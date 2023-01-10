@@ -60,6 +60,18 @@ namespace Tetris
         int maxZonedLines = 0;
 
         Stats(){}
+
+        Stats(const Stats& old){
+            for(int i = 0; i < 4; i++)
+                clears[i] = old.clears[i];
+
+            tspins = old.tspins;
+            perfectClears = old.perfectClears;
+            maxStreak = old.maxStreak;
+            maxCombo = old.maxCombo;
+            holds = old.holds;
+            maxZonedLines = old.maxZonedLines;
+        }
     };
 
     class Color {
@@ -615,6 +627,7 @@ namespace Tetris
             bag = oldGame.bag;
 
             pawn = Pawn(oldGame.pawn);
+            statTracker = Stats(oldGame.statTracker);
 
             held = oldGame.held;
             level = oldGame.level;
@@ -623,7 +636,7 @@ namespace Tetris
             linesCleared = oldGame.linesCleared;
             clearLock = oldGame.clearLock;
             gameMode = oldGame.gameMode;
-            sounds = SoundFlags(oldGame.sounds);
+            // sounds = SoundFlags(oldGame.sounds);
             previousClear = Score(oldGame.previousClear);
             timer = oldGame.timer;
             inGameTimer = oldGame.inGameTimer;
@@ -699,9 +712,12 @@ namespace Tetris
         int rotation = 0;
         Game* game;
         u16 testBoard[40];
+        int colboard[10];
         int columnHeights[10];
 
         Values currentValues;
+
+        std::list<Move> moves;
 
         // int currentHoles = 0;
         // int currentJag = 0;

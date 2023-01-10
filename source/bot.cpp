@@ -9,7 +9,9 @@
 #include "tonc_input.h"
 #include "tonc_memdef.h"
 
-int botThinkingSpeed = 10;
+#define MAX_MOVELIST_SIZE 5
+
+int botThinkingSpeed = 9;
 int botSleepDuration = 1;
 
 using namespace Tetris;
@@ -20,7 +22,7 @@ INLINE bool bitGet(u16 *bitboard,int x, int y){
     return (bitboard[y] >> x) & 0b1;
 }
 
-const u8 bitcount[] = {
+u8 bitcount[] = {
     0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
     1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
     1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
@@ -62,32 +64,45 @@ Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int st
     int wells = 0;
     int quadWell = 0;
 
+    std::string str;
+
+    // profile_start();
+
+    //~300-600 cycles
     for(int i = start; i < lengthY; i++){
-        if(board[i])
+        if(board[i]){
             rowTrans += countTransitions(board[i]);
+        }
     }
 
+    // str += std::to_string(profile_stop()) + " ";
+    // profile_start();
+
+    int counter = 0;
     for(int j = 0; j < lengthX; j++){
         bool prev = false;
         for(int i = lengthY - columnHeights[j]; i < lengthY; i++){
+            // profile_start();
             bool n = bitGet(board, j, i);
 
-            if(n != prev){
-                colTrans++;
+            colTrans += (n != prev);
 
-                if(!n)
-                    holes++;
-            }
+            holes += (n != prev) && !n;
 
             prev = n;
+            // log(std::to_string(profile_stop()));
+            counter++;
         }
     }
+    // log(std::to_string(counter));
+    // str += std::to_string(profile_stop()) + " ";
 
     int lowestX = 0;
     int lowestCount = 255;
 
     // profile_start();
 
+    //~1200-1400 cycles
     for(int x = 0; x < lengthX; x++){
         int count = 0;
         int n = columnHeights[x];
@@ -105,8 +120,10 @@ Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int st
         wells += count;
     }
 
+    // str += std::to_string(profile_stop()) + " ";
     // log("calc: " + std::to_string(profile_stop()));
 
+    // log(str);
 
     int i = lengthY - columnHeights[lowestX] - 1;
     while(countBits(board[i]) == 9 && i >= 0){
@@ -121,36 +138,36 @@ Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int st
     result.wells = wells;
     result.quadWell = quadWell;
 
-    if(key_is_down(KEY_SELECT)){
-        for(int i = lengthY-20; i < lengthY; i++){
-            std::string str;
+    // if(key_is_down(KEY_SELECT)){
+    //     for(int i = lengthY-20; i < lengthY; i++){
+    //         std::string str;
 
-            for(int j = 0; j < 16; j++)
-                str += std::to_string((board[i] >> j) & 0b1);
+    //         for(int j = 0; j < 16; j++)
+    //             str += std::to_string((board[i] >> j) & 0b1);
 
-            log(str);
-        }
+    //         log(str);
+    //     }
 
-        std::string str;
-        int *r = (int*) &result;
-        for(int i = 0; i < 5; i++)
-            str += std::to_string(r[i]) + " ";
-        log(str);
-        log(std::to_string(start) + " " + std::to_string(lengthY));
-        for(int i = start; i < lengthY; i++){
-            if(board[i])
-                log(std::to_string(countTransitions(board[i])));
-        }
+    //     std::string str;
+    //     int *r = (int*) &result;
+    //     for(int i = 0; i < 5; i++)
+    //         str += std::to_string(r[i]) + " ";
+    //     log(str);
+    //     log(std::to_string(start) + " " + std::to_string(lengthY));
+    //     for(int i = start; i < lengthY; i++){
+    //         if(board[i])
+    //             log(std::to_string(countTransitions(board[i])));
+    //     }
 
-        while(1){
-            VBlankIntrWait();
-            key_poll();
+    //     while(1){
+    //         VBlankIntrWait();
+    //         key_poll();
 
-            if(key_hit(KEY_A)){
-                break;
-            }
-        }
-    }
+    //         if(key_hit(KEY_A)){
+    //             break;
+    //         }
+    //     }
+    // }
 
     return result;
 }
@@ -185,8 +202,12 @@ void Bot::run(){
 
             // log(buff);
 
-            delete quickSave;
-            quickSave = new Game(*game);
+            if(checking == 0){
+
+                // moves.clear();
+                // delete quickSave;
+                // quickSave = new Game(*game);
+            }
         }
 
         if(thinkingI < 6){
@@ -221,12 +242,18 @@ void Bot::run(){
                 if(checking == 1){
                     thinking = false;
                     checking = 0;
-                    // game->pawn.current = previous;
-                    // game->pawn.setBlock(SRS);
-                    delete game;
-                    game = new Game(*quickSave);
-                    game->setTuning(getTuning());
-                } else{
+                    game->pawn.current = previous;
+                    game->pawn.setBlock(SRS);
+                    // int t = game->timer;
+                    // int igt = game->inGameTimer;
+                    // delete game;
+                    // game = new Game(*quickSave);
+                    // game->setTuning(getTuning());
+
+                    // game->timer = t;
+                    // game->inGameTimer = igt;
+
+                }else{
                     checking++;
 
                     previous = game->pawn.current;
@@ -262,9 +289,13 @@ void Bot::move(){
         sleepTimer = maxSleep;
 
     if(game->pawn.current != current.piece){
-        log("current: " + std::to_string(game->pawn.current) + " best: " + std::to_string(current.piece));
-        game->hold(1);
-        game->hold(0);
+        // log("current: " + std::to_string(game->pawn.current) + " best: " + std::to_string(current.piece));
+        if(game->held == current.piece || game->queue.front() == current.piece){
+            game->hold(1);
+            game->hold(0);
+        }else{
+            log("error hold");
+        }
         return;
     }
 
@@ -298,6 +329,7 @@ void Bot::move(){
 
     if(dx == current.dx && game->pawn.rotation == current.rotation){
         // log("dx: " + std::to_string(game->pawn.x) + " dy: " + std::to_string(game->pawn.rotation));
+        // log("drop");
         game->keyDrop(1);
         dx = 0;
         rotation = 0;
@@ -311,6 +343,9 @@ void Bot::move(){
 int Bot::findBestDrop(int ii,int jj){
     if(!game->checkRotation(ii,0,jj))
         return 0;
+
+    std::string str;
+    // profile_start();
 
     int prevR = game->pawn.rotation;
     int prevX = game->pawn.x;
@@ -330,6 +365,8 @@ int Bot::findBestDrop(int ii,int jj){
     //     testBoard[i] = game->bitboard[i];
         // memcpy32(testBoard[i],game->board[i+20],10);
 
+    // str += std::to_string(profile_stop()) + " ";
+    // profile_start();
 
     int minH = -1;
     int count = 0;
@@ -344,10 +381,6 @@ int Bot::findBestDrop(int ii,int jj){
 
             int x = game->pawn.x+ii+j;
 
-            if(y > game->lengthY-1 || y < 0 || x > game->lengthX-1)
-                continue;
-
-            // testBoard[y-20][x] = 1;
             testBoard[y-8] |= 1 << x;
             if(height-(y-8) > columnHeights[x])
                 columnHeights[x] = height-(y-8);
@@ -358,13 +391,17 @@ int Bot::findBestDrop(int ii,int jj){
         if(count == 4)
             break;
     }
+    // str += std::to_string(profile_stop()) + " ";
 
     // // showTestBoard();
 
+    // profile_start();
     int clears = countClears(testBoard,game->lengthX,height,lowest+minH-8);
     int afterHeight = min(game->stackHeight,lowest+minH) + clears;
 
     Values v = evaluate(testBoard, columnHeights, game->lengthX,height,afterHeight-8);
+    // str += std::to_string(profile_stop()) + " ";
+    // profile_start();
     // int afterJag = v.jag;
     int afterColTrans = v.colTrans;
     int afterRowTrans = v.rowTrans;
@@ -387,17 +424,59 @@ int Bot::findBestDrop(int ii,int jj){
         wellDiff * (weights.well) + rowDiff * (weights.row) + colDiff * (weights.col) + quadDiff * (weights.quadWell);
 
     // log( "score " + std::to_string(score) + " best score: " + std::to_string(best.score));
+    Move m;
+    m.score = score;
+    m.dx = ii;
+    m.rotation = jj;
+    m.piece = game->pawn.current;
+
+    //~2500 cycles
+    // if(moves.empty()){
+    //     moves.push_back(m);
+    // }else{
+    //     // log("checking: " + std::to_string(m.score));
+    //     auto it = moves.begin();
+    //     while(it != moves.end()){
+    //         // log("comparing: " + std::to_string(it->score)  + " " + std::to_string(m.score));
+    //         if(it->score < m.score){
+    //             moves.insert(it,m);
+    //             break;
+    //         }
+    //         ++it;
+    //     }
+
+    //     if(it == moves.end()){
+    //         moves.push_back(m);
+    //     }
+
+    //     if(moves.size() > MAX_MOVELIST_SIZE){
+    //         moves.pop_back();
+    //     }
+    // }
+
+    //print move list
+
+    // std::string str;
+    // for(auto const& move : moves){
+    //     str += std::to_string(move.score) + " ";
+    // }
+    // log(str);
 
     if(score > best.score){
-        best.score = score;
-        best.dx = ii;
-        best.rotation = jj;
+        best = m;
+        // best.score = score;
+        // best.dx = ii;
+        // best.rotation = jj;
 
         // log("qd: " + std::to_string(quadDiff));
 
         // log("setting to: " + std::to_string(game->pawn.current));
-        best.piece = game->pawn.current;
+        // best.piece = game->pawn.current;
     }
+
+    // str += std::to_string(profile_stop()) + " ";
+    // log(std::to_string(profile_stop()));
+    // log(str);
 
     return 1;
 }
