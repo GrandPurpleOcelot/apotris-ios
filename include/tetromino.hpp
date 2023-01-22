@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tonc_types.h"
+#include "platform.hpp"
 #include <cstdint>
 #include <string>
 #include <list>

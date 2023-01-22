@@ -1,8 +1,8 @@
-#include "def.h"
-#include "maxmod.h"
-#include "soundbank_bin.h"
+// #include "def.h"
+// #include "maxmod.h"
+// #include "soundbank_bin.h"
 
-#define audioChannels 12
+// #define audioChannels 12
 
 // u8 myMixingBuffer[ MM_MIXLEN_16KHZ ] __attribute((aligned(4)));
 

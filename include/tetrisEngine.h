@@ -1,11 +1,10 @@
 #pragma once
 
+#include "platform.hpp"
 #include <list>
 #include <string>
 #include "tetromino.hpp"
 #include <tuple>
-#include "platform.h"
-#include "tonc_core.h"
 
 namespace Tetris
 {

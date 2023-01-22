@@ -1,9 +1,13 @@
 #ifndef LINK_CONNECTION_H
 #define LINK_CONNECTION_H
 
-#include <tonc_core.h>
-#include <tonc_memdef.h>
-#include <tonc_memmap.h>
+#include "platform.hpp"
+
+#ifdef GBA
+
+// #include <tonc_core.h>
+// #include <tonc_memdef.h>
+// #include <tonc_memmap.h>
 
 #include <memory>
 #include <queue>
@@ -318,4 +322,7 @@ inline void LINK_QUEUE_CLEAR(std::queue<u16>& q) {
     LINK_QUEUE_POP(q);
 }
 
+#endif
+
 #endif  // LINK_CONNECTION_H
+

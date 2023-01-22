@@ -1,13 +1,13 @@
-
-#include "tetromino.hpp"
-#include "tetrisEngine.h"
 #include <iostream>
 #include <algorithm>
 #include <string>
 #include <tuple>
+
+#include "platform.hpp"
+#include "tetromino.hpp"
+#include "tetrisEngine.h"
 #include "logging.h"
 #include "posprintf.h"
-#include "tonc_core.h"
 
 using namespace Tetris;
 using namespace GameInfo;

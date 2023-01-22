@@ -94,6 +94,7 @@ void startScreen() {
     selection = 0;
 
     VBlankIntrWait();
+
     REG_DISPCNT &= ~DCNT_BG3;
     drawUIFrame(0, 0, 30, 20);
 

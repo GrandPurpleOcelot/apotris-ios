@@ -1,4 +1,3 @@
-#include "maxmod.h"
 #include "mm_types.h"
 #include "soundbank.h"
 #include "def.h"
@@ -42,8 +41,11 @@ void playSong(int menuId, int songId) {
     currentMenu = menuId;
     currentlyPlayingSong = songId;
 
-    mmStart(song, (savefile->settings.cycleSongs)? MM_PLAY_ONCE:MM_PLAY_LOOP);
-    mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
+    startSong(song,(savefile->settings.cycleSongs));
+    setMusicVolume(512 * ((float)savefile->settings.volume / 10));
+
+    // mmStart(song, (savefile->settings.cycleSongs)? MM_PLAY_ONCE:MM_PLAY_LOOP);
+    // mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
 }
 
 void playSongRandom(int menuId) {

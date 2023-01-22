@@ -1,8 +1,7 @@
 #pragma once
 
+#include "platform.hpp"
 #include "tetrisEngine.h"
-#include "platform.h"
-#include <maxmod.h>
 
 INLINE FIXED lerp(FIXED a, FIXED b, FIXED mix){
     return a + (((b-a)*mix)>>8);
@@ -320,8 +319,6 @@ extern void startBotGame(int seed);
 extern int countBits(u16 n);
 extern int countTransitions(u16 a);
 
-extern OBJ_ATTR obj_buffer[128];
-extern OBJ_AFFINE* obj_aff_buffer;
 extern Tetris::Game *game;
 extern Tetris::Game *quickSave;
 extern Tetris::Game *botGame;
@@ -405,14 +402,6 @@ extern Tetris::Options *previousGameOptions;
 
 #define shakeMax 10
 
-class Scene{
-public:
-    virtual void draw();
-
-    Scene(){};
-    virtual ~Scene(){};
-};
-
 class GameScene : public Scene{
     void draw();
 };
@@ -442,55 +431,60 @@ public:
 
     void show(int x, int y, int palette) {
         for (int i = 0; i < 3; i++) {
-            obj_unhide(sprites[i], 0);
-            obj_set_attr(sprites[i], ATTR0_WIDE, ATTR1_SIZE(1), ATTR2_BUILD(startTiles + i * 4, palette, priority));
-            obj_set_pos(sprites[i], x + i * 32, y);
+            sprite_unhide(sprites[i], 0);
+            sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
+            // obj_set_attr(sprites[i], ATTR0_WIDE, ATTR1_SIZE(1), ATTR2_BUILD(startTiles + i * 4, palette, priority));
+            sprite_set_pos(sprites[i], x + i * 32, y);
         }
     }
 
     void show(int x, int y, int palette, FIXED scale) {
         for (int i = 0; i < 3; i++) {
             int affId = id*3+i;
-            obj_unhide(sprites[i], 0);
-            obj_set_attr(sprites[i], ATTR0_WIDE | ATTR0_AFF, ATTR1_SIZE(1) | ATTR1_AFF_ID(affId), palette);
-            sprites[i]->attr2 = ATTR2_BUILD(startTiles + i * 4, palette, 1);
-            obj_set_pos(sprites[i], x + i * 32, y);
-            obj_aff_identity(&obj_aff_buffer[affId]);
-            obj_aff_scale(&obj_aff_buffer[affId], scale, scale);
+            sprite_unhide(sprites[i], 0);
+            sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
+            // obj_set_attr(sprites[i], ATTR0_WIDE | ATTR0_AFF, ATTR1_SIZE(1) | ATTR1_AFF_ID(affId), palette);
+            // sprites[i]->attr2 = ATTR2_BUILD(startTiles + i * 4, palette, 1);
+            sprite_set_pos(sprites[i], x + i * 32, y);
+            sprite_set_size(sprites[i], scale, affId);
+            // obj_aff_identity(&obj_aff_buffer[affId]);
+            // obj_aff_scale(&obj_aff_buffer[affId], scale, scale);
         }
     }
 
     void hide() {
         for (int i = 0; i < 3; i++)
-            obj_hide(sprites[i]);
+            // obj_hide(sprites[i]);
+            sprite_hide(sprites[i]);
     }
 
-    void setTextFast(char** _text, int size) {
-        if (*_text == text)
-            return;
+    // void setTextFast(char** _text, int size) {
+    //     if (*_text == text)
+    //         return;
 
-        text = *_text;
+    //     text = *_text;
 
-        if(text == ""){
-            memset32(&tile_mem[4][startTiles], 0, 12 * 8);
-            return;
-        }
+    //     if(text == ""){
+    //         clearSpriteTiles(startTiles, 12, 0);
+    //         // memset32(&tile_mem[4][startTiles], 0, 12 * 8);
+    //         return;
+    //     }
 
-        int n = min(size,12);
+    //     int n = min(size,12);
 
-        TILE* font = (TILE*)fontTiles;
-        int i;
-        for (i = 0; i < n; i++) {
-            int c = *_text[i] - 32;
+    //     TILE* font = (TILE*)fontTiles;
+    //     int i;
+    //     for (i = 0; i < n; i++) {
+    //         int c = *_text[i] - 32;
 
-            // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
-            dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
-        }
 
-        if(i < 12){
-            memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
-        }
-    }
+    //         // dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
+    //     }
+
+    //     if(i < 12){
+    //         memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
+    //     }
+    // }
 
     void setText(std::string _text) {
         if (_text == text)
@@ -500,7 +494,8 @@ public:
 
 
         if(text == ""){
-            memset32(&tile_mem[4][startTiles], 0, 12 * 8);
+            clearSpriteTiles(startTiles, 12, 0);
+            // memset32(&tile_mem[4][startTiles], 0, 12 * 8);
             return;
         }
 
@@ -511,12 +506,17 @@ public:
         for (i = 0; i < n; i++) {
             int c = text[i] - 32;
 
+            setSpriteTile(startTiles,i,0,0,&font[c]);
             // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
-            dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
+            // dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
         }
 
         if(i < 12){
-            memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
+
+            //TODO:
+            //"+ i" might be wrong
+            clearSpriteTiles(startTiles + i, 12-i, 0);
+            // memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
         }
     }
 

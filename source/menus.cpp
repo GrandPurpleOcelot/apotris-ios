@@ -1,7 +1,6 @@
-#include "maxmod.h"
+#include "def.h"
 #include "rumble.h"
 #include "tetromino.hpp"
-#include "def.h"
 #include "soundbank.h"
 #include "tetrisEngine.h"
 #include "logging.h"

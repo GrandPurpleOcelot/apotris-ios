@@ -1,0 +1,388 @@
+#include "platform.hpp"
+
+#ifdef GBA
+#include "logging.h"
+#include "LinkConnection.h"
+#include "maxmod.h"
+#include "soundbank.h"
+#include "rumble.h"
+#include "gbp_logo.hpp"
+#include "text.h"
+#include "soundbank_bin.h"
+
+// #include <string>
+// #include "scene.hpp"
+// #include "main.hpp"
+void initRumble();
+bool unlock_gbp();
+
+LinkConnection* linkConnection = new LinkConnection();
+
+OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
+
+mm_word myEventHandler(mm_word msg, mm_word param){
+    if(msg == MMCB_SONGMESSAGE)
+        return 0;
+
+    playNextSong();
+
+    return 0;
+}
+
+void toggleBG(int layer, bool state){
+    if(state){
+        REG_DISPCNT |= ((1 << layer) << 8);
+    }else{
+        REG_DISPCNT &= ~((1 << layer) << 8);
+    }
+}
+
+void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
+
+    *(vu16*) (REG_BASE + 0x0008 + 0x0002 * layer) = BG_CBB(cbb) | BG_SBB(sbb) | BG_SIZE(size) | BG_PRIO(prio) | BG_MOSAIC * mos;
+}
+
+void toggleSprites(bool state){
+    if(state){
+        REG_DISPCNT |= DCNT_OBJ;
+    }else{
+        REG_DISPCNT &= ~DCNT_OBJ;
+    }
+}
+
+void vsync(){
+    VBlankIntrWait();
+}
+
+void showSprites(int count){
+
+
+    // oam_init(oam_mem,128);
+
+    oam_copy(oam_mem,obj_buffer,count);
+    obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
+
+    // OBJ_ATTR* dest = (OBJ_ATTR*) MEM_OAM;
+    // for(auto const& sprite : sprite_list){
+    //     *dest++ = *sprite.sprite;
+    // }
+}
+
+void platformInit(){
+
+    if(DIAGNOSE)
+        logInitMgba();
+
+    if(ENABLE_FLASH_SAVE)
+        flash_init();
+
+    irq_init(0);
+    irq_enable(II_VBLANK);
+    irq_add(II_VBLANK, onVBlank);
+
+    irq_add(II_SERIAL, LINK_ISR_SERIAL);
+    irq_add(II_TIMER3, LINK_ISR_TIMER);
+
+    // irq_add(II_HBLANK, onHBlank);
+    irq_disable(II_HBLANK);
+
+    initRumble();
+
+    mmInitDefault((mm_addr)soundbank_bin, 12);
+    mmSetEventHandler((mm_callback)myEventHandler);
+
+    REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
+
+    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(2);
+}
+
+void deinitialize(){
+
+}
+
+bool closed(){
+    return true;
+}
+
+void loadPalette(int palette, int index, const void *src, int count){
+    memcpy16(&pal_bg_mem[16*palette + index], src, count);
+}
+
+void loadTiles(int tileset, int index, const void *src, int count){
+    memcpy32(&tile_mem[tileset][index], src,count*8);
+}
+
+void clearTilemap(int tilemap){
+    memset32(&se_mem[tilemap], 0,32*32);
+}
+
+void clearSpriteTiles(int index, int lengthX, int lengthY){
+    memset32(&tile_mem[4][index],0,lengthX*lengthY*8);
+}
+
+void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY){
+    memcpy32(&tile_mem[4][index], src,lengthX * lengthY * 8);
+}
+
+void setPaletteColor(int palette, int index, int color, int count){
+    memset16(&pal_bg_mem[palette * 16 + index],(color & 0xffff),count);
+}
+
+void sprite_hide(OBJ_ATTR * sprite){
+    obj_hide(sprite);
+}
+
+void sprite_unhide(OBJ_ATTR * sprite, int mode){
+    obj_unhide(sprite,mode);
+}
+
+void sprite_set_pos(OBJ_ATTR * sprite, int x, int y){
+    obj_set_pos(sprite,x,y);
+}
+
+void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int palette, int priority){
+    obj_set_attr(sprite, ATTR0_SHAPE(shape), ATTR1_SIZE(size), ATTR2_BUILD(tile_start, palette, priority));
+}
+
+void setLayerScroll(int layer, int x, int y){
+    switch(layer){
+    case 0:
+        REG_BG0HOFS = x;
+        REG_BG0VOFS = y;
+        break;
+    case 1:
+        REG_BG1HOFS = x;
+        REG_BG1VOFS = y;
+        break;
+    case 2:
+        REG_BG2HOFS = x;
+        REG_BG2VOFS = y;
+        break;
+    case 3:
+        REG_BG3HOFS = x;
+        REG_BG3VOFS = y;
+        break;
+
+    }
+}
+
+void enableLayerBlend(int layer){
+    REG_BLDCNT = (1 << 6) + (1 << 0xb) + (1<<layer);
+    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(15);
+
+    // TLN_SetLayerBlendMode(2,BLEND_ADD,0);
+}
+
+void color_fade_palette(int palette, int index, const COLOR *src, COLOR color, int count, u32 alpha){
+    clr_fade(src,color,&pal_bg_mem[palette*16+index],count,alpha);
+}
+
+void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha){
+    clr_fade(src,color,*dst,count,alpha);
+}
+
+void color_adj_brightness(int palette, int index, const COLOR * src, int count, u32 alpha){
+    clr_adj_brightness(&pal_bg_mem[palette*16+index], src, count, alpha);
+}
+
+void initRumble(){
+    if(!savefile->settings.rumble)
+        return;
+
+    rumbleInitialized = true;
+    RegisterRamReset(RESET_VRAM);
+    REG_DISPCNT = DCNT_MODE0 | DCNT_BG0;
+    *((volatile u16*)0x4000008) = 0x0088;
+
+    if (unlock_gbp()) {
+
+        RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
+            irq_enable(II_SERIAL);
+            irq_add(II_SERIAL, rumble_isr);
+        }};
+
+        rumble_init(&conf);
+    } else {
+        rumble_init(nullptr);
+    }
+}
+
+bool unlock_gbp(){
+    bool gbp_detected = false;
+
+    memcpy16((u16*)0x6008000, gbp_logo_pixels, (sizeof gbp_logo_pixels)/2);
+    memcpy16((u16*)0x6000000, gbp_logo_tiles, (sizeof gbp_logo_tiles)/2);
+    memcpy16(pal_bg_mem, gbp_logo_palette, (sizeof gbp_logo_palette)/2);
+
+    static volatile u32* keys = (volatile u32*)0x04000130;
+
+    for(int i = 0; i < 120; i++){
+        // if(key_is_down(KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT)){
+        if(*keys==0x030f){
+            gbp_detected = true;
+        }
+        VBlankIntrWait();
+    }
+
+    RegisterRamReset(RESET_VRAM);
+
+    return gbp_detected;
+}
+
+void sleep() {
+    int display_value = REG_DISPCNT;
+    REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG2; //Disable all backgrounds except text
+    clearText();
+
+    oam_init(obj_buffer, 128);
+    oam_copy(oam_mem, obj_buffer, 128);
+
+    while (1) {
+        aprint("Entering sleep...", 7, 4);
+        aprint("Press", 13, 8);
+        aprint("L + R + SELECT", 9, 10);
+        aprint("to leave sleep", 8, 12);
+
+        aprint("A: Sleep      B: Cancel", 4, 17);
+
+        VBlankIntrWait();
+
+        key_poll();
+
+        if (key_hit(KEY_A)) {
+            clearText();
+            break;
+        }
+
+        if (key_hit(KEY_B)) {
+            REG_DISPCNT = display_value;
+            clearText();
+            sfx(SFX_MENUCANCEL);
+            return;
+        }
+    }
+
+    irq_disable(II_VBLANK);
+    gradient(false);
+    int stat_value = REG_SNDSTAT;
+    int dsc_value = REG_SNDDSCNT;
+    int dmg_value = REG_SNDDMGCNT;
+
+    REG_DISPCNT |= 0x0080;
+    REG_SNDSTAT = 0;
+    REG_SNDDSCNT = 0;
+    REG_SNDDMGCNT = 0;
+
+    bool isLinked = linkConnection->isActive();
+
+    if(isLinked)
+        linkConnection->deactivate();
+
+    irq_disable(II_TIMER3);
+    irq_disable(II_SERIAL);
+
+    REG_P1CNT = 0b1100001100000100;
+    irq_add(II_KEYPAD, nullptr);
+
+    Stop();
+
+    REG_DISPCNT = display_value;
+    REG_SNDSTAT = stat_value;
+    REG_SNDDSCNT = dsc_value;
+    REG_SNDDMGCNT = dmg_value;
+
+    if(isLinked)
+        linkConnection->activate();
+
+    irq_enable(II_TIMER3);
+    irq_enable(II_SERIAL);
+    irq_delete(II_KEYPAD);
+    irq_enable(II_VBLANK);
+    gradient(true);
+}
+
+void sfx(int s){
+	mm_sfxhand h = mmEffect(s);
+	mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
+
+    if((s == SFX_PLACE) && game->zoneTimer){
+        mmEffectRate(h,512);
+    }
+}
+
+void sfxRate(int sound, float rate){
+        mm_sound_effect s = {
+            {sound},
+            (mm_hword)((1.0 + rate) * (1 << (10 - (game->zoneTimer != 0)))),
+            0,
+            (u8)(255 * (float) savefile->settings.sfxVolume / 10),
+            128,
+        };
+
+        mmEffectEx(&s);
+
+}
+
+void stopDMA(){
+    REG_DMA0CNT &= ~(1 << 0x1f);
+}
+
+void setMosaic(int sx, int sy){
+    REG_MOSAIC = MOS_BUILD(sx,sy,sx,sy);
+}
+
+void clearSprites(int count){
+    oam_init(obj_buffer, count);
+}
+
+void onVBlank(void) {
+
+    mmVBlank();
+    if(gradientEnabled)
+        DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
+
+    LINK_ISR_VBLANK();
+
+    REG_IME = 1;
+    if (canDraw) {
+        canDraw = 0;
+
+        scene->draw();
+    }
+
+    REG_IME = 0;
+    frameCounter++;
+    mmFrame();
+}
+
+void sprite_enable_affine(OBJ_ATTR * sprite,int affineId, bool doubleSize){
+    sprite->attr0 |= ATTR0_AFF + doubleSize * ATTR0_AFF_DBL_BIT;
+    sprite->attr1 |= ATTR1_AFF_ID(affineId);
+}
+
+void sprite_enable_mosaic(OBJ_ATTR * sprite){
+    sprite->attr0 |= ATTR0_MOSAIC;
+}
+
+void sprite_set_size(OBJ_ATTR * sprite, FIXED size, int aff_id){
+    obj_aff_identity(&obj_aff_buffer[aff_id]);
+    obj_aff_scale(&obj_aff_buffer[aff_id], size, size);
+}
+
+void setMusicTempo(int tempo){
+    mmSetModuleTempo(tempo);
+}
+
+void setMusicVolume(int volume){
+    mmSetModuleVolume(volume);
+}
+
+void setSFXVolume(int volume){
+    // mmSetModuleVolume(volume);
+}
+
+void startSong(int song, bool loop){
+    mmStart(song, (!loop)? MM_PLAY_ONCE:MM_PLAY_LOOP);
+}
+
+#endif

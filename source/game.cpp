@@ -1,5 +1,4 @@
 #include "def.h"
-#include "maxmod.h"
 #include "LinkConnection.h"
 #include "meter1_tiles_bin.h"
 #include "soundbank.h"
@@ -151,11 +150,14 @@ void GameScene::draw(){
     showPlaceEffect();// 300 idle, 3600 per effect when on
     // prof+= std::to_string(profile_stop()) + " ";
 
-    oam_copy(oam_mem, obj_buffer, 32);
-    // profile_start();
-    if(game->eventTimer)
-        oam_copy(&oam_mem[64], &obj_buffer[64], 27);
-    obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
+
+    showSprites(32);
+    // oam_copy(oam_mem, obj_buffer, 32);
+    // // profile_start();
+    // if(game->eventTimer)
+    //     oam_copy(&oam_mem[64], &obj_buffer[64], 27);
+    // obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
+
     if (game->refresh) {
         update();
         showBackground();
@@ -198,7 +200,7 @@ void checkSounds() {
         shake = (shakeMax * (savefile->settings.shakeAmount)/ 4) /2;
         if(!game->sounds.finesse)
             for(int i = 0; i < 3; i++)
-                obj_hide(moveSprites[i]);
+                sprite_hide(moveSprites[i]);
 
         rumbleTimer = rumbleMax * savefile->settings.rumble;
     }
@@ -222,15 +224,17 @@ void checkSounds() {
             if (speed > 10)
                 speed = 10;
 
-            mm_sound_effect clear = {
-                {SFX_LEVELUP},
-                (mm_hword)((1.0 + (float)speed / 10) * (1 << (10 - (game->zoneTimer != 0)))),
-                0,
-                (u8)(255 * (float) savefile->settings.sfxVolume / 10),
-                128,
-            };
+            sfxRate(SFX_LEVELUP,(float)speed/10);
 
-            mmEffectEx(&clear);
+            // mm_sound_effect clear = {
+            //     {SFX_LEVELUP},
+            //     (mm_hword)((1.0 + (float)speed / 10) * (1 << (10 - (game->zoneTimer != 0)))),
+            //     0,
+            //     (u8)(255 * (float) savefile->settings.sfxVolume / 10),
+            //     128,
+            // };
+
+            // mmEffectEx(&clear);
         }else{
             sfx(SFX_MULTICLEAR);
         }
@@ -310,9 +314,11 @@ void checkSounds() {
             int n = getClassicPalette();
 
             for(int i = 0; i < 8; i++){
-                memcpy16(&pal_bg_mem[i*16+1], &nesPalette[n][0],4);
+                loadPalette(i, 1, &nesPalette[n][0], 4);
+                loadPalette(i+16, 1, &nesPalette[n][0], 4);
+                // memcpy16(&pal_bg_mem[i*16+1], &nesPalette[n][0],4);
 
-                memcpy16(&pal_obj_mem[i*16+1], &nesPalette[n][0],4);
+                // memcpy16(&pal_obj_mem[i*16+1], &nesPalette[n][0],4);
             }
         }
 
@@ -362,24 +368,31 @@ void checkSounds() {
         flashTimer = flashTimerMax;
         zoneFlash();
 
-        u16 * dest = (u16*) &se_mem[26];
+        // u16 * dest = (u16*) &se_mem[26];
         for(int i = 0; i < 20; i++){
-            dest[i * 32 + 9] = 4;
-            dest[i * 32 + 20] = 4 + 0x400;
+            setTile(26, 9, i, tileBuild(4, false, false, 0));
+            setTile(26, 20, i, tileBuild(4, true, false, 0));
+            // dest[i * 32 + 9] = 4;
+            // dest[i * 32 + 20] = 4 + 0x400;
         }
 
         if (savefile->settings.lightMode){
             for(int i = 0; i < 4; i++){
                 COLOR c = RGB15(10-i, 10-i, 10-i);
-                pal_bg_mem[(0+i) * 16 + 5] += c;
+                //TODO:
+                //needs to add color to palette address, not simply assign it
+                setPaletteColor(i, 5, c, 1);
+                // pal_bg_mem[(0+i) * 16 + 5] += c;
             }
         }
 
         // if(savefile->settings.lightMode)
         //     memset16(&pal_bg_mem[4 * 16 + 5], 0x4a52, 1);
 
-        mmSetModuleTempo(512);
-        mmSetModuleVolume(512 * ((float)savefile->settings.volume / 20));
+        setMusicTempo(512);
+        setMusicVolume(512 * ((float)savefile->settings.volume / 20));
+        // mmSetModuleTempo(512);
+        // mmSetModuleVolume(512 * ((float)savefile->settings.volume / 20));
 
         sfx(SFX_ZONESTART);
     } else if (game->sounds.zone == 2) {
@@ -389,7 +402,10 @@ void checkSounds() {
         if (savefile->settings.lightMode){
             for(int i = 0; i < 4; i++){
                 COLOR c = RGB15(10-i, 10-i, 10-i);
-                pal_bg_mem[(0+i) * 16 + 5] += c;
+                // pal_bg_mem[(0+i) * 16 + 5] += c;
+                //TODO:
+                //needs to add color to palette address, not simply assign it
+                setPaletteColor(i, 5, c, 1);
             }
         }
 
@@ -417,13 +433,13 @@ void showBackground() {
 
     bool showEdges = savefile->settings.edges;
 
-    u16* dest = (u16*)se_mem[25];
+    // u16* dest = (u16*)se_mem[25];
 
     std::list<int>::iterator l2c = game->linesToClear.begin();
     bool up, down, left, right;
     bool before = false, after = false;
 
-    dest += 10;
+    // dest += 10;
 
     int startY = 20;
     int endY = 40;
@@ -447,14 +463,15 @@ void showBackground() {
         }
 
         if(game->clearLock && i != *l2c && clearTimer != 1){
-            dest+= 32;
+            // dest+= 32;
             continue;
         }
 
         for (int j = 0; j < 10; j++) {
             if (!game->board[i][j] || (game->clearLock && i == *l2c && showEdges) || (game->disappearing && game->disappearTimers[i][j] == 1)) {
                 if (!showEdges) {
-                    *dest++ = 0;
+                    setTile(25, 10+j, i-20, 0);
+                    // *dest++ = 0;
                     continue;
                 }
 
@@ -516,7 +533,8 @@ void showBackground() {
                     else
                         n = 0;
                 }
-                *dest++ = n + (savefile->settings.lightMode * 0x1000);
+                // *dest++ = n + (savefile->settings.lightMode * 0x1000);
+                setTile(25, 10+j, i-20, tileBuild(n, false, false, savefile->settings.lightMode));
             } else{
                 int offset = 1;
 
@@ -529,24 +547,29 @@ void showBackground() {
                     offset = 128 + GameInfo::connectedConversion[r];
 
                 if(n != 8)
-                    *dest++ = (offset + ((n) << 12) * !game->zoneTimer);
+                    // *dest++ = (offset + ((n) << 12) * !game->zoneTimer);
+                    setTile(25, 10+j, i-20, tileBuild(offset + (n << 12) * !game->zoneTimer, false, false, 0));
                 else
-                    *dest++ = 3;
+                    setTile(25, 10+j, i-20, tileBuild(3, false, false, 0));
+                    // *dest++ = 3;
             }
 
             if (game->clearLock && i == *l2c) {
-                dest--;
+                // dest--;
 
                 if (!showEdges)
-                    *dest = 0;
+                    // *dest = 0;
+                    setTile(25, 10+j, i-20, 0);
                 if (j < 5) {
                     if (clearTimer < maxClearTimer - 10 + j * 2)
-                        *dest = 3 + savefile->settings.lightMode * 0x1000;
+                        setTile(25, 10+j, i-20, tileBuild(3, false, false, savefile->settings.lightMode));
+                        // *dest = 3 + savefile->settings.lightMode * 0x1000;
                 } else {
                     if (clearTimer < maxClearTimer - 10 + (9 - j) * 2)
-                        *dest = 3 + savefile->settings.lightMode * 0x1000;
+                        setTile(25, 10+j, i-20, tileBuild(3, false, false, savefile->settings.lightMode));
+                        // *dest = 3 + savefile->settings.lightMode * 0x1000;
                 }
-                dest++;
+                // dest++;
 
                 if(clearTimer < 0){
                     aprint("ERROR",12,i);
@@ -556,35 +579,51 @@ void showBackground() {
         }
         if (i == *l2c)
             ++l2c;
-        dest += 22;
+        // dest += 22;
     }
 }
 
 void showPawn() {
     pawnSprite = &obj_buffer[0];
     if (game->clearLock || game->pawn.current == -1 || (ENABLE_BOT && game->gameMode != BATTLE)) {
-        obj_hide(pawnSprite);
+        sprite_hide(pawnSprite);
         return;
     }
 
-    obj_unhide(pawnSprite, 0);
+    sprite_unhide(pawnSprite, 0);
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             int n = game->pawn.board[game->pawn.rotation][i][j];
             if (n > 0){
                 if(savefile->settings.skin == 11)
-                    memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite38tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
+                    setSpriteTile(16 * 7, j, i, 4, &sprite38tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
                 else if(savefile->settings.skin == 12)
-                    memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite39tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
+                    setSpriteTile(16 * 7, j, i, 4, &sprite39tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
+                    // memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite39tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
                 else if(savefile->settings.skin == 13)
-                    memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite40tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
+                    setSpriteTile(16 * 7, j, i, 4, &sprite40tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
+                    // memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite40tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
                 else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
-                    memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], blockSprite, sprite1tiles_bin_size / 2);
+                    setSpriteTile(16 * 7, j, i, 4, blockSprite);
+                    // memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], blockSprite, sprite1tiles_bin_size / 2);
                 else
-                    memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], classicTiles[savefile->settings.skin-7][game->pawn.current], sprite1tiles_bin_size / 2);
+                    setSpriteTile(16 * 7, j, i, 4, classicTiles[savefile->settings.skin-7][game->pawn.current]);
+                    // memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], classicTiles[savefile->settings.skin-7][game->pawn.current], sprite1tiles_bin_size / 2);
+                // if(savefile->settings.skin == 11)
+                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite38tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
+                // else if(savefile->settings.skin == 12)
+                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite39tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
+                // else if(savefile->settings.skin == 13)
+                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite40tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
+                // else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
+                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], blockSprite, sprite1tiles_bin_size / 2);
+                // else
+                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], classicTiles[savefile->settings.skin-7][game->pawn.current], sprite1tiles_bin_size / 2);
             }else
-                memset16(&tile_mem[4][16 * 7 + i * 4 + j], 0, sprite1tiles_bin_size / 2);
+                clearSpriteTile(16*7,j,i,4);
+                // setSpriteTile(16 * 7, j, i, classicTiles[savefile->settings.skin-7][game->pawn.current]);
+                // memset16(&tile_mem[4][16 * 7 + i * 4 + j], 0, sprite1tiles_bin_size / 2);
         }
     }
 

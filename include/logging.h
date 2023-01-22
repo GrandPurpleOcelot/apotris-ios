@@ -1,6 +1,8 @@
 #pragma once
 #include "def.h"
-#include "tonc_types.h"
+
+#ifdef GBA
+
 #include <string>
 
 #define VOLADDR(a, t) (*(t volatile *)(a))
@@ -30,3 +32,5 @@ static inline void log(std::string str){
         return;
     logOutputMgba(4, str.c_str());
 }
+
+#endif

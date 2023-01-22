@@ -4,10 +4,6 @@
 #include <tuple>
 #include "logging.h"
 #include "posprintf.h"
-#include "tonc_bios.h"
-#include "tonc_core.h"
-#include "tonc_input.h"
-#include "tonc_memdef.h"
 
 #define MAX_MOVELIST_SIZE 5
 

@@ -1,0 +1,106 @@
+#pragma once
+
+// #define GBA
+#define PC
+
+#ifdef GBA
+
+#include "liba_gba.h"
+#include "tonc.h"
+#include "maxmod.h"
+
+#endif
+
+#ifdef PC
+
+#include "liba_pc.h"
+#include "Tilengine.h"
+
+#endif
+
+extern void onVBlank();
+
+extern OBJ_ATTR obj_buffer[128];
+
+enum {
+    ShapeSquare,
+    ShapeWide,
+    ShapeTall,
+};
+
+const int sizeTable[3][4][2] = {
+    {{8,8},{16,16},{32,32},{64,64}}, //Square
+    {{16,8},{32,8},{32,16},{64,32}}, //Wide
+    {{8,16},{8,32},{16,32},{32,64}}, //Tall
+};
+
+extern void toggleBG(int layer, bool state);
+extern void toggleSprites(bool state);
+extern void clearSprites(int count);
+
+extern void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos);
+
+extern void platformInit();
+extern void platformDeinit();
+extern bool closed();
+
+extern void vsync();
+extern void showSprites(int count);
+
+extern void loadPalette (int palette, int index, const void * src, int count);
+extern void loadTiles (int tileset, int index, const void * src, int count);
+extern void loadTiles8(int tileset, int index, const void * src, int count);
+
+extern void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY);
+
+// extern void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src);
+
+extern void setPaletteColor(int palette, int index, int color, int count);
+
+extern void sprite_hide(OBJ_ATTR * sprite);
+extern void sprite_unhide(OBJ_ATTR * sprite, int mode);
+extern void sprite_set_pos(OBJ_ATTR * sprite, int x, int y);
+extern void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int palette, int priority);
+
+extern void setLayerScroll(int layer, int x, int y);
+
+extern void clearTilemap(int tilemap);
+extern void clearSpriteTiles(int index, int lengthX, int lengthY);
+
+extern void enableLayerBlend(int layer);
+
+extern void sprite_enable_mosaic(OBJ_ATTR * sprite);
+extern void sprite_enable_affine(OBJ_ATTR * sprite,int affineId, bool doubleSize);
+extern void sprite_set_size(OBJ_ATTR * sprite, FIXED size, int aff_id);
+
+extern void color_fade_palette(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha);
+extern void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha);
+
+extern void color_adj_brightness(int palette, int index, const COLOR * src, int count, u32 alpha);
+
+extern void sleep();
+
+extern void sfx(int sound);
+
+extern void sfxRate(int sound, float rate);
+
+extern void stopDMA();
+
+extern void setMosaic(int sx ,int sy);
+
+extern u16 gradientTable[SCREEN_HEIGHT + 1];
+
+class Scene{
+public:
+    virtual void draw();
+
+    Scene(){};
+    virtual ~Scene(){};
+};
+
+extern Scene * scene;
+
+extern void setMusicTempo(int tempo);
+extern void setMusicVolume(int volume);
+extern void setSFXVolume(int volume);
+extern void startSong(int song, bool loop);

@@ -1,6 +1,8 @@
 #pragma once
 
-#include "tonc_types.h"
+#include "platform.hpp"
+
+#ifdef GBA
 
 #define AGB_ROM  ((u8*)0x8000000)
 #define AGB_SRAM ((u8*)0xE000000)
@@ -16,3 +18,5 @@ extern u8 flash_type;
 extern u32 get_flash_type();
 void save_sram_flash();
 void flash_init();
+
+#endif
