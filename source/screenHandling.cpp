@@ -1,6 +1,6 @@
 
 #include "def.h"
-#include "soundbank.h"
+// #include "soundbank.h"
 #include "text.h"
 #include <string>
 
@@ -26,7 +26,7 @@ static int arr = 0;
 
 static int dasSelection = 0;
 
-static std::list<std::string> options = {
+const static std::list<std::string> options = {
     "Auto Repeat Delay",
     "Auto Repeat Rate",
     "Soft Drop Speed",
@@ -57,8 +57,8 @@ void handlingSettings(){
         }
     }
 
-    while (1) {
-        VBlankIntrWait();
+    while (closed()) {
+        vsync();
 
         key_poll();
 

@@ -9,6 +9,7 @@
 #include "gbp_logo.hpp"
 #include "text.h"
 #include "soundbank_bin.h"
+#include "flashSaves.h"
 
 // #include <string>
 // #include "scene.hpp"
@@ -120,8 +121,16 @@ void clearSpriteTiles(int index, int lengthX, int lengthY){
     memset32(&tile_mem[4][index],0,lengthX*lengthY*8);
 }
 
+void clearSpriteTile(int index, int tx, int ty, int width){
+    memset32(&tile_mem[4][index + ty * width + tx],0,8);
+}
+
 void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY){
     memcpy32(&tile_mem[4][index], src,lengthX * lengthY * 8);
+}
+
+void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY){
+    memcpy32(&tile_mem[4][index + ty * lengthX + tx], src,lengthX * lengthY * 8);
 }
 
 void setPaletteColor(int palette, int index, int color, int count){
@@ -178,7 +187,7 @@ void color_fade_palette(int palette, int index, const COLOR *src, COLOR color, i
 }
 
 void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha){
-    clr_fade(src,color,*dst,count,alpha);
+    clr_fade(src,color,dst,count,alpha);
 }
 
 void color_adj_brightness(int palette, int index, const COLOR * src, int count, u32 alpha){
@@ -237,7 +246,7 @@ void sleep() {
     oam_init(obj_buffer, 128);
     oam_copy(oam_mem, obj_buffer, 128);
 
-    while (1) {
+    while (closed()) {
         aprint("Entering sleep...", 7, 4);
         aprint("Press", 13, 8);
         aprint("L + R + SELECT", 9, 10);
@@ -335,6 +344,10 @@ void clearSprites(int count){
     oam_init(obj_buffer, count);
 }
 
+void clearTiles(int tileset, int index, int count){
+    memset32(&tile_mem[tileset][index],0,8 * count);
+}
+
 void onVBlank(void) {
 
     mmVBlank();
@@ -364,9 +377,18 @@ void sprite_enable_mosaic(OBJ_ATTR * sprite){
     sprite->attr0 |= ATTR0_MOSAIC;
 }
 
+void sprite_set_id(OBJ_ATTR * sprite, int id){
+    sprite = &obj_buffer[id];
+}
+
 void sprite_set_size(OBJ_ATTR * sprite, FIXED size, int aff_id){
     obj_aff_identity(&obj_aff_buffer[aff_id]);
     obj_aff_scale(&obj_aff_buffer[aff_id], size, size);
+}
+
+void sprite_rotscale(OBJ_ATTR * sprite, FIXED sizex, FIXED sizey, int angle , int aff_id){
+    obj_aff_identity(&obj_aff_buffer[aff_id]);
+    obj_aff_rotscale(&obj_aff_buffer[aff_id], sizex, sizey, angle);
 }
 
 void setMusicTempo(int tempo){
@@ -383,6 +405,52 @@ void setSFXVolume(int volume){
 
 void startSong(int song, bool loop){
     mmStart(song, (!loop)? MM_PLAY_ONCE:MM_PLAY_LOOP);
+}
+
+void stopSong(){
+    mmStop();
+}
+
+void setTiles(int tilemap, int index, int count, u32 tile){
+    u16 * dst = (u16 * ) &se_mem[tilemap];
+    memset16(&dst[index], tile, count);
+}
+
+void pauseSong(){
+    mmPause();
+}
+
+void resumeSong(){
+    mmResume();
+}
+
+void clearTilemapEntries(int tilemap, int index, int count){
+	u16 * dst = (u16*) &se_mem[tilemap];
+
+	memset16(&dst[index],0,count);
+}
+
+void loadSavefile(){
+    volatile u8* sf = (volatile u8*)sram_mem;
+
+    u8* arr = (u8*)savefile;
+
+    for (int i = 0; i < (int)sizeof(Save); i++)
+        arr[i] = (u8)sf[i];
+}
+
+void saveSavefile(){
+    addStats();
+
+    volatile u8* sf = (volatile u8*)sram_mem;
+
+    u8* arr = (u8*)savefile;
+
+    for (int i = 0; i < (int)sizeof(Save); i++)
+        sf[i] = (u8)arr[i];
+
+    if(ENABLE_FLASH_SAVE)
+        save_sram_flash();
 }
 
 #endif

@@ -1,7 +1,7 @@
 #include "def.h"
 #include "rumble.h"
 #include "tetromino.hpp"
-#include "soundbank.h"
+// #include "soundbank.h"
 #include "tetrisEngine.h"
 #include "logging.h"
 #include "text.h"
@@ -65,11 +65,12 @@ void songListMenu() {
     int selection = 0;
     int options = 7;
 
-    mmStop();
+    stopSong();
     playSong(0, 0);
 
-    while (1) {
-        VBlankIntrWait();
+    while (closed()) {
+        vsync();
+        // VBlankIntrWait();
 
         key_poll();
 
@@ -97,7 +98,8 @@ void songListMenu() {
                 selection = options - 1;
             sfx(SFX_MENUMOVE);
 
-            mmStop();
+            stopSong();
+            // mmStop();
             if (selection < 2)
                 playSong(0, selection);
             else if (selection < 6)
@@ -165,10 +167,12 @@ void songListMenu() {
             aprint("]", endX + 1, startY + 2 + selection + (selection > 1) * 4);
         }
 
-        oam_copy(oam_mem, obj_buffer, 128);
+        showSprites(128);
+        // oam_copy(oam_mem, obj_buffer, 128);
     }
 
-    mmStop();
+    stopSong();
+    // mmStop();
     playSongRandom(0);
 }
 
@@ -176,7 +180,8 @@ int endScreen() {
     clearSmallText();
     setSmallTextArea(110, 1, 1, 10, 20);
 
-    mmStop();
+    stopSong();
+    // mmStop();
 
     int selection = 0;
 
@@ -197,9 +202,13 @@ int endScreen() {
 
     endAnimation();
 
-    int prevBld = REG_BLDCNT;
-    REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
-    memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
+    int prevBld = blendInfo;
+    enableBlend((1 << 6) + (0b11101 << 9) + (1));
+
+    // int prevBld = REG_BLDCNT;
+    // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
+    setTiles(25,0,32*20,tileBuild(12, false, false, 4*savefile->settings.lightMode));
+    // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
     if(savefile->settings.announcer){
         if (game->gameMode == ULTRA || game->gameMode == BLITZ) {
@@ -242,9 +251,9 @@ int endScreen() {
 
     showStats(showingStats, totalTime, ppsStr);
 
-    while (1) {
+    while (closed()) {
         handleMultiplayer();
-        VBlankIntrWait();
+        vsync();
         key_poll();
 
         showScore();
@@ -291,7 +300,7 @@ int endScreen() {
         if (playAgain && multiplayer) {
             startMultiplayerGame(nextSeed);
 
-            mmStop();
+            stopSong();
             playSongRandom(1);
 
             floatingList.clear();
@@ -300,11 +309,14 @@ int endScreen() {
             drawFrame();
             clearText();
 
-            oam_init(obj_buffer, 128);
+            clearSprites(128);
+            // oam_init(obj_buffer, 128);
             showHold();
             showQueue();
-            oam_copy(oam_mem, obj_buffer, 128);
-            memset16(&se_mem[25], 0, 32 * 20);
+            showSprites(128);
+            // oam_copy(oam_mem, obj_buffer, 128);
+            clearTilemap(25);
+            // memset16(&se_mem[25], 0, 32 * 20);
             countdown();
             update();
             break;
@@ -330,12 +342,14 @@ int endScreen() {
 
             } else if (selection == 1){
                 sfx(SFX_MENUCANCEL);
-                REG_BLDCNT = prevBld;
+                enableBlend(prevBld);
+                // REG_BLDCNT = prevBld;
                 goToOptions = true;
                 return 1;
             } else if (selection == 2){
                 sfx(SFX_MENUCANCEL);
-                REG_BLDCNT = prevBld;
+                enableBlend(prevBld);
+                // REG_BLDCNT = prevBld;
                 goalSelection = 0;
                 level = 1;
                 return 1;
@@ -364,48 +378,61 @@ int endScreen() {
             clearSmallText();
             showStats(showingStats, totalTime, ppsStr);
         }
+
+        showSprites(32);
     }
 
-    REG_BLDCNT = prevBld;
+    enableBlend(prevBld);
+    // REG_BLDCNT = prevBld;
     return 0;
 }
 
 void endAnimation() {
     clearText();
-    oam_init(obj_buffer, 128);
+    clearSprites(128);
+    // oam_init(obj_buffer, 128);
     showHold();
     showQueue();
-    oam_copy(oam_mem, obj_buffer, 128);
+    showSprites(128);
+    // oam_copy(oam_mem, obj_buffer, 128);
 
-    REG_BG0HOFS = 0;
-    REG_BG1HOFS = 0;
-    REG_BG0VOFS = 0;
-    REG_BG1VOFS = 0;
+    setLayerScroll(0, 0, 0);
+    setLayerScroll(1, 0, 0);
+    // REG_BG0HOFS = 0;
+    // REG_BG0VOFS = 0;
+    // REG_BG1HOFS = 0;
+    // REG_BG1VOFS = 0;
 
+    //TODO::
+    #ifdef GBA
     rumble_set_state(RumbleState(rumble_stop));
+    #endif
 
     sfx(SFX_END);
 
     for (int i = 0; i < 41; i++) {
-        VBlankIntrWait();
+        vsync();
         drawGrid();
         showClearText();
-        REG_BG0VOFS = -1 * i * 4;
-        u16* dest = (u16*)se_mem[25];
+        setLayerScroll(0, 0, -4 * i);
+        // REG_BG0VOFS = -1 * i * 4;
+        // u16* dest = (u16*)se_mem[25];
 
         if (i % 2 != 0)
             continue;
 
-        dest += 32 * (20 - i / 2) + 10;
+        // dest += 32 * (20 - i / 2) + 10;
 
         for (int j = 0; j < 10; j++) {
-            *dest++ = 0;
+            setTile(25, j + 10, 20-(i/2),0);
+            // *dest++ = 0;
         }
     }
 
     int counter = 0;
     while (!floatingList.empty()) {
-        VBlankIntrWait();
+        vsync();
+        // VBlankIntrWait();
         showClearText();
 
         if(++counter > 120)
@@ -428,10 +455,12 @@ void endAnimation() {
     // 		*dest++ = *dest2++ = 0;
     // }
 
-    REG_BG0HOFS = 0;
-    REG_BG1HOFS = 0;
-    REG_BG0VOFS = 0;
-    REG_BG1VOFS = 0;
+    setLayerScroll(0, 0, 0);
+    setLayerScroll(1, 0, 0);
+    // REG_BG0HOFS = 0;
+    // REG_BG0VOFS = 0;
+    // REG_BG1HOFS = 0;
+    // REG_BG1VOFS = 0;
 }
 
 void showScore(){
@@ -575,22 +604,28 @@ int pauseMenu(){
     clearText();
     setSmallTextArea(110, 1, 1, 10, 20);
 
-    int prevBld = REG_BLDCNT;
-    REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
-    memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
+    //TODO:
+    int prevBld = blendInfo;
+    enableBlend((1 << 6) + (0b11101 << 9) + (1));
+    // int prevBld = REG_BLDCNT;
+    // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
+    setTiles(25,0,32*20,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
-    REG_BG0HOFS = 0;
-    REG_BG0VOFS = 0;
+    setLayerScroll(0, 0, 0);
+    // REG_BG0HOFS = 0;
+    // REG_BG0VOFS = 0;
 
     //hide Sprites
     hideMinos();
-    obj_hide(&obj_buffer[23]); //hide meter
-    obj_hide(&obj_buffer[24]); //hide finesse combo counter
-    obj_hide(&obj_buffer[25]); //hide enemyBoard
+    sprite_hide(&obj_buffer[23]); //hide meter
+    sprite_hide(&obj_buffer[24]); //hide finesse combo counter
+    sprite_hide(&obj_buffer[25]); //hide enemyBoard
     for(int i = 0; i < 3; i++)
-        obj_hide(&obj_buffer[16+i]);
+        sprite_hide(&obj_buffer[16+i]);
 
-    oam_copy(oam_mem, obj_buffer, 128);
+    showSprites(128);
+    // oam_copy(oam_mem, obj_buffer, 128);
 
     //calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
@@ -614,7 +649,7 @@ int pauseMenu(){
 
     bool shown = false;
 
-    while (1) {
+    while (closed()) {
         if (!onStates){
             if(game->gameMode == TRAINING)
                 maxSelection = 5;
@@ -623,7 +658,7 @@ int pauseMenu(){
         } else
             maxSelection = 3;
 
-        VBlankIntrWait();
+        vsync();
         key_poll();
 
         for (int i = 0; i < maxSelection; i++)
@@ -655,7 +690,8 @@ int pauseMenu(){
                     clearText();
                     update();
                     pause = false;
-                    mmResume();
+                    resumeSong();
+                    // mmResume();
                     break;
                 } else if (n == 1) {
                     // restart = true;
@@ -673,7 +709,8 @@ int pauseMenu(){
                     showStats(showingStats, totalTime, ppsStr);
                     showModeText();
                 } else if (n == 4) {
-                    REG_BLDCNT = prevBld;
+                    enableBlend(prevBld);
+                    // REG_BLDCNT = prevBld;
                     sfx(SFX_MENUCANCEL);
                     return 1;
                 }
@@ -726,7 +763,8 @@ int pauseMenu(){
             clearText();
             update();
             pause = false;
-            mmResume();
+            resumeSong();
+            // mmResume();
             break;
         }
 
@@ -741,7 +779,8 @@ int pauseMenu(){
                 clearText();
                 update();
                 pause = false;
-                mmResume();
+                resumeSong();
+                // mmResume();
             }
             break;
         }
@@ -774,11 +813,15 @@ int pauseMenu(){
             showStats(showingStats, totalTime, ppsStr);
         }
 
-        oam_copy(oam_mem, obj_buffer, 128);
+        showSprites(128);
+        // oam_copy(oam_mem, obj_buffer, 128);
     }
 
-    REG_BLDCNT = prevBld;
-    memset16(&se_mem[25], 0 , 32 * 20);
+    enableBlend(prevBld);
+    // REG_BLDCNT = prevBld;
+
+    clearTilemap(25);
+    // memset16(&se_mem[25], 0 , 32 * 20);
     showBackground();
     setSmallTextArea(110, 3, 7, 9, 10);
 
@@ -942,7 +985,8 @@ int onRecord() {
 
         place = i;
 
-        saveToSram();
+        saveSavefile();
+        // saveToSram();
         break;
     }
 

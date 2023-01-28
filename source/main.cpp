@@ -6,8 +6,8 @@
 #include "tetrisEngine.h"
 #include "sprites.h"
 
-#include "soundbank.h"
-#include "soundbank_bin.h"
+// #include "soundbank.h"
+// #include "soundbank_bin.h"
 
 #include "LinkConnection.h"
 
@@ -101,7 +101,6 @@ void initialize(){
     toggleBG(2,true);
     toggleBG(3,true);
 
-
     // REG_BG0CNT = BG_CBB(0) | BG_SBB(25) | BG_SIZE(0) | BG_PRIO(2) | BG_MOSAIC;
     // REG_BG1CNT = BG_CBB(0) | BG_SBB(26) | BG_SIZE(0) | BG_PRIO(3) | BG_MOSAIC;
     // REG_BG2CNT = BG_CBB(2) | BG_SBB(29) | BG_SIZE(0) | BG_PRIO(0) | BG_MOSAIC;
@@ -138,19 +137,18 @@ void initialize(){
 
     loadSpriteTiles(512, sprite6tiles_bin,4,4);
 
-    loadSpriteTiles(512 + 16, sprite6tiles_bin,4,4);
-    loadSpriteTiles(512 + 16 + 12, &sprite6tiles_bin[128],4,1);
+    loadSpriteTiles(512 + 16, sprite6tiles_bin,4,3);
+    loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3,4,1);
     loadSpriteTiles(512 + 32, &sprite6tiles_bin[128],4,2);
-    loadSpriteTiles(512 + 32 + 8, &sprite6tiles_bin[128],4,2);
+    loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2);
     loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
-    loadSpriteTiles(512 + 48 + 4, &sprite6tiles_bin[128],4,3);
+    loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3);
 
     loadSpriteTiles(512 + 64, title1tiles_bin,8,8);
     loadSpriteTiles(512 + 96, title2tiles_bin,8,8);
 
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
-
 
     loadTiles(2,0,fontTiles,fontTilesLen/32);
 
@@ -179,9 +177,11 @@ void initialize(){
     setSkin();
     setClearEffect();
 
+
     // REG_BLDCNT = BLD_BUILD(BLD_BG1,BLD_BACKDROP,BLD_STD);
 
-    enableLayerBlend(1);
+    // enableLayerBlend(1);
+
     // REG_BLDCNT = (1 << 6) + (1 << 13) + (1 << 1);
     // REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(2);
 
@@ -194,10 +194,25 @@ int main(void) {
 
     platformInit();
 
+    // TLN_SetBGColor(50, 50, 50);
+    // while(closed()){
+    //     vsync();
+
+
+    //     key_poll();
+
+    //     u16 key = key_hit(KEY_FULL);
+
+    //     if(key)
+    //         log(std::to_string(key));
+    // }
+
     initialize();
 
+
+
     //start screen animation
-    while(1){
+    while(closed){
         reset();
 
         if(!playAgain){
@@ -270,7 +285,10 @@ void reset() {
     floatingList.clear();
     placeEffectList.clear();
     rumbleTimer = 0;
+    //TODO:
+    #ifdef GBA
     rumble_set_state(RumbleState(rumble_stop));
+    #endif
 
     resetZonePalette();
 
@@ -290,6 +308,7 @@ void reset() {
             glow[i][j] = 0;
 
     int g = savefile->settings.backgroundGradient;
+
     if(g == 0)
         memcpy16(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
     else
@@ -320,7 +339,9 @@ std::string nameInput(int place) {
 
     bool onDone = false;
 
-    while (1) {
+    showSprites(128);
+
+    while (closed()) {
         vsync();
         // VBlankIntrWait();
 
@@ -521,6 +542,7 @@ void setSkin() {
         break;
     }
 
+
     if(savefile->settings.skin < 7){
         //TODO:
         //vsync might not be necessary here
@@ -536,6 +558,7 @@ void setSkin() {
         }
     }
 
+
     loadTiles(0,1,blockSprite,1);
     loadTiles(2,97,blockSprite,1);
 
@@ -544,25 +567,31 @@ void setSkin() {
 
     int* board;
     for (int i = 0; i < 7; i++) {
-        board = getShape(i, 0, game->rotationSystem);
+        int n;
+        if(game == nullptr)
+            n = SRS;
+        else
+            n = game->rotationSystem;
+
+        board = getShape(i, 0, n);
 
         int iy = 16 * i;
         for (int j = 0; j < 4; j++) {
 
             for (int k = 0; k < 4; k++) {
                 int ix = j * 4 + k;
-                int index = iy + ix;
+                // int index = iy + ix;
                 if (board[ix]) {
                     if(savefile->settings.skin == 11)
-                        loadSpriteTiles(index, &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],1,1);
+                        loadSpriteTilesPartial(iy, &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1);
                     else if(savefile->settings.skin == 12)
-                        loadSpriteTiles(index, &sprite39tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],1,1);
+                        loadSpriteTilesPartial(iy, &sprite39tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1);
                     else if(savefile->settings.skin == 13)
-                        loadSpriteTiles(index, &sprite40tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],1,1);
+                        loadSpriteTilesPartial(iy, &sprite40tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1);
                     else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
-                        loadSpriteTiles(index, blockSprite,1,1);
+                        loadSpriteTilesPartial(iy, blockSprite,k,j,1,1);
                     else
-                        loadSpriteTiles(index, blockSprite,1,1);
+                        loadSpriteTilesPartial(iy, blockSprite,k,j,1,1);
                         // memcpy16(&tile_mem[4][index], classicTiles[savefile->settings.skin-7][i], sprite1tiles_bin_size / 2);
                     // if(savefile->settings.skin == 11)
                     //     memcpy16(&tile_mem[4][index], &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4] * 32], sprite1tiles_bin_size / 2);
@@ -575,7 +604,8 @@ void setSkin() {
                     // else
                     //     memcpy16(&tile_mem[4][index], classicTiles[savefile->settings.skin-7][i], sprite1tiles_bin_size / 2);
                 }else{
-                    clearSpriteTiles(0,1,1);
+                    clearSpriteTile(iy, k, j, 4);
+                    // clearSpriteTiles(0,1,1);
                     // memcpy16(&tile_mem[4][index], &tile_mem[4][0], sprite1tiles_bin_size / 2);
                 }
             }
@@ -805,12 +835,17 @@ void buildMini(TILE * customSkin){
 
     // memset32(&tile_mem[4][9*16],0,8*8*7);
 
-    int add = (game->rotationSystem == NRS || game->rotationSystem == ARS);
+    int add = 0;
+    int rs = SRS;
+    if(game != nullptr){
+        add = (game->rotationSystem == NRS || game->rotationSystem == ARS);
+        rs = game->rotationSystem;
+    }
 
     for (int i = 0; i < 7; i++){
 
         // TILE * t;
-        int* p = getShape(i, 0, game->rotationSystem);
+        int* p = getShape(i, 0, rs);
         int tileStart = 9 * 16 + i * 8;
 
         for(int y = 0; y < 2; y++){
@@ -820,7 +855,7 @@ void buildMini(TILE * customSkin){
 
                 for(int ii = 0; ii < 6; ii++){
                     for(int jj = 0; jj < 6; jj++){
-                        setSpritePixel(tileStart, (x * 6 + jj)/8, (y*6+ii)/8, 4, (((x*6+jj)%8)*4), (y*6+ii)%8, (customSkin->data[ii] >> (4*jj)));
+                        setSpritePixel(tileStart, (x * 6 + jj)/8, (y*6+ii)/8, 4, ((x*6+jj)%8), (y*6+ii)%8, (customSkin->data[ii] >> (4*jj)) & 0xf);
                         // t = &tile_mem[4][tileStart + (x*6+jj)/8 + ((y*6+ii)/8)*4];
 
                         // t->data[(y*6+ii)%8] |= ((customSkin->data[ii] >> (4*jj)) & 0xf) << (((x*6+jj)%8)*4);
@@ -871,7 +906,9 @@ void setGradient(int color){
             // color_fade(src, color, (COLOR *) &gradientTable[i], 1, ((SCREEN_HEIGHT-1-i) / 20) * 2 + 16);
         }
 
+        #ifdef GBA
         gradientTable[SCREEN_HEIGHT-1] = gradientTable[0];
+        #endif
     }else{
         for(int i = 0; i < SCREEN_HEIGHT; i++)
             gradientTable[i] = 0x5ad6;
@@ -883,17 +920,25 @@ void setDefaultGradient(){
     memcpy16(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
 }
 
-void gradient(bool state){
+void gradient(int state){
     stopDMA();
     // if(!state){
     //     REG_DMA0CNT &= ~(1 << 0x1f);
     // }
-
-    gradientEnabled = state;
+    if(state == 1){
+        gradientEnabled = true;
+        toggleHBlank(false);
+    }else if(state == 2){
+        gradientEnabled = false;
+        toggleHBlank(true);
+    }else{
+        gradientEnabled = false;
+    }
 }
 
 void startGame(Tetris::Options options,int seed){
-    delete game;
+    if(game != nullptr)
+        delete game;
     game = new Game(options.mode,seed,options.bigMode);
 
     game->setOptions(options);

@@ -5,7 +5,7 @@
 #include "text.h"
 #include <string>
 #include <list>
-#include "soundbank.h"
+// #include "soundbank.h"
 #include "LinkConnection.h"
 #include "flashSaves.h"
 
@@ -93,30 +93,41 @@ void startScreen() {
 
     selection = 0;
 
-    VBlankIntrWait();
+    vsync();
 
-    REG_DISPCNT &= ~DCNT_BG3;
+    toggleBG(3,false);
+
+    // REG_DISPCNT &= ~DCNT_BG3;
     drawUIFrame(0, 0, 30, 20);
 
-    memcpy16(&tile_mem[2][102], sprite37tiles_bin, sprite37tiles_bin_size / 2);
-    memcpy16(&tile_mem[2][105], sprite41tiles_bin, sprite41tiles_bin_size / 2);
+    loadTiles(2,102,sprite37tiles_bin,sprite37tiles_bin_size/32);
+    loadTiles(2,105,sprite41tiles_bin,sprite41tiles_bin_size/32);
+    // memcpy16(&tile_mem[2][102], sprite37tiles_bin, sprite37tiles_bin_size / 2);
+    // memcpy16(&tile_mem[2][105], sprite41tiles_bin, sprite41tiles_bin_size / 2);
 
     setSkin();
     setLightMode();
 
-    oam_init(obj_buffer, 128);
+    clearSprites(128);
+    // oam_init(obj_buffer, 128);
 
     playSongRandom(0);
 
     clearText();
 
-    memcpy16(&tile_mem[4][16*7],blockSprite,16);
-    obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
-    obj_hide(levelCursor);
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+    sprite_set_attr(levelCursor, ShapeSquare, 0, 16*7, 5, 0);
+    // memcpy16(&tile_mem[4][16*7],blockSprite,16);
+    // obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
+    sprite_hide(levelCursor);
 
-    memset32(&tile_mem[4][256], 0x0000 , MAX_WORD_SPRITES * 12 * 8);
+    clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
+    // memset32(&tile_mem[4][256], 0x0000 , MAX_WORD_SPRITES * 12 * 8);
+
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
+
+    int prevBld = blendInfo;
 
     if(goToOptions){
         goToOptions = false;
@@ -125,8 +136,9 @@ void startScreen() {
         toStart = previousOptionScreen;
         options = previousOptionMax;
 
-        u16* dest = (u16*)se_mem[25];
-        memset16(dest, 0, 20 * 32);
+        clearTilemap(25);
+        // u16* dest = (u16*)se_mem[25];
+        // memset16(dest, 0, 20 * 32);
 
         clearText();
 
@@ -140,19 +152,22 @@ void startScreen() {
         //initialise background array
         memset16(backgroundArray, 0, 30 * 30);
 
-        oam_copy(oam_mem, obj_buffer, 128);
+        showSprites(128);
+        // oam_copy(oam_mem, obj_buffer, 128);
     }
 
-    while (1) {
+    while (closed()) {
 
         canDraw = true;
-        VBlankIntrWait() ;
+        vsync();
         if (!onSettings) {
             gradient(false);
+            enableBlend(0);
         } else {
             if(savefile->settings.backgroundGradient == 0)
                 setDefaultGradient();
 
+            enableBlend((1 << 13) + (1 << 6) + (1 << 1));
             gradient(true);
         }
 
@@ -164,12 +179,14 @@ void startScreen() {
 
             fallingBlocks();
             showTitleSprites();
-            obj_hide(levelCursor);
+            sprite_hide(levelCursor);
 
             if (savefile->settings.lightMode)
-                memset16(pal_bg_mem, 0x5ad6, 1);//background gray
+                setPaletteColor(0, 0, 0x5ad6, 1);
+                // memset16(pal_bg_mem, 0x5ad6, 1);//background gray
             else
-                memset16(pal_bg_mem, 0x0000, 1);
+                setPaletteColor(0, 0, 0x0000, 1);
+                // memset16(pal_bg_mem, 0x0000, 1);
 
             int startX, startY, space = 2;
             startX = 12;
@@ -301,8 +318,10 @@ void startScreen() {
                         if(level < 1)
                             level = 1;
 
-                        obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
-                        memcpy16(&tile_mem[4][16*7],blockSprite,16);
+                        sprite_set_attr(levelCursor, 0, 0, 16*7, 5, 0);
+                        loadSpriteTiles(16*7, blockSprite, 1, 1);
+                        // obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
+                        // memcpy16(&tile_mem[4][16*7],blockSprite,16);
                     } else if (selection == 1) {//sprint
                         n = SPRINT;
                         options = 3;
@@ -330,8 +349,10 @@ void startScreen() {
                             level = 19;
                         if(level < 1)
                             level = 1;
-                        obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
-                        memcpy16(&tile_mem[4][16*7],blockSprite,16);
+                        sprite_set_attr(levelCursor, 0, 0, 16*7, 5, 0);
+                        loadSpriteTiles(16*7, blockSprite, 1, 1);
+                        // obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
+                        // memcpy16(&tile_mem[4][16*7],blockSprite,16);
                     } else if (selection == 8) {//Master
                         options = 2;
                         n = MASTER;
@@ -340,7 +361,8 @@ void startScreen() {
                         //     level = 997;
                     } else if (selection == 9) {//2p Battle
                         n = -3;
-                        linkConnection->activate();
+                        //TODO:
+                        // linkConnection->activate();
 
                     }else if (selection == 10){//CPU Battle
                         n = BATTLE;
@@ -351,8 +373,10 @@ void startScreen() {
                         if(level < 1)
                             level = 1;
 
-                        obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
-                        memcpy16(&tile_mem[4][16*7],blockSprite,16);
+                        sprite_set_attr(levelCursor, 0, 0, 16*7, 5, 0);
+                        loadSpriteTiles(16*7, blockSprite, 1, 1);
+                        // obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
+                        // memcpy16(&tile_mem[4][16*7],blockSprite,16);
 
                         // sfx(SFX_MENUCONFIRM);
                         // delete game;
@@ -381,8 +405,9 @@ void startScreen() {
                     onSettings = true;
                     gradient(true);
 
-                    u16* dest = (u16*)se_mem[25];
-                    memset16(dest, 0, 20 * 32);
+                    clearTilemap(25);
+                    // u16* dest = (u16*)se_mem[25];
+                    // memset16(dest, 0, 20 * 32);
 
                     clearText();
                     previousSelection = selection;
@@ -413,7 +438,7 @@ void startScreen() {
                 wordSprites[i]->hide();
 
             for (int i = 0; i < 2; i++)
-                obj_hide(titleSprites[i]);
+                sprite_hide(titleSprites[i]);
 
             if(key_held(KEY_L) && key_held(KEY_R) && key_held(KEY_SELECT)){
                 resetScoreboard(toStart,goalSelection,subMode);
@@ -658,11 +683,13 @@ void startScreen() {
                         graphicTest();
 
                         drawUIFrame(0, 0, 30, 20);
-                        oam_init(obj_buffer, 128);
+                        clearSprites(128);
+                        // oam_init(obj_buffer, 128);
                         showTitleSprites();
                         for (int i = 0; i < 2; i++)
-                            obj_hide(titleSprites[i]);
-                        oam_copy(oam_mem, obj_buffer, 128);
+                            sprite_hide(titleSprites[i]);
+                        showSprites(128);
+                        // oam_copy(oam_mem, obj_buffer, 128);
                         drawUIFrame(0, 0, 30, 20);
 
                         clearText();
@@ -681,7 +708,8 @@ void startScreen() {
                         refreshText = true;
                         settingsText();
                     }else if (selection == options-1){
-                        saveToSram();
+                        saveSavefile();
+                        // saveToSram();
                         gradient(true);
                         onSettings = false;
                         options = (int)menuOptions.size();
@@ -698,7 +726,8 @@ void startScreen() {
                         refreshText = true;
                         sfx(SFX_MENUMOVE);
                     }else{
-                        saveToSram();
+                        saveSavefile();
+                        // saveToSram();
                         gradient(true);
                         onSettings = false;
                         options = (int)menuOptions.size();
@@ -715,9 +744,11 @@ void startScreen() {
                         startMultiplayerGame(nextSeed);
                         break;
                     } else {
-                        linkConnection->send((u16)nextSeed + 100);
+                        //TODO:
+                        // linkConnection->send((u16)nextSeed + 100);
                     }
                 } else {
+                    #ifdef GBA
                     auto linkState = linkConnection->linkState.get();
 
                     if (linkState->isConnected()) {
@@ -775,6 +806,8 @@ void startScreen() {
                         }
                         connected = -1;
                     }
+
+                    #endif
                 }
             }
 
@@ -927,8 +960,9 @@ void startScreen() {
                         subMode = 0;
 
                         if(toStart == -3){
-                            if(linkConnection->isActive())
-                                linkConnection->deactivate();
+                            //TODO:
+                            // if(linkConnection->isActive())
+                            //     linkConnection->deactivate();
                         }
 
                     } else {
@@ -946,7 +980,7 @@ void startScreen() {
                     for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
                         savefile->customSkins[i] = previousSkins[i];
 
-                    mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
+                    setMusicVolume(512 * ((float)savefile->settings.volume / 10));
                     setSkin();
                     setLightMode();
                     setGradient(savefile->settings.backgroundGradient);
@@ -1034,23 +1068,28 @@ void startScreen() {
 
         sqran(qran() * frameCounter);
 
-        oam_copy(oam_mem, obj_buffer, 128);
+        showSprites(128);
+        // oam_copy(oam_mem, obj_buffer, 128);
     }
 
-    VBlankIntrWait();
+    vsync();
     clearText();
     onSettings = false;
     gradient(false);
     setPalette();
-    memset16(pal_bg_mem, 0x0000, 1);
+    // memset16(pal_bg_mem, 0x0000, 1);
 
-    memset16(&se_mem[26], 0x0000, 32 * 20);
-    memset16(&se_mem[27], 0x0000, 32 * 20);
+    clearTilemap(26);
+    clearTilemap(27);
+    // memset16(&se_mem[26], 0x0000, 32 * 20);
+    // memset16(&se_mem[27], 0x0000, 32 * 20);
 
     if (savefile->settings.lightMode)
-        memset16(pal_bg_mem, 0x5ad6, 1);//background gray
+        setPaletteColor(0, 0, 0x5ad6, 1);
+        // memset16(pal_bg_mem, 0x5ad6, 1);//background gray
     else
-        memset16(pal_bg_mem, 0x0000, 1);
+        setPaletteColor(0, 0, 0, 1);
+        // memset16(pal_bg_mem, 0x0000, 1);
 }
 
 void startText() {
@@ -1082,10 +1121,11 @@ void startText() {
             aprint("Lines:", linesStart, goalHeight);
             aprint("START", 12, 17);
 
-            u16* dest = (u16*)se_mem[29];
-            dest += (levelHeight) * 32 + 9;
+            // u16* dest = (u16*)se_mem[29];
+            // dest += (levelHeight) * 32 + 9;
             for(int i = 0; i < 15; i++){
-                *dest++ = 102 + (i % 3) + 0xe000;
+                setTile(29, 9 + i, levelHeight, tileBuild(102 + i%3, false, false, 15));
+            //     *dest++ = 102 + (i % 3) + 0xe000;
             }
 
             aprint("Type:",4,modeHeight);
@@ -1133,8 +1173,8 @@ void startText() {
 
             aprint(goalText,14 + (goalSelection == 0 || selection != 2),goalHeight);
 
-            obj_set_pos(levelCursor, 9 * 8 + 6 * (level - 1) - 1, levelHeight * 8 );
-            obj_unhide(levelCursor,0);
+            sprite_set_pos(levelCursor, 9 * 8 + 6 * (level - 1) - 1, levelHeight * 8 );
+            sprite_unhide(levelCursor,0);
 
             for (int i = 0; i < 5; i++) {
                 if(!subMode){
@@ -1480,10 +1520,11 @@ void startText() {
             aprint("Level: ", 2, levelHeight);
             aprint("START", 12, 17);
 
-            u16* dest = (u16*)se_mem[29];
-            dest += (levelHeight) * 32 + 9;
+            // u16* dest = (u16*)se_mem[29];
+            // dest += (levelHeight) * 32 + 9;
             for(int i = 0; i < 15; i++){
-                *dest++ = 102 + (i % 3) + 0xe000;
+                setTile(29, 9 + i, levelHeight, tileBuild(102 + i%3, false, false, 15));
+                // *dest++ = 102 + (i % 3) + 0xe000;
             }
 
             std::string levelText = std::to_string(level - 1);
@@ -1531,8 +1572,8 @@ void startText() {
             }
 
             // show level cursor
-            obj_set_pos(levelCursor, 9 * 8 + 6 * (level-1) - 1, levelHeight * 8 );
-            obj_unhide(levelCursor,0);
+            sprite_set_pos(levelCursor, 9 * 8 + 6 * (level-1) - 1, levelHeight * 8 );
+            sprite_unhide(levelCursor,0);
 
             for (int i = 0; i < 5; i++) {
                 posprintf(buff,"%d.",i+1);
@@ -1701,10 +1742,11 @@ void startText() {
             aprint("Level: ", 2, levelHeight);
             aprint("Finesse Training: ", 3, goalHeight);
 
-            u16* dest = (u16*)se_mem[29];
-            dest += (levelHeight) * 32 + 9;
+            // u16* dest = (u16*)se_mem[29];
+            // dest += (levelHeight) * 32 + 9;
             for(int i = 0; i < 15; i++){
-                *dest++ = 102 + (i % 3) + 0xe000;
+                setTile(29, 9 + i, levelHeight,tileBuild(102 + i%3, false, false, 15));
+                // *dest++ = 102 + (i % 3) + 0xe000;
             }
 
             std::string levelText = std::to_string(level);
@@ -1730,8 +1772,8 @@ void startText() {
             }
 
             // show level cursor
-            obj_set_pos(levelCursor, 9 * 8 + 6 * (level-1) - 1, levelHeight * 8 );
-            obj_unhide(levelCursor,0);
+            sprite_set_pos(levelCursor, 9 * 8 + 6 * (level-1) - 1, levelHeight * 8 );
+            sprite_unhide(levelCursor,0);
 
         }
 
@@ -1739,40 +1781,47 @@ void startText() {
 }
 
 void drawUIFrame(int x, int y, int w, int h) {
-    memset32(&se_mem[26], 0x0000, 32 * 20);
+    clearTilemap(26);
+    // memset32(&se_mem[26], 0x0000, 32 * 20);
 
-    u16* dest = (u16*)&se_mem[26];
-    u16* dest2 = (u16*)&se_mem[27];
+    // u16* dest = (u16*)&se_mem[26];
+    // u16* dest2 = (u16*)&se_mem[27];
 
-    dest2 += y * 32 + x;
+    // dest2 += y * 32 + x;
 
     // int color = (savefile->settings.palette + 2 * (savefile->settings.palette > 6)) * 0x1000;
-    int color = 8 * 0x1000;
+    // int color = 8 * 0x1000;
 
     for (int i = 0; i < h; i++) {
         for (int j = 0; j < w; j++) {
             int tile = 0;
             if ((i == 0 && (j == 0 || j == w - 1)) || (i == h - 1 && (j == 0 || j == w - 1))) {
-                tile = 29 + (i > 0) * 0x800 + (j > 0) * 0x400;
+                tile = tileBuild(29, j > 0, i > 0, 0);
+                // tile = 29 + (i > 0) * 0x800 + (j > 0) * 0x400;
             } else if (i == 0 || i == h - 1) {
-                tile = 28 + (i > 0) * 0x800;
+                tile = tileBuild(28, false, i > 0, 0);
+                // tile = 28 + (i > 0) * 0x800;
             } else if (j == 0 || j == w - 1) {
-                tile = 4 + (j > 0) * 0x400;
+                tile = tileBuild(4, j > 0, false, 0);
+                // tile = 4 + (j > 0) * 0x400;
             }
-            if (tile)
-                *dest2++ = tile + color * (tile != 12);
-            else
-                dest2++;
+            if(tile)
+                setTile(27, x+j, y+i, tile);
+            // if (tile)
+            //     *dest2++ = tile + color * (tile != 12);
+            // else
+            //     dest2++;
         }
-        dest2 += 32 - w;
+        // dest2 += 32 - w;
     }
 
-    dest += (y + 1) * 32 + x + 1;
+    // dest += (y + 1) * 32 + x + 1;
     for (int i = 1; i < h - 1; i++) {
         for (int j = 1; j < w - 1; j++) {
-            *dest++ = 12 + 4 * 0x1000 * (savefile->settings.lightMode);
+            setTile(26, x + j, y + i, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+            // *dest++ = 12 + 4 * 0x1000 * (savefile->settings.lightMode);
         }
-        dest += 32 - w + 2;
+        // dest += 32 - w + 2;
     }
 }
 
@@ -1780,15 +1829,21 @@ void showTitleSprites() {
     for (int i = 0; i < 2; i++)
         titleSprites[i] = &obj_buffer[14 + i];
     for (int i = 0; i < 2; i++) {
-        obj_unhide(titleSprites[i], 0);
-        obj_set_attr(titleSprites[i], ATTR0_WIDE, ATTR1_SIZE(3), ATTR2_PALBANK(13));
-        titleSprites[i]->attr2 = ATTR2_BUILD(512 + 64 + i * 32, 13, 0);
-        int offset = ((sin_lut[titleFloat]*3)>>12);
+        sprite_unhide(titleSprites[i], 0);
+        sprite_set_attr(titleSprites[i], ShapeWide, 3, 512 + 64 + i * 32, 13, 0);
+        // obj_set_attr(titleSprites[i], ATTR0_WIDE, ATTR1_SIZE(3), ATTR2_PALBANK(13));
+        // titleSprites[i]->attr2 = ATTR2_BUILD(512 + 64 + i * 32, 13, 0);
+
+        //TODO:
+        // int offset = ((sin_lut[titleFloat]*3)>>12);
+        // int offset = 0;
+        int offset = (sinLut(titleFloat) * 3) >> 12;
+        log(std::to_string(sinLut(titleFloat)));
 
         if(offset == 3)
             offset = 2;
-        obj_set_pos(titleSprites[i], 120 - 64 + 64 * i, 24 + offset);
-        // obj_set_pos(titleSprites[i], 120 - 64 + 64 * i, 24 + 40);
+
+        sprite_set_pos(titleSprites[i], 120 - 64 + 64 * i, 24 + offset);
     }
 
     titleFloat+=3;
@@ -1817,26 +1872,32 @@ void fallingBlocks() {
         }
     }
 
-    u16* dest = (u16*)se_mem[25];
+    // u16* dest = (u16*)se_mem[25];
 
-    for (i = 4+6*bigMode; i < 24+6*bigMode; i++) {
+    int offset = 4 + 6 * bigMode;
+
+    for (i = 0; i < 20; i++) {
         for (j = 0; j < 30; j++) {
-            if (backgroundArray[i][j]){
-                int n = (backgroundArray[i][j] - 1) & 0xf;
-                int r = backgroundArray[i][j] >> 4;
+            if (backgroundArray[i+offset][j]){
+                int n = (backgroundArray[i+offset][j] - 1) & 0xf;
+                int r = backgroundArray[i+offset][j] >> 4;
 
                 if(savefile->settings.skin >= 11)
-                    *dest++ = 128 + GameInfo::connectedConversion[r] + ((n) << 12);
+                    setTile(25,j,i,tileBuild(128 + GameInfo::connectedConversion[r], false, false, n));
+                    // *dest++ = 128 + GameInfo::connectedConversion[r] + ((n) << 12);
                 else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
-                    *dest++ = (1 + ((n) << 12));
+                    setTile(25,j,i,tileBuild(1, false, false, n));
+                    // *dest++ = (1 + ((n) << 12));
                 else{
-                    *dest++ = (48 + n + ((n) << 12));
+                    setTile(25,j,i,tileBuild(48, false, false, n));
+                    // *dest++ = (48 + n + ((n) << 12));
                 }
             }else{
-                *dest++ = 0;
+                setTile(25,j,i,0);
+                // *dest++ = 0;
             }
         }
-        dest += 2;
+        // dest += 2;
     }
 
     if (bgSpawnBlock > bgSpawnBlockMax) {
@@ -1961,21 +2022,23 @@ void resetScoreboard(int mode, int goal, int subMode){
     // REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG2; //Disable all backgrounds except text
     clearText();
 
-    oam_init(obj_buffer, 128);
-    oam_copy(oam_mem, obj_buffer, 128);
+    clearSprites(128);
+    showSprites(128);
+    // oam_init(obj_buffer, 128);
+    // oam_copy(oam_mem, obj_buffer, 128);
 
     int timer = 0;
 
     int s = 1;
 
-    while (1) {
+    while (closed()) {
 
         aprint("Are you sure you", 6, 6);
         aprint("want to reset the", 6 , 8);
         aprint("current scoreboard?", 6 , 10);
 
 
-        VBlankIntrWait();
+        vsync();
         key_poll();
 
         if(timer < 200){
@@ -2072,31 +2135,34 @@ void resetScoreboard(int mode, int goal, int subMode){
         break;
     }
 
-    saveToSram();
+    saveSavefile();
+    // saveToSram();
     clearText();
 }
 
 void drawBackgroundGrid(){
     gridDrawn = true;
 
-    u16 * dest = (u16*) &se_mem[26];
+    // u16 * dest = (u16*) &se_mem[26];
 
-    for(int i = 0; i < 20; i++){
-        for(int j = 0; j < 30; j++){
-            *dest++ = 2 * (!savefile->settings.lightMode);
-        }
-        dest+=2;
-    }
+    setTiles(26,0,32*20, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
+    // for(int i = 0; i < 20; i++){
+    //     for(int j = 0; j < 30; j++){
+    //         *dest++ = 2 * (!savefile->settings.lightMode);
+    //     }
+    //     dest+=2;
+    // }
 }
 
 void TitleScene::draw(){
     if(refreshText){
         refreshText = false;
         startText();
-        if (onSettings) {
-            REG_DISPCNT |= DCNT_BG3;
-        } else {
-            REG_DISPCNT &= ~DCNT_BG3;
-        }
+        toggleBG(3, onSettings);
+        // if (onSettings) {
+        //     // REG_DISPCNT |= DCNT_BG3;
+        // } else {
+        //     REG_DISPCNT &= ~DCNT_BG3;
+        // }
     }
 }

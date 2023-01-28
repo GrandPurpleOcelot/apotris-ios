@@ -25,8 +25,8 @@ BUILD := build
 
 # Library search directories and flags
 EXT_LIB :=
-LDFLAGS := -lTilengine -lSDL2 -lmm
-LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB)) $(LIBGBA)/lib
+LDFLAGS := -lTilengine -lSDL2
+LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB))
 
 # Include directories
 INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA) $(LIBGBA)/include
@@ -38,7 +38,7 @@ BINFILES := $(shell find $(DATA) -name '*.bin')
 
 ifneq ($(strip $(MUSIC)),)
 	export AUDIOFILES := $(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
-	BINFILES += $(DATA)/soundbank.bin
+	BINFILES += $(BUILD)/soundbank.bin
 endif
 
 OBJS_BIN := $(subst $(DATA)/,$(BUILD)/,$(addsuffix .o,$(BINFILES)))
@@ -67,21 +67,26 @@ all: $(TARGET)
 # Task producing target from built files
 $(TARGET): $(OBJS)
 	@echo "Building..."
-	mkdir -p $(dir $@)
-	$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS)
+	@mkdir -p $(dir $@)
+	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS)
 
-$(DATA)/soundbank.bin $(DATA)/soundbank.h : $(AUDIOFILES)
+$(BUILD)/soundbank.bin $(BUILD)/soundbank.h : $(AUDIOFILES)
 #---------------------------------------------------------------------------------
-	@mmutil $^ -o$(DATA)/soundbank.bin -h$(DATA)/soundbank.h
+	@mmutil $^ -o$(BUILD)/soundbank.bin -h$(BUILD)/soundbank.h
 
 # Compile all cpp files
 $(BUILD)/%.o: $(SRC)/%.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXX_FLAGS) $(PRE_FLAGS) $(INC_FLAGS) -c -o $@ $< $(LDPATHS) $(LDFLAGS)
+	@mkdir -p $(dir $@)
+	@echo $(notdir $<)
+	@$(CXX) $(CXX_FLAGS) $(PRE_FLAGS) $(INC_FLAGS) -c -o $@ $< $(LDPATHS) $(LDFLAGS)
 
 $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
-	mkdir -p $(dir $@)
-	tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
+	@mkdir -p $(dir $@)
+	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
+
+$(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(BUILD)/%.bin
+	@mkdir -p $(dir $@)
+	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
 
 $(OBJS_SOURCES) : $(HFILES)
 # @echo "$<"

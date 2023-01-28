@@ -27,13 +27,15 @@ TextArea *textArea = nullptr;
 void aprint(std::string str, int x, int y){
 	// profile_start();
 
-	u16 * dest = (u16 * )se_mem[29];
-	dest+= 32*y+x;
+	// u16 * dest = (u16 * )se_mem[29];
+	// dest+= 32*y+x;
 	for(int i = 0; i < (int) str.length(); i++){
 		int c = str[i]-32;
-		int letter = 0xf000;
-		letter += c;
-		*dest++ = letter;
+		setTile(29, x + i, y, tileBuild(c, false, false, 15));
+		// int letter = 0xf000;
+		// letter += c;
+
+		// *dest++ = letter;
 	}
 
 	// std::string result = std::to_string(profile_stop());
@@ -43,19 +45,21 @@ void aprint(std::string str, int x, int y){
 void aprintClearLine(int y){
 	// profile_start();
 
-	u16 * dest = (u16*)se_mem[29];
+	clearTiles(29, 32 * y, 32);
+	// u16 * dest = (u16*)se_mem[29];
 
-	memset32(&dest[32*y],0,32);
+	// memset32(&dest[32*y],0,32);
 
 	// std::string result = std::to_string(profile_stop());
 	// log("clear line: " + result);
 }
 
 void aprintClearArea(int x, int y, int w, int h){
-	u16 * dest = (u16*)se_mem[29];
+	// u16 * dest = (u16*)se_mem[29];
 
 	for(int i = y; i < y+h; i++){
-		memset16(&dest[32*i+x],0,w);
+		clearTilemapEntries(29, 32 * i + x, w);
+		// memset16(&dest[32*i+x],0,w);
 	}
 }
 
@@ -66,20 +70,22 @@ void aprintf(int n, int x, int y){
 }
 
 void aprintColor(std::string str, int x, int y,int palette){
-	u16 * dest = (u16*) se_mem[29];
-	dest+=32*y+x;
+	// u16 * dest = (u16*) se_mem[29];
+	// dest+=32*y+x;
 	for(int i = 0; i < (int) str.length(); i++){
 		int c = str[i]-32;
-		int letter = 0xf000-0x1000*palette;
-		letter += c;
-		*dest++ = letter;
+		setTile(29, x+i, y, tileBuild(c, false, false, 15-palette));
+		// int letter = 0xf000-0x1000*palette;
+		// letter += c;
+		// *dest++ = letter;
 	}
 }
 
 void clearText(){
 	// profile_start();
 
-    memset32(&se_mem[29], 0, 32*20);
+	clearTilemap(29);
+    // memset32(&se_mem[29], 0, 32*20);
 
 	// std::string result = std::to_string(profile_stop());
 	// log("clear all: " + result);
@@ -89,13 +95,16 @@ void clearText(){
 
 	// profile_start();
 
-	memset32(&tile_mem[2][textArea->tileId],0,(textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY)*8);
+	clearTiles(2, textArea->tileId, (textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY));
+	// setTiles(2, textArea->tileId, (textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY), 0);
+	// memset32(&tile_mem[2][textArea->tileId],0,(textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY)*8);
 
-	u16* dest = (u16*) se_mem[29];
+	// u16* dest = (u16*) se_mem[29];
 	int counter = 0;
 	for(int i = textArea->startY; i <= textArea->endY; i++)
 		for(int j = textArea->startX; j <= textArea->endX; j++)
-			dest[i*32+j] = 0xf000 + textArea->tileId + counter++;
+			setTile(29, j, i, tileBuild(textArea->tileId + counter++, false, false, 15));
+			// dest[i*32+j] = 0xf000 + textArea->tileId + counter++;
 
 	// result = std::to_string(profile_stop());
 	// log("clear small: " + result);
@@ -108,21 +117,24 @@ void setSmallTextArea(int tid, int startX,int startY,int endX,int endY){
 	textArea = new TextArea(tid,startX,startY,endX,endY);
 
 	//set screen entry to tile mem section, needs to happen once unless overriden
-	u16* dest = (u16*) se_mem[29];
+	// u16* dest = (u16*) se_mem[29];
 	int counter = 0;
 	for(int i = startY; i <= endY; i++)
 		for(int j = startX; j <= endX; j++)
-			dest[i*32+j] = 0xf000 + textArea->tileId + counter++;
+			setTile(29, j, i, tileBuild(textArea->tileId + counter++, false, false, 15));
+			// dest[i*32+j] = 0xf000 + textArea->tileId + counter++;
 }
 
 void clearSmallText(){
-	memset32(&tile_mem[2][textArea->tileId],0,(textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY+1)*8);
+	clearTiles(2, textArea->tileId, (textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY));
+	// setTiles(2, textArea->tileId, (textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY), 0);
+	// memset32(&tile_mem[2][textArea->tileId],0,(textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY+1)*8);
 }
 
 void aprints(std::string str, int x, int y, int colorIndex){//x and y are pixel
 	if(textArea == nullptr)
 		return;
-	TILE* dest2;
+	// TILE* dest2;
 
     //width of current line, acts like a cursor position so that
     //text is drawn on the next line if w is greater than text area width
@@ -149,10 +161,13 @@ void aprints(std::string str, int x, int y, int colorIndex){//x and y are pixel
 		int counter = 0;
 		for(int j = 0; j < 5; j++){
 			for(int k = 0; k < 3; k++){
-				dest2 = (TILE *) &tile_mem[2][textArea->tileId+((y+j+drop)/8)*rowSize+(x+w+k)/8];
+				if((character >> (15-counter)) & 1)
+					setTilesetPixel(2, textArea->tileId+((y+j+drop)/8)*rowSize+(x+w+k)/8, (x+w+k)%8, (y+j+drop)%8, colorIndex);
+				// dest2 = (TILE *) &tile_mem[2][textArea->tileId+((y+j+drop)/8)*rowSize+(x+w+k)/8];
 
-				if((character >> (15-counter)) & 1) //figure out if pixel at j,k should be drawn
-					dest2->data[(y+j+drop)%8] |= colorIndex << (((x+w+k)%8)*4);
+				//TODO:
+				// if((character >> (15-counter)) & 1) //figure out if pixel at j,k should be drawn
+				// 	dest2->data[(y+j+drop)%8] |= colorIndex << (((x+w+k)%8)*4);
 				counter++;
 			}
 		}
@@ -163,7 +178,7 @@ void aprints(std::string str, int x, int y, int colorIndex){//x and y are pixel
 void aprintsSprite(std::string str, int x, int y, int tileId){//x and y are pixel
 	if(textArea == nullptr)
 		return;
-	TILE* dest2;
+	// TILE* dest2;
 
     //width of current line, acts like a cursor position so that
     //text is drawn on the next line if w is greater than text area width
@@ -188,13 +203,14 @@ void aprintsSprite(std::string str, int x, int y, int tileId){//x and y are pixe
 		int counter = 0;
 		for(int j = 0; j < 5; j++){
 			for(int k = 0; k < 3; k++){
-				dest2 = (TILE *) &tile_mem[4][tileId+((y+j+drop)/8)+(x+w+k)/8];
+				// dest2 = (TILE *) &tile_mem[4][tileId+((y+j+drop)/8)+(x+w+k)/8];
 
                 //figure out if pixel at j,k should be drawn
                 int draw = (character >> (15-counter)) & 1;
 
 				if(draw)
-					dest2->data[(y+j+drop)%8] |= 2 << (((x+w+k)%8)*4);
+					setSpritePixel(tileId,(x+w+k)/8 + ((y+j+drop)/8), 0, 0, (((x+w+k)%8)), (y+j+drop)%8, 2);
+					// dest2->data[(y+j+drop)%8] |= 2 << (((x+w+k)%8)*4);
 				counter++;
 			}
 		}

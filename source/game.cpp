@@ -1,7 +1,7 @@
 #include "def.h"
 #include "LinkConnection.h"
 #include "meter1_tiles_bin.h"
-#include "soundbank.h"
+// #include "soundbank.h"
 #include "sprite36tiles_bin.h"
 #include "sprite5tiles_bin.h"
 #include "sprites.h"
@@ -51,7 +51,7 @@ void journeyFlash();
 // void journeyFlash();
 void setJourneyGraphics(Save * save, int level);
 
-Game* game;
+Game* game = nullptr;
 OBJ_ATTR* pawnSprite;
 OBJ_ATTR* pawnShadow;
 OBJ_ATTR* holdSprite;
@@ -150,7 +150,6 @@ void GameScene::draw(){
     showPlaceEffect();// 300 idle, 3600 per effect when on
     // prof+= std::to_string(profile_stop()) + " ";
 
-
     showSprites(32);
     // oam_copy(oam_mem, obj_buffer, 32);
     // // profile_start();
@@ -197,12 +196,12 @@ void checkSounds() {
         sfx(SFX_SHIFT2);
     if (game->sounds.place) {
         sfx(SFX_PLACE);
-        shake = (shakeMax * (savefile->settings.shakeAmount)/ 4) /2;
-        if(!game->sounds.finesse)
+        shake = (shakeMax * (savefile->settings.shakeAmount) / 4) /2;
+        if(!game->sounds.finesse && game->trainingMode)
             for(int i = 0; i < 3; i++)
                 sprite_hide(moveSprites[i]);
 
-        rumbleTimer = rumbleMax * savefile->settings.rumble;
+        // rumbleTimer = rumbleMax * savefile->settings.rumble;
     }
     if (game->sounds.invalid){
         sfx(SFX_INVALID);
@@ -217,214 +216,214 @@ void checkSounds() {
         sfx(SFX_MENUCANCEL);
     }
 
-    if (game->sounds.clear) {
+    // if (game->sounds.clear) {
 
-        if(game->previousClear.linesCleared <= 4){
-            int speed = game->comboCounter - 1;
-            if (speed > 10)
-                speed = 10;
+    //     if(game->previousClear.linesCleared <= 4){
+    //         int speed = game->comboCounter - 1;
+    //         if (speed > 10)
+    //             speed = 10;
 
-            sfxRate(SFX_LEVELUP,(float)speed/10);
+    //         sfxRate(SFX_LEVELUP,(float)speed/10);
 
-            // mm_sound_effect clear = {
-            //     {SFX_LEVELUP},
-            //     (mm_hword)((1.0 + (float)speed / 10) * (1 << (10 - (game->zoneTimer != 0)))),
-            //     0,
-            //     (u8)(255 * (float) savefile->settings.sfxVolume / 10),
-            //     128,
-            // };
+    //         // mm_sound_effect clear = {
+    //         //     {SFX_LEVELUP},
+    //         //     (mm_hword)((1.0 + (float)speed / 10) * (1 << (10 - (game->zoneTimer != 0)))),
+    //         //     0,
+    //         //     (u8)(255 * (float) savefile->settings.sfxVolume / 10),
+    //         //     128,
+    //         // };
 
-            // mmEffectEx(&clear);
-        }else{
-            sfx(SFX_MULTICLEAR);
-        }
+    //         // mmEffectEx(&clear);
+    //     }else{
+    //         sfx(SFX_MULTICLEAR);
+    //     }
 
-        int soundEffect = -1;
+    //     int soundEffect = -1;
 
-        clearTypeText = "";
-        if(game->zoneTimer){
+    //     clearTypeText = "";
+    //     if(game->zoneTimer){
 
-        } else if (game->previousClear.isPerfectClear == 1) {
-            soundEffect = SFX_PERFECTCLEAR;
-            clearTypeText = "perfect clear";
-            effectList.push_back(Effect(0));
-        } else if (game->previousClear.isTSpin == 2) {
-            if (game->previousClear.isBackToBack == 1)
-                soundEffect = SFX_BACKTOBACKTSPIN;
-            else
-                soundEffect = SFX_TSPIN;
+    //     } else if (game->previousClear.isPerfectClear == 1) {
+    //         soundEffect = SFX_PERFECTCLEAR;
+    //         clearTypeText = "perfect clear";
+    //         effectList.push_back(Effect(0));
+    //     } else if (game->previousClear.isTSpin == 2) {
+    //         if (game->previousClear.isBackToBack == 1)
+    //             soundEffect = SFX_BACKTOBACKTSPIN;
+    //         else
+    //             soundEffect = SFX_TSPIN;
 
-            if (game->previousClear.linesCleared == 1) {
-                clearTypeText = "t-spin single";
-            } else if (game->previousClear.linesCleared == 2) {
-                clearTypeText = "t-spin double";
-            } else if (game->previousClear.linesCleared == 3) {
-                clearTypeText = "t-spin triple";
-            }
-        } else if (game->previousClear.isTSpin == 1) {
-            soundEffect = SFX_TSPINMINI;
+    //         if (game->previousClear.linesCleared == 1) {
+    //             clearTypeText = "t-spin single";
+    //         } else if (game->previousClear.linesCleared == 2) {
+    //             clearTypeText = "t-spin double";
+    //         } else if (game->previousClear.linesCleared == 3) {
+    //             clearTypeText = "t-spin triple";
+    //         }
+    //     } else if (game->previousClear.isTSpin == 1) {
+    //         soundEffect = SFX_TSPINMINI;
 
-            clearTypeText = "t-spin mini";
-        } else if (game->previousClear.linesCleared > 4) {
-            int n = game->previousClear.linesCleared;
-            if(n < 8){
-                clearTypeText = "quad";
-                soundEffect = SFX_QUAD;
-            }else if(n < 12){
-                clearTypeText = "octo";
-                soundEffect = SFX_OCTORIS;
-            }else if(n < 16){
-                clearTypeText = "dodeca";
-                soundEffect = SFX_DODECATRIS;
-            }else if(n < 18){
-                clearTypeText = "decahexa";
-                soundEffect = SFX_DECAHEXATRIS;
-            }else if(n < 20){
-                clearTypeText = "perfectus";
-                soundEffect = SFX_PERFECTRIS;
-            }else{
-                clearTypeText = "ultimus";
-                soundEffect = SFX_ULTIMATRIS;
-            }
-        } else if (game->previousClear.linesCleared == 4) {
-            if (game->previousClear.isBackToBack == 1)
-                soundEffect = SFX_BACKTOBACKQUAD;
-            else
-                soundEffect = SFX_QUAD;
-            clearTypeText = "quad";
-        } else if (game->previousClear.linesCleared == 3) {
-            soundEffect = SFX_TRIPLE;
-            clearTypeText = "triple";
-        } else if (game->previousClear.linesCleared == 2) {
-            soundEffect = SFX_DOUBLE;
-            clearTypeText = "double";
-        }
+    //         clearTypeText = "t-spin mini";
+    //     } else if (game->previousClear.linesCleared > 4) {
+    //         int n = game->previousClear.linesCleared;
+    //         if(n < 8){
+    //             clearTypeText = "quad";
+    //             soundEffect = SFX_QUAD;
+    //         }else if(n < 12){
+    //             clearTypeText = "octo";
+    //             soundEffect = SFX_OCTORIS;
+    //         }else if(n < 16){
+    //             clearTypeText = "dodeca";
+    //             soundEffect = SFX_DODECATRIS;
+    //         }else if(n < 18){
+    //             clearTypeText = "decahexa";
+    //             soundEffect = SFX_DECAHEXATRIS;
+    //         }else if(n < 20){
+    //             clearTypeText = "perfectus";
+    //             soundEffect = SFX_PERFECTRIS;
+    //         }else{
+    //             clearTypeText = "ultimus";
+    //             soundEffect = SFX_ULTIMATRIS;
+    //         }
+    //     } else if (game->previousClear.linesCleared == 4) {
+    //         if (game->previousClear.isBackToBack == 1)
+    //             soundEffect = SFX_BACKTOBACKQUAD;
+    //         else
+    //             soundEffect = SFX_QUAD;
+    //         clearTypeText = "quad";
+    //     } else if (game->previousClear.linesCleared == 3) {
+    //         soundEffect = SFX_TRIPLE;
+    //         clearTypeText = "triple";
+    //     } else if (game->previousClear.linesCleared == 2) {
+    //         soundEffect = SFX_DOUBLE;
+    //         clearTypeText = "double";
+    //     }
 
-        if (savefile->settings.floatText)
-            floatingList.push_back(FloatText(clearTypeText));
+    //     if (savefile->settings.floatText)
+    //         floatingList.push_back(FloatText(clearTypeText));
 
-        if (savefile->settings.announcer && soundEffect != -1)
-            sfx(soundEffect);
-    }
+    //     if (savefile->settings.announcer && soundEffect != -1)
+    //         sfx(soundEffect);
+    // }
 
-    if (game->sounds.levelUp) {
-        sfx(SFX_LEVELUPSOUND);
+    // if (game->sounds.levelUp) {
+    //     sfx(SFX_LEVELUPSOUND);
 
-        if(savefile->settings.colors == 3){
-            int n = getClassicPalette();
+    //     if(savefile->settings.colors == 3){
+    //         int n = getClassicPalette();
 
-            for(int i = 0; i < 8; i++){
-                loadPalette(i, 1, &nesPalette[n][0], 4);
-                loadPalette(i+16, 1, &nesPalette[n][0], 4);
-                // memcpy16(&pal_bg_mem[i*16+1], &nesPalette[n][0],4);
+    //         for(int i = 0; i < 8; i++){
+    //             loadPalette(i, 1, &nesPalette[n][0], 4);
+    //             loadPalette(i+16, 1, &nesPalette[n][0], 4);
+    //             // memcpy16(&pal_bg_mem[i*16+1], &nesPalette[n][0],4);
 
-                // memcpy16(&pal_obj_mem[i*16+1], &nesPalette[n][0],4);
-            }
-        }
+    //             // memcpy16(&pal_obj_mem[i*16+1], &nesPalette[n][0],4);
+    //         }
+    //     }
 
-        if(game->gameMode == MASTER){
-            maxClearTimer = game->maxClearDelay;
-        }
-          // else if(game->gameMode == MARATHON){
-          //      journeyLevelUp = true;
-        // }
-    }
+    //     if(game->gameMode == MASTER){
+    //         maxClearTimer = game->maxClearDelay;
+    //     }
+    //       // else if(game->gameMode == MARATHON){
+    //       //      journeyLevelUp = true;
+    //     // }
+    // }
 
-    std::string sectionText = "";
+    // std::string sectionText = "";
 
-    switch(game->sounds.section){
-        case -1:
-            sectionText = "regret!!";
-            sfx(SFX_REGRET);
-            break;
-        case 1:
-            sectionText = "cool!!";
-            sfx(SFX_COOL);
-            break;
-        case 2: sfx(SFX_SECRET); break;
-    }
+    // switch(game->sounds.section){
+    //     case -1:
+    //         sectionText = "regret!!";
+    //         sfx(SFX_REGRET);
+    //         break;
+    //     case 1:
+    //         sectionText = "cool!!";
+    //         sfx(SFX_COOL);
+    //         break;
+    //     case 2: sfx(SFX_SECRET); break;
+    // }
 
-    if (sectionText.size() && savefile->settings.floatText)
-        floatingList.push_back(FloatText(sectionText));
+    // if (sectionText.size() && savefile->settings.floatText)
+    //     floatingList.push_back(FloatText(sectionText));
 
 
-    if(game->sounds.disappear){
-        disappear();
-    }
+    // if(game->sounds.disappear){
+    //     disappear();
+    // }
 
-    if (game->sounds.zone == 1) {
-        clearText();
-        gradient(false);
+    // if (game->sounds.zone == 1) {
+    //     clearText();
+    //     gradient(false);
 
-        holdingSave = true;
-        previousSettings = savefile->settings;
+    //     holdingSave = true;
+    //     previousSettings = savefile->settings;
 
-        savefile->settings.colors = 4;
-        savefile->settings.clearEffect = 2;
-        setPalette();
-        setClearEffect();
-        showBackground();
+    //     savefile->settings.colors = 4;
+    //     savefile->settings.clearEffect = 2;
+    //     setPalette();
+    //     setClearEffect();
+    //     showBackground();
 
-        flashTimer = flashTimerMax;
-        zoneFlash();
+    //     flashTimer = flashTimerMax;
+    //     zoneFlash();
 
-        // u16 * dest = (u16*) &se_mem[26];
-        for(int i = 0; i < 20; i++){
-            setTile(26, 9, i, tileBuild(4, false, false, 0));
-            setTile(26, 20, i, tileBuild(4, true, false, 0));
-            // dest[i * 32 + 9] = 4;
-            // dest[i * 32 + 20] = 4 + 0x400;
-        }
+    //     // u16 * dest = (u16*) &se_mem[26];
+    //     for(int i = 0; i < 20; i++){
+    //         setTile(26, 9, i, tileBuild(4, false, false, 0));
+    //         setTile(26, 20, i, tileBuild(4, true, false, 0));
+    //         // dest[i * 32 + 9] = 4;
+    //         // dest[i * 32 + 20] = 4 + 0x400;
+    //     }
 
-        if (savefile->settings.lightMode){
-            for(int i = 0; i < 4; i++){
-                COLOR c = RGB15(10-i, 10-i, 10-i);
-                //TODO:
-                //needs to add color to palette address, not simply assign it
-                setPaletteColor(i, 5, c, 1);
-                // pal_bg_mem[(0+i) * 16 + 5] += c;
-            }
-        }
+    //     if (savefile->settings.lightMode){
+    //         for(int i = 0; i < 4; i++){
+    //             COLOR c = RGB15(10-i, 10-i, 10-i);
+    //             //TODO:
+    //             //needs to add color to palette address, not simply assign it
+    //             setPaletteColor(i, 5, c, 1);
+    //             // pal_bg_mem[(0+i) * 16 + 5] += c;
+    //         }
+    //     }
 
-        // if(savefile->settings.lightMode)
-        //     memset16(&pal_bg_mem[4 * 16 + 5], 0x4a52, 1);
+    //     // if(savefile->settings.lightMode)
+    //     //     memset16(&pal_bg_mem[4 * 16 + 5], 0x4a52, 1);
 
-        setMusicTempo(512);
-        setMusicVolume(512 * ((float)savefile->settings.volume / 20));
-        // mmSetModuleTempo(512);
-        // mmSetModuleVolume(512 * ((float)savefile->settings.volume / 20));
+    //     setMusicTempo(512);
+    //     setMusicVolume(512 * ((float)savefile->settings.volume / 20));
+    //     // mmSetModuleTempo(512);
+    //     // mmSetModuleVolume(512 * ((float)savefile->settings.volume / 20));
 
-        sfx(SFX_ZONESTART);
-    } else if (game->sounds.zone == 2) {
-        savefile->settings.lightMode = !previousSettings.lightMode;
+    //     sfx(SFX_ZONESTART);
+    // } else if (game->sounds.zone == 2) {
+    //     savefile->settings.lightMode = !previousSettings.lightMode;
 
-        setPalette();
-        if (savefile->settings.lightMode){
-            for(int i = 0; i < 4; i++){
-                COLOR c = RGB15(10-i, 10-i, 10-i);
-                // pal_bg_mem[(0+i) * 16 + 5] += c;
-                //TODO:
-                //needs to add color to palette address, not simply assign it
-                setPaletteColor(i, 5, c, 1);
-            }
-        }
+    //     setPalette();
+    //     if (savefile->settings.lightMode){
+    //         for(int i = 0; i < 4; i++){
+    //             COLOR c = RGB15(10-i, 10-i, 10-i);
+    //             // pal_bg_mem[(0+i) * 16 + 5] += c;
+    //             //TODO:
+    //             //needs to add color to palette address, not simply assign it
+    //             setPaletteColor(i, 5, c, 1);
+    //         }
+    //     }
 
-        // if(savefile->settings.lightMode)
-        //     memset16(&pal_bg_mem[4 * 16 + 5], 0x4a52, 1);
+    //     // if(savefile->settings.lightMode)
+    //     //     memset16(&pal_bg_mem[4 * 16 + 5], 0x4a52, 1);
 
-    } else if (game->sounds.zone == -1) {
-        aprintClearArea(10, 0, 10, 20);
-        resetZonePalette();
-        zoneFlash();
-    }
+    // } else if (game->sounds.zone == -1) {
+    //     aprintClearArea(10, 0, 10, 20);
+    //     resetZonePalette();
+    //     zoneFlash();
+    // }
 
-    if(game->sounds.meter){
-        fullMeterTimer = fullMeterAnimationLength;
-    }
+    // if(game->sounds.meter){
+    //     fullMeterTimer = fullMeterAnimationLength;
+    // }
 
-    if(game->gameMode == MARATHON && subMode){
-        showFullMeter();
-    }
+    // if(game->gameMode == MARATHON && subMode){
+    //     showFullMeter();
+    // }
 
     game->resetSounds();
 }
@@ -534,7 +533,7 @@ void showBackground() {
                         n = 0;
                 }
                 // *dest++ = n + (savefile->settings.lightMode * 0x1000);
-                setTile(25, 10+j, i-20, tileBuild(n, false, false, savefile->settings.lightMode));
+                setTile(25, 10+j, i-20, tileBuild(n + (savefile->settings.lightMode * 0x1000)));
             } else{
                 int offset = 1;
 
@@ -548,7 +547,7 @@ void showBackground() {
 
                 if(n != 8)
                     // *dest++ = (offset + ((n) << 12) * !game->zoneTimer);
-                    setTile(25, 10+j, i-20, tileBuild(offset + (n << 12) * !game->zoneTimer, false, false, 0));
+                    setTile(25, 10+j, i-20, tileBuild(offset, false, false, n * !game->zoneTimer));
                 else
                     setTile(25, 10+j, i-20, tileBuild(3, false, false, 0));
                     // *dest++ = 3;
@@ -639,20 +638,27 @@ void showPawn() {
     }
 
     if(!game->pawn.big){
-        obj_set_attr(pawnSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(16 * 7, 11, 2));
-        obj_set_pos(pawnSprite, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->pawn.y - 20) * 8 + shake * savefile->settings.shake);
+        sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
+        sprite_enable_mosaic(pawnSprite);
+        // obj_set_attr(pawnSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(16 * 7, 11, 2));
+        sprite_set_pos(pawnSprite, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->pawn.y - 20) * 8 + shake * savefile->settings.shake);
     }else{
-        obj_set_attr(pawnSprite, ATTR0_SQUARE | ATTR0_AFF_DBL | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(31), ATTR2_BUILD(16 * 7, 11, 2));
-        obj_aff_identity(&obj_aff_buffer[31]);
-        obj_aff_scale(&obj_aff_buffer[31], 1<<7, 1<<7);
-        obj_set_pos(pawnSprite, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->pawn.y*2 - 20) * 8 + shake * savefile->settings.shake);
+        sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
+        sprite_enable_mosaic(pawnSprite);
+        sprite_enable_affine(pawnSprite, 31, true);
+        sprite_set_size(pawnSprite, 1<<7, 31);
+        // obj_set_attr(pawnSprite, ATTR0_SQUARE | ATTR0_AFF_DBL | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(31), ATTR2_BUILD(16 * 7, 11, 2));
+        // obj_aff_identity(&obj_aff_buffer[31]);
+        // obj_aff_scale(&obj_aff_buffer[31], 1<<7, 1<<7);
+        sprite_set_pos(pawnSprite, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->pawn.y*2 - 20) * 8 + shake * savefile->settings.shake);
     }
+
 }
 
 void showShadow() {
     pawnShadow = &obj_buffer[1];
     if (game->clearLock || game->pawn.current == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100) || (ENABLE_BOT && game->gameMode != BATTLE)) {
-        obj_hide(pawnShadow);
+        sprite_hide(pawnShadow);
         return;
     }
 
@@ -670,18 +676,22 @@ void showShadow() {
                 shadowTexture = (u8*)classicTiles[savefile->settings.skin-7][game->pawn.current];
             bld = true;
             break;
-        case 4: obj_hide(pawnShadow); return;
+        case 4: sprite_hide(pawnShadow); return;
         default: shadowTexture = (u8*)sprite2tiles_bin; break;
     }
 
-    obj_unhide(pawnShadow, 0);
+    sprite_unhide(pawnShadow, 0);
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if(game->pawn.board[game->pawn.rotation][i][j] > 0){
-                memcpy16(&tile_mem[4][16 * 8 + i * 4 + j], shadowTexture, sprite2tiles_bin_size / 2);
+                setSpriteTile(16 * 8, j, i, 4, shadowTexture);
+                // memcpy16(&tile_mem[4][16 * 8 + i * 4 + j], shadowTexture, sprite2tiles_bin_size / 2);
             } else
-                memset16(&tile_mem[4][16 * 8 + i * 4 + j], 0, sprite2tiles_bin_size / 2);
+                clearSpriteTile(16*8, j, i, 4);
+                // clear
+                // setSpriteTile(16 * 8, j, i, 4, 0);
+                // memset16(&tile_mem[4][16 * 8 + i * 4 + j], 0, sprite2tiles_bin_size / 2);
         }
     }
 
@@ -692,13 +702,19 @@ void showShadow() {
     }
 
     if(!game->pawn.big){
-        obj_set_attr(pawnShadow, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(16 * (8 - (savefile->settings.shadow == 3)), 10, 2));
-        obj_set_pos(pawnShadow, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->lowest() - 20) * 8 + shake * savefile->settings.shake);
+
+        sprite_set_attr(pawnShadow, ShapeSquare, 2, 16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
+        // obj_set_attr(pawnShadow, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(16 * (8 - (savefile->settings.shadow == 3)), 10, 2));
+        sprite_set_pos(pawnShadow, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->lowest() - 20) * 8 + shake * savefile->settings.shake);
     }else{
-        obj_set_attr(pawnShadow, ATTR0_SQUARE | ATTR0_AFF_DBL | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(30), ATTR2_BUILD(16 * (8 - (savefile->settings.shadow == 3)), 10, 2));
-        obj_aff_identity(&obj_aff_buffer[30]);
-        obj_aff_scale(&obj_aff_buffer[30],1<<7,1<<7);
-        obj_set_pos(pawnShadow, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->lowest()*2 - 20) * 8 + shake * savefile->settings.shake);
+        sprite_set_attr(pawnShadow, ShapeSquare, 2, 16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
+        sprite_enable_mosaic(pawnShadow);
+        sprite_enable_affine(pawnShadow,30,true);
+
+        // obj_set_attr(pawnShadow, ATTR0_SQUARE | ATTR0_AFF_DBL | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(30), ATTR2_BUILD(16 * (8 - (savefile->settings.shadow == 3)), 10, 2));
+        // obj_aff_identity(&obj_aff_buffer[30]);
+        // obj_aff_scale(&obj_aff_buffer[30],1<<7,1<<7);
+        sprite_set_pos(pawnShadow, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->lowest()*2 - 20) * 8 + shake * savefile->settings.shake);
     }
 }
 
@@ -707,15 +723,16 @@ void showHold() {
     holdFrameSprite = &obj_buffer[10];
 
     if(game->gameMode != CLASSIC && !game->zoneTimer){
-        obj_unhide(holdFrameSprite, 0);
-        obj_set_attr(holdFrameSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
-        obj_set_pos(holdFrameSprite, 4 * 8 + 7 + (push < 0) * push, 9 * 8 - 2);
+        sprite_unhide(holdFrameSprite, 0);
+        sprite_set_attr(holdFrameSprite,ShapeSquare,2,512,8,3);
+        // sprite_set_attr(holdFrameSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
+        sprite_set_pos(holdFrameSprite, 4 * 8 + 7 + (push < 0) * push, 9 * 8 - 2);
     }else{
-        obj_hide(holdFrameSprite);
+        sprite_hide(holdFrameSprite);
     }
 
     if (game->held == -1) {
-        obj_hide(holdSprite);
+        sprite_hide(holdSprite);
         return;
     }
 
@@ -725,22 +742,26 @@ void showHold() {
     int yoffset = - (6 * (game->rotationSystem != SRS && savefile->settings.skin >= 7));
 
     if (savefile->settings.skin < 7) {
-        obj_unhide(holdSprite, 0);
-        obj_set_attr(holdSprite, ATTR0_WIDE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_PALBANK(palette));
-        holdSprite->attr2 = ATTR2_BUILD(9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
-        obj_set_pos(holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS));
+        sprite_unhide(holdSprite, 0);
+        sprite_set_attr(holdSprite, ShapeWide, 2, 9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
+        // obj_set_attr(holdSprite, ATTR0_WIDE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_PALBANK(palette));
+        // holdSprite->attr2 = ATTR2_BUILD(9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
+        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS));
     } else {
-        obj_unhide(holdSprite, ATTR0_AFF);
-        obj_set_attr(holdSprite, ATTR0_SQUARE | ATTR0_AFF | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(5), ATTR2_PALBANK(palette));
-        holdSprite->attr2 = ATTR2_BUILD(16 * game->held, palette * (game->zoneTimer == 0), 3);
+        sprite_unhide(holdSprite, ATTR0_AFF);
+        sprite_set_attr(holdSprite, ShapeWide, 2, 16 * game->held, palette * (game->zoneTimer == 0), 3);
+        sprite_enable_affine(holdSprite, 5, false);
+        // obj_set_attr(holdSprite, ATTR0_SQUARE | ATTR0_AFF | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(5), ATTR2_PALBANK(palette));
+        // holdSprite->attr2 = ATTR2_BUILD(16 * game->held, palette * (game->zoneTimer == 0), 3);
         FIXED size;
         if(savefile->settings.skin < 9)
             size = 357;//~1.4
         else
             size = 349;//~1.4
 
-        obj_aff_scale(&obj_aff_buffer[5], size, size);
-        obj_set_pos(holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) - 3 + yoffset);
+        sprite_set_size(holdSprite, size,5);
+        // obj_aff_scale(&obj_aff_buffer[5], size, size);
+        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) - 3 + yoffset);
     }
 }
 
@@ -759,22 +780,26 @@ void showQueue() {
         queueFrameSprites[i] = &obj_buffer[11 + i];
 
     if(game->zoneTimer){
-        obj_hide(queueFrameSprites[0]);
-        obj_hide(queueFrameSprites[1]);
-        obj_hide(queueFrameSprites[2]);
+        sprite_hide(queueFrameSprites[0]);
+        sprite_hide(queueFrameSprites[1]);
+        sprite_hide(queueFrameSprites[2]);
     }else if(maxQueue > 1){
         for (int i = 0; i < 3; i++) {
-            obj_unhide(queueFrameSprites[i], 0);
-            obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, 8, 3));
-            obj_set_pos(queueFrameSprites[i], 173 + (push > 0) * push, 12 + 32 * i - (i * 9 * (5-maxQueue)));
+            sprite_unhide(queueFrameSprites[i], 0);
+            sprite_set_attr(queueFrameSprites[i], ShapeSquare, 2, 512 + 16 + 16 * i, 8, 3);
+            sprite_enable_mosaic(queueFrameSprites[i]);
+            // obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, 8, 3));
+            sprite_set_pos(queueFrameSprites[i], 173 + (push > 0) * push, 12 + 32 * i - (i * 9 * (5-maxQueue)));
         }
     }else{
-        obj_unhide(queueFrameSprites[0], 0);
-        obj_set_attr(queueFrameSprites[0], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
-        obj_set_pos(queueFrameSprites[0], 173 + (push > 0) * push, 12);
+        sprite_unhide(queueFrameSprites[0], 0);
+        sprite_set_attr(queueFrameSprites[0], ShapeSquare, 2, 512, 8, 3);
+        sprite_enable_mosaic(queueFrameSprites[0]);
+        // obj_set_attr(queueFrameSprites[0], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
+        sprite_set_pos(queueFrameSprites[0], 173 + (push > 0) * push, 12);
 
-        obj_hide(queueFrameSprites[1]);
-        obj_hide(queueFrameSprites[2]);
+        sprite_hide(queueFrameSprites[1]);
+        sprite_hide(queueFrameSprites[2]);
     }
 
     int startX = 22 * 8 + 1;
@@ -784,7 +809,7 @@ void showQueue() {
     for (int k = 0; k < 5; k++){
 
         if(k >= maxQueue){
-            obj_hide(queueSprites[k]);
+            sprite_hide(queueSprites[k]);
             continue;
         }
 
@@ -792,23 +817,29 @@ void showQueue() {
 
         int add = !(n == 0 || n == 3);
         if (savefile->settings.skin < 7) {
-            obj_unhide(queueSprites[k], 0);
-            obj_set_attr(queueSprites[k], ATTR0_WIDE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_PALBANK(n));
-            queueSprites[k]->attr2 = ATTR2_BUILD(16 * 9 + 8 * n, n * (game->zoneTimer == 0), 3);
-            obj_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push, (3 + (k * 3)) * 6 - 3 * (n == 0) + yoffset + 8 * (game->rotationSystem == ARS && n == 0));
+            sprite_unhide(queueSprites[k], 0);
+            sprite_set_attr(queueSprites[k], ShapeWide, 2, 16 * 9 + 8 * n, n * (game->zoneTimer == 0), 3);
+            sprite_enable_mosaic(queueSprites[k]);
+            // obj_set_attr(queueSprites[k], ATTR0_WIDE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_PALBANK(n));
+            // queueSprites[k]->attr2 = ATTR2_BUILD(16 * 9 + 8 * n, n * (game->zoneTimer == 0), 3);
+            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push, (3 + (k * 3)) * 6 - 3 * (n == 0) + yoffset + 8 * (game->rotationSystem == ARS && n == 0));
         } else {
-            obj_unhide(queueSprites[k], ATTR0_AFF);
-            obj_set_attr(queueSprites[k], ATTR0_SQUARE | ATTR0_AFF | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(k), ATTR2_PALBANK(n));
-            queueSprites[k]->attr2 = ATTR2_BUILD(16 * n, n * (game->zoneTimer == 0), 3);
-            obj_aff_identity(&obj_aff_buffer[k]);
+            sprite_unhide(queueSprites[k], ATTR0_AFF);
+            sprite_set_attr(queueSprites[k], ShapeSquare, 2, 16 * n, n * (game->zoneTimer == 0), 3);
+            sprite_enable_mosaic(queueSprites[k]);
+            sprite_enable_affine(queueSprites[k], k, false);
+            // obj_set_attr(queueSprites[k], ATTR0_SQUARE | ATTR0_AFF | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(k), ATTR2_PALBANK(n));
+            // queueSprites[k]->attr2 = ATTR2_BUILD(16 * n, n * (game->zoneTimer == 0), 3);
+            // obj_aff_identity(&obj_aff_buffer[k]);
             // FIXED size = 358 + sizeControl;//~1.4
             FIXED size;
             if(savefile->settings.skin < 9)
                 size = 357;//~1.4
             else
                 size = 349;//~1.4
-            obj_aff_scale(&obj_aff_buffer[k], size, size);
-            obj_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == 0) - 4 + yoffset);
+            // obj_aff_scale(&obj_aff_buffer[k], size, size);
+            sprite_set_size(queueSprites[k], size, k);
+            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == 0) - 4 + yoffset);
         }
 
         if(q != game->queue.end())
@@ -829,7 +860,7 @@ void control() {
     if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer) {
         sfx(SFX_MENUCONFIRM);
         pause = true;
-        mmPause();
+        pauseSong();
         clearText();
         update();
     }
@@ -1044,7 +1075,8 @@ void showPPS(){
         fractional &= 0xff;
     }
 
-    memset32(&tile_mem[2][113],0,8*3);
+    clearTiles(2, 113, 3);
+    // memset32(&tile_mem[2][113],0,8*3);
     aprints(str,25,0,2);
 
     aprints("PPS:",0,0,2);
@@ -1131,22 +1163,26 @@ void gameLoop(){
     setGradient(savefile->settings.backgroundGradient);
     gradient(true);
 
-    VBlankIntrWait();
+    vsync();
     setSkin();
 
-    memset32(&tile_mem[2][110], 0, 400*8);
+    clearTiles(2,110,400);
+    // memset32(&tile_mem[2][110], 0, 400*8);
     setSmallTextArea(110, 3, 7, 9, 10);
     clearText();
     gameSeconds = 0;
 
-    memcpy16(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/2);
+    loadSpriteTiles(256+3, meterTiles[0], 4, 4);
+    // memcpy16(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/2);
 
     update();
 
-    oam_init(obj_buffer, 128);
+    clearSprites(128);
+    // oam_init(obj_buffer, 128);
     drawFrame();
 
-    mmStop();
+    stopSong();
+    // mmStop();
 
     showHold();
     showQueue();
@@ -1156,7 +1192,8 @@ void gameLoop(){
 
     showZoneMeter();
 
-    oam_copy(oam_mem, obj_buffer, 128);
+    showSprites(128);
+    // oam_copy(oam_mem, obj_buffer, 128);
 
     countdown();
 
@@ -1182,8 +1219,9 @@ void gameLoop(){
 
     update();
 
-    while (1) {
+    while (closed()) {
         diagnose();
+
         if (!game->lost && !pause && !game->eventLock) {
             // profile_start();
             game->update();
@@ -1197,18 +1235,18 @@ void gameLoop(){
 
             std::string test;
             if(!botGame->clearLock){
-                profile_start();
+                // profile_start();
 
                 testBot->run();
-                test += std::to_string(profile_stop()) + " ";
+                // test += std::to_string(profile_stop()) + " ";
 
-                profile_start();
+                // profile_start();
                 botGame->update();
-                test += std::to_string(profile_stop()) + " ";
+                // test += std::to_string(profile_stop()) + " ";
             }
-            profile_start();
+            // profile_start();
             handleBotGame();
-            test += std::to_string(profile_stop()) + " ";
+            // test += std::to_string(profile_stop()) + " ";
             // log(std::to_string(profile_stop()));
             // log(test);
         }else if(ENABLE_BOT ){
@@ -1262,9 +1300,12 @@ void gameLoop(){
         // log(std::to_string(REG_VCOUNT));
 
         canDraw = true;
-        VBlankIntrWait();
+        vsync();
 
+        #ifdef GBA
         rumble_update();
+        #endif
+
         if (clearTimer >= maxClearTimer || maxClearTimer <= 0 || (game->gameMode == SURVIVAL && clearTimer)) {
             game->removeClearLock();
             shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
@@ -1273,6 +1314,8 @@ void gameLoop(){
             update();
         }
 
+        //TODO:
+        #ifdef GBA
         if(rumbleTimer > 0){
             rumbleTimer--;
 
@@ -1280,6 +1323,7 @@ void gameLoop(){
         }else{
             rumble_set_state(rumble_hard_stop);
         }
+        #endif
 
         if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
             endScreen();
@@ -1381,10 +1425,11 @@ void countdown() {
     int timerMax = 120;
     showQueue();
     showHold();
-    oam_copy(oam_mem, obj_buffer, 128);
+    showSprites(128);
+    // oam_copy(oam_mem, obj_buffer, 128);
 
     while (timer++ < timerMax - 1) {
-        VBlankIntrWait();
+        vsync();
 
         if (timer < timerMax / 3) {
             aprint("READY?", 12, 10);
@@ -1419,9 +1464,12 @@ void screenShake() {
     if (!savefile->settings.shake)
         return;
 
-    REG_BG0VOFS = -shake;
+    setLayerScroll(0, -push, -shake);
+    setLayerScroll(1, -push, -shake);
 
-    REG_BG1VOFS = -shake;
+    // REG_BG0VOFS = -shake;
+
+    // REG_BG1VOFS = -shake;
 
     if (shake) {
         if (shake > 0)
@@ -1431,8 +1479,8 @@ void screenShake() {
         shake *= -1;
     }
 
-    REG_BG0HOFS = -push;
-    REG_BG1HOFS = -push;
+    // REG_BG0HOFS = -push;
+    // REG_BG1HOFS = -push;
 
     if (game->pushDir != 0) {
         if (abs(push) < pushMax * (savefile->settings.shakeAmount)/4)
@@ -1446,26 +1494,32 @@ void screenShake() {
 }
 
 void drawFrame() {
-    u16* dest = (u16*)se_mem[26];
+    // u16* dest = (u16*)se_mem[26];
 
-    dest += 9;
+    // dest += 9;
 
-    int color = 8 * 0x1000;
+    // int color = 8 * 0x1000;
 
     for (int i = 0; i < 20; i++) {
         for (int j = 0; j < 2; j++) {
-            *dest++ = 0x0004 + j * 0x400 + color;
-            dest += 10;
+            setTile(26, j * 11 + 9, i, tileBuild(0x4,(j > 0), false, 8));
+            // *dest++ = 0x0004 + j * 0x400 + color;
+            // dest += 10;
         }
-        dest += 32 - 22;
+        // dest += 32 - 22;
     }
 
     progressBar();
 
     for (int i = 0; i < 3; i++) {
-        obj_unhide(queueFrameSprites[i], 0);
-        obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, color, 0));
-        obj_set_pos(queueFrameSprites[i], 173, 12 + 32 * i);
+        queueFrameSprites[i] = &obj_buffer[11 + i];
+        sprite_unhide(queueFrameSprites[i], 0);
+        //TODO:
+        //Found bug: was assigning weird palette index
+        //fixed but might change behavior
+        sprite_set_attr(queueFrameSprites[i], ShapeSquare, 2, 512 + 16 + 16 * i, 8, 0);
+        // obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, color, 0));
+        sprite_set_pos(queueFrameSprites[i], 173, 12 + 32 * i);
     }
 
     drawGrid();
@@ -1530,23 +1584,29 @@ void drawGrid() {
         default: gridTile = 0x0002; break;
     }
 
-    u16* dest = (u16*)se_mem[26];
+    setTiles(26,31*32+10, 10, tileBuild(gridTile, false, false, 0));
+    setTiles(26,20*32+10, 10, tileBuild(gridTile, false, false, 0));
+    // u16* dest = (u16*)se_mem[26];
 
-    memset16(&dest[31*32+10],gridTile,10);
-    memset16(&dest[20*32+10],gridTile,10);
+    // memset16(&dest[31*32+10],gridTile,10);
+    // memset16(&dest[20*32+10],gridTile,10);
 
-    dest += 10;
+    // dest += 10;
 
-    if (savefile->settings.lightMode && !game->zoneTimer)
-        gridTile += palOffset * 0x1000;
+    // if (savefile->settings.lightMode && !game->zoneTimer)
+    //     gridTile += palOffset * 0x1000;
+
+    u32 t = tileBuild(gridTile, false, false, savefile->settings.lightMode && !game->zoneTimer);
 
     for (int i = 0; i < 20; i++) {
         for (int j = 0; j < 10; j++) {
             if (glow[i][j] == 0 || !savefile->settings.effects) {
-                *dest++ = gridTile;
+                setTile(26, 10 + j, i, t);
+                // *dest++ = gridTile;
             } else if (glow[i][j] > glowDuration) {
                 glow[i][j]--;
-                *dest++ = gridTile;
+                setTile(26, 10 + j, i, t);
+                // *dest++ = gridTile;
             } else if (glow[i][j] > 0) {
                 glow[i][j]--;
                 int color = 0;
@@ -1556,15 +1616,16 @@ void drawGrid() {
                     color = 2;
                 else if (glow[i][j] >= glowDuration * 1 / 4)
                     color = 1;
-                *dest++ = gridTile + color * 0x1000;
+                setTile(26, 10 + j, i, tileBuild(gridTile, false, false, color + (palOffset + color) * (savefile->settings.lightMode && !game->zoneTimer)));
+                // *dest++ = gridTile + color * 0x1000;
             }
         }
-        dest += 22;
+        // dest += 22;
     }
 }
 
 void progressBar() {
-    if (game->goal == 0 || game->zoneTimer)
+    if (game == nullptr || game->goal == 0 || game->zoneTimer)
         return;
 
     int current;
@@ -1588,9 +1649,11 @@ void progressBar() {
             attackFlashTimer = 0;
 
         if (attackFlashTimer < attackFlashMax / 2) {
-            memset32(&pal_bg_mem[8 * 16 + 5], 0x421f, 1);
+            setPaletteColor(8, 5, 0x421f, 1);
+            // memset32(&pal_bg_mem[8 * 16 + 5], 0x421f, 1);
         } else {
-            memset32(&pal_bg_mem[8 * 16 + 5], 0x7fff, 1);
+            setPaletteColor(8, 5, 0x7fff, 1);
+            // memset32(&pal_bg_mem[8 * 16 + 5], 0x7fff, 1);
         }
 
         //attack bar
@@ -1599,6 +1662,7 @@ void progressBar() {
 }
 
 void showBar(int current, int max, int x, int palette) {
+    #ifdef GBA
     palette *= 0x1000;
 
     if (max > 10000) {
@@ -1684,6 +1748,8 @@ void showBar(int current, int max, int x, int palette) {
 
         dest += 32;
     }
+
+    #endif
 }
 
 void showBestMove(){
@@ -1699,14 +1765,15 @@ void showBestMove(){
 
     for(int i = 0; i < 3; i++){
         if(i > (int) moveList.size() - 1){
-            obj_hide(moveSprites[i]);
+            sprite_hide(moveSprites[i]);
             continue;
         }
-        obj_unhide(moveSprites[i],0);
+        sprite_unhide(moveSprites[i],0);
 
-        obj_set_attr(moveSprites[i], 0, 0, ATTR2_BUILD(512 + 128 + *move, 15, 2));
+        sprite_set_attr(moveSprites[i], ShapeSquare, 0, 512 + 128 + *move, 15, 2);
+        // obj_set_attr(moveSprites[i], 0, 0, ATTR2_BUILD(512 + 128 + *move, 15, 2));
 
-        obj_set_pos(moveSprites[i], 38 + 12 * i, 54);
+        sprite_set_pos(moveSprites[i], 38 + 12 * i, 54);
 
         ++move;
     }
@@ -1723,12 +1790,12 @@ void showPlaceEffect(){
     const int size = 384;
 
     for(int i = 0; i < 3; i++)
-        obj_hide(&obj_buffer[19+i]);
+        sprite_hide(&obj_buffer[19+i]);
 
     auto it = placeEffectList.begin();
     for(int i = 0; it != placeEffectList.end(); i++){
         if(it->timer == 0){
-            obj_hide(it->sprite);
+            sprite_hide(it->sprite);
             placeEffectList.erase(it++);
             i--;
             continue;
@@ -1743,7 +1810,8 @@ void showPlaceEffect(){
 
         switch(it->piece){
         case 0:
-            memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n],size/2);
+            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n], 8, 3);
+            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n],size/2);
             if(game->rotationSystem == NRS){
                 if(r % 2 == 1)
                     r = 1;
@@ -1757,7 +1825,8 @@ void showPlaceEffect(){
             }
             break;
         case 1:
-            memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
+            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 3], 8, 3);
+            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
             xoffset = yoffset = -4;
 
             if (game->rotationSystem == ARS && r == 2)
@@ -1768,7 +1837,8 @@ void showPlaceEffect(){
 
             break;
         case 2:
-            memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
+            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 3], 8, 3);
+            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
             xoffset = yoffset = -4;
             flip = true;
 
@@ -1779,12 +1849,14 @@ void showPlaceEffect(){
                 r = (r+2) % 4;
             break;
         case 3:
-            memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+6],size/2);
+            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 6], 8, 3);
+            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+6],size/2);
             yoffset = -4 + (game->rotationSystem == NRS || game-> rotationSystem == ARS) * 8;
             r = 0;
             break;
         case 4:
-            memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
+            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 9], 8, 3);
+            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
             xoffset = -4;
             yoffset = -4;
             if(game->rotationSystem == NRS || game-> rotationSystem == ARS){
@@ -1795,7 +1867,8 @@ void showPlaceEffect(){
             }
             break;
         case 5:
-            memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+12],size/2);
+            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 12], 8, 3);
+            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+12],size/2);
             xoffset = yoffset = -4;
 
             if (game->rotationSystem == ARS && r == 2)
@@ -1805,7 +1878,8 @@ void showPlaceEffect(){
                 r = (r+2) % 4;
             break;
         case 6:
-            memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
+            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 9], 8, 3);
+            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
             xoffset = -4;
             yoffset = -4;
             flip = true;
@@ -1857,11 +1931,13 @@ void showPlaceEffect(){
         y += yoffset - shake * savefile->settings.shake;
 
         it->sprite = &obj_buffer[19+i];
-        obj_unhide(it->sprite,ATTR0_AFF_DBL);
-        obj_set_attr(it->sprite, ATTR0_WIDE | ATTR0_AFF_DBL, ATTR1_SIZE(3) | ATTR1_AFF_ID(7+i), ATTR2_BUILD(650 + 32 * i, (game->zoneTimer != 0)?11:it->piece, 3 - (it->rotating != 0)));
-        obj_set_pos(it->sprite, x, y);
-        obj_aff_identity(&obj_aff_buffer[7+i]);
-        obj_aff_rotscale(&obj_aff_buffer[7+i], ((flip)?-1:1) << 8, 1<<8, - 0x4000 * (r) + spin);
+        sprite_unhide(it->sprite,ATTR0_AFF_DBL);
+        sprite_set_attr(it->sprite, ShapeWide, 3, 650 + 32 * i, (game->zoneTimer != 0)?11:it->piece, 3 - (it->rotating != 0));
+        sprite_enable_affine(it->sprite, 7+i, true);
+        // obj_set_attr(it->sprite, ATTR0_WIDE | ATTR0_AFF_DBL, ATTR1_SIZE(3) | ATTR1_AFF_ID(7+i), ATTR2_BUILD(650 + 32 * i, (game->zoneTimer != 0)?11:it->piece, 3 - (it->rotating != 0)));
+        sprite_set_pos(it->sprite, x, y);
+        // obj_aff_identity(&obj_aff_buffer[7+i]);
+        sprite_rotscale(it->sprite, ((flip)?-1:1) << 8, 1<<8, - 0x4000 * (r) + spin,7+i);
 
         it->timer--;
         it++;
@@ -1876,20 +1952,22 @@ void addPlaceEffect(Tetris::Drop drop){
 }
 
 void hideMinos(){
-    obj_hide(pawnSprite);
-    obj_hide(pawnShadow);
-    obj_hide(holdSprite);
+    sprite_hide(pawnSprite);
+    sprite_hide(pawnShadow);
+    sprite_hide(holdSprite);
 
     for(int i = 0; i < 5; i++)
-        obj_hide(queueSprites[i]);
+        sprite_hide(queueSprites[i]);
 
     for(int i = 0; i < 3; i++)
-        obj_hide(&obj_buffer[19+i]);
+        sprite_hide(&obj_buffer[19+i]);
 
-    obj_hide(&obj_buffer[22]);
+    sprite_hide(&obj_buffer[22]);
 }
 
 void showSpeedMeter(int fill){
+    //TODO:
+    #ifdef GBA
     const int maxLength = 20;
 
     fill *= 2;
@@ -1897,9 +1975,12 @@ void showSpeedMeter(int fill){
     OBJ_ATTR * sprite = &obj_buffer[22];
 
     //set palette
-    memset16(&pal_obj_mem[13*16+1],0x03e0,1); //green
-    memset16(&pal_obj_mem[13*16+2],0x001f,1); //red
-    memset16(&pal_obj_mem[13*16+3],0x4a52,1); //gray
+    setPaletteColor(16 + 13, 1, 0x03e0, 1);
+    setPaletteColor(16 + 13, 2, 0x001f, 1);
+    setPaletteColor(16 + 13, 3, 0x4a52, 1);
+    // memset16(&pal_obj_mem[13*16+1],0x03e0,1); //green
+    // memset16(&pal_obj_mem[13*16+2],0x001f,1); //red
+    // memset16(&pal_obj_mem[13*16+3],0x4a52,1); //gray
 
     //initialize tile with 0s
     TILE *dest;
@@ -1931,11 +2012,12 @@ void showSpeedMeter(int fill){
     obj_set_pos(sprite,35, 139);
     obj_unhide(sprite, 0);
 
+    #endif
 }
 
 void disappear(){
     std::tuple<u8,u8> coords;
-    u16* dest = (u16*)se_mem[25];
+    // u16* dest = (u16*)se_mem[25];
 
     bool found = false;
 
@@ -1945,7 +2027,8 @@ void disappear(){
         int x = std::get<0>(coords);
         int y = std::get<1>(coords);
 
-        dest[(y-20)*32 + x + 10] = 0;
+        clearTiles(25,(y-20)*32 + x + 10,1);
+        // dest[(y-20)*32 + x + 10] = 0;
 
         found = true;
 
@@ -1970,9 +2053,11 @@ void showZoneMeter(){
 
     OBJ_ATTR * sprite = &obj_buffer[23];
 
-    obj_set_attr(sprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2),ATTR2_BUILD(256 + 3, 15, 0));
-    obj_set_pos(sprite, 14 + (push < 0) * push, 74);
-    obj_unhide(sprite,0);
+    sprite_set_attr(sprite, ShapeSquare, 2, 256 + 3, 15, 0);
+    sprite_enable_mosaic(sprite);
+    // obj_set_attr(sprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2),ATTR2_BUILD(256 + 3, 15, 0));
+    sprite_set_pos(sprite, 14 + (push < 0) * push, 74);
+    sprite_unhide(sprite,0);
 
     const int color = 0x7fff;
     const int anticolor = 0x0c63;
@@ -1989,16 +2074,21 @@ void showZoneMeter(){
 
     for(int i = 0; i < 12; i++){
         if(i < n && n <= 2 && !game->zoneTimer)
-            memset16(&pal_obj_mem[15*16 + 4 + i], disabled , 1);
+            setPaletteColor(15 + 16, 4+i, disabled, 1);
+            // memset16(&pal_obj_mem[15*16 + 4 + i], disabled , 1);
         else if (i < n)
-            memset16(&pal_obj_mem[15*16 + 4 + i], color , 1);
+            setPaletteColor(15 + 16, 4+i, color, 1);
+            // memset16(&pal_obj_mem[15*16 + 4 + i], color , 1);
         else
-            memset16(&pal_obj_mem[15*16 + 4 + i], anticolor , 1);
+            setPaletteColor(15 + 16, 4+i, anticolor, 1);
+            // memset16(&pal_obj_mem[15*16 + 4 + i], anticolor , 1);
     }
 
 }
 
 void zoneFlash(){
+    //TODO:
+    #ifdef GBA
 
     if(!eventPauseTimer && game->gameMode == MARATHON)
         rainbowPalette();
@@ -2031,6 +2121,7 @@ void zoneFlash(){
         else
             memset16(pal_bg_mem, 0x5ad6, 1);//background gray
     }
+    #endif
 }
 
 void resetZonePalette(){
@@ -2043,18 +2134,22 @@ void resetZonePalette(){
     setPalette();
     setClearEffect();
 
-    mmSetModuleTempo(1024);
-    mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
+    setMusicTempo(1024);
+    setMusicVolume(512 * ((float)savefile->settings.volume / 10));
+    // mmSetModuleTempo(1024);
 
-    memcpy16(&tile_mem[0][4],sprite5tiles_bin,16);
+    loadTiles(0, 4, sprite5tiles_bin, 1);
+    // memcpy16(&tile_mem[0][4],sprite5tiles_bin,16);
 
     if(game->lost)
         return;
 
-    u16 * dest = (u16*) &se_mem[26];
+    // u16 * dest = (u16*) &se_mem[26];
     for(int i = 0; i < 20; i++){
-        dest[i * 32 + 9] = 4 + 0x8000;
-        dest[i * 32 + 20] = 4 + 0x8400;
+        setTile(26, 9, i, tileBuild(4, false, false, 8));
+        setTile(26, 20, i, tileBuild(4, true, false, 8));
+        // dest[i * 32 + 9] = 4 + 0x8000;
+        // dest[i * 32 + 20] = 4 + 0x8400;
     }
 
     if(!eventPauseTimer)
@@ -2065,21 +2160,25 @@ void showFinesseCombo(){
     OBJ_ATTR * sprite = &obj_buffer[24];
 
     if(game->rotationSystem != SRS || game->finesseStreak < 3){
-        obj_hide(sprite);
+        sprite_hide(sprite);
         return;
     }
 
-    obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(0),ATTR2_BUILD(275, 15, 0));
-    obj_set_pos(sprite, 52, 104);
-    obj_unhide(sprite,0);
+    sprite_set_attr(sprite, ShapeWide, 0, 275, 15, 0);
+    // obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(0),ATTR2_BUILD(275, 15, 0));
+    sprite_set_pos(sprite, 52, 104);
+    sprite_unhide(sprite,0);
 
-    memset32(&tile_mem[4][275],0x0000, 8 * 2);
+    clearSpriteTiles(275, 2, 1);
+    // memset32(&tile_mem[4][275],0x0000, 8 * 2);
 
     std::string text = "x" + std::to_string(game->finesseStreak);
     aprintsSprite(text,0,0,275);
 }
 
 void frameSnow(){
+    //TODO:
+    #ifdef GBA
     const int fillAmount = 20;
 
     TILE * t = (TILE *) sprite5tiles_bin;
@@ -2112,9 +2211,12 @@ void frameSnow(){
     dest2[i * 32 + 9] = 46;
     dest2[i * 32 + 20] = 46 + 0x400;
 
+    #endif
 }
 
 void rainbowPalette(){
+    //TODO:
+    #ifdef GBA
     int n = (rainbowTimer >> 3) + 24;
 
     int color = 0;
@@ -2152,9 +2254,12 @@ void rainbowPalette(){
             clr_adj_brightness(&pal_obj_mem[10 * 16+1], (COLOR*)rainbow, 4, float2fx(0.25));
     }
     memcpy16(&pal_obj_mem[11*16+1],rainbow,4);
+    #endif
 }
 
 void showZoneText(){
+    //TODO:
+    #ifdef GBA
     if(game->zonedLines == 0 || !savefile->settings.floatText)
         return;
 
@@ -2181,6 +2286,7 @@ void showZoneText(){
         memcpy16(&pal_bg_mem[13 * 16 + 2 ],pal[1],2);
 
     aprintColor(text, 15 - text.size()/2, height , 2);
+    #endif
 }
 
 static FIXED creditCurrentHeight = int2fx(SCREEN_HEIGHT);
@@ -2191,6 +2297,8 @@ const FIXED creditSpeed = float2fx(0.6);
 const int creditSpace = 200;
 
 void setupCredits(){
+    //TODO:
+    #ifdef GBA
     creditCurrentHeight = int2fx(SCREEN_HEIGHT);
     creditIndex = 0;
     creditLastRead = 0;
@@ -2225,9 +2333,12 @@ void setupCredits(){
     for(int i = 0; i < 9; i++){
         wordSprites[i]->priority = 3;
     }
+    #endif
 }
 
 void showCredits(){
+    //TODO:
+    #ifdef GBA
 
     creditCurrentHeight -= creditSpeed;
 
@@ -2250,6 +2361,7 @@ void showCredits(){
 
     if(fx2int(creditCurrentHeight) <= -32)
         creditRefresh = true;
+    #endif
 }
 
 void refreshCredits(){
@@ -2298,20 +2410,23 @@ void showFullMeter(){
     if(game->zoneCharge != 32){
         if(fullMeterTimer < fullMeterAnimationLength){
             fullMeterTimer = 0;
-            memcpy32(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
+            loadSpriteTiles(256+3, meterTiles[0], 4, 4);
+            // memcpy32(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
         }
         return;
     }
 
     if(--fullMeterTimer <= 0){
         fullMeterTimer = fullMeterTimerMax;
-        memcpy32(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
+        loadSpriteTiles(256+3, meterTiles[0], 4, 4);
+        // memcpy32(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
         return;
     }
 
     if(fullMeterTimer < fullMeterAnimationLength){
-        int n = 2 - (fullMeterTimer/(fullMeterAnimationLength/3));
-        memcpy32(&tile_mem[4][256+3],meterTiles[n+1],meter1_tiles_bin_size/4);
+    int n = 2 - (fullMeterTimer/(fullMeterAnimationLength/3));
+        loadSpriteTiles(256+3, meterTiles[n+1], 4, 4);
+        // memcpy32(&tile_mem[4][256+3],meterTiles[n+1],meter1_tiles_bin_size/4);
     }
 }
 
@@ -2346,6 +2461,8 @@ void liftKeys(){
 }
 
 void journeyFlash(){
+    //TODO:
+    #ifdef GBA
 
     if(flashTimer == flashTimerMax){
         if(previousPalette != nullptr)
@@ -2375,6 +2492,7 @@ void journeyFlash(){
         else
             memset16(pal_bg_mem, 0x5ad6, 1);//background gray
     }
+    #endif
 }
 
 // void journeyFlash(){

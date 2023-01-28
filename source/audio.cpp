@@ -1,4 +1,4 @@
-// #include "def.h"
+#include "def.h"
 // #include "maxmod.h"
 // #include "soundbank_bin.h"
 
@@ -33,3 +33,17 @@
 
 //     mmInit( &mySystem );
 // }
+
+#ifdef PC
+
+// #include <SDL2/SDL.h>
+
+// SDL_AudioSpec wavSpec;
+
+// void audioInit(){
+//     SDL_AudioDeviceID deviceId = SDL_OpenAudioDevice(NULL,0,&wavSpec, NULL, 0);
+// }
+
+
+
+#endif

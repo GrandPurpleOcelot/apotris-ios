@@ -1,4 +1,6 @@
 #include "def.h"
+
+#ifdef GBA
 #include "flashSaves.h"
 #include "LinkConnection.h"
 #include "logging.h"
@@ -350,4 +352,5 @@ void save_sram_flash()
 
 	aprint("   Saved!",21,19);//spaces necessary to "erase" the previous text
 }
+#endif
 #endif

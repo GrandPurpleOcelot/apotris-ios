@@ -30,6 +30,8 @@ Game *botGame;
 
 int botIncomingHeight = 0;
 void handleMultiplayer() {
+    //TODO:
+    #ifdef GBA
     if (!multiplayer)
         return;
     if (multiplayerStartTimer) {
@@ -136,10 +138,13 @@ void handleMultiplayer() {
             multiplayer = false;
         }
     }
+    #endif
 }
 
 void startMultiplayerGame(int seed) {
-    memset32(&tile_mem[5][256], 0, 8 * 8);
+    clearSpriteTiles(512 + 256, 2,4);
+
+    // memset32(&tile_mem[5][256], 0, 8 * 8);
 
     for (int i = 0; i < 20; i++)
         for (int j = 0; j < 10; j++)
@@ -151,23 +156,31 @@ void startMultiplayerGame(int seed) {
     game->setTuning(getTuning());
     game->setGoal(100);
     multiplayer = true;
-    linkConnection->send(50);
+
+    //TODO:
+    //linkConnection->send(50);
     nextSeed = 0;
 }
 
 void drawEnemyBoard(int height) {
 
     enemyBoardSprite = &obj_buffer[25];
-    obj_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
-    obj_set_attr(enemyBoardSprite, ATTR0_TALL | ATTR0_AFF_DBL, ATTR1_SIZE(2) | ATTR1_AFF_ID(6), 0);
-    enemyBoardSprite->attr2 = ATTR2_BUILD(768, 15, 1);
-    obj_set_pos(enemyBoardSprite, 43, 24);
-    obj_aff_identity(&obj_aff_buffer[6]);
-    obj_aff_scale(&obj_aff_buffer[6], float2fx(0.5), float2fx(0.5));
+    sprite_set_attr(enemyBoardSprite, ShapeTall, 2, 768, 15, 1);
+    sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
+    sprite_enable_affine(enemyBoardSprite, 6, true);
+    // obj_set_attr(enemyBoardSprite, ATTR0_TALL | ATTR0_AFF_DBL, ATTR1_SIZE(2) | ATTR1_AFF_ID(6), 0);
+    // enemyBoardSprite->attr2 = ATTR2_BUILD(768, 15, 1);
+    sprite_set_pos(enemyBoardSprite, 43, 24);
+    sprite_set_size(enemyBoardSprite, float2fx(0.5), 6);
+    // obj_aff_identity(&obj_aff_buffer[6]);
+    // obj_aff_scale(&obj_aff_buffer[6], float2fx(0.5), float2fx(0.5));
 
     if (height > 19)
         return;
 
+
+    //TODO:
+    #ifdef GBA
     TILE* dest2;
 
     for (int j = 0; j < 10; j++) {
@@ -178,6 +191,7 @@ void drawEnemyBoard(int height) {
         else
             dest2->data[(height) % 8] &= ~(0xffff << ((j % 8) * 4));
     }
+    #endif
 }
 
 int botClearTimer = 0;

@@ -31,33 +31,37 @@ const std::list<SaveChange> saveChanges = {
     SaveChange(0x50,3120,4096),// add zone + buffer to scoreboards
 };
 
-void saveToSram() {
-    addStats();
+// void saveToSram() {
+//     //TODO:
+//     #ifdef GBA
+//     addStats();
 
-    volatile u8* sf = (volatile u8*)sram_mem;
+//     volatile u8* sf = (volatile u8*)sram_mem;
 
-    u8* arr = (u8*)savefile;
+//     u8* arr = (u8*)savefile;
 
-    for (int i = 0; i < (int)sizeof(Save); i++)
-        sf[i] = (u8)arr[i];
+//     for (int i = 0; i < (int)sizeof(Save); i++)
+//         sf[i] = (u8)arr[i];
 
-    if(ENABLE_FLASH_SAVE)
-        save_sram_flash();
-}
+//     if(ENABLE_FLASH_SAVE)
+//         save_sram_flash();
+//     #endif
+// }
 
-void loadFromSram() {
-    volatile u8* sf = (volatile u8*)sram_mem;
-
-    u8* arr = (u8*)savefile;
-
-    for (int i = 0; i < (int)sizeof(Save); i++)
-        arr[i] = (u8)sf[i];
-}
+// void loadFromSram() {
+//     //TODO:
+//     #ifdef GBA
+//     #endif
+// }
 
 void loadSave() {
+    //TODO:
     delete savefile;
     savefile = new Save();
-    loadFromSram();
+    loadSavefile();
+    // #ifdef GBA
+    // loadFromSram();
+    // #endif
 
     const int pmSettings = 540;
     const int pmSave = 3876;
@@ -172,7 +176,10 @@ void loadSave() {
     sqran(sum);
 
     savefile->seed = qran();
-    saveToSram();
+    saveSavefile();
+    // #ifdef GBA
+    // saveToSram();
+    // #endif
 }
 
 void setDefaultKeys(){
@@ -415,7 +422,7 @@ void setDefaultGraphics(Save *save, int depth){
     if(depth < 2){
         save->settings.edges = true;
         save->settings.backgroundGrid = 5;
-        save->settings.skin = 11;
+        save->settings.skin = 2;
         save->settings.palette = 5;
         save->settings.shadow = 3;
         save->settings.lightMode = false;

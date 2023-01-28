@@ -1,3 +1,5 @@
+#include "sprites.h"
+
 #include "small1tiles_bin.h"
 #include "small2tiles_bin.h"
 #include "small3tiles_bin.h"
@@ -82,6 +84,7 @@ const uint8_t * classicTiles[2][8] = {
                 classic16tiles_bin,
         }
 };
+
 
 const uint16_t nesPalette[10][4] __attribute__((aligned(4)))= {
         {0x0421,0x7d60,0x7ee7,0x7fff},

@@ -232,7 +232,7 @@ public:
 #define SHOW_FINESSE 1
 #define DIAGNOSE 1
 #define SAVE_TAG 0x50
-#define ENABLE_BOT 1
+#define ENABLE_BOT 0
 
 #define ENABLE_FLASH_SAVE 1
 
@@ -303,7 +303,7 @@ extern void showFinesseCombo();
 extern void showTimer();
 extern void setGradient(int);
 extern void setDefaultGradient();
-extern void gradient(bool state);
+extern void gradient(int state);
 extern std::string timeToString(int);
 extern void setDefaultGraphics(Save * save, int depth);
 extern void showCredits();
@@ -318,6 +318,7 @@ extern void startGame();
 extern void startBotGame(int seed);
 extern int countBits(u16 n);
 extern int countTransitions(u16 a);
+extern void addStats();
 
 extern Tetris::Game *game;
 extern Tetris::Game *quickSave;

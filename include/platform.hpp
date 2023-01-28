@@ -52,26 +52,32 @@ extern void loadTiles (int tileset, int index, const void * src, int count);
 extern void loadTiles8(int tileset, int index, const void * src, int count);
 
 extern void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY);
+extern void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY);
 
 // extern void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src);
 
 extern void setPaletteColor(int palette, int index, int color, int count);
 
+extern void sprite_set_id(OBJ_ATTR * sprite,int id);
 extern void sprite_hide(OBJ_ATTR * sprite);
 extern void sprite_unhide(OBJ_ATTR * sprite, int mode);
 extern void sprite_set_pos(OBJ_ATTR * sprite, int x, int y);
 extern void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int palette, int priority);
+extern void sprite_enable_mosaic(OBJ_ATTR * sprite);
+extern void sprite_enable_affine(OBJ_ATTR * sprite,int affineId, bool doubleSize);
+extern void sprite_set_size(OBJ_ATTR * sprite, FIXED size, int aff_id);
+extern void sprite_rotscale(OBJ_ATTR * sprite, FIXED sizex, FIXED sizey, int angle , int aff_id);
 
 extern void setLayerScroll(int layer, int x, int y);
 
 extern void clearTilemap(int tilemap);
+extern void clearTilemapEntries(int tilemap, int index, int count);
+extern void clearTiles(int tileset, int index, int count);
 extern void clearSpriteTiles(int index, int lengthX, int lengthY);
+extern void clearSpriteTile(int index, int tx, int ty, int width);
+extern void setTiles(int tilemap, int index, int count, u32 value);
 
-extern void enableLayerBlend(int layer);
-
-extern void sprite_enable_mosaic(OBJ_ATTR * sprite);
-extern void sprite_enable_affine(OBJ_ATTR * sprite,int affineId, bool doubleSize);
-extern void sprite_set_size(OBJ_ATTR * sprite, FIXED size, int aff_id);
+extern void enableBlend(int info);
 
 extern void color_fade_palette(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha);
 extern void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha);
@@ -85,6 +91,7 @@ extern void sfx(int sound);
 extern void sfxRate(int sound, float rate);
 
 extern void stopDMA();
+extern void toggleHBlank(bool state);
 
 extern void setMosaic(int sx ,int sy);
 
@@ -92,7 +99,7 @@ extern u16 gradientTable[SCREEN_HEIGHT + 1];
 
 class Scene{
 public:
-    virtual void draw();
+    virtual void draw() = 0;
 
     Scene(){};
     virtual ~Scene(){};
@@ -104,3 +111,11 @@ extern void setMusicTempo(int tempo);
 extern void setMusicVolume(int volume);
 extern void setSFXVolume(int volume);
 extern void startSong(int song, bool loop);
+extern void stopSong();
+extern void pauseSong();
+extern void resumeSong();
+
+extern void loadSavefile();
+extern void saveSavefile();
+
+extern s16 sinLut(int angle);

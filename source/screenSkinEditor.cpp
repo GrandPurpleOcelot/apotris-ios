@@ -15,7 +15,7 @@
 #include <tuple>
 #include <algorithm>
 
-#include "soundbank.h"
+// #include "soundbank.h"
 #include "tetrisEngine.h"
 
 const int xoffset = 15-8;
@@ -31,8 +31,8 @@ public:
         int sx = (x+mini) * 16 + xoffset * 8;
         int sy = (y+mini) * 16 + yoffset * 8;
 
-        obj_set_pos(sprite,sx,sy);
-        obj_unhide(sprite,0);
+        sprite_set_pos(sprite,sx,sy);
+        sprite_unhide(sprite,0);
     }
 
     bool move(int dx, int dy,bool mini){
@@ -61,7 +61,9 @@ public:
 
     Cursor(){
         sprite = &obj_buffer[0];
-        obj_set_attr(sprite,ATTR0_SQUARE,ATTR1_SIZE(1),ATTR2_BUILD(712, 15, 0));
+        sprite_set_attr(sprite, ShapeSquare, 1, 712, 15, 0);
+
+        // obj_set_attr(sprite,ATTR0_SQUARE,ATTR1_SIZE(1),ATTR2_BUILD(712, 15, 0));
     }
 };
 
@@ -162,42 +164,62 @@ class Board{
         }
 
         void show(bool mini){
-            u16* dest = (u16*) &se_mem[25];
+            // u16* dest = (u16*) &se_mem[25];
 
             for(int i = 0; i < 8; i++){
-                int y = ((i * 2)+yoffset) * 32;
+                int y = ((i * 2)+yoffset);
                 for(int j = 0; j < 8; j++){
                     int x = j * 2 + xoffset;
                     if(!mini){
                         if(board[i][j] != 0){
                             int n = board[i][j] + 100 - (board[i][j] == 6);
-                            dest[y+x] = n;
-                            dest[y+x+1] = n;
-                            dest[y+32+x] = n;
-                            dest[y+32+x+1] = n;
+                            setTile(25, x, y, tileBuild(n, false, false, 0));
+                            setTile(25, x+1, y, tileBuild(n, false, false, 0));
+                            setTile(25, x, y+1, tileBuild(n, false, false, 0));
+                            setTile(25, x+1, y+1, tileBuild(n, false, false, 0));
+                            // dest[y+x] = n;
+                            // dest[y+x+1] = n;
+                            // dest[y+32+x] = n;
+                            // dest[y+32+x+1] = n;
                         }else{
-                            dest[y+x] = 0xf06a;
-                            dest[y+x+1] = 0xf06b;
-                            dest[y+32+x] = 0xf06c;
-                            dest[y+32+x+1] = 0xf06d;
+                            setTile(25, x, y, tileBuild(0x6a, false, false, 15));
+                            setTile(25, x+1, y, tileBuild(0x6b, false, false, 15));
+                            setTile(25, x, y+1, tileBuild(0x6c, false, false, 15));
+                            setTile(25, x+1, y+1, tileBuild(0x6c, false, false, 15));
+                            // dest[y+x] = 0xf06a;
+                            // dest[y+x+1] = 0xf06b;
+                            // dest[y+32+x] = 0xf06c;
+                            // dest[y+32+x+1] = 0xf06d;
                         }
                     }else{
                         if(i == 0 || j == 0 || i > 6 || j > 6){
-                            dest[y+x] = 0;
-                            dest[y+x+1] = 0;
-                            dest[y+32+x] = 0;
-                            dest[y+32+x+1] = 0;
+                            setTile(25, x, y, 0);
+                            setTile(25, x+1, y, 0);
+                            setTile(25, x, y+1, 0);
+                            setTile(25, x+1, y+1, 0);
+                            // dest[y+x] = 0;
+                            // dest[y+x+1] = 0;
+                            // dest[y+32+x] = 0;
+                            // dest[y+32+x+1] = 0;
                         }else if(board[i-1][j-1] != 0){
                             int n = board[i-1][j-1] + 100 - (board[i-1][j-1] == 6);
-                            dest[y+x] = n;
-                            dest[y+x+1] = n;
-                            dest[y+32+x] = n;
-                            dest[y+32+x+1] = n;
+                            setTile(25, x, y, tileBuild(n, false, false, 0));
+                            setTile(25, x+1, y, tileBuild(n, false, false, 0));
+                            setTile(25, x, y+1, tileBuild(n, false, false, 0));
+                            setTile(25, x+1, y+1, tileBuild(n, false, false, 0));
+                            // dest[y+x] = n;
+                            // dest[y+x+1] = n;
+                            // dest[y+32+x] = n;
+                            // dest[y+32+x+1] = n;
                         }else{
-                            dest[y+x] = 0xf06a;
-                            dest[y+x+1] = 0xf06b;
-                            dest[y+32+x] = 0xf06c;
-                            dest[y+32+x+1] = 0xf06d;
+                            setTile(25, x, y, tileBuild(0x6a, false, false, 15));
+                            setTile(25, x+1, y, tileBuild(0x6b, false, false, 15));
+                            setTile(25, x, y+1, tileBuild(0x6c, false, false, 15));
+                            setTile(25, x+1, y+1, tileBuild(0x6c, false, false, 15));
+                            // dest[y+x] = 0xf06a;
+                            // dest[y+x+1] = 0xf06b;
+                            // dest[y+32+x] = 0xf06c;
+                            // dest[y+32+x+1] = 0xf06d;
                         }
                     }
                 }
@@ -276,26 +298,33 @@ void skinEditor(){
     EditorScene * s = new EditorScene();
     changeScene(s);
 
+
     onMini = false;
     gradient(false);
-    memset16(&pal_bg_mem[0],0,1);
-    memset16(&se_mem[27], 0x0000, 32 * 20);
-    REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(2);
+    setPaletteColor(0, 0, 0, 1);
+    clearTilemap(27);
+    // memset16(&pal_bg_mem[0],0,1);
+    // memset16(&se_mem[27], 0x0000, 32 * 20);
+    buildBG(3, 0, 27, 0, 2, 0);
+    // REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(2);
 
-    u16* dest = (u16*) &se_mem[26];
+    // u16* dest = (u16*) &se_mem[26];
 
     for(int i = 0; i < 32; i++)
         for(int j = 0; j < 20; j++)
-            *dest++ = 2 * (!savefile->settings.lightMode);
+            setTile(26,i,j,2 * !(savefile->settings.lightMode));
+            // *dest++ = 2 * (!savefile->settings.lightMode);
 
-    if(game->gameMode == Tetris::CLASSIC){
+
+    if(game != nullptr && game->gameMode == Tetris::CLASSIC){
         game->gameMode = Tetris::SPRINT;
         setSkin();
     }
 
-    while(true){
+    while(closed()){
 
-        memcpy16(&tile_mem[5][216],sprite35tiles_bin,sprite35tiles_bin_size/2);
+        loadSpriteTiles(512 + 216, sprite35tiles_bin, 2, 2);
+        // memcpy16(&tile_mem[5][216],sprite35tiles_bin,sprite35tiles_bin_size/2);
         setPalette();
 
         if(selector())
@@ -303,15 +332,23 @@ void skinEditor(){
 
         onMini = false;
 
-        REG_DISPCNT |= DCNT_BG3;
+        // REG_DISPCNT |= DCNT_BG3;
+        toggleBG(3, true);
         clearText();
 
-        memcpy16(&tile_mem[0][106],sprite34tiles_bin,sprite34tiles_bin_size/2);
+        loadTiles(0, 106, sprite34tiles_bin, 4);
 
-        memcpy16(&tile_mem[5][200],sprite29tiles_bin,sprite29tiles_bin_size/2);
-        memcpy16(&tile_mem[5][204],sprite31tiles_bin,sprite31tiles_bin_size/2);
-        memcpy16(&tile_mem[5][208],sprite32tiles_bin,sprite32tiles_bin_size/2);
-        memcpy16(&tile_mem[5][212],sprite33tiles_bin,sprite33tiles_bin_size/2);
+        loadSpriteTiles(512 + 200, sprite29tiles_bin, 2,2);
+        loadSpriteTiles(512 + 204, sprite31tiles_bin, 2,2);
+        loadSpriteTiles(512 + 208, sprite32tiles_bin, 2,2);
+        loadSpriteTiles(512 + 212, sprite33tiles_bin, 2,2);
+
+        // memcpy16(&tile_mem[0][106],sprite34tiles_bin,sprite34tiles_bin_size/2);
+
+        // memcpy16(&tile_mem[5][200],sprite29tiles_bin,sprite29tiles_bin_size/2);
+        // memcpy16(&tile_mem[5][204],sprite31tiles_bin,sprite31tiles_bin_size/2);
+        // memcpy16(&tile_mem[5][208],sprite32tiles_bin,sprite32tiles_bin_size/2);
+        // memcpy16(&tile_mem[5][212],sprite33tiles_bin,sprite33tiles_bin_size/2);
 
         generateTiles();
 
@@ -337,9 +374,9 @@ void skinEditor(){
 
         u8 timer = 0;
 
-        while(true){
+        while(closed()){
             canDraw = true;
-            VBlankIntrWait();
+            vsync();
             key_poll();
 
             int dx = 0;
@@ -506,39 +543,54 @@ void skinEditor(){
             showColorPalette(currentColor);
             showTools(currentTool);
 
-            oam_copy(oam_mem, obj_buffer, 32);
+            showSprites(32);
+            // oam_copy(oam_mem, obj_buffer, 32);
         }
 
         // for(int i = 0; i < 8; i++)
         //     savefile->customSkins[skinIndex].board.data[i] = customSkin->data[i];
         refreshSkin();
 
-        memset16(&tile_mem[5][200],0,64*4);
+        clearSpriteTiles(712, 16, 1);
+        clearSprites(128);
+        showSprites(128);
+        clearTilemap(25);
 
-        oam_init(obj_buffer,128);
-        oam_copy(oam_mem, obj_buffer, 128);
-        memset16(&se_mem[25], 0x0000, 32 * 20);
+        // memset16(&tile_mem[5][200],0,64*4);
+        // oam_init(obj_buffer,128);
+        // oam_copy(oam_mem, obj_buffer, 128);
+        // memset16(&se_mem[25], 0x0000, 32 * 20);
         clearText();
-        REG_DISPCNT &= ~DCNT_BG3;
+        toggleBG(3, false);
+        // REG_DISPCNT &= ~DCNT_BG3;
 
         delete customSkin;
     }
 
     //clean up
-    oam_init(obj_buffer,128);
-    oam_copy(oam_mem, obj_buffer, 128);
-    memset16(&tile_mem[5][200],0,64*4);
+    clearSpriteTiles(712, 16, 1);
+    clearSprites(128);
+    showSprites(128);
+    clearTilemap(25);
+    clearTilemap(26);
+    clearTilemap(27);
+    // oam_init(obj_buffer,128);
+    // oam_copy(oam_mem, obj_buffer, 128);
+    // memset16(&tile_mem[5][200],0,64*4);
 
     gradient(true);
-    memset16(&se_mem[25], 0x0000, 32 * 20);
-    memset16(&se_mem[26], 0x0000, 32 * 20);
-    memset16(&se_mem[27], 0x0000, 32 * 20);
+    // memset16(&se_mem[25], 0x0000, 32 * 20);
+    // memset16(&se_mem[26], 0x0000, 32 * 20);
+    // memset16(&se_mem[27], 0x0000, 32 * 20);
     drawUIFrame(0, 0, 30, 20);
-    REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(3);
-    REG_BG3VOFS = 0;
-    REG_BG3HOFS = 0;
+    buildBG(3, 0, 27, 0, 3, 0);
+    setLayerScroll(3, 0, 0);
+    // REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(3);
+    // REG_BG3VOFS = 0;
+    // REG_BG3HOFS = 0;
 
-    memset32(&tile_mem[2][110],0,8 * 400);
+    clearTiles(2,110,400);
+    // memset32(&tile_mem[2][110],0,8 * 400);
     TitleScene* newScene = new TitleScene();
     changeScene(newScene);
 }
@@ -558,17 +610,21 @@ int selector(){
     for(int i = 0; i < 5; i++){
         OBJ_ATTR * sprite = &obj_buffer[i+1];
 
-        memcpy16(&tile_mem[5][200+i],&savefile->customSkins[i].board,16);
+        loadSpriteTiles(512 + 200 + i, &savefile->customSkins[i].board, 1, 1);
+        // memcpy16(&tile_mem[5][200+i],&savefile->customSkins[i].board,16);
 
-        obj_set_attr(sprite, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(712+i, 5, 0));
-        obj_set_pos(sprite,(4+i*5)*8 + 4,(slotHeight * 8) + 12);
-        obj_unhide(sprite,0);
+        sprite_set_attr(sprite, ShapeSquare, 0, 712+i, 5, 0);
+        // obj_set_attr(sprite, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(712+i, 5, 0));
+        sprite_set_pos(sprite,(4+i*5)*8 + 4,(slotHeight * 8) + 12);
+        sprite_unhide(sprite,0);
     }
 
-    oam_copy(oam_mem, obj_buffer, 32);
+    showSprites(32);
+    // oam_copy(oam_mem, obj_buffer, 32);
 
-    while(1){
-        VBlankIntrWait();
+    while(closed()){
+        vsync();
+        // VBlankIntrWait();
         key_poll();
 
         aprintColor(" C1   C2   C3   C4   C5 ",3, slotHeight, 1);
@@ -660,7 +716,8 @@ void generateTiles(){
         for(int j = 0; j < 8; j++)
             t->data[j] = n;
 
-        memcpy16(&tile_mem[0][100+i],t,16);
+        loadTiles(0, 100+i, t, 1);
+        // memcpy16(&tile_mem[0][100+i],t,16);
     }
 
     delete t;
@@ -672,37 +729,43 @@ void generateTiles(){
 }
 
 void showColorPalette(int c){
-    u16* dest = (u16*) &se_mem[27];
+    // u16* dest = (u16*) &se_mem[27];
 
     for(int i = 0; i < 3; i++){
         for(int j = 0; j < 8; j++){
             if(i == 1){
                 if(j > 0 && j < 7)
-                    *dest++ = 100 + j - 1;
+                    setTile(27, j, i, tileBuild(100+j-1, false, false, 0));
+                    // *dest++ = 100 + j - 1;
                 else
-                    *dest++ = 27 + 0x400 * (j == 7) + 0x6000;
+                    setTile(27, j, i, tileBuild(27, (j==7), false, 6));
+                    // *dest++ = 27 + 0x400 * (j == 7) + 0x6000;
             }else{
                 if(j > 0 && j < 7)
-                    *dest++ = 28 + 0x800 * (i == 2) + 0x6000;
+                    setTile(27, j, i, tileBuild(28, false, (i==2), 6));
+                    // *dest++ = 28 + 0x800 * (i == 2) + 0x6000;
                 else
-                    *dest++ = 29 + 0x400 * (j == 7) + 0x800 * (i == 2) + 0x6000;
+                    setTile(27, j, i, tileBuild(29, (j==7), (i==2), 6));
+                    // *dest++ = 29 + 0x400 * (j == 7) + 0x800 * (i == 2) + 0x6000;
 
             }
         }
 
-        dest+=32-8;
+        // dest+=32-8;
     }
 
     aprint("      ",0,1);
 
-    REG_BG3VOFS = 4;
-    REG_BG3HOFS = 4;
+    setLayerScroll(3, 4, 4);
+    // REG_BG3VOFS = 4;
+    // REG_BG3HOFS = 4;
 
     OBJ_ATTR * sprite = &obj_buffer[11];
 
-    obj_set_attr(sprite,ATTR0_SQUARE,ATTR1_SIZE(1),ATTR2_BUILD(512 + 216, 15, 0));
-    obj_set_pos(sprite,3+c*8,3);
-    obj_unhide(sprite,0);
+    sprite_set_attr(sprite, ShapeSquare, 1, 512 + 216, 15, 0);
+    // obj_set_attr(sprite,ATTR0_SQUARE,ATTR1_SIZE(1),ATTR2_BUILD(512 + 216, 15, 0));
+    sprite_set_pos(sprite,3+c*8,3);
+    sprite_unhide(sprite,0);
 }
 
 void showTools(int c){
@@ -710,20 +773,22 @@ void showTools(int c){
 
     for(int i = 0; i < 3; i++){
         sprites[i] = &obj_buffer[i+8];
-        obj_set_attr(sprites[i], ATTR0_SQUARE, ATTR1_SIZE(1), ATTR2_BUILD(716 + i * 4, 15, 2));
+        sprite_set_attr(sprites[i], ShapeSquare, 1, 716 + i * 4, 15, 2);
+        // obj_set_attr(sprites[i], ATTR0_SQUARE, ATTR1_SIZE(1), ATTR2_BUILD(716 + i * 4, 15, 2));
 
         int offset = 0;
 
         if(i == c){
             aprint("<",3,4+i*2);
 
-            offset = ((sin_lut[toolTimer]*2)>>12);
+            //TODO:
+            // offset = ((sin_lut[toolTimer]*2)>>12);
 
         } else
             aprint(" ",3,4+i*2);
 
-        obj_set_pos(sprites[i],4,32+(i*16) - 4 + offset);
-        obj_unhide(sprites[i],0);
+        sprite_set_pos(sprites[i],4,32+(i*16) - 4 + offset);
+        sprite_unhide(sprites[i],0);
     }
 
     toolTimer+=6;
@@ -735,17 +800,19 @@ void showTools(int c){
 void showMinos(){
 
     for(int i = 0; i < 7; i++){
-    OBJ_ATTR *sprite = &obj_buffer[i+1];
+        OBJ_ATTR *sprite = &obj_buffer[i+1];
 
         if(!onMini){
-            obj_set_attr(sprite, ATTR0_SQUARE, ATTR1_SIZE(2), ATTR2_BUILD(16 * i, i, 2));
-            obj_unhide(sprite,0);
+            sprite_set_attr(sprite, ShapeSquare, 2, 16 * i, i, 2);
+            // obj_set_attr(sprite, ATTR0_SQUARE, ATTR1_SIZE(2), ATTR2_BUILD(16 * i, i, 2));
+            sprite_unhide(sprite,0);
         }else{
-            obj_unhide(sprite, 0);
-            obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(2), ATTR2_BUILD(9 * 16 + 8 * i, i, 3));
+            sprite_unhide(sprite, 0);
+            sprite_set_attr(sprite, ShapeWide, 2, 9 * 16 + 8 * i, i, 3);
+            // obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(2), ATTR2_BUILD(9 * 16 + 8 * i, i, 3));
             // obj_set_pos(sprite, 192, i * 24 + 4);
         }
-        obj_set_pos(sprite,208 - (4-onMini) * (i == 0 || i == 3),i * 24 - 4);
+        sprite_set_pos(sprite,208 - (4-onMini) * (i == 0 || i == 3),i * 24 - 4);
     }
 }
 
@@ -771,9 +838,11 @@ void showCursor(){
     const int animationLength = 32;
 
     if(cursorTimer < animationLength/2){
-        memcpy16(&tile_mem[5][200],sprite29tiles_bin,sprite29tiles_bin_size/2);
+        loadSpriteTiles(512+200, sprite29tiles_bin, 2, 2);
+        // memcpy16(&tile_mem[5][200],sprite29tiles_bin,sprite29tiles_bin_size/2);
     }else{
-        memcpy16(&tile_mem[5][200],sprite30tiles_bin,sprite30tiles_bin_size/2);
+        loadSpriteTiles(512+200, sprite30tiles_bin, 2, 2);
+        // memcpy16(&tile_mem[5][200],sprite30tiles_bin,sprite30tiles_bin_size/2);
         if(cursorTimer >= animationLength-1)
             cursorTimer = 0 ;
     }
@@ -785,9 +854,10 @@ void showMini(){
 
         // int n = savefile->customSkins[skinIndex].previewStyle;
 
-        obj_unhide(sprite, 0);
-        obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(2), ATTR2_BUILD(9 * 16 + 8 * i, i, 3));
-        obj_set_pos(sprite, 192, i * 24 + 4);
+        sprite_unhide(sprite, 0);
+        sprite_set_attr(sprite, ShapeWide, 2, 9*16 + 8*i, i, 3);
+        // sprite_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(2), ATTR2_BUILD(9 * 16 + 8 * i, i, 3));
+        sprite_set_pos(sprite, 192, i * 24 + 4);
     }
 }
 
@@ -832,21 +902,29 @@ void helpScreen(){
     aprints("-Exit by pressing Start",startX, (startY+count)*4,2);
     count+= 3;
 
-    oam_init(obj_mem, 128);
+    clearSprites(128);
+    showSprites(128);
 
-    REG_DISPCNT &= ~DCNT_BG0;
-    REG_DISPCNT &= ~DCNT_BG3;
+    toggleBG(0, false);
+    toggleBG(3, false);
+
+    // oam_init(obj_mem, 128);
+
+    // REG_DISPCNT &= ~DCNT_BG0;
+    // REG_DISPCNT &= ~DCNT_BG3;
 
     while(true){
-        VBlankIntrWait();
+        vsync();
         key_poll();
 
         if(key_hit(KEY_FULL))
             break;
     }
 
-    REG_DISPCNT |= DCNT_BG0;
-    REG_DISPCNT |= DCNT_BG3;
+    toggleBG(0, true);
+    toggleBG(3, true);
+    // REG_DISPCNT |= DCNT_BG0;
+    // REG_DISPCNT |= DCNT_BG3;
     setSmallTextArea(110, 0, 10, 10, 20);
     clearText();
     aprints("Press SELECT",2,64,2);

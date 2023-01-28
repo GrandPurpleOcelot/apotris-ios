@@ -1,5 +1,5 @@
 #include "def.h"
-#include "soundbank.h"
+// #include "soundbank.h"
 #include "text.h"
 
 void audioText();
@@ -36,8 +36,8 @@ void audioSettings(){
     bool previous = savefile->settings.cycleSongs;
     savefile->settings.cycleSongs = false;
 
-    while (1) {
-        VBlankIntrWait();
+    while (closed()) {
+        vsync();
 
         key_poll();
 
@@ -75,7 +75,8 @@ bool audioControl(){
                 }
             }
 
-            mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
+            setMusicVolume(512 * ((float)savefile->settings.volume / 10));
+            // mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
         }else if (selection == 1) {
             if (key_hit(KEY_RIGHT)){
                 if(savefile->settings.sfxVolume < 10){
@@ -117,7 +118,7 @@ bool audioControl(){
                     refreshText = true;
                 }
             }
-            mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
+            setMusicVolume(512 * ((float)savefile->settings.volume / 10));
             refreshText = true;
         } else if (key_is_down(KEY_RIGHT)) {
             if (dasHor < maxDas) {
@@ -130,7 +131,7 @@ bool audioControl(){
                     refreshText = true;
                 }
             }
-            mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
+            setMusicVolume(512 * ((float)savefile->settings.volume / 10));
             refreshText = true;
         } else {
             dasHor = 0;

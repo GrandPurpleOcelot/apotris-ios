@@ -1,5 +1,5 @@
 #include "def.h"
-#include "soundbank.h"
+// #include "soundbank.h"
 #include "text.h"
 #include <map>
 #include <string>
@@ -62,8 +62,8 @@ void controlsSettings(){
     for(auto const & option : options)
         aprint(option,startX,startY+space*(i++));
 
-    while (1) {
-        VBlankIntrWait();
+    while (closed()) {
+        vsync();
 
         key_poll();
 
@@ -299,8 +299,8 @@ void changeInput(int selection){
     aprint("           ",endX-6,startY+space*selection);
     aprint("[...]",endX-2,startY+space*selection);
 
-    while(1){
-        VBlankIntrWait();
+    while(closed()){
+        vsync();
         key_poll();
 
         if(key_hit(KEY_START)){

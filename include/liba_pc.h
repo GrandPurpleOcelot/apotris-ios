@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Tilengine.h"
 #include <cstring>
+#include "soundbank.h"
 
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 160
@@ -29,20 +30,45 @@ typedef signed long long s64;
 #define KEY_L			0x0200	//!< Shoulder L
 #define KEY_FULL	0xFFFFFFFF		//!< Define for checking all keys.
 
+#define ATTR0_AFF 0
+#define ATTR0_AFF_DBL 0
+
+#define CLR_MASK			0x001F
+
+#define RED_MASK			0x001F
+#define RED_SHIFT				 0
+#define GREEN_MASK			0x03E0
+#define GREEN_SHIFT				 5
+#define BLUE_MASK			0x7C00
+#define BLUE_SHIFT				10
+
+extern int blendInfo;
+
 typedef struct TILE{
     u32 data[8];
 }TILE;
 
+static int spriteIdCounter = 0;
+
 class SpriteAttributes{
 public:
-    int id;
+    int id = spriteIdCounter++;
+    bool enabled = false;
     int tile_start;
     int x;
     int y;
     int sx;
     int sy;
+    bool affine;
+    bool mosaic;
+    float scalex;
+    float scaley;
     int palette;
-    int priority;
+    int priority = 0;
+    bool flipx;
+    bool flipy;
+    bool rotate = false;
+    bool blend = false;
 };
 
 typedef SpriteAttributes OBJ_ATTR;
@@ -75,7 +101,11 @@ extern TLN_SpriteData spriteData[128];
 
 extern TLN_Spriteset spriteset;
 
+extern TLN_Bitmap spriteBitmap;
+
 extern void key_poll();
+
+extern u32 Sqrt(u32 n);
 
 // extern bool canDraw;
 
@@ -103,12 +133,40 @@ INLINE u32 tileBuild(int index, bool flipx, bool flipy, int palette){
     return result;
 }
 
+INLINE u32 tileBuild(u16 value){
+    TLN_Tile t = new Tile();
+    t->index = value & 0xff;
+    t->palette = (value >> 12) & 0xf;
+    t->flipx = ((value >> 8) & 0xf) & 0x4;
+    t->flipy = ((value >> 8) & 0xf) & 0x8;
+
+    u32 result = t->value;
+
+    delete t;
+
+    return result;
+}
+
 INLINE void memcpy16(void * dst, const void * src, int count){
     memcpy(dst,src,count*2);
 }
 
 INLINE void memcpy32(void * dst, const void * src, int count){
     memcpy(dst,src,count*4);
+}
+
+INLINE void memset16(void * dst, u16 n, int count){
+    u16* dest = (u16*)dst;
+    while(count--){
+        *dest++ = n;
+    }
+}
+
+INLINE void memset32(void * dst, u32 n, int count){
+    u32* dest = (u32*)dst;
+    while(count--){
+        *dest++ = n;
+    }
 }
 
 INLINE int qran(){
@@ -187,10 +245,64 @@ INLINE int min(int a, int b){
     return (a < b)? a : b;
 }
 
+INLINE int max(int a, int b){
+    return (a > b)? a : b;
+}
+
 INLINE void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src){
+    u8* source = (u8*) src;
+    uint8_t tmp[8 * 8];
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j < 4; j++){
+            tmp[i * 8 + j * 2] = source[i * 4 + j] & 0xf;
+            tmp[i * 8 + j * 2 + 1] = (source[i * 4 + j] >> 4) & 0xf;
+        }
+    }
+
+    // TLN_SpriteData temp;
+
+    // memcpy(temp.name,spriteData->name,64);
+
+    // temp.w = spriteData->w;
+    // temp.h = spriteData->h;
+    // temp.x = spriteData->x;
+    // temp.y = spriteData->h;
+
+    TLN_SpriteData d;
+    memcpy(d.name,"tile",4);
+    d.w = 8;
+    d.h = 8;
+    // d.w = lengthX * 8;
+    // d.h = lengthY * 8;
+    // d.x = index * 8;
+    // d.y = 0;
+
+    d.x = 8 * (tx + index);
+    d.y = 8 * ty;
+
+    TLN_SetSpritesetData(spriteset, 0, &d, tmp, 8);
+
+    // memcpy(spriteData->name,temp.name,64);
+
+    // spriteData->w = temp.w;
+    // spriteData->h = temp.h;
+    // spriteData->x = temp.x;
+    // spriteData->h = temp.x;
     // memcpy32(&tile_mem[4][index + ty * 4 + tx], src, 8);
 }
 
-//TODO:
 INLINE void setSpritePixel(int index, u8 tx, u8 ty, u8 width, u8 x, u8 y, u8 color){
+    u8 *dst = TLN_GetBitmapPtr(spriteBitmap, (tx + index) * 8 + x, ty * 8 + y);
+
+    *dst = color;
 }
+
+INLINE void setTilesetPixel(int cbb, int index, int x, int y, u8 color){
+    u8 *dst = TLN_GetTilesetPtr(tilesets[cbb],index,x,y);
+
+    *dst = color;
+}
+
+extern void rumble_set_state(int);
+// extern void sfx(int n);
+// extern void sfx
