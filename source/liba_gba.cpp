@@ -17,6 +17,11 @@
 void initRumble();
 bool unlock_gbp();
 
+void onHBlank() {
+    if(REG_VCOUNT < 160)
+        pal_bg_mem[0] = gradientTable[REG_VCOUNT];
+}
+
 LinkConnection* linkConnection = new LinkConnection();
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
@@ -133,7 +138,7 @@ void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int leng
     memcpy32(&tile_mem[4][index + ty * lengthX + tx], src,lengthX * lengthY * 8);
 }
 
-void setPaletteColor(int palette, int index, int color, int count){
+void setPaletteColor(int palette, int index, u16 color, int count){
     memset16(&pal_bg_mem[palette * 16 + index],(color & 0xffff),count);
 }
 
@@ -451,6 +456,26 @@ void saveSavefile(){
 
     if(ENABLE_FLASH_SAVE)
         save_sram_flash();
+}
+
+void mirrorPalettes(int index, int count){
+    memcpy16(&pal_bg_mem[index],&pal_obj_mem[index],(8 * 16));
+}
+
+void toggleHBlank(bool state){
+    if(state){
+        irq_add(II_HBLANK, onHBlank);
+    }else{
+        irq_disable(II_HBLANK);
+    }
+}
+
+void savePalette(COLOR * dst){
+    memcpy32(dst, pal_bg_mem, 256);
+}
+
+void enableBlend(int info){
+    REG_BLDCNT = info;
 }
 
 #endif

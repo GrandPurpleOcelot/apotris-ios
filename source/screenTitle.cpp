@@ -1836,9 +1836,7 @@ void showTitleSprites() {
 
         //TODO:
         // int offset = ((sin_lut[titleFloat]*3)>>12);
-        // int offset = 0;
         int offset = (sinLut(titleFloat) * 3) >> 12;
-        log(std::to_string(sinLut(titleFloat)));
 
         if(offset == 3)
             offset = 2;

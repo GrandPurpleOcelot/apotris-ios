@@ -57,7 +57,7 @@ void aprintClearLine(int y){
 void aprintClearArea(int x, int y, int w, int h){
 	// u16 * dest = (u16*)se_mem[29];
 
-	for(int i = y; i < y+h; i++){
+	for(int i = y; i < h+y; i++){
 		clearTilemapEntries(29, 32 * i + x, w);
 		// memset16(&dest[32*i+x],0,w);
 	}

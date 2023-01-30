@@ -11,10 +11,52 @@
 #include <cstdio>
 #include <fstream>
 #include <list>
+#include "audio_files.h"
 
 #include <SDL2/SDL.h>
-// #include "main.hpp"
-//
+#include <SDL2/SDL_mixer.h>
+
+
+Mix_Chunk *soundEffectChunks[SFX_COUNT];
+Mix_Music *musicChunks[MUSIC_COUNT];
+
+static const int offsetx = (SCREEN_WIDTH - 240)/2;
+static const int offsety = (SCREEN_HEIGHT - 160)/2;
+
+void loadAudio(){
+
+    for(int i = 0; i < SFX_COUNT; i++){
+        // log(SoundEffectPaths[i]);
+        soundEffectChunks[i] = Mix_LoadWAV(SoundEffectPaths[i]);
+
+        if(soundEffectChunks[i] == NULL){
+            std::string str = "Failed to init sound file at: ";
+            str += SoundEffectPaths[i];
+            log(str);
+        }
+    }
+
+    for(int i = 0; i < MUSIC_COUNT; i++){
+        // log(SoundEffectPaths[i]);
+        musicChunks[i] = Mix_LoadMUS(SongPaths[i]);
+
+        if(musicChunks[i] == NULL){
+            std::string str = "Failed to init music file at: ";
+            str += SongPaths[i];
+            log(str);
+        }
+    }
+}
+
+void freeAudio(){
+    for(int i = 0; i < SFX_COUNT; i++){
+        Mix_FreeChunk(soundEffectChunks[i]);
+    }
+
+    for(int i = 0; i < MUSIC_COUNT; i++){
+        Mix_FreeMusic(musicChunks[i]);
+    }
+}
 
 static bool blendSprites = false;
 
@@ -40,6 +82,12 @@ public:
         r = (((c) & 0x1f) << 3);
         g = (((c >> 5) & 0x1f) << (3));
         b = (((c >> 10) & 0x1f) << (3));
+    }
+
+    ColorSplit(u32 *c){
+        r = (*c >> (16 + 3)) & 0x1f;
+        g = (*c >> ( 8 + 3)) & 0x1f;
+        b = (*c >> ( 0 + 3)) & 0x1f;
     }
 };
 
@@ -89,8 +137,21 @@ void setInputs(){
     TLN_DefineInputKey(PLAYER1, INPUT_CRT, SDLK_BACKSPACE);
 }
 
+void handleSDLEvents(SDL_Event * evt){
+    if(evt->type == SDL_MOUSEBUTTONDOWN){
+		SDL_MouseButtonEvent* mouse = (SDL_MouseButtonEvent*)evt;
+
+		/* scale from window space to framebuffer space */
+		mouse->x = (mouse->x*SCREEN_WIDTH)/TLN_GetWindowWidth();
+		mouse->y = (mouse->y*SCREEN_HEIGHT)/TLN_GetWindowHeight();
+
+        if(mouse->button == SDL_BUTTON_LEFT)
+            log(std::to_string(mouse->x) + " " + std::to_string(mouse->y));
+    }
+}
+
 void platformInit(){
-    TLN_Init(240,160,4,128,0);
+    TLN_Init(SCREEN_WIDTH,SCREEN_HEIGHT,4,128,0);
 
     for(int i = 0; i < 32; i++){
         palettes[i] = TLN_CreatePalette(16);
@@ -124,13 +185,25 @@ void platformInit(){
     TLN_DisableCRTEffect();
 
     TLN_SetRasterCallback(onHBlank);
+    TLN_SetSDLCallback(handleSDLEvents);
+
+    //Initialize SDL_mixer
+    if( Mix_OpenAudio( 32000, MIX_DEFAULT_FORMAT, 8, 768 ) < 0 )
+    {
+        printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+    }
+
+    loadAudio();
 
     TLN_EnableInput(PLAYER1, true);
 }
 
+
 void deinitialize(){
     TLN_DeleteWindow();
     TLN_Deinit();
+    freeAudio();
+    Mix_Quit();
 
     // SDL_CloseAudioDevice(deviceId);
     // SDL_FreeWAV(wavBuffer);
@@ -211,12 +284,12 @@ void vsync(){
     TLN_DrawFrame(0);
 
 
-	// Uint64 end = SDL_GetPerformanceCounter();
+    // Uint64 end = SDL_GetPerformanceCounter();
 
-	// float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
+    // float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
 
-	// // Cap to 60 FPS
-	// SDL_Delay(floor(16.666f - elapsedMS));
+    // // Cap to 60 FPS
+    // SDL_Delay(floor(16.666f - elapsedMS));
 }
 
 void showSprites(int n ){
@@ -257,12 +330,18 @@ void showSprites(int n ){
         TLN_SetSpritesetData(spriteset, counter, &spriteData[counter], 0,0);
         TLN_SetSpritePicture(counter, counter);
         TLN_SetSpritePalette(counter, palettes[sprite->palette + 16]);
+        // TLN_SetSpriteFlags(counter, (FLAG_ROTATE));
         if(sprite->affine && !sprite->rotate){
             TLN_SetSpritePivot(counter, 0.5, 0.5);
             TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
-            TLN_SetSpritePosition(counter, sprite->x + sprite->sx/2, sprite->y + sprite->sy/2);
+            TLN_SetSpritePosition(counter, sprite->x + sprite->sx/2 + offsetx, sprite->y + sprite->sy/2 + offsety);
+        }else if (sprite->affine && sprite->rotate){
+            TLN_SetSpritePivot(counter, 0.5, 0.5);
+            // TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
+            TLN_SetSpritePosition(counter, sprite->x + offsetx, sprite->y + sprite->sy/2 + offsety);
+            TLN_ResetSpriteScaling(counter);
         }else{
-            TLN_SetSpritePosition(counter, sprite->x, sprite->y);
+            TLN_SetSpritePosition(counter, sprite->x + offsetx, sprite->y + offsety);
             TLN_SetSpritePivot(counter, 0, 0);
             TLN_SetSpriteScaling(counter, 1, 1);
         }
@@ -281,6 +360,13 @@ void loadPalette(int palette, int index, const void * src, int count){
         u16 r = (u16) ((u16 *) src)[i];
         ColorSplit c = ColorSplit(r);
         TLN_SetPaletteColor(palettes[palette], i, c.r, c.g, c.b);
+    }
+
+    if(palette == 0 && index == 0 && !gradientEnabled){
+        u16 r = (u16) ((u16 *) src)[0];
+        ColorSplit c = ColorSplit(r);
+
+        TLN_SetBGColor(c.r, c.g, c.b);
     }
 }
 
@@ -347,10 +433,11 @@ void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int 
 };
 
 void setLayerScroll(int layer, int x, int y){
-    TLN_SetLayerPosition(layerInfo[layer].id, x, y);
+    TLN_SetLayerPosition(layerInfo[layer].id, x - offsetx, y - offsety);
 }
 
 void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY){
+
     u8* source = (u8*) src;
     const int count = lengthX * lengthY;
     uint8_t tmp[8 * 8 * count];
@@ -463,7 +550,7 @@ void setSFXVolume(int volume){
 }
 
 void startSong(int song, bool loop){
-
+    Mix_PlayMusic(musicChunks[song], -1 * loop);
 }
 
 u32 Sqrt(u32 n){
@@ -471,13 +558,11 @@ u32 Sqrt(u32 n){
 }
 
 void sfx(int n){
-    // Uint32 wavLength;
-    // Uint8 *wavBuffer;
-    // SDL_LoadWAV("audio/levelUP.wav", &wavSpec, &wavBuffer, &wavLength);
+    Mix_PlayChannel(-1, soundEffectChunks[n], 0);
 }
 
 void sfxRate(int sound, float rate){
-
+    sfx(sound);
 }
 
 void setTiles(int tilemap, int index, int count, u32 value){
@@ -497,8 +582,18 @@ void clearSprites(int n){
     }
 }
 
-void setPaletteColor(int palette, int index, int color, int count){
+void setPaletteColor(int palette, int index, u16 color, int count){
+    ColorSplit c = ColorSplit(color);
+    if(palette == 0 && index == 0)
+        TLN_SetBGColor(c.r,c.g,c.b);
 
+    for(int i = 0; i < count; i++){
+        // log(std::to_string(palette) + " " + std::to_string(index));
+        // char buff [64];
+        // snprintf(buff,64, "%d %d %d", c.r, c.g, c.b);
+        // log(buff);
+        TLN_SetPaletteColor(palettes[palette], index+i, c.r, c.g, c.b);
+    }
 }
 
 void clearSpriteTiles(int index, int lengthX, int lengthY){
@@ -552,7 +647,7 @@ void sprite_set_size(OBJ_ATTR *sprite, FIXED size, int aff_id){
 }
 
 void sprite_rotscale(OBJ_ATTR *sprite, FIXED sizex, FIXED sizey, int angle, int aff_id){
-    sprite->affine = false;
+    // sprite->affine = false;
     sprite->flipx = (sizex < 0);
     // sprite->flipy = (sizey < 0);
 
@@ -587,9 +682,15 @@ void posprintf(char * buff, const char * str, ...){
 
 }
 
-void stopSong(){};
-void pauseSong(){};
-void resumeSong(){};
+void stopSong(){
+    Mix_HaltMusic();
+};
+void pauseSong(){
+    Mix_PauseMusic();
+};
+void resumeSong(){
+    Mix_ResumeMusic();
+};
 
 void color_fade_palette(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha){
     u16 temp[count];
@@ -600,35 +701,55 @@ void color_fade_palette(int palette, int index, const COLOR * src, COLOR color, 
 };
 
 void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha){
-	if(!count)
-		return;
+    if(!count)
+        return;
 
-	u32 clra, parta, part;
-	const u32 rbmask= (RED_MASK|BLUE_MASK), gmask= GREEN_MASK;
-	const u32 rbhalf= 0x4010, ghalf= 0x0200;
+    u32 clra, parta, part;
+    const u32 rbmask= (RED_MASK|BLUE_MASK), gmask= GREEN_MASK;
+    const u32 rbhalf= 0x4010, ghalf= 0x0200;
 
-	// precalc color B parts
-	u32 partb_rb= color & rbmask, partb_g=  color & gmask;
+    // precalc color B parts
+    u32 partb_rb= color & rbmask, partb_g=  color & gmask;
 
-	for(int ii = 0; ii < count; ii++)
-	{
-		clra= src[ii];
+    for(int ii = 0; ii < count; ii++)
+    {
+        clra= src[ii];
 
-		// Red and blue
-		parta= clra & rbmask;
-		part = (partb_rb-parta)*alpha + parta*32 + rbhalf;
-		 color  = (part/32) & rbmask;
+        // Red and blue
+        parta= clra & rbmask;
+        part = (partb_rb-parta)*alpha + parta*32 + rbhalf;
+         color  = (part/32) & rbmask;
 
-		// Green
-		parta= clra & gmask;
-		part = (partb_g-parta)*alpha + parta*32 + ghalf;
-		 color |= (part/32) & gmask;
+        // Green
+        parta= clra & gmask;
+        part = (partb_g-parta)*alpha + parta*32 + ghalf;
+         color |= (part/32) & gmask;
 
-		dst[ii]= color;
-	}
+        dst[ii]= color;
+    }
 };
 
-void color_adj_brightness(int palette, int index, const COLOR *src, int count, u32 alpha){};
+void color_adj_brightness(int palette, int index, const COLOR *src, int count, u32 bright){
+    u32 ii, clr;
+    int rr, gg, bb;
+
+    COLOR dst[count];
+
+    bright >>= 3;
+    for(ii=0; ii<count; ii++)
+    {
+        clr= src[ii];
+
+        rr= ((clr    )&31) + bright;
+        gg= ((clr>>5 )&31) + bright;
+        bb= ((clr>>10)&31) + bright;
+
+        dst[ii]= RGB15(bf_clamp(rr,5), bf_clamp(gg,5), bf_clamp(bb,5));
+    }
+
+    loadPalette(palette, index, dst, count);
+};
+
 void clearSpriteTile(int index, int tx, int ty, int width){
     uint8_t tmp[8 * 8];
     memset(tmp,0,64);
@@ -684,8 +805,9 @@ void clearTiles(int tileset, int index, int count){
 };
 
 void clearTilemapEntries(int tilemap, int index, int count){
+    // log(std::to_string(index) + " " + std::to_string(count));
     for(int i = index; i < count+index; i++){
-        setTile(tilemap, i/32, i%32, 0);
+        setTile(tilemap, i%32, i/32, 0);
     }
 }
 
@@ -717,14 +839,40 @@ void onVBlank(){
         SDL_Delay(delay);
 
     frame_start = SDL_GetPerformanceCounter();
+
+
+    // int count = 0;
+    // while(SDL_PollEvent(&test_event)){
+    //     switch(test_event.type){
+    //         case SDL_MOUSEBUTTONDOWN:
+    //         log("test");
+    //         break;
+    //     }
+    //     if(++count > 100){
+    //         log("broke");
+    //         break;
+    //     }
+    // }
 };
 
 void onHBlank(int line){
     if(!gradientEnabled){
         // TLN_DisableBGColor();
-        TLN_SetBGColor(0,0,0);
         return;
     }
+
+    // int scroll = 0;
+    // if(clearTimer && line < ((game->linesToClear.back() - 19) * 8) + offsety){
+    //     log(std::to_string(game->linesToClear.front()));
+    //     int n = game->previousClear.linesCleared;
+
+    //     FIXED s = fxdiv(int2fx(8 * n * clearTimer),int2fx(maxClearTimer));
+
+    //     scroll = fx2int(s);
+    // }
+
+    // setLayerScroll(0, -push,-(shake + scroll));
+
 
     ColorSplit c = ColorSplit(gradientTable[line]);
     TLN_SetBGColor(c.r, c.g, c.b);
@@ -770,7 +918,42 @@ void toggleHBlank(bool state){
 }
 
 s16 sinLut(int angle){
-    return ((int)((float)(1 << 12) * (sin((float)angle / 512)))) & 0xffff;
+    float r = (float)angle * ((3.1459) / 256);
+    int adj = (int) ((float)(1 << 12) * (sin(r)));
+    return (adj & 0xffff);
+}
+
+
+COLOR rgb8to5(u32 *c){
+    int r = (*c >> (16 + 3)) & 0x1f;
+    int g = (*c >> ( 8 + 3)) & 0x1f;
+    int b = (*c >> ( 0 + 3)) & 0x1f;
+
+    return r | g | b;
+}
+
+void savePalette(COLOR *dst){
+    for(int i = 0; i < 32; i++)
+        for(int j = 0; j < 16; j++)
+            *dst++ = rgb8to5((u32*) TLN_GetPaletteData(palettes[i], j));
+}
+
+void color_fade_fast(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha){
+    u16 temp[count];
+
+    color_fade(temp,src,color,count,alpha);
+
+    loadPalette(palette, index, temp, count);
+}
+
+void mirrorPalettes(int index, int count){
+    for(int i = 0; i < count; i++){
+
+        loadPalette(i, index, TLN_GetPaletteData(palettes[i+16], index), 16);
+        // for(int j = 0; j < 16; j++){
+        //     setPaletteColor(i, j, rgb8to5((u32*) TLN_GetPaletteData(palettes[i + 16], j)), 1);
+        // }
+    }
 }
 
 #endif

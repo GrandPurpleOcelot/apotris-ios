@@ -25,7 +25,7 @@ BUILD := build
 
 # Library search directories and flags
 EXT_LIB :=
-LDFLAGS := -lTilengine -lSDL2
+LDFLAGS := -lTilengine -lSDL2 -lSDL2_mixer
 LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB))
 
 # Include directories

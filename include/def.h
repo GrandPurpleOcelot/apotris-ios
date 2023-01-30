@@ -222,7 +222,7 @@ public:
 #define MAX_SHADOWS 5
 #define MAX_BACKGROUNDS 6
 #define MAX_COLORS 7
-#define MAX_CLEAR_EFFECTS 3
+#define MAX_CLEAR_EFFECTS 4
 
 #define MAX_MENU_SONGS 2
 #define MAX_GAME_SONGS 4
@@ -398,6 +398,9 @@ extern bool gradientEnabled;
 
 extern int botThinkingSpeed;
 extern int botSleepDuration;
+
+extern int clearTimer;
+extern int maxClearTimer;
 
 extern Tetris::Options *previousGameOptions;
 

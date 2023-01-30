@@ -94,12 +94,13 @@ void initialize(){
     buildBG(0, 0, 25, 0, 2, true);
     buildBG(1, 0, 26, 0, 3, true);
     buildBG(2, 2, 29, 0, 0, true);
-    buildBG(3, 0, 27, 0, 3, true);
+    buildBG(3, 0, 27, 0, 1, true);
 
-    toggleBG(0,true);
-    toggleBG(1,true);
-    toggleBG(2,true);
-    toggleBG(3,true);
+
+    for(int i = 0; i < 4; i++){
+        toggleBG(i,true);
+        setLayerScroll(i, 0, 0);
+    }
 
     // REG_BG0CNT = BG_CBB(0) | BG_SBB(25) | BG_SIZE(0) | BG_PRIO(2) | BG_MOSAIC;
     // REG_BG1CNT = BG_CBB(0) | BG_SBB(26) | BG_SIZE(0) | BG_PRIO(3) | BG_MOSAIC;
@@ -121,6 +122,7 @@ void initialize(){
     loadTiles(0,30,sprite22tiles_bin,sprite22tiles_bin_size/32);
     loadTiles(0,31,sprite23tiles_bin,sprite23tiles_bin_size/32);
     loadTiles(0,32,sprite24tiles_bin,sprite24tiles_bin_size/32);
+    loadTiles(0,33,sprite42tiles_bin,sprite42tiles_bin_size/32);
 
     // memcpy16(&tile_mem[0][2], sprite3tiles_bin, sprite3tiles_bin_size / 2);
     // memcpy16(&tile_mem[0][4], sprite5tiles_bin, sprite3tiles_bin_size / 2);
@@ -809,7 +811,6 @@ void setPalette(){
         loadPalette(8+16, 0, &palette[n][color*16], 16);
         // memcpy16(&pal_obj_mem[8 * 16], &palette[n][color * 16], 16);
         // memcpy16(&pal_bg_mem[8 * 16], &palette[n][color * 16], 16);
-
     }
 
     loadPalette(13+16, 0, title_pal_bin, title_pal_bin_size/2);
@@ -900,9 +901,17 @@ void setGradient(int color){
 
     COLOR * src = (COLOR *) &palette[n];
 
+    int div = 20;
+
+    #ifdef PC
+
+    div = SCREEN_HEIGHT/8;
+
+    #endif
+
     if(!(savefile->settings.lightMode && color == 0)){
         for(int i = 0; i < SCREEN_HEIGHT; i++){
-            color_fade((COLOR *) &gradientTable[i],src,color,1,((SCREEN_HEIGHT-1-i) / 20) * 2 + 16);
+            color_fade((COLOR *) &gradientTable[i],src,color,1,((SCREEN_HEIGHT-1-i) / div) * 2 + 16);
             // color_fade(src, color, (COLOR *) &gradientTable[i], 1, ((SCREEN_HEIGHT-1-i) / 20) * 2 + 16);
         }
 
@@ -1015,9 +1024,9 @@ void setPawnPalette(int dest, int n, int blend){
             color_fade_palette(dest,0,(COLOR*)&palette[savefile->settings.colors][n*16],0x0000,8,blend);
             // clr_fade_fast((COLOR*)&palette[savefile->settings.colors][n * 16], 0x0000, &pal_obj_mem[dest * 16], 8, blend);
     }else{
-        if(dest == 11)
+        if(dest == 11+16)
             blend = int2fx(blend) >> 5;
-        else if(dest == 10)
+        else if(dest == 10+16)
             blend = float2fx(0.25);
 
         if(savefile->settings.colors == 2)

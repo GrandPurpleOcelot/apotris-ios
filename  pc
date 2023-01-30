@@ -1,0 +1,938 @@
+[apostolos@APCMJ apotris]$ ./set_platform.sh 
+Unknown platform.\n
+Cleaning...
+rm -rf build
+[apostolos@APCMJ apotris]$ ./set_platform.sh pc
+Cleaning...
+rm -rf build
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+hello
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+hello
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+Traceback (most recent call last):
+  File "/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py", line 13, in <module>
+    f = os.path.join(directory.filename)
+AttributeError: 'str' object has no attribute 'filename'
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+audio/double.wav
+audio/oh_my_god.mod
+audio/go.wav
+audio/place.wav
+audio/shift2.wav
+audio/quad.wav
+audio/norm-al_tune.mod
+audio/shift.wav
+audio/invalid.wav
+audio/win.wav
+audio/menuMove.wav
+audio/warning_infected.mod
+audio/perfectris.wav
+audio/hold.wav
+audio/lite.mod
+audio/multiClear.wav
+audio/cool.wav
+audio/perfectClear.wav
+audio/regret.wav
+audio/triple.wav
+audio/end.wav
+audio/dodecatris.wav
+audio/menuConfirm.wav
+audio/youWin.wav
+audio/menu.it
+audio/oh_my_god.bak
+audio/levelUPsound.wav
+audio/ultimatris.wav
+audio/tSpin.wav
+audio/aldebaran-short.mod
+audio/clear.wav
+audio/tSpinMini.wav
+audio/octoris.wav
+audio/decahexatris.wav
+audio/time.wav
+audio/zoneStart.wav
+audio/youLose.wav
+audio/menuCancel.wav
+audio/backToBackQuad.wav
+audio/thirno.it
+audio/backToBackTSpin.wav
+audio/rotate.wav
+audio/levelUP.wav
+audio/ready.wav
+audio/secret.wav
+audio/unsuspected_h.mod
+audio/optikal-innovation.mod
+audio/gameover.wav
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+double.wav
+oh_my_god.mod
+go.wav
+place.wav
+shift2.wav
+quad.wav
+norm-al_tune.mod
+shift.wav
+invalid.wav
+win.wav
+menuMove.wav
+warning_infected.mod
+perfectris.wav
+hold.wav
+lite.mod
+multiClear.wav
+cool.wav
+perfectClear.wav
+regret.wav
+triple.wav
+end.wav
+dodecatris.wav
+menuConfirm.wav
+youWin.wav
+menu.it
+oh_my_god.bak
+levelUPsound.wav
+ultimatris.wav
+tSpin.wav
+aldebaran-short.mod
+clear.wav
+tSpinMini.wav
+octoris.wav
+decahexatris.wav
+time.wav
+zoneStart.wav
+youLose.wav
+menuCancel.wav
+backToBackQuad.wav
+thirno.it
+backToBackTSpin.wav
+rotate.wav
+levelUP.wav
+ready.wav
+secret.wav
+unsuspected_h.mod
+optikal-innovation.mod
+gameover.wav
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(word.find(filename) is not -1):
+Traceback (most recent call last):
+  File "/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py", line 14, in <module>
+    if(word.find(filename) is not -1):
+NameError: name 'word' is not defined. Did you mean: 'ord'?
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find(filename) is not -1):
+double.wav
+oh_my_god.mod
+go.wav
+place.wav
+shift2.wav
+quad.wav
+norm-al_tune.mod
+shift.wav
+invalid.wav
+win.wav
+menuMove.wav
+warning_infected.mod
+perfectris.wav
+hold.wav
+lite.mod
+multiClear.wav
+cool.wav
+perfectClear.wav
+regret.wav
+triple.wav
+end.wav
+dodecatris.wav
+menuConfirm.wav
+youWin.wav
+menu.it
+oh_my_god.bak
+levelUPsound.wav
+ultimatris.wav
+tSpin.wav
+aldebaran-short.mod
+clear.wav
+tSpinMini.wav
+octoris.wav
+decahexatris.wav
+time.wav
+zoneStart.wav
+youLose.wav
+menuCancel.wav
+backToBackQuad.wav
+thirno.it
+backToBackTSpin.wav
+rotate.wav
+levelUP.wav
+ready.wav
+secret.wav
+unsuspected_h.mod
+optikal-innovation.mod
+gameover.wav
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+double.wav
+go.wav
+place.wav
+shift2.wav
+quad.wav
+shift.wav
+invalid.wav
+win.wav
+menuMove.wav
+perfectris.wav
+hold.wav
+multiClear.wav
+cool.wav
+perfectClear.wav
+regret.wav
+triple.wav
+end.wav
+dodecatris.wav
+menuConfirm.wav
+youWin.wav
+levelUPsound.wav
+ultimatris.wav
+tSpin.wav
+clear.wav
+tSpinMini.wav
+octoris.wav
+decahexatris.wav
+time.wav
+zoneStart.wav
+youLose.wav
+menuCancel.wav
+backToBackQuad.wav
+backToBackTSpin.wav
+rotate.wav
+levelUP.wav
+ready.wav
+secret.wav
+gameover.wav
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+veo
+vo
+vep
+v2h
+vd
+vts
+vdv
+vn
+veu
+vsce
+vd
+vrCu
+vl
+vrCf
+vte
+ver
+vd
+vsao
+vmnn
+vno
+vdse
+vsal
+vnt
+vrc
+vint
+vst
+vsaa
+ve
+vtSz
+veu
+vlae
+vdkoa
+vnTBc
+veo
+vPv
+vyr
+vte
+vre
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+double.wav
+go.wav
+place.wav
+shift2.wav
+quad.wav
+shift.wav
+invalid.wav
+win.wav
+menuMove.wav
+perfectris.wav
+hold.wav
+multiClear.wav
+cool.wav
+perfectClear.wav
+regret.wav
+triple.wav
+end.wav
+dodecatris.wav
+menuConfirm.wav
+youWin.wav
+levelUPsound.wav
+ultimatris.wav
+tSpin.wav
+clear.wav
+tSpinMini.wav
+octoris.wav
+decahexatris.wav
+time.wav
+zoneStart.wav
+youLose.wav
+menuCancel.wav
+backToBackQuad.wav
+backToBackTSpin.wav
+rotate.wav
+levelUP.wav
+ready.wav
+secret.wav
+gameover.wav
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+vaw.elbuod
+vaw.og
+vaw.ecalp
+vaw.2tfihs
+vaw.dauq
+vaw.tfihs
+vaw.dilavni
+vaw.niw
+vaw.evoMunem
+vaw.sirtcefrep
+vaw.dloh
+vaw.raelCitlum
+vaw.looc
+vaw.raelCtcefrep
+vaw.terger
+vaw.elpirt
+vaw.dne
+vaw.sirtacedod
+vaw.mrifnoCunem
+vaw.niWuoy
+vaw.dnuosPUlevel
+vaw.sirtamitlu
+vaw.nipSt
+vaw.raelc
+vaw.iniMnipSt
+vaw.sirotco
+vaw.sirtaxehaced
+vaw.emit
+vaw.tratSenoz
+vaw.esoLuoy
+vaw.lecnaCunem
+vaw.dauQkcaBoTkcab
+vaw.nipSTkcaBoTkcab
+vaw.etator
+vaw.PUlevel
+vaw.ydaer
+vaw.terces
+vaw.revoemag
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+db.v
+gw
+pcw
+sf.v
+qda
+sfw
+iada
+w.v
+muvw
+pftsa
+hda
+mtlra
+cla
+pfte.v
+rr.v
+tp.v
+e.v
+detsa
+munrw
+yW.v
+lePu.v
+uitsa
+tiw
+caw
+tii.v
+oosa
+daxr.v
+tea
+zea.v
+yLea
+munla
+bkBkaw
+bkBkp.v
+ra.v
+lePa
+rdw
+sr.v
+geew
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+olw
+oa
+lea
+htw
+u.v
+hta
+nl.v
+iw
+eMea
+eer.v
+o.v
+uie.v
+o.v
+eeCaw
+eew
+rlw
+nw
+ocr.v
+eCfma
+oiw
+elsnw
+lmr.v
+Sna
+lra
+Snnw
+cr.v
+ehaiw
+i.v
+oSrw
+oo.v
+eCc.v
+aTaQda
+aTaTiw
+otw
+el.v
+eya
+eew
+aora
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+v
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+double.
+go.
+place.
+shift2.
+quad.
+shift.
+invalid.
+win.
+menuMove.
+perfectris.
+hold.
+multiClear.
+cool.
+perfectClear.
+regret.
+triple.
+end.
+dodecatris.
+menuConfirm.
+youWin.
+levelUPsound.
+ultimatris.
+tSpin.
+clear.
+tSpinMini.
+octoris.
+decahexatris.
+time.
+zoneStart.
+youLose.
+menuCancel.
+backToBackQuad.
+backToBackTSpin.
+rotate.
+levelUP.
+ready.
+secret.
+gameover.
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+double
+go
+place
+shift2
+quad
+shift
+invalid
+win
+menuMove
+perfectris
+hold
+multiClear
+cool
+perfectClear
+regret
+triple
+end
+dodecatris
+menuConfirm
+youWin
+levelUPsound
+ultimatris
+tSpin
+clear
+tSpinMini
+octoris
+decahexatris
+time
+zoneStart
+youLose
+menuCancel
+backToBackQuad
+backToBackTSpin
+rotate
+levelUP
+ready
+secret
+gameover
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+DOUBLE
+GO
+PLACE
+SHIFT2
+QUAD
+SHIFT
+INVALID
+WIN
+MENUMOVE
+PERFECTRIS
+HOLD
+MULTICLEAR
+COOL
+PERFECTCLEAR
+REGRET
+TRIPLE
+END
+DODECATRIS
+MENUCONFIRM
+YOUWIN
+LEVELUPSOUND
+ULTIMATRIS
+TSPIN
+CLEAR
+TSPINMINI
+OCTORIS
+DECAHEXATRIS
+TIME
+ZONESTART
+YOULOSE
+MENUCANCEL
+BACKTOBACKQUAD
+BACKTOBACKTSPIN
+ROTATE
+LEVELUP
+READY
+SECRET
+GAMEOVER
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:14: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+SFX_DOUBLE
+SFX_GO
+SFX_PLACE
+SFX_SHIFT2
+SFX_QUAD
+SFX_SHIFT
+SFX_INVALID
+SFX_WIN
+SFX_MENUMOVE
+SFX_PERFECTRIS
+SFX_HOLD
+SFX_MULTICLEAR
+SFX_COOL
+SFX_PERFECTCLEAR
+SFX_REGRET
+SFX_TRIPLE
+SFX_END
+SFX_DODECATRIS
+SFX_MENUCONFIRM
+SFX_YOUWIN
+SFX_LEVELUPSOUND
+SFX_ULTIMATRIS
+SFX_TSPIN
+SFX_CLEAR
+SFX_TSPINMINI
+SFX_OCTORIS
+SFX_DECAHEXATRIS
+SFX_TIME
+SFX_ZONESTART
+SFX_YOULOSE
+SFX_MENUCANCEL
+SFX_BACKTOBACKQUAD
+SFX_BACKTOBACKTSPIN
+SFX_ROTATE
+SFX_LEVELUP
+SFX_READY
+SFX_SECRET
+SFX_GAMEOVER
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:16: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+SFX_DOUBLE
+SFX_GO
+SFX_PLACE
+SFX_SHIFT2
+SFX_QUAD
+SFX_SHIFT
+SFX_INVALID
+SFX_WIN
+SFX_MENUMOVE
+SFX_PERFECTRIS
+SFX_HOLD
+SFX_MULTICLEAR
+SFX_COOL
+SFX_PERFECTCLEAR
+SFX_REGRET
+SFX_TRIPLE
+SFX_END
+SFX_DODECATRIS
+SFX_MENUCONFIRM
+SFX_YOUWIN
+SFX_LEVELUPSOUND
+SFX_ULTIMATRIS
+SFX_TSPIN
+SFX_CLEAR
+SFX_TSPINMINI
+SFX_OCTORIS
+SFX_DECAHEXATRIS
+SFX_TIME
+SFX_ZONESTART
+SFX_YOULOSE
+SFX_MENUCANCEL
+SFX_BACKTOBACKQUAD
+SFX_BACKTOBACKTSPIN
+SFX_ROTATE
+SFX_LEVELUP
+SFX_READY
+SFX_SECRET
+SFX_GAMEOVER
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:19: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+('assets/double.wav', 'SFX_DOUBLE')
+('assets/go.wav', 'SFX_GO')
+('assets/place.wav', 'SFX_PLACE')
+('assets/shift2.wav', 'SFX_SHIFT2')
+('assets/quad.wav', 'SFX_QUAD')
+('assets/shift.wav', 'SFX_SHIFT')
+('assets/invalid.wav', 'SFX_INVALID')
+('assets/win.wav', 'SFX_WIN')
+('assets/menuMove.wav', 'SFX_MENUMOVE')
+('assets/perfectris.wav', 'SFX_PERFECTRIS')
+('assets/hold.wav', 'SFX_HOLD')
+('assets/multiClear.wav', 'SFX_MULTICLEAR')
+('assets/cool.wav', 'SFX_COOL')
+('assets/perfectClear.wav', 'SFX_PERFECTCLEAR')
+('assets/regret.wav', 'SFX_REGRET')
+('assets/triple.wav', 'SFX_TRIPLE')
+('assets/end.wav', 'SFX_END')
+('assets/dodecatris.wav', 'SFX_DODECATRIS')
+('assets/menuConfirm.wav', 'SFX_MENUCONFIRM')
+('assets/youWin.wav', 'SFX_YOUWIN')
+('assets/levelUPsound.wav', 'SFX_LEVELUPSOUND')
+('assets/ultimatris.wav', 'SFX_ULTIMATRIS')
+('assets/tSpin.wav', 'SFX_TSPIN')
+('assets/clear.wav', 'SFX_CLEAR')
+('assets/tSpinMini.wav', 'SFX_TSPINMINI')
+('assets/octoris.wav', 'SFX_OCTORIS')
+('assets/decahexatris.wav', 'SFX_DECAHEXATRIS')
+('assets/time.wav', 'SFX_TIME')
+('assets/zoneStart.wav', 'SFX_ZONESTART')
+('assets/youLose.wav', 'SFX_YOULOSE')
+('assets/menuCancel.wav', 'SFX_MENUCANCEL')
+('assets/backToBackQuad.wav', 'SFX_BACKTOBACKQUAD')
+('assets/backToBackTSpin.wav', 'SFX_BACKTOBACKTSPIN')
+('assets/rotate.wav', 'SFX_ROTATE')
+('assets/levelUP.wav', 'SFX_LEVELUP')
+('assets/ready.wav', 'SFX_READY')
+('assets/secret.wav', 'SFX_SECRET')
+('assets/gameover.wav', 'SFX_GAMEOVER')
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:19: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+assets/double.wav
+assets/go.wav
+assets/place.wav
+assets/shift2.wav
+assets/quad.wav
+assets/shift.wav
+assets/invalid.wav
+assets/win.wav
+assets/menuMove.wav
+assets/perfectris.wav
+assets/hold.wav
+assets/multiClear.wav
+assets/cool.wav
+assets/perfectClear.wav
+assets/regret.wav
+assets/triple.wav
+assets/end.wav
+assets/dodecatris.wav
+assets/menuConfirm.wav
+assets/youWin.wav
+assets/levelUPsound.wav
+assets/ultimatris.wav
+assets/tSpin.wav
+assets/clear.wav
+assets/tSpinMini.wav
+assets/octoris.wav
+assets/decahexatris.wav
+assets/time.wav
+assets/zoneStart.wav
+assets/youLose.wav
+assets/menuCancel.wav
+assets/backToBackQuad.wav
+assets/backToBackTSpin.wav
+assets/rotate.wav
+assets/levelUP.wav
+assets/ready.wav
+assets/secret.wav
+assets/gameover.wav
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:18: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py:18: SyntaxWarning: "is not" with a literal. Did you mean "!="?
+  if(filename.find('.wav') is not -1):
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+Traceback (most recent call last):
+  File "/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py", line 59, in <module>
+    for item in music:
+NameError: name 'music' is not defined
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+Traceback (most recent call last):
+  File "/home/apostolos/Programming/GBA/apotris/./tools/buildSongs.py", line 70, in <module>
+    for item in music:
+NameError: name 'music' is not defined
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ python3 ./tools/buildSongs.py 
+[apostolos@APCMJ apotris]$ make clean
+Cleaning...
+rm -rf build
+[apostolos@APCMJ apotris]$ 

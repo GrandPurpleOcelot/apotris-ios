@@ -19,7 +19,7 @@ INLINE u32 tileBuild(u16 value){
 INLINE void setSpritePixel(int index, u8 tx, u8 ty, u8 width, u8 x, u8 y, u8 color){
     TILE * t = &tile_mem[4][index + ty * width + tx];
 
-    t->data[y] |= color << (x);
+    t->data[y] |= color << (x * 4);
 }
 
 INLINE void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src){
@@ -28,6 +28,25 @@ INLINE void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src){
 
 INLINE void clearSpriteTile(int index, u8 tx, u8 ty, u8 width){
     memset32(&tile_mem[4][index+ ty * width + tx],0,8);
+}
+
+INLINE void setTileRow(int tileset, int index, int row, u32 data){
+    TILE* tile = &tile_mem[tileset][index];
+    tile->data[row] = data;
+}
+
+INLINE void setTilesetPixel(int cbb, int index, int x, int y, u8 color){
+    TILE* tile = &tile_mem[cbb][index];
+
+    tile->data[y] |= (color & 0xf) << (x*4);
+}
+
+INLINE void color_fade_fast(int palette, int index, COLOR *src, COLOR color, int count, u32 alpha){
+    clr_fade_fast(src, color, &pal_bg_mem[palette * 16 + index], count, alpha);
+}
+
+INLINE s16 sinLut(int angle){
+    return sin_lut[angle];
 }
 
 extern OBJ_AFFINE* obj_aff_buffer;

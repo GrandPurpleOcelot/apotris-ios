@@ -207,7 +207,7 @@ int endScreen() {
 
     // int prevBld = REG_BLDCNT;
     // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
-    setTiles(25,0,32*20,tileBuild(12, false, false, 4*savefile->settings.lightMode));
+    setTiles(25,0,32*32,tileBuild(12, false, false, 4*savefile->settings.lightMode));
     // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
     if(savefile->settings.announcer){
@@ -609,7 +609,7 @@ int pauseMenu(){
     enableBlend((1 << 6) + (0b11101 << 9) + (1));
     // int prevBld = REG_BLDCNT;
     // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
-    setTiles(25,0,32*20,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    setTiles(25,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
     // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
     setLayerScroll(0, 0, 0);

@@ -639,6 +639,9 @@ void setClearEffect(){
         loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
         // memcpy16(&tile_mem[0][3], sprite26tiles_bin, sprite26tiles_bin_size / 2);
         break;
+    default:
+        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
+        break;
     }
 }
 

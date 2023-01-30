@@ -179,19 +179,21 @@ void drawEnemyBoard(int height) {
         return;
 
 
-    //TODO:
-    #ifdef GBA
-    TILE* dest2;
 
     for (int j = 0; j < 10; j++) {
-        dest2 = (TILE*)&tile_mem[5][256 + ((height) / 8) * 2 + (j) / 8];
+        // dest2 = (TILE*)&tile_mem[5][256 + ((height) / 8) * 2 + (j) / 8];
 
         if (enemyBoard[height][j])
-            dest2->data[(height) % 8] |= ((enemyBoard[height][j]) + 1 * savefile->settings.lightMode) << ((j % 8) * 4);
+            setSpritePixel(512 + 256, j / 8, height/8, 2, j % 8, height % 8, ((enemyBoard[height][j]) + 1 * savefile->settings.lightMode));
         else
-            dest2->data[(height) % 8] &= ~(0xffff << ((j % 8) * 4));
+            setSpritePixel(512 + 256, j / 8, height/8, 2, j % 8, height % 8, 0);
+            // dest2->data[(height) % 8] &= ~(0xffff << ((j % 8) * 4));
+
+        // if (enemyBoard[height][j])
+        //     dest2->data[(height) % 8] |= ((enemyBoard[height][j]) + 1 * savefile->settings.lightMode) << ((j % 8) * 4);
+        // else
+        //     dest2->data[(height) % 8] &= ~(0xffff << ((j % 8) * 4));
     }
-    #endif
 }
 
 int botClearTimer = 0;

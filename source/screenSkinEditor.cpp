@@ -781,8 +781,7 @@ void showTools(int c){
         if(i == c){
             aprint("<",3,4+i*2);
 
-            //TODO:
-            // offset = ((sin_lut[toolTimer]*2)>>12);
+            offset = ((sinLut(toolTimer)*2)>>12);
 
         } else
             aprint(" ",3,4+i*2);

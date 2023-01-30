@@ -3,10 +3,10 @@
 #include <iostream>
 #include "Tilengine.h"
 #include <cstring>
-#include "soundbank.h"
+#include "audio_files.h"
 
-#define SCREEN_WIDTH 240
-#define SCREEN_HEIGHT 160
+#define SCREEN_WIDTH 272
+#define SCREEN_HEIGHT 196
 
 typedef unsigned char  u8;
 typedef unsigned short u16, COLOR;
@@ -81,6 +81,9 @@ typedef int FIXED;
 #define int2fx(i)		((int)(i) << FIXED_BITS)
 #define fx2int(f)		((int)(f) >> FIXED_BITS)
 #define fx2float(f)	(float)(f)/(1 << FIXED_BITS)
+
+INLINE FIXED fxmul(FIXED fa, FIXED fb)
+{	return (fa*fb)>>FIXED_BITS;				}
 
 INLINE FIXED fxdiv(FIXED fa, FIXED fb)
 {	return ((fa)*(1<<FIXED_BITS))/(fb);			}
@@ -303,6 +306,23 @@ INLINE void setTilesetPixel(int cbb, int index, int x, int y, u8 color){
     *dst = color;
 }
 
+INLINE void setTileRow(int tileset, int index, int row, u32 data){
+    u8 *dst = TLN_GetTilesetPtr(tilesets[tileset],index,0,row);
+
+    for(int i = 0; i < 8; i++)
+        *dst++ = (data >> (4 * i)) & 0xf;
+}
+
+INLINE u32 bf_clamp(int x, uint len){
+	u32 y=x>>len;
+	if(y)
+		x= (~y)>>(32-len);
+	return x;
+}
+
+extern void color_fade_fast(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha);
+
 extern void rumble_set_state(int);
+
 // extern void sfx(int n);
 // extern void sfx

@@ -56,7 +56,7 @@ extern void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, i
 
 // extern void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src);
 
-extern void setPaletteColor(int palette, int index, int color, int count);
+extern void setPaletteColor(int palette, int index, u16 color, int count);
 
 extern void sprite_set_id(OBJ_ATTR * sprite,int id);
 extern void sprite_hide(OBJ_ATTR * sprite);
@@ -82,7 +82,7 @@ extern void enableBlend(int info);
 extern void color_fade_palette(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha);
 extern void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha);
 
-extern void color_adj_brightness(int palette, int index, const COLOR * src, int count, u32 alpha);
+extern void color_adj_brightness(int palette, int index, const COLOR * src, int count, u32 bright);
 
 extern void sleep();
 
@@ -119,3 +119,7 @@ extern void loadSavefile();
 extern void saveSavefile();
 
 extern s16 sinLut(int angle);
+
+extern void savePalette(COLOR * dst);
+
+extern void mirrorPalettes(int index, int count);
