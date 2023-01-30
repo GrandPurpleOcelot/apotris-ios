@@ -11,6 +11,8 @@
 #ifndef _TILENGINE_H
 #define _TILENGINE_H
 
+#include "SDL2/SDL.h"
+
 /**
  * \defgroup types
  * \brief Common data types
@@ -465,6 +467,7 @@ TLNAPI void TLN_Delay (uint32_t msecs);
 TLNAPI uint32_t TLN_GetTicks (void);
 TLNAPI int TLN_GetWindowWidth(void);
 TLNAPI int TLN_GetWindowHeight(void);
+TLNAPI SDL_Window * TLN_GetWindow(void);
 /**@}*/
 
 /**

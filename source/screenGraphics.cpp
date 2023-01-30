@@ -70,7 +70,7 @@ void graphicTest() {
 
 
     buildBG(3, 0, 27, 0, 1, 0);
-    setTiles(27, 0, 32 * 20, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
     // REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(1);
     // memset16(&se_mem[27], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
@@ -153,7 +153,7 @@ void graphicTest() {
             setDefaultGraphics(savefile, 0);
             setSkin();
             setPalette();
-            setTiles(27, 0, 32 * 20, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+            setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
             // memset16(&se_mem[27], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
         }
 
@@ -225,8 +225,11 @@ void graphicTest() {
             // oam_copy(oam_mem, obj_buffer, 128);
 
             gradientEditor();
-            if(showOptions)
+            if(showOptions){
+                toggleBG(3, showOptions);
                 showLabels();
+            }
+
         }
 
         if (key_hit(KEY_LEFT) || key_hit(KEY_RIGHT)) {
@@ -332,7 +335,7 @@ void graphicTest() {
                 break;
             case 7:
                 savefile->settings.lightMode = !savefile->settings.lightMode;
-                setTiles(27, 0, 32 * 20, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+                setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
 
                 // memset16(&se_mem[27], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
                 setSkin();
@@ -760,7 +763,7 @@ void gradientEditor(){
 
         c = 0;
 
-        const int tile = 105 + 0xf000;
+        const int tile = 105;
 
         for(int i = 0; i < 3; i++){
             int x = 14 + (i-1)*space;
@@ -779,10 +782,10 @@ void gradientEditor(){
             aprint(buff, x, height);
 
             if(i == selection){
-                setTile(29, x, height - 1 , tileBuild(tile, false, false, 0));
-                setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 0));
-                setTile(29, x, height + 1 , tileBuild(tile, false, true, 0));
-                setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 0));
+                setTile(29, x, height - 1 , tileBuild(tile, false, false, 15));
+                setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 15));
+                setTile(29, x, height + 1 , tileBuild(tile, false, true, 15));
+                setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 15));
                 // dest[32 * (height - 1) + x] = tile;
                 // dest[32 * (height - 1) + x+1] = tile + 1;
                 // dest[32 * (height + 1) + x] = tile + 0x800;
@@ -802,5 +805,8 @@ void gradientEditor(){
 
     //TODO:
     // REG_DISPCNT = display_value;
+    toggleBG(0, true);
+    toggleBG(1, true);
+    toggleBG(2, true);
     clearText();
 }

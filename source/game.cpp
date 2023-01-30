@@ -65,7 +65,7 @@ bool onStates = false;
 
 int clearTimer = 0;
 
-int maxClearTimer = 10;
+int maxClearTimer = 20;
 
 std::string clearTypeText = "";
 #define maxClearTextTimer 100
@@ -749,6 +749,7 @@ void showHold() {
     if(game->gameMode != CLASSIC && !game->zoneTimer){
         sprite_unhide(holdFrameSprite, 0);
         sprite_set_attr(holdFrameSprite,ShapeSquare,2,512,8,3);
+        sprite_enable_blend(holdFrameSprite);
         // sprite_set_attr(holdFrameSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
         sprite_set_pos(holdFrameSprite, 4 * 8 + 7 + (push < 0) * push, 9 * 8 - 2);
     }else{
@@ -812,6 +813,7 @@ void showQueue() {
             sprite_unhide(queueFrameSprites[i], 0);
             sprite_set_attr(queueFrameSprites[i], ShapeSquare, 2, 512 + 16 + 16 * i, 8, 3);
             sprite_enable_mosaic(queueFrameSprites[i]);
+            sprite_enable_blend(queueFrameSprites[i]);
             // obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, 8, 3));
             sprite_set_pos(queueFrameSprites[i], 173 + (push > 0) * push, 12 + 32 * i - (i * 9 * (5-maxQueue)));
         }
@@ -819,6 +821,7 @@ void showQueue() {
         sprite_unhide(queueFrameSprites[0], 0);
         sprite_set_attr(queueFrameSprites[0], ShapeSquare, 2, 512, 8, 3);
         sprite_enable_mosaic(queueFrameSprites[0]);
+        sprite_enable_blend(queueFrameSprites[0]);
         // obj_set_attr(queueFrameSprites[0], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
         sprite_set_pos(queueFrameSprites[0], 173 + (push > 0) * push, 12);
 
@@ -1199,6 +1202,9 @@ void gameLoop(){
     loadSpriteTiles(256+3, meterTiles[0], 4, 4);
     // memcpy16(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/2);
 
+    for(int i = 0; i < 3; i++)
+        moveSprites[i] = &obj_buffer[16+i];
+
     update();
 
     clearSprites(128);
@@ -1462,8 +1468,9 @@ void countdown() {
     showSprites(128);
     // oam_copy(oam_mem, obj_buffer, 128);
 
-    while (timer++ < timerMax - 1) {
+    while (closed() && timer++ < timerMax - 1) {
         vsync();
+        key_poll();
 
         if (timer < timerMax / 3) {
             aprint("READY?", 12, 10);
@@ -1471,7 +1478,6 @@ void countdown() {
                 sfx(SFX_READY);
             }
         } else if (timer < 2 * timerMax / 3){
-            key_poll();
             aprint("READY?", 12, 10);
             if(key_is_down(KEY_L) && key_is_down(KEY_R)){
                 // restart = true;
@@ -1585,8 +1591,8 @@ void drawFrame() {
     #ifdef PC
 
     // setTile(26,9,31,tileBuild(29,false,false,8));
-    setTile(26,9,20,tileBuild(29,false,true,8));
-    setTile(26,20,20,tileBuild(33,false,false,8));
+    setTile(26,20,20,tileBuild(29,true,true,8));// right bottom frame corner
+    setTile(26,9,20,tileBuild(29,false,true,8));// left bottom frame corner
 
     for(int i = 0; i < 10; i++){
         // setTile(26,10+i,31,tileBuild(28,false,false,8));
@@ -1731,25 +1737,31 @@ void progressBar() {
         current = game->linesSent;
     else if (game->gameMode != SURVIVAL)
         current = game->linesCleared;
-    else
+    else{
+        setTile(26,20,20,tileBuild(29,true,true,8));// right bottom frame corner
         return;
+    }
+
 
     if (game->gameMode != BATTLE) {
         showBar(current, max, 20, 8);
+        setTile(26,20,20,tileBuild(33,false,false,8));// right bottom frame corner
+        setTile(26,9,20,tileBuild(29,false,true,8));// left bottom frame corner
     }else{
         if (++attackFlashTimer > attackFlashMax)
             attackFlashTimer = 0;
 
         if (attackFlashTimer < attackFlashMax / 2) {
-            setPaletteColor(8, 5, 0x421f, 1);
+            setPaletteColor(8, 4, 0x421f, 1);
             // memset32(&pal_bg_mem[8 * 16 + 5], 0x421f, 1);
         } else {
-            setPaletteColor(8, 5, 0x7fff, 1);
+            setPaletteColor(8, 4, 0x7fff, 1);
             // memset32(&pal_bg_mem[8 * 16 + 5], 0x7fff, 1);
         }
 
         //attack bar
         showBar(game->getIncomingGarbage(), 20, 9, 8);
+        setTile(26,9,20,tileBuild(33,true,false,8)); // left bottom frame corner
     }
 }
 

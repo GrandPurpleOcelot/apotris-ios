@@ -478,4 +478,8 @@ void enableBlend(int info){
     REG_BLDCNT = info;
 }
 
+void sprite_enable_blend(OBJ_ATTR * sprite){
+    sprite->attr0 |= ATTR0_BLEND;
+}
+
 #endif

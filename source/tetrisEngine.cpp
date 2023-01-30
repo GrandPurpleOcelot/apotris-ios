@@ -85,9 +85,12 @@ void Pawn::setBlock(int system) {
     }
 
     int lowestBlock = 0;
-    for(int i = 0; i < 4; i++)
-        if(boardLowest[rotation][i] > lowestBlock)
-            lowestBlock = boardLowest[rotation][i];
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 4; j++){
+            if(boardLowest[j][i] > lowestBlock)
+                lowestBlock = boardLowest[j][i];
+        }
+    }
 }
 
 int getNbr(int **board, int x, int y, int ex, int sy , int ey){
@@ -249,6 +252,11 @@ void Game::rotate(int dir){
 }
 
 void Game::rotatePlace(int dir, int dx, int dy, int r){
+    std::string str;
+    for (int i = 0; i < 4; i++) {
+        str += std::to_string(pawn.boardLowest[r][i]) + " ";
+    }
+    log(str);
     pawn.rotation = r;
 
     lockCheck();
@@ -342,9 +350,12 @@ void Game::hardDrop() {
         lastMoveRotation = 0;
 
     int offset = 0;
-    for(int i = 0; i < 4; i++)
-        if(pawn.boardLowest[pawn.rotation][i] != -1)
+    for(int i = 0; i < 4; i++){
+        if(pawn.boardLowest[pawn.rotation][i] != -1){
             offset = i;
+            break;
+        }
+    }
 
     std::list<int> bestFinesse = getBestFinesse(pawn.current,pawn.x+offset,pawn.rotation);
     previousBest = bestFinesse;
@@ -364,7 +375,6 @@ void Game::hardDrop() {
     }else{
         correct = true;
     }
-
 
     if(!correct && !softDrop){
         finesseFaults += difference;

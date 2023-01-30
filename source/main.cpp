@@ -667,6 +667,8 @@ void setLightMode() {
         setPaletteColor(30,2,0x318c,1);//obj font main
         setPaletteColor(30,3,0x0421,1);//obj font shadow
 
+        setPaletteColor(16 + 8,6,0x0c63,1);//frame background
+
         // memset16(pal_bg_mem, 0x0000, 1);
         // memset16(&pal_bg_mem[8 * 16 + 4], 0x7fff, 1);
 

@@ -24,6 +24,7 @@ static const int offsetx = (SCREEN_WIDTH - 240)/2;
 static const int offsety = (SCREEN_HEIGHT - 160)/2;
 
 void loadAudio(){
+    return;
 
     for(int i = 0; i < SFX_COUNT; i++){
         // log(SoundEffectPaths[i]);
@@ -186,12 +187,16 @@ void platformInit(){
 
     TLN_SetRasterCallback(onHBlank);
     TLN_SetSDLCallback(handleSDLEvents);
+    TLN_SetWindowTitle("Apotris PC");
+
+    SDL_Surface * icon = SDL_LoadBMP("assets/favicon32.bmp");
+    SDL_SetWindowIcon(TLN_GetWindow(), icon);
 
     //Initialize SDL_mixer
-    if( Mix_OpenAudio( 32000, MIX_DEFAULT_FORMAT, 8, 768 ) < 0 )
-    {
-        printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
-    }
+    // if( Mix_OpenAudio( 32000, MIX_DEFAULT_FORMAT, 8, 1024 ) < 0 )
+    // {
+    //     printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+    // }
 
     loadAudio();
 
@@ -346,7 +351,11 @@ void showSprites(int n ){
             TLN_SetSpriteScaling(counter, 1, 1);
         }
 
-        TLN_SetSpriteBlendMode(counter, (blendSprites || sprite->blend)?BLEND_MIX25:BLEND_NONE , 0);
+        if(!(blendSprites || sprite->blend))
+            TLN_SetSpriteBlendMode(counter, BLEND_NONE , 0);
+        else
+            TLN_SetSpriteBlendMode(counter, (blendSprites)?BLEND_MIX25:BLEND_MIX75 , 0);
+        TLN_SetSpriteBlendMode(counter, (blendSprites || sprite->blend)?BLEND_MIX75:BLEND_NONE , 0);
         TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + (sprite->rotate * FLAG_ROTATE) + ((sprite->priority == 0) * FLAG_PRIORITY));
         counter++;
     }
@@ -433,6 +442,9 @@ void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int 
 };
 
 void setLayerScroll(int layer, int x, int y){
+    if(!layerInfo[layer].enabled)
+        return;
+
     TLN_SetLayerPosition(layerInfo[layer].id, x - offsetx, y - offsety);
 }
 
@@ -588,10 +600,12 @@ void setPaletteColor(int palette, int index, u16 color, int count){
         TLN_SetBGColor(c.r,c.g,c.b);
 
     for(int i = 0; i < count; i++){
-        // log(std::to_string(palette) + " " + std::to_string(index));
-        // char buff [64];
-        // snprintf(buff,64, "%d %d %d", c.r, c.g, c.b);
-        // log(buff);
+        // if(palette == 8 && index == 5){
+        //     log(std::to_string(palette) + " " + std::to_string(index));
+        //     char buff [64];
+        //     snprintf(buff,64, "%d %d %d", c.r, c.g, c.b);
+        //     log(buff);
+        // }
         TLN_SetPaletteColor(palettes[palette], index+i, c.r, c.g, c.b);
     }
 }
@@ -954,6 +968,10 @@ void mirrorPalettes(int index, int count){
         //     setPaletteColor(i, j, rgb8to5((u32*) TLN_GetPaletteData(palettes[i + 16], j)), 1);
         // }
     }
+}
+
+void sprite_enable_blend(OBJ_ATTR * sprite){
+    sprite->blend = true;
 }
 
 #endif
