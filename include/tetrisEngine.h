@@ -291,6 +291,30 @@ namespace Tetris
             int rotationSystem = SRS;
     };
 
+    class Timestamp{
+    public:
+        int timer;
+        int move;
+        int dir;
+        bool shiftTimer = false;
+
+        Timestamp(int _timer, int _move, int _dir){
+            timer = _timer;
+            move = _move;
+            dir = _dir;
+        }
+
+        Timestamp(bool shift){
+            shiftTimer = shift;
+        }
+
+        Timestamp(u32 m){
+            timer = (m >> 11) & 0x3fffff;
+            dir = (m >> 9) & 1;
+            move = m & 0x1ff;
+        }
+    };
+
     class Game {
     private:
         void fillBag();
@@ -306,7 +330,7 @@ namespace Tetris
         void generateGarbage(int,int);
         Drop calculateDrop();
         void setMasterTuning();
-        void rotate(int);
+        void rotate(int,int);
         int checkSpecialRotation(int,int);
         int checkITouching(int,int);
         void rotatePlace(int,int,int,int);
@@ -471,8 +495,6 @@ namespace Tetris
 
         u16 ** disappearTimers;
         int disappearing = 0;
-
-
         std::list<std::tuple<u8,u8>> toDisappear;
 
         float creditGrade = 0;
@@ -484,6 +506,10 @@ namespace Tetris
         int inGameTimer = 0;
 
         int stackHeight = lengthY;
+
+        int replayTimerSections = 0;
+
+        std::list<Timestamp> replay;
 
         int checkRotation(int, int, int);
         void rotateCW(int dir);

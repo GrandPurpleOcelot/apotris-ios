@@ -10,6 +10,9 @@
 #include <cstring>
 #include "posprintf.h"
 
+//TEMPORARY
+#include <fstream>
+
 using namespace Tetris;
 
 void endAnimation();
@@ -18,6 +21,8 @@ void showStats(bool, std::string, std::string);
 int onRecord();
 std::string nameInput(int);
 void showModeText();
+
+void saveReplay();
 
 int mode = 0;
 bool showingStats = false;
@@ -182,6 +187,8 @@ int endScreen() {
 
     stopSong();
     // mmStop();
+
+    saveReplay();
 
     int selection = 0;
 
@@ -1046,5 +1053,114 @@ void showModeText(){
 
         if(bigMode)
             aprintColor("BIG MODE",22,counter++,0);
+    }
+}
+
+Replay test;
+// ReplayHeader test;
+
+void saveReplay(){
+    if(replaying)
+        return;
+
+    const int len = game->replay.size();
+    if(len >= 4096){
+        log("replay size too big (" + std::to_string(len) + ")");
+        return;
+    }
+
+    test.header.tag = savefile->newGame;
+    test.header.length = len;
+    test.header.duration = game->timer;
+    test.header.seed = game->initSeed;
+    test.header.options = *previousGameOptions;
+
+    auto it = game->replay.begin();
+    for(int i = 0; i < len; i++){
+        Timestamp move = *it;
+
+        // char buff[64];
+        // posprintf(buff, "%d. %d %d %d", i, move.timer, move.move, move.dir);
+        // log(buff);
+
+        test.moves[i] = (((move.timer & 0x3fffff) << 11) + ((move.dir & 1) << 9) + (move.move & 0x1ff));
+
+        // log(move.timer)
+
+        it++;
+    }
+
+    std::ofstream output("replay.sav",std::ios::binary | std::ios::out);
+
+    char * src = (char * ) &test;
+    output.write(src, sizeof(Replay));
+
+    if(!output){
+        log("Error when trying to write replay.");
+        return;
+    }
+
+    output.close();
+}
+
+ReplayHeader curRepHeader;
+std::list<Timestamp> currentReplay;
+
+void loadReplay(){
+    currentReplay.clear();
+
+    std::ifstream input("replay.sav",std::ios::binary | std::ios::in);
+
+    Replay rep;
+    char * dst = (char * ) &rep;
+
+    log(std::to_string(sizeof(Replay)));
+
+    input.read(dst,sizeof(Replay));
+
+    if(!input){
+        log("Error when trying to load replay.");
+        return;
+    }
+
+    if(rep.header.tag != savefile->newGame){
+        log("Invalid replay (old version).");
+        return;
+    }
+
+    if(rep.header.length > 4096){
+        log("Invalid replay (too large).");
+        return;
+    }
+
+    for(int i = 0; i < rep.header.length; i++){
+        currentReplay.push_back(Timestamp(rep.moves[i]));
+    }
+
+    curRepHeader = rep.header;
+
+    startGame(curRepHeader.options,curRepHeader.seed);
+    replaying = true;
+
+    replayIterator = currentReplay.begin();
+
+    input.close();
+
+    int t1 = curRepHeader.options.mode;
+    int t2 = curRepHeader.options.goal;
+    int t3 = curRepHeader.options.tuning.das;
+    int t4 = curRepHeader.options.rotationSystem;
+
+    char buff[64];
+
+    posprintf(buff, "%d %d %d %d", t1, t2, t3, t4);
+    log(buff);
+
+    while(closed()){
+        vsync();
+        key_poll();
+
+        if(key_hit(KEY_FULL))
+            break;
     }
 }

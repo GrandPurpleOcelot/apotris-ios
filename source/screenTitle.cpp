@@ -445,6 +445,11 @@ void startScreen() {
                 refreshText = true;
             }
 
+            if(key == KEY_R){
+                loadReplay();
+                break;
+            }
+
             if (toStart == MARATHON) {
                 if (selection == 0) {
                     if (key == KEY_RIGHT && subMode < 1) {

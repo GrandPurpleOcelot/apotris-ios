@@ -24,7 +24,6 @@ static const int offsetx = (SCREEN_WIDTH - 240)/2;
 static const int offsety = (SCREEN_HEIGHT - 160)/2;
 
 void loadAudio(){
-    return;
 
     for(int i = 0; i < SFX_COUNT; i++){
         // log(SoundEffectPaths[i]);
@@ -193,10 +192,10 @@ void platformInit(){
     SDL_SetWindowIcon(TLN_GetWindow(), icon);
 
     //Initialize SDL_mixer
-    // if( Mix_OpenAudio( 32000, MIX_DEFAULT_FORMAT, 8, 1024 ) < 0 )
-    // {
-    //     printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
-    // }
+    if( Mix_OpenAudio( 32000, MIX_DEFAULT_FORMAT, 8, 1024 ) < 0 )
+    {
+        printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+    }
 
     loadAudio();
 

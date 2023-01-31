@@ -49,6 +49,7 @@ Function getActionFromKey(int key);
 void liftKeys();
 // void journeyFlash();
 void setJourneyGraphics(Save * save, int level);
+void replayControl();
 
 Game* game = nullptr;
 OBJ_ATTR* pawnSprite;
@@ -118,6 +119,8 @@ static u16 fullMeterTimer = 0;
 
 FIXED shakeBuff;
 FIXED shakeVelocity;
+
+bool replaying = false;
 
 void GameScene::draw(){
     std::string prof;
@@ -892,6 +895,11 @@ void control() {
         update();
     }
 
+    if(replaying){
+        replayControl();
+        return;
+    }
+
     if (key_hit(k.hold) && !checkDiagonal(k.hold)) {
         game->hold(1);
     }
@@ -1184,6 +1192,7 @@ void showClearText() {
 }
 
 void gameLoop(){
+    log("here");
     GameScene* s = new GameScene();
     changeScene(s);
 
@@ -2669,5 +2678,40 @@ void setJourneyGraphics(Save *save, int level){
         default:
             setRandomGraphics(save);
             break;
+    }
+}
+
+std::list<Timestamp>::iterator replayIterator;
+
+void replayControl(){
+    while(replayIterator->timer == game->timer && replayIterator != currentReplay.end()){
+        bool dir = replayIterator->dir;
+        switch(replayIterator->move){
+        case 0:
+            game->keyLeft(dir);
+            break;
+        case 1:
+            game->keyRight(dir);
+            break;
+        case 2:
+            game->rotateCW(dir);
+            break;
+        case 3:
+            game->rotateCCW(dir);
+            break;
+        case 4:
+            game->rotateTwice(dir);
+            break;
+        case 5:
+            game->hold(dir);
+            break;
+        case 6:
+            game->keyDown(dir);
+            break;
+        case 7:
+            game->keyDrop(dir);
+            break;
+        }
+        ++replayIterator;
     }
 }

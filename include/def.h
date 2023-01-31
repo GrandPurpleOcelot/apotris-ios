@@ -154,6 +154,22 @@ typedef struct Save{
     Skin customSkins[MAX_CUSTOM_SKINS];
 }ALIGN(4) Save;
 
+typedef struct ReplayHeader{
+    u8 tag;
+    u32 length;
+    u32 duration;
+    u32 seed;
+
+    Tetris::Options options;
+
+    int placeholder[240];
+}ALIGN(4) ReplayHeader;
+
+typedef struct Replay{
+    ReplayHeader header;
+    u32 moves[4096];
+}ALIGN(4) Replay;
+
 extern Save *savefile;
 
 #define glowDuration 12
@@ -320,6 +336,8 @@ extern int countBits(u16 n);
 extern int countTransitions(u16 a);
 extern void addStats();
 
+extern void loadReplay();
+
 extern Tetris::Game *game;
 extern Tetris::Game *quickSave;
 extern Tetris::Game *botGame;
@@ -404,7 +422,15 @@ extern int maxClearTimer;
 
 extern Tetris::Options *previousGameOptions;
 
+extern FIXED shakeBuff;
+extern FIXED shakeVelocity;
+
+extern std::list<Tetris::Timestamp>::iterator replayIterator;
+extern std::list<Tetris::Timestamp> currentReplay;
+
 #define shakeMax 10
+
+extern bool replaying;
 
 class GameScene : public Scene{
     void draw();

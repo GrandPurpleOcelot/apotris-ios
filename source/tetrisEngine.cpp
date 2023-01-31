@@ -120,31 +120,32 @@ int getNbr(int **board, int x, int y, int ex, int sy , int ey){
 void Game::rotateCW(int dir) {
     rotates[0] = dir;
 
-    if(!dir)
-        return;
+    replay.push_back(Timestamp(timer,2,dir));
 
-    rotate(1);
+    rotate(1,dir);
 }
 
 void Game::rotateCCW(int dir) {
     rotates[1] = dir;
 
-    if(!dir)
-        return;
+    replay.push_back(Timestamp(timer,3,dir));
 
-    rotate(-1);
+    rotate(-1,dir);
 }
 
 void Game::rotateTwice(int dir) {
     rotates[2] = dir;
 
-    if(!dir)
-        return;
+    replay.push_back(Timestamp(timer,4,dir));
 
-    rotate(2);
+    rotate(2,dir);
 }
 
-void Game::rotate(int dir){
+void Game::rotate(int dir, int on){
+
+    if(!on)
+        return;
+
     if ((clearLock || entryDelay)){
         return;
     }else if(eventLock){
@@ -252,11 +253,6 @@ void Game::rotate(int dir){
 }
 
 void Game::rotatePlace(int dir, int dx, int dy, int r){
-    std::string str;
-    for (int i = 0; i < 4; i++) {
-        str += std::to_string(pawn.boardLowest[r][i]) + " ";
-    }
-    log(str);
     pawn.rotation = r;
 
     lockCheck();
@@ -284,7 +280,6 @@ bool Game::moveLeft() {
 
         moveHistory.push_back(2);
     }
-
 
     if (checkRotation(-1, 0, pawn.rotation)) {
         pawn.x--;
@@ -1335,6 +1330,9 @@ void Game::fillQueue(int count) {
 
 void Game::hold(int dir) {
     holding = dir;
+
+    replay.push_back(Timestamp(timer,5,dir));
+
     if((clearLock || entryDelay) && gameMode != CLASSIC){
         // holding = dir;
         return;
@@ -1494,6 +1492,9 @@ void Game::lockCheck() {
 
 void Game::keyLeft(int dir) {
     moveCounter++;
+
+    replay.push_back(Timestamp(timer,0,dir));
+
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         left = dir;
         return;
@@ -1523,6 +1524,9 @@ void Game::keyLeft(int dir) {
 
 void Game::keyRight(int dir) {
     moveCounter++;
+
+    replay.push_back(Timestamp(timer,1,dir));
+
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         right = dir;
         return;
@@ -1551,6 +1555,7 @@ void Game::keyRight(int dir) {
 
 void Game::keyDown(int dir) {
     moveCounter++;
+    replay.push_back(Timestamp(timer,6,dir));
     if (clearLock || eventLock || entryDelay) {
         if(!(entryDelay && rotationSystem == NRS))
             down = dir;
@@ -1706,6 +1711,7 @@ void Game::generateGarbage(int height,int mode){
 }
 
 void Game::keyDrop(int dir){
+    replay.push_back(Timestamp(timer, 7,dir));
     if(!dir)
         return;
 
