@@ -13,12 +13,19 @@
 #include <list>
 #include "audio_files.h"
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+#include "sfMod.h"
 
+#define TLN_EXCLUDE_WINDOW
 
-Mix_Chunk *soundEffectChunks[SFX_COUNT];
-Mix_Music *musicChunks[MUSIC_COUNT];
+std::list<sf::Sound*> soundList;
+sf::SoundBuffer sfxBuffers[SFX_COUNT];
+sfmod::Mod musicArray[MUSIC_COUNT];
+
+// Mix_Chunk *soundEffectChunks[SFX_COUNT];
+// Mix_Music *musicChunks[MUSIC_COUNT];
 
 static const int offsetx = (SCREEN_WIDTH - 240)/2;
 static const int offsety = (SCREEN_HEIGHT - 160)/2;
@@ -26,22 +33,16 @@ static const int offsety = (SCREEN_HEIGHT - 160)/2;
 void loadAudio(){
 
     for(int i = 0; i < SFX_COUNT; i++){
-        // log(SoundEffectPaths[i]);
-        soundEffectChunks[i] = Mix_LoadWAV(SoundEffectPaths[i]);
-
-        if(soundEffectChunks[i] == NULL){
-            std::string str = "Failed to init sound file at: ";
+        if(!sfxBuffers[i].loadFromFile(SoundEffectPaths[i])){
+            std::string str = "Failed to load ";
             str += SoundEffectPaths[i];
             log(str);
         }
     }
 
     for(int i = 0; i < MUSIC_COUNT; i++){
-        // log(SoundEffectPaths[i]);
-        musicChunks[i] = Mix_LoadMUS(SongPaths[i]);
-
-        if(musicChunks[i] == NULL){
-            std::string str = "Failed to init music file at: ";
+        if(!musicArray[i].loadFromFile(SongPaths[i])){
+            std::string str = "Failed to load ";
             str += SongPaths[i];
             log(str);
         }
@@ -49,18 +50,21 @@ void loadAudio(){
 }
 
 void freeAudio(){
-    for(int i = 0; i < SFX_COUNT; i++){
-        Mix_FreeChunk(soundEffectChunks[i]);
-    }
+    // for(int i = 0; i < SFX_COUNT; i++){
+    //     Mix_FreeChunk(soundEffectChunks[i]);
+    // }
 
-    for(int i = 0; i < MUSIC_COUNT; i++){
-        Mix_FreeMusic(musicChunks[i]);
-    }
+    // for(int i = 0; i < MUSIC_COUNT; i++){
+    //     Mix_FreeMusic(musicChunks[i]);
+    // }
 }
 
 static bool blendSprites = false;
 
 int blendInfo = 0;
+int currentSong = -1;
+int sfxVolume = 1024;
+int musicVolume = 0;
 
 void onHBlank(int line);
 
@@ -71,23 +75,24 @@ public:
     int g = 0;
     int b = 0;
 
+    //Red and Blue are swapped intentionally to fix Tilengine -> SFML issue
     ColorSplit(int _r, int _g, int _b){
-        r = _r;
+        b = _r;
         g = _g;
-        b = _b;
+        r = _b;
 
     }
 
     ColorSplit(u16 c){
-        r = (((c) & 0x1f) << 3);
+        b = (((c) & 0x1f) << 3);
         g = (((c >> 5) & 0x1f) << (3));
-        b = (((c >> 10) & 0x1f) << (3));
+        r = (((c >> 10) & 0x1f) << (3));
     }
 
     ColorSplit(u32 *c){
-        r = (*c >> (16 + 3)) & 0x1f;
+        b = (*c >> (16 + 3)) & 0x1f;
         g = (*c >> ( 8 + 3)) & 0x1f;
-        b = (*c >> ( 0 + 3)) & 0x1f;
+        r = (*c >> ( 0 + 3)) & 0x1f;
     }
 };
 
@@ -124,34 +129,50 @@ u16 __key_prev = 0;
 // static Uint64 frame_start;
 
 void setInputs(){
-    TLN_DefineInputKey(PLAYER1, INPUT_UP, SDLK_c);
-    TLN_DefineInputKey(PLAYER1, INPUT_DOWN, SDLK_k);
-    TLN_DefineInputKey(PLAYER1, INPUT_LEFT, SDLK_j);
-    TLN_DefineInputKey(PLAYER1, INPUT_RIGHT, SDLK_l);
-    TLN_DefineInputKey(PLAYER1, INPUT_BUTTON1, SDLK_i);
-    TLN_DefineInputKey(PLAYER1, INPUT_BUTTON2, SDLK_SEMICOLON);
-    TLN_DefineInputKey(PLAYER1, INPUT_BUTTON3, SDLK_z);
-    TLN_DefineInputKey(PLAYER1, INPUT_BUTTON4, SDLK_s);
-    TLN_DefineInputKey(PLAYER1, INPUT_START, SDLK_RETURN);
-    TLN_DefineInputKey(PLAYER1, INPUT_QUIT, SDLK_ESCAPE);
-    TLN_DefineInputKey(PLAYER1, INPUT_CRT, SDLK_BACKSPACE);
+    // TLN_DefineInputKey(PLAYER1, INPUT_UP, SDLK_c);
+    // TLN_DefineInputKey(PLAYER1, INPUT_DOWN, SDLK_k);
+    // TLN_DefineInputKey(PLAYER1, INPUT_LEFT, SDLK_j);
+    // TLN_DefineInputKey(PLAYER1, INPUT_RIGHT, SDLK_l);
+    // TLN_DefineInputKey(PLAYER1, INPUT_BUTTON1, SDLK_i);
+    // TLN_DefineInputKey(PLAYER1, INPUT_BUTTON2, SDLK_SEMICOLON);
+    // TLN_DefineInputKey(PLAYER1, INPUT_BUTTON3, SDLK_z);
+    // TLN_DefineInputKey(PLAYER1, INPUT_BUTTON4, SDLK_s);
+    // TLN_DefineInputKey(PLAYER1, INPUT_START, SDLK_RETURN);
+    // TLN_DefineInputKey(PLAYER1, INPUT_QUIT, SDLK_ESCAPE);
+    // TLN_DefineInputKey(PLAYER1, INPUT_CRT, SDLK_BACKSPACE);
 }
 
-void handleSDLEvents(SDL_Event * evt){
-    if(evt->type == SDL_MOUSEBUTTONDOWN){
-		SDL_MouseButtonEvent* mouse = (SDL_MouseButtonEvent*)evt;
+// void handleSDLEvents(SDL_Event * evt){
+//     if(evt->type == SDL_MOUSEBUTTONDOWN){
+// 		SDL_MouseButtonEvent* mouse = (SDL_MouseButtonEvent*)evt;
 
-		/* scale from window space to framebuffer space */
-		mouse->x = (mouse->x*SCREEN_WIDTH)/TLN_GetWindowWidth();
-		mouse->y = (mouse->y*SCREEN_HEIGHT)/TLN_GetWindowHeight();
+// 		/* scale from window space to framebuffer space */
+// 		mouse->x = (mouse->x*SCREEN_WIDTH)/TLN_GetWindowWidth();
+// 		mouse->y = (mouse->y*SCREEN_HEIGHT)/TLN_GetWindowHeight();
 
-        if(mouse->button == SDL_BUTTON_LEFT)
-            log(std::to_string(mouse->x) + " " + std::to_string(mouse->y));
-    }
-}
+//         if(mouse->button == SDL_BUTTON_LEFT)
+//             log(std::to_string(mouse->x) + " " + std::to_string(mouse->y));
+//     }
+// }
+
+#define WINDOW_SCALE 4
+u8 * framebuffer;
+sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH * WINDOW_SCALE, SCREEN_HEIGHT * WINDOW_SCALE), "Apotris PC");
+sf::Texture frameTexture;
+
 
 void platformInit(){
     TLN_Init(SCREEN_WIDTH,SCREEN_HEIGHT,4,128,0);
+
+    framebuffer = (sf::Uint8*) malloc(4 * SCREEN_WIDTH * SCREEN_HEIGHT);
+
+    TLN_SetRenderTarget(framebuffer, 4 * SCREEN_WIDTH);
+
+    window.setFramerateLimit(60);
+
+    frameTexture.create(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // window.setActive(false);
 
     for(int i = 0; i < 32; i++){
         palettes[i] = TLN_CreatePalette(16);
@@ -179,35 +200,26 @@ void platformInit(){
 
     setInputs();
 
-    TLN_CreateWindow(NULL, 0);
-
-    TLN_ConfigCRTEffect(TLN_CRT_APERTURE,false);
-    TLN_DisableCRTEffect();
-
     TLN_SetRasterCallback(onHBlank);
-    TLN_SetSDLCallback(handleSDLEvents);
-    TLN_SetWindowTitle("Apotris PC");
 
-    SDL_Surface * icon = SDL_LoadBMP("assets/favicon32.bmp");
-    SDL_SetWindowIcon(TLN_GetWindow(), icon);
+    // SDL_Surface * icon = SDL_LoadBMP("assets/favicon32.bmp");
 
-    //Initialize SDL_mixer
-    if( Mix_OpenAudio( 32000, MIX_DEFAULT_FORMAT, 8, 1024 ) < 0 )
-    {
-        printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
-    }
+
+    sf::Image icon;
+    icon.loadFromFile("assets/favicon32.bmp");
+
+    window.setIcon(32, 32, icon.getPixelsPtr());
 
     loadAudio();
-
-    TLN_EnableInput(PLAYER1, true);
 }
 
 
 void deinitialize(){
-    TLN_DeleteWindow();
+    // TLN_DeleteWindow();
     TLN_Deinit();
-    freeAudio();
-    Mix_Quit();
+    free(framebuffer);
+    // freeAudio();
+
 
     // SDL_CloseAudioDevice(deviceId);
     // SDL_FreeWAV(wavBuffer);
@@ -216,7 +228,8 @@ void deinitialize(){
 
 bool closed(){
     // frame_start = SDL_GetPerformanceCounter();
-    bool result = TLN_ProcessWindow();
+    // bool result = TLN_ProcessWindow();
+    bool result = window.isOpen();
 
     if(!result){
         deinitialize();
@@ -285,8 +298,35 @@ void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
 void vsync(){
     onVBlank();
 
-    TLN_DrawFrame(0);
+    TLN_UpdateFrame(0);
+    frameTexture.update((sf::Uint8*)framebuffer);
+    sf::Sprite sprite;
+    sprite.setTexture(frameTexture);
+    sprite.setScale(WINDOW_SCALE,WINDOW_SCALE);
+    window.draw(sprite);
+    window.display();
 
+    // TLN_DrawFrame(0);
+    sf::Event event;
+    while (window.pollEvent(event))
+    {
+        // "close requested" event: we close the window
+        if (event.type == sf::Event::Closed)
+            window.close();
+    }
+
+    auto it = soundList.begin();
+
+    while(it != soundList.end()){
+        if((*it)->getStatus() == sf::Sound::Stopped){
+            delete *it;
+            soundList.erase(it++);
+        }else{
+            it++;
+        }
+    }
+
+    // window.draw();
 
     // Uint64 end = SDL_GetPerformanceCounter();
 
@@ -514,23 +554,27 @@ void key_poll(){
     __key_prev = __key_curr;
 
     __key_curr = 0;
+    if(!window.hasFocus()){
+        return;
+    }
 
-    __key_curr |= (TLN_GetInput(INPUT_BUTTON1)) * KEY_A;
-    __key_curr |= (TLN_GetInput(INPUT_BUTTON2)) * KEY_B;
-    __key_curr |= (TLN_GetInput(INPUT_BUTTON3)) * KEY_R;
-    __key_curr |= (TLN_GetInput(INPUT_BUTTON4)) * KEY_L;
-    __key_curr |= (TLN_GetInput(INPUT_START)) * KEY_START;
-    __key_curr |= (TLN_GetInput(INPUT_UP)) * KEY_UP;
-    __key_curr |= (TLN_GetInput(INPUT_DOWN)) * KEY_DOWN;
-    __key_curr |= (TLN_GetInput(INPUT_LEFT)) * KEY_LEFT;
-    __key_curr |= (TLN_GetInput(INPUT_RIGHT)) * KEY_RIGHT;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::I)) * KEY_A;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::SemiColon)) * KEY_B;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) * KEY_R;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) * KEY_L;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) * KEY_START;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Backspace)) * KEY_SELECT;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) * KEY_UP;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) * KEY_DOWN;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::J)) * KEY_LEFT;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) * KEY_RIGHT;
 }
 
 void enableBlend(int info){
 
     int top = info & 0x3f;
     int bot = (info >> 8) & 0x3f;
-    int mode = (info >> 6) & 0x3;
+    // int mode = (info >> 6) & 0x3;
 
     for(int i = 0; i < 4; i++){
         if(((top >> i) & 0b1)){
@@ -553,15 +597,19 @@ void setMusicTempo(int tempo){
 }
 
 void setMusicVolume(int volume){
+    musicVolume = volume;
 
+    if(currentSong != -1)
+        musicArray[currentSong].setMasterVolume((volume * 100) / 512);
 }
 
 void setSFXVolume(int volume){
-
+    sfxVolume = volume;
 }
 
 void startSong(int song, bool loop){
-    Mix_PlayMusic(musicChunks[song], -1 * loop);
+    musicArray[song].play();
+    currentSong = song;
 }
 
 u32 Sqrt(u32 n){
@@ -569,11 +617,24 @@ u32 Sqrt(u32 n){
 }
 
 void sfx(int n){
-    Mix_PlayChannel(-1, soundEffectChunks[n], 0);
+    sf::Sound * sound = new sf::Sound();
+    sound->setBuffer(sfxBuffers[n]);
+    sound->play();
+    sound->setVolume(savefile->settings.sfxVolume * 5);
+
+    soundList.push_back(sound);
 }
 
-void sfxRate(int sound, float rate){
-    sfx(sound);
+void sfxRate(int n, float rate){
+    sf::Sound * sound = new sf::Sound();
+    sound->setBuffer(sfxBuffers[n]);
+    sound->play();
+
+    sound->setPitch(rate);
+
+    soundList.push_back(sound);
+
+    // sfx(sound);
 }
 
 void setTiles(int tilemap, int index, int count, u32 value){
@@ -611,7 +672,7 @@ void setPaletteColor(int palette, int index, u16 color, int count){
 
 void clearSpriteTiles(int index, int lengthX, int lengthY){
     // u8* source = (u8*) src;
-    const int count = lengthX * lengthY;
+    // const int count = lengthX * lengthY;
     uint8_t tmp[8 * 8];
     memset(tmp,0,8 * 8);
 
@@ -696,13 +757,25 @@ void posprintf(char * buff, const char * str, ...){
 }
 
 void stopSong(){
-    Mix_HaltMusic();
+    if(currentSong == -1)
+        return;
+
+    musicArray[currentSong].stop();
+    currentSong = -1;
 };
+
 void pauseSong(){
-    Mix_PauseMusic();
+    if(currentSong == -1)
+        return;
+
+    musicArray[currentSong].pause();
 };
+
 void resumeSong(){
-    Mix_ResumeMusic();
+    if(currentSong == -1)
+        return;
+
+    musicArray[currentSong].play();
 };
 
 void color_fade_palette(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha){
@@ -842,16 +915,16 @@ void onVBlank(){
 
     frameCounter++;
 
-    frame_end = SDL_GetPerformanceCounter();
+    // frame_end = SDL_GetPerformanceCounter();
 
-    float elapsedMS = (frame_end - frame_start) / (float) SDL_GetPerformanceFrequency() * 1000.0f;
+    // float elapsedMS = (frame_end - frame_start) / (float) SDL_GetPerformanceFrequency() * 1000.0f;
 
-    int delay = (std::floor(16.666f - elapsedMS));
+    // int delay = (std::floor(16.666f - elapsedMS));
 
-    if(frame_start > 0 && delay > 0)
-        SDL_Delay(delay);
+    // if(frame_start > 0 && delay > 0)
+    //     SDL_Delay(delay);
 
-    frame_start = SDL_GetPerformanceCounter();
+    // frame_start = SDL_GetPerformanceCounter();
 
 
     // int count = 0;

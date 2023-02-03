@@ -238,7 +238,7 @@ void checkSounds() {
             if (speed > 10)
                 speed = 10;
 
-            sfxRate(SFX_LEVELUP,(float)speed/10);
+            sfxRate(SFX_LEVELUP,1.0 + (float)speed/10);
 
             // mm_sound_effect clear = {
             //     {SFX_LEVELUP},
@@ -1192,7 +1192,6 @@ void showClearText() {
 }
 
 void gameLoop(){
-    log("here");
     GameScene* s = new GameScene();
     changeScene(s);
 

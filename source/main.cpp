@@ -196,22 +196,7 @@ int main(void) {
 
     platformInit();
 
-    // TLN_SetBGColor(50, 50, 50);
-    // while(closed()){
-    //     vsync();
-
-
-    //     key_poll();
-
-    //     u16 key = key_hit(KEY_FULL);
-
-    //     if(key)
-    //         log(std::to_string(key));
-    // }
-
     initialize();
-
-    log(std::to_string(sizeof(ReplayHeader)));
 
     //start screen animation
     while(closed()){
@@ -285,6 +270,7 @@ void reset() {
     shakeBuff = 0;
     shakeVelocity = 0;
     push = 0;
+    replaying = false;
 
     floatingList.clear();
     placeEffectList.clear();
@@ -952,7 +938,6 @@ void gradient(int state){
 void startGame(Tetris::Options options,int seed){
     if(game != nullptr)
         delete game;
-    log("Starting game with seed: " + std::to_string(seed));
     game = new Game(options.mode,seed,options.bigMode);
 
     game->setOptions(options);
@@ -962,7 +947,6 @@ void startGame(Tetris::Options options,int seed){
     previousGameOptions = new Options();
 
     *previousGameOptions = options;
-
 
     if (ENABLE_BOT) {
         delete testBot;

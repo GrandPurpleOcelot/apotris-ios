@@ -127,7 +127,7 @@ void startScreen() {
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
 
-    int prevBld = blendInfo;
+    // int prevBld = blendInfo;
 
     if(goToOptions){
         goToOptions = false;
@@ -445,7 +445,7 @@ void startScreen() {
                 refreshText = true;
             }
 
-            if(key == KEY_R){
+            if(key == KEY_L){
                 loadReplay();
                 break;
             }
