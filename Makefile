@@ -7,7 +7,7 @@ endif
 LIBGBA := $(DEVKITPRO)/libgba
 
 # Pre-compiler and Compiler flags
-CXX_FLAGS := -Wall -O2 -ggdb
+CXX_FLAGS := -Wall -O2 -ggdb -Wno-array-bounds
 PRE_FLAGS := -MMD -MP
 
 # Project directory structure
@@ -36,10 +36,10 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 SRCS := $(shell find $(SRC) -name *.cpp)
 BINFILES := $(shell find $(DATA) -name '*.bin')
 
-ifneq ($(strip $(MUSIC)),)
-	export AUDIOFILES := $(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
-	BINFILES += $(BUILD)/soundbank.bin
-endif
+# ifneq ($(strip $(MUSIC)),)
+# 	export AUDIOFILES := $(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
+# 	BINFILES += $(BUILD)/soundbank.bin
+# endif
 
 OBJS_BIN := $(subst $(DATA)/,$(BUILD)/,$(addsuffix .o,$(BINFILES)))
 
@@ -70,9 +70,9 @@ $(TARGET): $(OBJS)
 	@mkdir -p $(dir $@)
 	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS) -Wl,-rpath lib
 
-$(BUILD)/soundbank.bin $(BUILD)/soundbank.h : $(AUDIOFILES)
-#---------------------------------------------------------------------------------
-	@mmutil $^ -o$(BUILD)/soundbank.bin -h$(BUILD)/soundbank.h
+# $(BUILD)/soundbank.bin $(BUILD)/soundbank.h : $(AUDIOFILES)
+# #---------------------------------------------------------------------------------
+# 	@mmutil $^ -o$(BUILD)/soundbank.bin -h$(BUILD)/soundbank.h
 
 # Compile all cpp files
 $(BUILD)/%.o: $(SRC)/%.cpp
@@ -84,9 +84,9 @@ $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
 	@mkdir -p $(dir $@)
 	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
 
-$(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(BUILD)/%.bin
-	@mkdir -p $(dir $@)
-	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
+# $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(BUILD)/%.bin
+# 	@mkdir -p $(dir $@)
+# 	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
 
 $(OBJS_SOURCES) : $(HFILES)
 # @echo "$<"

@@ -1133,7 +1133,7 @@ void loadReplay(){
         return;
     }
 
-    for(int i = 0; i < rep.header.length; i++){
+    for(int i = 0; i < (int)rep.header.length; i++){
         currentReplay.push_back(Timestamp(rep.moves[i]));
     }
 

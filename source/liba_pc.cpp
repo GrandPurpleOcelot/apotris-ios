@@ -815,14 +815,14 @@ void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alph
     }
 };
 
-void color_adj_brightness(int palette, int index, const COLOR *src, int count, u32 bright){
+void color_adj_brightness(int palette, int index, const COLOR *src, u32 count, u32 bright){
     u32 ii, clr;
     int rr, gg, bb;
 
     COLOR dst[count];
 
     bright >>= 3;
-    for(ii=0; ii<count; ii++)
+    for(ii=0; ii < count; ii++)
     {
         clr= src[ii];
 
@@ -903,8 +903,8 @@ void setMosaic(int sx, int sy){};
 void sleep(){};
 void rumble_set_state(int n){};
 
-static uint64_t frame_start = 0;
-static uint64_t frame_end = 0;
+// static uint64_t frame_start = 0;
+// static uint64_t frame_end = 0;
 
 void onVBlank(){
     if (canDraw) {

@@ -108,7 +108,10 @@ COLOR * previousPalette = nullptr;
 
 static int rainbowTimer = 1;
 static bool rainbowIncreasing = 0;
+
+#ifdef GBA
 static u16 rainbow[5];
+#endif
 
 static bool creditRefresh = false;
 static u16 fullMeterTimer = 0;
@@ -1918,9 +1921,6 @@ bool checkDiagonal(int key){
 }
 
 void showPlaceEffect(){
-
-    const int size = 384;
-
     for(int i = 0; i < 3; i++)
         sprite_hide(&obj_buffer[19+i]);
 
@@ -2425,7 +2425,7 @@ static FIXED creditCurrentHeight = int2fx(SCREEN_HEIGHT);
 static s8 creditIndex = 0;
 static u8 creditLastRead = 0;
 
-const FIXED creditSpeed = float2fx(0.6);
+// const FIXED creditSpeed = float2fx(0.6);
 const int creditSpace = 200;
 
 void setupCredits(){
