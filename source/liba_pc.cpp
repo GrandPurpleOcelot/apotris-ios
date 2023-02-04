@@ -215,15 +215,8 @@ void platformInit(){
 
 
 void deinitialize(){
-    // TLN_DeleteWindow();
     TLN_Deinit();
     free(framebuffer);
-    // freeAudio();
-
-
-    // SDL_CloseAudioDevice(deviceId);
-    // SDL_FreeWAV(wavBuffer);
-    // SDL_Quit();
 }
 
 bool closed(){
@@ -231,9 +224,9 @@ bool closed(){
     // bool result = TLN_ProcessWindow();
     bool result = window.isOpen();
 
-    if(!result){
-        deinitialize();
-    }
+    // if(!result){
+    //     deinitialize();
+    // }
 
     return result;
 }
@@ -311,8 +304,10 @@ void vsync(){
     while (window.pollEvent(event))
     {
         // "close requested" event: we close the window
-        if (event.type == sf::Event::Closed)
+        if (event.type == sf::Event::Closed){
             window.close();
+            deinitialize();
+        }
     }
 
     auto it = soundList.begin();
@@ -599,8 +594,17 @@ void setMusicTempo(int tempo){
 void setMusicVolume(int volume){
     musicVolume = volume;
 
-    if(currentSong != -1)
-        musicArray[currentSong].setMasterVolume((volume * 100) / 512);
+    if(currentSong != -1){
+        int f = volume / 2;
+
+        if(f){
+            musicArray[currentSong].setMasterVolume(f);
+            if(musicArray[currentSong].getStatus() != sfmod::Mod::Playing)
+                musicArray[currentSong].play();
+        }else{
+            musicArray[currentSong].pause();
+        }
+    }
 }
 
 void setSFXVolume(int volume){
@@ -608,6 +612,12 @@ void setSFXVolume(int volume){
 }
 
 void startSong(int song, bool loop){
+    if(song == currentSong)
+        return;
+
+    if(currentSong != -1)
+        musicArray[currentSong].stop();
+
     musicArray[song].play();
     currentSong = song;
 }
@@ -629,6 +639,7 @@ void sfxRate(int n, float rate){
     sf::Sound * sound = new sf::Sound();
     sound->setBuffer(sfxBuffers[n]);
     sound->play();
+    sound->setVolume(savefile->settings.sfxVolume * 5);
 
     sound->setPitch(rate);
 
@@ -761,6 +772,7 @@ void stopSong(){
         return;
 
     musicArray[currentSong].stop();
+
     currentSong = -1;
 };
 
