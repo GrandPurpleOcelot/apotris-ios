@@ -20,7 +20,9 @@ MUSIC := audio
 MAINFILE := $(SRC)/main.cpp
 
 # Build directories and output
-TARGET := $(BIN)/main
+TARGET := $(BIN)/Apotris
+ASSETS_PATH := $(BIN)/assets
+BINLIBS_PATH := $(BIN)/lib
 BUILD := build
 
 # Library search directories and flags
@@ -51,28 +53,30 @@ OBJS := $(OBJS_SOURCES) $(OBJS_BIN)
 
 DEPS := $(OBJS:.o=.d)
 
-# # Run task
-# run: build
-# 	@echo "Executing..."
-# 	./$(TARGET) $(ARGS)
+AUDIO_FILES := $(shell find $(MUSIC) -name '*.*')
+
+ICON_FILE := sprites/favicon32.bmp
+
+ICON := $(addprefix $(ASSETS_PATH)/, $(notdir $(ICON_FILE)))
+
+ASSETS := $(addprefix $(ASSETS_PATH)/, $(notdir $(AUDIO_FILES)))
+
+LIBFILES := $(addprefix $(BINLIBS_PATH)/, $(notdir $(shell find $(LIB) -name '*.*')))
 
 # Build task
 build: all
 
 # Main task
 
+all: $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
 
-all: $(TARGET)
+$(ICON) : $(ICON_FILE)
 
 # Task producing target from built files
 $(TARGET): $(OBJS)
 	@echo "Building..."
 	@mkdir -p $(dir $@)
 	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS) -Wl,-rpath lib
-
-# $(BUILD)/soundbank.bin $(BUILD)/soundbank.h : $(AUDIOFILES)
-# #---------------------------------------------------------------------------------
-# 	@mmutil $^ -o$(BUILD)/soundbank.bin -h$(BUILD)/soundbank.h
 
 # Compile all cpp files
 $(BUILD)/%.o: $(SRC)/%.cpp
@@ -84,9 +88,17 @@ $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
 	@mkdir -p $(dir $@)
 	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
 
-# $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(BUILD)/%.bin
-# 	@mkdir -p $(dir $@)
-# 	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
+$(ASSETS_PATH)/% : $(MUSIC)/%
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
+
+$(ICON) :
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
+
+$(BINLIBS_PATH)/% : $(LIB)/%
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
 
 $(OBJS_SOURCES) : $(HFILES)
 # @echo "$<"
@@ -98,7 +110,7 @@ clean:
 	rm -rf build
 
 help:
-	@echo "bin: $(LDPATHS)"
+	@echo "bin: $(LIBFILES)"
 
 # Include all dependencies
 -include $(DEPS)

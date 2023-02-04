@@ -1722,57 +1722,6 @@ void Game::generateGarbage(int height,int mode){
         }else{
             columnHeights[x] = 0;
         }
-        for(int i = lengthY-height; i < lengthY; i++){
-            int prevHole = hole;
-            if(!mode || qran() % 10 < 3){
-                int counter = 0;
-                do{
-                    hole = qran() % lengthX;
-                    if(++counter > lengthX)
-                        break;
-                }while((!(i == lengthY-1 && garbageHeight == 0) && !board[i-1][hole]) || hole == prevHole);
-            }
-            for(int j = 0; j < lengthX; j++){
-                if(j == hole)
-                    continue;
-                board[i][j]=8;
-            }
-        }
-
-        garbageHeight+=height;
-    }else{
-        int hole = qran() % lengthX/2;
-        // shift up
-        for(int i = 0; i < lengthY; i++){
-            for(int j = 0; j < lengthX; j++){
-                if(i < lengthY-height*2)
-                    board[i][j] = board[i+height*2][j];
-                else
-                    board[i][j] = 0;
-            }
-        }
-
-        for(int i = lengthY/2-height; i < lengthY/2; i++){
-            int prevHole = hole;
-            if(!mode || qran() % 10 < 3){
-                int counter = 0;
-                do{
-                    hole = qran() % (lengthX/2);
-                    if(++counter > lengthX/2)
-                        break;
-                }while(!((i == lengthY-1 && garbageHeight == 0) && !board[(i-1)*2][hole*2]) || hole == prevHole);
-            }
-            for(int j = 0; j < lengthX/2; j++){
-                if(j == hole)
-                    continue;
-                board[i*2][j*2]=8;
-                board[i*2][j*2+1]=8;
-                board[i*2+1][j*2]=8;
-                board[i*2+1][j*2+1]=8;
-            }
-        }
-
-        garbageHeight+=height;
     }
 
     if(bigMode)
