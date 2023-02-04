@@ -98,11 +98,11 @@ void loadSave() {
         for (int i = 0; i < oldSize; i++)
             tmp[i] = sf[i];
 
-        memcpy16(&tmp[sizeof(Settings) + sizeof(u8)], &sf[oldSize], (sizeof(Save) - oldSize) / 2);
+        memcpy16(&tmp[pmSettings + sizeof(u8)], &sf[oldSize], (pmSave - oldSize) / 2);
 
         setDefaults(temp,2);
 
-        memcpy32(savefile, temp, sizeof(Save) / 4);
+        memcpy32(savefile, temp, pmSave / 4);
 
         setDefaultKeys();
 
@@ -118,13 +118,13 @@ void loadSave() {
         for (int i = 0; i < oldSize; i++)
             tmp[i] = sf[i];
 
-        memcpy16(&tmp[sizeof(Settings) + sizeof(u8)], &sf[oldSize], (sizeof(Save) - oldSize) / 2);
+        memcpy16(&tmp[pmSettings + sizeof(u8)], &sf[oldSize], (pmSave - oldSize) / 2);
 
         setDefaults(temp,1);
 
         setDefaultKeys();
 
-        memcpy32(savefile, temp, sizeof(Save) / 4);
+        memcpy32(savefile, temp, pmSave / 4);
 
         delete temp;
 
@@ -151,6 +151,8 @@ void loadSave() {
         savefile->settings.irs = 0;
     if(savefile->settings.ihs < 0 || savefile->settings.ihs > 1)
         savefile->settings.ihs = 0;
+    if(savefile->settings.initialType < 0 || savefile->settings.initialType > 1)
+        savefile->settings.initialType = 1;
 
     if(savefile->newGame != SAVE_TAG){
 
@@ -310,6 +312,7 @@ void setDefaults(Save *save, int depth){
         save->settings.customDas = false;
         save->settings.irs = 0;
         save->settings.ihs = 0;
+        save->settings.initialType = 1;
 
         //check if select is already bound - if not, bind it to zone activation
         int* keys = (int*) &save->settings.keys;

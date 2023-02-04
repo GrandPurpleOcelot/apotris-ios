@@ -274,6 +274,7 @@ namespace Tetris
             bool delaySoftDrop = true;
             bool ihs = false;
             bool irs = false;
+            bool initialType = false;
     };
 
     class Options{
@@ -402,7 +403,8 @@ namespace Tetris
         int decayTimer = 0;
 
         bool stopLockReset = false;
-        bool fromLock = false;
+        bool fromLockHold = false;
+        bool fromLockRotate = false;
 
         std::list<int> historyList;
 
@@ -411,6 +413,7 @@ namespace Tetris
 
         bool ihs = false;
         bool irs = false;
+        bool initialType = false;
 
         bool rotates[3] = {false,false,false};
 

@@ -1351,8 +1351,7 @@ void gameLoop(){
         #ifdef GBA
         rumble_update();
         #endif
-
-        if (clearTimer >= maxClearTimer || maxClearTimer <= 0 || (game->gameMode == SURVIVAL && clearTimer)) {
+        if (clearTimer >= maxClearTimer || maxClearTimer <= 0) {
             game->removeClearLock();
             #ifdef GBA
             shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
@@ -1915,7 +1914,7 @@ void showBestMove(){
 }
 
 bool checkDiagonal(int key){
-    if(!savefile->settings.diagonalType && game->rotationSystem != ARS)
+    if((!savefile->settings.diagonalType || game->rotationSystem == NRS) && game->rotationSystem != ARS)
         return false;
     return ((key == KEY_DOWN || key == KEY_UP) && (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)));
 }

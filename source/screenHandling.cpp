@@ -9,7 +9,7 @@ bool handlingControl();
 void setDas(int index);
 
 static const int startX = 3;
-static const int startY = 4;
+static const int startY = 3;
 static const int endX = 23;
 static const int space = 1;
 
@@ -26,7 +26,7 @@ static int arr = 0;
 
 static int dasSelection = 0;
 
-const static std::list<std::string> options = {
+static const std::list<std::string> options = {
     "Auto Repeat Delay",
     "Auto Repeat Rate",
     "Soft Drop Speed",
@@ -36,6 +36,7 @@ const static std::list<std::string> options = {
     "Disable Diagonals",
     "Initial Holding",
     "Initial Rotation",
+    "Initial System",
 };
 
 void handlingSettings(){
@@ -118,6 +119,8 @@ bool handlingControl(){
             savefile->settings.ihs = !savefile->settings.ihs;
         }else if (selection == 8){
             savefile->settings.irs = !savefile->settings.irs;
+        }else if (selection == 9){
+            savefile->settings.initialType = !savefile->settings.initialType;
         }
 
         sfx(SFX_MENUMOVE);
@@ -331,6 +334,11 @@ void handlingText(){
     else
         aprint("OFF", endX, startY + space * 10);
 
+    if (savefile->settings.initialType)
+        aprint("TYPE B", endX-1, startY + space * 11);
+    else
+        aprint("TYPE A", endX-1, startY + space * 11);
+
     //show cursor
     if (selection == 0) {
         if(!savefile->settings.customDas){
@@ -374,6 +382,9 @@ void handlingText(){
     } else if (selection == 8) {
         aprint("[", endX - 1, startY + space * (selection + 2));
         aprint("]", endX + 2 + (!savefile->settings.irs), startY + space * (selection + 2));
+    } else if (selection == 9) {
+        aprint("[", endX - 2, startY + space * (selection + 2));
+        aprint("]", endX + 5, startY + space * (selection + 2));
     }else if (selection == (int) options.size()){
         aprint("[",12,17);
         aprint("]",17,17);

@@ -709,8 +709,8 @@ int pauseMenu(){
                 } else if (n == 2) {
                     onStates = true;
                     selection = 0;
+                    // update();
                     clearText();
-                    update();
                 } else if (n == 3) {
                     sleep();
                     showStats(showingStats, totalTime, ppsStr);
@@ -737,6 +737,9 @@ int pauseMenu(){
                         floatingList.clear();
                         placeEffectList.clear();
                         clearGlow();
+
+                        if(savefile->settings.colors == 3)
+                            setPalette();
 
                         if (ENABLE_BOT) {
                             delete testBot;

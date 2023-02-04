@@ -147,6 +147,7 @@ void Game::rotate(int dir, int on){
         return;
 
     if ((clearLock || entryDelay)){
+        fromLockRotate = true;
         return;
     }else if(eventLock){
         return;
@@ -545,7 +546,7 @@ void Game::update() {
         dropping = false;
         return;
     }else{
-        if (pawn.lowest == pawn.y && !zoneTimer)
+        if (pawn.lowest <= pawn.y && !zoneTimer)
             lockTimer--;
 
         if (lockTimer == 0 && rotationSystem != NRS){
@@ -757,7 +758,7 @@ void Game::place() {
     if(zoneTimer == 1)
         endZone();
 
-    if(maxClearDelay == 1 && clearLock){
+    if((maxClearDelay == 1 || gameMode == SURVIVAL) && clearLock){
         removeClearLock();
     }
 }
@@ -1173,7 +1174,7 @@ void Game::next() {//~21-29k cycles
     pawn.y = (int)lengthY / 2;
     pawn.x = (int)lengthX / 2 - 2;
 
-    if((fromLock && irs) || rotationSystem == ARS){
+    if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
         int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
 
         pawn.rotation = sum + 4 * (sum < 0);
@@ -1204,15 +1205,7 @@ void Game::next() {//~21-29k cycles
     //     pawn.y/=2;
     // }
 
-    //check if stack has reached top half of board
     bool check = bitboard[30] != 0;
-    // bool check = false;
-    // for(int j = 0; j < 10; j++){
-    //     if(board[30][j] != 0){
-    //         check = true;
-    //         break;
-    //     }
-    // }
 
     if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
         pawn.y-=1;
@@ -1234,7 +1227,9 @@ void Game::next() {//~21-29k cycles
 
     softDrop = false;
 
-    if(holding && canHold && (ihs || rotationSystem == ARS))
+    fromLockRotate = false;
+
+    if(holding && canHold && ((ihs && ((fromLockHold && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS))
         hold(1);
 }
 
@@ -1335,8 +1330,10 @@ void Game::hold(int dir) {
 
     if((clearLock || entryDelay) && gameMode != CLASSIC){
         // holding = dir;
+        fromLockHold = true;
         return;
     }else if(dir == 0){
+        fromLockHold = false;
         return;
     }
 
@@ -1356,7 +1353,7 @@ void Game::hold(int dir) {
         pawn.current = temp;
         pawn.setBlock(rotationSystem);
         pawn.x = (int)lengthX / 2 - 2;
-		pawn.y = (int)lengthY / 2 - 1;
+		pawn.y = (int)lengthY / 2;
 
         // if(pawn.big){
         //     pawn.x/=2;
@@ -1364,12 +1361,38 @@ void Game::hold(int dir) {
         // }
     }
 
-    if(rotationSystem == ARS || irs){
+    if(rotationSystem == ARS || (irs && ((fromLockRotate && maxClearDelay > 1) || !initialType))){
         int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
 
         pawn.rotation = sum + (sum < 0) * 4;
     } else
         pawn.rotation = 0;
+
+    //check if stack has reached top 3 lines
+    bool check = false;
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 10; j++){
+            if(board[21+i][j] != 0){
+                check = true;
+                break;
+            }
+        }
+        if(check)
+            break;
+    }
+
+    if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
+        pawn.y-=1;
+        if (!checkRotation(0, 0, pawn.rotation)){
+            if(zoneTimer && zonedLines)
+                endZone();
+            else if(gameMode == TRAINING)
+                clearBoard();
+            else{
+                lost = 1;
+            }
+        }
+    }
 
     sounds.hold = 1;
     holdCounter++;
@@ -1379,6 +1402,7 @@ void Game::hold(int dir) {
     arrCounter = 0;
 
     dropLockTimer = 0;
+    fromLockHold = false;
     moveHistory.clear();
 
     statTracker.holds++;
@@ -1625,10 +1649,8 @@ void Game::removeClearLock() {
 
     linesToClear = std::list<int>();
 
-    fromLock = true;
     if(!entryDelay)
         next();
-    fromLock = false;
 
     refresh = 2;
     zonedLines = 0;
@@ -1700,6 +1722,57 @@ void Game::generateGarbage(int height,int mode){
         }else{
             columnHeights[x] = 0;
         }
+        for(int i = lengthY-height; i < lengthY; i++){
+            int prevHole = hole;
+            if(!mode || qran() % 10 < 3){
+                int counter = 0;
+                do{
+                    hole = qran() % lengthX;
+                    if(++counter > lengthX)
+                        break;
+                }while((!(i == lengthY-1 && garbageHeight == 0) && !board[i-1][hole]) || hole == prevHole);
+            }
+            for(int j = 0; j < lengthX; j++){
+                if(j == hole)
+                    continue;
+                board[i][j]=8;
+            }
+        }
+
+        garbageHeight+=height;
+    }else{
+        int hole = qran() % lengthX/2;
+        // shift up
+        for(int i = 0; i < lengthY; i++){
+            for(int j = 0; j < lengthX; j++){
+                if(i < lengthY-height*2)
+                    board[i][j] = board[i+height*2][j];
+                else
+                    board[i][j] = 0;
+            }
+        }
+
+        for(int i = lengthY/2-height; i < lengthY/2; i++){
+            int prevHole = hole;
+            if(!mode || qran() % 10 < 3){
+                int counter = 0;
+                do{
+                    hole = qran() % (lengthX/2);
+                    if(++counter > lengthX/2)
+                        break;
+                }while(!((i == lengthY-1 && garbageHeight == 0) && !board[(i-1)*2][hole*2]) || hole == prevHole);
+            }
+            for(int j = 0; j < lengthX/2; j++){
+                if(j == hole)
+                    continue;
+                board[i*2][j*2]=8;
+                board[i*2][j*2+1]=8;
+                board[i*2+1][j*2]=8;
+                board[i*2+1][j*2+1]=8;
+            }
+        }
+
+        garbageHeight+=height;
     }
 
     if(bigMode)
@@ -1792,7 +1865,17 @@ Drop Game::calculateDrop(){
 }
 
 void Game::setTuning(Tuning newTune){
-    if(gameMode == CLASSIC || gameMode == MASTER)
+    if(gameMode == CLASSIC)
+        return;
+
+
+    if(rotationSystem != ARS){
+        ihs = newTune.ihs;
+        irs = newTune.irs;
+        initialType = newTune.initialType;
+    }
+
+    if(gameMode == MASTER)
         return;
 
     maxDas = newTune.das;
@@ -1802,8 +1885,6 @@ void Game::setTuning(Tuning newTune){
     directionCancel = newTune.directionalDas;
     delaySoftDrop = newTune.delaySoftDrop;
     maxClearDelay = 20;
-    ihs = newTune.ihs;
-    irs = newTune.irs;
 }
 
 void Game::setMasterTuning(){
@@ -2082,6 +2163,8 @@ void Game::clearBoard(){
         }
         bitboard[i] = 0;
     }
+
+    garbageHeight = 0;
 }
 
 void Game::fixConnected(std::list<int> sourceList){

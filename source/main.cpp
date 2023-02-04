@@ -31,6 +31,7 @@
 
 using namespace Tetris;
 
+const std::string save_type = "SRAM_Vnnn";
 int getClassicPalette();
 void setPawnPalette(int dest, int n, int blend);
 
@@ -871,6 +872,7 @@ Tuning getTuning(){
         t.delaySoftDrop = savefile->settings.delaySoftDrop,
         t.ihs = savefile->settings.ihs,
         t.irs = savefile->settings.irs,
+        t.initialType = savefile->settings.initialType,
     };
 
     return t;
