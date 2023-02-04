@@ -26,7 +26,7 @@ BUILD := build
 # Library search directories and flags
 EXT_LIB :=
 LDFLAGS := -lTilengine -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lmodplug
-LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB))
+LDPATHS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB))
 
 # Include directories
 INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA) $(LIBGBA)/include
@@ -68,7 +68,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	@echo "Building..."
 	@mkdir -p $(dir $@)
-	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS)
+	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS) -Wl,-rpath lib
 
 $(BUILD)/soundbank.bin $(BUILD)/soundbank.h : $(AUDIOFILES)
 #---------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ clean:
 	rm -rf build
 
 help:
-	@echo "bin: $(HFILES)"
+	@echo "bin: $(LDPATHS)"
 
 # Include all dependencies
 -include $(DEPS)
