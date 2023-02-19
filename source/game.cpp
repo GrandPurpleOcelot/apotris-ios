@@ -109,9 +109,7 @@ COLOR * previousPalette = nullptr;
 static int rainbowTimer = 1;
 static bool rainbowIncreasing = 0;
 
-#ifdef GBA
 static u16 rainbow[5];
-#endif
 
 static bool creditRefresh = false;
 static u16 fullMeterTimer = 0;
@@ -347,6 +345,10 @@ void checkSounds() {
         // }
     }
 
+    if(game->sounds.initial){
+        // sfx(SFX_INITIAL);
+    }
+
     std::string sectionText = "";
 
     switch(game->sounds.section){
@@ -398,7 +400,8 @@ void checkSounds() {
                 COLOR c = RGB15(10-i, 10-i, 10-i);
                 //TODO:
                 //needs to add color to palette address, not simply assign it
-                setPaletteColor(i, 5, c, 1);
+                // setPaletteColor(i, 5, c, 1);
+                addColorToPalette(i, 5, c, 1);
                 // pal_bg_mem[(0+i) * 16 + 5] += c;
             }
         }
@@ -420,9 +423,9 @@ void checkSounds() {
             for(int i = 0; i < 4; i++){
                 COLOR c = RGB15(10-i, 10-i, 10-i);
                 // pal_bg_mem[(0+i) * 16 + 5] += c;
-                //TODO:
                 //needs to add color to palette address, not simply assign it
-                setPaletteColor(i, 5, c, 1);
+                // setPaletteColor(i, 5, c, 1);
+                addColorToPalette(i, 5, c, 1);
             }
         }
 
@@ -1356,7 +1359,7 @@ void gameLoop(){
             #ifdef GBA
             shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
             #elifdef PC
-            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)));
+            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
             #endif
             // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
             rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
@@ -1541,7 +1544,8 @@ void screenShake() {
     }
     #elifdef PC
     shake = fx2int(shakeBuff);
-    const FIXED deccel = (0b11 << 6);
+    // const FIXED deccel = (0b11 << 6);
+    const FIXED deccel = float2fx(0.768);
     if(shakeBuff){
 
         // log(std::to_string(shake));
@@ -2346,8 +2350,6 @@ void frameSnow(){
 }
 
 void rainbowPalette(){
-    //TODO:
-    #ifdef GBA
     int n = (rainbowTimer >> 3) + 24;
 
     int color = 0;
@@ -2359,38 +2361,42 @@ void rainbowPalette(){
     clr_rgbscale((COLOR *) rainbow,(COLOR *)&palette[0][1],5,color);
 
     if(savefile->settings.lightMode){
-        memcpy16(&pal_obj_mem[1],rainbow,1);
-        memcpy16(&pal_obj_mem[2],rainbow,4);
+        loadPalette(16, 1, rainbow, 1);
+        loadPalette(16, 2, rainbow, 4);
+        // memcpy16(&pal_obj_mem[1],rainbow,1);
+        // memcpy16(&pal_obj_mem[2],rainbow,4);
     }
 
     if(!savefile->settings.lightMode)
-        clr_fade((COLOR *) rainbow,0,(COLOR*) rainbow,4,10);
+        color_fade((COLOR *) rainbow, (COLOR *) rainbow, 0, 4, 10);
+        // clr_fade((COLOR *) rainbow,0,(COLOR*) rainbow,4,10);
     else
-        clr_adj_brightness((COLOR *) rainbow,(COLOR*) rainbow,4,float2fx(0.25));
+        color_adj_MEM((COLOR *) rainbow, (COLOR *) rainbow, 4, float2fx(0.25));
+        // clr_adj_brightness((COLOR *) rainbow,(COLOR*) rainbow,4,float2fx(0.25));
 
-        // clr_adj_brightness((COLOR *) rainbow,(COLOR*) rainbow,4,float2fx(0.5));
-        // clr_fade((COLOR *) rainbow,0,(COLOR*) rainbow,4,22);
-
-    memcpy16(&pal_bg_mem[1],rainbow,4);
+    loadPalette(0, 1, rainbow, 4);
+    // memcpy16(&pal_bg_mem[1],rainbow,4);
 
     if(!savefile->settings.lightMode)
-        memcpy16(&pal_obj_mem[1],rainbow,4);
+        loadPalette(16, 1, rainbow, 4);
+        // memcpy16(&pal_obj_mem[1],rainbow,4);
 
     if(savefile->settings.shadow != 3){
-        memcpy16(&pal_obj_mem[10*16+1],rainbow,4);
+        loadPalette(16 + 10, 1, rainbow, 4);
+        // memcpy16(&pal_obj_mem[10*16+1],rainbow,4);
     }else{
         if(!savefile->settings.lightMode)
-            clr_fade((COLOR*)rainbow, 0x0000, &pal_obj_mem[10 * 16+1], 4, 14);
+            color_fade_palette(16 + 10, 1, (COLOR *) rainbow, 0, 4, 14);
+        //     clr_fade((COLOR*)rainbow, 0x0000, &pal_obj_mem[10 * 16+1], 4, 14);
         else
-            clr_adj_brightness(&pal_obj_mem[10 * 16+1], (COLOR*)rainbow, 4, float2fx(0.25));
+            color_adj_brightness(16 + 10, 1, (COLOR *) rainbow, 4, (float2fx(0.25)));
+        //     clr_adj_brightness(&pal_obj_mem[10 * 16+1], (COLOR*)rainbow, 4, float2fx(0.25));
     }
-    memcpy16(&pal_obj_mem[11*16+1],rainbow,4);
-    #endif
+    loadPalette(16 + 11, 1, rainbow, 4);
+    // memcpy16(&pal_obj_mem[11*16+1],rainbow,4);
 }
 
 void showZoneText(){
-    //TODO:
-    #ifdef GBA
     if(game->zonedLines == 0 || !savefile->settings.floatText)
         return;
 
@@ -2412,29 +2418,29 @@ void showZoneText(){
     const u16 pal[2][2] = {{0x5294,0x0421},{0x5294,0x318c}};
 
     if(!savefile->settings.lightMode)
-        memcpy16(&pal_bg_mem[13 * 16 + 2],pal[0],2);
+        loadPalette(13, 2, pal[0], 2);
+        // memcpy16(&pal_bg_mem[13 * 16 + 2],pal[0],2);
     else
-        memcpy16(&pal_bg_mem[13 * 16 + 2 ],pal[1],2);
+        loadPalette(13, 2, pal[1], 2);
+        // memcpy16(&pal_bg_mem[13 * 16 + 2 ],pal[1],2);
 
     aprintColor(text, 15 - text.size()/2, height , 2);
-    #endif
 }
 
 static FIXED creditCurrentHeight = int2fx(SCREEN_HEIGHT);
 static s8 creditIndex = 0;
 static u8 creditLastRead = 0;
 
-// const FIXED creditSpeed = float2fx(0.6);
+const FIXED creditSpeed = float2fx(0.6);
 const int creditSpace = 200;
 
 void setupCredits(){
-    //TODO:
-    #ifdef GBA
     creditCurrentHeight = int2fx(SCREEN_HEIGHT);
     creditIndex = 0;
     creditLastRead = 0;
 
-    memset32(&tile_mem[4][256], 0x0000 , MAX_WORD_SPRITES * 12 * 8);
+    clearSpriteTiles(256, MAX_WORD_SPRITES * 12 * 8, 1);
+    // memset32(&tile_mem[4][256], 0x0000 , MAX_WORD_SPRITES * 12 * 8);
     for (int i = 0; i < MAX_WORD_SPRITES; i++){
         delete wordSprites[i];
         wordSprites[i] = new WordSprite(i,64 + i * 3, 300 + i * 12);
@@ -2464,12 +2470,9 @@ void setupCredits(){
     for(int i = 0; i < 9; i++){
         wordSprites[i]->priority = 3;
     }
-    #endif
 }
 
 void showCredits(){
-    //TODO:
-    #ifdef GBA
 
     creditCurrentHeight -= creditSpeed;
 
@@ -2492,7 +2495,6 @@ void showCredits(){
 
     if(fx2int(creditCurrentHeight) <= -32)
         creditRefresh = true;
-    #endif
 }
 
 void refreshCredits(){

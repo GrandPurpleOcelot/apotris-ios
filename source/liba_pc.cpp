@@ -144,11 +144,11 @@ void setInputs(){
 
 // void handleSDLEvents(SDL_Event * evt){
 //     if(evt->type == SDL_MOUSEBUTTONDOWN){
-// 		SDL_MouseButtonEvent* mouse = (SDL_MouseButtonEvent*)evt;
+//         SDL_MouseButtonEvent* mouse = (SDL_MouseButtonEvent*)evt;
 
-// 		/* scale from window space to framebuffer space */
-// 		mouse->x = (mouse->x*SCREEN_WIDTH)/TLN_GetWindowWidth();
-// 		mouse->y = (mouse->y*SCREEN_HEIGHT)/TLN_GetWindowHeight();
+//         /* scale from window space to framebuffer space */
+//         mouse->x = (mouse->x*SCREEN_WIDTH)/TLN_GetWindowWidth();
+//         mouse->y = (mouse->y*SCREEN_HEIGHT)/TLN_GetWindowHeight();
 
 //         if(mouse->button == SDL_BUTTON_LEFT)
 //             log(std::to_string(mouse->x) + " " + std::to_string(mouse->y));
@@ -558,7 +558,7 @@ void key_poll(){
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) * KEY_R;
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) * KEY_L;
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) * KEY_START;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Backspace)) * KEY_SELECT;
+    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace)) * KEY_SELECT;
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) * KEY_UP;
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) * KEY_DOWN;
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::J)) * KEY_LEFT;
@@ -784,7 +784,7 @@ void pauseSong(){
 };
 
 void resumeSong(){
-    if(currentSong == -1)
+    if(currentSong == -1 || savefile->settings.volume == 0)
         return;
 
     musicArray[currentSong].play();
@@ -827,11 +827,9 @@ void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alph
     }
 };
 
-void color_adj_brightness(int palette, int index, const COLOR *src, u32 count, u32 bright){
+void color_adj_MEM(COLOR *dst, const COLOR *src, u32 count, u32 bright){
     u32 ii, clr;
     int rr, gg, bb;
-
-    COLOR dst[count];
 
     bright >>= 3;
     for(ii=0; ii < count; ii++)
@@ -845,7 +843,68 @@ void color_adj_brightness(int palette, int index, const COLOR *src, u32 count, u
         dst[ii]= RGB15(bf_clamp(rr,5), bf_clamp(gg,5), bf_clamp(bb,5));
     }
 
+}
+
+void color_adj_brightness(int palette, int index, const COLOR *src, u32 count, u32 bright){
+    COLOR dst[count];
+
+    color_adj_MEM(dst, src, count, bright);
+
     loadPalette(palette, index, dst, count);
+}
+
+void clr_grayscale(COLOR *dst, const COLOR *src, uint nclrs){
+    u32 ii;
+    u32 clr, gray, rr, gg, bb;
+
+    for(ii=0; ii<nclrs; ii++)
+    {
+        clr= *src++;
+
+        // Do RGB conversion in .8 fixed point
+        rr= ((clr    )&31)*0x4C;    // 29.7%
+        gg= ((clr>> 5)&31)*0x96;    // 58.6%
+        bb= ((clr>>10)&31)*0x1E;    // 11.7%
+        gray= (rr+gg+bb+0x80)>>8;
+
+        *dst++= RGB15(gray, gray, gray);
+    }
+}
+
+void clr_rgbscale(COLOR *dst, const COLOR *src, uint nclrs, COLOR clr){
+    int ii;
+    u32 rr, gg, bb, scale, gray;
+
+    // Normalize target color
+    rr= (clr    )&31;
+    gg= (clr>> 5)&31;
+    bb= (clr>>10)&31;
+
+    scale= max(max(rr, gg), bb);
+    if(scale == 0)    // Can't scale to black : use gray instead
+    {
+        clr_grayscale(dst, src, nclrs);
+        return;
+    }
+
+    scale = ((1 << 16)/scale) & 0xffff;
+
+    rr *= scale;        // rr, gg, bb -> 0.16f
+    gg *= scale;
+    bb *= scale;
+
+    for(ii=0; ii<nclrs; ii++)
+    {
+        clr= *src++;
+
+        // Grayscaly in 5.8f
+        gray  = ((clr    )&31)*0x4C;    // 29.7%
+        gray += ((clr>> 5)&31)*0x96;    // 58.6%
+        gray += ((clr>>10)&31)*0x1E;    // 11.7%
+
+        // Match onto color vector
+        dst[ii]= RGB15(rr*gray>>24, gg*gray>>24, bb*gray>>24);
+    }
 };
 
 void clearSpriteTile(int index, int tx, int ty, int width){
@@ -1023,11 +1082,11 @@ s16 sinLut(int angle){
 
 
 COLOR rgb8to5(u32 *c){
-    int r = (*c >> (16 + 3)) & 0x1f;
+    int b = (*c >> (16 + 3)) & 0x1f;
     int g = (*c >> ( 8 + 3)) & 0x1f;
-    int b = (*c >> ( 0 + 3)) & 0x1f;
+    int r = (*c >> ( 0 + 3)) & 0x1f;
 
-    return r | g | b;
+    return r | (g << 5) | (b << 10);
 }
 
 void savePalette(COLOR *dst){
@@ -1041,13 +1100,26 @@ void color_fade_fast(int palette, int index, const COLOR * src, COLOR color, int
 
     color_fade(temp,src,color,count,alpha);
 
-    loadPalette(palette, index, temp, count);
+    if(count > 16){
+        int n = count/16;
+
+        for(int i = 0; i < (n); i++)
+            loadPalette(palette + i, index, &temp[i * 16], 16);
+    }else{
+        loadPalette(palette, index, temp, count);
+    }
 }
 
 void mirrorPalettes(int index, int count){
-    for(int i = 0; i < count; i++){
 
-        loadPalette(i, index, TLN_GetPaletteData(palettes[i+16], index), 16);
+
+    for(int i = 0; i < count; i++){
+        COLOR temp[16];
+
+        for(int j = 0; j < 16; j++)
+            temp[j] = rgb8to5((u32 *)TLN_GetPaletteData(palettes[i+16], index));
+
+        loadPalette(i, index, temp, 16-index);
         // for(int j = 0; j < 16; j++){
         //     setPaletteColor(i, j, rgb8to5((u32*) TLN_GetPaletteData(palettes[i + 16], j)), 1);
         // }
@@ -1056,6 +1128,16 @@ void mirrorPalettes(int index, int count){
 
 void sprite_enable_blend(OBJ_ATTR * sprite){
     sprite->blend = true;
+}
+
+void addColorToPalette(int palette, int index, COLOR color, int count){
+
+    COLOR dst[count];
+
+    for(int i = 0; i < count; i++)
+        dst[i] = rgb8to5((u32*) TLN_GetPaletteData(palettes[palette], index + i)) + color;
+
+    loadPalette(palette, index, dst, count);
 }
 
 #endif

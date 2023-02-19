@@ -1,38 +1,43 @@
 #include "def.h"
-// #include "maxmod.h"
-// #include "soundbank_bin.h"
 
-// #define audioChannels 12
+#ifdef GBA
 
-// u8 myMixingBuffer[ MM_MIXLEN_16KHZ ] __attribute((aligned(4)));
+#include "maxmod.h"
+#include "soundbank_bin.h"
 
-// void maxModInit(){
+#define audioChannels 12
 
-//     u8* myData;
-//     mm_gba_system mySystem;
+u8 myMixingBuffer[ MM_MIXLEN_16KHZ ] __attribute((aligned(4)));
 
-//     myData = (u8*)malloc( audioChannels * (MM_SIZEOF_MODCH
-//                                +MM_SIZEOF_ACTCH
-//                                +MM_SIZEOF_MIXCH)
-//                                +MM_MIXLEN_16KHZ );
+void maxModInit(){
 
-//     mySystem.mixing_mode       = MM_MIX_16KHZ;
+    u8* myData;
+    mm_gba_system mySystem;
 
-//     mySystem.mod_channel_count = audioChannels;
-//     mySystem.mix_channel_count = audioChannels;
+    myData = (u8*)malloc( audioChannels * (MM_SIZEOF_MODCH
+                               +MM_SIZEOF_ACTCH
+                               +MM_SIZEOF_MIXCH)
+                               +MM_MIXLEN_16KHZ );
 
-//     mySystem.module_channels   = (mm_addr)(myData+0);
-//     mySystem.active_channels   = (mm_addr)(myData+(audioChannels*MM_SIZEOF_MODCH));
-//     mySystem.mixing_channels   = (mm_addr)(myData+(audioChannels*(MM_SIZEOF_MODCH
-// 	                                             +MM_SIZEOF_ACTCH)));
-//     mySystem.mixing_memory     = (mm_addr)myMixingBuffer;
-//     mySystem.wave_memory       = (mm_addr)(myData+(audioChannels*(MM_SIZEOF_MODCH
-//                                                      +MM_SIZEOF_ACTCH
-//                                                      +MM_SIZEOF_MIXCH)));
-//     mySystem.soundbank         = (mm_addr)soundbank_bin;
+    mySystem.mixing_mode       = MM_MIX_16KHZ;
 
-//     mmInit( &mySystem );
-// }
+    mySystem.mod_channel_count = audioChannels;
+    mySystem.mix_channel_count = audioChannels;
+
+    mySystem.module_channels   = (mm_addr)(myData+0);
+    mySystem.active_channels   = (mm_addr)(myData+(audioChannels*MM_SIZEOF_MODCH));
+    mySystem.mixing_channels   = (mm_addr)(myData+(audioChannels*(MM_SIZEOF_MODCH
+	                                             +MM_SIZEOF_ACTCH)));
+    mySystem.mixing_memory     = (mm_addr)myMixingBuffer;
+    mySystem.wave_memory       = (mm_addr)(myData+(audioChannels*(MM_SIZEOF_MODCH
+                                                     +MM_SIZEOF_ACTCH
+                                                     +MM_SIZEOF_MIXCH)));
+    mySystem.soundbank         = (mm_addr)soundbank_bin;
+
+    mmInit( &mySystem );
+}
+
+#endif
 
 #ifdef PC
 

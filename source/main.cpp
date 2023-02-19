@@ -55,7 +55,7 @@ int profileResults[10];
 
 void addToResults(int input, int index);
 
-Save* savefile;
+Save* savefile = nullptr;
 
 u8* blockSprite;
 

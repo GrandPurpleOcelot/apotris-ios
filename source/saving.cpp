@@ -55,13 +55,10 @@ const std::list<SaveChange> saveChanges = {
 // }
 
 void loadSave() {
-    //TODO:
-    delete savefile;
+    if(savefile != nullptr)
+        delete savefile;
     savefile = new Save();
     loadSavefile();
-    // #ifdef GBA
-    // loadFromSram();
-    // #endif
 
     const int pmSettings = 540;
     const int pmSave = 3876;
@@ -179,9 +176,6 @@ void loadSave() {
 
     savefile->seed = qran();
     saveSavefile();
-    // #ifdef GBA
-    // saveToSram();
-    // #endif
 }
 
 void setDefaultKeys(){
@@ -425,7 +419,7 @@ void setDefaultGraphics(Save *save, int depth){
     if(depth < 2){
         save->settings.edges = true;
         save->settings.backgroundGrid = 5;
-        save->settings.skin = 2;
+        save->settings.skin = 11;
         save->settings.palette = 5;
         save->settings.shadow = 3;
         save->settings.lightMode = false;

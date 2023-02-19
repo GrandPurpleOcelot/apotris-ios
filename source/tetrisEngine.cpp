@@ -1178,6 +1178,8 @@ void Game::next() {//~21-29k cycles
         int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
 
         pawn.rotation = sum + 4 * (sum < 0);
+
+        sounds.initial = 1;
     } else
         pawn.rotation = 0;
 
@@ -1229,8 +1231,11 @@ void Game::next() {//~21-29k cycles
 
     fromLockRotate = false;
 
-    if(holding && canHold && ((ihs && ((fromLockHold && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS))
+    if(holding && canHold && ((ihs && ((fromLockHold && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS)){
         hold(1);
+
+        sounds.initial = 1;
+    }
 }
 
 void Game::fillQueue(int count) {
@@ -1363,8 +1368,9 @@ void Game::hold(int dir) {
 
     if(rotationSystem == ARS || (irs && ((fromLockRotate && maxClearDelay > 1) || !initialType))){
         int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
-
         pawn.rotation = sum + (sum < 0) * 4;
+
+        sounds.initial = 1;
     } else
         pawn.rotation = 0;
 

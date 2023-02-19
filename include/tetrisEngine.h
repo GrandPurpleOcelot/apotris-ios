@@ -203,6 +203,7 @@ namespace Tetris
         int disappear = 0;
         int zone = 0;
         int meter = 0;
+        int initial = 0;
 
         SoundFlags() {}
         SoundFlags(const SoundFlags& oldFlags){
@@ -218,6 +219,7 @@ namespace Tetris
             disappear = oldFlags.disappear;
             zone = oldFlags.zone;
             meter = oldFlags.meter;
+            initial = oldFlags.initial;
         }
     };
 

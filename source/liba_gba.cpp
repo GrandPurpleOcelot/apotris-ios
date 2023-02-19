@@ -199,6 +199,16 @@ void color_adj_brightness(int palette, int index, const COLOR * src, u32 count, 
     clr_adj_brightness(&pal_bg_mem[palette*16+index], src, count, alpha);
 }
 
+void color_adj_MEM(COLOR * dst, const COLOR * src, u32 count, u32 alpha){
+    clr_adj_brightness(dst, src, count, alpha);
+}
+
+void addColorToPalette(int palette, int index, COLOR color, int count){
+    for(int i = 0; i < count; i++){
+        pal_bg_mem[palette * 16 + index + i] += color;
+    }
+}
+
 void initRumble(){
     if(!savefile->settings.rumble)
         return;
@@ -325,16 +335,15 @@ void sfx(int s){
 }
 
 void sfxRate(int sound, float rate){
-        mm_sound_effect s = {
-            {sound},
-            (mm_hword)((1.0 + rate) * (1 << (10 - (game->zoneTimer != 0)))),
-            0,
-            (u8)(255 * (float) savefile->settings.sfxVolume / 10),
-            128,
-        };
+    mm_sound_effect s = {
+        {(mm_word)sound},
+        (mm_hword)((rate) * (1 << (10 - (game->zoneTimer != 0)))),
+        0,
+        (u8)(255 * (float) savefile->settings.sfxVolume / 10),
+        128,
+    };
 
-        mmEffectEx(&s);
-
+    mmEffectEx(&s);
 }
 
 void stopDMA(){

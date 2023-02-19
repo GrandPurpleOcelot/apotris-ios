@@ -1,7 +1,8 @@
 #pragma once
 
-// #define GBA
-#define PC
+#define GBA
+
+// #define PC
 
 #ifdef GBA
 
@@ -84,6 +85,9 @@ extern void color_fade_palette(int palette, int index, const COLOR * src, COLOR 
 extern void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha);
 
 extern void color_adj_brightness(int palette, int index, const COLOR * src, u32 count, u32 bright);
+extern void color_adj_MEM(COLOR * dst, const COLOR * src, u32 count, u32 bright);
+
+extern void addColorToPalette(int palette, int index, COLOR color, int count);
 
 extern void sleep();
 
@@ -124,3 +128,6 @@ extern s16 sinLut(int angle);
 extern void savePalette(COLOR * dst);
 
 extern void mirrorPalettes(int index, int count);
+
+// //TEMPORARY
+// extern COLOR rgb8to5(u32 *c);

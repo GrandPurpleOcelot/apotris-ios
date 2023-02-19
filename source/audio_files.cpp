@@ -1,3 +1,7 @@
+#include "platform.hpp"
+
+#ifdef PC
+
 const char * SoundEffectPaths[] = {
 	"assets/double.wav",
 	"assets/go.wav",
@@ -29,6 +33,7 @@ const char * SoundEffectPaths[] = {
 	"assets/time.wav",
 	"assets/zoneStart.wav",
 	"assets/youLose.wav",
+	"assets/initial.wav",
 	"assets/menuCancel.wav",
 	"assets/backToBackQuad.wav",
 	"assets/backToBackTSpin.wav",
@@ -47,3 +52,5 @@ const char * SongPaths[] = {
 	"assets/unsuspected_h.mod",
 	"assets/optikal-innovation.mod",
 };
+
+#endif

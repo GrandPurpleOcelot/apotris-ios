@@ -322,6 +322,8 @@ INLINE u32 bf_clamp(int x, uint len){
 
 extern void color_fade_fast(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha);
 
+extern void clr_rgbscale(COLOR *dst, const COLOR *src, uint nclrs, COLOR clr);
+
 extern void rumble_set_state(int);
 
 // extern void sfx(int n);

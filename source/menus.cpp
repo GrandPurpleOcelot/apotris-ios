@@ -1059,111 +1059,116 @@ void showModeText(){
     }
 }
 
-Replay test;
+// Replay * test = nullptr;
 // ReplayHeader test;
 
 void saveReplay(){
-    if(replaying)
-        return;
+    // if(replaying)
+    //     return;
 
-    const int len = game->replay.size();
-    if(len >= 4096){
-        log("replay size too big (" + std::to_string(len) + ")");
-        return;
-    }
+    // const int len = game->replay.size();
+    // if(len >= 4096){
+    //     log("replay size too big (" + std::to_string(len) + ")");
+    //     return;
+    // }
 
-    test.header.tag = savefile->newGame;
-    test.header.length = len;
-    test.header.duration = game->timer;
-    test.header.seed = game->initSeed;
-    test.header.options = *previousGameOptions;
+    // if(test != nullptr)
+    //     delete test;
 
-    auto it = game->replay.begin();
-    for(int i = 0; i < len; i++){
-        Timestamp move = *it;
+    // test = new Replay();
 
-        // char buff[64];
-        // posprintf(buff, "%d. %d %d %d", i, move.timer, move.move, move.dir);
-        // log(buff);
+    // test->header.tag = savefile->newGame;
+    // test->header.length = len;
+    // test->header.duration = game->timer;
+    // test->header.seed = game->initSeed;
+    // test->header.options = *previousGameOptions;
 
-        test.moves[i] = (((move.timer & 0x3fffff) << 11) + ((move.dir & 1) << 9) + (move.move & 0x1ff));
+    // auto it = game->replay.begin();
+    // for(int i = 0; i < len; i++){
+    //     Timestamp move = *it;
 
-        // log(move.timer)
+    //     // char buff[64];
+    //     // posprintf(buff, "%d. %d %d %d", i, move.timer, move.move, move.dir);
+    //     // log(buff);
 
-        it++;
-    }
+    //     test->moves[i] = (((move.timer & 0x3fffff) << 11) + ((move.dir & 1) << 9) + (move.move & 0x1ff));
 
-    std::ofstream output("replay.sav",std::ios::binary | std::ios::out);
+    //     // log(move.timer)
 
-    char * src = (char * ) &test;
-    output.write(src, sizeof(Replay));
+    //     it++;
+    // }
 
-    if(!output){
-        log("Error when trying to write replay.");
-        return;
-    }
+    // std::ofstream output("replay.sav",std::ios::binary | std::ios::out);
 
-    output.close();
+    // char * src = (char * ) &test;
+    // output.write(src, sizeof(Replay));
+
+    // if(!output){
+    //     log("Error when trying to write replay.");
+    //     return;
+    // }
+
+    // output.close();
 }
 
-ReplayHeader curRepHeader;
+ReplayHeader *curRepHeader;
 std::list<Timestamp> currentReplay;
 
 void loadReplay(){
-    currentReplay.clear();
+    // currentReplay.clear();
 
-    std::ifstream input("replay.sav",std::ios::binary | std::ios::in);
+    // std::ifstream input("replay.sav",std::ios::binary | std::ios::in);
 
-    Replay rep;
-    char * dst = (char * ) &rep;
+    // Replay rep;
+    // char * dst = (char * ) &rep;
 
-    log(std::to_string(sizeof(Replay)));
+    // log(std::to_string(sizeof(Replay)));
 
-    input.read(dst,sizeof(Replay));
+    // input.read(dst,sizeof(Replay));
 
-    if(!input){
-        log("Error when trying to load replay.");
-        return;
-    }
+    // if(!input){
+    //     log("Error when trying to load replay.");
+    //     return;
+    // }
 
-    if(rep.header.tag != savefile->newGame){
-        log("Invalid replay (old version).");
-        return;
-    }
+    // if(rep.header.tag != savefile->newGame){
+    //     log("Invalid replay (old version).");
+    //     return;
+    // }
 
-    if(rep.header.length > 4096){
-        log("Invalid replay (too large).");
-        return;
-    }
+    // if(rep.header.length > 4096){
+    //     log("Invalid replay (too large).");
+    //     return;
+    // }
 
-    for(int i = 0; i < (int)rep.header.length; i++){
-        currentReplay.push_back(Timestamp(rep.moves[i]));
-    }
+    // for(int i = 0; i < (int)rep.header.length; i++){
+    //     currentReplay.push_back(Timestamp(rep.moves[i]));
+    // }
 
-    curRepHeader = rep.header;
+    // curRepHeader = rep.header;
 
-    startGame(curRepHeader.options,curRepHeader.seed);
-    replaying = true;
+    // startGame(curRepHeader.options,curRepHeader.seed);
+    // replaying = true;
 
-    replayIterator = currentReplay.begin();
+    // replayIterator = currentReplay.begin();
 
-    input.close();
+    // input.close();
 
-    int t1 = curRepHeader.options.mode;
-    int t2 = curRepHeader.options.goal;
-    int t3 = curRepHeader.options.tuning.das;
-    int t4 = curRepHeader.options.rotationSystem;
+    // int t1 = curRepHeader.options.mode;
+    // int t2 = curRepHeader.options.goal;
+    // int t3 = curRepHeader.options.tuning.das;
+    // int t4 = curRepHeader.options.rotationSystem;
 
-    char buff[64];
+    // char buff[64];
 
-    posprintf(buff, "%d %d %d %d", t1, t2, t3, t4);
-    log(buff);
+    // posprintf(buff, "%d %d %d %d", t1, t2, t3, t4);
+    // log(buff);
 
-    while(closed()){
-        vsync();
-        key_poll();
+    // while(closed()){
+    //     vsync();
+    //     key_poll();
 
-        if(key_hit(KEY_FULL))
-            break;
-    }
+    //     if(key_hit(KEY_FULL))
+    //         break;
+    // }
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#define SFX_COUNT 38
+#define SFX_COUNT 39
 #define MUSIC_COUNT 6
 
 extern const char * SoundEffectPaths[];
@@ -37,6 +37,7 @@ enum SoundEffects{
 	SFX_TIME,
 	SFX_ZONESTART,
 	SFX_YOULOSE,
+	SFX_INITIAL,
 	SFX_MENUCANCEL,
 	SFX_BACKTOBACKQUAD,
 	SFX_BACKTOBACKTSPIN,

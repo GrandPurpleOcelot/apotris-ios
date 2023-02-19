@@ -29,6 +29,10 @@
 //    distribution.                                                         //
 //////////////////////////////////////////////////////////////////////////////
 
+#include "platform.hpp"
+
+#ifdef PC
+
 #ifndef SFMOD_H
 #define SFMOD_H
 
@@ -267,3 +271,4 @@ private:
 
 
 #endif //SFMOD_H
+#endif
