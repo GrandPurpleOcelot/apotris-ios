@@ -755,7 +755,7 @@ int pauseMenu(){
             sfx(SFX_MENUMOVE);
         }
 
-        if(key == KEY_L){
+        if(key == KEY_L && !onStates){
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
