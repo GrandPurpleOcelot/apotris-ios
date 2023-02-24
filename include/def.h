@@ -387,6 +387,8 @@ extern bool proMode;
 
 extern bool gradientEnabled;
 
+extern Tetris::Game *quickSave;
+
 #define shakeMax 10
 
 class Scene{
