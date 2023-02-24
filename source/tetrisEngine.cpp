@@ -704,10 +704,13 @@ void Game::place() {
             }
 
     if ((pawn.y+lowestPart) * (1+pawn.big) < (lengthY / 2 - 2)) {
-        if(gameMode == TRAINING)
+        if(zoneTimer && zonedLines)
+            endZone();
+        else if(gameMode == TRAINING)
             clearBoard();
-        else
+        else{
             lost = 1;
+        }
         return;
     }
 
