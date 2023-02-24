@@ -772,8 +772,12 @@ void Game::place() {
             level++;
 
         if (level % 100 >= 70 && prevLevel % 100 < 70){
-            if(sectionTimeGoal[(level / 100)][0] > timer-sectionStart && (timer-sectionStart < previousSectionTime+120))
+            if(sectionTimeGoal[(level / 100)][0] > timer-sectionStart && (timer-sectionStart < previousSectionTime+120)){
                 cool = true;
+                previousSectionTime = timer-sectionStart;
+            }else{
+                previousSectionTime = 1000000;
+            }
         }else if(cool && level % 100 >= 82 && prevLevel % 100 < 82){
             sounds.section = 1;
         }else if((level % 100 == 99 && prevLevel % 100 < 99 && level != 999) || (level == 998 && prevLevel != 998)){
@@ -1039,7 +1043,6 @@ int Game::clear(Drop drop) {
                 sounds.section = -1;
             }
 
-            previousSectionTime = currentSession;
             sounds.levelUp = 1;
             sectionStart = timer;
             setMasterTuning();
