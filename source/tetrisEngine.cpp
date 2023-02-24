@@ -1273,10 +1273,10 @@ void Game::next() {
 
     softDrop = false;
 
-    fromLockRotate = false;
-
     if(holding && canHold && ((ihs && ((fromLockHold && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS))
         hold(1);
+
+    fromLockRotate = false;
 }
 
 void Game::fillQueue(int count) {
