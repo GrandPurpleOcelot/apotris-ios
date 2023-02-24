@@ -579,6 +579,8 @@ int pauseMenu(){
 
     oam_copy(oam_mem, obj_buffer, 128);
 
+    rumble_set_state(rumble_stop);
+
     //calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
     FIXED pps = 0;
