@@ -1913,7 +1913,8 @@ void showZoneMeter(){
     OBJ_ATTR * sprite = &obj_buffer[23];
 
     obj_set_attr(sprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2),ATTR2_BUILD(256 + 3, 15, 0));
-    obj_set_pos(sprite, 14 + (push < 0) * push, 74);
+    // obj_set_pos(sprite, 9 + (push < 0) * push, 74);
+    obj_set_pos(sprite, 9, 74);
     obj_unhide(sprite,0);
 
     const int color = 0x7fff;

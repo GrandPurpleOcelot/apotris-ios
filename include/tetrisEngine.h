@@ -352,6 +352,8 @@ namespace Tetris
 
         bool rotates[3] = {false,false,false};
 
+        bool zoneExit = false;
+
     public:
         const int lengthX = 10;
         const int lengthY = 40;

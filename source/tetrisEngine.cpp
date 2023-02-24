@@ -710,8 +710,8 @@ void Game::place() {
             clearBoard();
         else{
             lost = 1;
+            return;
         }
-        return;
     }
 
     lastDrop = calculateDrop();
@@ -1676,8 +1676,11 @@ void Game::removeClearLock() {
 
     linesToClear = std::list<int>();
 
-    if(!entryDelay)
+    if(!entryDelay && !zoneExit){
         next();
+    }else if(zoneExit){
+        zoneExit = false;
+    }
 
     refresh = 1;
     zonedLines = 0;
@@ -2177,6 +2180,7 @@ void Game::endZone(){
     sounds.zone = -1;
     clear(Drop());
     eventLock = true;
+    zoneExit = true;
 }
 
 void Game::clearBoard(){
