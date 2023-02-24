@@ -1091,6 +1091,9 @@ int Game::clear(Drop drop) {
         if(gradePoints >= 100){
             gradePoints = 0;
             internalGrade++;
+
+            if(internalGrade > 31)
+                internalGrade = 31;
         }
 
         grade = gradeTable[internalGrade][0];
