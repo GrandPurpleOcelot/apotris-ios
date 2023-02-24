@@ -1695,8 +1695,8 @@ void drawGrid() {
 
 
     #ifdef GBA
-    setTiles(26,31*32+10, 10, tileBuild(gridTile, false, false, 0));
-    setTiles(26,20*32+10, 10, tileBuild(gridTile, false, false, 0));
+    setTiles(26,31*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
+    setTiles(26,20*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     #endif
     // u16* dest = (u16*)se_mem[26];
 

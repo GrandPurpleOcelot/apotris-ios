@@ -626,6 +626,8 @@ void setLightMode() {
         setPaletteColor(30,2,0x7fff,1);//obj font main
         setPaletteColor(30,3,0x5ad6,1);//obj font shadow
 
+        setPaletteColor(16 + 8,6,0x6739,1);//frame background
+
         // memset16(pal_bg_mem, 0x5ad6, 1);//background gray
         // memset16(&pal_bg_mem[8 * 16 + 4], 0x0421, 1);//progressbar
 
