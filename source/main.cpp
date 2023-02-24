@@ -573,6 +573,8 @@ void setLightMode() {
         memset16(&pal_bg_mem[14 * 16 + 3], 0x5ad6, 1);//font shadow
         memset16(&pal_obj_mem[14 * 16 + 2], 0x7fff, 1);//obj font main
         memset16(&pal_obj_mem[14 * 16 + 3], 0x5ad6, 1);//boj font shadow
+
+        memset16(&pal_obj_mem[8 * 16 + 6], 0x6739, 1);//frame background
     } else {
         memset16(pal_bg_mem, 0x0000, 1);
         memset16(&pal_bg_mem[8 * 16 + 4], 0x7fff, 1);
@@ -588,6 +590,7 @@ void setLightMode() {
         memset16(&pal_bg_mem[14 * 16 + 3], 0x0421, 1);//font shadow
         memset16(&pal_obj_mem[14 * 16 + 2], 0x318c, 1);//obj font main
         memset16(&pal_obj_mem[14 * 16 + 3], 0x0421, 1);//boj font shadow
+        memset16(&pal_obj_mem[8 * 16 + 6], 0x0c63, 1);//frame background
     }
 
     setGradient(savefile->settings.backgroundGradient);

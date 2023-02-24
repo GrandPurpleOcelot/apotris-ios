@@ -689,7 +689,7 @@ void showHold() {
 
     if(game->gameMode != CLASSIC && !game->zoneTimer){
         obj_unhide(holdFrameSprite, 0);
-        obj_set_attr(holdFrameSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
+        obj_set_attr(holdFrameSprite, ATTR0_SQUARE | ATTR0_MOSAIC | ATTR0_BLEND, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
         obj_set_pos(holdFrameSprite, 4 * 8 + 7 + (push < 0) * push, 9 * 8 - 2);
     }else{
         obj_hide(holdFrameSprite);
@@ -746,12 +746,12 @@ void showQueue() {
     }else if(maxQueue > 1){
         for (int i = 0; i < 3; i++) {
             obj_unhide(queueFrameSprites[i], 0);
-            obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, 8, 3));
+            obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE | ATTR0_MOSAIC | ATTR0_BLEND, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, 8, 3));
             obj_set_pos(queueFrameSprites[i], 173 + (push > 0) * push, 12 + 32 * i - (i * 9 * (5-maxQueue)));
         }
     }else{
         obj_unhide(queueFrameSprites[0], 0);
-        obj_set_attr(queueFrameSprites[0], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
+        obj_set_attr(queueFrameSprites[0], ATTR0_SQUARE | ATTR0_MOSAIC | ATTR0_BLEND, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
         obj_set_pos(queueFrameSprites[0], 173 + (push > 0) * push, 12);
 
         obj_hide(queueFrameSprites[1]);
@@ -1476,8 +1476,8 @@ void drawGrid() {
 
     u16* dest = (u16*)se_mem[26];
 
-    memset16(&dest[31*32+10],gridTile,10);
-    memset16(&dest[20*32+10],gridTile,10);
+    memset16(&dest[31*32+10],gridTile + palOffset * 0x1000 * (savefile->settings.lightMode && !game->zoneTimer),10);
+    memset16(&dest[20*32+10],gridTile + palOffset * 0x1000 * (savefile->settings.lightMode && !game->zoneTimer),10);
 
     dest += 10;
 
