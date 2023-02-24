@@ -704,7 +704,10 @@ void Game::place() {
             }
 
     if ((pawn.y+lowestPart) * (1+pawn.big) < (lengthY / 2 - 2)) {
-        lost = 1;
+        if(gameMode == TRAINING)
+            clearBoard();
+        else
+            lost = 1;
         return;
     }
 
