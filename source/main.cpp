@@ -632,6 +632,8 @@ void sleep() {
     }
 
     irq_disable(II_VBLANK);
+
+    bool tmp = gradientEnabled;
     gradient(false);
     int stat_value = REG_SNDSTAT;
     int dsc_value = REG_SNDDSCNT;
@@ -667,7 +669,9 @@ void sleep() {
     irq_enable(II_SERIAL);
     irq_delete(II_KEYPAD);
     irq_enable(II_VBLANK);
-    gradient(true);
+
+    if(tmp)
+        gradient(true);
 }
 
 void diagnose() {
