@@ -807,12 +807,13 @@ void control() {
 
     Keys k = savefile->settings.keys;
 
-    if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer) {
+    if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
         pause = true;
         mmPause();
         clearText();
         update();
+        return;
     }
 
     if (key_hit(k.hold) && !checkDiagonal(k.hold)) {
