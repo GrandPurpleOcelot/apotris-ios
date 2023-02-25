@@ -581,7 +581,7 @@ void showPawn() {
             if(savefile->settings.colors == 2)
                 clr_adj_brightness(&pal_obj_mem[11 * 16], (COLOR*)classic_pal_bin, 8, int2fx(blend) >> 5);
             else if(savefile->settings.colors == 3){
-                clr_adj_brightness(&pal_obj_mem[11 * 16+1], (COLOR*)&nesPalette[getClassicPalette()][0], 8, int2fx(blend) >> 5);
+                clr_adj_brightness(&pal_obj_mem[11 * 16+1], (COLOR*)&nesPalette[getClassicPalette()][0], 4, int2fx(blend) >> 5);
             }else if(savefile->settings.colors == 4){
                 clr_adj_brightness(&pal_obj_mem[11 * 16+1], (COLOR*)&monoPalette[1][0], 4, int2fx(blend) >> 5);
             }else if(savefile->settings.colors == 5){
@@ -658,9 +658,9 @@ void showShadow() {
                 clr_fade_fast((COLOR*)&palette[savefile->settings.colors][n * 16], 0x0000, &pal_obj_mem[10 * 16], 8, (14) * bld);
         }else{
             if(savefile->settings.colors == 2)
-                clr_adj_brightness(&pal_obj_mem[10 * 16], (COLOR*)classic_pal_bin, 8, float2fx(0.25));
+                clr_adj_brightness(&pal_obj_mem[10 * 16], (COLOR*)classic_pal_bin, 4, float2fx(0.25));
             else if(savefile->settings.colors == 3){
-                clr_adj_brightness(&pal_obj_mem[10 * 16+1], (COLOR*)&nesPalette[getClassicPalette()][0], 8, float2fx(0.25));
+                clr_adj_brightness(&pal_obj_mem[10 * 16+1], (COLOR*)&nesPalette[getClassicPalette()][0], 4, float2fx(0.25));
             }else if(savefile->settings.colors == 4){
                 clr_adj_brightness(&pal_obj_mem[10 * 16+1], (COLOR*)&monoPalette[1][0], 4, float2fx(0.25));
             }else if(savefile->settings.colors == 5){

@@ -707,9 +707,10 @@ int pauseMenu(){
                 } else if (selection == 2) {
                     sfx(SFX_MENUCONFIRM);
                     clearText();
-                    update();
                     onStates = false;
                     selection = 0;
+                    update();
+                    break;
                 }
             }
         }
@@ -762,7 +763,7 @@ int pauseMenu(){
             showStats(showingStats, totalTime, ppsStr);
         }
 
-        if(!shown){
+        if(!shown && !onStates){
             shown = true;
             showStats(showingStats, totalTime, ppsStr);
         }
