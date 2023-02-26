@@ -1025,7 +1025,7 @@ int Game::clear(Drop drop) {
                     board[i][j] = 0;
         }
 
-        int currentSectionLevel = level / 100 ;
+        int currentSectionLevel = level / 100;
 
         if(currentSectionLevel > prevLevel / 100){
             int currentSession = timer-sectionStart;
@@ -1054,7 +1054,8 @@ int Game::clear(Drop drop) {
             setMasterTuning();
         }
 
-        if(disappearing && clearCount){
+    }else if(gameMode == MASTER && disappearing){
+        if(clearCount){
             creditGrade += creditPoints[clearCount-1][disappearing-1];
         }
     }
@@ -1781,7 +1782,7 @@ void Game::keyDrop(int dir){
     if(!dir)
         return;
 
-    if(gameMode == CLASSIC || entryDelay)
+    if(gameMode == CLASSIC)
         return;
 
     dropping = true;
@@ -1898,6 +1899,7 @@ void Game::setTuning(Tuning newTune){
 }
 
 void Game::setMasterTuning(){
+
     int n = 0;
     int speedLevel = level + coolCount * 100;
 
