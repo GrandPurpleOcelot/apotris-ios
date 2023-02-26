@@ -1216,12 +1216,17 @@ void Game::next() {
     pawn.y = (int)lengthY / 2;
     pawn.x = (int)lengthX / 2 - 2;
 
+    pawn.rotation = 0;
     if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
-        int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
-
-        pawn.rotation = sum + 4 * (sum < 0);
-    } else
-        pawn.rotation = 0;
+        if(rotates[0])
+            rotate(1);
+        else if(rotates[1]){
+            rotate(-1);
+            if(rotates[2] && rotationSystem == ARS)
+                rotate(-1);
+        } else if(rotates[2] && rotationSystem != ARS)
+            rotate(2);
+    }
 
     speedCounter = 0;
 
@@ -1412,9 +1417,14 @@ void Game::hold(int dir) {
     }
 
     if(rotationSystem == ARS || (irs && ((fromLockRotate && maxClearDelay > 1) || !initialType))){
-        int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
-
-        pawn.rotation = sum + (sum < 0) * 4;
+        if(rotates[0])
+            rotate(1);
+        else if(rotates[1]){
+            rotate(-1);
+            if(rotates[2] && rotationSystem == ARS)
+                rotate(-1);
+        } else if(rotates[2] && rotationSystem != ARS)
+            rotate(2);
     } else
         pawn.rotation = 0;
 
