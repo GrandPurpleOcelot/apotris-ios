@@ -863,6 +863,9 @@ void control() {
         game->rotateTwice(0);
     }
 
+    if (key_released(k.hardDrop))
+        game->keyDrop(0);
+
     if (key_released(k.softDrop))
         game->keyDown(0);
 

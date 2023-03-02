@@ -1789,6 +1789,9 @@ void Game::generateGarbage(int height,int mode){
 }
 
 void Game::keyDrop(int dir){
+    if(dir == 0 && gameMode == MASTER)
+        dropping = false;
+
     if(!dir)
         return;
 
