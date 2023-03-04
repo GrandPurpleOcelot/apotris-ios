@@ -147,6 +147,9 @@ void Game::rotateCCW(int dir) {
 }
 
 void Game::rotateTwice(int dir) {
+    if(rotationSystem == NRS)
+        return;
+
     rotates[2] = dir;
 
     if(!dir)

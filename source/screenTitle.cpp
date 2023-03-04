@@ -1485,7 +1485,7 @@ void startText() {
             }
 
             std::string levelText = std::to_string(level - 1);
-            if(level < 10)
+            if(level <= 10)
                 levelText = " " + levelText;
             aprint(levelText, 26 , levelHeight);
 
