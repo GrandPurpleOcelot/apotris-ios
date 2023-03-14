@@ -21,7 +21,9 @@ void settingsText();
 void toggleBigMode();
 std::string timeToStringHours(int frames);
 void resetScoreboard(int,int,int);
+bool confirmUnsaved();
 void drawBackgroundGrid();
+bool checkSettingsChange();
 
 static OBJ_ATTR * levelCursor = &obj_buffer[32];
 
@@ -31,7 +33,16 @@ WordSprite* wordSprites[MAX_WORD_SPRITES];
 
 int titleFloat = 0;
 OBJ_ATTR* titleSprites[2];
-u16 backgroundArray[30][30];
+
+#ifdef GBA
+const int bgGridHeight = 30;
+#endif
+#ifdef PC
+const int bgGridHeight = 42;
+#endif
+u16 backgroundArray[bgGridHeight][30];
+
+
 int bgSpawnBlock = 0;
 int bgSpawnBlockMax = 20;
 int gravity = 0;
@@ -150,7 +161,7 @@ void startScreen() {
         showTitleSprites();
 
         //initialise background array
-        memset16(backgroundArray, 0, 30 * 30);
+        memset16(backgroundArray, 0, 30 * (bgGridHeight));
 
         showSprites(128);
         // oam_copy(oam_mem, obj_buffer, 128);
@@ -168,7 +179,8 @@ void startScreen() {
                 setDefaultGradient();
 
             enableBlend((1 << 13) + (1 << 6) + (1 << 1));
-            gradient(true);
+            toggleBG(3, true);
+            gradient(1);
         }
 
         key_poll();
@@ -176,6 +188,9 @@ void startScreen() {
         u16 key = key_hit(KEY_FULL);
 
         if (!onSettings) {
+            #ifdef PC
+            setLayerScroll(0,0,40);
+            #endif
 
             fallingBlocks();
             showTitleSprites();
@@ -296,6 +311,11 @@ void startScreen() {
                             previousSkins[i] = savefile->customSkins[i];
 
                         options = 6;
+
+                        #ifdef PC
+                        options++;
+                        #endif
+
                     } else if (selection == 2) {
                         n = -2;
                     }
@@ -403,6 +423,7 @@ void startScreen() {
                 if (n != 0) {
                     previousOptionScreen = toStart = n;
                     onSettings = true;
+                    // log("here");
                     gradient(true);
 
                     clearTilemap(25);
@@ -695,7 +716,7 @@ void startScreen() {
                             sprite_hide(titleSprites[i]);
                         showSprites(128);
                         // oam_copy(oam_mem, obj_buffer, 128);
-                        drawUIFrame(0, 0, 30, 20);
+                        // drawUIFrame(0, 0, 30, 20);
 
                         clearText();
                         refreshText = true;
@@ -703,7 +724,15 @@ void startScreen() {
                     }else if(selection != options-1){
                         clearText();
                         sfx(SFX_MENUCONFIRM);
-                        switch(selection){
+
+                        int n = selection;
+
+                        #ifdef PC
+                        n--;
+                        #endif
+
+                        switch(n){
+                            case 0: windowSettings(); break;
                             case 1: audioSettings(); break;
                             case 2: controlsSettings(); break;
                             case 3: handlingSettings(); break;
@@ -818,10 +847,14 @@ void startScreen() {
 
             if ((key == KEY_A || key == KEY_START) && (toStart >= 0)) {
                 if (selection != options - 1 && toStart != -2 && !(toStart == CLASSIC && !subMode && selection == options - 2)) {
-                    selection = options - 1;
+                    if(key == KEY_A){
+                        selection++;
+                    }else{
+                        selection = options - 1;
 
-                    if(toStart == CLASSIC && !subMode)
-                        selection--;
+                        if(toStart == CLASSIC && !subMode)
+                            selection--;
+                    }
 
                     sfx(SFX_MENUCONFIRM);
                     refreshText = true;
@@ -975,23 +1008,25 @@ void startScreen() {
                         sfx(SFX_MENUCANCEL);
                         refreshText = true;
                     }
-                } else {
-                    onSettings = false;
-                    options = (int)menuOptions.size();
-                    clearText();
-                    sfx(SFX_MENUCANCEL);
-                    savefile->settings = previousSettings;
+                }else {
+                    bool change = checkSettingsChange();
 
-                    for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
-                        savefile->customSkins[i] = previousSkins[i];
+                    bool exit = true;
+                    if(change){
+                        exit = confirmUnsaved();
+                    }
 
-                    setMusicVolume(512 * ((float)savefile->settings.volume / 10));
-                    setSkin();
-                    setLightMode();
-                    setGradient(savefile->settings.backgroundGradient);
-                    drawUIFrame(0, 0, 30, 20);
-                    refreshText = true;
-                    selection = previousSelection;
+                    if(exit){
+                        onSettings = false;
+                        options = (int)menuOptions.size();
+                        clearText();
+                        sfx(SFX_MENUCANCEL);
+                        drawUIFrame(0, 0, 30, 20);
+                        refreshText = true;
+                        selection = previousSelection;
+                    }else{
+                        refreshText = true;
+                    }
                 }
 
                 if(!onSettings)
@@ -1086,6 +1121,8 @@ void startScreen() {
 
     clearTilemap(26);
     clearTilemap(27);
+
+    setLayerScroll(0, 0, 0);
     // memset16(&se_mem[26], 0x0000, 32 * 20);
     // memset16(&se_mem[27], 0x0000, 32 * 20);
 
@@ -1697,11 +1734,16 @@ void startText() {
         } else if (toStart == -1) {
             clearText();
             settingsText();
-            const int startY = 5;
+            const int startY = 4;
             const int space = 2;
             aprint(" SAVE ", 12, 17);
 
-            if(selection != 5)
+            int max = 6;
+            #ifdef PC
+            max = 7;
+            #endif
+
+            if(selection != max-1)
                 aprint(">", 10, startY+selection * space);
             else{
                 aprint("[",12,17);
@@ -1801,13 +1843,13 @@ void drawUIFrame(int x, int y, int w, int h) {
         for (int j = 0; j < w; j++) {
             int tile = 0;
             if ((i == 0 && (j == 0 || j == w - 1)) || (i == h - 1 && (j == 0 || j == w - 1))) {
-                tile = tileBuild(29, j > 0, i > 0, 0);
+                tile = tileBuild(29, j > 0, i > 0, 8);
                 // tile = 29 + (i > 0) * 0x800 + (j > 0) * 0x400;
             } else if (i == 0 || i == h - 1) {
-                tile = tileBuild(28, false, i > 0, 0);
+                tile = tileBuild(28, false, i > 0, 8);
                 // tile = 28 + (i > 0) * 0x800;
             } else if (j == 0 || j == w - 1) {
-                tile = tileBuild(4, j > 0, false, 0);
+                tile = tileBuild(4, j > 0, false, 8);
                 // tile = 4 + (j > 0) * 0x400;
             }
             if(tile)
@@ -1839,8 +1881,6 @@ void showTitleSprites() {
         // obj_set_attr(titleSprites[i], ATTR0_WIDE, ATTR1_SIZE(3), ATTR2_PALBANK(13));
         // titleSprites[i]->attr2 = ATTR2_BUILD(512 + 64 + i * 32, 13, 0);
 
-        //TODO:
-        // int offset = ((sin_lut[titleFloat]*3)>>12);
         int offset = (sinLut(titleFloat) * 3) >> 12;
 
         if(offset == 3)
@@ -1865,7 +1905,7 @@ void fallingBlocks() {
     if (gravity > gravityMax) {
         gravity = 0;
 
-        for (i = 29; i >= 0; i--) {
+        for (i = bgGridHeight - 1; i >= 0; i--) {
             for (j = 0; j < 30; j++) {
                 if (i == 0)
                     backgroundArray[i][j] = 0;
@@ -1879,7 +1919,7 @@ void fallingBlocks() {
 
     int offset = 4 + 6 * bigMode;
 
-    for (i = 0; i < 20; i++) {
+    for (i = 0; i < (bgGridHeight - 10); i++) {
         for (j = 0; j < 30; j++) {
             if (backgroundArray[i+offset][j]){
                 int n = (backgroundArray[i+offset][j] - 1) & 0xf;
@@ -1967,6 +2007,7 @@ void fallingBlocks() {
 void settingsText() {
     const std::list<std::string> options = {
         "Graphics",
+        "Window",
         "Audio",
         "Controls",
         "Handling",
@@ -1974,11 +2015,19 @@ void settingsText() {
     };
 
     const int startX = 12;
-    const int startY = 5;
+    const int startY = 4;
     const int space = 2;
+
+    bool skip = false;
+    #ifdef GBA
+    skip = true;
+    #endif
 
     int i = 0;
     for(auto const& option : options){
+        if(skip && option == "Window")
+            continue;
+
         aprint(option,startX,startY+space*i);
         i++;
     }
@@ -1991,7 +2040,7 @@ void toggleBigMode(){
     bigMode = !bigMode;
 
     //empty background array
-    for (int i = 0; i < 30; i++)
+    for (int i = 0; i < bgGridHeight; i++)
         for (int j = 0; j < 30; j++)
             backgroundArray[i][j] = 0;
 
@@ -2039,7 +2088,6 @@ void resetScoreboard(int mode, int goal, int subMode){
         aprint("Are you sure you", 6, 6);
         aprint("want to reset the", 6 , 8);
         aprint("current scoreboard?", 6 , 10);
-
 
         vsync();
         key_poll();
@@ -2143,12 +2191,88 @@ void resetScoreboard(int mode, int goal, int subMode){
     clearText();
 }
 
+bool confirmUnsaved(){
+    clearText();
+
+    clearSprites(128);
+    showSprites(128);
+
+    int timer = 0;
+
+    int s = 0;
+
+    while (closed()) {
+
+        aprint("You haven't saved", 6, 6);
+        aprint("your changes.", 6 , 8);
+        aprint("Save settings?", 6 , 10);
+
+
+        vsync();
+        key_poll();
+
+        if(timer < 16){
+            timer++;
+        }else{
+            aprint(" SAVE     DON'T SAVE ", 6, 15);
+
+            if(s == 0){
+                aprint("[",6,15);
+                aprint("]",11,15);
+            }else{
+                aprint("[",15,15);
+                aprint("]",26,15);
+            }
+
+            if (key_hit(KEY_A)) {
+                clearText();
+                if(s == 0)
+                    break;
+                else{
+                    clearText();
+                    savefile->settings = previousSettings;
+
+                    for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
+                        savefile->customSkins[i] = previousSkins[i];
+
+                    setMusicVolume(512 * ((float)savefile->settings.volume / 10));
+                    setSkin();
+                    setLightMode();
+                    setGradient(savefile->settings.backgroundGradient);
+                    return true;
+                }
+            }
+
+            if (key_hit(KEY_B)) {
+                clearText();
+                return false;
+            }
+
+            if(key_hit(KEY_LEFT)){
+                if(s > 0)
+                    s--;
+            }
+
+            if(key_hit(KEY_RIGHT)){
+                if(s < 1)
+                    s++;
+            }
+        }
+    }
+
+    saveSavefile();
+    // saveToSram();
+    clearText();
+
+    return true;
+}
+
 void drawBackgroundGrid(){
     gridDrawn = true;
 
     // u16 * dest = (u16*) &se_mem[26];
 
-    setTiles(26,0,32*20, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
+    setTiles(26,0,32*32, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
     // for(int i = 0; i < 20; i++){
     //     for(int j = 0; j < 30; j++){
     //         *dest++ = 2 * (!savefile->settings.lightMode);
@@ -2168,4 +2292,16 @@ void TitleScene::draw(){
         //     REG_DISPCNT &= ~DCNT_BG3;
         // }
     }
+}
+
+bool checkSettingsChange(){
+    u8 * v1 = (u8 *) &savefile->settings;
+    u8 * v2 = (u8 *) &previousSettings;
+
+    for(int i = 0; i < (int) sizeof(Settings); i++){
+        if(v1[i] != v2[i])
+            return true;
+    }
+
+    return false;
 }

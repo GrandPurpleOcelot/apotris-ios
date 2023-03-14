@@ -16,6 +16,9 @@ void playSong(int menuId, int songId) {
         case 1:
             song = MOD_OPTIKAL_INNOVATION;
             break;
+        case 2:
+            song = MOD_SCHMID_SPACE_TAXI;
+            break;
         default:
             return;
         }
@@ -32,6 +35,12 @@ void playSong(int menuId, int songId) {
             break;
         case 3:
             song = MOD_WARNING_INFECTED;
+            break;
+        case 4:
+            song = MOD_SCHIZOFRENIUM_LONG;
+            break;
+        case 5:
+            song = MOD__DETERSIVE_;
             break;
         default:
             return;

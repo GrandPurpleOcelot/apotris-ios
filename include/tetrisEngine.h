@@ -514,6 +514,8 @@ namespace Tetris
 
         int replayTimerSections = 0;
 
+        int boardOffset = lengthY/2;
+
         std::list<Timestamp> replay;
 
         int checkRotation(int, int, int);
@@ -559,11 +561,6 @@ namespace Tetris
         }
 
         Game(int gm, int sd, bool big){
-            if(big){
-                lengthY /= 2;
-                lengthX /= 2;
-            }
-
             gameMode = gm;
             seed = initSeed = sd;
             board = new int* [lengthY];
@@ -634,6 +631,11 @@ namespace Tetris
                 setMasterTuning();
             }
 
+            if(big){
+                lengthY /= 2;
+                lengthX /= 2;
+                boardOffset = lengthY/2;
+            }
         }
 
         Game(int gm,bool big) : Game(gm,qran(),big){}
@@ -697,12 +699,12 @@ namespace Tetris
 
 
         ~Game(){
-            for(int i = 0; i < lengthY; i++)
+            for(int i = 0; i < 40; i++)
                 delete[] board[i];
             delete[] board;
 
             if(disappearing){
-                for(int i = 0; i < lengthY; i++)
+                for(int i = 0; i < 40; i++)
                     delete[] disappearTimers[i];
                 delete[] disappearTimers;
             }

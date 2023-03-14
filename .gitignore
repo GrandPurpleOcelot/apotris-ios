@@ -5,6 +5,7 @@ bin/
 *.gba
 *.elf
 *.sav
+*.srm
 *.pnproj
 *.el
 compile_commands.json

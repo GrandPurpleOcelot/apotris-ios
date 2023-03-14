@@ -24,6 +24,8 @@ std::list<sf::Sound*> soundList;
 sf::SoundBuffer sfxBuffers[SFX_COUNT];
 sfmod::Mod musicArray[MUSIC_COUNT];
 
+sf::Shader shader;
+
 // Mix_Chunk *soundEffectChunks[SFX_COUNT];
 // Mix_Music *musicChunks[MUSIC_COUNT];
 
@@ -67,6 +69,7 @@ int sfxVolume = 1024;
 int musicVolume = 0;
 
 void onHBlank(int line);
+uint8_t customBlend(uint8_t a,uint8_t b);
 
 class ColorSplit{
 
@@ -162,6 +165,7 @@ sf::Texture frameTexture;
 
 
 void platformInit(){
+
     TLN_Init(SCREEN_WIDTH,SCREEN_HEIGHT,4,128,0);
 
     framebuffer = (sf::Uint8*) malloc(4 * SCREEN_WIDTH * SCREEN_HEIGHT);
@@ -211,6 +215,21 @@ void platformInit(){
     window.setIcon(32, 32, icon.getPixelsPtr());
 
     loadAudio();
+
+    TLN_SetCustomBlendFunction(customBlend);
+
+    if(!sf::Shader::isAvailable()){
+        log("Shaders not available on system.");
+    }else{
+        if(!shader.loadFromFile("lib/bloom.glsl", sf::Shader::Fragment)){
+            log("Couldn't load Bloom shader.");
+        }else{
+            log("Loaded Bloom Shader.");
+            shader.setUniform("pixelWidth",1.f / window.getSize().x);
+            shader.setUniform("pixelHeight",1.f / window.getSize().y);
+        }
+
+    }
 }
 
 
@@ -296,7 +315,37 @@ void vsync(){
     sf::Sprite sprite;
     sprite.setTexture(frameTexture);
     sprite.setScale(WINDOW_SCALE,WINDOW_SCALE);
+
     window.draw(sprite);
+
+    sf::Color c = sf::Color::Black;
+
+    c.a = 10;
+
+    for(int i = 0; i < SCREEN_HEIGHT; i++){
+        sf::Vertex line[2];
+
+        line[0].position = sf::Vector2f(0,i * WINDOW_SCALE + (WINDOW_SCALE - 1));
+        line[1].position = sf::Vector2f(SCREEN_WIDTH * WINDOW_SCALE,i * WINDOW_SCALE + (WINDOW_SCALE - 1));
+
+        line[0].color = c;
+        line[1].color = c;
+
+        window.draw(line,2,sf::Lines);
+    }
+
+    for(int i = 0; i < SCREEN_WIDTH; i++){
+        sf::Vertex line[2];
+
+        line[0].position = sf::Vector2f(i * WINDOW_SCALE + (WINDOW_SCALE),0);
+        line[1].position = sf::Vector2f(i * WINDOW_SCALE + (WINDOW_SCALE),SCREEN_HEIGHT * WINDOW_SCALE);
+
+        line[0].color = c;
+        line[1].color = c;
+
+        window.draw(line,2,sf::Lines);
+    }
+
     window.display();
 
     // TLN_DrawFrame(0);
@@ -307,6 +356,8 @@ void vsync(){
         if (event.type == sf::Event::Closed){
             window.close();
             deinitialize();
+
+            exit(0);
         }
     }
 
@@ -348,13 +399,15 @@ void showSprites(int n ){
         }
     }
 
+    for(int i = 0; i < 128; i++){
+        TLN_DisableSprite(i);
+    }
+
     int counter = 0;
     for(auto const & id : spriteList){
-    // for(int counter = 0; counter < n; counter++){
         OBJ_ATTR *sprite = &obj_buffer[id];
 
         if(!sprite->enabled){
-            TLN_DisableSprite(counter);
             counter++;
             continue;
         }
@@ -388,9 +441,12 @@ void showSprites(int n ){
         if(!(blendSprites || sprite->blend))
             TLN_SetSpriteBlendMode(counter, BLEND_NONE , 0);
         else
-            TLN_SetSpriteBlendMode(counter, (blendSprites)?BLEND_MIX25:BLEND_MIX75 , 0);
-        TLN_SetSpriteBlendMode(counter, (blendSprites || sprite->blend)?BLEND_MIX75:BLEND_NONE , 0);
+            TLN_SetSpriteBlendMode(counter, (blendSprites)?BLEND_CUSTOM:BLEND_MIX75 , 0);
+            // TLN_SetSpriteBlendMode(counter, (blendSprites)?BLEND_MIX25:BLEND_MIX75 , 0);
+
+        // TLN_SetSpriteBlendMode(counter, BLEND_MIX75, 0);
         TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + (sprite->rotate * FLAG_ROTATE) + ((sprite->priority == 0) * FLAG_PRIORITY));
+
         counter++;
     }
 }
@@ -399,10 +455,10 @@ void showSprites(int n ){
 // }
 
 void loadPalette(int palette, int index, const void * src, int count){
-    for(int i = 0; i < (int) 16; i++){
+    for(int i = 0; i < (int) count; i++){
         u16 r = (u16) ((u16 *) src)[i];
         ColorSplit c = ColorSplit(r);
-        TLN_SetPaletteColor(palettes[palette], i, c.r, c.g, c.b);
+        TLN_SetPaletteColor(palettes[palette], index + i, c.r, c.g, c.b);
     }
 
     if(palette == 0 && index == 0 && !gradientEnabled){
@@ -514,7 +570,7 @@ void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY){
     }
 }
 
-void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY){
+void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY, int rowLength){
     u8* source = (u8*) src;
     const int count = lengthX * lengthY;
     uint8_t tmp[8 * 8 * count];
@@ -853,7 +909,7 @@ void color_adj_brightness(int palette, int index, const COLOR *src, u32 count, u
     loadPalette(palette, index, dst, count);
 }
 
-void clr_grayscale(COLOR *dst, const COLOR *src, uint nclrs){
+void clr_grayscale(COLOR *dst, const COLOR *src, u32 nclrs){
     u32 ii;
     u32 clr, gray, rr, gg, bb;
 
@@ -872,7 +928,7 @@ void clr_grayscale(COLOR *dst, const COLOR *src, uint nclrs){
 }
 
 void clr_rgbscale(COLOR *dst, const COLOR *src, uint nclrs, COLOR clr){
-    int ii;
+    uint ii;
     u32 rr, gg, bb, scale, gray;
 
     // Normalize target color
@@ -1111,13 +1167,11 @@ void color_fade_fast(int palette, int index, const COLOR * src, COLOR color, int
 }
 
 void mirrorPalettes(int index, int count){
-
-
     for(int i = 0; i < count; i++){
         COLOR temp[16];
 
-        for(int j = 0; j < 16; j++)
-            temp[j] = rgb8to5((u32 *)TLN_GetPaletteData(palettes[i+16], index));
+        for(int j = index; j < 16; j++)
+            temp[j] = rgb8to5((u32 *)TLN_GetPaletteData(palettes[i+16], j));
 
         loadPalette(i, index, temp, 16-index);
         // for(int j = 0; j < 16; j++){
@@ -1138,6 +1192,10 @@ void addColorToPalette(int palette, int index, COLOR color, int count){
         dst[i] = rgb8to5((u32*) TLN_GetPaletteData(palettes[palette], index + i)) + color;
 
     loadPalette(palette, index, dst, count);
+}
+
+uint8_t customBlend(uint8_t a, uint8_t b){
+    return (a + b + b + b + b) /5;
 }
 
 #endif

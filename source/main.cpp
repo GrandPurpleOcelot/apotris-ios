@@ -141,11 +141,11 @@ void initialize(){
     loadSpriteTiles(512, sprite6tiles_bin,4,4);
 
     loadSpriteTiles(512 + 16, sprite6tiles_bin,4,3);
-    loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3,4,1);
+    loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3,4,1,4);
     loadSpriteTiles(512 + 32, &sprite6tiles_bin[128],4,2);
-    loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2);
+    loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2,4);
     loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
-    loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3);
+    loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
 
     loadSpriteTiles(512 + 64, title1tiles_bin,8,8);
     loadSpriteTiles(512 + 96, title2tiles_bin,8,8);
@@ -534,18 +534,21 @@ void setSkin() {
     }
 
 
-    if(savefile->settings.skin < 7){
+    // if(savefile->settings.skin < 7){
+    if(savefile->settings.skin < 7 || savefile->settings.skin == 9 || savefile->settings.skin == 10){
         //TODO:
         //vsync might not be necessary here
-        vsync();
         // VBlankIntrWait();
+        vsync();
+        int n = savefile->settings.skin;
         if(savefile->settings.skin < 0){
-            int n = savefile->settings.skin;
             n *= -1;
             n--;
             buildMini(&savefile->customSkins[n].smallBoard);
         }else{
-            buildMini((TILE*)mini[savefile->settings.skin]);
+            if (n >= 9)
+                n-=2;
+            buildMini((TILE*)mini[n]);
         }
     }
 
@@ -574,15 +577,15 @@ void setSkin() {
                 // int index = iy + ix;
                 if (board[ix]) {
                     if(savefile->settings.skin == 11)
-                        loadSpriteTilesPartial(iy, &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1);
+                        loadSpriteTilesPartial(iy, &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
                     else if(savefile->settings.skin == 12)
-                        loadSpriteTilesPartial(iy, &sprite39tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1);
+                        loadSpriteTilesPartial(iy, &sprite39tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
                     else if(savefile->settings.skin == 13)
-                        loadSpriteTilesPartial(iy, &sprite40tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1);
+                        loadSpriteTilesPartial(iy, &sprite40tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
                     else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
-                        loadSpriteTilesPartial(iy, blockSprite,k,j,1,1);
+                        loadSpriteTilesPartial(iy, blockSprite,k,j,1,1,4);
                     else
-                        loadSpriteTilesPartial(iy, blockSprite,k,j,1,1);
+                        loadSpriteTilesPartial(iy, classicTiles[savefile->settings.skin-7][i],k,j,1,1,4);
                         // memcpy16(&tile_mem[4][index], classicTiles[savefile->settings.skin-7][i], sprite1tiles_bin_size / 2);
                     // if(savefile->settings.skin == 11)
                     //     memcpy16(&tile_mem[4][index], &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4] * 32], sprite1tiles_bin_size / 2);
@@ -609,7 +612,6 @@ void setSkin() {
 }
 
 void setLightMode() {
-
     if (savefile->settings.lightMode) {
         setPaletteColor(0,0,0x5ad6,1);//background gray
         setPaletteColor(8,4,0x0421,1);//progressbar
@@ -710,8 +712,8 @@ void setPalette(){
             // memcpy16(&pal_bg_mem[i*16], &palette[n][i*16], 8);
             // memcpy16(&pal_obj_mem[i*16], &palette[n][i*16], 8);
         }else if (i < 8){
-            loadPalette(i, 4, &palette[n][i*16], 8);
-            loadPalette(i+16, 4, &palette[n][i*16], 8);
+            loadPalette(i, 4, &palette[n][i*16+4], 4);
+            loadPalette(i+16, 4, &palette[n][i*16+4], 4);
             // memcpy16(&pal_bg_mem[i*16+4], &palette[n][i*16+4], 4);
             // memcpy16(&pal_obj_mem[i*16+4], &palette[n][i*16+4], 4);
         }else if (i > 9){
@@ -739,6 +741,7 @@ void setPalette(){
         // memcpy16(&pal_bg_mem[8 * 16], &palette[n][color * 16], 16);
 
         int n = getClassicPalette();
+
         for(int i = 0; i < 8; i++){
             loadPalette(i,1, &nesPalette[n][0],4);
             loadPalette(i+16,1, &nesPalette[n][0],4);
@@ -761,17 +764,17 @@ void setPalette(){
             // memset16(&pal_obj_mem[i*16+1], c,4);
         }
 
-        if(!savefile->settings.lightMode){
-            setPaletteColor(7, 0, 0x7fff, 2);
-            setPaletteColor(7+16, 0, 0x7fff, 2);
-            // memset16(&pal_bg_mem[7], 0x7fff,2);
-            // memset16(&pal_obj_mem[7], 0x7fff,2);
-        }else{
-            setPaletteColor(7, 0, 0x0421, 2);
-            setPaletteColor(7+16, 0, 0x0421, 2);
-            // memset16(&pal_bg_mem[7], 0x0421,2);
-            // memset16(&pal_obj_mem[7], 0x0421,2);
-        }
+        // if(!savefile->settings.lightMode){
+        //     setPaletteColor(7, 0, 0x7fff, 2);
+        //     setPaletteColor(7+16, 0, 0x7fff, 2);
+        //     // memset16(&pal_bg_mem[7], 0x7fff,2);
+        //     // memset16(&pal_obj_mem[7], 0x7fff,2);
+        // }else{
+        //     setPaletteColor(7, 0, 0x0421, 2);
+        //     setPaletteColor(7+16, 0, 0x0421, 2);
+        //     // memset16(&pal_bg_mem[7], 0x0421,2);
+        //     // memset16(&pal_obj_mem[7], 0x0421,2);
+        // }
 
     }else if(savefile->settings.colors == 5){
         for(int i = 0; i < 8; i++){
@@ -924,17 +927,15 @@ void setDefaultGradient(){
 }
 
 void gradient(int state){
-    stopDMA();
-    // if(!state){
-    //     REG_DMA0CNT &= ~(1 << 0x1f);
-    // }
     if(state == 1){
         gradientEnabled = true;
         toggleHBlank(false);
     }else if(state == 2){
+        stopDMA();
         gradientEnabled = false;
         toggleHBlank(true);
     }else{
+        stopDMA();
         gradientEnabled = false;
     }
 }
@@ -1006,7 +1007,17 @@ void setPawnPalette(int dest, int n, int blend){
             color_fade_palette(dest,1,(COLOR*)classic_pal_bin,0x0000,4,blend);
             // clr_fade((COLOR*)&nesPalette[getClassicPalette()][0], 0x0000, &pal_obj_mem[dest * 16+1], 4, blend);
         }else if(savefile->settings.colors == 4){
-            color_fade_palette(dest,1,(COLOR*)&monoPalette[0][0],0x0000,4,blend);
+            COLOR c;
+            if(savefile->settings.palette < 7){
+                int *clr = (int *) GameInfo::colors[savefile->settings.palette];
+                c = RGB15_SAFE(clr[0] >> 3, clr[1] >> 3, clr[2] >> 3);
+            } else{
+                c = monoPalette[savefile->settings.lightMode][0];
+            }
+            COLOR mono[4];
+            memset16(mono,c,4);
+
+            color_fade_palette(dest,1,(COLOR*)&mono[0],0x0000,4,blend);
             // clr_fade((COLOR*)&monoPalette[0][0], 0x0000, &pal_obj_mem[dest * 16+1], 4, blend);
         }else if(savefile->settings.colors == 5){
             color_fade_palette(dest,1,(COLOR*)&arsPalette[0][n],0x0000,4,blend);
@@ -1030,7 +1041,17 @@ void setPawnPalette(int dest, int n, int blend){
             color_adj_brightness(dest, 1, (COLOR*)&nesPalette[getClassicPalette()][0], 8, blend);
             // clr_adj_brightness(&pal_obj_mem[dest * 16+1], (COLOR*)&nesPalette[getClassicPalette()][0], 8, blend);
         }else if(savefile->settings.colors == 4){
-            color_adj_brightness(dest, 1, (COLOR*)&monoPalette[1][0], 4, blend);
+            COLOR c;
+            if(savefile->settings.palette < 7){
+                int *clr = (int *) GameInfo::colors[savefile->settings.palette];
+                c = RGB15_SAFE(clr[0] >> 3, clr[1] >> 3, clr[2] >> 3);
+            } else{
+                c = monoPalette[savefile->settings.lightMode][0];
+            }
+            COLOR mono[4];
+            memset16(mono,c,4);
+
+            color_adj_brightness(dest, 1, (COLOR*)&mono[0], 4, blend);
             // clr_adj_brightness(&pal_obj_mem[dest * 16+1], (COLOR*)&monoPalette[1][0], 4, blend);
         }else if(savefile->settings.colors == 5){
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[0][n], 4, blend);

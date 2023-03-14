@@ -7,6 +7,8 @@
 #include "small5tiles_bin.h"
 #include "small6tiles_bin.h"
 #include "small7tiles_bin.h"
+#include "small8tiles_bin.h"
+#include "small9tiles_bin.h"
 /* #include "small8tiles_bin.h" */
 /* #include "small9tiles_bin.h" */
 /* #include "small10tiles_bin.h" */
@@ -105,7 +107,7 @@ const uint16_t monoPalette[2][4] = {
 };
 
 
-const uint8_t * mini[7] = {
+const uint8_t * mini[9] = {
         small1tiles_bin,
         small2tiles_bin,
         small3tiles_bin,
@@ -113,6 +115,8 @@ const uint8_t * mini[7] = {
         small5tiles_bin,
         small6tiles_bin,
         small7tiles_bin,
+        small8tiles_bin,
+        small9tiles_bin,
 };
 
 const uint8_t * moveSpriteTiles[8] = {

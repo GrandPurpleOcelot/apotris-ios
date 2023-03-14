@@ -241,8 +241,8 @@ public:
 #define MAX_COLORS 7
 #define MAX_CLEAR_EFFECTS 4
 
-#define MAX_MENU_SONGS 2
-#define MAX_GAME_SONGS 4
+#define MAX_MENU_SONGS 3
+#define MAX_GAME_SONGS 6
 
 #define GRADIENT_COLOR 0x71a6
 
@@ -261,6 +261,7 @@ extern void playNextSong();
 extern void settingsText();
 extern void songListMenu();
 extern void graphicTest();
+extern void windowSettings();
 extern void audioSettings();
 extern void handlingSettings();
 extern void controlsSettings();
@@ -271,13 +272,14 @@ extern void update();
 extern void setDefaultKeys();
 extern void setClearEffect();
 
-extern void showBackground();
+extern void showBackground(int offset);
 extern void showPawn();
 extern void showShadow();
 extern void showQueue();
 extern void showHold();
 extern void drawGrid();
-extern void drawFrame();
+extern void drawFrame(int layer);
+extern void drawFrameBackgrounds();
 extern void clearGlow();
 extern void showClearText();
 extern void hideMinos();
@@ -287,7 +289,7 @@ extern void sleep();
 
 extern void handleMultiplayer();
 extern void startMultiplayerGame(int);
-extern void progressBar();
+extern void progressBar(int layer);
 
 extern int endScreen();
 extern int pauseMenu();

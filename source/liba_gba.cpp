@@ -119,7 +119,7 @@ void loadTiles(int tileset, int index, const void *src, int count){
 }
 
 void clearTilemap(int tilemap){
-    memset32(&se_mem[tilemap], 0,32*32);
+    memset16(&se_mem[tilemap], 0,32*32);
 }
 
 void clearSpriteTiles(int index, int lengthX, int lengthY){
@@ -134,8 +134,8 @@ void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY){
     memcpy32(&tile_mem[4][index], src,lengthX * lengthY * 8);
 }
 
-void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY){
-    memcpy32(&tile_mem[4][index + ty * lengthX + tx], src,lengthX * lengthY * 8);
+void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY, int rowLength){
+    memcpy32(&tile_mem[4][index + ty * rowLength + tx], src,lengthX * lengthY * 8);
 }
 
 void setPaletteColor(int palette, int index, u16 color, int count){

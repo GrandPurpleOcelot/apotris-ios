@@ -63,7 +63,6 @@ void graphicTest() {
     toggleBG(2, true);
     toggleBG(3, true);
 
-    //TODO:
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b111011 << 8) + (1 << 3));
     // REG_BLDCNT = (1 << 6) + (0b111111 << 8) + (1 << 3) ;
@@ -77,10 +76,12 @@ void graphicTest() {
     // showBackground();
     showLabels();
 
+    drawFrameBackgrounds();
+
     while (closed()) {
         vsync();
         drawGrid();
-        drawFrame();
+        drawFrame(1);
         screenShake();
         showPlaceEffect();
 
@@ -224,6 +225,7 @@ void graphicTest() {
             // oam_init(obj_buffer, 128);
             // oam_copy(oam_mem, obj_buffer, 128);
 
+            sfx(SFX_MENUCONFIRM);
             gradientEditor();
             if(showOptions){
                 toggleBG(3, showOptions);
@@ -370,6 +372,10 @@ void graphicTest() {
                 setClearEffect();
                 break;
             case 10:
+                #ifdef PC
+                sfx(SFX_MENUCANCEL);
+                break;
+                #endif
                 savefile->settings.placeEffect = !savefile->settings.placeEffect;
                 if(savefile->settings.placeEffect && (int)placeEffectList.size() <= 3){
                     placeEffectList.push_back(PlaceEffect(game->pawn.x, game->pawn.y-20, 0, 0, game->pawn.current, 0, false));
@@ -434,6 +440,7 @@ void graphicTest() {
                         sfx(SFX_MENUCANCEL);
                     }
                 }
+                drawFrameBackgrounds();
                 break;
             }
         }
@@ -489,10 +496,16 @@ void graphicTest() {
 
             counter++;
 
+            #ifdef PC
+            aprintColor("OFF", endX, startY + counter,1);
+
+            #endif
+            #ifdef GBA
             if (savefile->settings.placeEffect)
                 aprint("ON", endX, startY + counter);
             else
                 aprint("OFF", endX, startY + counter);
+            #endif
 
             counter++;
 
@@ -595,7 +608,7 @@ void graphicTest() {
             showPawn();
             showShadow();
             showHold();
-            showBackground();
+            showBackground(0);
 
             if(selection == 9){
                 // u16 *dest = (u16*) &se_mem[25];
@@ -669,6 +682,13 @@ void showLabels(){
     int counter = 0;
 
     for(auto const& label : labels){
+        #ifdef PC
+        if(label == "Place Effect"){
+            aprintColor(label, startX, startY + counter++, 1);
+            continue;
+        }
+
+        #endif
         aprint(label,startX, startY + counter++);
     }
 }

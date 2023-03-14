@@ -215,6 +215,7 @@ int endScreen() {
     // int prevBld = REG_BLDCNT;
     // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
     setTiles(25,0,32*32,tileBuild(12, false, false, 4*savefile->settings.lightMode));
+    drawFrame(1);
     // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
     if(savefile->settings.announcer){
@@ -249,7 +250,7 @@ int endScreen() {
 
     if (multiplayer) {
         enemyHeight = 0;
-        progressBar();
+        progressBar(0);
     }
 
     savefile->stats.gamesCompleted++;
@@ -313,7 +314,7 @@ int endScreen() {
             floatingList.clear();
             placeEffectList.clear();
 
-            drawFrame();
+            drawFrame(0);
             clearText();
 
             clearSprites(128);
@@ -417,11 +418,12 @@ void endAnimation() {
 
     sfx(SFX_END);
 
-    for (int i = 0; i < 41; i++) {
+    for (int i = 0; i < 40; i++) {
         vsync();
         drawGrid();
         showClearText();
-        setLayerScroll(0, 0, -4 * i);
+        // setLayerScroll(0, 0, -4 * i);
+        // setLayerScroll(1, 0, -4 * i);
         // REG_BG0VOFS = -1 * i * 4;
         // u16* dest = (u16*)se_mem[25];
 
@@ -430,10 +432,13 @@ void endAnimation() {
 
         // dest += 32 * (20 - i / 2) + 10;
 
+        showBackground(i/2);
         for (int j = 0; j < 10; j++) {
-            setTile(25, j + 10, 20-(i/2),0);
+            setTile(25, j + 10, i/2,0);
+            // setTile(25, j + 10, 20-(i/2),0);
             // *dest++ = 0;
         }
+
     }
 
     int counter = 0;
@@ -611,12 +616,12 @@ int pauseMenu(){
     clearText();
     setSmallTextArea(110, 1, 1, 10, 20);
 
-    //TODO:
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1));
     // int prevBld = REG_BLDCNT;
     // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
     setTiles(25,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    drawFrame(1);
     // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
     setLayerScroll(0, 0, 0);
@@ -656,12 +661,23 @@ int pauseMenu(){
 
     bool shown = false;
 
+    bool showSleep = false;
+
+    #ifdef GBA
+    showSleep = true;
+    #endif
+
     while (closed()) {
         if (!onStates){
-            if(game->gameMode == TRAINING)
-                maxSelection = 5;
-            else
-                maxSelection = 4;
+            maxSelection = 5;
+            if(game->gameMode != TRAINING)
+                maxSelection--;
+            if(!showSleep)
+                maxSelection--;
+
+            if(maxSelection == 3){
+                optionsHeight = 11;
+            }
         } else
             maxSelection = 3;
 
@@ -684,13 +700,18 @@ int pauseMenu(){
             if(game->gameMode == TRAINING)
                 aprint("Saves", 12, optionsHeight + optionsCounter++ * 2);
 
-            aprint("Sleep", 12, optionsHeight + optionsCounter++ * 2);
+            if(showSleep)
+                aprint("Sleep", 12, optionsHeight + optionsCounter++ * 2);
+
             aprint("Quit", 12, optionsHeight + optionsCounter++ * 2);
 
             if (key == KEY_A) {
                 int n = selection;
+                if(!showSleep && selection >= 2)
+                    n++;
                 if(!(game->gameMode == TRAINING) && selection >= 2)
                     n++;
+
 
                 if (n == 0) {
                     sfx(SFX_MENUCONFIRM);
@@ -832,7 +853,7 @@ int pauseMenu(){
 
     clearTilemap(25);
     // memset16(&se_mem[25], 0 , 32 * 20);
-    showBackground();
+    showBackground(0);
     setSmallTextArea(110, 3, 7, 9, 10);
 
     return 0;
