@@ -698,7 +698,8 @@ int pauseMenu(){
                         sfx(SFX_MENUCANCEL);
                     }
                 } else if (selection == 1) {
-                    delete quickSave;
+                    if(saveExists)
+                        delete quickSave;
                     quickSave = new Game(*game);
                     saveExists = true;
 

@@ -388,6 +388,7 @@ extern bool proMode;
 extern bool gradientEnabled;
 
 extern Tetris::Game *quickSave;
+extern bool saveExists;
 
 #define shakeMax 10
 

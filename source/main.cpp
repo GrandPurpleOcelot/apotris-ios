@@ -276,7 +276,10 @@ void reset() {
 
     resetZonePalette();
 
-    delete quickSave;
+    if(saveExists){
+        delete quickSave;
+        saveExists = false;
+    }
 
     memset32(&se_mem[25], 0x0000, 32 * 20);
     memset32(&se_mem[26], 0x0000, 32 * 20);
