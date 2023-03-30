@@ -342,6 +342,7 @@ namespace Tetris
         void clearBoard();
         void fixConnected(std::list<int>);
         void connectBoard(int startY, int endY);
+        void updateColumns(int height);
 
         int bigBag[35];
 
@@ -610,6 +611,10 @@ namespace Tetris
                             if(j > 2 && j < 7 && !(i == lengthY-2 && j < 5) && !(i == lengthY-1 && j < 4))
                                 continue;
                             board[i][j] = i % 7 + 1;
+                            bitboard[i] |= 1 << j;
+
+                            if((lengthY-i) > columnHeights[j])
+                                columnHeights[j] = lengthY-i;
                         }
                         connectBoard(i, i);
                     }

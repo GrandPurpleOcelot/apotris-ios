@@ -8,7 +8,7 @@ LIBGBA := $(DEVKITPRO)/libgba
 
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -ggdb -Wno-array-bounds
-PRE_FLAGS := -MMD -MP
+PRE_FLAGS := -MMD -MP -DPC
 
 # Project directory structure
 BIN := bin

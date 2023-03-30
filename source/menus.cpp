@@ -70,6 +70,9 @@ void songListMenu() {
     int selection = 0;
     int options = 7;
 
+    bool previous = savefile->settings.cycleSongs;
+    savefile->settings.cycleSongs = false;
+
     stopSong();
     playSong(0, 0);
 
@@ -179,6 +182,8 @@ void songListMenu() {
     stopSong();
     // mmStop();
     playSongRandom(0);
+
+    savefile->settings.cycleSongs = previous;
 }
 
 int endScreen() {
@@ -215,6 +220,7 @@ int endScreen() {
     // int prevBld = REG_BLDCNT;
     // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
     setTiles(25,0,32*32,tileBuild(12, false, false, 4*savefile->settings.lightMode));
+
     drawFrame(1);
     // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
@@ -596,17 +602,6 @@ void showStats(bool moreStats, std::string time, std::string pps) {
 }
 
 int pauseMenu(){
-
-    // for(int i = 20; i < 40; i++){
-    //     std::string str;
-
-    //     for(int j = 0; j < 10; j++){
-    //         str += std::to_string((game->bitboard[i] >> j) & 0b1);
-    //     }
-
-    //     log(str);
-    // }
-
     int selection = 0;
     int maxSelection;
 
@@ -621,7 +616,10 @@ int pauseMenu(){
     // int prevBld = REG_BLDCNT;
     // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
     setTiles(25,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+
     drawFrame(1);
+    if(game->zoneTimer)
+        frameSnow(1);
     // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
     setLayerScroll(0, 0, 0);
@@ -852,6 +850,12 @@ int pauseMenu(){
     // REG_BLDCNT = prevBld;
 
     clearTilemap(25);
+    clearTilemap(26);
+
+    drawFrame(0);
+    if(game->zoneTimer)
+        frameSnow(0);
+
     // memset16(&se_mem[25], 0 , 32 * 20);
     showBackground(0);
     setSmallTextArea(110, 3, 7, 9, 10);

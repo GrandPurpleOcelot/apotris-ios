@@ -81,7 +81,7 @@ void graphicTest() {
     while (closed()) {
         vsync();
         drawGrid();
-        drawFrame(1);
+        drawFrame(0);
         screenShake();
         showPlaceEffect();
 

@@ -43,7 +43,7 @@ void control();
 void showTimer();
 void update();
 void rainbowPalette();
-void frameSnow();
+void frameSnow(int layer);
 void showZoneText();
 void showFullMeter();
 Function getActionFromKey(int key);
@@ -380,6 +380,7 @@ void checkSounds() {
         previousSettings = savefile->settings;
 
         savefile->settings.colors = 4;
+        savefile->settings.palette = 7;
         savefile->settings.clearEffect = 2;
         setPalette();
         setClearEffect();
@@ -390,8 +391,8 @@ void checkSounds() {
 
         // u16 * dest = (u16*) &se_mem[26];
         for(int i = 0; i < 20; i++){
-            setTile(26, 9, i, tileBuild(4, false, false, 0));
-            setTile(26, 20, i, tileBuild(4, true, false, 0));
+            setTile(25, 9, i, tileBuild(4, false, false, 0));
+            setTile(25, 20, i, tileBuild(4, true, false, 0));
             // dest[i * 32 + 9] = 4;
             // dest[i * 32 + 20] = 4 + 0x400;
         }
@@ -436,7 +437,11 @@ void checkSounds() {
     } else if (game->sounds.zone == -1) {
         aprintClearArea(10, 0, 10, 20);
         resetZonePalette();
-        setPalette();
+
+        flashTimer = flashTimerMax;
+        eventPauseTimer = flashTimerMax + 2;
+
+        // setPalette();
         // zoneFlash();
     }
 
@@ -606,6 +611,13 @@ void showPawn() {
         return;
     }
 
+    #ifdef PC
+    if(flashTimer){
+        sprite_hide(pawnSprite);
+        return;
+    }
+    #endif
+
     sprite_unhide(pawnSprite, 0);
 
     for (int i = 0; i < 4; i++) {
@@ -678,6 +690,13 @@ void showShadow() {
         sprite_hide(pawnShadow);
         return;
     }
+
+    #ifdef PC
+    if(flashTimer){
+        sprite_hide(pawnShadow);
+        return;
+    }
+    #endif
 
     u8* shadowTexture;
 
@@ -833,11 +852,25 @@ void showQueue() {
         // obj_set_attr(queueFrameSprites[0], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
         sprite_set_pos(queueFrameSprites[0], 173 + (push > 0) * push, 12);
 
+        sprite_unhide(background[0], 0);
+        sprite_set_attr(background[0], ShapeSquare, 2, 512 + 416, 8, 3);
+        sprite_enable_blend(background[0]);
+        // sprite_set_pos(background[i], 173 + (push > 0) * push, 12 + 32 * i - (i * 9 * (5-maxQueue)));
+        sprite_set_pos(background[0], 173 + (push > 0) * push, 12);
+
         for(int i = 1; i < 3; i++){
             sprite_hide(queueFrameSprites[i]);
             sprite_hide(background[i]);
         }
     }
+
+    #ifdef PC
+    if(flashTimer){
+        for(int i = 0; i < 5; i++)
+            sprite_hide(queueSprites[i]);
+        return;
+    }
+    #endif
 
     int startX = 22 * 8 + 1;
     const int skin = savefile->settings.skin;
@@ -1208,6 +1241,7 @@ void gameLoop(){
     vsync();
     setSkin();
 
+
     clearTiles(2,110,400);
     // memset32(&tile_mem[2][110], 0, 400*8);
     setSmallTextArea(110, 3, 7, 9, 10);
@@ -1323,6 +1357,7 @@ void gameLoop(){
         }
 
         if(game->eventLock){
+            log(std::to_string(frameCounter));
             if(eventPauseTimer == 0){
                 if(game->gameMode == MASTER){
                     showBackground(0);
@@ -1330,16 +1365,18 @@ void gameLoop(){
                     setupCredits();
                     flashTimer = flashTimerMax;
                     gradient(false);
-                } else if(game->gameMode == MARATHON){
-                    flashTimer = flashTimerMax;
-                    eventPauseTimer = flashTimerMax + 2;
+                // } else if(game->gameMode == MARATHON){
+                //     flashTimer = flashTimerMax;
+                //     eventPauseTimer = flashTimerMax + 2;
                 }
             }
 
-            eventPauseTimer--;
+            if(eventPauseTimer){
+                eventPauseTimer--;
 
-            if(eventPauseTimer == 0)
-                game->removeEventLock();
+                if(eventPauseTimer == 0)
+                    game->removeEventLock();
+            }
         }
 
         latestDrop = game->getDrop();
@@ -1354,16 +1391,15 @@ void gameLoop(){
         canDraw = true;
         vsync();
 
-        #ifdef GBA
-        rumble_update();
-        #endif
         if (clearTimer >= maxClearTimer || maxClearTimer <= 0) {
             game->removeClearLock();
+
             #ifdef GBA
             shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
             #elifdef PC
             shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
             #endif
+
             // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
             rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
             clearTimer = 0;
@@ -1372,6 +1408,7 @@ void gameLoop(){
 
         //TODO:
         #ifdef GBA
+        rumble_update();
         if(rumbleTimer > 0){
             rumbleTimer--;
 
@@ -1404,7 +1441,7 @@ void gameLoop(){
 
         if(game->zoneTimer){
             if(gameSeconds % 4 == 0){
-                frameSnow();
+                frameSnow(0);
             }
 
             if(!flashTimer)
@@ -1598,10 +1635,13 @@ void drawFrame(int layer) {
     // dest += 9;
 
     // int color = 8 * 0x1000;
+    int p = 8;
+    if(game->zoneTimer)
+        p = 0;
 
     for (int i = 0; i < 20; i++) {
         for (int j = 0; j < 2; j++) {
-            setTile(l, j * 11 + 9, i, tileBuild(0x4,(j > 0), false, 8));
+            setTile(l, j * 11 + 9, i, tileBuild(0x4,(j > 0), false, p));
             // *dest++ = 0x0004 + j * 0x400 + color;
             // dest += 10;
         }
@@ -1610,32 +1650,17 @@ void drawFrame(int layer) {
 
     #ifdef PC
 
-    // setTile(26,9,31,tileBuild(29,false,false,8));
-    setTile(l,20,20,tileBuild(29,true,true,8));// right bottom frame corner
-    setTile(l,9,20,tileBuild(29,false,true,8));// left bottom frame corner
+    if(!game->zoneTimer){
+        setTile(l,20,20,tileBuild(29,true,true,p));// right bottom frame corner
+        setTile(l,9,20,tileBuild(29,false,true,p));// left bottom frame corner
 
-    for(int i = 0; i < 10; i++){
-        // setTile(26,10+i,31,tileBuild(28,false,false,8));
-        setTile(l,10+i,20,tileBuild(28,false,true,8));
+        for(int i = 0; i < 10; i++)
+            setTile(l,10+i,20,tileBuild(28,false,true,p));
     }
-
-    // setTile(26,20,31,tileBuild(29,true,false,6));
-    // setTile(26,20,21,tileBuild(29,true,true,6));
 
     #endif
 
     progressBar(layer);
-
-    for (int i = 0; i < 3; i++) {
-        queueFrameSprites[i] = &obj_buffer[11 + i];
-        sprite_unhide(queueFrameSprites[i], 0);
-        //TODO:
-        //Found bug: was assigning weird palette index
-        //fixed but might change behavior
-        sprite_set_attr(queueFrameSprites[i], ShapeSquare, 2, 512 + 16 + 16 * i, 8, 3);
-        // obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, color, 0));
-        sprite_set_pos(queueFrameSprites[i], 173, 12 + 32 * i);
-    }
 
     drawGrid();
 }
@@ -1643,7 +1668,12 @@ void drawFrame(int layer) {
 const u8 queueBGLengths[5] = {32,42,60,78,96};
 
 void drawFrameBackgrounds(){
-    const int l = queueBGLengths[savefile->settings.maxQueue-1];
+    int maxQueue = savefile->settings.maxQueue;
+
+    if(game->gameMode == MASTER)
+        maxQueue = (maxQueue < 3)? maxQueue : 3;
+
+    const int l = queueBGLengths[maxQueue-1];
 
     TILE *t = (TILE *) &sprite43tiles_bin;
 
@@ -1701,7 +1731,7 @@ void drawFrameBackgrounds(){
         temp->data[i] = 0x66666666 * (i < pixelRows);
 
     for(int i = 0; i < 4; i++)
-        loadSpriteTilesPartial(512 + 216 + 16 * ((int) segments/4), temp, i, segments % 4, 1, 1, 4);
+        loadSpriteTilesPartial(512 + 416 + 16 * ((int) segments/4), temp, i, segments % 4, 1, 1, 4);
 
     delete temp;
 }
@@ -2000,6 +2030,10 @@ bool checkDiagonal(int key){
 }
 
 void showPlaceEffect(){
+    #ifdef PC
+    return;
+    #endif
+
     for(int i = 0; i < 3; i++)
         sprite_hide(&obj_buffer[19+i]);
 
@@ -2264,6 +2298,13 @@ void showZoneMeter(){
 
     OBJ_ATTR * sprite = &obj_buffer[23];
 
+    #ifdef PC
+    if(flashTimer){
+        sprite_hide(sprite);
+        return;
+    }
+    #endif
+
     sprite_set_attr(sprite, ShapeSquare, 2, 256 + 3, 15, 0);
     sprite_enable_mosaic(sprite);
     // obj_set_attr(sprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2),ATTR2_BUILD(256 + 3, 15, 0));
@@ -2298,7 +2339,6 @@ void showZoneMeter(){
 }
 
 void zoneFlash(){
-
     if(flashTimer == flashTimerMax){
         if(previousPalette != nullptr)
             delete previousPalette;
@@ -2309,9 +2349,8 @@ void zoneFlash(){
 
     flashTimer--;
 
-    #ifdef GBA
-    REG_MOSAIC = MOS_BUILD(flashTimer,flashTimer,flashTimer,flashTimer);
-    #endif
+    // REG_MOSAIC = MOS_BUILD(flashTimer,flashTimer,flashTimer,flashTimer);
+    setMosaic(flashTimer, flashTimer);
 
     int n = ((float)flashTimer/flashTimerMax) * 31;
 
@@ -2357,11 +2396,21 @@ void resetZonePalette(){
 
     // u16 * dest = (u16*) &se_mem[26];
     for(int i = 0; i < 20; i++){
-        setTile(26, 9, i, tileBuild(4, false, false, 8));
-        setTile(26, 20, i, tileBuild(4, true, false, 8));
+        setTile(25, 9, i, tileBuild(4, false, false, 8));
+        setTile(25, 20, i, tileBuild(4, true, false, 8));
         // dest[i * 32 + 9] = 4 + 0x8000;
         // dest[i * 32 + 20] = 4 + 0x8400;
     }
+
+    #ifdef PC
+
+    setTile(25,20,20,tileBuild(29,true,true,8));// right bottom frame corner
+    setTile(25,9,20,tileBuild(29,false,true,8));// left bottom frame corner
+
+    for(int i = 0; i < 10; i++)
+        setTile(25,10+i,20,tileBuild(28,false,true,8));
+
+    #endif
 
     if(!eventPauseTimer)
         flashTimer = 0;
@@ -2387,14 +2436,18 @@ void showFinesseCombo(){
     aprintsSprite(text,0,0,275);
 }
 
-void frameSnow(){
-    //TODO:
-    #ifdef GBA
+void frameSnow(int layer){
     const int fillAmount = 20;
 
+    int l = 25 + layer;
+
     TILE * t = (TILE *) sprite5tiles_bin;
-    TILE * dest = (TILE *) &tile_mem[0][4];
-    TILE * topTile = (TILE *) &tile_mem[0][46];
+
+    TILE * dest = new TILE();
+    TILE * topTile = new TILE();
+
+    // TILE * dest = (TILE *) &tile_mem[0][4];
+    // TILE * topTile = (TILE *) &tile_mem[0][46];
 
     for(int i = 0; i < 8; i++){
         int add1 = 0;
@@ -2408,21 +2461,40 @@ void frameSnow(){
         topTile->data[i] = t->data[i] & ~add2;
     }
 
-    u16 * dest2 = (u16 *) &se_mem[26];
+    loadTiles(0, 4, dest, 1);
+    loadTiles(0, 46, topTile, 1);
+
+    // u16 * dest2 = (u16 *) &se_mem[25];
 
     int i;
     for(i = 0; i < 20 - ((20 * game->zoneTimer) / game->zoneStart); i++){
-        dest2[i * 32 + 9] = 0;
-        dest2[i * 32 + 20] = 0;
+        setTile(l, 9, i, 0);
+        setTile(l, 20, i, 0);
+        // dest2[i * 32 + 9] = 0;
+        // dest2[i * 32 + 20] = 0;
     }
 
     if(i == 20)
         i = 19;
 
-    dest2[i * 32 + 9] = 46;
-    dest2[i * 32 + 20] = 46 + 0x400;
+    setTile(l, 9, i, tileBuild(46,false,false,0));
+    setTile(l, 20, i, tileBuild(46,true,false,0));
+    // dest2[i * 32 + 9] = 46;
+    // dest2[i * 32 + 20] = 46 + 0x400;
+
+    #ifdef PC
+
+    setTile(l,20,20,tileBuild(29,true,true,0));// right bottom frame corner
+    setTile(l,9,20,tileBuild(29,false,true,0));// left bottom frame corner
+
+    for(int i = 0; i < 10; i++)
+        setTile(l,10+i,20,tileBuild(28,false,true,0));
 
     #endif
+
+    delete dest;
+    delete topTile;
+
 }
 
 void rainbowPalette(){

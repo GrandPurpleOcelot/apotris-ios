@@ -1,7 +1,7 @@
 #pragma once
 
 #define SFX_COUNT 39
-#define MUSIC_COUNT 12
+#define MUSIC_COUNT 9
 
 extern const char * SoundEffectPaths[];
 extern const char * SongPaths[];
@@ -51,13 +51,10 @@ enum SoundEffects{
 enum Songs{
 	MOD_OH_MY_GOD,
 	MOD_WARNING_INFECTED,
-	MOD_NORDIC_REPORT_1,
 	MOD_SCHIZOFRENIUM_LONG,
 	MOD_SCHMID_SPACE_TAXI,
-	MOD_A_JAZZ_HELLAGROOVE,
 	MOD_MENU,
 	MOD__DETERSIVE_,
-	MOD_THE_DREAM,
 	MOD_THIRNO,
 	MOD_UNSUSPECTED_H,
 	MOD_OPTIKAL_INNOVATION,

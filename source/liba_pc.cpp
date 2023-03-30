@@ -158,7 +158,7 @@ void setInputs(){
 //     }
 // }
 
-#define WINDOW_SCALE 4
+#define WINDOW_SCALE 3
 u8 * framebuffer;
 sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH * WINDOW_SCALE, SCREEN_HEIGHT * WINDOW_SCALE), "Apotris PC");
 sf::Texture frameTexture;
@@ -220,7 +220,7 @@ void platformInit(){
 
     if(!sf::Shader::isAvailable()){
         log("Shaders not available on system.");
-    }else{
+    }else if(ENABLE_SHADERS){
         if(!shader.loadFromFile("lib/bloom.glsl", sf::Shader::Fragment)){
             log("Couldn't load Bloom shader.");
         }else{
@@ -229,6 +229,27 @@ void platformInit(){
             shader.setUniform("pixelHeight",1.f / window.getSize().y);
         }
 
+    }
+
+    if(sf::Joystick::isConnected(0)){
+        log("controller connected");
+
+        int buttonCount = sf::Joystick::getButtonCount(0);
+
+        log("button count: " + std::to_string(buttonCount));
+
+        int axii = 0;
+
+        for(int i = 0; i < 8; i++)
+            axii += sf::Joystick::hasAxis(0, sf::Joystick::Axis(i));
+
+        log("axis count: " + std::to_string(axii));
+
+        log(sf::Joystick::getIdentification(0).name);
+
+        return;
+    }else{
+        log("no controller connected");
     }
 }
 
@@ -316,34 +337,48 @@ void vsync(){
     sprite.setTexture(frameTexture);
     sprite.setScale(WINDOW_SCALE,WINDOW_SCALE);
 
-    window.draw(sprite);
 
-    sf::Color c = sf::Color::Black;
+    if(ENABLE_SHADERS){
+        window.draw(sprite, &shader);
 
-    c.a = 10;
+        sf::Color c = sf::Color::Black;
 
-    for(int i = 0; i < SCREEN_HEIGHT; i++){
-        sf::Vertex line[2];
+        c.a = 60;
 
-        line[0].position = sf::Vector2f(0,i * WINDOW_SCALE + (WINDOW_SCALE - 1));
-        line[1].position = sf::Vector2f(SCREEN_WIDTH * WINDOW_SCALE,i * WINDOW_SCALE + (WINDOW_SCALE - 1));
+        for(int i = 0; i < SCREEN_HEIGHT; i++){
+            sf::RectangleShape rectangle(sf::Vector2f(SCREEN_WIDTH * WINDOW_SCALE,WINDOW_SCALE/2.0));
 
-        line[0].color = c;
-        line[1].color = c;
+            rectangle.setPosition(sf::Vector2f(0,i * WINDOW_SCALE + WINDOW_SCALE / 2.0));
 
-        window.draw(line,2,sf::Lines);
-    }
+            rectangle.setFillColor(c);
 
-    for(int i = 0; i < SCREEN_WIDTH; i++){
-        sf::Vertex line[2];
+            window.draw(rectangle);
 
-        line[0].position = sf::Vector2f(i * WINDOW_SCALE + (WINDOW_SCALE),0);
-        line[1].position = sf::Vector2f(i * WINDOW_SCALE + (WINDOW_SCALE),SCREEN_HEIGHT * WINDOW_SCALE);
+            // sf::Vertex line[2];
 
-        line[0].color = c;
-        line[1].color = c;
+            // line[0].position = sf::Vector2f(0,i * WINDOW_SCALE + (WINDOW_SCALE - 1));
+            // line[1].position = sf::Vector2f(SCREEN_WIDTH * WINDOW_SCALE,i * WINDOW_SCALE + (WINDOW_SCALE - 1));
 
-        window.draw(line,2,sf::Lines);
+            // line[0].color = c;
+            // line[1].color = c;
+
+            // window.draw(line,2,sf::Lines);
+        }
+
+        // for(int i = 0; i < SCREEN_WIDTH; i++){
+        //     sf::Vertex line[2];
+
+        //     line[0].position = sf::Vector2f(i * WINDOW_SCALE + (WINDOW_SCALE),0);
+        //     line[1].position = sf::Vector2f(i * WINDOW_SCALE + (WINDOW_SCALE),SCREEN_HEIGHT * WINDOW_SCALE);
+
+        //     line[0].color = c;
+        //     line[1].color = c;
+
+        //     window.draw(line,2,sf::Lines);
+        // }
+
+    }else{
+        window.draw(sprite);
     }
 
     window.display();
@@ -361,6 +396,22 @@ void vsync(){
         }
     }
 
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Tab)){
+        window.setFramerateLimit(2000);
+
+        if(currentSong >= 0)
+            musicArray[currentSong].setPitch(3);
+    }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::T)){
+        window.setFramerateLimit(5);
+    }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num5)){
+        window.setFramerateLimit(1);
+    }else{
+        window.setFramerateLimit(60);
+
+        if(currentSong >= 0)
+            musicArray[currentSong].setPitch(1);
+    }
+
     auto it = soundList.begin();
 
     while(it != soundList.end()){
@@ -369,6 +420,17 @@ void vsync(){
             soundList.erase(it++);
         }else{
             it++;
+        }
+    }
+
+    if(currentSong >= 0 && musicArray[currentSong].getStatus() == sfmod::Mod::Stopped  && musicVolume / 2 != 0){
+        if(savefile->settings.cycleSongs){
+            log("next");
+            playNextSong();
+        }else{
+            log("loop");
+            musicArray[currentSong].stop();
+            musicArray[currentSong].play();
         }
     }
 
@@ -609,6 +671,29 @@ void key_poll(){
         return;
     }
 
+    if(sf::Joystick::isConnected(0)){
+
+        __key_curr |= (sf::Joystick::isButtonPressed(0, 1)) * KEY_A;
+        __key_curr |= (sf::Joystick::isButtonPressed(0, 0)) * KEY_B;
+        __key_curr |= (sf::Joystick::isButtonPressed(0, 5)) * KEY_R;
+        __key_curr |= (sf::Joystick::isButtonPressed(0, 4)) * KEY_L;
+        __key_curr |= (sf::Joystick::isButtonPressed(0, 7)) * KEY_START;
+        __key_curr |= (sf::Joystick::isButtonPressed(0, 6)) * KEY_SELECT;
+
+        float pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(7));
+        if(pos < 0)
+            __key_curr |= (1) * KEY_UP;
+        else if (pos > 0)
+            __key_curr |= (1) * KEY_DOWN;
+
+        pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(6));
+        if(pos < 0)
+            __key_curr |= (1) * KEY_LEFT;
+        else if (pos > 0)
+            __key_curr |= (1) * KEY_RIGHT;
+
+    }
+
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::I)) * KEY_A;
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::SemiColon)) * KEY_B;
     __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) * KEY_R;
@@ -668,7 +753,7 @@ void setSFXVolume(int volume){
 }
 
 void startSong(int song, bool loop){
-    if(song == currentSong)
+    if(song == currentSong && musicArray[currentSong].getStatus() == sfmod::Mod::Playing)
         return;
 
     if(currentSong != -1)
@@ -1025,7 +1110,19 @@ void clearTilemapEntries(int tilemap, int index, int count){
 }
 
 void stopDMA(){};
-void setMosaic(int sx, int sy){};
+void setMosaic(int sx, int sy){
+    log(std::to_string(sx) + " " + std::to_string(sy));
+    for(int i = 0; i < 4; i++){
+        if(!sx || !sy)
+            TLN_DisableLayerMosaic(i);
+        else
+            TLN_SetLayerMosaic(i, sx, sy);
+
+        // TLN_SetLayerMosaic(i, 1, 2);
+        // TLN_SetLayerClip(i, 0, 0, 0, 0);
+
+    }
+};
 
 void sleep(){};
 void rumble_set_state(int n){};
@@ -1170,10 +1267,12 @@ void mirrorPalettes(int index, int count){
     for(int i = 0; i < count; i++){
         COLOR temp[16];
 
+        temp[0] = 0;
+
         for(int j = index; j < 16; j++)
             temp[j] = rgb8to5((u32 *)TLN_GetPaletteData(palettes[i+16], j));
 
-        loadPalette(i, index, temp, 16-index);
+        loadPalette(i, 0, temp, 16);
         // for(int j = 0; j < 16; j++){
         //     setPaletteColor(i, j, rgb8to5((u32*) TLN_GetPaletteData(palettes[i + 16], j)), 1);
         // }

@@ -1,9 +1,5 @@
 #pragma once
 
-#define GBA
-
-// #define PC
-
 #ifdef GBA
 
 #include "liba_gba.h"
@@ -42,6 +38,7 @@ extern void clearSprites(int count);
 extern void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos);
 
 extern void platformInit();
+
 extern void platformDeinit();
 extern bool closed();
 

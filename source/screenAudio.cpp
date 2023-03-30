@@ -33,9 +33,6 @@ void audioSettings(){
     selection = 0;
     refreshText = true;
 
-    bool previous = savefile->settings.cycleSongs;
-    savefile->settings.cycleSongs = false;
-
     while (closed()) {
         vsync();
 
@@ -50,8 +47,6 @@ void audioSettings(){
         if(audioControl())
             break;
     }
-
-    savefile->settings.cycleSongs = previous;
 }
 
 bool audioControl(){
@@ -100,6 +95,7 @@ bool audioControl(){
             sfx(SFX_MENUMOVE);
         }else if (selection == 3) {
             savefile->settings.cycleSongs = !savefile->settings.cycleSongs;
+
             sfx(SFX_MENUMOVE);
         }
 

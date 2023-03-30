@@ -250,6 +250,7 @@ public:
 #define DIAGNOSE 1
 #define SAVE_TAG 0x50
 #define ENABLE_BOT 0
+#define ENABLE_SHADERS 0
 
 #define ENABLE_FLASH_SAVE 1
 
@@ -340,6 +341,7 @@ extern int countTransitions(u16 a);
 extern void addStats();
 
 extern void loadReplay();
+extern void frameSnow(int layer);
 
 extern Tetris::Game *game;
 extern Tetris::Game *quickSave;

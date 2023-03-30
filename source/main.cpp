@@ -193,6 +193,7 @@ void initialize(){
 
 int main(void) {
 
+
     loadSave();
 
     platformInit();
@@ -816,6 +817,12 @@ void setPalette(){
 
 int getClassicPalette(){
     int n = 0;
+
+    if(game == nullptr){
+        n = abs(savefile->seed) % 10;
+        return n;
+    }
+
     int mode = game->gameMode;
     if((mode == MARATHON || mode == BLITZ || mode == CLASSIC ) && game->level >= 0 && game->level < 255)
         n = (game->level-(game->gameMode != CLASSIC)) % 10;
@@ -828,7 +835,7 @@ int getClassicPalette(){
 void buildMini(TILE * customSkin){
     //TODO:
     //lengthX and Y might be wrong on pc
-    clearSpriteTiles(9*16, 8, 7);
+    clearSpriteTiles(9*16, 8 * 7, 4);
 
     // memset32(&tile_mem[4][9*16],0,8*8*7);
 
@@ -923,7 +930,22 @@ void setGradient(int color){
 }
 
 void setDefaultGradient(){
+    #ifdef GBA
     memcpy16(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
+    #endif
+
+    #ifdef PC
+
+    int div = SCREEN_HEIGHT/8;
+    int n = (savefile->settings.colors < 2)?savefile->settings.colors:0;
+
+    COLOR * src = (COLOR *) &palette[n];
+
+    for(int i = 0; i < SCREEN_HEIGHT; i++){
+        color_fade((COLOR *) &gradientTable[i],src,GRADIENT_COLOR,1,((SCREEN_HEIGHT-1-i) / div) * 2 + 16);
+    }
+
+    #endif
 }
 
 void gradient(int state){

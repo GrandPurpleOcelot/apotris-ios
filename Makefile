@@ -1,166 +1,117 @@
 #!/usr/bin/env make
-#---------------------------------------------------------------------------------
-.SUFFIXES:
-#---------------------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
 
-include $(DEVKITARM)/gba_rules
+LIBGBA := $(DEVKITPRO)/libgba
 
-LIBTONC := $(DEVKITPRO)/libtonc
-#---------------------------------------------------------------------------------
-# TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# INCLUDES is a list of directories containing extra header files
-# DATA is a list of directories containing binary data
-# GRAPHICS is a list of directories containing files to be processed by grit
-#
-# All directories are specified relative to the project directory where
-# the makefile is found
-#
-#---------------------------------------------------------------------------------
-TARGET		:= $(notdir $(CURDIR))
-BUILD		:= build
-SOURCES		:= source
-INCLUDES	:= include
-DATA		:= data
-MUSIC		:= audio
+# Pre-compiler and Compiler flags
+CXX_FLAGS := -Wall -O2 -ggdb -Wno-array-bounds
+PRE_FLAGS := -MMD -MP -DPC
 
-#---------------------------------------------------------------------------------
-# options for code generation
-#---------------------------------------------------------------------------------
-ARCH	:=	-mthumb -mthumb-interwork
+# Project directory structure
+BIN := bin
+SRC := source
+LIB := lib
+INC := include
+DATA := data
+MUSIC := audio
+MAINFILE := $(SRC)/main.cpp
 
-CFLAGS	:=	-g -Wall -O2\
-		-mcpu=arm7tdmi -mtune=arm7tdmi\
-		$(ARCH)
+# Build directories and output
+TARGET := $(BIN)/Apotris
+ASSETS_PATH := $(BIN)/assets
+BINLIBS_PATH := $(BIN)/lib
+BUILD := build
 
-CFLAGS	+=	$(INCLUDE)
+# Library search directories and flags
+EXT_LIB :=
+LDFLAGS := -lTilengine -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lmodplug
+LDPATHS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB))
 
-CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
+# Include directories
+INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA) $(LIBGBA)/include
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-g $(ARCH) -Wl,-Map,$(notdir $*.map)
+# Construct build output and dependency filenames
+SRCS := $(shell find $(SRC) -name *.cpp)
+BINFILES := $(shell find $(DATA) -name '*.bin')
 
-#---------------------------------------------------------------------------------
-# any extra libraries we wish to link with the project
-#---------------------------------------------------------------------------------
-LIBS	:= -lmm -ltonc
+# ifneq ($(strip $(MUSIC)),)
+# 	export AUDIOFILES := $(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
+# 	BINFILES += $(BUILD)/soundbank.bin
+# endif
 
+OBJS_BIN := $(subst $(DATA)/,$(BUILD)/,$(addsuffix .o,$(BINFILES)))
 
-#---------------------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level containing
-# include and lib
-#---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBGBA) $(LIBTONC)
+OBJS_SOURCES := $(subst $(SRC)/,$(BUILD)/,$(addsuffix .o,$(basename $(SRCS))))
 
-#---------------------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
-#---------------------------------------------------------------------------------
+HFILES := $(subst $(DATA)/,$(BUILD)/,$(addsuffix .h,$(subst .,_,$(BINFILES))))
 
+OBJS := $(OBJS_SOURCES) $(OBJS_BIN)
 
-ifneq ($(BUILD),$(notdir $(CURDIR)))
-#---------------------------------------------------------------------------------
+DEPS := $(OBJS:.o=.d)
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+AUDIO_FILES := $(shell find $(MUSIC) -name '*.*')
 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(GRAPHICS),$(CURDIR)/$(dir))
+ICON_FILE := sprites/favicon32.bmp
 
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+ICON := $(addprefix $(ASSETS_PATH)/, $(notdir $(ICON_FILE)))
 
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+ASSETS := $(addprefix $(ASSETS_PATH)/, $(notdir $(AUDIO_FILES)))
 
-ifneq ($(strip $(MUSIC)),)
-	export AUDIOFILES	:=	$(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
-	BINFILES += soundbank.bin
-endif
+LIBFILES := $(addprefix $(BINLIBS_PATH)/, $(notdir $(shell find $(LIB) -name '*.*')))
 
-#---------------------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
-#---------------------------------------------------------------------------------
-ifeq ($(strip $(CPPFILES)),)
-#---------------------------------------------------------------------------------
-	export LD	:=	$(CC)
-#---------------------------------------------------------------------------------
-else
-#---------------------------------------------------------------------------------
-	export LD	:=	$(CXX)
-#---------------------------------------------------------------------------------
-endif
-#---------------------------------------------------------------------------------
+# Build task
+build: all
 
-export OFILES_BIN := $(addsuffix .o,$(BINFILES))
+# Main task
 
-export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+all: $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
 
-export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+$(ICON) : $(ICON_FILE)
 
-export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
+# Task producing target from built files
+$(TARGET): $(OBJS)
+	@echo "Building..."
+	@mkdir -p $(dir $@)
+	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS) -Wl,-rpath lib
 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
-					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-					-I$(CURDIR)/$(BUILD)
-
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
-
-.PHONY: $(BUILD) clean
-
-#---------------------------------------------------------------------------------
-#./convertAll.sh
-$(BUILD):
-	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
-#---------------------------------------------------------------------------------
-clean:
-	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).gba
-
-
-#---------------------------------------------------------------------------------
-else
-
-#---------------------------------------------------------------------------------
-# main targets
-#---------------------------------------------------------------------------------
-
-$(OUTPUT).gba	:	$(OUTPUT).elf
-
-$(OUTPUT).elf	:	$(OFILES)
-
-$(OFILES_SOURCES) : $(HFILES)
-
-#---------------------------------------------------------------------------------
-# The bin2o rule should be copied and modified
-# for each extension used in the data directories
-#---------------------------------------------------------------------------------
-
-#---------------------------------------------------------------------------------
-# rule to build soundbank from music files
-#---------------------------------------------------------------------------------
-soundbank.bin soundbank.h : $(AUDIOFILES)
-#---------------------------------------------------------------------------------
-	@mmutil $^ -osoundbank.bin -hsoundbank.h
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .bin extension
-#---------------------------------------------------------------------------------
-%.bin.o	%_bin.h :	%.bin
-#---------------------------------------------------------------------------------
+# Compile all cpp files
+$(BUILD)/%.o: $(SRC)/%.cpp
+	@mkdir -p $(dir $@)
 	@echo $(notdir $<)
-	@$(bin2o)
+	@$(CXX) $(CXX_FLAGS) $(PRE_FLAGS) $(INC_FLAGS) -c -o $@ $< $(LDPATHS) $(LDFLAGS)
 
+$(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
+	@mkdir -p $(dir $@)
+	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
 
--include $(DEPSDIR)/*.d
-#---------------------------------------------------------------------------------------
-endif
-#---------------------------------------------------------------------------------------
+$(ASSETS_PATH)/% : $(MUSIC)/%
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
+
+$(ICON) :
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
+
+$(BINLIBS_PATH)/% : $(LIB)/%
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
+
+$(OBJS_SOURCES) : $(HFILES)
+# @echo "$<"
+
+# Clean task
+.PHONY: clean
+clean:
+	@echo "Cleaning..."
+	rm -rf build
+
+help:
+	@echo "bin: $(LIBFILES)"
+
+# Include all dependencies
+-include $(DEPS)
+

@@ -854,8 +854,9 @@ int Game::clear(Drop drop) {
                 break;
 
             for(int ii = i; ii < lengthY-1-zonedLines; ii++){
-                for (int j = 0; j < lengthX; j++)
+                for (int j = 0; j < lengthX; j++){
                     board[ii][j] = board[ii+1][j];
+                }
                 bitboard[ii] = bitboard[ii+1];
             }
 
@@ -877,6 +878,15 @@ int Game::clear(Drop drop) {
         if (!inversion && zonedLines >= 8 && sounds.zone != -1) {
             inversion = true;
             sounds.zone = 2;
+        }
+
+        for(int x = 0; x < lengthX; x++){
+            for(int y = lengthY-stackHeight; y < lengthY; y++){
+                if(board[y][x]){
+                    columnHeights[x] = lengthY-y;
+                    break;
+                }
+            }
         }
 
         linesToMove.clear();
@@ -1714,21 +1724,7 @@ void Game::generateGarbage(int height,int mode){
 
     stackHeight -= height;
 
-    for(int x = 0; x < lengthX; x++){
-        int found = -1;
-        for(int y = lengthY-(columnHeights[x]+height)-1; y < lengthY; y++){
-            if(board[y][x]){
-                found = y;
-                break;
-            }
-        }
-
-        if(found >= 0){
-            columnHeights[x] = lengthY-found;
-        }else{
-            columnHeights[x] = 0;
-        }
-    }
+    updateColumns(height);
 
     if(bigMode)
         return;
@@ -1972,9 +1968,26 @@ void Game::bType(int height){
         for(int j = 0; j < lengthX; j++){
             if(qran() % 2 && !(i == lengthY-n && j == 0)){
                 board[i][j] = (qran() % 7);
+
+                if(columnHeights[j] < lengthY-i)
+                    columnHeights[j] = lengthY-i;
+
+                bitboard[i] |= 1 << j;
             }
         }
     }
+
+    // for(int i = 0; i < 10; i++){
+    //     log(std::to_string(columnHeights[i]));
+    // }
+
+    // log(std::to_string(stackHeight));
+
+    stackHeight -= n;
+
+    // log(std::to_string(stackHeight));
+
+    // updateColumns(height);
 }
 
 void Game::setSubMode(int sm){
@@ -2244,4 +2257,23 @@ void Game::setOptions(Options newOptions){
     bTypeHeight = newOptions.bTypeHeight;
     setRotationSystem(newOptions.rotationSystem);
     setSubMode(newOptions.subMode);
+}
+
+void Game::updateColumns(int height){
+
+    for(int x = 0; x < lengthX; x++){
+        int found = -1;
+        for(int y = lengthY-(columnHeights[x]+height)-1; y < lengthY; y++){
+            if(board[y][x]){
+                found = y;
+                break;
+            }
+        }
+
+        if(found >= 0){
+            columnHeights[x] = lengthY-found;
+        }else{
+            columnHeights[x] = 0;
+        }
+    }
 }

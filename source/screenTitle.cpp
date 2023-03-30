@@ -938,7 +938,6 @@ void startScreen() {
                         case CLASSIC:
                             if(subMode)
                                 goal = 25;
-                            game->setRotationSystem(NRS);
                             break;
                         case MASTER:
                             // game->setRotationSystem(ARS);

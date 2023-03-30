@@ -43,13 +43,10 @@ const char * SoundEffectPaths[] = {
 const char * SongPaths[] = {
 	"assets/oh_my_god.mod",
 	"assets/warning_infected.mod",
-	"assets/nordic_report_1.mod",
 	"assets/schizofrenium_long.mod",
 	"assets/schmid-space_taxi.mod",
-	"assets/a_jazz_hellagroove.mod",
 	"assets/menu.it",
 	"assets/_detersive_.mod",
-	"assets/the_dream.mod",
 	"assets/thirno.it",
 	"assets/unsuspected_h.mod",
 	"assets/optikal-innovation.mod",

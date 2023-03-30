@@ -50,7 +50,7 @@ void playSong(int menuId, int songId) {
     currentMenu = menuId;
     currentlyPlayingSong = songId;
 
-    startSong(song,(savefile->settings.cycleSongs));
+    startSong(song,(!savefile->settings.cycleSongs));
     setMusicVolume(512 * ((float)savefile->settings.volume / 10));
 
     // mmStart(song, (savefile->settings.cycleSongs)? MM_PLAY_ONCE:MM_PLAY_LOOP);
