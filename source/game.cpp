@@ -376,6 +376,8 @@ void checkSounds() {
     } else if (game->sounds.zone == -1) {
         aprintClearArea(10, 0, 10, 20);
         resetZonePalette();
+        flashTimer = flashTimerMax;
+        eventPauseTimer = flashTimerMax + 2;
         zoneFlash();
     }
 
@@ -1202,16 +1204,15 @@ void gameLoop(){
                     setupCredits();
                     flashTimer = flashTimerMax;
                     gradient(false);
-                } else if(game->gameMode == MARATHON){
-                    flashTimer = flashTimerMax;
-                    eventPauseTimer = flashTimerMax + 2;
                 }
             }
 
-            eventPauseTimer--;
+            if(eventPauseTimer){
+                eventPauseTimer--;
 
-            if(eventPauseTimer == 0)
-                game->removeEventLock();
+                if(eventPauseTimer == 0)
+                    game->removeEventLock();
+            }
         }
 
         Tetris::Drop latestDrop = game->getDrop();

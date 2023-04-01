@@ -706,9 +706,11 @@ void Game::place() {
                 break;
             }
 
+    bool toEndZone = false;
     if ((pawn.y+lowestPart) * (1+pawn.big) < (lengthY / 2 - 2)) {
         if(zoneTimer && zonedLines)
-            endZone();
+            toEndZone = true;
+            // endZone();
         else if(gameMode == TRAINING)
             clearBoard();
         else{
@@ -816,7 +818,7 @@ void Game::place() {
 
     moveHistory.clear();
 
-    if(zoneTimer == 1)
+    if(zoneTimer == 1 || toEndZone)
         endZone();
 
     if((maxClearDelay == 1 || gameMode == SURVIVAL) && clearLock){
@@ -2196,7 +2198,9 @@ void Game::endZone(){
 
     zoneTimer = 0;
     sounds.zone = -1;
+
     clear(Drop());
+
     eventLock = true;
     zoneExit = true;
 }
