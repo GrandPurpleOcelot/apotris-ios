@@ -707,10 +707,9 @@ void Game::place() {
             }
 
     bool toEndZone = false;
-    if ((pawn.y+lowestPart) * (1+pawn.big) < (lengthY / 2 - 2)) {
+    if ((pawn.y+lowestPart) * (1+pawn.big) <= (lengthY / 2 - 2)) {
         if(zoneTimer && zonedLines)
             toEndZone = true;
-            // endZone();
         else if(gameMode == TRAINING)
             clearBoard();
         else{
