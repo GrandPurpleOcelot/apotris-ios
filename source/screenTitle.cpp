@@ -167,6 +167,13 @@ void startScreen() {
         // oam_copy(oam_mem, obj_buffer, 128);
     }
 
+    // int counter = 0;
+    // while(closed()){
+    //     vsync();
+    //     log(std::to_string(counter));
+    //     counter++;
+    // }
+
     while (closed()) {
 
         canDraw = true;

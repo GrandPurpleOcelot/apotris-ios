@@ -29,8 +29,8 @@ sf::Shader shader;
 // Mix_Chunk *soundEffectChunks[SFX_COUNT];
 // Mix_Music *musicChunks[MUSIC_COUNT];
 
-static const int offsetx = (SCREEN_WIDTH - 240)/2;
-static const int offsety = (SCREEN_HEIGHT - 160)/2;
+static int offsetx = (SCREEN_WIDTH - 240)/2;
+static int offsety = (SCREEN_HEIGHT - 160)/2;
 
 void loadAudio(){
 
@@ -145,24 +145,20 @@ void setInputs(){
     // TLN_DefineInputKey(PLAYER1, INPUT_CRT, SDLK_BACKSPACE);
 }
 
-// void handleSDLEvents(SDL_Event * evt){
-//     if(evt->type == SDL_MOUSEBUTTONDOWN){
-//         SDL_MouseButtonEvent* mouse = (SDL_MouseButtonEvent*)evt;
+int windowScale = 3;
+int windowWidth = 256;
+int windowHeight = 192;
 
-//         /* scale from window space to framebuffer space */
-//         mouse->x = (mouse->x*SCREEN_WIDTH)/TLN_GetWindowWidth();
-//         mouse->y = (mouse->y*SCREEN_HEIGHT)/TLN_GetWindowHeight();
+int rowStart = (512 - windowHeight)/2;
+int rowEnd = (512 + windowHeight)/2;
 
-//         if(mouse->button == SDL_BUTTON_LEFT)
-//             log(std::to_string(mouse->x) + " " + std::to_string(mouse->y));
-//     }
-// }
-
-#define WINDOW_SCALE 3
 u8 * framebuffer;
-sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH * WINDOW_SCALE, SCREEN_HEIGHT * WINDOW_SCALE), "Apotris PC");
+sf::RenderWindow window(sf::VideoMode(windowWidth * windowScale, windowHeight * windowScale), "Apotris PC");
 sf::Texture frameTexture;
 
+bool isFullscreen = false;
+
+#define TILEMAP_SIZE 64
 
 void platformInit(){
 
@@ -188,13 +184,13 @@ void platformInit(){
         tilesets[i] = TLN_CreateTileset(512, 8, 8, palettes[0], NULL, NULL);
     }
 
-    Tile tiles[32*32];
-    for(int i = 0; i < 32; i++)
-        for(int j = 0; j < 32; j++)
-            tiles[i * 32 + j].value = 0;
+    Tile tiles[TILEMAP_SIZE * TILEMAP_SIZE];
+    for(int i = 0; i < TILEMAP_SIZE; i++)
+        for(int j = 0; j < TILEMAP_SIZE; j++)
+            tiles[i * TILEMAP_SIZE + j].value = 0;
 
     for(int i = 0; i < 32; i++){
-        tilemaps[i] = TLN_CreateTilemap(32, 32, tiles, 0, tilesets[0]);
+        tilemaps[i] = TLN_CreateTilemap(64, 64, tiles, 0, tilesets[0]);
     }
 
     spriteBitmap = TLN_CreateBitmap(1024 * 8, 64, 8);
@@ -207,7 +203,6 @@ void platformInit(){
     TLN_SetRasterCallback(onHBlank);
 
     // SDL_Surface * icon = SDL_LoadBMP("assets/favicon32.bmp");
-
 
     sf::Image icon;
     icon.loadFromFile("assets/favicon32.bmp");
@@ -335,7 +330,9 @@ void vsync(){
     frameTexture.update((sf::Uint8*)framebuffer);
     sf::Sprite sprite;
     sprite.setTexture(frameTexture);
-    sprite.setScale(WINDOW_SCALE,WINDOW_SCALE);
+    sprite.setScale(windowScale,windowScale);
+    sprite.setPosition(0,0);
+    // sprite.setPosition()
 
 
     if(ENABLE_SHADERS){
@@ -346,9 +343,9 @@ void vsync(){
         c.a = 60;
 
         for(int i = 0; i < SCREEN_HEIGHT; i++){
-            sf::RectangleShape rectangle(sf::Vector2f(SCREEN_WIDTH * WINDOW_SCALE,WINDOW_SCALE/2.0));
+            sf::RectangleShape rectangle(sf::Vector2f(SCREEN_WIDTH * windowScale,windowScale/2.0));
 
-            rectangle.setPosition(sf::Vector2f(0,i * WINDOW_SCALE + WINDOW_SCALE / 2.0));
+            rectangle.setPosition(sf::Vector2f(0,i * windowScale + windowScale / 2.0));
 
             rectangle.setFillColor(c);
 
@@ -356,8 +353,8 @@ void vsync(){
 
             // sf::Vertex line[2];
 
-            // line[0].position = sf::Vector2f(0,i * WINDOW_SCALE + (WINDOW_SCALE - 1));
-            // line[1].position = sf::Vector2f(SCREEN_WIDTH * WINDOW_SCALE,i * WINDOW_SCALE + (WINDOW_SCALE - 1));
+            // line[0].position = sf::Vector2f(0,i * windowScale + (windowScale - 1));
+            // line[1].position = sf::Vector2f(SCREEN_WIDTH * windowScale,i * windowScale + (windowScale - 1));
 
             // line[0].color = c;
             // line[1].color = c;
@@ -368,8 +365,8 @@ void vsync(){
         // for(int i = 0; i < SCREEN_WIDTH; i++){
         //     sf::Vertex line[2];
 
-        //     line[0].position = sf::Vector2f(i * WINDOW_SCALE + (WINDOW_SCALE),0);
-        //     line[1].position = sf::Vector2f(i * WINDOW_SCALE + (WINDOW_SCALE),SCREEN_HEIGHT * WINDOW_SCALE);
+        //     line[0].position = sf::Vector2f(i * windowScale + (windowScale),0);
+        //     line[1].position = sf::Vector2f(i * windowScale + (windowScale),SCREEN_HEIGHT * windowScale);
 
         //     line[0].color = c;
         //     line[1].color = c;
@@ -393,6 +390,36 @@ void vsync(){
             deinitialize();
 
             exit(0);
+        }else if(event.type == sf::Event::Resized){
+            while(event.size.height / windowScale > 160 * 2){
+                windowScale++;
+            }
+            while(windowScale > 1 && event.size.height / windowScale < 160){
+                windowScale--;
+            }
+
+            sf::FloatRect visibleArea(sf::Vector2f(0,0), sf::Vector2f(event.size.width, event.size.height));
+            sf::View view(visibleArea);
+            view.setCenter(256 * windowScale,256 * windowScale);
+            window.setView(view);
+
+            rowStart = (512 - (event.size.height/windowScale))/2;
+            rowEnd = (512 + (event.size.height/windowScale))/2;
+
+            setGradient(savefile->settings.backgroundGradient);
+        }else if(event.type == sf::Event::KeyPressed){
+            if(event.key.code == sf::Keyboard::F11){
+                isFullscreen = !isFullscreen;
+
+                if(isFullscreen){
+                    sf::VideoMode mode = sf::VideoMode::getDesktopMode();
+
+                    window.create(mode, "Apotris PC",sf::Style::Fullscreen);
+                }else{
+                    window.create(sf::VideoMode(windowWidth * windowScale, windowHeight * windowScale), "Apotris PC");
+                }
+
+            }
         }
     }
 
@@ -554,8 +581,8 @@ void loadTiles8(int tileset, int index, const void * src, int count){
 }
 
 void clearTilemap(int tilemap){
-    for(int i = 0; i < 32; i++){
-        for(int j = 0; j < 32; j++){
+    for(int i = 0; i < TILEMAP_SIZE; i++){
+        for(int j = 0; j < TILEMAP_SIZE; j++){
             setTile(tilemap, i, j, 0);
         }
     }
@@ -790,14 +817,19 @@ void sfxRate(int n, float rate){
 }
 
 void setTiles(int tilemap, int index, int count, u32 value){
+    if(count == 32 * 32)
+        count = TILEMAP_SIZE * TILEMAP_SIZE;
+
     TLN_Tile t = new Tile();
     t->value = value;
     // t->index = 1;
     // t->flags = 0;
 
     for(int i = index; i < count+index; i++){
-        TLN_SetTilemapTile(tilemaps[tilemap], (i / 32), (i % 32), t);
+        TLN_SetTilemapTile(tilemaps[tilemap], (i / TILEMAP_SIZE), (i % TILEMAP_SIZE), t);
     }
+
+    delete t;
 }
 
 void clearSprites(int n){
@@ -1111,7 +1143,6 @@ void clearTilemapEntries(int tilemap, int index, int count){
 
 void stopDMA(){};
 void setMosaic(int sx, int sy){
-    log(std::to_string(sx) + " " + std::to_string(sy));
     for(int i = 0; i < 4; i++){
         if(!sx || !sy)
             TLN_DisableLayerMosaic(i);
@@ -1167,22 +1198,8 @@ void onVBlank(){
 
 void onHBlank(int line){
     if(!gradientEnabled){
-        // TLN_DisableBGColor();
         return;
     }
-
-    // int scroll = 0;
-    // if(clearTimer && line < ((game->linesToClear.back() - 19) * 8) + offsety){
-    //     log(std::to_string(game->linesToClear.front()));
-    //     int n = game->previousClear.linesCleared;
-
-    //     FIXED s = fxdiv(int2fx(8 * n * clearTimer),int2fx(maxClearTimer));
-
-    //     scroll = fx2int(s);
-    // }
-
-    // setLayerScroll(0, -push,-(shake + scroll));
-
 
     ColorSplit c = ColorSplit(gradientTable[line]);
     TLN_SetBGColor(c.r, c.g, c.b);

@@ -5,8 +5,8 @@
 #include <cstring>
 #include "audio_files.h"
 
-#define SCREEN_WIDTH 272
-#define SCREEN_HEIGHT 196
+#define SCREEN_WIDTH 512
+#define SCREEN_HEIGHT 512
 
 typedef unsigned char  u8;
 typedef unsigned short u16, COLOR;
@@ -110,6 +110,9 @@ extern void key_poll();
 
 extern u32 Sqrt(u32 n);
 
+extern int rowStart;
+extern int rowEnd;
+
 // extern bool canDraw;
 
 INLINE void setTile(int sbb, int x, int y, u32 value){
@@ -118,8 +121,15 @@ INLINE void setTile(int sbb, int x, int y, u32 value){
     t->value = value;
     // t->index = 1;
     // t->flags = 0;
+    //
+
+    //TODO:
+    if(y < 0)
+        y += 64;
 
     TLN_SetTilemapTile(tilemaps[sbb], y, x, t);
+
+    delete t;
 }
 
 INLINE u32 tileBuild(int index, bool flipx, bool flipy, int palette){

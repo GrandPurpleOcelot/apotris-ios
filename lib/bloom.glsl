@@ -12,7 +12,7 @@ void main()
 	vec4 pixel = vec4(texture2D(referenceTex, texel));
 
 	// Larger constant = bigger glow
-	float glow = 8.0 * ((pixelWidth + pixelHeight) / 2.0);
+	float glow = 2.0 * ((pixelWidth + pixelHeight) / 2.0);
 
 	// The vector to contain the new, "bloomed" colour values
 	vec4 bloom = vec4(0);

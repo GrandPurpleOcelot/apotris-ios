@@ -466,7 +466,11 @@ void showBackground(int offset) {
 
     int startY = 20;
 
-    for (int i = startY; i < startY+20; i++) {
+    #ifdef PC
+    startY = 1;
+    #endif
+
+    for (int i = startY; i < game->lengthY; i++) {
         if (game->linesToClear.size() > 0) {
             before = after = false;
             for(auto const& l : game->linesToClear){
@@ -479,10 +483,11 @@ void showBackground(int offset) {
             }
         }
 
-        int y = i - game->boardOffset + offset;
+        int y = i - 20 + offset;
+        // int y = i - game->boardOffset + offset;
 
-        if(y >= 20)
-            return;
+        // if(y >= 20)
+        //     return;
 
         if(game->clearLock && i != *l2c && clearTimer != 1)
             continue;
@@ -778,6 +783,13 @@ void showHold() {
         sprite_hide(holdSprite);
         return;
     }
+
+    #ifdef PC
+    if(flashTimer){
+        sprite_hide(holdSprite);
+        return;
+    }
+    #endif
 
     int add = !(game->held == 0 || game->held == 3);
     int palette = (game->canHold)? game->held : 7;
@@ -1357,7 +1369,6 @@ void gameLoop(){
         }
 
         if(game->eventLock){
-            log(std::to_string(frameCounter));
             if(eventPauseTimer == 0){
                 if(game->gameMode == MASTER){
                     showBackground(0);
