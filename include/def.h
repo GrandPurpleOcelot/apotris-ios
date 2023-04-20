@@ -2,6 +2,8 @@
 
 #include "platform.hpp"
 #include "tetrisEngine.h"
+#include "text.h"
+#include "menu.h"
 
 INLINE FIXED lerp(FIXED a, FIXED b, FIXED mix){
     return a + (((b-a)*mix)>>8);
@@ -356,7 +358,7 @@ extern bool onStates;
 
 extern bool multiplayer;
 
-extern bool pause;
+extern bool paused;
 
 extern bool restart;
 
@@ -437,136 +439,6 @@ extern std::list<Tetris::Timestamp> currentReplay;
 
 extern bool replaying;
 
-class GameScene : public Scene{
-    void draw();
-};
-
-class TitleScene : public Scene{
-    void draw();
-};
-
-class GraphicsScene : public Scene{
-    void draw();
-};
-
-class EditorScene : public Scene{
-    void draw();
-};
-
-extern void changeScene(Scene * newScene);
-
-class WordSprite {
-public:
-    std::string text = "";
-    int startIndex;
-    int startTiles;
-    int id;
-    int priority = 1;
-    OBJ_ATTR* sprites[3];
-
-    void show(int x, int y, int palette) {
-        for (int i = 0; i < 3; i++) {
-            sprite_unhide(sprites[i], 0);
-            sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
-            // obj_set_attr(sprites[i], ATTR0_WIDE, ATTR1_SIZE(1), ATTR2_BUILD(startTiles + i * 4, palette, priority));
-            sprite_set_pos(sprites[i], x + i * 32, y);
-        }
-    }
-
-    void show(int x, int y, int palette, FIXED scale) {
-        for (int i = 0; i < 3; i++) {
-            int affId = id*3+i;
-            sprite_unhide(sprites[i], 0);
-            sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
-            // obj_set_attr(sprites[i], ATTR0_WIDE | ATTR0_AFF, ATTR1_SIZE(1) | ATTR1_AFF_ID(affId), palette);
-            // sprites[i]->attr2 = ATTR2_BUILD(startTiles + i * 4, palette, 1);
-            sprite_set_pos(sprites[i], x + i * 32, y);
-            sprite_set_size(sprites[i], scale, affId);
-            // obj_aff_identity(&obj_aff_buffer[affId]);
-            // obj_aff_scale(&obj_aff_buffer[affId], scale, scale);
-        }
-    }
-
-    void hide() {
-        for (int i = 0; i < 3; i++)
-            // obj_hide(sprites[i]);
-            sprite_hide(sprites[i]);
-    }
-
-    // void setTextFast(char** _text, int size) {
-    //     if (*_text == text)
-    //         return;
-
-    //     text = *_text;
-
-    //     if(text == ""){
-    //         clearSpriteTiles(startTiles, 12, 0);
-    //         // memset32(&tile_mem[4][startTiles], 0, 12 * 8);
-    //         return;
-    //     }
-
-    //     int n = min(size,12);
-
-    //     TILE* font = (TILE*)fontTiles;
-    //     int i;
-    //     for (i = 0; i < n; i++) {
-    //         int c = *_text[i] - 32;
-
-
-    //         // dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
-    //     }
-
-    //     if(i < 12){
-    //         memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
-    //     }
-    // }
-
-    void setText(std::string _text) {
-        if (_text == text)
-            return;
-
-        text = _text;
-
-
-        if(text == ""){
-            clearSpriteTiles(startTiles, 12, 0);
-            // memset32(&tile_mem[4][startTiles], 0, 12 * 8);
-            return;
-        }
-
-        int n = min((int)text.size(),12);
-
-        TILE* font = (TILE*)fontTiles;
-        int i;
-        for (i = 0; i < n; i++) {
-            int c = text[i] - 32;
-
-            setSpriteTile(startTiles,i,0,0,&font[c]);
-            // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
-            // dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
-        }
-
-        if(i < 12){
-
-            //TODO:
-            //"+ i" might be wrong
-            clearSpriteTiles(startTiles + i, 12-i, 0);
-            // memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
-        }
-    }
-
-    WordSprite(int _id,int _index, int _tiles) {
-        id = _id;
-        startIndex = _index;
-        startTiles = _tiles;
-
-        for (int i = 0; i < 3; i++) {
-            sprites[i] = &obj_buffer[startIndex + i];
-        }
-    }
-};
-
-#define MAX_WORD_SPRITES 15
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
 
 class Function{

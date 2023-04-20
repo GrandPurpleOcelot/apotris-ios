@@ -62,8 +62,8 @@ bool bigMode = false;
 int bigModeMessageTimer = 0;
 int bigModeMessageMax = 180;
 
-const std::list<std::string> menuOptions = { "Play","Settings","Credits" };
-const std::list<std::string> gameOptions = { "Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","2P Battle","CPU Battle","Training"};
+const std::list<std::string> menuOptions = {"Play","Settings","Extras"};
+const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","2P Battle","CPU Battle","Training"};
 
 const int secretCombo[11] = {KEY_UP,KEY_UP,KEY_DOWN,KEY_DOWN,KEY_LEFT,KEY_RIGHT,KEY_LEFT,KEY_RIGHT,KEY_B,KEY_A,KEY_START};
 
@@ -1901,9 +1901,6 @@ void showTitleSprites() {
 }
 
 void fallingBlocks() {
-    if(!gridDrawn)
-        drawBackgroundGrid();
-
     gravity++;
     bgSpawnBlock++;
 
@@ -1995,8 +1992,6 @@ void fallingBlocks() {
             }
         }
 
-        // for(i = 0; i < 4; i++)
-        //     delete[] p[i];
         delete[] p;
 
         bgSpawnBlock = 0;
@@ -2310,4 +2305,184 @@ bool checkSettingsChange(){
     }
 
     return false;
+}
+
+void newTitleScene::draw(){
+    fallingBlocks();
+    showTitleSprites();
+    showSprites(128);
+
+    const int startY = 80;
+    const int space = 1;
+
+    int offset = (sinLut(cursorFloat) * 2) >> 12;
+
+    FIXED scale = float2fx(1-(float) 0.1 * offset);
+
+    int i = 0;
+    for(auto const & option : menuOptions){
+
+        int len = (int) option.size();
+        int x = (240 - len * 8) / 2;
+
+        int y = startY + 8 * (space + 1) * i;
+
+        // if(movingHor){
+        //     if(movingDirection == -1)
+        //         x=lerp((startX-5)*8,x,64*movingTimer);
+        //     else
+        //         x=lerp((startX)*8,x,64*movingTimer);
+        // }
+
+        wordSprites[i]->setText(option);
+        wordSprites[i]->setPriority(1 + (i != selection));
+        if(i == selection){
+            for(int i = 0; i < 2; i++){
+                sprite_unhide(cursorSprites[i],0);
+                sprite_enable_affine(cursorSprites[i], i, true);
+                sprite_set_size(cursorSprites[i], scale , i);
+                sprite_set_pos(cursorSprites[i], 240/2 - (((len/2)+1) * 8 + offset + 4) * ((i)?-1:1) - 8, y - 5);
+            }
+
+            wordSprites[i]->show(x, y ,15 - (i != selection));
+        }else{
+            wordSprites[i]->show(x, y ,15 - (i != selection));
+        }
+
+
+        i++;
+    }
+
+    const int y = 160 - (3) * 8;
+
+    versionText.show(0,y,15);
+    nameText.show(240-10*8,y,15);
+}
+
+
+void newTitleScene::init(){
+    log("started title screen");
+    reset();
+    toggleBG(3,false);
+    loadTiles(2,102,sprite37tiles_bin,sprite37tiles_bin_size/32);
+    loadTiles(2,105,sprite41tiles_bin,sprite41tiles_bin_size/32);
+
+    setSkin();
+    setLightMode();
+
+    clearSprites(128);
+
+    playSongRandom(0);
+
+    memset16(backgroundArray, 0, 30 * (bgGridHeight));
+
+    options = (int) menuOptions.size();
+
+    drawBackgroundGrid();
+
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
+
+    versionText.setText("v4.0.0a");
+
+    nameText.setText("akouzoukos");
+
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+    for(int i = 0; i < 2; i++){
+        cursorSprites[i] = &obj_buffer[1 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_hide(cursorSprites[i]);
+    }
+}
+
+void newTitleScene::control(){
+    if(key_hit(KEY_A)){
+        auto it = menuOptions.begin();
+        std::advance(it,selection);
+        log("hit A! " + *it);
+    }
+
+    if(key_hit(KEY_B)){
+        log("trying to load new scene...");
+
+        changeScene(new newTitleScene());
+    }
+
+    int prevSelection = selection;
+
+    if (key_hit(KEY_UP)) {
+        if (selection == 0)
+            selection = options - 1;
+        else
+            selection--;
+
+        sfx(SFX_MENUMOVE);
+        refreshText = true;
+    }
+
+    if (key_hit(KEY_DOWN)) {
+        if (selection == options - 1)
+            selection = 0;
+        else
+            selection++;
+
+        sfx(SFX_MENUMOVE);
+        refreshText = true;
+    }
+
+    if (key_is_down(KEY_UP)) {
+        if (dasVer < maxDas) {
+            dasVer++;
+        } else if(selection != 0){
+            if (arr++ > maxArr) {
+                arr = 0;
+                selection--;
+                // if(onPlay){
+                //     moving = true;
+                //     movingDirection = -1;
+                // }
+                sfx(SFX_MENUMOVE);
+            //     refreshText = true;
+            }
+        }
+    } else if (key_is_down(KEY_DOWN)) {
+        if (dasVer < maxDas) {
+            dasVer++;
+        } else if(selection != options-1){
+            if (arr++ > maxArr) {
+                arr = 0;
+                selection++;
+                // if(onPlay){
+                //     moving = true;
+                //     movingDirection = 1;
+                // }
+                sfx(SFX_MENUMOVE);
+                // refreshText = true;
+            }
+        }
+    } else {
+        dasVer = 0;
+    }
+
+    if(prevSelection != selection){
+        auto it = menuOptions.begin();
+        std::advance(it,selection);
+        log("moved to " + *it);
+    }
+}
+
+void newTitleScene::update(){
+    canDraw = 1;
+    key_poll();
+    control();
+
+    cursorFloat += 6;
+    if(cursorFloat >= 512)
+        cursorFloat = 0;
+
+}
+
+void newTitleScene::deinit(){
+    log("left title screen");
 }

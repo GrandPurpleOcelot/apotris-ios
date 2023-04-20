@@ -99,16 +99,6 @@ extern void setMosaic(int sx ,int sy);
 
 extern u16 gradientTable[SCREEN_HEIGHT + 1];
 
-class Scene{
-public:
-    virtual void draw() = 0;
-
-    Scene(){};
-    virtual ~Scene(){};
-};
-
-extern Scene * scene;
-
 extern void setMusicTempo(int tempo);
 extern void setMusicVolume(int volume);
 extern void setSFXVolume(int volume);

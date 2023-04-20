@@ -29,6 +29,12 @@
 
 #include <bit>
 
+#include "menu.h"
+#include "menuSystem.h"
+
+#include "font1tiles_bin.h"
+#include "font2tiles_bin.h"
+
 using namespace Tetris;
 
 const std::string save_type = "SRAM_Vnnn";
@@ -43,7 +49,7 @@ int shake = 0;
 
 int gameSeconds;
 
-bool pause = false;
+bool paused = false;
 
 int marathonClearTimer = 20;
 
@@ -153,7 +159,7 @@ void initialize(){
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
 
-    loadTiles(2,0,fontTiles,fontTilesLen/32);
+    loadTiles(2,1,font1tiles_bin,font1tiles_bin_size/32);
 
     //hold tiles
     // memcpy16(&tile_mem[5][0], sprite6tiles_bin, sprite6tiles_bin_size / 2);
@@ -191,6 +197,66 @@ void initialize(){
     setGradient(GRADIENT_COLOR);
 }
 
+void genWidths(){
+    const int len = 96;
+
+    int output[len][2];
+
+    output[0][0] = 0;
+    output[0][1] = 0;
+
+    for(int i = 0; i < len; i++){
+        TILE * t = (TILE *) &font1tiles_bin[i * 32];
+
+        int found = 0;
+        for(int x = 7; x >= 0; x--){
+            for(int y = 0; y < 8; y++){
+                if((t->data[y] >> (4 * x)) & 0xf){
+                    output[i][1] = x;
+                    found = 1;
+                }
+
+                if(found)
+                    break;
+            }
+            if(found)
+                break;
+        }
+    }
+
+    for(int i = 0; i < len; i++){
+        TILE * t = (TILE *) &font1tiles_bin[i * 32];
+
+        int found = 0;
+        for(int x = 0; x < 8; x++){
+            for(int y = 0; y < 8; y++){
+                if((t->data[y] >> (4 * x)) & 0xf){
+                    output[i][0] = x;
+                    found = 1;
+                }
+
+                if(found)
+                    break;
+            }
+            if(found)
+                break;
+        }
+    }
+
+    std::string str;
+    for(int i = 0; i < len; i++){
+        output[i][1] -= output[i][0] - 1;
+
+        str += "{" + std::to_string(output[i][0]) + ", " + std::to_string(output[i][1]) + "}, ";
+
+        if(((i+1) % 8) == 0){
+            log(str);
+            str = "";
+        }
+    }
+
+}
+
 int main(void) {
 
     loadSave();
@@ -199,40 +265,63 @@ int main(void) {
 
     initialize();
 
+    // genWidths();
+
+    // profile_start();
+    // Menu *menu = new Menu();
+
+    // naprint("This is a tezt SENTENCE",10,10);
+    // // naprint("Here is even more text",10,100);
+    // log(std::to_string(profile_stop()));
+
+    // aprint("this is a test SENTENCE",0,0);
+
+    // while(closed()){
+    //     vsync();
+
+    //     // key_poll();
+    //     // menu->update();
+    // }
+
+    changeScene(new newTitleScene());
+
     //start screen animation
     while(closed()){
-        reset();
+        vsync();
+        scene->update();
+        // reset();
 
-        if(!playAgain){
-            startScreen();
-		}else{
-            playAgain = false;
+        // if(!playAgain){
+        //     newStart();
+        //     // startScreen();
+		// }else{
+        //     playAgain = false;
 
-            if(game->gameMode != BATTLE){
-                startGame();
-            }else{
-                int seed = qran();
+        //     if(game->gameMode != BATTLE){
+        //         startGame();
+        //     }else{
+        //         int seed = qran();
 
-                startGame(seed);
-                startBotGame(seed);
-            }
-            // int goal = game->goal;
-            // int training = game->trainingMode;
-            // int rs = game->rotationSystem;
+        //         startGame(seed);
+        //         startBotGame(seed);
+        //     }
+        //     // int goal = game->goal;
+        //     // int training = game->trainingMode;
+        //     // int rs = game->rotationSystem;
 
-            // delete game;
-            // game = new Game(game->gameMode,bigMode);
-            // game->setGoal(goal);
-            // game->setLevel(initialLevel);
-            // game->setTuning(getTuning());
-            // game->setTrainingMode(training);
-            // game->pawn.big = bigMode;
-            // game->bTypeHeight = goalSelection;
-            // game->setSubMode(subMode);
-            // game->setRotationSystem(rs);
-        }
+        //     // delete game;
+        //     // game = new Game(game->gameMode,bigMode);
+        //     // game->setGoal(goal);
+        //     // game->setLevel(initialLevel);
+        //     // game->setTuning(getTuning());
+        //     // game->setTrainingMode(training);
+        //     // game->pawn.big = bigMode;
+        //     // game->bTypeHeight = goalSelection;
+        //     // game->setSubMode(subMode);
+        //     // game->setRotationSystem(rs);
+        // }
 
-        gameLoop();
+        // gameLoop();
     }
 }
 
@@ -617,65 +706,36 @@ void setLightMode() {
         setPaletteColor(8,4,0x0421,1);//progressbar
 
         //activated font
-        setPaletteColor(15,2,0x0000,1);//font main
-        setPaletteColor(15,3,0x5ad6,1);//font shaddow
-        setPaletteColor(31,2,0x0000,1);//obj font main
-        setPaletteColor(31,3,0x5ad6,1);//obj font shaddow
+        // setPaletteColor(15,2,0x0000,1);//font main
+        // setPaletteColor(15,3,0x5ad6,1);//font shaddow
+        // setPaletteColor(31,2,0x0000,1);//obj font main
+        // setPaletteColor(31,3,0x5ad6,1);//obj font shaddow
 
         //unactivated font
-        setPaletteColor(14,2,0x7fff,1);//font main
-        setPaletteColor(14,3,0x5ad6,1);//font shadow
-        setPaletteColor(30,2,0x7fff,1);//obj font main
-        setPaletteColor(30,3,0x5ad6,1);//obj font shadow
+        // setPaletteColor(14,2,0x7fff,1);//font main
+        // setPaletteColor(14,3,0x5ad6,1);//font shadow
+        // setPaletteColor(30,2,0x7fff,1);//obj font main
+        // setPaletteColor(30,3,0x5ad6,1);//obj font shadow
 
         setPaletteColor(16 + 8,6,0x6739,1);//frame background
 
-        // memset16(pal_bg_mem, 0x5ad6, 1);//background gray
-        // memset16(&pal_bg_mem[8 * 16 + 4], 0x0421, 1);//progressbar
-
-        // //activated font
-        // memset16(&pal_bg_mem[15 * 16 + 2], 0x0000, 1);//font main
-        // memset16(&pal_bg_mem[15 * 16 + 3], 0x5ad6, 1);//font shadow
-        // memset16(&pal_obj_mem[15 * 16 + 2], 0x0000, 1);//obj font main
-        // memset16(&pal_obj_mem[15 * 16 + 3], 0x5ad6, 1);//boj font shadow
-
-        // //unactivated font
-        // memset16(&pal_bg_mem[14 * 16 + 2], 0x7fff, 1);//font main
-        // memset16(&pal_bg_mem[14 * 16 + 3], 0x5ad6, 1);//font shadow
-        // memset16(&pal_obj_mem[14 * 16 + 2], 0x7fff, 1);//obj font main
-        // memset16(&pal_obj_mem[14 * 16 + 3], 0x5ad6, 1);//boj font shadow
     } else {
         setPaletteColor(0,0,0x0000,1);//background gray
         setPaletteColor(8,4,0x7fff,1);//progressbar
 
         //activated font
-        setPaletteColor(15,2,0x7fff,1);//font main
-        setPaletteColor(15,3,0x294a,1);//font shaddow
-        setPaletteColor(31,2,0x7fff,1);//obj font main
-        setPaletteColor(31,3,0x294a,1);//obj font shaddow
+        // setPaletteColor(15,2,0x7fff,1);//font main
+        // setPaletteColor(15,3,0x294a,1);//font shaddow
+        // setPaletteColor(31,2,0x7fff,1);//obj font main
+        // setPaletteColor(31,3,0x294a,1);//obj font shaddow
 
         //unactivated font
-        setPaletteColor(14,2,0x318c,1);//font main
-        setPaletteColor(14,3,0x0421,1);//font shadow
-        setPaletteColor(30,2,0x318c,1);//obj font main
-        setPaletteColor(30,3,0x0421,1);//obj font shadow
+        // setPaletteColor(14,2,0x318c,1);//font main
+        // setPaletteColor(14,3,0x0421,1);//font shadow
+        // setPaletteColor(30,2,0x318c,1);//obj font main
+        // setPaletteColor(30,3,0x0421,1);//obj font shadow
 
         setPaletteColor(16 + 8,6,0x0c63,1);//frame background
-
-        // memset16(pal_bg_mem, 0x0000, 1);
-        // memset16(&pal_bg_mem[8 * 16 + 4], 0x7fff, 1);
-
-        // //activated font
-        // memset16(&pal_bg_mem[15 * 16 + 2], 0x7fff, 1);
-        // memset16(&pal_bg_mem[15 * 16 + 3], 0x294a, 1);
-        // memset16(&pal_obj_mem[15 * 16 + 2], 0x7fff, 1);
-        // memset16(&pal_obj_mem[15 * 16 + 3], 0x294a, 1);
-
-        // //unactivated font
-        // memset16(&pal_bg_mem[14 * 16 + 2], 0x318c, 1);//font main
-        // memset16(&pal_bg_mem[14 * 16 + 3], 0x0421, 1);//font shadow
-        // memset16(&pal_obj_mem[14 * 16 + 2], 0x318c, 1);//obj font main
-        // memset16(&pal_obj_mem[14 * 16 + 3], 0x0421, 1);//boj font shadow
     }
 
     setGradient(savefile->settings.backgroundGradient);
@@ -887,14 +947,6 @@ Tuning getTuning(){
     };
 
     return t;
-}
-
-void changeScene(Scene *newScene){
-    if(scene != nullptr){
-        delete scene;
-    }
-
-    scene = newScene;
 }
 
 void setGradient(int color){

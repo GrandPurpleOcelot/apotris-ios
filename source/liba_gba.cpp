@@ -100,6 +100,8 @@ void platformInit(){
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
 
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(2);
+
+    REG_WAITCNT = 0x4317;
 }
 
 void deinitialize(){

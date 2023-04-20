@@ -932,7 +932,7 @@ void showQueue() {
 }
 
 void control() {
-    if (pause)
+    if (paused)
         return;
 
     key_poll();
@@ -941,7 +941,7 @@ void control() {
 
     if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer) {
         sfx(SFX_MENUCONFIRM);
-        pause = true;
+        paused = true;
         pauseSong();
         clearText();
         update();
@@ -1315,7 +1315,7 @@ void gameLoop(){
     while (closed()) {
         diagnose();
 
-        if (!game->lost && !pause && !game->eventLock) {
+        if (!game->lost && !paused && !game->eventLock) {
             // profile_start();
             game->update();
             // log(std::to_string(profile_stop()));
@@ -1437,10 +1437,10 @@ void gameLoop(){
                 playAgain = false;
         }
 
-        if (pause){
+        if (paused){
 
             if(pauseMenu()){
-                pause = false;
+                paused = false;
                 return;
             }
             liftKeys();

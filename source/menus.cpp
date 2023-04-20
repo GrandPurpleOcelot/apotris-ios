@@ -10,9 +10,6 @@
 #include <cstring>
 #include "posprintf.h"
 
-//TEMPORARY
-#include <fstream>
-
 using namespace Tetris;
 
 void endAnimation();
@@ -715,14 +712,14 @@ int pauseMenu(){
                     sfx(SFX_MENUCONFIRM);
                     clearText();
                     update();
-                    pause = false;
+                    paused = false;
                     resumeSong();
                     // mmResume();
                     break;
                 } else if (n == 1) {
                     // restart = true;
                     playAgain = true;
-                    pause = false;
+                    paused = false;
                     sfx(SFX_MENUCONFIRM);
                     break;
                 } else if (n == 2) {
@@ -791,7 +788,7 @@ int pauseMenu(){
             sfx(SFX_MENUCONFIRM);
             clearText();
             update();
-            pause = false;
+            paused = false;
             resumeSong();
             // mmResume();
             break;
@@ -807,7 +804,7 @@ int pauseMenu(){
             }else{
                 clearText();
                 update();
-                pause = false;
+                paused = false;
                 resumeSong();
                 // mmResume();
             }

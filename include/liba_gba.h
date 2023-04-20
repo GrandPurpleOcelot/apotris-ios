@@ -35,10 +35,10 @@ INLINE void setTileRow(int tileset, int index, int row, u32 data){
     tile->data[row] = data;
 }
 
-INLINE void setTilesetPixel(int cbb, int index, int x, int y, u8 color){
+INLINE void setTilesetPixel(int cbb, int index, int x, int y, int color){
     TILE* tile = &tile_mem[cbb][index];
 
-    tile->data[y] |= (color & 0xf) << (x*4);
+    tile->data[y] |= (color) << (x*4);
 }
 
 INLINE void color_fade_fast(int palette, int index, COLOR *src, COLOR color, int count, u32 alpha){

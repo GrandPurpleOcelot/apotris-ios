@@ -15,3 +15,7 @@ extern void clearSmallText();
 extern void clearText();
 extern void aprintClearLine(int);
 extern void aprintClearArea(int,int,int,int);
+
+extern void naprint(std::string str, int x, int y);
+
+extern void naprintSprite(std::string str, int tile);
