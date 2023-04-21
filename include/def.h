@@ -329,7 +329,7 @@ extern bool onStates;
 
 extern bool multiplayer;
 
-extern bool pause;
+extern bool paused;
 
 extern bool restart;
 

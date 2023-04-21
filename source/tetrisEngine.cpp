@@ -698,16 +698,20 @@ void Game::place() {
     }
 
     int lowestPart = 0;
-
-    for(int i = 3; i >= 0; i--)//find height of lowest block in column
-        for(int j = 0; j < 4; j++)
+    for(int i = 3; i >= 0; i--){//find height of lowest block in column
+        for(int j = 0; j < 4; j++){
             if(pawn.board[pawn.rotation][i][j]){
                 lowestPart = i;
                 break;
             }
+        }
+
+        if(lowestPart == i)
+            break;
+    }
 
     bool toEndZone = false;
-    if ((pawn.y+lowestPart) * (1+pawn.big) <= (lengthY / 2 - 2)) {
+    if ((pawn.y+lowestPart) * (1+pawn.big) + pawn.big <= (lengthY / 2 - 1)) {
         if(zoneTimer && zonedLines)
             toEndZone = true;
         else if(gameMode == TRAINING)

@@ -326,6 +326,11 @@ void changeInput(int selection){
                 counter++;
             }while(temp != 0);
 
+            if((int)currentKeys.size() > 2){
+                sfx(SFX_MENUCANCEL);
+                break;
+            }
+
             for(int i = 0; i < 9; i++){
                 foundKeys.clear();
 

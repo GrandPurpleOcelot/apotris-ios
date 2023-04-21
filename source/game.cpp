@@ -802,7 +802,7 @@ void showQueue() {
 }
 
 void control() {
-    if (pause)
+    if (paused)
         return;
 
     key_poll();
@@ -811,7 +811,7 @@ void control() {
 
     if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
-        pause = true;
+        paused = true;
         mmPause();
         clearText();
         update();
@@ -886,7 +886,7 @@ void control() {
         restartTimer = 0;
     }
 
-    if(key_is_down(k.zone) && game->gameMode == MARATHON && subMode && !game->zoneTimer){
+    if(key_hit(k.zone) && game->gameMode == MARATHON && subMode && !game->zoneTimer){
         game->activateZone(1);
     }
 
@@ -1164,7 +1164,7 @@ void gameLoop(){
 
     while (1) {
         diagnose();
-        if (!game->lost && !pause && !game->eventLock) {
+        if (!game->lost && !paused && !game->eventLock) {
             game->update();
         }
         handleMultiplayer();
@@ -1250,10 +1250,10 @@ void gameLoop(){
                 playAgain = false;
         }
 
-        if (pause){
+        if (paused){
 
             if(pauseMenu()){
-                pause = false;
+                paused = false;
                 return;
             }
             liftKeys();
@@ -1931,6 +1931,8 @@ void showZoneMeter(){
         n = game->zoneCharge / 3;
         if(game->zoneCharge == 32)
             n = 12;
+        else if(game->zoneCharge == 8)
+            n = 3;
     }else{
         n = game->zoneTimer / 100 + 1;
     }

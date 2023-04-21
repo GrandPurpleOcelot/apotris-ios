@@ -69,6 +69,8 @@ void songListMenu() {
 
     mmStop();
     playSong(0, 0);
+    bool previous = savefile->settings.cycleSongs;
+    savefile->settings.cycleSongs = false;
 
     while (1) {
         VBlankIntrWait();
@@ -172,6 +174,7 @@ void songListMenu() {
 
     mmStop();
     playSongRandom(0);
+    savefile->settings.cycleSongs = previous;
 }
 
 int endScreen() {
@@ -643,13 +646,13 @@ int pauseMenu(){
                     sfx(SFX_MENUCONFIRM);
                     clearText();
                     update();
-                    pause = false;
+                    paused = false;
                     mmResume();
                     break;
                 } else if (n == 1) {
                     // restart = true;
                     playAgain = true;
-                    pause = false;
+                    paused = false;
                     sfx(SFX_MENUCONFIRM);
                     break;
                 } else if (n == 2) {
@@ -720,7 +723,7 @@ int pauseMenu(){
             sfx(SFX_MENUCONFIRM);
             clearText();
             update();
-            pause = false;
+            paused = false;
             mmResume();
             break;
         }
@@ -735,7 +738,7 @@ int pauseMenu(){
             }else{
                 clearText();
                 update();
-                pause = false;
+                paused = false;
                 mmResume();
             }
             break;

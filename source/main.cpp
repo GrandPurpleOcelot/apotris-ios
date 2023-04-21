@@ -59,7 +59,7 @@ int shake = 0;
 
 int gameSeconds;
 
-bool pause = false;
+bool paused = false;
 
 int marathonClearTimer = 20;
 
