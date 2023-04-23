@@ -103,7 +103,6 @@ void initialize(){
     buildBG(2, 2, 29, 0, 0, true);
     buildBG(3, 0, 27, 0, 1, true);
 
-
     for(int i = 0; i < 4; i++){
         toggleBG(i,true);
         setLayerScroll(i, 0, 0);
@@ -153,8 +152,8 @@ void initialize(){
     loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
     loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
 
-    loadSpriteTiles(512 + 64, title1tiles_bin,8,8);
-    loadSpriteTiles(512 + 96, title2tiles_bin,8,8);
+    // loadSpriteTiles(512 + 64, title1tiles_bin,8,8);
+    // loadSpriteTiles(512 + 96, title2tiles_bin,8,8);
 
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
@@ -184,6 +183,7 @@ void initialize(){
     //load tetriminoes into tile memory for menu screen animation
 
     setSkin();
+    setPalette();
     setClearEffect();
 
 
@@ -548,7 +548,7 @@ std::string nameInput(int place) {
 
 
 void setSkin() {
-    setPalette();
+    // setPalette();
 
     switch (savefile->settings.skin) {
     case 0:
@@ -869,7 +869,6 @@ void setPalette(){
         // memcpy16(&pal_bg_mem[8 * 16], &palette[n][color * 16], 16);
     }
 
-    loadPalette(13+16, 0, title_pal_bin, title_pal_bin_size/2);
     // memcpy16(&pal_obj_mem[13 * 16], title_pal_bin, title_pal_bin_size / 2);
     setLightMode();
 }

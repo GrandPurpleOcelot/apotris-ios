@@ -6,20 +6,33 @@
 #include "font1tiles_bin.h"
 
 #define MAX_WORD_SPRITES 15
+
+extern int previousSelection;
+
+enum Transitions{
+    INSTANT,
+    FADE,
+    SCANLINE
+};
+
 class WordSprite {
 public:
     std::string text = "";
     int startIndex;
     int startTiles;
     int id;
-    int priority = 1;
+    int priority = 0;
+    bool blend = false;
     OBJ_ATTR* sprites[3];
 
     void show(int x, int y, int palette) {
         for (int i = 0; i < 3; i++) {
             sprite_unhide(sprites[i], 0);
             sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
-            // obj_set_attr(sprites[i], ATTR0_WIDE, ATTR1_SIZE(1), ATTR2_BUILD(startTiles + i * 4, palette, priority));
+
+            if(blend)
+                sprite_enable_blend(sprites[i]);
+
             sprite_set_pos(sprites[i], x + i * 32, y);
         }
     }
@@ -29,13 +42,13 @@ public:
             int affId = id*3+i;
             sprite_unhide(sprites[i], 0);
             sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
-            // obj_set_attr(sprites[i], ATTR0_WIDE | ATTR0_AFF, ATTR1_SIZE(1) | ATTR1_AFF_ID(affId), palette);
-            // sprites[i]->attr2 = ATTR2_BUILD(startTiles + i * 4, palette, 1);
+
+            if(blend)
+                sprite_enable_blend(sprites[i]);
+
             sprite_set_pos(sprites[i], x + fx2int(fxdiv(int2fx( i * 32 ),scale)), y);
             sprite_set_size(sprites[i], scale, affId);
             sprite_enable_affine(sprites[i], affId, true);
-            // obj_aff_identity(&obj_aff_buffer[affId]);
-            // obj_aff_scale(&obj_aff_buffer[affId], scale, scale);
         }
     }
 
@@ -45,8 +58,11 @@ public:
 
     void hide() {
         for (int i = 0; i < 3; i++)
-            // obj_hide(sprites[i]);
             sprite_hide(sprites[i]);
+    }
+
+    void enableBlend(bool state){
+        blend = state;
     }
 
     void setText(std::string _text) {
@@ -146,6 +162,28 @@ class EditorScene : public Scene{
 };
 
 class newTitleScene : public Scene{
+    WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+    WordSprite versionText = WordSprite(0,20,2);
+    WordSprite nameText = WordSprite(0,23,2 + 12);
+
+    OBJ_ATTR * cursorSprites[2];
+
+    int flashTimer = 0;
+    const int maxFlash = 48;
+
+    void draw();
+    void update();
+    void control();
+    void init();
+    void deinit();
+
+    ~newTitleScene(){
+        deinit();
+    };
+};
+
+class MainMenuScene : public Scene{
     int maxDas = 16;
     int dasHor = 0;
     int dasVer = 0;
@@ -159,10 +197,8 @@ class newTitleScene : public Scene{
     int movingDirection = 0;
 
     int options = 0;
+    int selection = 0;
     WordSprite* wordSprites[MAX_WORD_SPRITES];
-
-    WordSprite versionText = WordSprite(0,20,2);
-    WordSprite nameText = WordSprite(0,23,2 + 12);
 
     OBJ_ATTR * cursorSprites[2];
 
@@ -174,12 +210,47 @@ class newTitleScene : public Scene{
     void init();
     void deinit();
 
-    ~newTitleScene(){
+    ~MainMenuScene(){
+        deinit();
+    };
+};
+
+class SettingsScene : public Scene{
+    int maxDas = 16;
+    int dasHor = 0;
+    int dasVer = 0;
+
+    int maxArr = 3;
+    int arr = 0;
+
+    bool moving = false;
+    bool movingHor = false;
+    int movingTimer = 0;
+    int movingDirection = 0;
+
+    int options = 0;
+    int selection = 0;
+    WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+    WordSprite saveText = WordSprite(0,20,2);
+
+    OBJ_ATTR * cursorSprites[2];
+
+    int cursorFloat = 0;
+
+    void draw();
+    void update();
+    void control();
+    void init();
+    void deinit();
+
+    ~SettingsScene(){
         deinit();
     };
 };
 
 extern void changeScene(Scene * newScene);
+extern void changeScene(Scene * newScene,Transitions transition);
 
 // class Option{
 //     public:

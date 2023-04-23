@@ -99,7 +99,7 @@ void platformInit(){
 
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
 
-    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(2);
+    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
 
     REG_WAITCNT = 0x4317;
 }
@@ -141,7 +141,7 @@ void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int leng
 }
 
 void setPaletteColor(int palette, int index, u16 color, int count){
-    memset16(&pal_bg_mem[palette * 16 + index],(color & 0xffff),count);
+    memset16(&pal_bg_mem[palette * 16 + index],color,count);
 }
 
 void sprite_hide(OBJ_ATTR * sprite){

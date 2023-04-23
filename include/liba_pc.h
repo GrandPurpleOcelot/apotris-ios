@@ -77,7 +77,7 @@ typedef SpriteAttributes OBJ_ATTR;
 
 typedef int FIXED;
 #define FIXED_BITS	8
-#define float2fx(f)	(FIXED)(f*(1 << FIXED_BITS))
+#define float2fx(f)	(FIXED)(f*((float)(1 << FIXED_BITS)))
 #define int2fx(i)		((int)(i) << FIXED_BITS)
 #define fx2int(f)		((int)(f) >> FIXED_BITS)
 #define fx2float(f)	(float)(f)/(1 << FIXED_BITS)

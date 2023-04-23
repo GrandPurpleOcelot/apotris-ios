@@ -515,7 +515,7 @@ void showSprites(int n ){
         if(sprite->affine && !sprite->rotate){
             TLN_SetSpritePivot(counter, 0.5, 0.5);
             TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
-            TLN_SetSpritePosition(counter, sprite->x + sprite->sx/2 + offsetx, sprite->y + sprite->sy/2 + offsety);
+            TLN_SetSpritePosition(counter, sprite->x + sprite->sx + offsetx, sprite->y + sprite->sy + offsety);
         }else if (sprite->affine && sprite->rotate){
             TLN_SetSpritePivot(counter, 0.5, 0.5);
             // TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
@@ -750,7 +750,7 @@ void enableBlend(int info){
         }
     }
 
-    blendSprites = (bot >> 4) & 0b1;
+    blendSprites = (top >> 4) & 0b1;
 
     blendInfo = info;
 }
@@ -968,7 +968,24 @@ void color_fade_palette(int palette, int index, const COLOR * src, COLOR color, 
 
     color_fade(temp,src,color,count,alpha);
 
-    loadPalette(palette, index, temp, count);
+    int remaining = index + count;
+
+    int counter = 0;
+    while(remaining > 0){
+
+        int m = remaining % 16;
+        if(m){
+
+            loadPalette(palette, index, temp, m);
+
+            remaining -= m;
+        }else{
+            loadPalette(palette + counter, 0, &temp[count-remaining], 16);
+            remaining -= 16;
+        }
+
+        counter++;
+    }
 };
 
 void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha){
