@@ -132,6 +132,8 @@ void songListMenu() {
             }
         }
 
+
+
         aprint(" DONE ", 12, 17);
 
         aprint("Menu:", startX, startY);
@@ -757,7 +759,7 @@ int pauseMenu(){
                         if(savefile->settings.colors == 3)
                             setPalette();
 
-                        if (ENABLE_BOT) {
+                        if (enableBot) {
                             delete testBot;
                             testBot = new Bot(game);
                         }

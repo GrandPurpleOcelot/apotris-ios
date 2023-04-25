@@ -1,5 +1,7 @@
 #include "def.h"
 #include "logging.h"
+#include "menu.h"
+#include "platform.hpp"
 #include "text.h"
 #include "posprintf.h"
 
@@ -286,6 +288,7 @@ void helpScreen();
 int optionsMenu();
 
 TILE * customSkin;
+Board board;
 
 static int cursorTimer = 0;
 static int toolTimer = 0;
@@ -294,279 +297,92 @@ static int skinIndex = 0;
 static bool onMini = false;
 static bool refresh = false;
 
-void skinEditor(){
-    EditorScene * s = new EditorScene();
-    changeScene(s);
-
-
+void EditorScene::init(){
     onMini = false;
     gradient(false);
     setPaletteColor(0, 0, 0, 1);
     clearTilemap(27);
-    // memset16(&pal_bg_mem[0],0,1);
-    // memset16(&se_mem[27], 0x0000, 32 * 20);
     buildBG(3, 0, 27, 0, 2, 0);
-    // REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(2);
 
-    // u16* dest = (u16*) &se_mem[26];
-
-    for(int i = 0; i < 32; i++)
-        for(int j = 0; j < 20; j++)
-            setTile(26,i,j,2 * !(savefile->settings.lightMode));
-            // *dest++ = 2 * (!savefile->settings.lightMode);
-
+    setTiles(26, 0, 32*32, 2 * !(savefile->settings.lightMode));
+    // for(int i = 0; i < 32; i++)
+    //     for(int j = 0; j < 20; j++)
+    //         setTile(26,i,j,);
 
     if(game != nullptr && game->gameMode == Tetris::CLASSIC){
         game->gameMode = Tetris::SPRINT;
         setSkin();
     }
+}
 
-    while(closed()){
+void EditorScene::update(){
+    loadSpriteTiles(512 + 216, sprite35tiles_bin, 2, 2);
+    setPalette();
 
-        loadSpriteTiles(512 + 216, sprite35tiles_bin, 2, 2);
-        // memcpy16(&tile_mem[5][216],sprite35tiles_bin,sprite35tiles_bin_size/2);
-        setPalette();
-
-        if(selector())
-            break;
-
-        onMini = false;
-
-        // REG_DISPCNT |= DCNT_BG3;
-        toggleBG(3, true);
-        clearText();
-
-        loadTiles(0, 106, sprite34tiles_bin, 4);
-
-        loadSpriteTiles(512 + 200, sprite29tiles_bin, 2,2);
-        loadSpriteTiles(512 + 204, sprite31tiles_bin, 2,2);
-        loadSpriteTiles(512 + 208, sprite32tiles_bin, 2,2);
-        loadSpriteTiles(512 + 212, sprite33tiles_bin, 2,2);
-
-        // memcpy16(&tile_mem[0][106],sprite34tiles_bin,sprite34tiles_bin_size/2);
-
-        // memcpy16(&tile_mem[5][200],sprite29tiles_bin,sprite29tiles_bin_size/2);
-        // memcpy16(&tile_mem[5][204],sprite31tiles_bin,sprite31tiles_bin_size/2);
-        // memcpy16(&tile_mem[5][208],sprite32tiles_bin,sprite32tiles_bin_size/2);
-        // memcpy16(&tile_mem[5][212],sprite33tiles_bin,sprite33tiles_bin_size/2);
-
-        generateTiles();
-
-        Board board;
-
-        for(int i = 0; i < 8; i++)
-            customSkin->data[i] = savefile->customSkins[skinIndex].board.data[i];
-
-        board.setBoard(customSkin,0);
-        refreshSkin();
-
-        setSmallTextArea(110, 0, 10, 10, 20);
-        clearText();
-        aprints("Press SELECT",2,64,2);
-        aprints("for help",2,72,2);
-
-        int currentColor = 2;
-        int currentTool = 1;
-
-        u8 das = 0;
-        const int arr = 4;
-        const int dasMax = 20;
-
-        u8 timer = 0;
-
-        while(closed()){
-            canDraw = true;
-            vsync();
-            key_poll();
-
-            int dx = 0;
-            int dy = 0;
-
-            if(key_is_down(KEY_R)){
-                if(key_hit(KEY_LEFT)){
-                    currentColor--;
-                    if(currentColor < 0)
-                        currentColor = 5;
-                    sfx(SFX_MENUMOVE);
-                }
-
-                if(key_hit(KEY_RIGHT)){
-                    currentColor++;
-                    if(currentColor > 5)
-                        currentColor = 0;
-                    sfx(SFX_MENUMOVE);
-                }
-
-                if(key_hit(KEY_UP)){
-                    currentTool--;
-                    if(currentTool < 0)
-                        currentTool = 2;
-                    sfx(SFX_MENUMOVE);
-                }
-
-                if(key_hit(KEY_DOWN)){
-                    currentTool++;
-                    if(currentTool > 2)
-                        currentTool = 0;
-                    sfx(SFX_MENUMOVE);
-                }
-            }else if(key_is_down(KEY_L)){
-                if(key_hit(KEY_UP)){
-                    savefile->settings.colors--;
-                    if(savefile->settings.colors < 0)
-                        savefile->settings.colors = MAX_COLORS-1;
-                    sfx(SFX_MENUMOVE);
-                }
-
-                if(key_hit(KEY_DOWN)){
-                    savefile->settings.colors++;
-                    if(savefile->settings.colors > MAX_COLORS-1)
-                        savefile->settings.colors = 0;
-                    sfx(SFX_MENUMOVE);
-                }
-
-                if(key_hit(KEY_UP) || key_hit(KEY_DOWN))
-                    setPalette();
-
-                if(key_hit(KEY_LEFT) || key_hit(KEY_RIGHT)){
-                    refreshSkin();
-                    onMini = !onMini;
-
-                    if(onMini){
-                        for(int i = 0; i < 8; i++)
-                            customSkin->data[i] = savefile->customSkins[skinIndex].smallBoard.data[i];
-
-                        if(board.cursor.x > 0)
-                            board.cursor.x--;
-                        if(board.cursor.x > 5)
-                            board.cursor.x = 5;
-
-                        if(board.cursor.y > 0)
-                            board.cursor.y--;
-                        if(board.cursor.y > 5)
-                            board.cursor.y = 5;
-                    }else{
-                        for(int i = 0; i < 8; i++)
-                            customSkin->data[i] = savefile->customSkins[skinIndex].board.data[i];
-                        board.cursor.x++;
-                        board.cursor.y++;
-                    }
-
-                    board.setBoard(customSkin,onMini);
-                }
-
-            }else{
-                if(key_hit(KEY_LEFT | KEY_RIGHT)){
-                    dx = ((key_hit(KEY_RIGHT) != 0) - (key_hit(KEY_LEFT) != 0));
-                }
-
-                if(key_hit(KEY_UP | KEY_DOWN)){
-                    dy = ((key_hit(KEY_DOWN) != 0) - (key_hit(KEY_UP) != 0));
-                }
-
-                if(key_is_down(KEY_LEFT | KEY_RIGHT | KEY_UP | KEY_DOWN))
-                    das++;
-                else
-                    das = 0;
-
-                if(das >= dasMax){
-
-                    if(key_is_down(KEY_LEFT))
-                        dx = -1;
-                    else if(key_is_down(KEY_RIGHT))
-                        dx = 1;
-
-                    if(key_is_down(KEY_UP))
-                        dy = -1;
-                    else if(key_is_down(KEY_DOWN))
-                        dy = 1;
-
-                    das -= arr;
-                }
-
-                bool moved = board.cursor.move(dx,dy,onMini);
-                if((dx || dy) && key_is_down(KEY_A)){
-                    switch(currentTool){
-                    case 0: board.set(0,true); break;
-                    case 1: board.set(currentColor,true); break;
-                    }
-                    if(moved)
-                        sfx(SFX_PLACE);
-                    refreshSkin();
-                }
-            }
-
-            if(key_hit(KEY_A)){
-                switch(currentTool){
-                case 0: board.set(0,true); break;
-                case 1: board.set(currentColor,true); break;
-                case 2: board.fill(currentColor,true); break;
-                }
-
-                sfx(SFX_PLACE);
-                refreshSkin();
-            }
-
-            if(key_hit(KEY_B)){
-                if(board.undo())
-                    sfx(SFX_ROTATE);
-                else
-                    sfx(SFX_MENUCANCEL);
-
-                refreshSkin();
-            }
-
-            if(key_hit(KEY_START)){
-                sfx(SFX_MENUCONFIRM);
-                break;
-            }
-
-            if(key_hit(KEY_SELECT)){
-                helpScreen();
-            }
-
-            if(key_is_down(KEY_L) && key_is_down(KEY_R)){
-                if(++timer > 50){
-                    board.clear();
-                    refreshSkin();
-                    timer = 0;
-                }
-            }else{
-                timer = 0;
-            }
-
-            board.show(onMini);
-            showMinos();
-            showCursor();
-            // showMini();
-
-            showColorPalette(currentColor);
-            showTools(currentTool);
-
-            showSprites(32);
-            // oam_copy(oam_mem, obj_buffer, 32);
-        }
-
-        // for(int i = 0; i < 8; i++)
-        //     savefile->customSkins[skinIndex].board.data[i] = customSkin->data[i];
-        refreshSkin();
-
-        clearSpriteTiles(712, 16, 1);
-        clearSprites(128);
-        showSprites(128);
-        clearTilemap(25);
-
-        // memset16(&tile_mem[5][200],0,64*4);
-        // oam_init(obj_buffer,128);
-        // oam_copy(oam_mem, obj_buffer, 128);
-        // memset16(&se_mem[25], 0x0000, 32 * 20);
-        clearText();
-        toggleBG(3, false);
-        // REG_DISPCNT &= ~DCNT_BG3;
-
-        delete customSkin;
+    if(selector()){
+        previousSelection = 5;
+        changeScene(new MainMenuScene,FADE);
+        return;
     }
 
+    onMini = false;
+
+    toggleBG(3, true);
+    clearText();
+
+    loadTiles(0, 106, sprite34tiles_bin, 4);
+
+    loadSpriteTiles(512 + 200, sprite29tiles_bin, 2,2);
+    loadSpriteTiles(512 + 204, sprite31tiles_bin, 2,2);
+    loadSpriteTiles(512 + 208, sprite32tiles_bin, 2,2);
+    loadSpriteTiles(512 + 212, sprite33tiles_bin, 2,2);
+
+    generateTiles();
+
+    for(int i = 0; i < 8; i++)
+        customSkin->data[i] = savefile->customSkins[skinIndex].board.data[i];
+
+    board.setBoard(customSkin,0);
+    refreshSkin();
+
+    setSmallTextArea(110, 0, 10, 10, 20);
+    clearText();
+    aprints("Press SELECT",2,64,2);
+    aprints("for help",2,72,2);
+
+    while(closed()){
+        canDraw = true;
+        vsync();
+
+        if(control()){
+            break;
+        }
+
+        board.show(onMini);
+        showMinos();
+        showCursor();
+        // showMini();
+
+        showColorPalette(currentColor);
+        showTools(currentTool);
+
+        showSprites(32);
+    }
+
+    refreshSkin();
+
+    clearSpriteTiles(712, 16, 1);
+    clearSprites(128);
+    showSprites(128);
+    clearTilemap(25);
+
+    clearText();
+    toggleBG(3, false);
+
+    delete customSkin;
+}
+
+void EditorScene::deinit(){
     //clean up
     clearSpriteTiles(712, 16, 1);
     clearSprites(128);
@@ -574,22 +390,184 @@ void skinEditor(){
     clearTilemap(25);
     clearTilemap(26);
     clearTilemap(27);
-    // oam_init(obj_buffer,128);
-    // oam_copy(oam_mem, obj_buffer, 128);
-    // memset16(&tile_mem[5][200],0,64*4);
 
     gradient(true);
-    // memset16(&se_mem[25], 0x0000, 32 * 20);
-    // memset16(&se_mem[26], 0x0000, 32 * 20);
-    // memset16(&se_mem[27], 0x0000, 32 * 20);
     drawUIFrame(0, 0, 30, 20);
     buildBG(3, 0, 27, 0, 3, 0);
     setLayerScroll(3, 0, 0);
-    // REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(3);
-    // REG_BG3VOFS = 0;
-    // REG_BG3HOFS = 0;
 
     clearTiles(2,110,400);
+}
+
+bool EditorScene::control(){
+    key_poll();
+
+    int dx = 0;
+    int dy = 0;
+
+    if(key_is_down(KEY_R)){
+        if(key_hit(KEY_LEFT)){
+            currentColor--;
+            if(currentColor < 0)
+                currentColor = 5;
+            sfx(SFX_MENUMOVE);
+        }
+
+        if(key_hit(KEY_RIGHT)){
+            currentColor++;
+            if(currentColor > 5)
+                currentColor = 0;
+            sfx(SFX_MENUMOVE);
+        }
+
+        if(key_hit(KEY_UP)){
+            currentTool--;
+            if(currentTool < 0)
+                currentTool = 2;
+            sfx(SFX_MENUMOVE);
+        }
+
+        if(key_hit(KEY_DOWN)){
+            currentTool++;
+            if(currentTool > 2)
+                currentTool = 0;
+            sfx(SFX_MENUMOVE);
+        }
+    }else if(key_is_down(KEY_L)){
+        if(key_hit(KEY_UP)){
+            savefile->settings.colors--;
+            if(savefile->settings.colors < 0)
+                savefile->settings.colors = MAX_COLORS-1;
+            sfx(SFX_MENUMOVE);
+        }
+
+        if(key_hit(KEY_DOWN)){
+            savefile->settings.colors++;
+            if(savefile->settings.colors > MAX_COLORS-1)
+                savefile->settings.colors = 0;
+            sfx(SFX_MENUMOVE);
+        }
+
+        if(key_hit(KEY_UP) || key_hit(KEY_DOWN))
+            setPalette();
+
+        if(key_hit(KEY_LEFT) || key_hit(KEY_RIGHT)){
+            refreshSkin();
+            onMini = !onMini;
+
+            if(onMini){
+                for(int i = 0; i < 8; i++)
+                    customSkin->data[i] = savefile->customSkins[skinIndex].smallBoard.data[i];
+
+                if(board.cursor.x > 0)
+                    board.cursor.x--;
+                if(board.cursor.x > 5)
+                    board.cursor.x = 5;
+
+                if(board.cursor.y > 0)
+                    board.cursor.y--;
+                if(board.cursor.y > 5)
+                    board.cursor.y = 5;
+            }else{
+                for(int i = 0; i < 8; i++)
+                    customSkin->data[i] = savefile->customSkins[skinIndex].board.data[i];
+                board.cursor.x++;
+                board.cursor.y++;
+            }
+
+            board.setBoard(customSkin,onMini);
+        }
+
+    }else{
+        if(key_hit(KEY_LEFT | KEY_RIGHT)){
+            dx = ((key_hit(KEY_RIGHT) != 0) - (key_hit(KEY_LEFT) != 0));
+        }
+
+        if(key_hit(KEY_UP | KEY_DOWN)){
+            dy = ((key_hit(KEY_DOWN) != 0) - (key_hit(KEY_UP) != 0));
+        }
+
+        if(key_is_down(KEY_LEFT | KEY_RIGHT | KEY_UP | KEY_DOWN))
+            das++;
+        else
+            das = 0;
+
+        if(das >= dasMax){
+
+            if(key_is_down(KEY_LEFT))
+                dx = -1;
+            else if(key_is_down(KEY_RIGHT))
+                dx = 1;
+
+            if(key_is_down(KEY_UP))
+                dy = -1;
+            else if(key_is_down(KEY_DOWN))
+                dy = 1;
+
+            das -= arr;
+        }
+
+        bool moved = board.cursor.move(dx,dy,onMini);
+        if((dx || dy) && key_is_down(KEY_A)){
+            switch(currentTool){
+            case 0: board.set(0,true); break;
+            case 1: board.set(currentColor,true); break;
+            }
+            if(moved)
+                sfx(SFX_PLACE);
+            refreshSkin();
+        }
+    }
+
+    if(key_hit(KEY_A)){
+        switch(currentTool){
+        case 0: board.set(0,true); break;
+        case 1: board.set(currentColor,true); break;
+        case 2: board.fill(currentColor,true); break;
+        }
+
+        sfx(SFX_PLACE);
+        refreshSkin();
+    }
+
+    if(key_hit(KEY_B)){
+        if(board.undo())
+            sfx(SFX_ROTATE);
+        else
+            sfx(SFX_MENUCANCEL);
+
+        refreshSkin();
+    }
+
+    if(key_hit(KEY_START)){
+        sfx(SFX_MENUCONFIRM);
+        return true;
+    }
+
+    if(key_hit(KEY_SELECT)){
+        helpScreen();
+    }
+
+    if(key_is_down(KEY_L) && key_is_down(KEY_R)){
+        if(++timer > 50){
+            board.clear();
+            refreshSkin();
+            timer = 0;
+        }
+    }else{
+        timer = 0;
+    }
+
+    return false;
+}
+
+void skinEditor(){
+    EditorScene * s = new EditorScene();
+    changeScene(s);
+
+    while(closed()){
+    }
+
     // memset32(&tile_mem[2][110],0,8 * 400);
     TitleScene* newScene = new TitleScene();
     changeScene(newScene);

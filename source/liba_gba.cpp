@@ -493,4 +493,15 @@ void sprite_enable_blend(OBJ_ATTR * sprite){
     sprite->attr0 |= ATTR0_BLEND;
 }
 
+int prevDispCnt = 0;
+
+void toggleRendering(bool state){
+    if(state){
+        REG_DISPCNT = prevDispCnt;
+    } else {
+        prevDispCnt = REG_DISPCNT;
+        REG_DISPCNT = 0;
+    }
+}
+
 #endif

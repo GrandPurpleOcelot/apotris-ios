@@ -1,5 +1,6 @@
 #include "def.h"
 #include "LinkConnection.h"
+#include "menu.h"
 #include "meter1_tiles_bin.h"
 // #include "soundbank.h"
 #include "sprite36tiles_bin.h"
@@ -39,7 +40,7 @@ void disappear();
 INLINE int getBoard(int,int);
 void zoneFlash();
 void resetZonePalette();
-void control();
+// void control();
 void showTimer();
 void update();
 void rainbowPalette();
@@ -116,6 +117,8 @@ static bool creditRefresh = false;
 static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
+
+bool enableBot = false;
 // static bool refreshSkin = false;
 // Bot *testBot;
 
@@ -123,6 +126,7 @@ FIXED shakeBuff;
 FIXED shakeVelocity;
 
 bool replaying = false;
+bool exitGame = false;
 
 void GameScene::draw(){
     std::string prof;
@@ -611,7 +615,7 @@ void showBackground(int offset) {
 
 void showPawn() {
     pawnSprite = &obj_buffer[0];
-    if (game->clearLock || game->pawn.current == -1 || (ENABLE_BOT && game->gameMode != BATTLE)) {
+    if (game->clearLock || game->pawn.current == -1 || (enableBot && game->gameMode != BATTLE)) {
         sprite_hide(pawnSprite);
         return;
     }
@@ -691,7 +695,7 @@ void showPawn() {
 
 void showShadow() {
     pawnShadow = &obj_buffer[1];
-    if (game->clearLock || game->pawn.current == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100) || (ENABLE_BOT && game->gameMode != BATTLE)) {
+    if (game->clearLock || game->pawn.current == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100) || (enableBot && game->gameMode != BATTLE)) {
         sprite_hide(pawnShadow);
         return;
     }
@@ -908,7 +912,7 @@ void showQueue() {
         } else {
             sprite_unhide(queueSprites[k], ATTR0_AFF);
             sprite_set_attr(queueSprites[k], ShapeSquare, 2, 16 * n, n * (game->zoneTimer == 0), 3);
-            sprite_enable_mosaic(queueSprites[k]);
+            // sprite_enable_mosaic(queueSprites[k]);
             sprite_enable_affine(queueSprites[k], k, false);
             // obj_set_attr(queueSprites[k], ATTR0_SQUARE | ATTR0_AFF | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(k), ATTR2_PALBANK(n));
             // queueSprites[k]->attr2 = ATTR2_BUILD(16 * n, n * (game->zoneTimer == 0), 3);
@@ -919,8 +923,9 @@ void showQueue() {
                 size = 357;//~1.4
             else
                 size = 349;//~1.4
-            // obj_aff_scale(&obj_aff_buffer[k], size, size);
+
             sprite_set_size(queueSprites[k], size, k);
+
             sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == 0) - 4 + yoffset);
         }
 
@@ -931,11 +936,16 @@ void showQueue() {
     }
 }
 
-void control() {
+bool GameScene::control() {
     if (paused)
-        return;
+        return false;
 
     key_poll();
+
+    if(demo && key_hit(KEY_FULL)){
+        exitGame = true;
+        return true;
+    }
 
     Keys k = savefile->settings.keys;
 
@@ -949,7 +959,7 @@ void control() {
 
     if(replaying){
         replayControl();
-        return;
+        return false;
     }
 
     if (key_hit(k.hold) && !checkDiagonal(k.hold)) {
@@ -1032,6 +1042,8 @@ void control() {
             }
         }
     }
+
+    return false;
 }
 
 void showTimer() {
@@ -1245,7 +1257,7 @@ void showClearText() {
 
 void gameLoop(){
     GameScene* s = new GameScene();
-    changeScene(s);
+    changeScene(s,FADE);
 
     setGradient(savefile->settings.backgroundGradient);
     gradient(true);
@@ -1312,7 +1324,7 @@ void gameLoop(){
 
     update();
 
-    while (closed()) {
+    while (closed() && !exitGame) {
         diagnose();
 
         if (!game->lost && !paused && !game->eventLock) {
@@ -1342,7 +1354,7 @@ void gameLoop(){
             // test += std::to_string(profile_stop()) + " ";
             // log(std::to_string(profile_stop()));
             // log(test);
-        }else if(ENABLE_BOT ){
+        }else if(enableBot){
             testBot->run();
         }
 
@@ -1493,6 +1505,8 @@ void gameLoop(){
           //      return;
           // }
     }
+
+    exitGame = false;
 }
 
 void addGlow(Tetris::Drop location) {

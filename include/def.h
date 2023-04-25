@@ -251,7 +251,6 @@ public:
 #define SHOW_FINESSE 1
 #define DIAGNOSE 1
 #define SAVE_TAG 0x50
-#define ENABLE_BOT 0
 #define ENABLE_SHADERS 0
 
 #define ENABLE_FLASH_SAVE 1
@@ -344,6 +343,8 @@ extern void addStats();
 
 extern void loadReplay();
 extern void frameSnow(int layer);
+
+extern void initFallingBlocks();
 
 extern Tetris::Game *game;
 extern Tetris::Game *quickSave;
@@ -438,6 +439,9 @@ extern std::list<Tetris::Timestamp> currentReplay;
 #define shakeMax 10
 
 extern bool replaying;
+
+extern bool enableBot;
+extern bool demo;
 
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
 

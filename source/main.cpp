@@ -194,6 +194,8 @@ void initialize(){
     // REG_BLDCNT = (1 << 6) + (1 << 13) + (1 << 1);
     // REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(2);
 
+    initFallingBlocks();
+
     setGradient(GRADIENT_COLOR);
 }
 
@@ -1031,7 +1033,7 @@ void startGame(Tetris::Options options,int seed){
 
     *previousGameOptions = options;
 
-    if (ENABLE_BOT) {
+    if (enableBot) {
         delete testBot;
         testBot = new Bot(game);
     }

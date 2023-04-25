@@ -281,7 +281,7 @@ namespace Tetris
 
     class Options{
     public:
-            int mode = 0;
+            int mode = NO_MODE;
             int goal = 0;
             int level = 0;
             Tuning tuning;
@@ -297,8 +297,8 @@ namespace Tetris
     class Timestamp{
     public:
         int timer;
-        int move;
-        int dir;
+        u16 move;
+        bool dir;
         bool shiftTimer = false;
 
         Timestamp(int _timer, int _move, int _dir){

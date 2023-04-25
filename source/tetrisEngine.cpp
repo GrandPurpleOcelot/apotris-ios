@@ -3,6 +3,7 @@
 #include <string>
 #include <tuple>
 
+#include "def.h"
 #include "platform.hpp"
 #include "tetromino.hpp"
 #include "tetrisEngine.h"
@@ -377,6 +378,7 @@ void Game::hardDrop() {
         finesseStreak = 0;
 
         if(trainingMode){
+            log("here");
             canHold = true;
             lockTimer = maxLockTimer;
             lockMoveCounter = 15;
@@ -587,6 +589,9 @@ void Game::update() {
     while((int)moveHistory.size() > 10)
         moveHistory.pop_front();
 
+    if(enableBot){
+        replay.clear();
+    }
 }
 
 int Game::lowest() {
@@ -1224,7 +1229,7 @@ void Game::next() {//~21-29k cycles
         if (!checkRotation(0, 0, pawn.rotation)){
             if(zoneTimer && zonedLines)
                 endZone();
-            else if(gameMode == TRAINING)
+            else if(gameMode == TRAINING || gameMode == NO_MODE)
                 clearBoard();
             else{
                 lost = 1;
@@ -1402,7 +1407,7 @@ void Game::hold(int dir) {
         if (!checkRotation(0, 0, pawn.rotation)){
             if(zoneTimer && zonedLines)
                 endZone();
-            else if(gameMode == TRAINING)
+            else if(gameMode == TRAINING || gameMode == NO_MODE)
                 clearBoard();
             else{
                 lost = 1;

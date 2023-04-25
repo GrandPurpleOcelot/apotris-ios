@@ -1,4 +1,5 @@
 #include "platform.hpp"
+#include <string>
 
 #ifdef PC
 #include "Tilengine.h"
@@ -148,6 +149,8 @@ void setInputs(){
 int windowScale = 3;
 int windowWidth = 256;
 int windowHeight = 192;
+// int windowWidth = 240;
+// int windowHeight = 160;
 
 int rowStart = (512 - windowHeight)/2;
 int rowEnd = (512 + windowHeight)/2;
@@ -515,11 +518,12 @@ void showSprites(int n ){
         if(sprite->affine && !sprite->rotate){
             TLN_SetSpritePivot(counter, 0.5, 0.5);
             TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
-            TLN_SetSpritePosition(counter, sprite->x + sprite->sx + offsetx, sprite->y + sprite->sy + offsety);
+            float scaleOffset = (1+sprite->doubleSize)/2.0;
+            TLN_SetSpritePosition(counter, sprite->x + offsetx + sprite->sx * scaleOffset, sprite->y + offsety + sprite->sy * scaleOffset);
         }else if (sprite->affine && sprite->rotate){
-            TLN_SetSpritePivot(counter, 0.5, 0.5);
+            TLN_SetSpritePivot(counter, 0, 0);
             // TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
-            TLN_SetSpritePosition(counter, sprite->x + offsetx, sprite->y + sprite->sy/2 + offsety);
+            TLN_SetSpritePosition(counter, sprite->x + offsetx, sprite->y + offsety);
             TLN_ResetSpriteScaling(counter);
         }else{
             TLN_SetSpritePosition(counter, sprite->x + offsetx, sprite->y + offsety);
@@ -540,14 +544,13 @@ void showSprites(int n ){
     }
 }
 
-// void loadTiles(uint8_t * tiles, int size){
-// }
-
 void loadPalette(int palette, int index, const void * src, int count){
     for(int i = 0; i < (int) count; i++){
         u16 r = (u16) ((u16 *) src)[i];
         ColorSplit c = ColorSplit(r);
-        TLN_SetPaletteColor(palettes[palette], index + i, c.r, c.g, c.b);
+        int p = palette + i / 16;
+
+        TLN_SetPaletteColor(palettes[p], index + i % 16, c.r, c.g, c.b);
     }
 
     if(palette == 0 && index == 0 && !gradientEnabled){
@@ -612,6 +615,7 @@ void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int 
     sprite->palette = palette;
     sprite->priority = priority;
     sprite->affine = false;
+    sprite->doubleSize = false;
     sprite->flipx = false;
     sprite->flipy = false;
     sprite->rotate = false;
@@ -924,6 +928,7 @@ void sprite_rotscale(OBJ_ATTR *sprite, FIXED sizex, FIXED sizey, int angle, int 
 
 void sprite_enable_affine(OBJ_ATTR *sprite, int affineId, bool doubleSize){
     sprite->affine = true;
+    sprite->doubleSize = doubleSize;
 }
 
 
@@ -1329,6 +1334,10 @@ void addColorToPalette(int palette, int index, COLOR color, int count){
 
 uint8_t customBlend(uint8_t a, uint8_t b){
     return (a + b + b + b + b) /5;
+}
+
+void toggleRendering(bool states){
+
 }
 
 #endif

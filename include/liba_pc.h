@@ -69,6 +69,7 @@ public:
     bool flipy;
     bool rotate = false;
     bool blend = false;
+    bool doubleSize = false;
 };
 
 typedef SpriteAttributes OBJ_ATTR;

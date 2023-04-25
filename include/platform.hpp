@@ -116,5 +116,7 @@ extern void savePalette(COLOR * dst);
 
 extern void mirrorPalettes(int index, int count);
 
+extern void toggleRendering(bool state);
+
 // //TEMPORARY
 // extern COLOR rgb8to5(u32 *c);
