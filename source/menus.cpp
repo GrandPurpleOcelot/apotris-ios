@@ -451,8 +451,8 @@ void showScore(){
 
     } else if (game->gameMode == MASTER){
         int grade = game->grade + game->coolCount + (int) game->creditGrade;
-        if(grade > 34)
-            grade = 34;
+        if(grade > 32)
+            grade = 32;
 
         std::string gradeText = GameInfo::masterGrades[grade];
 
@@ -920,8 +920,8 @@ int onRecord() {
         } else if (game->gameMode == MASTER) {
             int grade = game->grade + game->coolCount + (int) game->creditGrade;
 
-            if(grade > 34)
-                grade = 34;
+            if(grade > 32)
+                grade = 32;
 
             if (grade < savefile->master[subMode].grade[i] || (grade == savefile->master[subMode].grade[i] && gameSeconds > savefile->master[subMode].times[i].frames))
                 continue;

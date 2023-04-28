@@ -41,7 +41,7 @@ namespace GameInfo{
 
     extern const int sectionTimeGoal[10][2];
 
-    extern const char* masterGrades[36];
+    extern const char* masterGrades[33];
 
     extern const u8 gradeTable[32][6];
 
