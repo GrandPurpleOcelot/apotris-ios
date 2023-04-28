@@ -251,7 +251,7 @@ void setDefaults(Save *save, int depth){
         save->settings.cycleSongs = true;
         save->settings.dropProtectionFrames = 8;
         save->settings.abHold = true;
-        save->settings.resetHold = false;
+        save->settings.resetHoldType = false;
 
         for (int i = 0; i < 2; i++)
             for (int j = 0; j < 5; j++)
@@ -308,6 +308,7 @@ void setDefaults(Save *save, int depth){
         save->settings.irs = 0;
         save->settings.ihs = 0;
         save->settings.initialType = 1;
+        save->settings.resetHoldToggle = 0;
 
         //check if select is already bound - if not, bind it to zone activation
         int* keys = (int*) &save->settings.keys;

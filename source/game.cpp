@@ -880,7 +880,7 @@ void control() {
     }
 
     if (key_is_down(KEY_L) && key_is_down(KEY_R) && !(game->gameMode == BATTLE || game->gameMode == MASTER) && !eventPauseTimer) {
-        if(restartTimer++ > maxRestartTimer || !savefile->settings.resetHold)
+        if(!savefile->settings.resetHoldToggle && (restartTimer++ > maxRestartTimer || !savefile->settings.resetHoldType))
             playAgain = true;
     }else{
         restartTimer = 0;

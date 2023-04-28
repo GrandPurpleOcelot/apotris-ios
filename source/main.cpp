@@ -208,6 +208,8 @@ int main(void) {
 
     initialize();
 
+    log(std::to_string(savefile->settings.resetHoldToggle));
+
     //start screen animation
     while(1){
         reset();

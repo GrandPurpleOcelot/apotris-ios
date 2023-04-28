@@ -86,8 +86,9 @@ typedef struct Settings{
     bool abHold;
     struct Keys keys;
     int clearEffect;
-    bool resetHold;
+    bool resetHoldType;
     bool placeEffect;
+    bool resetHoldToggle;
     int rumble;
     int diagonalType;
     bool delaySoftDrop;

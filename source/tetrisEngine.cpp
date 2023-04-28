@@ -1408,8 +1408,10 @@ void Game::hold(int dir) {
     canHold = false;
 
     if (held == -1) {
+        int temp = fromLockRotate;
         held = pawn.current;
         next();
+        fromLockRotate = temp;
     } else {
         int temp = held;
         held = pawn.current;
@@ -1424,6 +1426,7 @@ void Game::hold(int dir) {
         }
     }
 
+    pawn.rotation = 0;
     if(rotationSystem == ARS || (irs && ((fromLockRotate && maxClearDelay > 1) || !initialType))){
         if(rotates[0])
             rotate(1);
@@ -1433,8 +1436,7 @@ void Game::hold(int dir) {
                 rotate(-1);
         } else if(rotates[2] && rotationSystem != ARS)
             rotate(2);
-    } else
-        pawn.rotation = 0;
+    }
 
     //check if stack has reached top 3 lines
     bool check = false;
