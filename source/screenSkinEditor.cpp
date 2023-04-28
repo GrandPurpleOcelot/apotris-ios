@@ -19,6 +19,7 @@
 
 // #include "soundbank.h"
 #include "tetrisEngine.h"
+#include "scene.hpp"
 
 const int xoffset = 15-8;
 const int yoffset = 10-8;

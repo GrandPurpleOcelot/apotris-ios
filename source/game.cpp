@@ -18,6 +18,7 @@
 #include "classic_pal_bin.h"
 #include "logging.h"
 #include "posprintf.h"
+#include "scene.hpp"
 
 using namespace Tetris;
 

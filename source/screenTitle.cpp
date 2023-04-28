@@ -1,3 +1,4 @@
+#include "audio_files.h"
 #include "def.h"
 #include "menu.h"
 #include "sprite41tiles_bin.h"
@@ -14,6 +15,7 @@
 #include "logging.h"
 #include "sprites.h"
 #include "classic_pal_bin.h"
+#include "scene.hpp"
 
 void drawUIFrame(int, int, int, int);
 void fallingBlocks();
@@ -2335,8 +2337,6 @@ void newTitleScene::init(){
     //backgroundGrid
     setTiles(26,0,32*32, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
 
-    // setTiles(27,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
-
     clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
@@ -2348,23 +2348,8 @@ void newTitleScene::init(){
 
     nameText.setText("akouzoukos");
 
-    // loadSpriteTiles(16*7, blockSprite, 1, 1);
-    // for(int i = 0; i < 2; i++){
-    //     cursorSprites[i] = &obj_buffer[1 + i];
-    //     sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
-    //     sprite_enable_affine(cursorSprites[i], i, true);
-    //     sprite_hide(cursorSprites[i]);
-    // }
-
-    //faded Text Palette
-    // color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
 
     enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
-
-    Element e = TestElement();
-
-    e.showLabel();
-    e.showOption();
 }
 
 
@@ -2512,7 +2497,6 @@ void SettingsScene::draw(){
 
         i++;
     }
-
 
     int y = 17*8;
     int x = (240 - 4 * 8) / 2;
@@ -2896,29 +2880,36 @@ void OptionListScene::init(){
 
     clearSprites(128);
 
-    optionList = getOptionList();
-    options = (int) optionList.size();
+    elementList = getElementList();
+    options = (int) elementList.size();
 
-    if(previousElement.size()){
-        bool found = false;
-        int i = 0;
-        for(auto const& option : optionList){
-            if(option == previousElement){
-                found = true;
-                break;
-            }
-            i++;
-        }
-
-        if(found)
-            selection = i;
-        else
-            selection = 0;
-
-        previousElement = "";
-    }else{
-        selection = previousSelection;
+    for(auto & option : elementList){
+        log(option->getLabel());
     }
+    // optionList = getOptionList();
+    // options = (int) optionList.size();
+
+    // if(previousElement.size()){
+    //     bool found = false;
+    //     int i = 0;
+    //     for(auto const& option : optionList){
+    //         if(option == previousElement){
+    //             found = true;
+    //             break;
+    //         }
+    //         i++;
+    //     }
+
+    //     if(found)
+    //         selection = i;
+    //     else
+    //         selection = 0;
+
+    //     previousElement = "";
+    // }else{
+    //     selection = previousSelection;
+    // }
+    selection = 0;
 
     //backgroundGrid
     setTiles(26,0,32*32, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
@@ -2939,7 +2930,7 @@ void OptionListScene::init(){
     //faded Text Palette
     color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
 
-    enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
+    enableBlend((0b101011 << 8) + (1 << 6) + (1 << 3));
 }
 
 void OptionListScene::draw(){
@@ -2950,49 +2941,60 @@ void OptionListScene::draw(){
     const int startY = 60;
     const int space = 1;
 
-    int offset = (sinLut(cursorFloat) * 2) >> 12;
-    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+    const int startX = 2;
+    const int endX = 27;
+
+    // int offset = (sinLut(cursorFloat) * 2) >> 12;
+    // FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
     int i = 0;
-    for(auto const & option : optionList){
-        int len = (int) option.size();
-        int x = (240 - len * 8) / 2;
+    for(auto & option : elementList){
+        aprint(option->getLabel(),startX, i * (1 + space) + startY / 8);
 
-        int pos = 0;
-        if(selection == options -1)
-            pos = -selection + 2;
-        else if(selection > 0)
-            pos = -selection + 1;
+        std::string opt = option->getCurrentOption();
 
-        int y = startY + 8 * (space + 1) * (i + pos);
-        if(moving){
-            int temp = lerp(y + (movingDirection) * (space + 1) * 8,y,64*movingTimer);
-            y = lerp(temp,y,64*movingTimer);
-        }
+        aprint(opt,endX - opt.size(), i * (1 + space) + startY / 8);
+        // log(option->getLabel());
+        // log(option.getCurrentOption(1));
 
-        if((i + pos) > 5 || (i + pos) < -3){
-            wordSprites[i]->hide();
-            i++;
-            continue;
-        }
+        // int len = (int) option.size();
+        // int x = (240 - len * 8) / 2;
 
-        wordSprites[i]->setText(option);
-        wordSprites[i]->setPriority(0);
-        if(i == selection){
-            for(int i = 0; i < 2; i++){
-                sprite_unhide(cursorSprites[i],0);
-                sprite_enable_affine(cursorSprites[i], i, true);
-                sprite_set_size(cursorSprites[i], scale , i);
+        // int pos = 0;
+        // if(selection == options -1)
+        //     pos = -selection + 2;
+        // else if(selection > 0)
+        //     pos = -selection + 1;
 
-                int x = 240/2 - (((len+1) * 8) / 2 + offset + 4) * ((i)?-1:1) - 8;
+        // int y = startY + 8 * (space + 1) * (i + pos);
+        // if(moving){
+        //     int temp = lerp(y + (movingDirection) * (space + 1) * 8,y,64*movingTimer);
+        //     y = lerp(temp,y,64*movingTimer);
+        // }
 
-                sprite_set_pos(cursorSprites[i], x, y - 5);
-            }
+        // if((i + pos) > 5 || (i + pos) < -3){
+        //     wordSprites[i]->hide();
+        //     i++;
+        //     continue;
+        // }
 
-            wordSprites[i]->show(x, y ,15 - (i != selection) - ((i + pos) > 4 || (i + pos) < -2));
-        }else{
-            wordSprites[i]->show(x, y ,15 - (i != selection) - ((i + pos) > 4 || (i + pos) < -2));
-        }
+        // wordSprites[i]->setText(option);
+        // wordSprites[i]->setPriority(0);
+        // if(i == selection){
+        //     for(int i = 0; i < 2; i++){
+        //         sprite_unhide(cursorSprites[i],0);
+        //         sprite_enable_affine(cursorSprites[i], i, true);
+        //         sprite_set_size(cursorSprites[i], scale , i);
+
+        //         int x = 240/2 - (((len+1) * 8) / 2 + offset + 4) * ((i)?-1:1) - 8;
+
+        //         sprite_set_pos(cursorSprites[i], x, y - 5);
+        //     }
+
+        //     wordSprites[i]->show(x, y ,15 - (i != selection) - ((i + pos) > 4 || (i + pos) < -2));
+        // }else{
+        //     wordSprites[i]->show(x, y ,15 - (i != selection) - ((i + pos) > 4 || (i + pos) < -2));
+        // }
 
         i++;
     }
@@ -3001,12 +3003,14 @@ void OptionListScene::draw(){
 bool OptionListScene::control(){
     if(key_hit(KEY_A)){
         sfx(SFX_MENUCONFIRM);
-        auto it = optionList.begin();
-        std::advance(it,selection);
+        if(selection < options - 1)
+            selection++;
+        // auto it = optionList.begin();
+        // std::advance(it,selection);
 
-        sceneSwitcher(*it);
+        // sceneSwitcher(*it);
 
-        previousElement = "";
+        // previousElement = "";
         return true;
     }
 
@@ -3019,7 +3023,25 @@ bool OptionListScene::control(){
         return true;
     }
 
-    int prevSelection = selection;
+    if(key_hit(KEY_LEFT)){
+        auto it = elementList.begin();
+        std::advance(it,selection);
+
+        (*it)->action(-1);
+
+        sfx(SFX_MENUMOVE);
+    }
+
+    if(key_hit(KEY_RIGHT)){
+        auto it = elementList.begin();
+        std::advance(it,selection);
+
+        (*it)->action(1);
+
+        sfx(SFX_MENUMOVE);
+    }
+
+    // int prevSelection = selection;
 
     if (key_hit(KEY_UP)) {
 
@@ -3088,11 +3110,6 @@ bool OptionListScene::control(){
         dasVer = 0;
     }
 
-    if(prevSelection != selection){
-        auto it = optionList.begin();
-        std::advance(it,selection);
-    }
-
     return false;
 }
 
@@ -3129,18 +3146,3 @@ void OptionListScene::deinit(){
 
     clearText();
 }
-
-void Element::showLabel(){
-    log("here");
-    log(label);
-};
-
-void Element::showOption(){
-    for(auto const& option : options)
-        log(option);
-};
-
-// void TestElement::setLabel(){
-//     log("here1");
-//     label = "test";
-// }

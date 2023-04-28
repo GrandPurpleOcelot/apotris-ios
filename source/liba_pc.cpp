@@ -13,6 +13,7 @@
 #include <fstream>
 #include <list>
 #include "audio_files.h"
+#include "scene.hpp"
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
