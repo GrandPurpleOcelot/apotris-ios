@@ -10,7 +10,7 @@ namespace Tetris
 {
     #define MAX_DISAPPEAR 300
     #define CREDITS_LENGTH 3240 //54 seconds * 60
-    #define maxSleep 1;
+    #define maxSleep 3;
 
     extern const u16 connectedConversion[24];
     extern const u16 connectedFix[3][24];
@@ -517,6 +517,8 @@ namespace Tetris
 
         int boardOffset = lengthY/2;
 
+        int activePiece = -1;
+
         std::list<Timestamp> replay;
 
         int checkRotation(int, int, int);
@@ -700,6 +702,7 @@ namespace Tetris
             stackHeight = oldGame.stackHeight;
             pieceCounter = oldGame.pieceCounter;
             speed = oldGame.speed;
+            activePiece = oldGame.activePiece;
         }
 
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "audio_files.h"
 #include "def.h"
 #include <list>
 #include <string>
@@ -167,7 +166,7 @@ class Element{
 
         virtual std::string getLabel(){return "";};
         // virtual std::list<std::string> getOptions(){return {};};
-        virtual int getCursorType(){return 0;};
+        virtual std::string getCursor(std::string text){return "";};
         virtual void action(int dir){};
         virtual std::string getCurrentOption(){return "";};
 
@@ -209,8 +208,20 @@ class MusicVolumeElement : public Element{
             return "Music";
         }
 
-        int getCursorType() override {
-            return 0;
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.volume > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.volume < 10)
+                result += ">";
+
+            return result;
         }
 
         void action(int dir) override{
@@ -236,24 +247,78 @@ class SFXVolumeElement : public Element{
             return "SFX";
         }
 
-        int getCursorType() override {
-            return 0;
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.sfxVolume > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.sfxVolume < 10)
+                result += ">";
+
+            return result;
         }
 
         void action(int dir) override{
             if(dir > 0){
-                if(savefile->settings.sfxVolume < 10)
+                if(savefile->settings.sfxVolume < 10){
                     savefile->settings.sfxVolume++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.sfxVolume > 0)
+                if(savefile->settings.sfxVolume > 0){
                     savefile->settings.sfxVolume--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
-
-            sfx(SFX_MENUMOVE);
         }
 
         std::string getCurrentOption() override {
             return std::to_string(savefile->settings.sfxVolume);
+        }
+};
+
+class AnnouncerElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Announcer";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.announcer = !savefile->settings.announcer;
+            sfx(SFX_MENUMOVE);
+        }
+
+        std::string getCurrentOption() override {
+            return (savefile->settings.announcer) ? "ON" : "OFF";
+        }
+};
+
+class PlaybackElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Playback";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.cycleSongs = !savefile->settings.cycleSongs;
+            sfx(SFX_MENUMOVE);
+        }
+
+        std::string getCurrentOption() override {
+            return (savefile->settings.cycleSongs) ? "CYCLE" : "LOOP";
         }
 };
 
@@ -281,15 +346,25 @@ class OptionListScene : public Scene{
     int selection = 0;
     WordSprite* wordSprites[MAX_WORD_SPRITES];
 
+    WordSprite cursorText = WordSprite(0,20,2);
+
     OBJ_ATTR * cursorSprites[2];
 
     int cursorFloat = 0;
+
+    bool refreshText = true;
+
+    int listStart = 0;
+    int startY = 0;
+
+    const int elementMax = 5;
 
     void draw();
     void update();
     bool control();
     void init();
     void deinit();
+    virtual void drawText();
     virtual Scene* previousScene(){return NULL;};
 
     ~OptionListScene(){
@@ -298,15 +373,18 @@ class OptionListScene : public Scene{
 
 };
 
-class TestOption : public OptionListScene{
+class AudioOptionScene : public OptionListScene{
     public:
     std::string name(){return "Achievements";};
         std::list<Element*> getElementList(){
             return {
                 new MusicVolumeElement(),
                 new SFXVolumeElement(),
+                new AnnouncerElement(),
+                new PlaybackElement(),
             };
         };
+
     Scene* previousScene(){return new MainMenuScene();};
 };
 

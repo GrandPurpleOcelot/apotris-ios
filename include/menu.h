@@ -83,6 +83,8 @@ public:
 
             if(c >= 0)
                 setSpriteTile(startTiles,i,0,0,&font[c]);
+            else
+                clearSpriteTiles(startTiles + i, 1, 1);
             // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
             // dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
         }
@@ -91,7 +93,7 @@ public:
 
             //TODO:
             //"+ i" might be wrong
-            clearSpriteTiles(startTiles + i, 12-i, 0);
+            clearSpriteTiles(startTiles + i, 12-i, 1);
             // memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
         }
     }

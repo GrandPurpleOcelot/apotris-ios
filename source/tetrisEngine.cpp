@@ -736,8 +736,10 @@ void Game::place() {
         }
     }
 
-    if(entryDelay)
+    if(entryDelay){
         pawn.current = -1;
+        activePiece = -1;
+    }
 
     canHold = true;
 
@@ -1201,6 +1203,7 @@ void Game::next() {//~21-29k cycles
     speedCounter = 0;
 
     pawn.current = queue.front();
+    activePiece = pawn.current;
     queue.pop_front();
     fillQueue(1);
 
@@ -1371,6 +1374,7 @@ void Game::hold(int dir) {
         int temp = held;
         held = pawn.current;
         pawn.current = temp;
+        activePiece = temp;
         pawn.setBlock(rotationSystem);
         pawn.x = (int)lengthX / 2 - 2;
 		pawn.y = (int)lengthY / 2;
@@ -1451,80 +1455,6 @@ int* Tetris::getShape(int n,int r, int rotationSystem) {
     }
 
     memcpy32(result,source,16);
-
-    // for (int i = 0; i < 4; i++){
-    //     for (int j = 0; j < 4; j++){
-    //     }
-    // }
-
-    // if(bigMode)
-    //     return result;
-
-    // for(int iy = 0; iy < 4; iy++){
-    //     for(int ix = 0; ix < 4; ix++){
-    //         if(!result[iy][ix])
-    //             continue;
-
-    //         const int n = getNbr(result, ix, iy, 4 , 0 , 4);
-
-    //         switch(n){
-    //         case 1:
-    //             if(iy > 0 && result[iy-1][ix])
-    //                 result[iy][ix] += 1 << 4;
-    //             else if(iy < 3 && result[iy+1][ix])
-    //                 result[iy][ix] += 2 << 4;
-    //             else if(ix > 0 && result[iy][ix-1])
-    //                 result[iy][ix] += 3 << 4;
-    //             else if(ix < 3 && result[iy][ix+1])
-    //                 result[iy][ix] += 4 << 4;
-    //             break;
-    //         case 2:
-    //             if(iy > 0 && result[iy-1][ix] && iy < 3 && result[iy+1][ix])
-    //                 result[iy][ix] += 5 << 4;
-    //             else if(ix > 0 && result[iy][ix-1] && ix < 3 && result[iy][ix+1])
-    //                 result[iy][ix] += 6 << 4;
-    //             else if(iy < 3 && result[iy+1][ix] && ix < 3 && result[iy][ix+1])
-    //                 result[iy][ix] += 7 << 4;
-    //             else if(iy < 3 && result[iy+1][ix] && ix > 0 && result[iy][ix-1])
-    //                 result[iy][ix] += 8 << 4;
-    //             else if(iy > 0 && result[iy-1][ix] && ix < 3 && result[iy][ix+1])
-    //                 result[iy][ix] += 9 << 4;
-    //             else if(iy > 0 && result[iy-1][ix] && ix > 0 && result[iy][ix-1])
-    //                 result[iy][ix] += 10 << 4;
-    //             break;
-    //         case 3:
-    //             if(iy < 3 && result[iy+1][ix] && ix < 3 && result[iy][ix+1] && result[iy+1][ix+1])
-    //                 result[iy][ix] += 11 << 4;
-    //             else if(iy < 3 && result[iy+1][ix] && ix > 0 && result[iy][ix-1] && result[iy+1][ix-1])
-    //                 result[iy][ix] += 12 << 4;
-    //             else if(iy > 0 && result[iy-1][ix] && ix < 3 && result[iy][ix+1] && result[iy-1][ix+1])
-    //                 result[iy][ix] += 13 << 4;
-    //             else if(iy > 0 && result[iy-1][ix] && ix > 0 && result[iy][ix-1] && result[iy-1][ix-1])
-    //                 result[iy][ix] += 14 << 4;
-    //             else if(iy > 0 && result[iy-1][ix] && iy < 3 && result[iy+1][ix] && ix < 3 && result[iy][ix+1])
-    //                 result[iy][ix] += 15 << 4;
-    //             else if(ix > 0 && result[iy][ix-1] && ix < 3 && result[iy][ix+1] && iy < 3 && result[iy+1][ix])
-    //                 result[iy][ix] += 16 << 4;
-    //             else if(iy > 0 && result[iy-1][ix] && iy < 3 && result[iy+1][ix] && ix > 0 && result[iy][ix-1])
-    //                 result[iy][ix] += 17 << 4;
-    //             else if(ix > 0 && result[iy][ix-1] && ix < 3 && result[iy][ix+1] && iy > 0 && result[iy-1][ix])
-    //                 result[iy][ix] += 18 << 4;
-    //             break;
-    //         }
-    //         // }else if(n == 5){
-    //         //     if(iy < 3 && ix < 3 && ix > 0 && result[iy+1][ix-1] && result[iy+1][ix+1])
-    //         //         result[iy][ix] += 19 << 4;
-    //         //     else if(iy > 0 && ix < 3 && ix > 0 && result[iy-1][ix-1] && result[iy-1][ix+1])
-    //         //         result[iy][ix] += 20 << 4;
-    //         //     else if(ix < 3 && iy < 3 && iy > 0 && result[iy-1][ix+1] && result[iy+1][ix+1])
-    //         //         result[iy][ix] += 21 << 4;
-    //         //     else if(ix > 0 && iy < 3 && iy > 0 && result[iy-1][ix-1] && result[iy+1][ix-1])
-    //         //         result[iy][ix] += 22 << 4;
-    //         // }else if(n == 8){
-    //         //     result[iy][ix] += 23 << 4;
-    //     }
-    // }
-
     return result;
 }
 

@@ -616,7 +616,8 @@ void showBackground(int offset) {
 
 void showPawn() {
     pawnSprite = &obj_buffer[0];
-    if (game->clearLock || game->pawn.current == -1 || (enableBot && game->gameMode != BATTLE)) {
+    // if (game->clearLock || game->pawn.current == -1 || (enableBot && game->gameMode != BATTLE)) {
+    if (game->clearLock || game->activePiece == -1) {
         sprite_hide(pawnSprite);
         return;
     }
@@ -630,42 +631,31 @@ void showPawn() {
 
     sprite_unhide(pawnSprite, 0);
 
+    int * b = Tetris::getShape(game->activePiece, game->pawn.rotation, game->rotationSystem);
+
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            int n = game->pawn.board[game->pawn.rotation][i][j];
+            int n = b[i * 4 + j];
             if (n > 0){
                 if(savefile->settings.skin == 11)
                     setSpriteTile(16 * 7, j, i, 4, &sprite38tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
                 else if(savefile->settings.skin == 12)
                     setSpriteTile(16 * 7, j, i, 4, &sprite39tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
-                    // memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite39tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
                 else if(savefile->settings.skin == 13)
                     setSpriteTile(16 * 7, j, i, 4, &sprite40tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
-                    // memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite40tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
                 else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
                     setSpriteTile(16 * 7, j, i, 4, blockSprite);
-                    // memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], blockSprite, sprite1tiles_bin_size / 2);
                 else
-                    setSpriteTile(16 * 7, j, i, 4, classicTiles[savefile->settings.skin-7][game->pawn.current]);
-                    // memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], classicTiles[savefile->settings.skin-7][game->pawn.current], sprite1tiles_bin_size / 2);
-                // if(savefile->settings.skin == 11)
-                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite38tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
-                // else if(savefile->settings.skin == 12)
-                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite39tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
-                // else if(savefile->settings.skin == 13)
-                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], &sprite40tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32], sprite1tiles_bin_size / 2);
-                // else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
-                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], blockSprite, sprite1tiles_bin_size / 2);
-                // else
-                //     memcpy16(&tile_mem[4][16 * 7 + i * 4 + j], classicTiles[savefile->settings.skin-7][game->pawn.current], sprite1tiles_bin_size / 2);
-            }else
+                    setSpriteTile(16 * 7, j, i, 4, classicTiles[savefile->settings.skin-7][game->activePiece]);
+            }else{
                 clearSpriteTile(16*7,j,i,4);
-                // setSpriteTile(16 * 7, j, i, classicTiles[savefile->settings.skin-7][game->pawn.current]);
-                // memset16(&tile_mem[4][16 * 7 + i * 4 + j], 0, sprite1tiles_bin_size / 2);
+            }
         }
     }
 
-    int n = game->pawn.current;
+    delete[] b;
+
+    int n = game->activePiece;
 
     int blend = 0;
 
@@ -679,24 +669,20 @@ void showPawn() {
     if(!game->pawn.big){
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
         sprite_enable_mosaic(pawnSprite);
-        // obj_set_attr(pawnSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(16 * 7, 11, 2));
         sprite_set_pos(pawnSprite, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->pawn.y - game->boardOffset) * 8 + shake * savefile->settings.shake);
     }else{
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
         sprite_enable_mosaic(pawnSprite);
         sprite_enable_affine(pawnSprite, 31, true);
         sprite_set_size(pawnSprite, 1<<7, 31);
-        // obj_set_attr(pawnSprite, ATTR0_SQUARE | ATTR0_AFF_DBL | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(31), ATTR2_BUILD(16 * 7, 11, 2));
-        // obj_aff_identity(&obj_aff_buffer[31]);
-        // obj_aff_scale(&obj_aff_buffer[31], 1<<7, 1<<7);
         sprite_set_pos(pawnSprite, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->pawn.y*2 - game->boardOffset) * 8 + shake * savefile->settings.shake);
     }
-
 }
 
 void showShadow() {
     pawnShadow = &obj_buffer[1];
-    if (game->clearLock || game->pawn.current == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100) || (enableBot && game->gameMode != BATTLE)) {
+    // if (game->clearLock || game->activePiece == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100) || (enableBot && game->gameMode != BATTLE)) {
+    if (game->clearLock || game->activePiece == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100)) {
         sprite_hide(pawnShadow);
         return;
     }
@@ -719,7 +705,7 @@ void showShadow() {
             if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
                 shadowTexture = blockSprite;
             else
-                shadowTexture = (u8*)classicTiles[savefile->settings.skin-7][game->pawn.current];
+                shadowTexture = (u8*)classicTiles[savefile->settings.skin-7][game->activePiece];
             bld = true;
             break;
         case 4: sprite_hide(pawnShadow); return;
@@ -728,20 +714,20 @@ void showShadow() {
 
     sprite_unhide(pawnShadow, 0);
 
+    int * b = Tetris::getShape(game->activePiece, game->pawn.rotation, game->rotationSystem);
+
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            if(game->pawn.board[game->pawn.rotation][i][j] > 0){
+            if(b[i * 4 + j] > 0){
                 setSpriteTile(16 * 8, j, i, 4, shadowTexture);
-                // memcpy16(&tile_mem[4][16 * 8 + i * 4 + j], shadowTexture, sprite2tiles_bin_size / 2);
             } else
                 clearSpriteTile(16*8, j, i, 4);
-                // clear
-                // setSpriteTile(16 * 8, j, i, 4, 0);
-                // memset16(&tile_mem[4][16 * 8 + i * 4 + j], 0, sprite2tiles_bin_size / 2);
         }
     }
 
-    int n = game->pawn.current;
+    delete[] b;
+
+    int n = game->activePiece;
 
     if(!game->zoneTimer){
         setPawnPalette(10, n, 14*bld);

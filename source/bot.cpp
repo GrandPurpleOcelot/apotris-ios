@@ -10,6 +10,8 @@
 int botThinkingSpeed = 9;
 int botSleepDuration = 1;
 
+int stepMax = 1;
+
 using namespace Tetris;
 
 void showTestBoard();
@@ -309,14 +311,15 @@ void Bot::move(){
         // }
     }
 
+    int step = 0;
     if(dx > current.dx){
-        while(dx != current.dx){
+        while(dx != current.dx && step++ < stepMax){
             game->keyLeft(1);
             game->keyLeft(0);
             dx--;
         }
     }else if(dx < current.dx){
-        while(dx != current.dx){
+        while(dx != current.dx && step++ < stepMax){
             game->keyRight(1);
             game->keyRight(0);
             dx++;

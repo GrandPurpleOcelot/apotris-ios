@@ -10,6 +10,7 @@
 #include "text.h"
 #include "soundbank_bin.h"
 #include "flashSaves.h"
+#include "scene.hpp"
 
 // #include <string>
 // #include "scene.hpp"
