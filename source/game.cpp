@@ -851,7 +851,7 @@ void control() {
         game->rotateTwice(1);
     }
 
-    if(savefile->settings.abHold && key_released(KEY_A) && key_released(KEY_B)){
+    if(savefile->settings.abHold && (key_released(KEY_A) || key_released(KEY_B))){
         game->hold(0);
     }
 

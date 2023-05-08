@@ -712,7 +712,7 @@ void Game::place() {
 
     bool toEndZone = false;
     if ((pawn.y+lowestPart) * (1+pawn.big) + pawn.big <= (lengthY / 2 - 1)) {
-        if(zoneTimer && zonedLines)
+        if(zoneTimer)
             toEndZone = true;
         else if(gameMode == TRAINING)
             clearBoard();
@@ -804,7 +804,8 @@ void Game::place() {
 
     canHold = true;
 
-    if (!clearLock && !entryDelay && !(zoneTimer == 1 && comboCounter > 0))
+    // if (!clearLock && !entryDelay && !(zoneTimer == 1 && comboCounter > 0))
+    if (!clearLock && !entryDelay)
         next();
 
     lockTimer = maxLockTimer;
@@ -1224,18 +1225,6 @@ void Game::next() {
     pawn.y = (int)lengthY / 2;
     pawn.x = (int)lengthX / 2 - 2;
 
-    pawn.rotation = 0;
-    if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
-        if(rotates[0])
-            rotate(1);
-        else if(rotates[1]){
-            rotate(-1);
-            if(rotates[2] && rotationSystem == ARS)
-                rotate(-1);
-        } else if(rotates[2] && rotationSystem != ARS)
-            rotate(2);
-    }
-
     speedCounter = 0;
 
     pawn.current = queue.front();
@@ -1260,17 +1249,55 @@ void Game::next() {
         pawn.y/=2;
     }
 
+    pawn.rotation = 0;
+    if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
+        if(rotationSystem == ARS){
+            if(rotates[0])
+                rotate(1);
+            else if(rotates[1]){
+                rotate(-1);
+                if(rotates[2] && rotationSystem == ARS)
+                    rotate(-1);
+            } else if(rotates[2] && rotationSystem != ARS)
+                rotate(2);
+        }else{
+            int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
+
+            pawn.rotation = sum + 4 * (sum < 0);
+        }
+    }
+
     //check if stack has reached top 3 lines
     bool check = false;
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 10; j++){
-            if(board[21+i][j] != 0){
-                check = true;
-                break;
-            }
+    const int line = 21 + 3 * (1 + pawn.big);
+    for(int j = 0; j < 10; j++){
+        if(board[line][j] != 0){
+            check = true;
+            break;
         }
-        if(check)
-           break;
+    }
+
+    if(pawn.rotation && rotationSystem == SRS){
+        int lowestPart = 0;
+        for(int i = 3; i >= 0; i--){//find height of lowest block in column
+            for(int j = 0; j < 4; j++){
+                if(pawn.board[pawn.rotation][i][j]){
+                    lowestPart = i;
+                    break;
+                }
+            }
+
+            if(lowestPart == i)
+                break;
+        }
+
+        int n = 0;
+        if(!pawn.big)
+            n = (40 - 19) - (lowestPart + pawn.y);
+        else
+            n = (20 - 9) - (lowestPart + pawn.y);
+
+        pawn.y += std::min(n,0);
     }
 
     if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
@@ -1428,27 +1455,53 @@ void Game::hold(int dir) {
 
     pawn.rotation = 0;
     if(rotationSystem == ARS || (irs && ((fromLockRotate && maxClearDelay > 1) || !initialType))){
-        if(rotates[0])
-            rotate(1);
-        else if(rotates[1]){
-            rotate(-1);
-            if(rotates[2] && rotationSystem == ARS)
+        if(rotationSystem == ARS){
+            if(rotates[0])
+                rotate(1);
+            else if(rotates[1]){
                 rotate(-1);
-        } else if(rotates[2] && rotationSystem != ARS)
-            rotate(2);
+                if(rotates[2] && rotationSystem == ARS)
+                    rotate(-1);
+            } else if(rotates[2] && rotationSystem != ARS)
+                rotate(2);
+        }else{
+            int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
+
+            pawn.rotation = sum + 4 * (sum < 0);
+        }
     }
 
     //check if stack has reached top 3 lines
     bool check = false;
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 10; j++){
-            if(board[21+i][j] != 0){
-                check = true;
-                break;
-            }
-        }
-        if(check)
+    const int line = 21 + 3 * (1 + pawn.big);
+    for(int j = 0; j < 10; j++){
+        if(board[line][j] != 0){
+            check = true;
             break;
+        }
+    }
+
+    if(pawn.rotation && rotationSystem == SRS){
+        int lowestPart = 0;
+        for(int i = 3; i >= 0; i--){//find height of lowest block in column
+            for(int j = 0; j < 4; j++){
+                if(pawn.board[pawn.rotation][i][j]){
+                    lowestPart = i;
+                    break;
+                }
+            }
+
+            if(lowestPart == i)
+                break;
+        }
+
+        int n = 0;
+        if(!pawn.big)
+            n = (40 - 19) - (lowestPart + pawn.y);
+        else
+            n = (20 - 9) - (lowestPart + pawn.y);
+
+        pawn.y += std::min(n,0);
     }
 
     if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
@@ -2208,6 +2261,8 @@ void Game::endZone(){
 
     eventLock = true;
     zoneExit = true;
+
+    previousClear.isPerfectClear = false;
 }
 
 void Game::clearBoard(){
