@@ -1943,13 +1943,10 @@ void showZoneMeter(){
 
     int n;
     if(!game->zoneTimer){
-        n = game->zoneCharge / 3;
-        if(game->zoneCharge == 32)
-            n = 12;
-        else if(game->zoneCharge == 8)
-            n = 3;
+        int part = game->zoneCharge / 8;
+        n = part * 3 + (game->zoneCharge % 8) / 3;
     }else{
-        n = game->zoneTimer / 100 + 1;
+        n = game->zoneTimer / 100 + !(game->zoneTimer == 1);
     }
 
     for(int i = 0; i < 12; i++){
@@ -2120,7 +2117,7 @@ void rainbowPalette(){
 }
 
 void showZoneText(){
-    if(game->zonedLines == 0 || !savefile->settings.floatText)
+    if(game->zonedLines == 0)
         return;
 
     aprintClearArea(10, 0, 10, 20);

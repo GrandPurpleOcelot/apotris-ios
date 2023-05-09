@@ -710,7 +710,7 @@ void Game::place() {
             break;
     }
 
-    bool toEndZone = false;
+    toEndZone = false;
     if ((pawn.y+lowestPart) * (1+pawn.big) + pawn.big <= (lengthY / 2 - 1)) {
         if(zoneTimer)
             toEndZone = true;
@@ -831,7 +831,6 @@ void Game::place() {
 }
 
 int Game::clear(Drop drop) {
-
     int clearCount = 0;
     int attack = 0;
     int isTSpin = 0;
@@ -1303,9 +1302,10 @@ void Game::next() {
     if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
         pawn.y-=1;
         if (!checkRotation(0, 0, pawn.rotation)){
-            if(zoneTimer && zonedLines)
-                endZone();
-            else if(gameMode == TRAINING)
+            if(zoneTimer && zonedLines) {
+                if(!toEndZone)
+                    endZone();
+            } else if(gameMode == TRAINING)
                 clearBoard();
             else{
                 lost = 1;
@@ -1748,7 +1748,7 @@ void Game::removeClearLock() {
         }
     }
 
-    linesToClear = std::list<int>();
+    linesToClear.clear();
 
     if(!entryDelay && !zoneExit){
         next();

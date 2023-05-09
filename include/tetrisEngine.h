@@ -442,6 +442,8 @@ namespace Tetris
 
         int inGameTimer = 0;
 
+        bool toEndZone = false;
+
         int checkRotation(int, int, int);
         void rotateCW(int dir);
         void rotateCCW(int dir);
