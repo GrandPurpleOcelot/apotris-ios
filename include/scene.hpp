@@ -9,6 +9,7 @@ extern int previousSelection;
 extern void sceneSwitcher(std::string str);
 extern const std::list<std::string> menuOptions;
 extern const std::list<std::string> gameOptions;
+extern const std::list<std::string> settingsOptions;
 
 class Scene{
 public:
@@ -36,15 +37,6 @@ class GameScene : public Scene{
 };
 
 class TitleScene : public Scene{
-    void draw();
-    void update(){};
-    bool control(){return false;};
-    void init(){};
-    void deinit(){};
-    Scene* previousScene(){return NULL;};
-};
-
-class GraphicsScene : public Scene{
     void draw();
     void update(){};
     bool control(){return false;};
@@ -114,7 +106,7 @@ class SimpleListScene : public Scene{
     virtual std::list<std::string> getOptionList(){return menuOptions;};
     std::list<std::string> optionList;
 
-    virtual std::string name(){return "Menu";};
+    virtual std::string name(){return "";};
 
     int options = 0;
     int selection = 0;
@@ -123,6 +115,11 @@ class SimpleListScene : public Scene{
     OBJ_ATTR * cursorSprites[2];
 
     int cursorFloat = 0;
+
+    int listStart = 0;
+    const int elementMax = 4;
+
+    int startY = 0;
 
     void draw();
     void update();
@@ -142,7 +139,7 @@ class MainMenuScene: public SimpleListScene{
     Scene* previousScene();
 
     std::list<std::string> getOptionList(){return menuOptions;};
-    std::string name(){return "Menu";};
+    std::string name(){return "";};
 };
 
 class ModeListScene: public SimpleListScene{
@@ -168,6 +165,7 @@ class Element{
         // virtual std::list<std::string> getOptions(){return {};};
         virtual std::string getCursor(std::string text){return "";};
         virtual void action(int dir){};
+        virtual void action(){};
         virtual std::string getCurrentOption(){return "";};
 
         Element(){
@@ -322,6 +320,25 @@ class PlaybackElement : public Element{
         }
 };
 
+class SongListElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Song List";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action() override{
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            return "...";
+        }
+};
+
 
 class OptionListScene : public Scene{
     public:
@@ -355,9 +372,9 @@ class OptionListScene : public Scene{
     bool refreshText = true;
 
     int listStart = 0;
-    int startY = 0;
-
     const int elementMax = 5;
+
+    int startY = 0;
 
     void draw();
     void update();
@@ -373,54 +390,52 @@ class OptionListScene : public Scene{
 
 };
 
+class SettingsScene : public SimpleListScene{
+    public:
+    Scene* previousScene(){return new MainMenuScene();};
+
+    std::list<std::string> getOptionList(){return settingsOptions;};
+    std::string name(){return "Settings";};
+};
+
+class GraphicsScene : public Scene{
+    void draw(){};
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene(){return new SettingsScene();};
+
+    bool showOptions = true;
+    bool showGame = true;
+
+    int selection = 0;
+
+    const int maxDas = 16;
+    int dasVer = 0;
+    int dasHor = 0;
+    int dasOffset = 0;
+
+    const int maxArr = 3;
+    int arr = 0;
+
+    int prevBld = blendInfo;
+};
+
 class AudioOptionScene : public OptionListScene{
     public:
-    std::string name(){return "Achievements";};
+    std::string name(){return "Audio";};
         std::list<Element*> getElementList(){
             return {
                 new MusicVolumeElement(),
                 new SFXVolumeElement(),
                 new AnnouncerElement(),
                 new PlaybackElement(),
+                new SongListElement(),
             };
         };
 
-    Scene* previousScene(){return new MainMenuScene();};
-};
-
-class SettingsScene : public Scene{
-    int maxDas = 16;
-    int dasHor = 0;
-    int dasVer = 0;
-
-    int maxArr = 3;
-    int arr = 0;
-
-    bool moving = false;
-    bool movingHor = false;
-    int movingTimer = 0;
-    int movingDirection = 0;
-
-    int options = 0;
-    int selection = 0;
-    WordSprite* wordSprites[MAX_WORD_SPRITES];
-
-    WordSprite saveText = WordSprite(0,20,2);
-
-    OBJ_ATTR * cursorSprites[2];
-
-    int cursorFloat = 0;
-
-    void draw();
-    void update();
-    bool control();
-    void init();
-    void deinit();
-    Scene* previousScene(){return NULL;};
-
-    ~SettingsScene(){
-        deinit();
-    };
+    Scene* previousScene(){return new SettingsScene();};
 };
 
 enum Transitions{

@@ -68,6 +68,7 @@ int bigModeMessageMax = 180;
 
 const std::list<std::string> menuOptions = {"Play","Settings","Achievements","Stats","Links","Skin Editor","Credits"};
 const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","2P Battle","CPU Battle","Training"};
+const std::list<std::string> settingsOptions = {"Graphics","Audio","Controls","Handling"};
 
 const int secretCombo[11] = {KEY_UP,KEY_UP,KEY_DOWN,KEY_DOWN,KEY_LEFT,KEY_RIGHT,KEY_LEFT,KEY_RIGHT,KEY_B,KEY_A,KEY_START};
 
@@ -86,6 +87,8 @@ bool refreshText = true;
 bool demo = false;
 
 std::string previousElement;
+
+std::list<std::string> path;
 
 void startScreen() {
 
@@ -2420,204 +2423,204 @@ void newTitleScene::deinit(){
     clearText();
 }
 
-void SettingsScene::init(){
-    // setTiles(26,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
-    drawUIFrame(0, 0, 30, 20);
+// void SettingsScene::init(){
+//     // setTiles(26,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+//     drawUIFrame(0, 0, 30, 20);
 
-    enableBlend((1 << 13) + (1 << 6) + (1 << 1));
+//     enableBlend((1 << 13) + (1 << 6) + (1 << 1));
 
-    options = 6;
-    #ifdef PC
-    options = 7;
-    #endif
+//     options = 6;
+//     #ifdef PC
+//     options = 7;
+//     #endif
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
+//     for (int i = 0; i < MAX_WORD_SPRITES; i++)
+//         wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
 
-    saveText.setText("SAVE");
+//     saveText.setText("SAVE");
 
-    for(int i = 0; i < 2; i++){
-        cursorSprites[i] = &obj_buffer[1 + i];
-        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
-        sprite_enable_affine(cursorSprites[i], i, true);
-        sprite_hide(cursorSprites[i]);
-    }
-}
+//     for(int i = 0; i < 2; i++){
+//         cursorSprites[i] = &obj_buffer[1 + i];
+//         sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+//         sprite_enable_affine(cursorSprites[i], i, true);
+//         sprite_hide(cursorSprites[i]);
+//     }
+// }
 
-const std::list<std::string> settingsOptions = {
-    "Graphics",
-    "Window",
-    "Audio",
-    "Controls",
-    "Handling",
-    "Skin Editor"
-};
+// const std::list<std::string> settingsOptions = {
+//     "Graphics",
+//     "Window",
+//     "Audio",
+//     "Controls",
+//     "Handling",
+//     "Skin Editor"
+// };
 
-void SettingsScene::draw(){
-    // gradient(1);
-    showSprites(128);
-    toggleBG(3, true);
+// void SettingsScene::draw(){
+//     // gradient(1);
+//     showSprites(128);
+//     toggleBG(3, true);
 
-    int startY = 32;
+//     int startY = 32;
 
-    #ifdef GBA
-    startY += 8;
-    #endif
+//     #ifdef GBA
+//     startY += 8;
+//     #endif
 
-    const int space = 1;
+//     const int space = 1;
 
-    int offset = (sinLut(cursorFloat) * 2) >> 12;
+//     int offset = (sinLut(cursorFloat) * 2) >> 12;
 
-    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+//     FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
-    int i = 0;
-    for(auto const & option : settingsOptions){
-        #ifdef GBA
-        if(option == "Window")
-            continue;
-        #endif
-        int len = (int) option.size();
-        int x = (240 - len * 8) / 2;
-        int y = startY + 8 * (space + 1) * i;
+//     int i = 0;
+//     for(auto const & option : settingsOptions){
+//         #ifdef GBA
+//         if(option == "Window")
+//             continue;
+//         #endif
+//         int len = (int) option.size();
+//         int x = (240 - len * 8) / 2;
+//         int y = startY + 8 * (space + 1) * i;
 
-        wordSprites[i]->setText(option);
-        wordSprites[i]->setPriority(1 + (i != selection));
-        if(i == selection){
-            for(int i = 0; i < 2; i++){
-                sprite_unhide(cursorSprites[i],0);
-                sprite_enable_affine(cursorSprites[i], i, true);
-                sprite_set_size(cursorSprites[i], scale , i);
-                sprite_set_pos(cursorSprites[i], 240/2 - (((len/2)+1) * 8 + offset + 4) * ((i)?-1:1) - 8, y - 5);
-            }
+//         wordSprites[i]->setText(option);
+//         wordSprites[i]->setPriority(1 + (i != selection));
+//         if(i == selection){
+//             for(int i = 0; i < 2; i++){
+//                 sprite_unhide(cursorSprites[i],0);
+//                 sprite_enable_affine(cursorSprites[i], i, true);
+//                 sprite_set_size(cursorSprites[i], scale , i);
+//                 sprite_set_pos(cursorSprites[i], 240/2 - (((len/2)+1) * 8 + offset + 4) * ((i)?-1:1) - 8, y - 5);
+//             }
 
-            wordSprites[i]->show(x, y ,15 - (i != selection));
-        }else{
-            wordSprites[i]->show(x, y ,15 - (i != selection));
-        }
+//             wordSprites[i]->show(x, y ,15 - (i != selection));
+//         }else{
+//             wordSprites[i]->show(x, y ,15 - (i != selection));
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    int y = 17*8;
-    int x = (240 - 4 * 8) / 2;
-    saveText.show(x,y,15 - !(selection == options - 1));
+//     int y = 17*8;
+//     int x = (240 - 4 * 8) / 2;
+//     saveText.show(x,y,15 - !(selection == options - 1));
 
-    if(selection == options - 1){
-        for(int i = 0; i < 2; i++){
-            sprite_unhide(cursorSprites[i],0);
-            sprite_enable_affine(cursorSprites[i], i, true);
-            sprite_set_size(cursorSprites[i], scale , i);
-            sprite_set_pos(cursorSprites[i], 240/2 - (((4/2)+1) * 8 + offset + 4) * ((i)?-1:1) - 8, y - 5);
-        }
-    }
-}
+//     if(selection == options - 1){
+//         for(int i = 0; i < 2; i++){
+//             sprite_unhide(cursorSprites[i],0);
+//             sprite_enable_affine(cursorSprites[i], i, true);
+//             sprite_set_size(cursorSprites[i], scale , i);
+//             sprite_set_pos(cursorSprites[i], 240/2 - (((4/2)+1) * 8 + offset + 4) * ((i)?-1:1) - 8, y - 5);
+//         }
+//     }
+// }
 
-void SettingsScene::update(){
-    canDraw = 1;
-    key_poll();
-    gradient(1);
+// void SettingsScene::update(){
+//     canDraw = 1;
+//     key_poll();
+//     gradient(1);
 
-    cursorFloat += 6;
-    if(cursorFloat >= 512)
-        cursorFloat = 0;
+//     cursorFloat += 6;
+//     if(cursorFloat >= 512)
+//         cursorFloat = 0;
 
-    control();
-}
+//     control();
+// }
 
-bool SettingsScene::control(){
-    if(key_hit(KEY_B)){
-        sfx(SFX_MENUCANCEL);
-        changeScene(new MainMenuScene(),FADE);
-        return true;
-    }
+// bool SettingsScene::control(){
+//     if(key_hit(KEY_B)){
+//         sfx(SFX_MENUCANCEL);
+//         changeScene(new MainMenuScene(),FADE);
+//         return true;
+//     }
 
-    if (key_hit(KEY_UP)) {
-        if (selection == 0)
-            selection = options - 1;
-        else
-            selection--;
+//     if (key_hit(KEY_UP)) {
+//         if (selection == 0)
+//             selection = options - 1;
+//         else
+//             selection--;
 
-        sfx(SFX_MENUMOVE);
-        refreshText = true;
-    }
+//         sfx(SFX_MENUMOVE);
+//         refreshText = true;
+//     }
 
-    if (key_hit(KEY_DOWN)) {
-        if (selection == options - 1)
-            selection = 0;
-        else
-            selection++;
+//     if (key_hit(KEY_DOWN)) {
+//         if (selection == options - 1)
+//             selection = 0;
+//         else
+//             selection++;
 
-        sfx(SFX_MENUMOVE);
-        refreshText = true;
-    }
+//         sfx(SFX_MENUMOVE);
+//         refreshText = true;
+//     }
 
-    if (key_is_down(KEY_UP)) {
-        if (dasVer < maxDas) {
-            dasVer++;
-        } else if(selection != 0){
-            if (arr++ > maxArr) {
-                arr = 0;
-                selection--;
-                // if(onPlay){
-                //     moving = true;
-                //     movingDirection = -1;
-                // }
-                sfx(SFX_MENUMOVE);
-            //     refreshText = true;
-            }
-        }
-    } else if (key_is_down(KEY_DOWN)) {
-        if (dasVer < maxDas) {
-            dasVer++;
-        } else if(selection != options-1){
-            if (arr++ > maxArr) {
-                arr = 0;
-                selection++;
-                // if(onPlay){
-                //     moving = true;
-                //     movingDirection = 1;
-                // }
-                sfx(SFX_MENUMOVE);
-                // refreshText = true;
-            }
-        }
-    } else {
-        dasVer = 0;
-    }
+//     if (key_is_down(KEY_UP)) {
+//         if (dasVer < maxDas) {
+//             dasVer++;
+//         } else if(selection != 0){
+//             if (arr++ > maxArr) {
+//                 arr = 0;
+//                 selection--;
+//                 // if(onPlay){
+//                 //     moving = true;
+//                 //     movingDirection = -1;
+//                 // }
+//                 sfx(SFX_MENUMOVE);
+//             //     refreshText = true;
+//             }
+//         }
+//     } else if (key_is_down(KEY_DOWN)) {
+//         if (dasVer < maxDas) {
+//             dasVer++;
+//         } else if(selection != options-1){
+//             if (arr++ > maxArr) {
+//                 arr = 0;
+//                 selection++;
+//                 // if(onPlay){
+//                 //     moving = true;
+//                 //     movingDirection = 1;
+//                 // }
+//                 sfx(SFX_MENUMOVE);
+//                 // refreshText = true;
+//             }
+//         }
+//     } else {
+//         dasVer = 0;
+//     }
 
-    if(key_hit(KEY_A)){
+//     if(key_hit(KEY_A)){
 
-        int n = selection;
+//         int n = selection;
 
-        #ifdef GBA
-        if(n)
-            n++;
-        #endif
+//         #ifdef GBA
+//         if(n)
+//             n++;
+//         #endif
 
-        switch(n){
-            case 0: graphicTest(); break;
-            case 1: windowSettings(); break;
-            case 2: audioSettings(); break;
-            case 3: controlsSettings(); break;
-            case 4: handlingSettings(); break;
-            case 5: skinEditor(); break;
-        }
-    }
-    return false;
-}
+//         switch(n){
+//             case 0: graphicTest(); break;
+//             case 1: windowSettings(); break;
+//             case 2: audioSettings(); break;
+//             case 3: controlsSettings(); break;
+//             case 4: handlingSettings(); break;
+//             case 5: skinEditor(); break;
+//         }
+//     }
+//     return false;
+// }
 
-void SettingsScene::deinit(){
-    gradient(0);
+// void SettingsScene::deinit(){
+//     gradient(0);
 
-    clearTilemap(25);
-    clearTilemap(26);
-    clearTilemap(27);
-    clearSpriteTiles(256, 256, 4);
+//     clearTilemap(25);
+//     clearTilemap(26);
+//     clearTilemap(27);
+//     clearSpriteTiles(256, 256, 4);
 
-    previousSelection = 1;
+//     previousSelection = 1;
 
-    clearText();
-}
+//     clearText();
+// }
 
 Scene* MainMenuScene::previousScene(){
     return new newTitleScene();
@@ -2633,6 +2636,8 @@ void SimpleListScene::init(){
 
     optionList = getOptionList();
     options = (int) optionList.size();
+
+    startY = 40;
 
     if(previousElement.size()){
         bool found = false;
@@ -2675,46 +2680,72 @@ void SimpleListScene::init(){
     color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
+
+    if(name() != "" && path.back() != name())
+        path.push_back(name());
+
+    std::string p;
+    int i = 0;
+    auto it = path.begin();
+    while(it != path.end()){
+        if(i != 0)
+            p += " > ";
+
+        p += *it;
+
+        it++;
+        i++;
+    }
+
+    int count = p.size() / 12 + 1;
+
+    for(int i = 0; i < count; i++){
+        int wordIndex = MAX_WORD_SPRITES - count - 1 + i;
+
+        std::string str = p.substr(0,std::min(12, (int) p.size()));
+        wordSprites[wordIndex]->setText(str);
+        p.erase(0,std::min(12, (int) p.size()));
+
+        wordSprites[wordIndex]->show(i * 12 * 8 + 4, 4,15);
+    }
 }
 
 
 void SimpleListScene::draw(){
     fallingBlocks();
-    showSprites(128);
     toggleBG(3,true);
 
-    const int startY = 60;
     const int space = 1;
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
     FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
-    int i = 0;
+    int verticalOffset = 0;
+    if(moving){
+        int temp = lerp((movingDirection) * (space + 1) * 8,0,64*movingTimer);
+        verticalOffset = lerp(temp,0,64*movingTimer);
+    }
+
+    int i = 0;//drawing index, starts at listStart
+    int counter = 0;//element index
     for(auto const & option : optionList){
-        int len = (int) option.size();
-        int x = (240 - len * 8) / 2;
-
-        int pos = 0;
-        if(selection == options -1)
-            pos = -selection + 2;
-        else if(selection > 0)
-            pos = -selection + 1;
-
-        int y = startY + 8 * (space + 1) * (i + pos);
-        if(moving){
-            int temp = lerp(y + (movingDirection) * (space + 1) * 8,y,64*movingTimer);
-            y = lerp(temp,y,64*movingTimer);
-        }
-
-        if((i + pos) > 5 || (i + pos) < -3){
-            wordSprites[i]->hide();
-            i++;
+        if(counter < listStart){
+            counter++;
             continue;
         }
 
+        if(i > elementMax + 1){ // break if elements drawn reached max
+            continue;
+        }
+
+        int len = (int) option.size();
+        int x = (240 - len * 8) / 2;
+
+        int y = startY + 8 * (space + 1) * i + verticalOffset;
+
         wordSprites[i]->setText(option);
         wordSprites[i]->setPriority(0);
-        if(i == selection){
+        if(counter == selection){
             for(int i = 0; i < 2; i++){
                 sprite_unhide(cursorSprites[i],0);
                 sprite_enable_affine(cursorSprites[i], i, true);
@@ -2725,13 +2756,20 @@ void SimpleListScene::draw(){
                 sprite_set_pos(cursorSprites[i], x, y - 5);
             }
 
-            wordSprites[i]->show(x, y ,15 - (i != selection) - ((i + pos) > 4 || (i + pos) < -2));
+            wordSprites[i]->show(x, y, 15 - (i == elementMax + 1 || (listStart && i == 0)));
         }else{
-            wordSprites[i]->show(x, y ,15 - (i != selection) - ((i + pos) > 4 || (i + pos) < -2));
+            wordSprites[i]->show(x, y, 14 - (i == elementMax + 1 || (listStart && i == 0)));
         }
 
         i++;
+        counter++;
     }
+
+    for(int sprite = i; sprite < elementMax + 2; sprite++){
+        wordSprites[sprite]->hide();
+    }
+
+    showSprites(128);
 }
 
 bool SimpleListScene::control(){
@@ -2751,72 +2789,82 @@ bool SimpleListScene::control(){
         previousElement = name();
         previousSelection = selection;
 
+        if(path.size())
+            path.pop_back();
+
         changeScene(previousScene(),FADE);
         return true;
     }
 
-    int prevSelection = selection;
+    int prev = listStart;
 
     if (key_hit(KEY_UP)) {
-
-        if(selection != 1 && selection != options-1){
-            moving = true;
-            movingDirection = -1;
-        }
+        movingDirection = -1;
 
         if (selection == 0)
             selection = options - 1;
         else
             selection--;
 
+        if(selection == options -1)
+            listStart = max(0,selection-elementMax);
+        else if(selection < listStart + 1){
+            listStart--;
+            if(listStart < 0)
+                listStart = 0;
+        }
+
         sfx(SFX_MENUMOVE);
         refreshText = true;
     }
 
-    if (key_hit(KEY_DOWN)) {
-        if(selection && selection != options-2){
-            moving = true;
-            movingDirection = 1;
-        }
+    if (key_hit(KEY_DOWN) || key_hit(KEY_A)) {
+        movingDirection = 1;
 
         if (selection == options - 1)
             selection = 0;
         else
             selection++;
 
+        if(selection == 0)
+            listStart = 0;
+        else if(selection > listStart + elementMax)
+            listStart++;
+
         sfx(SFX_MENUMOVE);
         refreshText = true;
     }
 
-    if (key_is_down(KEY_UP)) {
+    if (key_is_down(KEY_UP) || key_is_down(KEY_DOWN)) {
         if (dasVer < maxDas) {
             dasVer++;
-        } else if(selection != 0){
-            if (arr++ > maxArr) {
+        } else {
+            int dir = (key_is_down(KEY_UP)? -1 : 1);
+
+            if (selection + dir >= 0 && selection + dir <= options-1 && arr++ > maxArr) {
                 arr = 0;
 
-                if(selection != 1 && selection != options - 1){
-                    moving = true;
-                    movingDirection = -1;
+                movingDirection = dir;
+
+                selection += dir;
+
+                if(dir < 0){
+                    if(selection == options -1)
+                        listStart = max(0,selection-elementMax);
+                    else if(selection < listStart + 1){
+                        listStart--;
+                        if(listStart < 0)
+                            listStart = 0;
+                    }
+                }else{
+                    if(selection == 0)
+                        listStart = 0;
+                    else if(selection > listStart + elementMax)
+                        listStart++;
+
                 }
 
-                selection--;
-                sfx(SFX_MENUMOVE);
-            }
-        }
-    } else if (key_is_down(KEY_DOWN)) {
-        if (dasVer < maxDas) {
-            dasVer++;
-        } else if(selection != options-1){
-            if (arr++ > maxArr) {
-                arr = 0;
-
-                if(selection && selection != options - 2){
-                    moving = true;
-                    movingDirection = 1;
-                }
-
-                selection++;
+                refreshText = true;
                 sfx(SFX_MENUMOVE);
             }
         }
@@ -2824,9 +2872,8 @@ bool SimpleListScene::control(){
         dasVer = 0;
     }
 
-    if(prevSelection != selection){
-        auto it = optionList.begin();
-        std::advance(it,selection);
+    if(prev != listStart){
+        moving = true;
     }
 
     return false;
@@ -2911,6 +2958,34 @@ void OptionListScene::init(){
     color_fade_palette(13, 0, &palette[1][14*16], 0, 8, 15);
 
     enableBlend((0b101011 << 8) + (1 << 6) + (1 << 3));
+
+    if(name() != "" && path.back() != name())
+        path.push_back(name());
+
+    std::string p;
+    int i = 0;
+    auto it = path.begin();
+    while(it != path.end()){
+        if(i != 0)
+            p += " > ";
+
+        p += *it;
+
+        it++;
+        i++;
+    }
+
+    int count = p.size() / 12 + 1;
+
+    for(int i = 0; i < count; i++){
+        int wordIndex = MAX_WORD_SPRITES - count - 1 + i;
+
+        std::string str = p.substr(0,std::min(12, (int) p.size()));
+        wordSprites[wordIndex]->setText(str);
+        p.erase(0,std::min(12, (int) p.size()));
+
+        wordSprites[wordIndex]->show(i * 12 * 8 + 4, 4,15);
+    }
 }
 
 void OptionListScene::draw(){
@@ -2947,7 +3022,7 @@ void OptionListScene::draw(){
         std::string opt = option->getCurrentOption();
         int len = (int) option->getLabel().size();
         int x = (15 + middleSpace) * 8;
-        int y = startY + 8 * (space + 1) * (i) + verticalOffset;
+        int y = startY + 8 * (space + 1) * i + verticalOffset;
 
         if(counter == selection)
             wordSprites[i]->setText(option->getCursor(opt)); //draw option with text cursor
@@ -2955,7 +3030,7 @@ void OptionListScene::draw(){
             wordSprites[i]->setText(" " + opt); // draw option without text cursor
 
         wordSprites[i]->setPriority(0);
-        wordSprites[i]->show(x, y ,15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
+        wordSprites[i]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
 
         if(counter == selection){ //draw sprite cursor
             for(int i = 0; i < 2; i++){
@@ -2973,7 +3048,7 @@ void OptionListScene::draw(){
         counter++;
     }
 
-    for(int sprite = i; sprite < MAX_WORD_SPRITES; sprite++){
+    for(int sprite = i; sprite < elementMax + 2; sprite++){
         wordSprites[sprite]->hide();
     }
 
@@ -3033,6 +3108,9 @@ bool OptionListScene::control(){
         previousElement = name();
         previousSelection = selection;
 
+        if(path.size())
+            path.pop_back();
+
         changeScene(previousScene(),FADE);
         return true;
     }
@@ -3049,6 +3127,13 @@ bool OptionListScene::control(){
         std::advance(it,selection);
 
         (*it)->action(1);
+    }
+
+    if(key_hit(KEY_A)){
+        auto it = elementList.begin();
+        std::advance(it,selection);
+
+        (*it)->action();
     }
 
     int prev = listStart;
@@ -3073,7 +3158,7 @@ bool OptionListScene::control(){
         refreshText = true;
     }
 
-    if (key_hit(KEY_DOWN) || key_hit(KEY_A)) {
+    if (key_hit(KEY_DOWN)) {
         movingDirection = 1;
 
         if (selection == options - 1)
