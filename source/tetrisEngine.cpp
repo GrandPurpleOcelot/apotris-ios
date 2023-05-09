@@ -690,7 +690,7 @@ void Game::place() {
                         if(disappearing == 1)
                             disappearTimers[y+k][x+l] = MAX_DISAPPEAR;
                         else if(disappearing == 2)
-                            disappearTimers[y][x] = 1;
+                            disappearTimers[y+k][x+l] = 1;
                     }
                 }
             }
@@ -2252,7 +2252,7 @@ void Game::activateZone(int dir){
 
 void Game::endZone(){
     if(zonedLines > statTracker.maxZonedLines)
-        statTracker.maxZonedLines = zonedLines;
+        statTracker.maxZonedLines = zonedLines / (1 + pawn.big);
 
     zoneTimer = 0;
     sounds.zone = -1;

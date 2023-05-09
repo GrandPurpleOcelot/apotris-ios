@@ -2129,13 +2129,15 @@ void showZoneText(){
 
     char buff[4];
 
-    posprintf(buff, "%d",game->zonedLines);
+    int lines = game->zonedLines / (1 + game->pawn.big);
+
+    posprintf(buff, "%d", lines);
 
     std::string text = buff;
 
     text += " line";
 
-    if(game->zonedLines > 1)
+    if(lines > 1)
         text+= "s";
 
     const u16 pal[2][2] = {{0x5294,0x0421},{0x5294,0x318c}};
