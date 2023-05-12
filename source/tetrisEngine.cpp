@@ -492,6 +492,12 @@ void Game::update() {
                     c = moveLeft();
                 else if(right)
                     c = moveRight();
+
+                if(speed == 20){
+                    int counter = 0;
+                    while(counter++ < 20 && checkRotation(0,1,pawn.rotation))
+                        pawn.y++;
+                }
             }
         }
     }
@@ -1221,10 +1227,10 @@ void Game::fillBag() {
 }
 
 void Game::next() {
-    pawn.y = (int)lengthY / 2;
+    pawn.y = (int)lengthY / 2 - 1;
     pawn.x = (int)lengthX / 2 - 2;
 
-    speedCounter = 0;
+    speedCounter = 1;
 
     pawn.current = queue.front();
     queue.pop_front();
