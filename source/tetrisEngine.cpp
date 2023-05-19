@@ -483,6 +483,12 @@ void Game::update() {
                     moveLeft();
                 else if(right)
                     moveRight();
+
+                if(speed == 20){
+                    int counter = 0;
+                    while(counter++ < 20 && checkRotation(0,1,pawn.rotation))
+                        pawn.y++;
+                }
             }
             arrCounter = arr;
         }else if(arr < 0){
@@ -1298,9 +1304,9 @@ void Game::next() {
 
         int n = 0;
         if(!pawn.big)
-            n = (40 - 19) - (lowestPart + pawn.y);
+            n = (40 - 20) - (lowestPart + pawn.y);
         else
-            n = (20 - 9) - (lowestPart + pawn.y);
+            n = (20 - 10) - (lowestPart + pawn.y);
 
         pawn.y += std::min(n,0);
     }
@@ -1451,7 +1457,7 @@ void Game::hold(int dir) {
         pawn.current = temp;
         pawn.setBlock(rotationSystem);
         pawn.x = (int)lengthX / 2 - 2;
-		pawn.y = (int)lengthY / 2;
+		pawn.y = (int)lengthY / 2 - 1;
 
         if(pawn.big){
             pawn.x/=2;
@@ -1503,9 +1509,9 @@ void Game::hold(int dir) {
 
         int n = 0;
         if(!pawn.big)
-            n = (40 - 19) - (lowestPart + pawn.y);
+            n = (40 - 20) - (lowestPart + pawn.y);
         else
-            n = (20 - 9) - (lowestPart + pawn.y);
+            n = (20 - 10) - (lowestPart + pawn.y);
 
         pawn.y += std::min(n,0);
     }
