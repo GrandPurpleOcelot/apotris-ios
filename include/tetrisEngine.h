@@ -526,7 +526,7 @@ namespace Tetris
                     generateGarbage(4,0);
             }else if(gameMode == COMBO){
                 if(!big){
-                    for(int i = lengthY/2-1; i < lengthY; i++){
+                    for(int i = lengthY/2-4; i < lengthY; i++){
                         for(int j = 0; j < 10; j++){
                             if(j > 2 && j < 7 && !(i == lengthY-2 && j < 5) && !(i == lengthY-1 && j < 4))
                                 continue;

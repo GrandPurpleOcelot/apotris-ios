@@ -193,6 +193,8 @@ void Game::rotate(int dir){
             }
 
             if (checkRotation(dx, dy, r)) {
+                specialTspin = (pawn.current == 5 && abs(dx*dy) >= 2);
+
                 rotatePlace(dir,dx,dy,r);
                 return;
 
@@ -1233,10 +1235,8 @@ void Game::fillBag() {
 }
 
 void Game::next() {
-    pawn.y = (int)lengthY / 2 - 1;
+    pawn.y = (int)lengthY / 2;
     pawn.x = (int)lengthX / 2 - 2;
-
-    speedCounter = 1;
 
     pawn.current = queue.front();
     queue.pop_front();
@@ -1304,9 +1304,9 @@ void Game::next() {
 
         int n = 0;
         if(!pawn.big)
-            n = (40 - 20) - (lowestPart + pawn.y);
+            n = (40 - 19) - (lowestPart + pawn.y);
         else
-            n = (20 - 10) - (lowestPart + pawn.y);
+            n = (20 - 9) - (lowestPart + pawn.y);
 
         pawn.y += std::min(n,0);
     }
@@ -1329,6 +1329,8 @@ void Game::next() {
     lastMoveDy = 0;
 
     arrCounter = 0;
+
+    speedCounter = 0;
 
     softDrop = false;
 
@@ -1456,8 +1458,8 @@ void Game::hold(int dir) {
         held = pawn.current;
         pawn.current = temp;
         pawn.setBlock(rotationSystem);
+		pawn.y = (int)lengthY / 2;
         pawn.x = (int)lengthX / 2 - 2;
-		pawn.y = (int)lengthY / 2 - 1;
 
         if(pawn.big){
             pawn.x/=2;
@@ -1509,9 +1511,9 @@ void Game::hold(int dir) {
 
         int n = 0;
         if(!pawn.big)
-            n = (40 - 20) - (lowestPart + pawn.y);
+            n = (40 - 19) - (lowestPart + pawn.y);
         else
-            n = (20 - 10) - (lowestPart + pawn.y);
+            n = (20 - 9) - (lowestPart + pawn.y);
 
         pawn.y += std::min(n,0);
     }
@@ -1738,7 +1740,7 @@ void Game::removeClearLock() {
 
     if(gameMode == COMBO){
         if(!pawn.big){
-            for(int i = lengthY/2-1; i < lengthY; i++){
+            for(int i = lengthY/2-4; i < lengthY; i++){
                 if(board[i][0] != 0)
                     break;
                 for(int j = 0; j < 10; j++){
