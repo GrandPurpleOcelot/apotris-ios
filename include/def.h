@@ -43,8 +43,8 @@ typedef struct Gradeboard{
 typedef struct Keys{
     int moveLeft;
     int moveRight;
-    int rotateCW;
     int rotateCCW;
+    int rotateCW;
     int rotate180;
     int softDrop;
     int hardDrop;
@@ -270,7 +270,7 @@ extern void controlsSettings();
 extern void showTitleSprites();
 extern void setLightMode();
 extern void setSkin();
-extern void update();
+extern void updateText();
 extern void setDefaultKeys();
 extern void setClearEffect();
 
@@ -345,6 +345,8 @@ extern void loadReplay();
 extern void frameSnow(int layer);
 
 extern void initFallingBlocks();
+
+extern void gradientEditor();
 
 extern Tetris::Game *game;
 extern Tetris::Game *quickSave;

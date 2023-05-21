@@ -27,6 +27,8 @@ LinkConnection* linkConnection = new LinkConnection();
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
+int spriteVOffset = 0;
+
 mm_word myEventHandler(mm_word msg, mm_word param){
     if(msg == MMCB_SONGMESSAGE)
         return 0;
@@ -154,7 +156,7 @@ void sprite_unhide(OBJ_ATTR * sprite, int mode){
 }
 
 void sprite_set_pos(OBJ_ATTR * sprite, int x, int y){
-    obj_set_pos(sprite,x,y);
+    obj_set_pos(sprite,x,y + spriteVOffset);
 }
 
 void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int palette, int priority){

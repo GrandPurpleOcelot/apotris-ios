@@ -3,6 +3,7 @@
 #include "menu.h"
 #include "meter1_tiles_bin.h"
 // #include "soundbank.h"
+#include "platform.hpp"
 #include "sprite36tiles_bin.h"
 #include "sprite5tiles_bin.h"
 #include "sprites.h"
@@ -26,7 +27,6 @@ void diagnose();
 void clearGlow();
 void addGlow(Drop);
 void addPlaceEffect(Drop);
-void countdown();
 void drawFrame(int layer);
 void drawFrameBackgrounds();
 void drawGrid();
@@ -43,7 +43,7 @@ void zoneFlash();
 void resetZonePalette();
 // void control();
 void showTimer();
-void update();
+void updateText();
 void rainbowPalette();
 void frameSnow(int layer);
 void showZoneText();
@@ -130,9 +130,11 @@ bool replaying = false;
 bool exitGame = false;
 
 void GameScene::draw(){
-    std::string prof;
+    // std::string prof;
     // profile_start();
-    control();
+    if (control())
+        return;
+
     checkSounds();
 
     showPawn();
@@ -162,7 +164,7 @@ void GameScene::draw(){
     showPlaceEffect();// 300 idle, 3600 per effect when on
     // prof+= std::to_string(profile_stop()) + " ";
 
-    showSprites(32);
+    showSprites(128);
     // oam_copy(oam_mem, obj_buffer, 32);
     // // profile_start();
     // if(game->eventTimer)
@@ -170,7 +172,7 @@ void GameScene::draw(){
     // obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
 
     if (game->refresh) {
-        update();
+        updateText();
         showBackground(0);
         game->resetRefresh();
     }else if (game->clearLock && !eventPauseTimer){
@@ -185,7 +187,7 @@ void GameScene::draw(){
     // log(prof);
 }
 
-void update() {
+void updateText() {
     if(!game->zoneTimer)
         showText();
     else{
@@ -454,7 +456,7 @@ void checkSounds() {
         fullMeterTimer = fullMeterAnimationLength;
     }
 
-    if(game->gameMode == MARATHON && subMode){
+    if(game->gameMode == MARATHON && game->subMode){
         showFullMeter();
     }
 
@@ -615,7 +617,7 @@ void showBackground(int offset) {
 }
 
 void showPawn() {
-    pawnSprite = &obj_buffer[0];
+    pawnSprite = &obj_buffer[112];
     // if (game->clearLock || game->pawn.current == -1 || (enableBot && game->gameMode != BATTLE)) {
     if (game->clearLock || game->activePiece == -1) {
         sprite_hide(pawnSprite);
@@ -680,7 +682,7 @@ void showPawn() {
 }
 
 void showShadow() {
-    pawnShadow = &obj_buffer[1];
+    pawnShadow = &obj_buffer[113];
     // if (game->clearLock || game->activePiece == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100) || (enableBot && game->gameMode != BATTLE)) {
     if (game->clearLock || game->activePiece == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100)) {
         sprite_hide(pawnShadow);
@@ -751,9 +753,9 @@ void showShadow() {
 }
 
 void showHold() {
-    holdSprite = &obj_buffer[2];
-    holdFrameSprite = &obj_buffer[10];
-    OBJ_ATTR *background = &obj_buffer[26];
+    holdSprite = &obj_buffer[114];
+    holdFrameSprite = &obj_buffer[115];
+    OBJ_ATTR *background = &obj_buffer[116];
 
     if(game->gameMode != CLASSIC && !game->zoneTimer){
         sprite_unhide(holdFrameSprite, 0);
@@ -815,9 +817,6 @@ void showHold() {
 void showQueue() {
     int maxQueue = savefile->settings.maxQueue;
 
-    OBJ_ATTR *background[3];
-    for(int i = 0; i < 3; i++)
-        background[i] = &obj_buffer[27+i];
 
     if(game->gameMode == CLASSIC)
         maxQueue = 1;
@@ -825,10 +824,14 @@ void showQueue() {
         maxQueue = (maxQueue < 3)? maxQueue : 3;
 
     for (int i = 0; i < 5; i++)
-        queueSprites[i] = &obj_buffer[3 + i];
+        queueSprites[i] = &obj_buffer[117 + i];
 
     for (int i = 0; i < 3; i++)
-        queueFrameSprites[i] = &obj_buffer[11 + i];
+        queueFrameSprites[i] = &obj_buffer[122 + i];
+
+    OBJ_ATTR *background[3];
+    for(int i = 0; i < 3; i++)
+        background[i] = &obj_buffer[125+i];
 
     if(game->zoneTimer){
         for(int i = 0; i < 3; i++){
@@ -839,7 +842,6 @@ void showQueue() {
         for (int i = 0; i < 3; i++) {
             sprite_unhide(queueFrameSprites[i], 0);
             sprite_set_attr(queueFrameSprites[i], ShapeSquare, 2, 512 + 16 + 16 * i, 8, 3);
-            // obj_set_attr(queueFrameSprites[i], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512 + 16 + 16 * i, 8, 3));
             sprite_set_pos(queueFrameSprites[i], 173 + (push > 0) * push, 12 + 32 * i - (i * 9 * (5-maxQueue)));
 
             sprite_unhide(background[i], 0);
@@ -941,7 +943,7 @@ bool GameScene::control() {
         paused = true;
         pauseSong();
         clearText();
-        update();
+        updateText();
     }
 
     if(replaying){
@@ -1014,7 +1016,7 @@ bool GameScene::control() {
         restartTimer = 0;
     }
 
-    if(key_is_down(k.zone) && game->gameMode == MARATHON && subMode && !game->zoneTimer){
+    if(key_is_down(k.zone) && game->gameMode == MARATHON && game->subMode && !game->zoneTimer){
         game->activateZone(1);
     }
 
@@ -1076,7 +1078,7 @@ void showText() {
 
     } else if (game->gameMode == TRAINING) {
         aprint("Training", 1, 1);
-    } else if (game->gameMode == DIG && subMode) {
+    } else if (game->gameMode == DIG && game->subMode) {
         aprint("Pieces", 2, 14);
 
         aprintClearArea(0, 15, 10, 1);
@@ -1105,7 +1107,7 @@ void showText() {
         aprint(str,4 - (str.length() == 1),5);
     }
 
-    if (game->gameMode != BATTLE && game->gameMode != BLITZ && !(game->gameMode == SPRINT && subMode == 1) && game->gameMode != MASTER){
+    if (game->gameMode != BATTLE && game->gameMode != BLITZ && !(game->gameMode == SPRINT && game->subMode == 1) && game->gameMode != MASTER){
         aprint("Lines", 2, 17);
         aprintClearArea(0, 18, 10, 1);
         if (game->gameMode == DIG)
@@ -1132,7 +1134,7 @@ void showText() {
         aprintClearArea(0, 18, 10, 1);
         aprint(str,2,18);
 
-    } else if(game->gameMode == BATTLE || (game->gameMode == SPRINT && subMode == 1)){
+    } else if(game->gameMode == BATTLE || (game->gameMode == SPRINT && game->subMode == 1)){
         aprint("Attack", 2, 17);
         aprintClearArea(0, 18, 10, 1);
         aprintf(game->linesSent, 4, 18);
@@ -1243,255 +1245,7 @@ void showClearText() {
 }
 
 void gameLoop(){
-    GameScene* s = new GameScene();
-    changeScene(s,FADE);
-
-    setGradient(savefile->settings.backgroundGradient);
-    gradient(true);
-
-    vsync();
-    setSkin();
-
-
-    clearTiles(2,110,400);
-    // memset32(&tile_mem[2][110], 0, 400*8);
-    setSmallTextArea(110, 3, 7, 9, 10);
-    clearText();
-    gameSeconds = 0;
-
-    loadSpriteTiles(256+3, meterTiles[0], 4, 4);
-    // memcpy16(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/2);
-
-    for(int i = 0; i < 3; i++)
-        moveSprites[i] = &obj_buffer[16+i];
-
-    update();
-
-    clearSprites(128);
-    // oam_init(obj_buffer, 128);
-    drawFrame(0);
-    drawFrameBackgrounds();
-
-    stopSong();
-    // mmStop();
-
-    showHold();
-
-    showQueue();
-
-    if(game->gameMode == MASTER)
-        showSpeedMeter((int)game->speed);
-
-    showZoneMeter();
-
-    showSprites(128);
-    // oam_copy(oam_mem, obj_buffer, 128);
-
-    countdown();
-
-     // if (!resumeJourney){
-     // }
-     // else{
-     //      resumeJourney = false;
-     // }
-
-    if (!(game->gameMode == TRAINING)) {
-        playSongRandom(1);
-    }
-
-    if(game->gameMode == MASTER){
-        maxClearTimer = game->maxClearDelay;
-    }else if(proMode && game->rotationSystem == SRS){
-        maxClearTimer = 1;
-        game->maxClearDelay = 1;
-    }else{
-        maxClearTimer = 20;
-        game->maxClearDelay = 20;
-    }
-
-    update();
-
-    while (closed() && !exitGame) {
-        diagnose();
-
-        if (!game->lost && !paused && !game->eventLock) {
-            // profile_start();
-            game->update();
-            // log(std::to_string(profile_stop()));
-        }
-        handleMultiplayer();
-
-        progressBar(0);
-
-        if(game->gameMode == BATTLE && !multiplayer){
-
-            std::string test;
-            if(!botGame->clearLock){
-                // profile_start();
-
-                testBot->run();
-                // test += std::to_string(profile_stop()) + " ";
-
-                // profile_start();
-                botGame->update();
-                // test += std::to_string(profile_stop()) + " ";
-            }
-            // profile_start();
-            handleBotGame();
-            // test += std::to_string(profile_stop()) + " ";
-            // log(std::to_string(profile_stop()));
-            // log(test);
-        }else if(enableBot){
-            testBot->run();
-        }
-
-        if(creditRefresh && !game->clearLock)
-            refreshCredits();
-
-        gameSeconds = game->timer;
-
-        if (game->clearLock && !(game->eventLock && game->gameMode != MASTER)) {
-            clearTimer++;
-
-            if(clearTimer >= 100){
-                game->removeClearLock();
-                // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
-                #ifdef GBA
-                shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
-                #elifdef PC
-                // shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))) * 2;
-                #endif
-                rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
-                clearTimer = 0;
-                update();
-            }
-        }
-
-        if(game->eventLock){
-            if(eventPauseTimer == 0){
-                if(game->gameMode == MASTER){
-                    showBackground(0);
-                    eventPauseTimer = eventPauseTimerMax;
-                    setupCredits();
-                    flashTimer = flashTimerMax;
-                    gradient(false);
-                // } else if(game->gameMode == MARATHON){
-                //     flashTimer = flashTimerMax;
-                //     eventPauseTimer = flashTimerMax + 2;
-                }
-            }
-
-            if(eventPauseTimer){
-                eventPauseTimer--;
-
-                if(eventPauseTimer == 0)
-                    game->removeEventLock();
-            }
-        }
-
-        latestDrop = game->getDrop();
-
-        if (latestDrop.on){
-            addGlow(latestDrop);
-            addPlaceEffect(latestDrop);
-        }
-
-        // log(std::to_string(REG_VCOUNT));
-
-        canDraw = true;
-        vsync();
-
-        if (clearTimer >= maxClearTimer || maxClearTimer <= 0) {
-            game->removeClearLock();
-
-            #ifdef GBA
-            shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
-            #elifdef PC
-            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
-            #endif
-
-            // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
-            rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
-            clearTimer = 0;
-            update();
-        }
-
-        //TODO:
-        #ifdef GBA
-        rumble_update();
-        if(rumbleTimer > 0){
-            rumbleTimer--;
-
-            rumble_set_state(rumble_start);
-        }else{
-            rumble_set_state(rumble_hard_stop);
-        }
-        #endif
-
-        if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
-            endScreen();
-            if(!(playAgain && multiplayer))
-                return;
-            else
-                playAgain = false;
-        }
-
-        if (paused){
-
-            if(pauseMenu()){
-                paused = false;
-                return;
-            }
-            liftKeys();
-        }
-
-        if (playAgain) {
-            return;
-        }
-
-        if(game->zoneTimer){
-            if(gameSeconds % 4 == 0){
-                frameSnow(0);
-            }
-
-            if(!flashTimer)
-                rainbowPalette();
-
-        }
-
-        if(game->gameMode == MARATHON && game->subMode && gameSeconds % 2 == 0){
-            if(rainbowIncreasing)
-                rainbowTimer++;
-            else
-                rainbowTimer--;
-
-            if(rainbowTimer >= (32 * 2) - 1 || rainbowTimer == 0)
-                rainbowIncreasing = !rainbowIncreasing;
-
-            showZoneMeter();
-        }
-
-        if(game->eventTimer){
-            showCredits();
-        }
-
-        if(flashTimer)
-            zoneFlash();
-
-        sqran(qran() % frameCounter);
-
-          // if(!game->eventLock && journeyLevelUp){
-          //      // flashTimer = flashTimerMax;
-          //      // journeyFlash();
-
-          //      setJourneyGraphics(savefile, game->level);
-
-          //      delete journeySave;
-          //      journeySave = new Game(*game);
-          //      journeySaveExists = true;
-          //      return;
-          // }
-    }
+    changeScene(new GameScene(),FADE);
 
     exitGame = false;
 }
@@ -1525,15 +1279,16 @@ void clearGlow() {
     drawGrid();
 }
 
-void countdown() {
+void GameScene::countdown() {
     int timer = 0;
     int timerMax = 120;
     showQueue();
     showHold();
     showSprites(128);
-    // oam_copy(oam_mem, obj_buffer, 128);
+    gradient(1);
 
     while (closed() && timer++ < timerMax - 1) {
+        canDraw = true;
         vsync();
         key_poll();
 
@@ -1545,7 +1300,6 @@ void countdown() {
         } else if (timer < 2 * timerMax / 3){
             aprint("READY?", 12, 10);
             if(key_is_down(KEY_L) && key_is_down(KEY_R)){
-                // restart = true;
                 playAgain = true;
                 break;
             }
@@ -1558,12 +1312,19 @@ void countdown() {
 
     showBackground(0);
     clearText();
+    updateText();
 
     if(key_is_down(KEY_LEFT)){
         game->keyLeft(1);
     }else if(key_is_down(KEY_RIGHT)){
         game->keyRight(1);
     }
+
+    if (!(game->gameMode == TRAINING)) {
+        playSongRandom(1);
+    }
+
+    counted = true;
 }
 
 void screenShake() {
@@ -2305,7 +2066,7 @@ INLINE int getBoard(int x, int y){
 }
 
 void showZoneMeter(){
-    if(!(game->gameMode == MARATHON && subMode))
+    if(!(game->gameMode == MARATHON && game->subMode))
         return;
 
     OBJ_ATTR * sprite = &obj_buffer[23];
@@ -2753,45 +2514,6 @@ void liftKeys(){
     game->liftKeys();
 }
 
-// void journeyFlash(){
-
-//     if(flashTimer == flashTimerMax){
-//         if(previousPalette != nullptr)
-//             delete previousPalette;
-//         previousPalette = new COLOR [512];
-//         savePalette(previousPalette);
-//         // memcpy32(&previousPalette[0], pal_bg_mem, 256);
-//     }
-
-//     flashTimer--;
-
-//     #ifdef GBA
-//     REG_MOSAIC = MOS_BUILD(flashTimer,flashTimer,flashTimer,flashTimer);
-//     #endif
-
-//     int n = ((float)flashTimer/flashTimerMax) * 31;
-
-//     color_fade_fast(16, 0, previousPalette, 0x7fff, 128, n);
-//     // clr_fade_fast(previousPalette, 0x7fff, pal_obj_mem, 128, n);
-
-//     bool cond = ((flashTimer < flashTimerMax/2) && eventPauseTimer);
-
-//     if(cond && game->gameMode == MARATHON)
-//         gradient(true);
-
-//     mirrorPalettes(8);
-//     // memcpy16(&pal_bg_mem[cond],&pal_obj_mem[cond],(8 * 16));
-
-//     if(flashTimer < flashTimerMax/2 && game->gameMode == MASTER){
-//         if(!savefile->settings.lightMode)
-//             setPaletteColor(0, 0, 0x0000, 1);
-//             // memset16(pal_bg_mem, 0x0000, 1);
-//         else
-//             setPaletteColor(0, 0, 0x5ad6, 1);
-//             // memset16(pal_bg_mem, 0x5ad6, 1);//background gray
-//     }
-// }
-
 void setRandomGraphics(Save *save){
     save->settings.edges = true;
     save->settings.backgroundGrid = qran() % (MAX_BACKGROUNDS - 1);
@@ -2874,4 +2596,245 @@ void replayControl(){
         }
         ++replayIterator;
     }
+}
+
+void GameScene::init(){
+    loadSpriteTiles(512, sprite6tiles_bin,4,4);
+
+    loadSpriteTiles(512 + 16, sprite6tiles_bin,4,3);
+    loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3,4,1,4);
+    loadSpriteTiles(512 + 32, &sprite6tiles_bin[128],4,2);
+    loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2,4);
+    loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
+    loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
+
+    setGradient(savefile->settings.backgroundGradient);
+
+    setSkin();
+
+    clearTilemap(25);
+
+    clearTiles(2,110,400);
+    setSmallTextArea(110, 3, 7, 9, 10);
+    clearText();
+    gameSeconds = 0;
+
+    loadSpriteTiles(256+3, meterTiles[0], 4, 4);
+
+    for(int i = 0; i < 3; i++)
+        moveSprites[i] = &obj_buffer[16+i];
+
+    updateText();
+
+    clearSprites(128);
+    drawFrame(0);
+    drawFrameBackgrounds();
+
+    stopSong();
+
+    showHold();
+
+    showQueue();
+
+    if(game->gameMode == MASTER)
+        showSpeedMeter((int)game->speed);
+
+    showZoneMeter();
+
+    showSprites(128);
+
+    if(game->gameMode == MASTER){
+        maxClearTimer = game->maxClearDelay;
+    }else if(proMode && game->rotationSystem == SRS){
+        maxClearTimer = 1;
+        game->maxClearDelay = 1;
+    }else{
+        maxClearTimer = 20;
+        game->maxClearDelay = 20;
+    }
+
+    updateText();
+}
+
+void GameScene::update(){
+
+    if(!counted){
+        countdown();
+    }
+
+    diagnose();
+
+    if(exitGame){
+        changeScene(new newTitleScene(),FADE);
+        exitGame = false;
+        return;
+    }
+
+    if (!game->lost && !paused && !game->eventLock) {
+        // profile_start();
+        game->update();
+        // log(std::to_string(profile_stop()));
+    }
+    handleMultiplayer();
+
+    progressBar(0);
+
+    if(game->gameMode == BATTLE && !multiplayer){
+
+        std::string test;
+        if(!botGame->clearLock){
+            // profile_start();
+
+            testBot->run();
+            // test += std::to_string(profile_stop()) + " ";
+
+            // profile_start();
+            botGame->update();
+            // test += std::to_string(profile_stop()) + " ";
+        }
+        // profile_start();
+        handleBotGame();
+        // test += std::to_string(profile_stop()) + " ";
+        // log(std::to_string(profile_stop()));
+        // log(test);
+    }else if(enableBot){
+        testBot->run();
+    }
+
+    if(creditRefresh && !game->clearLock)
+        refreshCredits();
+
+    gameSeconds = game->timer;
+
+    if (game->clearLock && !(game->eventLock && game->gameMode != MASTER)) {
+        clearTimer++;
+
+        if(clearTimer >= 100){
+            game->removeClearLock();
+            // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
+            #ifdef GBA
+            shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+            #elifdef PC
+            // shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))) * 2;
+            #endif
+            rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
+            clearTimer = 0;
+            updateText();
+        }
+    }
+
+    if(game->eventLock){
+        if(eventPauseTimer == 0){
+            if(game->gameMode == MASTER){
+                showBackground(0);
+                eventPauseTimer = eventPauseTimerMax;
+                setupCredits();
+                flashTimer = flashTimerMax;
+                gradient(false);
+            // } else if(game->gameMode == MARATHON){
+            //     flashTimer = flashTimerMax;
+            //     eventPauseTimer = flashTimerMax + 2;
+            }
+        }
+
+        if(eventPauseTimer){
+            eventPauseTimer--;
+
+            if(eventPauseTimer == 0)
+                game->removeEventLock();
+        }
+    }
+
+    latestDrop = game->getDrop();
+
+    if (latestDrop.on){
+        addGlow(latestDrop);
+        addPlaceEffect(latestDrop);
+    }
+
+    canDraw = true;
+
+    if (clearTimer >= maxClearTimer || maxClearTimer <= 0) {
+        game->removeClearLock();
+
+        #ifdef GBA
+        shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+        #elifdef PC
+        shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
+        #endif
+
+        // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
+        rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
+        clearTimer = 0;
+        updateText();
+    }
+
+    //TODO:
+    #ifdef GBA
+    rumble_update();
+    if(rumbleTimer > 0){
+        rumbleTimer--;
+
+        rumble_set_state(rumble_start);
+    }else{
+        rumble_set_state(rumble_hard_stop);
+    }
+    #endif
+
+    if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
+        endScreen();
+        if(!(playAgain && multiplayer))
+            return;
+        else
+            playAgain = false;
+    }
+
+    if (paused){
+
+        if(pauseMenu()){
+            paused = false;
+            return;
+        }
+        liftKeys();
+    }
+
+    if (playAgain) {
+        return;
+    }
+
+    if(game->zoneTimer){
+        if(gameSeconds % 4 == 0){
+            frameSnow(0);
+        }
+
+        if(!flashTimer)
+            rainbowPalette();
+
+    }
+
+    if(game->gameMode == MARATHON && game->subMode && gameSeconds % 2 == 0){
+        if(rainbowIncreasing)
+            rainbowTimer++;
+        else
+            rainbowTimer--;
+
+        if(rainbowTimer >= (32 * 2) - 1 || rainbowTimer == 0)
+            rainbowIncreasing = !rainbowIncreasing;
+
+        showZoneMeter();
+    }
+
+    if(game->eventTimer){
+        showCredits();
+    }
+
+    if(flashTimer)
+        zoneFlash();
+
+    sqran(qran() % frameCounter);
+
+}
+
+void GameScene::deinit(){
+    gradient(0);
 }

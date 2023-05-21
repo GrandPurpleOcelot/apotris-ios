@@ -267,7 +267,7 @@ namespace Tetris
     };
 
     class Tuning{
-    public:
+        public:
             int das = 8;
             int arr = 2;
             int sfr = 2;
@@ -280,7 +280,7 @@ namespace Tetris
     };
 
     class Options{
-    public:
+        public:
             int mode = NO_MODE;
             int goal = 0;
             int level = 0;

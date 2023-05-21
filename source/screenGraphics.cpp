@@ -1,4 +1,5 @@
 #include "def.h"
+#include "platform.hpp"
 #include "text.h"
 // #include "soundbank.h"
 #include "sprites.h"
@@ -63,7 +64,6 @@ bool GraphicsScene::control(){
 }
 
 void GraphicsScene::update(){
-    vsync();
     drawGrid();
     drawFrame(0);
     screenShake();
@@ -714,6 +714,7 @@ void gradientEditor(){
     while(closed()){
         vsync();
         key_poll();
+        showSprites(128);
 
         if(key_hit(KEY_START) || key_hit(KEY_B)){
             sfx(SFX_MENUCANCEL);
@@ -820,4 +821,146 @@ void gradientEditor(){
     toggleBG(1, true);
     toggleBG(2, true);
     clearText();
+}
+
+void GradientEditorScene::init(){
+    toggleBG(0, false);
+    toggleBG(1, false);
+    toggleBG(2, true);
+    toggleBG(3, false);
+
+    for(int i = 0; i < 3; i++){
+        color[i] = (savefile->settings.backgroundGradient >> (5*i)) & 0x1f;
+    }
+
+    aprint("Press B to Exit",7,18);
+
+    const int space = 7;
+    const int height = 11;
+
+    for(int i = 0; i < 3; i++){
+        int x = 14 + (i-1)*space;
+
+        std::string str = "";
+        switch(i){
+            case 0: str = "RED"; break;
+            case 1: str = "GREEN"; break;
+            case 2: str = "BLUE"; break;
+        }
+        aprint(str,x-str.length()/2 + (i - 1) * (i > 0), height - 4);
+    }
+}
+
+void GradientEditorScene::draw(){
+
+    const int space = 7;
+    const int height = 11;
+
+    c = 0;
+
+    const int tile = 105;
+
+    for(int i = 0; i < 3; i++){
+        int x = 14 + (i-1)*space;
+
+        char buff[2];
+        posprintf(buff, "%02d",color[i]);
+
+        aprint(buff, x, height);
+
+        if(i == selection){
+            setTile(29, x, height - 1 , tileBuild(tile, false, false, 15));
+            setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 15));
+            setTile(29, x, height + 1 , tileBuild(tile, false, true, 15));
+            setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 15));
+        }else{
+            aprint("  " , x,height-1);
+            aprint("  " , x,height+1);
+        }
+
+        c += color[i] << (5*i);
+    }
+
+    showSprites(128);
+}
+
+void GradientEditorScene::update(){
+    canDraw = 1;
+    key_poll();
+
+    setGradient(c);
+    gradient(2);
+
+    control();
+}
+
+bool GradientEditorScene::control(){
+    if(key_hit(KEY_START) || key_hit(KEY_B)){
+        sfx(SFX_MENUCANCEL);
+        changeScene(previousScene(),FADE);
+        return true;
+    }
+
+    if(key_hit(KEY_LEFT)){
+        if(selection > 0)
+            selection--;
+
+        sfx(SFX_MENUMOVE);
+    }
+
+    if(key_hit(KEY_RIGHT)){
+        if(selection < 2)
+            selection++;
+        sfx(SFX_MENUMOVE);
+    }
+
+    if(key_hit(KEY_UP)){
+        if(color[selection] < 31)
+            color[selection]++;
+        sfx(SFX_SHIFT2);
+    }
+
+    if(key_hit(KEY_DOWN)){
+        if(color[selection] > 0)
+            color[selection]--;
+        sfx(SFX_SHIFT2);
+    }
+
+    if(key_is_down(KEY_UP) || key_is_down(KEY_DOWN)){
+        das++;
+
+        if(das == dasMax){
+            das -= arrMax;
+
+            if(key_is_down(KEY_UP)){
+                if(color[selection] < 31){
+                    color[selection]++;
+                    sfx(SFX_SHIFT2);
+                }
+            }else if(key_is_down(KEY_DOWN)){
+                if(color[selection] > 0){
+                    color[selection]--;
+                    sfx(SFX_SHIFT2);
+                }
+            }
+        }
+    }else{
+        das = 0;
+    }
+
+    return false;
+}
+
+void GradientEditorScene::deinit(){
+    savefile->settings.backgroundGradient = c;
+
+    toggleBG(0, true);
+    toggleBG(1, true);
+    toggleBG(2, true);
+    clearText();
+}
+
+void GradientElement::action(){
+    sfx(SFX_MENUCONFIRM);
+    changeScene(new GradientEditorScene(),FADE);
 }

@@ -1,9 +1,13 @@
 #include "def.h"
 #include <string>
 #include "logging.h"
+#include "platform.hpp"
 #include "posprintf.h"
 
 #include "font1tiles_bin.h"
+
+static int allocatedTiles = 0;
+const int allocateStart = 124;
 
 class TextArea{
 public:
@@ -87,7 +91,8 @@ void clearText(){
 	// profile_start();
 
 	clearTilemap(29);
-    // memset32(&se_mem[29], 0, 32*20);
+	clearTiles(2, allocateStart, allocatedTiles);
+	allocatedTiles = 0;
 
 	// std::string result = std::to_string(profile_stop());
 	// log("clear all: " + result);
@@ -222,18 +227,18 @@ void aprintsSprite(std::string str, int x, int y, int tileId){//x and y are pixe
 
 const u8 fontWidths[97][2] = {
 {1, 1},
-{3, 3}, {2, 4}, {1, 6}, {1, 6}, {1, 7}, {1, 7}, {2, 2}, {2, 4},
-{3, 4}, {1, 6}, {1, 6}, {3, 2}, {1, 6}, {2, 2}, {1, 7}, {1, 7},
-{2, 4}, {1, 7}, {1, 7}, {1, 7}, {1, 7}, {1, 7}, {1, 6}, {1, 7},
-{1, 7}, {2, 2}, {2, 2}, {1, 5}, {1, 6}, {3, 5}, {1, 6}, {0, 8},
-{1, 7}, {1, 7}, {1, 7}, {1, 7}, {1, 6}, {1, 6}, {1, 7}, {1, 7},
-{3, 3}, {2, 4}, {1, 7}, {1, 7}, {0, 8}, {1, 7}, {1, 7}, {1, 7},
-{1, 7}, {1, 7}, {1, 7}, {2, 6}, {1, 7}, {1, 7}, {0, 8}, {1, 7},
-{1, 7}, {1, 6}, {2, 4}, {1, 7}, {3, 4}, {0, 8}, {1, 6}, {4, 3},
-{2, 6}, {2, 5}, {2, 5}, {2, 5}, {2, 5}, {2, 5}, {2, 5}, {2, 5},
-{3, 3}, {2, 4}, {2, 5}, {2, 4}, {1, 7}, {2, 5}, {2, 5}, {2, 5},
-{2, 5}, {2, 5}, {2, 5}, {2, 5}, {2, 5}, {2, 5}, {1, 7}, {2, 5},
-{2, 5}, {2, 5}, {2, 4}, {3, 2}, {3, 4}, {0, 8}, {1, 7}, {0, 8},
+{2, 4}, {1, 5}, {0, 7}, {0, 7}, {0, 8}, {0, 8}, {1, 3}, {1, 5},
+{2, 5}, {0, 7}, {0, 7}, {2, 3}, {0, 7}, {1, 3}, {0, 8}, {0, 8},
+{1, 5}, {0, 8}, {0, 8}, {0, 8}, {0, 8}, {0, 8}, {0, 7}, {0, 8},
+{0, 8}, {1, 3}, {1, 3}, {0, 5}, {0, 7}, {2, 5}, {0, 7}, {0, 8},
+{0, 8}, {0, 8}, {0, 8}, {0, 8}, {0, 7}, {0, 7}, {0, 8}, {0, 8},
+{1, 6}, {1, 6}, {0, 8}, {0, 7}, {0, 8}, {0, 8}, {0, 8}, {0, 8},
+{0, 8}, {0, 8}, {0, 8}, {1, 7}, {0, 8}, {0, 8}, {0, 8}, {0, 8},
+{0, 8}, {0, 7}, {1, 5}, {0, 8}, {2, 5}, {0, 8}, {0, 8}, {3, 4},
+{1, 7}, {1, 6}, {1, 6}, {1, 6}, {1, 6}, {1, 6}, {1, 6}, {1, 6},
+{2, 4}, {1, 5}, {1, 6}, {1, 5}, {0, 8}, {1, 6}, {1, 6}, {1, 6},
+{1, 6}, {1, 6}, {1, 6}, {1, 6}, {1, 6}, {1, 6}, {0, 8}, {1, 6},
+{1, 6}, {1, 6}, {1, 5}, {2, 3}, {2, 5}, {0, 7}, {0, 8}, {0, 8},
 };
 
 const u16 font3x5 [96] = {
@@ -335,13 +340,28 @@ const u16 font3x5 [96] = {
 	0x56f0,
 };
 
-static int allocatedTiles = 1;
-
 const int fontHeight = 8;
 const int fontGap = 1;
+const int spaceWidth = 6;
+
+int getVariableWidth(std::string str){
+	int widthCount = 0;
+	for(int i = 0; i < (int) str.size(); i++){
+		if(str[i]-32){
+			widthCount += ((fontWidths[str[i]-32][1]) + fontGap);
+		} else
+			widthCount += spaceWidth;
+	}
+
+	return widthCount;
+}
+
 
 void naprint(std::string str, int x, int y){
+	naprintColor(str,x,y,15);
+}
 
+void naprintColor(std::string str, int x, int y, int palette){
 	//calculate tiles needed to write word
 	const int len = str.size();
 
@@ -351,17 +371,17 @@ void naprint(std::string str, int x, int y){
 		if(str[i]-32){
 			widthCount += ((fontWidths[str[i]-32][1]) + fontGap);
 		} else{
-			widthCount += 5;
+			widthCount += spaceWidth;
 		}
 	}
 
 	//divide pixel width by 8 to get tile count and add
 	//1 if pixel width / 8 has a remainder
-	const int tileW = ((widthCount) >> 3) + ((x & 0x7) != 0);
-	const int tileH = ((fontHeight) >> 3) + ((y & 0x7) != 0);
+	const int tileW = ((widthCount) >> 3) + (((x+widthCount) & 0x7) != 0);
+	const int tileH = ((fontHeight) >> 3) + (((y+fontHeight) & 0x7) != 0);
 
 	//allocate tiles
-	const int allocatePosition = allocatedTiles;
+	const int allocatePosition = allocateStart + allocatedTiles;
 	const int toAllocate = tileW * tileH;
 	allocatedTiles += toAllocate;
 
@@ -372,9 +392,17 @@ void naprint(std::string str, int x, int y){
 	for(int i = 0; i < len; i++){
 		const int character = str[i]-32;
 
+		if(!character){
+			cursor += spaceWidth;
+			continue;
+		}
+
 		TILE *src = (TILE*) &font1tiles_bin[(character - 1) * 32];
 		const int start = fontWidths[character][0];
 		const int end = fontWidths[character][1];
+
+		// log(start);
+		// log(end);
 
 		for(int py = 0; py < fontHeight; py++){
 			const int row = src->data[py];
@@ -384,7 +412,7 @@ void naprint(std::string str, int x, int y){
 			const int cy = (py + offsety);
 			const int toy = (allocatePosition + ((cy) >> 3) * (tileW));
 
-			for(int px = 0; px <= end; px++){
+			for(int px = 0; px < end; px++){
 				const int color = ((row) >> (4 * (px+start))) & 0xf;
 
 				if(color){
@@ -394,10 +422,7 @@ void naprint(std::string str, int x, int y){
 			}
 		}
 
-		if(character)
-			cursor += fontWidths[character][1] + fontGap;
-		else
-			cursor += 5;
+		cursor += fontWidths[character][1] + fontGap;
 	}
 
 	//write tiles to map
@@ -405,7 +430,7 @@ void naprint(std::string str, int x, int y){
 	int counter = 0;
 	for(int ty = 0; ty < tileH; ty++){
 		for(int tx = 0; tx < tileW; tx++){
-			setTile(29, (x >> 3) + tx, (y >> 3) + ty, tileBuild(allocatePosition + counter,false,false,15));
+			setTile(29, (x >> 3) + tx, (y >> 3) + ty, tileBuild(allocatePosition + counter,false,false,palette));
 			counter++;
 		}
 	}
@@ -413,16 +438,14 @@ void naprint(std::string str, int x, int y){
 
 void naprintSprite(std::string str, int tile){
 
-	//calculate tiles needed to write word
-	const int len = min((int)str.size(),12);
+	// if(str.size() > 12)
+	// 	str = str.substr(0,12);
 
-	int widthCount = 0;
-	for(int i = 0; i < len; i++){
-		if(str[i]-32){
-			widthCount += ((fontWidths[str[i]-32][1]) + fontGap);
-		} else
-			widthCount += 5;
-	}
+	// //calculate tiles needed to write word
+	// const int len = min((int)str.size(),12);
+	const int len = (int) str.size();
+
+	int widthCount = getVariableWidth(str);
 
 	//divide pixel width by 8 to get tile count and add
 	//1 if pixel width / 8 has a remainder
@@ -432,6 +455,11 @@ void naprintSprite(std::string str, int tile){
 	int cursor = 0;
 	for(int i = 0; i < len; i++){
 		const int character = str[i]-32;
+
+		if(!character){
+			cursor += spaceWidth;
+			continue;
+		}
 
 		TILE *src = (TILE*) &font1tiles_bin[(character - 1) * 32];
 		const int start = fontWidths[character][0];
@@ -444,7 +472,7 @@ void naprintSprite(std::string str, int tile){
 
 			const int toy = (tile + ((py) >> 3) * (tileW));
 
-			for(int px = 0; px <= end; px++){
+			for(int px = 0; px < end; px++){
 				const int color = ((row) >> (4 * (px+start))) & 0xf;
 
 				if(color){
@@ -454,9 +482,6 @@ void naprintSprite(std::string str, int tile){
 			}
 		}
 
-		if(character)
-			cursor += fontWidths[character][1] + fontGap;
-		else
-			cursor += 5;
+		cursor += fontWidths[character][1] + fontGap;
 	}
 }

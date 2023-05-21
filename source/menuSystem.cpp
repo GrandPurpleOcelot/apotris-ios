@@ -96,17 +96,25 @@ void sceneSwitcher(std::string str){
     }else if(str == "Settings"){
         changeScene(new SettingsScene(),FADE);
     }else if(str == "Achievements"){
-        // changeScene(new AudioOptionScene(),FADE);
+
     }else if(str == "Stats"){
+
     }else if(str == "Links"){
+
     }else if(str == "Skin Editor"){
         changeScene(new EditorScene(),FADE);
     }else if(str == "Credits"){
 
     }else if(str == "Graphics"){
-        changeScene(new GraphicsScene(),FADE);
+        changeScene(new newGraphicsScene(),FADE);
     }else if(str == "Audio"){
         changeScene(new AudioOptionScene(),FADE);
+    }else if(str == "Controls"){
+        changeScene(new ControlOptionScene(),FADE);
+    }else if(str == "Handling"){
+        changeScene(new HandlingOptionScene(),FADE);
+    }else if(str == "Marathon"){
+        changeScene(new MarathonScene(),FADE);
     }else{
         log("invalid option: " + str);
     }

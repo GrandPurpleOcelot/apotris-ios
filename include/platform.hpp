@@ -31,6 +31,8 @@ const int sizeTable[3][4][2] = {
     {{8,16},{8,32},{16,32},{32,64}}, //Tall
 };
 
+extern int spriteVOffset;
+
 extern void toggleBG(int layer, bool state);
 extern void toggleSprites(bool state);
 extern void clearSprites(int count);

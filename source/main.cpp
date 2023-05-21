@@ -1,6 +1,7 @@
 #include <string>
 
 #include "def.h"
+#include "platform.hpp"
 #include "sprite37tiles_bin.h"
 #include "sprite5tiles_bin.h"
 #include "tetrisEngine.h"
@@ -144,15 +145,6 @@ void initialize(){
     // memcpy16(&tile_mem[0][31], sprite23tiles_bin, sprite23tiles_bin_size / 2);
     // memcpy16(&tile_mem[0][32], sprite24tiles_bin, sprite24tiles_bin_size / 2);
 
-    loadSpriteTiles(512, sprite6tiles_bin,4,4);
-
-    loadSpriteTiles(512 + 16, sprite6tiles_bin,4,3);
-    loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3,4,1,4);
-    loadSpriteTiles(512 + 32, &sprite6tiles_bin[128],4,2);
-    loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2,4);
-    loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
-    loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
-
     // loadSpriteTiles(512 + 64, title1tiles_bin,8,8);
     // loadSpriteTiles(512 + 96, title2tiles_bin,8,8);
 
@@ -186,7 +178,6 @@ void initialize(){
     setSkin();
     setPalette();
     setClearEffect();
-
 
     // REG_BLDCNT = BLD_BUILD(BLD_BG1,BLD_BACKDROP,BLD_STD);
 
@@ -270,20 +261,13 @@ int main(void) {
 
     // genWidths();
 
-    // profile_start();
-    // Menu *menu = new Menu();
-
-    // naprint("This is a tezt SENTENCE",10,10);
-    // // naprint("Here is even more text",10,100);
-    // log(std::to_string(profile_stop()));
-
-    // aprint("this is a test SENTENCE",0,0);
+    // naprint("S",4,4);
 
     // while(closed()){
     //     vsync();
 
-    //     // key_poll();
-    //     // menu->update();
+
+    //     showSprites(128);
     // }
 
     changeScene(new newTitleScene());
@@ -336,7 +320,7 @@ std::string timeToString(int frames) {
 
 	char res[30];
 
-	posprintf(res,"%02d:%02d:%02d",minutes,seconds,millis);
+	posprintf(res,"%02d:%02d.%02d",minutes,seconds,millis);
 
     std::string result = "";
 
@@ -874,6 +858,10 @@ void setPalette(){
 
     // memcpy16(&pal_obj_mem[13 * 16], title_pal_bin, title_pal_bin_size / 2);
     setLightMode();
+
+    //faded Text Palette
+    color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
+    color_fade_palette(13, 0, &palette[1][14*16], 0, 8, 15);
 }
 
 int getClassicPalette(){
@@ -1018,6 +1006,7 @@ void gradient(int state){
     }else{
         stopDMA();
         gradientEnabled = false;
+        toggleHBlank(false);
     }
 }
 

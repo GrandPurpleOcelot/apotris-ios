@@ -27,6 +27,15 @@ static void logOutputMgba(u8 level, const char *message)
     REG_MGBA_FLAGS = (level - 1) | 0x100;
 }
 
+static inline void log(int n){
+    if(!DIAGNOSE)
+        return;
+
+    std::string str = std::to_string(n);
+
+    logOutputMgba(4, str.c_str());
+}
+
 static inline void log(std::string str){
     if(!DIAGNOSE)
         return;

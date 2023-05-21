@@ -4,8 +4,9 @@
 #include "platform.hpp"
 #include <string>
 #include "font1tiles_bin.h"
+#include "text.h"
 
-#define MAX_WORD_SPRITES 15
+#define MAX_WORD_SPRITES 12
 
 class WordSprite {
 public:
@@ -15,10 +16,12 @@ public:
     int id;
     int priority = 0;
     bool blend = false;
-    OBJ_ATTR* sprites[3];
+    OBJ_ATTR* sprites[5];
+    int width = 0;
+    bool big = false;
 
     void show(int x, int y, int palette) {
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3 * (1+big) - big; i++) {
             sprite_unhide(sprites[i], 0);
             sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
 
@@ -30,7 +33,7 @@ public:
     }
 
     void show(int x, int y, int palette, FIXED scale) {
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3 * (1+big) - big; i++) {
             int affId = id*3+i;
             sprite_unhide(sprites[i], 0);
             sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
@@ -49,7 +52,7 @@ public:
     }
 
     void hide() {
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3 * (1+big) - big; i++)
             sprite_hide(sprites[i]);
     }
 
@@ -63,39 +66,40 @@ public:
 
         text = _text;
 
-
         if(text == ""){
-            clearSpriteTiles(startTiles, 12, 0);
+            clearSpriteTiles(startTiles, (big)?20:12 , 0);
             // memset32(&tile_mem[4][startTiles], 0, 12 * 8);
             return;
         }
 
-        // clearSpriteTiles(startTiles, 12, 1);
+        width = getVariableWidth(text);
 
-        // naprintSprite(text,startTiles);
+        clearSpriteTiles(startTiles, (big)?20:12, 1);
 
-        int n = min((int)text.size(),12);
+        naprintSprite(text,startTiles);
 
-        TILE* font = (TILE*)font1tiles_bin;
-        int i;
-        for (i = 0; i < n; i++) {
-            int c = text[i] - 32 - 1;
+        // int n = min((int)text.size(),12);
 
-            if(c >= 0)
-                setSpriteTile(startTiles,i,0,0,&font[c]);
-            else
-                clearSpriteTiles(startTiles + i, 1, 1);
-            // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
-            // dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
-        }
+        // TILE* font = (TILE*)font1tiles_bin;
+        // int i;
+        // for (i = 0; i < n; i++) {
+        //     int c = text[i] - 32 - 1;
 
-        if(i < 12){
+        //     if(c >= 0)
+        //         setSpriteTile(startTiles,i,0,0,&font[c]);
+        //     else
+        //         clearSpriteTiles(startTiles + i, 1, 1);
+        //     // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
+        //     // dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
+        // }
 
-            //TODO:
-            //"+ i" might be wrong
-            clearSpriteTiles(startTiles + i, 12-i, 1);
-            // memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
-        }
+        // if(i < 12){
+
+        //     //TODO:
+        //     //"+ i" might be wrong
+        //     clearSpriteTiles(startTiles + i, 12-i, 1);
+        //     // memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
+        // }
     }
 
     WordSprite(int _id,int _index, int _tiles) {
@@ -104,6 +108,17 @@ public:
         startTiles = _tiles;
 
         for (int i = 0; i < 3; i++) {
+            sprites[i] = &obj_buffer[startIndex + i];
+        }
+    }
+
+    WordSprite(int _id,int _index, int _tiles, bool _big) {
+        id = _id;
+        startIndex = _index;
+        startTiles = _tiles;
+        big = _big;
+
+        for (int i = 0; i < 3 * (1 + big) - big; i++) {
             sprites[i] = &obj_buffer[startIndex + i];
         }
     }

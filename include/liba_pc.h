@@ -54,19 +54,19 @@ class SpriteAttributes{
 public:
     int id = spriteIdCounter++;
     bool enabled = false;
-    int tile_start;
-    int x;
-    int y;
-    int sx;
-    int sy;
-    bool affine;
-    bool mosaic;
-    float scalex;
-    float scaley;
-    int palette;
+    int tile_start = 0;
+    int x = 0;
+    int y = 0;
+    int sx = 0;
+    int sy = 0;
+    bool affine = false;
+    bool mosaic = false;
+    float scalex = 0.0f;
+    float scaley = 0.0f;
+    int palette = 0;
     int priority = 0;
-    bool flipx;
-    bool flipy;
+    bool flipx = false;
+    bool flipy = false;
     bool rotate = false;
     bool blend = false;
     bool doubleSize = false;
@@ -90,6 +90,10 @@ INLINE FIXED fxdiv(FIXED fa, FIXED fb)
 {	return ((fa)*(1<<FIXED_BITS))/(fb);			}
 
 #define ALIGN(n)	__attribute__((aligned(n)))
+
+static inline void log(int n){
+    std::cout << std::to_string(n) << "\n";
+}
 
 static inline void log(std::string str){
     std::cout << str << "\n";

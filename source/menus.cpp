@@ -1,5 +1,6 @@
 #include "def.h"
 #include "rumble.h"
+#include "scene.hpp"
 #include "tetromino.hpp"
 // #include "soundbank.h"
 #include "tetrisEngine.h"
@@ -330,8 +331,8 @@ int endScreen() {
             // oam_copy(oam_mem, obj_buffer, 128);
             clearTilemap(25);
             // memset16(&se_mem[25], 0, 32 * 20);
-            countdown();
-            update();
+            // countdown();
+            updateText();
             break;
         }
 
@@ -341,7 +342,8 @@ int endScreen() {
 
                 if (!multiplayer) {
                     sfx(SFX_MENUCONFIRM);
-                    playAgain = true;
+                    startGame();
+                    changeScene(new GameScene());
                     break;
                 } else {
                     if (connected == 1) {
@@ -713,14 +715,15 @@ int pauseMenu(){
                 if (n == 0) {
                     sfx(SFX_MENUCONFIRM);
                     clearText();
-                    update();
+                    updateText();
                     paused = false;
                     resumeSong();
                     // mmResume();
                     break;
                 } else if (n == 1) {
                     // restart = true;
-                    playAgain = true;
+                    startGame();
+                    changeScene(new GameScene());
                     paused = false;
                     sfx(SFX_MENUCONFIRM);
                     break;
@@ -737,6 +740,7 @@ int pauseMenu(){
                     enableBlend(prevBld);
                     // REG_BLDCNT = prevBld;
                     sfx(SFX_MENUCANCEL);
+                    changeScene(new MainMenuScene(), FADE);
                     return 1;
                 }
             }
@@ -779,7 +783,7 @@ int pauseMenu(){
                 } else if (selection == 2) {
                     sfx(SFX_MENUCONFIRM);
                     clearText();
-                    update();
+                    updateText();
                     onStates = false;
                     selection = 0;
                 }
@@ -789,7 +793,7 @@ int pauseMenu(){
         if (key == KEY_START || key == KEY_SELECT) {
             sfx(SFX_MENUCONFIRM);
             clearText();
-            update();
+            updateText();
             paused = false;
             resumeSong();
             // mmResume();
@@ -802,10 +806,10 @@ int pauseMenu(){
                 clearText();
                 onStates = false;
                 selection = 0;
-                update();
+                updateText();
             }else{
                 clearText();
-                update();
+                updateText();
                 paused = false;
                 resumeSong();
                 // mmResume();

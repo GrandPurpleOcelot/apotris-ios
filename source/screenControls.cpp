@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include "logging.h"
+#include "scene.hpp"
 
 std::map<int,std::string> keyMap = {
     {KEY_LEFT,"Left"},
@@ -37,6 +38,18 @@ static int dasVer = 0;
 
 static int maxArr = 3;
 static int arr = 0;
+
+const std::list<std::string> controlOptions = {
+    "Move Left",
+    "Move Right",
+    "Rotate Left",
+    "Rotate Right",
+    "Rotate 180",
+    "Soft Drop",
+    "Hard Drop",
+    "Hold",
+    "Activate Zone",
+};
 
 static const std::list<std::string> options = {
     "Move Left",
@@ -258,12 +271,12 @@ void controlsText(){
 }
 
 void showKey(int key, int x, int y,bool selected){
-    if((key & (key - 1)) == 0)
+    if((key & (key - 1)) == 0)//if only 1 key
         if(!selected)
             aprint(keyMap[key], x - keyMap[key].size()/2, y);
         else
             aprint("["+keyMap[key]+"]", x - keyMap[key].size()/2-1, y);
-    else{
+    else{//if multiple keys
         std::string result = "";
 
         if(selected)

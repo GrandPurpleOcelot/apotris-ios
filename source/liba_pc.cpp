@@ -34,6 +34,8 @@ sf::Shader shader;
 static int offsetx = (SCREEN_WIDTH - 240)/2;
 static int offsety = (SCREEN_HEIGHT - 160)/2;
 
+int spriteVOffset = 0;
+
 void loadAudio(){
 
     for(int i = 0; i < SFX_COUNT; i++){
@@ -338,7 +340,6 @@ void vsync(){
     sprite.setPosition(0,0);
     // sprite.setPosition()
 
-
     if(ENABLE_SHADERS){
         window.draw(sprite, &shader);
 
@@ -481,13 +482,13 @@ void showSprites(int n ){
 
     std::list<int> spriteList;
 
-    for(int i = 3; i >= 0; i--){
-        // log(std::to_string(i));
+    int sum = 0;
+    for(int i = 4; i >= 1; i--){
         for(int counter = 127; counter >= 0; counter--){
             OBJ_ATTR *sprite = &obj_buffer[counter];
             if(sprite->priority == i){
                 spriteList.push_back(sprite->id);
-                // log(std::to_string(sprite->id) + " " + std::to_string(sprite->priority));
+                sum++;
             }
         }
     }
@@ -497,6 +498,7 @@ void showSprites(int n ){
     }
 
     int counter = 0;
+    sum = 0;
     for(auto const & id : spriteList){
         OBJ_ATTR *sprite = &obj_buffer[id];
 
@@ -504,6 +506,8 @@ void showSprites(int n ){
             counter++;
             continue;
         }
+
+        sum++;
 
         // TLN_SpriteData d;
         spriteData[counter].x = (sprite->tile_start) * 8;
@@ -518,6 +522,7 @@ void showSprites(int n ){
         // TLN_SetSpriteFlags(counter, (FLAG_ROTATE));
         if(sprite->affine && !sprite->rotate){
             TLN_SetSpritePivot(counter, 0.5, 0.5);
+            log(sprite->scalex);
             TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
             float scaleOffset = (1+sprite->doubleSize)/2.0;
             TLN_SetSpritePosition(counter, sprite->x + offsetx + sprite->sx * scaleOffset, sprite->y + offsety + sprite->sy * scaleOffset);
@@ -528,8 +533,8 @@ void showSprites(int n ){
             TLN_ResetSpriteScaling(counter);
         }else{
             TLN_SetSpritePosition(counter, sprite->x + offsetx, sprite->y + offsety);
-            TLN_SetSpritePivot(counter, 0, 0);
-            TLN_SetSpriteScaling(counter, 1, 1);
+            TLN_SetSpritePivot(counter, 0.0, 0.0);
+            TLN_SetSpriteScaling(counter, 1.0, 1.0);
         }
 
         if(!(blendSprites || sprite->blend))
@@ -539,7 +544,8 @@ void showSprites(int n ){
             // TLN_SetSpriteBlendMode(counter, (blendSprites)?BLEND_MIX25:BLEND_MIX75 , 0);
 
         // TLN_SetSpriteBlendMode(counter, BLEND_MIX75, 0);
-        TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + (sprite->rotate * FLAG_ROTATE) + ((sprite->priority == 0) * FLAG_PRIORITY));
+        TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + (sprite->rotate * FLAG_ROTATE) + ((sprite->priority == 1) * FLAG_PRIORITY));
+        // TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + (sprite->rotate * FLAG_ROTATE));
 
         counter++;
     }
@@ -606,15 +612,16 @@ void sprite_unhide(OBJ_ATTR * sprite, int mode){
 
 void sprite_set_pos(OBJ_ATTR * sprite, int x, int y){
     sprite->x = x;
-    sprite->y = y;
+    sprite->y = y + spriteVOffset;
 };
 
 void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int palette, int priority){
     sprite->sx = sizeTable[shape][size][0];
     sprite->sy = sizeTable[shape][size][1];
+
     sprite->tile_start = tile_start;
     sprite->palette = palette;
-    sprite->priority = priority;
+    sprite->priority = priority + 1;
     sprite->affine = false;
     sprite->doubleSize = false;
     sprite->flipx = false;
@@ -900,10 +907,11 @@ void sprite_enable_mosaic(OBJ_ATTR *sprite){
 }
 
 void sprite_set_size(OBJ_ATTR *sprite, FIXED size, int aff_id){
-    if(size == 0)
+    float n = fx2float(size);
+    if(size == 0 || n == 0)
         return;
 
-    float scale = 1/(fx2float(size));
+    float scale = 1/(n);
 
     sprite->scalex = scale;
     sprite->scaley = scale;
