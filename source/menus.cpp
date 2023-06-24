@@ -248,7 +248,7 @@ int endScreen() {
     showStats(showingStats, totalTime, ppsStr);
 
     while (1) {
-        handleMultiplayer();
+        handleMultiplayer(1);
         VBlankIntrWait();
         key_poll();
 
@@ -337,6 +337,7 @@ int endScreen() {
                 sfx(SFX_MENUCANCEL);
                 REG_BLDCNT = prevBld;
                 goToOptions = true;
+                nextSeed = 0;
                 return 1;
             } else if (selection == 2){
                 sfx(SFX_MENUCANCEL);

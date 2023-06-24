@@ -274,7 +274,7 @@ extern void hideMinos();
 extern void reset();
 extern void sleep();
 
-extern void handleMultiplayer();
+extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
 extern void progressBar();
 

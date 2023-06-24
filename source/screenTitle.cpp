@@ -757,12 +757,14 @@ void startScreen() {
                                     clearText();
                                 }
                                 connected = 1;
-                            } else if (data[i] > 100)
+                            } else if (data[i] > 100){
                                 nextSeed = data[i] - 100;
+                            }
                         }
 
                         if (linkState->playerCount == 2) {
                             if (linkState->currentPlayerId != 0) {
+                                log(std::to_string(nextSeed));
                                 if (nextSeed > 100) {
                                     startMultiplayerGame(nextSeed);
                                     break;
@@ -834,6 +836,8 @@ void startScreen() {
                         game->bTypeHeight = goalSelection;
                         game->setSubMode(subMode);
                         mode = goalSelection;
+
+                        multiplayer = false;
 
                         game->pawn.big = bigMode;
 

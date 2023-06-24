@@ -208,8 +208,6 @@ int main(void) {
 
     initialize();
 
-    log(std::to_string(savefile->settings.resetHoldToggle));
-
     //start screen animation
     while(1){
         reset();
@@ -903,6 +901,7 @@ void setGradient(int color){
             gradientTable[i] = 0x5ad6;
     }
 
+    gradientTable[SCREEN_HEIGHT] = 0x1f;
 }
 
 void sfx(int s){
@@ -920,6 +919,10 @@ void setDefaultGradient(){
 
 void gradient(bool state){
     if(state){
+        bool light = savefile->settings.lightMode;
+        if((!light && gradientTable[0] == 0) || (light && gradientTable[0] == 0x5ad6)){
+            return;
+        }
     }else{
         REG_DMA0CNT &= ~(1 << 0x1f);
     }

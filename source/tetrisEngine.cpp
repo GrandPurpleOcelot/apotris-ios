@@ -178,7 +178,6 @@ void Game::rotate(int dir){
         r += 4;
 
     moveCounter++;
-    lastMoveRotation = dir;
 
     if(rotationSystem == SRS){
         for (int i = 0; i < 5 + (dir > 1); i++) {
@@ -194,6 +193,7 @@ void Game::rotate(int dir){
 
             if (checkRotation(dx, dy, r)) {
                 specialTspin = (pawn.current == 5 && abs(dx*dy) >= 2);
+                lastMoveRotation = dir;
 
                 rotatePlace(dir,dx,dy,r);
                 return;

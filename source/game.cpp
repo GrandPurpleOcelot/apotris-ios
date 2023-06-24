@@ -137,6 +137,7 @@ void GameScene::draw(){
     if(game->eventTimer)
         oam_copy(&oam_mem[64], &obj_buffer[64], 27);
     obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
+
     if (game->refresh) {
         update();
         showBackground();
@@ -1167,7 +1168,7 @@ void gameLoop(){
         if (!game->lost && !paused && !game->eventLock) {
             game->update();
         }
-        handleMultiplayer();
+        handleMultiplayer(0);
 
         progressBar();
 
@@ -1361,12 +1362,6 @@ void countdown() {
 
     Keys k = savefile->settings.keys;
 
-    if(key_is_down(k.moveLeft)){
-        game->keyLeft(1);
-    }else if(key_is_down(k.moveRight)){
-        game->keyRight(1);
-    }
-
     if(key_is_down(k.hold))
         game->hold(1);
     if(key_is_down(k.rotateCW))
@@ -1377,6 +1372,12 @@ void countdown() {
         game->rotateTwice(1);
     if(key_is_down(k.hardDrop))
         game->keyDrop(1);
+
+    if(key_is_down(k.moveLeft)){
+        game->keyLeft(1);
+    }else if(key_is_down(k.moveRight)){
+        game->keyRight(1);
+    }
 }
 
 void screenShake() {
