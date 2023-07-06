@@ -2666,6 +2666,16 @@ void SimpleListScene::init(){
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
 
+    loadSpriteTiles(1, sprite41tiles_bin, 2, 1);
+    for(int i = 0; i < 2; i++){
+        arrowSprites[i] = &obj_buffer[3 + i];
+        sprite_set_attr(arrowSprites[i], ShapeWide, 0, 1, 14, 0);
+
+        if(i) sprite_enable_flip(arrowSprites[1], false, true);
+
+        sprite_hide(arrowSprites[i]);
+    }
+
     loadSpriteTiles(16*7, blockSprite, 1, 1);
     for(int i = 0; i < 2; i++){
         cursorSprites[i] = &obj_buffer[1 + i];
@@ -2724,6 +2734,7 @@ void SimpleListScene::init(){
 
     for(int i = 0; i < count; i++)
         wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+
 }
 
 
@@ -2741,6 +2752,7 @@ void SimpleListScene::draw(){
         int temp = lerp((movingDirection) * (space + 1) * 8,0,64*movingTimer);
         verticalOffset = lerp(temp,0,64*movingTimer);
     }
+
 
     int i = 0;//drawing index, starts at listStart
     int counter = 0;//element index
@@ -2787,6 +2799,20 @@ void SimpleListScene::draw(){
         int index = (j + listStart) % (elementMax + 2);
 
         wordSprites[index]->hide();
+    }
+
+    if(listStart > 0){
+        sprite_unhide(arrowSprites[0], 0);
+        sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 16);
+    }else{
+        sprite_hide(arrowSprites[0]);
+    }
+
+    if(listStart + elementMax + 2 <  (int) optionList.size()){
+        sprite_unhide(arrowSprites[1], 0);
+        sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * (1 + space) * 8 + startY + 0);
+    }else{
+        sprite_hide(arrowSprites[1]);
     }
 
     refreshText = false;
@@ -2970,6 +2996,16 @@ void OptionListScene::init(){
     for (int i = 0; i < 7; i++)
         labels[i] = new WordSprite(MAX_WORD_SPRITES + i, 32 + 3 * MAX_WORD_SPRITES + i * 5, 512 + i * 20, true);
 
+    loadSpriteTiles(1, sprite41tiles_bin, 2, 1);
+    for(int i = 0; i < 2; i++){
+        arrowSprites[i] = &obj_buffer[3 + i];
+        sprite_set_attr(arrowSprites[i], ShapeWide, 0, 1, 14, 0);
+
+        if(i) sprite_enable_flip(arrowSprites[1], false, true);
+
+        sprite_hide(arrowSprites[i]);
+    }
+
     loadSpriteTiles(16*7, blockSprite, 1, 1);
     for(int i = 0; i < 2; i++){
         cursorSprites[i] = &obj_buffer[1 + i];
@@ -3105,6 +3141,20 @@ void OptionListScene::draw(){
 
         wordSprites[index]->hide();
         labels[index]->hide();
+    }
+
+    if(listStart > 0){
+        sprite_unhide(arrowSprites[0], 0);
+        sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 11);
+    }else{
+        sprite_hide(arrowSprites[0]);
+    }
+
+    if(listStart + elementMax + 2 <  (int) elementList.size()){
+        sprite_unhide(arrowSprites[1], 0);
+        sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * (1 + space) * 8 + startY + 0);
+    }else{
+        sprite_hide(arrowSprites[1]);
     }
 
     showSprites(128);
@@ -3426,7 +3476,7 @@ bool PlayOptionScene::control(){
     return false;
 }
 
-void MarathonScene::start(){
+void PlayOptionScene::start(){
     for(auto const& element : elementList){
         std::string s = element->getLabel();
         int value = element->getValue();
@@ -3437,24 +3487,15 @@ void MarathonScene::start(){
         }else if(s == "Type"){
             subMode = value;
         }else if(s == "Lines"){
-            goalSelection = value;
+            goal = value;
+        }else if(s == "Minutes"){
+            goal = value;
         }
     }
 
-    int goal = 0;
-
-    if (goalSelection == 0)
-        goal = 150;
-    else if (goalSelection == 1)
-        goal = 200;
-    else if (goalSelection == 2)
-        goal = 300;
-    else if (goalSelection == 3)
-        goal = 0;//Endless
-
     Tetris::Options newOptions;
 
-    newOptions.mode = MARATHON;
+    newOptions.mode = getMode();
     newOptions.goal = goal;
     newOptions.level = level;
     newOptions.tuning = getTuning();

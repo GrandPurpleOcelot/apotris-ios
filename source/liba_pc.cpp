@@ -940,6 +940,10 @@ void sprite_enable_affine(OBJ_ATTR *sprite, int affineId, bool doubleSize){
     sprite->doubleSize = doubleSize;
 }
 
+void sprite_enable_flip(OBJ_ATTR *sprite, bool flipX, bool flipY){
+    sprite->flipx = flipX;
+    sprite->flipy = flipY;
+}
 
 extern "C" {
 

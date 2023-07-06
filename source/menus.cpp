@@ -394,7 +394,7 @@ int endScreen() {
             showStats(showingStats, totalTime, ppsStr);
         }
 
-        showSprites(32);
+        showSprites(128);
     }
 
     enableBlend(prevBld);

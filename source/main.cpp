@@ -110,12 +110,6 @@ void initialize(){
         setLayerScroll(i, 0, 0);
     }
 
-    // REG_BG0CNT = BG_CBB(0) | BG_SBB(25) | BG_SIZE(0) | BG_PRIO(2) | BG_MOSAIC;
-    // REG_BG1CNT = BG_CBB(0) | BG_SBB(26) | BG_SIZE(0) | BG_PRIO(3) | BG_MOSAIC;
-    // REG_BG2CNT = BG_CBB(2) | BG_SBB(29) | BG_SIZE(0) | BG_PRIO(0) | BG_MOSAIC;
-    // REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(3);
-    // REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG0 | DCNT_BG1 | DCNT_BG2 | DCNT_BG3; //Set to Sprite mode, 1d rendering
-
     //Load bg tiles
 
     loadTiles(0,2,sprite3tiles_bin,sprite3tiles_bin_size/32);
@@ -131,22 +125,6 @@ void initialize(){
     loadTiles(0,31,sprite23tiles_bin,sprite23tiles_bin_size/32);
     loadTiles(0,32,sprite24tiles_bin,sprite24tiles_bin_size/32);
     loadTiles(0,33,sprite42tiles_bin,sprite42tiles_bin_size/32);
-
-    // memcpy16(&tile_mem[0][2], sprite3tiles_bin, sprite3tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][4], sprite5tiles_bin, sprite3tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][6], sprite8tiles_bin, sprite8tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][12], sprite10tiles_bin, sprite10tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][13], sprite11tiles_bin, sprite11tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][14], sprite12tiles_bin, sprite12tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][15], sprite13tiles_bin, sprite13tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][26], sprite17tiles_bin, sprite17tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][27], sprite20tiles_bin, sprite20tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][30], sprite22tiles_bin, sprite22tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][31], sprite23tiles_bin, sprite23tiles_bin_size / 2);
-    // memcpy16(&tile_mem[0][32], sprite24tiles_bin, sprite24tiles_bin_size / 2);
-
-    // loadSpriteTiles(512 + 64, title1tiles_bin,8,8);
-    // loadSpriteTiles(512 + 96, title2tiles_bin,8,8);
 
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);

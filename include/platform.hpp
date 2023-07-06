@@ -66,6 +66,7 @@ extern void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_star
 extern void sprite_enable_mosaic(OBJ_ATTR * sprite);
 extern void sprite_enable_affine(OBJ_ATTR * sprite,int affineId, bool doubleSize);
 extern void sprite_enable_blend(OBJ_ATTR * sprite);
+extern void sprite_enable_flip(OBJ_ATTR * sprite, bool flipX, bool flipY);
 extern void sprite_set_size(OBJ_ATTR * sprite, FIXED size, int aff_id);
 extern void sprite_rotscale(OBJ_ATTR * sprite, FIXED sizex, FIXED sizey, int angle , int aff_id);
 

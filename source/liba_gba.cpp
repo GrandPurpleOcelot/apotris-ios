@@ -18,6 +18,8 @@
 void initRumble();
 bool unlock_gbp();
 
+int spriteVOffset = 0;
+
 void onHBlank() {
     if(REG_VCOUNT < 160)
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
@@ -26,8 +28,6 @@ void onHBlank() {
 LinkConnection* linkConnection = new LinkConnection();
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
-
-int spriteVOffset = 0;
 
 mm_word myEventHandler(mm_word msg, mm_word param){
     if(msg == MMCB_SONGMESSAGE)
@@ -156,7 +156,7 @@ void sprite_unhide(OBJ_ATTR * sprite, int mode){
 }
 
 void sprite_set_pos(OBJ_ATTR * sprite, int x, int y){
-    obj_set_pos(sprite,x,y + spriteVOffset);
+    obj_set_pos(sprite,x,y);
 }
 
 void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int palette, int priority){
@@ -505,6 +505,11 @@ void toggleRendering(bool state){
         prevDispCnt = REG_DISPCNT;
         REG_DISPCNT = 0;
     }
+}
+
+void sprite_enable_flip(OBJ_ATTR *sprite, bool flipX, bool flipY){
+    sprite->attr1 |= flipX << 0xc;
+    sprite->attr1 |= flipY << 0xd;
 }
 
 #endif

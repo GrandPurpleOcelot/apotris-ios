@@ -115,6 +115,20 @@ void sceneSwitcher(std::string str){
         changeScene(new HandlingOptionScene(),FADE);
     }else if(str == "Marathon"){
         changeScene(new MarathonScene(),FADE);
+    }else if(str == "Sprint"){
+        changeScene(new SprintScene(),FADE);
+    }else if(str == "Dig"){
+        changeScene(new DigScene(),FADE);
+    }else if(str == "Ultra"){
+        changeScene(new UltraScene(),FADE);
+    }else if(str == "Blitz"){
+        changeScene(new BlitzScene(),FADE);
+    }else if(str == "Combo"){
+        changeScene(new ComboScene(),FADE);
+    }else if(str == "Survival"){
+        changeScene(new SurvivalScene(),FADE);
+    }else if(str == "Classic"){
+        changeScene(new ClassicScene(),FADE);
     }else{
         log("invalid option: " + str);
     }

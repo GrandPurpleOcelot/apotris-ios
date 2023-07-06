@@ -1,6 +1,7 @@
 #pragma once
 
 #include "def.h"
+#include "tetrisEngine.h"
 #include <list>
 #include <string>
 #include <tuple>
@@ -125,6 +126,8 @@ class SimpleListScene : public Scene{
     WordSprite* wordSprites[MAX_WORD_SPRITES];
 
     OBJ_ATTR * cursorSprites[2];
+
+    OBJ_ATTR * arrowSprites[2];
 
     int cursorFloat = 0;
 
@@ -1125,6 +1128,8 @@ class OptionListScene : public Scene{
 
     OBJ_ATTR * cursorSprites[2];
 
+    OBJ_ATTR * arrowSprites[2];
+
     int cursorFloat = 0;
 
     bool refreshText = true;
@@ -1334,12 +1339,14 @@ class PlayOptionScene : public OptionListScene{
     public:
 
     int subMode = 0;
-    int goalSelection = 0;
+    int goal = 0;
     int level = 0;
+
+    virtual Tetris::Modes getMode() = 0;
 
     bool control();
 
-    virtual void start(){};
+    virtual void start();
 
     Scene* previousScene(){return new ModeListScene();};
 };
@@ -1347,6 +1354,9 @@ class PlayOptionScene : public OptionListScene{
 class LevelSelectorElement : public Element{
     public:
         int value = 1;
+
+        int min = 0;
+        int max = 1;
 
         int getValue() override{
             return value;
@@ -1387,6 +1397,11 @@ class LevelSelectorElement : public Element{
         std::string getCurrentOption() override {
             return std::to_string(value);
         }
+
+        LevelSelectorElement(int _min, int _max){
+            min = _min;
+            max = _max;
+        }
 };
 
 class StringSelectorElement : public Element{
@@ -1397,7 +1412,7 @@ class StringSelectorElement : public Element{
         std::list<std::string> optionList;
         std::string label;
 
-        virtual int getValue(){return value;};
+        virtual int getValue() override {return value;};
 
         std::string getLabel() override {return label;};
 
@@ -1460,7 +1475,15 @@ class IntSelectorElement : public Element{
         std::list<int> optionList;
         std::string label;
 
-        virtual int getValue() override {return value;};
+        virtual int getValue() override {
+            if(value > (int) optionList.size())
+                return 0;
+
+            auto it = optionList.begin();
+            std::advance(it,value);
+
+            return *it;
+        };
 
         std::string getLabel() override {return label;};
 
@@ -1511,6 +1534,13 @@ class IntSelectorElement : public Element{
             optionList = list;
             options = optionList.size();
             label = newLabel;
+        }
+
+        IntSelectorElement(std::string newLabel, std::list<int> list, int _value){
+            optionList = list;
+            options = optionList.size();
+            label = newLabel;
+            value = _value;
         }
 };
 
@@ -1588,17 +1618,120 @@ class TupleSelectorElement : public Element{
 class MarathonScene : public PlayOptionScene{
     public:
 
+    Tetris::Modes getMode(){return Tetris::MARATHON;};
+
     std::list<Element*> getElementList(){
         return {
             new StringSelectorElement("Type",{"Normal","Zone"}),
-            new LevelSelectorElement(),
+            new LevelSelectorElement(1,20),
             new TupleSelectorElement("Lines",{{150,"150"},{200,"200"},{300,"300"},{0,"Endless"},}),
         };
     };
 
     std::string name(){return "Marathon";};
+};
 
-    void start();
+class SprintScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::SPRINT;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new StringSelectorElement("Type",{"Normal","Attack"}),
+            new IntSelectorElement("Lines",{20,40,100},1),
+        };
+    };
+
+    std::string name(){return "Sprint";};
+};
+
+class DigScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::DIG;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new StringSelectorElement("Type",{"Normal","Efficiency"}),
+            new IntSelectorElement("Lines",{10,20,100}),
+        };
+    };
+
+    std::string name(){return "Dig";};
+};
+
+class UltraScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::ULTRA;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new TupleSelectorElement("Minutes",{{3 * 3600,"3"},{5 * 3600,"5"},{10* 3600, "10"}}),
+        };
+    };
+
+    std::string name(){return "Ultra";};
+};
+
+class BlitzScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::BLITZ;};
+
+    std::list<Element*> getElementList(){
+        return {
+        };
+    };
+
+    std::string name(){return "Blitz";};
+
+    BlitzScene(){
+        goal = 2 * 3600;
+    }
+};
+
+class ComboScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::COMBO;};
+
+    std::list<Element*> getElementList(){
+        return {
+        };
+    };
+
+    std::string name(){return "Combo";};
+};
+
+class SurvivalScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::SURVIVAL;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new TupleSelectorElement("Difficulty",{{1,"EASY"},{2,"MEDIUM"},{3,"HARD"}}),
+        };
+    };
+
+    std::string name(){return "Survival";};
+};
+
+class ClassicScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::CLASSIC;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new StringSelectorElement("Type",{"A-TYPE","B-TYPE"}),
+            new LevelSelectorElement(0,19),
+        };
+    };
+
+    std::string name(){return "Classic";};
 };
 
 class GradientEditorScene : public Scene{
