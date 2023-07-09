@@ -921,6 +921,7 @@ void gradient(bool state){
     if(state){
         bool light = savefile->settings.lightMode;
         if((!light && gradientTable[0] == 0) || (light && gradientTable[0] == 0x5ad6)){
+            memset16(pal_bg_mem, gradientTable[0], 1);
             return;
         }
     }else{

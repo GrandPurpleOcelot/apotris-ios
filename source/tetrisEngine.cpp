@@ -399,7 +399,6 @@ void Game::hardDrop() {
         finesseStreak = 0;
 
         if(trainingMode){
-            canHold = true;
             lockTimer = maxLockTimer;
             lockMoveCounter = 15;
             sounds.finesse = 1;
@@ -975,7 +974,7 @@ int Game::clear(Drop drop) {
                 }
                 ++index;
             }
-            if (skip)
+            if (skip || j + zonedLines >= lengthY)
                 continue;
             for (int i = 0; i < lengthX; i++) {
                 if (board[j][i]) {
