@@ -195,6 +195,12 @@ void Game::rotate(int dir){
                 specialTspin = (pawn.current == 5 && abs(dx*dy) >= 2);
                 lastMoveRotation = dir;
 
+                if(dy < 0)
+                    verticalKick++;
+
+                if(verticalKick >= verticalKickMax)
+                    hardDrop();
+
                 rotatePlace(dir,dx,dy,r);
                 return;
 
@@ -401,6 +407,7 @@ void Game::hardDrop() {
         if(trainingMode){
             lockTimer = maxLockTimer;
             lockMoveCounter = 15;
+            verticalKick = 0;
             sounds.finesse = 1;
             refresh = 1;
             dropLockTimer = dropLockMax;
@@ -462,14 +469,7 @@ void Game::update() {
         next();
     }
 
-    if (!(left || right)){
-        if(gameMode != CLASSIC){
-            das = 0;
-            arrCounter = 0;
-        }
-    }else if (das < maxDas){
-        das++;
-    }
+    updateDas();
 
     if(entryDelay)
         return;
@@ -524,8 +524,12 @@ void Game::update() {
             generateGarbage(1,0);
             refresh = 1;
 
-            while(!checkRotation(0,0,pawn.rotation))
-                pawn.y--;
+            while(!checkRotation(0,0,pawn.rotation)){
+                if(!checkRotation(0,-1,pawn.rotation))
+                    lost = 1;
+                else
+                    pawn.y--;
+            }
         }
     }else if(gameMode == MASTER && !disappearing){
         if(level < 500 && timer >= 25200)
@@ -823,6 +827,7 @@ void Game::place() {
 
     lockTimer = maxLockTimer;
     lockMoveCounter = 15;
+    verticalKick = 0;
     dropLockTimer = dropLockMax;
     stopLockReset = false;
 
@@ -1535,6 +1540,7 @@ void Game::hold(int dir) {
 
     lockTimer = maxLockTimer;
     lockMoveCounter = 15;
+    verticalKick = 0;
     arrCounter = 0;
 
     dropLockTimer = 0;
@@ -2398,4 +2404,22 @@ void Game::liftKeys(){
     holding = 0;
     left = 0;
     right = 0;
+}
+
+void Game::updateDas(){
+    if (!(left || right)){
+        if(gameMode != CLASSIC){
+            das = 0;
+            arrCounter = 0;
+        }
+    }else if (das < maxDas){
+        das++;
+    }
+}
+
+void Game::chargeDas(){
+    if(!(left || right))
+        return;
+
+    das = maxDas;
 }

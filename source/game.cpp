@@ -597,9 +597,18 @@ void showPawn() {
     }
 
     if(!game->pawn.big){
+        if(game->pawn.y < 16){
+            obj_hide(pawnSprite);
+            return;
+        }
+
         obj_set_attr(pawnSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(16 * 7, 11, 2));
         obj_set_pos(pawnSprite, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->pawn.y - 20) * 8 + shake * savefile->settings.shake);
     }else{
+        if(game->pawn.y * 2 < 16){
+            obj_hide(pawnSprite);
+            return;
+        }
         obj_set_attr(pawnSprite, ATTR0_SQUARE | ATTR0_AFF_DBL | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(31), ATTR2_BUILD(16 * 7, 11, 2));
         obj_aff_identity(&obj_aff_buffer[31]);
         obj_aff_scale(&obj_aff_buffer[31], 1<<7, 1<<7);
@@ -676,9 +685,19 @@ void showShadow() {
     }
 
     if(!game->pawn.big){
+        if(game->pawn.y < 16){
+            obj_hide(pawnSprite);
+            return;
+        }
+
         obj_set_attr(pawnShadow, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(16 * (8 - (savefile->settings.shadow == 3)), 10, 2));
         obj_set_pos(pawnShadow, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->lowest() - 20) * 8 + shake * savefile->settings.shake);
     }else{
+        if(game->pawn.y < 16){
+            obj_hide(pawnSprite);
+            return;
+        }
+
         obj_set_attr(pawnShadow, ATTR0_SQUARE | ATTR0_AFF_DBL | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(30), ATTR2_BUILD(16 * (8 - (savefile->settings.shadow == 3)), 10, 2));
         obj_aff_identity(&obj_aff_buffer[30]);
         obj_aff_scale(&obj_aff_buffer[30],1<<7,1<<7);
@@ -1378,6 +1397,8 @@ void countdown() {
     }else if(key_is_down(k.moveRight)){
         game->keyRight(1);
     }
+
+    game->chargeDas();
 }
 
 void screenShake() {

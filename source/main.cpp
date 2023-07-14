@@ -150,7 +150,7 @@ void initialize(){
     REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(3);
     REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG0 | DCNT_BG1 | DCNT_BG2 | DCNT_BG3; //Set to Sprite mode, 1d rendering
 
-    	// //Load bg tiles
+        // //Load bg tiles
     memcpy16(&tile_mem[0][2], sprite3tiles_bin, sprite3tiles_bin_size / 2);
     memcpy16(&tile_mem[0][4], sprite5tiles_bin, sprite3tiles_bin_size / 2);
     memcpy16(&tile_mem[0][6], sprite8tiles_bin, sprite8tiles_bin_size / 2);
@@ -243,9 +243,9 @@ std::string timeToString(int frames) {
     int seconds = t % 60;
     int minutes = t / 60;
 
-	char res[30];
+    char res[30];
 
-	posprintf(res,"%02d:%02d:%02d",minutes,seconds,millis);
+    posprintf(res,"%02d:%02d:%02d",minutes,seconds,millis);
 
     std::string result = "";
 
@@ -905,8 +905,8 @@ void setGradient(int color){
 }
 
 void sfx(int s){
-	mm_sfxhand h = mmEffect(s);
-	mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
+    mm_sfxhand h = mmEffect(s);
+    mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
 
     if((s == SFX_PLACE) && game->zoneTimer){
         mmEffectRate(h,512);

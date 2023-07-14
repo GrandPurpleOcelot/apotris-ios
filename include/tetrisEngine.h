@@ -58,6 +58,18 @@ namespace Tetris
         int maxZonedLines = 0;
 
         Stats(){}
+
+        Stats(const Stats& old){
+            for(int i = 0; i < 4; i++)
+                clears[i] = old.clears[i];
+
+            tspins = old.tspins;
+            perfectClears = old.perfectClears;
+            maxStreak = old.maxStreak;
+            maxCombo = old.maxCombo;
+            holds = old.holds;
+            maxZonedLines = old.maxZonedLines;
+        }
     };
 
     class Color {
@@ -444,6 +456,9 @@ namespace Tetris
 
         bool toEndZone = false;
 
+        int verticalKick = 0;
+        int verticalKickMax = 8;
+
         int checkRotation(int, int, int);
         void rotateCW(int dir);
         void rotateCCW(int dir);
@@ -480,6 +495,8 @@ namespace Tetris
         void removeEventLock();
         void activateZone(int);
         void liftKeys();
+        void updateDas();
+        void chargeDas();
 
         Game(){
             seed = initSeed = qran();
@@ -601,6 +618,9 @@ namespace Tetris
             trainingMode = oldGame.trainingMode;
             clearLock = oldGame.clearLock;
             linesToClear = oldGame.linesToClear;
+            pieceCounter = oldGame.pieceCounter;
+
+            statTracker = Stats(oldGame.statTracker);
         }
 
 
