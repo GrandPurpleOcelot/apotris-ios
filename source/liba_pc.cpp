@@ -1285,7 +1285,6 @@ s16 sinLut(int angle){
     return (adj & 0xffff);
 }
 
-
 COLOR rgb8to5(u32 *c){
     int b = (*c >> (16 + 3)) & 0x1f;
     int g = (*c >> ( 8 + 3)) & 0x1f;

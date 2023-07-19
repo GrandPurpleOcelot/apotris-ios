@@ -229,6 +229,12 @@ void genWidths(){
 
 }
 
+// IWRAM_CODE void showGrid(){
+//     for(int i = 0; i < 20; i++)
+//         for(int j = 0; j < 10; j++)
+//             setTile(25, j + 10, i, tileBuild(31,false,false,prep(current[i+1][j+1])));
+// }
+
 int main(void) {
 
     loadSave();
@@ -247,6 +253,53 @@ int main(void) {
 
     //     showSprites(128);
     // }
+    //
+
+    for(int i = 0; i < 16; i++){
+        setPaletteColor(i, 5, RGB15(i, i, i), 1);
+    }
+
+    // while(closed()){
+    //     vsync();
+    //     key_poll();
+
+    //     if(++t >= tm){
+    //         t = 0;
+
+    //         profile_start();
+    //         updateGrid();
+    //         log("update:" + std::to_string(profile_stop()));
+
+    //         profile_start();
+    //         showGrid();
+    //         log("show:" + std::to_string(profile_stop()));
+
+    //         profile_start();
+    //         FIXED temp[22][11];
+
+    //         memcpy32(temp, current, 22 * 12);
+    //         memcpy32(current, previous, 22 * 12);
+    //         memcpy32(previous, temp, 22 * 12);
+
+    //         log("swap:" + std::to_string(profile_stop()));
+    //     }
+
+
+    //     if(key_hit(KEY_START))
+    //         break;
+
+    //     if(key_hit(KEY_A)){
+    //         for(int i = 0; i < 20; i++){
+    //             for(int j = 0; j < 2; j++){
+    //                 current[i + 1][j + 1 + 4] = c;
+    //             }
+    //         }
+    //         // current[10][5] = c;
+    //         // current[11][5] = c;
+    //         // current[10][6] = c;
+    //         // current[11][6] = c;
+    //     }
+    // }
 
     changeScene(new newTitleScene());
 
@@ -259,7 +312,7 @@ int main(void) {
         // if(!playAgain){
         //     newStart();
         //     // startScreen();
-		// }else{
+        // }else{
         //     playAgain = false;
 
         //     if(game->gameMode != BATTLE){
@@ -296,9 +349,9 @@ std::string timeToString(int frames) {
     int seconds = t % 60;
     int minutes = t / 60;
 
-	char res[30];
+    char res[30];
 
-	posprintf(res,"%02d:%02d.%02d",minutes,seconds,millis);
+    posprintf(res,"%02d:%02d.%02d",minutes,seconds,millis);
 
     std::string result = "";
 
@@ -306,7 +359,6 @@ std::string timeToString(int frames) {
 
     return result;
 }
-
 
 void addToResults(int input, int index) {
     profileResults[index] = input;
@@ -358,6 +410,9 @@ void reset() {
         memcpy16(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
     else
         setGradient(g);
+
+    memset32(current, 0, 22 * 12);
+    memset32(previous, 0, 22 * 12);
 }
 
 std::string nameInput(int place) {

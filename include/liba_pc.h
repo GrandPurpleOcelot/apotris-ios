@@ -18,6 +18,8 @@ typedef signed short s16;
 typedef signed int   s32;
 typedef signed long long s64;
 
+#define IWRAM_CODE
+
 #define KEY_A			0x0001	//!< Button A
 #define KEY_B			0x0002	//!< Button B
 #define KEY_SELECT		0x0004	//!< Select button
@@ -334,6 +336,9 @@ INLINE u32 bf_clamp(int x, uint len){
 		x= (~y)>>(32-len);
 	return x;
 }
+
+INLINE int clamp(int x, int min, int max)
+{	return (x>=max) ? (max-1) : ( (x<min) ? min : x );	}
 
 extern void color_fade_fast(int palette, int index, const COLOR * src, COLOR color, int count, u32 alpha);
 

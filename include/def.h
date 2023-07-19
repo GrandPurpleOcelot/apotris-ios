@@ -445,6 +445,9 @@ extern bool replaying;
 extern bool enableBot;
 extern bool demo;
 
+extern int current[22][12];
+extern int previous[22][12];
+
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
 
 class Function{

@@ -53,6 +53,9 @@ void liftKeys();
 // void journeyFlash();
 void setJourneyGraphics(Save * save, int level);
 void replayControl();
+INLINE int prep(int n);
+
+IWRAM_CODE void updateGrid();
 
 Game* game = nullptr;
 OBJ_ATTR* pawnSprite;
@@ -128,6 +131,17 @@ FIXED shakeVelocity;
 
 bool replaying = false;
 bool exitGame = false;
+
+int current[22][12];
+int previous[22][12];
+
+int gridUpdateTimer = 0;
+int gridUpdateTimerMax = 4;
+
+int damp = 2;
+
+int dampTimer = 0;
+int dampTimerMax = 60;
 
 void GameScene::draw(){
     // std::string prof;
@@ -1032,6 +1046,16 @@ bool GameScene::control() {
         }
     }
 
+    if(key_hit(KEY_SELECT)){
+        for(int i = 0; i < 20; i++){
+            std::string str;
+            for(int j = 0; j < 10; j++){
+                str += std::to_string(prep(current[i+1][j+1])) + " ";
+            }
+            log(str);
+        }
+    }
+
     return false;
 }
 
@@ -1251,9 +1275,11 @@ void gameLoop(){
 }
 
 void addGlow(Tetris::Drop location) {
-    for (int i = 0; i < location.endY && i < 20; i++)
-        for (int j = location.startX; j < location.endX; j++)
+    for (int i = 0; i < location.endY && i < 20; i++){
+        for (int j = location.startX; j < location.endX; j++){
             glow[i][j] = glowDuration;
+        }
+    }
 
     if (game->comboCounter > 0 || game->zoneTimer) {
         int xCenter = (location.endX - location.startX) / 2 + location.startX;
@@ -1269,6 +1295,19 @@ void addGlow(Tetris::Drop location) {
 
         if (game->previousClear.isBackToBack == 1)
             effectList.push_back(Effect(1 + (game->previousClear.isTSpin != 0), xCenter, location.endY));
+
+        for (int i = location.startY; i < location.endY && i < 20; i++)
+            for (int j = 0; j < 10; j++)
+                current[i+1][j+1] = 2048;
+
+        damp = 4;
+
+        dampTimer = dampTimerMax;
+
+    }else{
+        for (int i = location.startY; i < location.endY && i < 20; i++)
+            for (int j = location.startX; j < location.endX; j++)
+                current[i+1][j+1] = 1024;
     }
 }
 
@@ -1509,6 +1548,27 @@ void drawFrameBackgrounds(){
     delete temp;
 }
 
+// INLINE int prep(int n){
+//     n = clamp(n + 1024, 0, 2047);
+//     return n / 128;
+// }
+
+INLINE int prep(int n){
+    return clamp((n + 500) / 8, 0, 255) / 16;
+}
+
+IWRAM_CODE void updateGrid(){
+    for(int i = 1; i < 21; i++){
+        for(int j = 1; j < 11; j++){
+            current[i][j] = (
+                previous[i-1][j] + previous[i+1][j] +
+                previous[i][j-1] + previous[i][j+1]) / 2 - current[i][j];
+
+            current[i][j] -= current[i][j] >> damp;
+        }
+    }
+}
+
 void drawGrid() {
     std::list<Effect>::iterator index = effectList.begin();
 
@@ -1573,42 +1633,37 @@ void drawGrid() {
     setTiles(26,31*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     setTiles(26,20*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     #endif
-    // u16* dest = (u16*)se_mem[26];
 
-    // memset16(&dest[31*32+10],gridTile,10);
-    // memset16(&dest[20*32+10],gridTile,10);
+    // u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer));
 
-    // dest += 10;
+    // for (int i = 0; i < 20; i++) {
+    //     for (int j = 0; j < 10; j++) {
+    //         if (glow[i][j] == 0 || !savefile->settings.effects) {
+    //             setTile(26, 10 + j, i, t);
+    //             // *dest++ = gridTile;
+    //         } else if (glow[i][j] > glowDuration) {
+    //             glow[i][j]--;
+    //             setTile(26, 10 + j, i, t);
+    //             // *dest++ = gridTile;
+    //         } else if (glow[i][j] > 0) {
+    //             glow[i][j]--;
+    //             int color = 0;
+    //             if (glow[i][j] >= glowDuration * 3 / 4)
+    //                 color = 3;
+    //             else if (glow[i][j] >= glowDuration * 2 / 4)
+    //                 color = 2;
+    //             else if (glow[i][j] >= glowDuration * 1 / 4)
+    //                 color = 1;
+    //             setTile(26, 10 + j, i, tileBuild(gridTile, false, false, color + (palOffset) * (savefile->settings.lightMode && !game->zoneTimer)));
+    //             // *dest++ = gridTile + color * 0x1000;
+    //         }
+    //     }
+    //     // dest += 22;
+    // }
 
-    // if (savefile->settings.lightMode && !game->zoneTimer)
-    //     gridTile += palOffset * 0x1000;
-
-    u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer));
-
-    for (int i = 0; i < 20; i++) {
-        for (int j = 0; j < 10; j++) {
-            if (glow[i][j] == 0 || !savefile->settings.effects) {
-                setTile(26, 10 + j, i, t);
-                // *dest++ = gridTile;
-            } else if (glow[i][j] > glowDuration) {
-                glow[i][j]--;
-                setTile(26, 10 + j, i, t);
-                // *dest++ = gridTile;
-            } else if (glow[i][j] > 0) {
-                glow[i][j]--;
-                int color = 0;
-                if (glow[i][j] >= glowDuration * 3 / 4)
-                    color = 3;
-                else if (glow[i][j] >= glowDuration * 2 / 4)
-                    color = 2;
-                else if (glow[i][j] >= glowDuration * 1 / 4)
-                    color = 1;
-                setTile(26, 10 + j, i, tileBuild(gridTile, false, false, color + (palOffset) * (savefile->settings.lightMode && !game->zoneTimer)));
-                // *dest++ = gridTile + color * 0x1000;
-            }
-        }
-        // dest += 22;
-    }
+    for(int i = 0; i < 20; i++)
+        for(int j = 0; j < 10; j++)
+            setTile(26, j + 10, i, tileBuild(gridTile,false,false,prep(current[i+1][j+1])));
 }
 
 void progressBar(int layer) {
@@ -2654,6 +2709,9 @@ void GameScene::init(){
     }
 
     updateText();
+
+    // enableBlend((0b000000 << 8) + (1 << 6) + (0 << 3));
+    enableBlend((0b101010 << 8) + (1 << 6) + (0b1010));
 }
 
 void GameScene::update(){
@@ -2799,6 +2857,9 @@ void GameScene::update(){
     }
 
     if (playAgain) {
+        playAgain = false;
+        startGame();
+        changeScene(new GameScene());
         return;
     }
 
@@ -2833,6 +2894,22 @@ void GameScene::update(){
 
     sqran(qran() % frameCounter);
 
+    if(++gridUpdateTimer >= gridUpdateTimerMax){
+        gridUpdateTimer = 0;
+        updateGrid();
+
+        FIXED temp[22][12];
+
+        memcpy32(temp, current, 22 * 12);
+        memcpy32(current, previous, 22 * 12);
+        memcpy32(previous, temp, 22 * 12);
+    }
+
+    if(dampTimer){
+        dampTimer--;
+        if(!dampTimer)
+            damp = 2;
+    }
 }
 
 void GameScene::deinit(){

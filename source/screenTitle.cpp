@@ -3442,6 +3442,7 @@ bool ConfirmSaveScene::control(){
             setLightMode();
             setGradient(savefile->settings.backgroundGradient);
 
+        }else{
             saveSavefile();
         }
 
