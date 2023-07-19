@@ -192,7 +192,7 @@ void Game::rotate(int dir){
             }
 
             if (checkRotation(dx, dy, r)) {
-                specialTspin = (pawn.current == 5 && abs(dx*dy) >= 2);
+                specialTspin = (pawn.current == 5 && (abs(dx) + abs(dy) >= 2));
                 lastMoveRotation = dir;
 
                 if(dy < 0)
