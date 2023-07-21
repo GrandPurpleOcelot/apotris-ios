@@ -45,6 +45,10 @@ class GameScene : public Scene{
     bool counted = false;
 
     Scene* previousScene(){return NULL;};
+
+    ~GameScene(){
+        deinit();
+    };
 };
 
 class TitleScene : public Scene{
@@ -1249,7 +1253,7 @@ class newGraphicsScene : public Scene{
     int cursorFloat = 0;
 
     bool refreshText = true;
-    bool refreshGame = true;
+    bool refreshGame = false;
 
     bool showText = true;
 
@@ -1760,7 +1764,7 @@ class GradientEditorScene : public Scene{
     }
 };
 
-enum Transitions{
+enum class Transitions{
     INSTANT,
     FADE,
     SCANLINE

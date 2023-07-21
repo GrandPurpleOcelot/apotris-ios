@@ -897,7 +897,7 @@ void GradientEditorScene::update(){
 bool GradientEditorScene::control(){
     if(key_hit(KEY_START) || key_hit(KEY_B)){
         sfx(SFX_MENUCANCEL);
-        changeScene(previousScene(),FADE);
+        changeScene(previousScene(),Transitions::FADE);
         return true;
     }
 
@@ -962,5 +962,5 @@ void GradientEditorScene::deinit(){
 
 void GradientElement::action(){
     sfx(SFX_MENUCONFIRM);
-    changeScene(new GradientEditorScene(),FADE);
+    changeScene(new GradientEditorScene(),Transitions::FADE);
 }

@@ -8,5 +8,6 @@ bin/
 *.srm
 *.pnproj
 *.el
+.clangd
 compile_commands.json
 apotris*.png

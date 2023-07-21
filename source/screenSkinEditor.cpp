@@ -322,7 +322,7 @@ void EditorScene::update(){
 
     if(selector()){
         previousSelection = 5;
-        changeScene(new MainMenuScene,FADE);
+        changeScene(new MainMenuScene,Transitions::FADE);
         return;
     }
 

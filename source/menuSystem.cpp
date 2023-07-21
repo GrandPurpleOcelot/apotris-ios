@@ -1,5 +1,5 @@
-#include "menuSystem.h"
 #include "platform.hpp"
+#include "menuSystem.h"
 #include "logging.h"
 #include "menu.h"
 #include <string>
@@ -17,12 +17,12 @@ void changeScene(Scene *newScene, Transitions transition){
     setLightMode();
 
     switch(transition){
-    case INSTANT:
+    case Transitions::INSTANT:
         break;
-    case FADE:
+    case Transitions::FADE:
         fadeToBlack();
         break;
-    case SCANLINE:
+    case Transitions::SCANLINE:
         break;
     default:
         break;
@@ -42,12 +42,12 @@ void changeScene(Scene *newScene, Transitions transition){
     toggleRendering(true);
 
     switch(transition){
-    case INSTANT:
+    case Transitions::INSTANT:
         break;
-    case FADE:
+    case Transitions::FADE:
         fadeFromBlack();
         break;
-    case SCANLINE:
+    case Transitions::SCANLINE:
         break;
         default:
         break;
@@ -55,7 +55,7 @@ void changeScene(Scene *newScene, Transitions transition){
 }
 
 void changeScene(Scene *newScene){
-    changeScene(newScene,INSTANT);
+    changeScene(newScene,Transitions::INSTANT);
 }
 
 void fadeToBlack(){
@@ -92,9 +92,9 @@ void fadeFromBlack(){
 
 void sceneSwitcher(std::string str){
     if(str == "Play"){
-        changeScene(new ModeListScene(),FADE);
+        changeScene(new ModeListScene(),Transitions::FADE);
     }else if(str == "Settings"){
-        changeScene(new SettingsScene(),FADE);
+        changeScene(new SettingsScene(),Transitions::FADE);
     }else if(str == "Achievements"){
 
     }else if(str == "Stats"){
@@ -102,33 +102,33 @@ void sceneSwitcher(std::string str){
     }else if(str == "Links"){
 
     }else if(str == "Skin Editor"){
-        changeScene(new EditorScene(),FADE);
+        changeScene(new EditorScene(),Transitions::FADE);
     }else if(str == "Credits"){
 
     }else if(str == "Graphics"){
-        changeScene(new newGraphicsScene(),FADE);
+        changeScene(new newGraphicsScene(),Transitions::FADE);
     }else if(str == "Audio"){
-        changeScene(new AudioOptionScene(),FADE);
+        changeScene(new AudioOptionScene(),Transitions::FADE);
     }else if(str == "Controls"){
-        changeScene(new ControlOptionScene(),FADE);
+        changeScene(new ControlOptionScene(),Transitions::FADE);
     }else if(str == "Handling"){
-        changeScene(new HandlingOptionScene(),FADE);
+        changeScene(new HandlingOptionScene(),Transitions::FADE);
     }else if(str == "Marathon"){
-        changeScene(new MarathonScene(),FADE);
+        changeScene(new MarathonScene(),Transitions::FADE);
     }else if(str == "Sprint"){
-        changeScene(new SprintScene(),FADE);
+        changeScene(new SprintScene(),Transitions::FADE);
     }else if(str == "Dig"){
-        changeScene(new DigScene(),FADE);
+        changeScene(new DigScene(),Transitions::FADE);
     }else if(str == "Ultra"){
-        changeScene(new UltraScene(),FADE);
+        changeScene(new UltraScene(),Transitions::FADE);
     }else if(str == "Blitz"){
-        changeScene(new BlitzScene(),FADE);
+        changeScene(new BlitzScene(),Transitions::FADE);
     }else if(str == "Combo"){
-        changeScene(new ComboScene(),FADE);
+        changeScene(new ComboScene(),Transitions::FADE);
     }else if(str == "Survival"){
-        changeScene(new SurvivalScene(),FADE);
+        changeScene(new SurvivalScene(),Transitions::FADE);
     }else if(str == "Classic"){
-        changeScene(new ClassicScene(),FADE);
+        changeScene(new ClassicScene(),Transitions::FADE);
     }else{
         log("invalid option: " + str);
     }

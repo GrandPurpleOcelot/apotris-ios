@@ -24,12 +24,9 @@ void settingsText();
 void toggleBigMode();
 std::string timeToStringHours(int frames);
 void resetScoreboard(int,int,int);
-bool confirmUnsaved();
 void drawBackgroundGrid();
 bool checkSettingsChange();
 void initFallingBlocks();
-
-static OBJ_ATTR * levelCursor = &obj_buffer[32];
 
 using namespace Tetris;
 
@@ -72,7 +69,6 @@ const std::list<std::string> settingsOptions = {"Graphics","Audio","Controls","H
 
 const int secretCombo[11] = {KEY_UP,KEY_UP,KEY_DOWN,KEY_DOWN,KEY_LEFT,KEY_RIGHT,KEY_LEFT,KEY_RIGHT,KEY_B,KEY_A,KEY_START};
 
-static int selection = 0;
 int goalSelection = 0;
 int level = 1;
 static int toStart = 0;
@@ -90,6 +86,7 @@ std::string previousElement;
 
 std::list<std::string> path;
 
+#if 0
 void startScreen() {
 
     TitleScene* s = new TitleScene();
@@ -119,19 +116,15 @@ void startScreen() {
 
     toggleBG(3,false);
 
-    // REG_DISPCNT &= ~DCNT_BG3;
     drawUIFrame(0, 0, 30, 20);
 
     loadTiles(2,102,sprite37tiles_bin,sprite37tiles_bin_size/32);
     loadTiles(2,105,sprite41tiles_bin,sprite41tiles_bin_size/32);
-    // memcpy16(&tile_mem[2][102], sprite37tiles_bin, sprite37tiles_bin_size / 2);
-    // memcpy16(&tile_mem[2][105], sprite41tiles_bin, sprite41tiles_bin_size / 2);
 
     setSkin();
     setLightMode();
 
     clearSprites(128);
-    // oam_init(obj_buffer, 128);
 
     playSongRandom(0);
 
@@ -139,17 +132,12 @@ void startScreen() {
 
     loadSpriteTiles(16*7, blockSprite, 1, 1);
     sprite_set_attr(levelCursor, ShapeSquare, 0, 16*7, 5, 0);
-    // memcpy16(&tile_mem[4][16*7],blockSprite,16);
-    // obj_set_attr(levelCursor, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(16*7, 5, 0));
     sprite_hide(levelCursor);
 
     clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
-    // memset32(&tile_mem[4][256], 0x0000 , MAX_WORD_SPRITES * 12 * 8);
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
-
-    // int prevBld = blendInfo;
 
     if(goToOptions){
         goToOptions = false;
@@ -159,8 +147,6 @@ void startScreen() {
         options = previousOptionMax;
 
         clearTilemap(25);
-        // u16* dest = (u16*)se_mem[25];
-        // memset16(dest, 0, 20 * 32);
 
         clearText();
 
@@ -175,15 +161,7 @@ void startScreen() {
         memset16(backgroundArray, 0, 30 * (bgGridHeight));
 
         showSprites(128);
-        // oam_copy(oam_mem, obj_buffer, 128);
     }
-
-    // int counter = 0;
-    // while(closed()){
-    //     vsync();
-    //     log(std::to_string(counter));
-    //     counter++;
-    // }
 
     while (closed()) {
 
@@ -1029,9 +1007,9 @@ void startScreen() {
                     bool change = checkSettingsChange();
 
                     bool exit = true;
-                    if(change){
-                        exit = confirmUnsaved();
-                    }
+                    // if(change){
+                    //     exit = confirmUnsaved();
+                    // }
 
                     if(exit){
                         onSettings = false;
@@ -1844,6 +1822,8 @@ void startText() {
     }
 }
 
+#endif
+
 void drawUIFrame(int x, int y, int w, int h) {
     clearTilemap(26);
     // memset32(&se_mem[26], 0x0000, 32 * 20);
@@ -2206,80 +2186,6 @@ void resetScoreboard(int mode, int goal, int subMode){
     clearText();
 }
 
-bool confirmUnsaved(){
-    clearText();
-
-    clearSprites(128);
-    showSprites(128);
-
-    int timer = 0;
-
-    int s = 0;
-
-    while (closed()) {
-
-        aprint("You haven't saved", 6, 6);
-        aprint("your changes.", 6 , 8);
-        aprint("Save settings?", 6 , 10);
-
-        vsync();
-        key_poll();
-
-        if(timer < 16){
-            timer++;
-        }else{
-            aprint(" SAVE     DON'T SAVE ", 6, 15);
-
-            if(s == 0){
-                aprint("[",6,15);
-                aprint("]",11,15);
-            }else{
-                aprint("[",15,15);
-                aprint("]",26,15);
-            }
-
-            if (key_hit(KEY_A)) {
-                clearText();
-                if(s == 0)
-                    break;
-                else{
-                    savefile->settings = previousSettings;
-
-                    for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
-                        savefile->customSkins[i] = previousSkins[i];
-
-                    setMusicVolume(512 * ((float)savefile->settings.volume / 10));
-                    setSkin();
-                    setLightMode();
-                    setGradient(savefile->settings.backgroundGradient);
-                    return true;
-                }
-            }
-
-            if (key_hit(KEY_B)) {
-                clearText();
-                return false;
-            }
-
-            if(key_hit(KEY_LEFT)){
-                if(s > 0)
-                    s--;
-            }
-
-            if(key_hit(KEY_RIGHT)){
-                if(s < 1)
-                    s++;
-            }
-        }
-    }
-
-    saveSavefile();
-    // saveToSram();
-    clearText();
-
-    return true;
-}
-
 void drawBackgroundGrid(){
     gridDrawn = true;
 
@@ -2296,7 +2202,7 @@ void drawBackgroundGrid(){
 void TitleScene::draw(){
     if(refreshText){
         refreshText = false;
-        startText();
+        // startText();
         toggleBG(3, onSettings);
         // if (onSettings) {
         //     // REG_DISPCNT |= DCNT_BG3;
@@ -2322,8 +2228,8 @@ void newTitleScene::init(){
     reset();
     toggleBG(3,false);
 
-    loadSpriteTiles(512 + 64, title1tiles_bin,8,8);
-    loadSpriteTiles(512 + 96, title2tiles_bin,8,8);
+    loadSpriteTiles(512 + 64, title1tiles_bin,8,4);
+    loadSpriteTiles(512 + 96, title2tiles_bin,8,4);
 
     loadPalette(12+16, 0, title_pal_bin, title_pal_bin_size/2);
     loadTiles(2,102,sprite37tiles_bin,sprite37tiles_bin_size/32);
@@ -2381,7 +2287,7 @@ void newTitleScene::draw(){
 bool newTitleScene::control(){
     if(key_hit(KEY_FULL)){
         sfx(SFX_MENUCONFIRM);
-        changeScene(new MainMenuScene(),FADE);
+        changeScene(new MainMenuScene(),Transitions::FADE);
         return true;
     }
 
@@ -2404,7 +2310,7 @@ void newTitleScene::update(){
 
         startGame();
 
-        changeScene(new GameScene(), FADE);
+        changeScene(new GameScene(), Transitions::FADE);
     }
 }
 
@@ -2780,8 +2686,9 @@ void SimpleListScene::draw(){
         if(counter == selection){
             for(int i = 0; i < 2; i++){
                 sprite_unhide(cursorSprites[i],0);
-                sprite_enable_affine(cursorSprites[i], i, true);
-                sprite_set_size(cursorSprites[i], scale , i);
+                // sprite_enable_affine(cursorSprites[i], i, true);
+                // sprite_set_size(cursorSprites[i], scale , i);
+                if(i) sprite_enable_flip(cursorSprites[1], false, true);
 
                 int x = 240/2 - ((len + 8) / 2 + offset + 4) * ((i)?-1:1) - 8;
 
@@ -2840,7 +2747,7 @@ bool SimpleListScene::control(){
         if(path.size())
             path.pop_back();
 
-        changeScene(previousScene(),FADE);
+        changeScene(previousScene(),Transitions::FADE);
         return true;
     }
 
@@ -2988,7 +2895,7 @@ void OptionListScene::init(){
     //backgroundGrid
     setTiles(26,0,32*32, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
 
-    setTiles(27,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    setTiles(27,0,32*32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,32 + i * 3, 256 + i * 12);
@@ -3064,11 +2971,12 @@ void OptionListScene::init(){
 
     for(int i = 0; i < count; i++)
         wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+
+    draw();
 }
 
 void OptionListScene::draw(){
     fallingBlocks();
-    toggleBG(3,true);
 
     const int space = 1;
     const int startX = 3 * 8;
@@ -3100,7 +3008,7 @@ void OptionListScene::draw(){
 
         std::string opt = option->getCurrentOption();
 
-        int index = (i + listStart) % (elementMax + 2);
+        const int index = (i + listStart) % (elementMax + 2);
 
         if(refreshText){
             if(counter == selection)
@@ -3108,12 +3016,11 @@ void OptionListScene::draw(){
             else
                 wordSprites[index]->setText(" " + opt); // draw option without text cursor
 
-            std::string label = option->getLabel();
-            labels[index]->setText(label);
+            labels[index]->setText(option->getLabel());
         }
 
-        int x = (endX) * 8 - getVariableWidth(opt);
-        int y = startY + 8 * (space + 1) * i + verticalOffset;
+        const int x = (endX) * 8 - getVariableWidth(opt);
+        const int y = startY + 8 * (space + 1) * i + verticalOffset;
 
         wordSprites[index]->setPriority(0);
         wordSprites[index]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
@@ -3184,7 +3091,7 @@ bool OptionListScene::control(){
         if(path.size())
             path.pop_back();
 
-        changeScene(previousScene(),FADE);
+        changeScene(previousScene(),Transitions::FADE);
         return true;
     }
 
@@ -3325,6 +3232,8 @@ void OptionListScene::update(){
     canDraw = 1;
     key_poll();
 
+    toggleBG(3,true);
+
     cursorFloat += 6;
     if(cursorFloat >= 512)
         cursorFloat = 0;
@@ -3446,10 +3355,10 @@ bool ConfirmSaveScene::control(){
             saveSavefile();
         }
 
-        changeScene(new MainMenuScene(),FADE);
+        changeScene(new MainMenuScene(),Transitions::FADE);
     }else if(key_hit(KEY_B)){
         sfx(SFX_MENUCANCEL);
-        changeScene(new SettingsScene(),FADE);
+        changeScene(new SettingsScene(),Transitions::FADE);
     }
 
     return false;
@@ -3622,11 +3531,6 @@ void newGraphicsScene::init(){
 
     game->pawn.y += 1;
 
-    toggleBG(0, true);
-    toggleBG(1, true);
-    toggleBG(2, true);
-    toggleBG(3, true);
-
     enableBlend((1 << 6) + (0b111011 << 8) + (1 << 3));
     // enableBlend(0);
 
@@ -3642,11 +3546,13 @@ void newGraphicsScene::init(){
     loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2,4);
     loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
     loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
+
+    draw();
+
+    refreshGame = true;
 }
 
 void newGraphicsScene::draw(){
-    toggleBG(3,true);
-
     if(showText){
         const int space = 1;
         const int startX = 3 * 8;
@@ -3734,7 +3640,6 @@ void newGraphicsScene::draw(){
         showQueue();
         showHold();
         showBackground(0);
-
     }
 
     showPawn();
@@ -3749,6 +3654,11 @@ void newGraphicsScene::update(){
     canDraw = 1;
     key_poll();
     gradient(2);
+
+    toggleBG(0, true);
+    toggleBG(1, true);
+    toggleBG(2, true);
+    toggleBG(3, true);
 
     cursorFloat += 6;
     if(cursorFloat >= 512)
@@ -3789,7 +3699,7 @@ bool newGraphicsScene::control(){
         if(path.size())
             path.pop_back();
 
-        changeScene(previousScene(),FADE);
+        changeScene(previousScene(),Transitions::FADE);
         return true;
     }
 

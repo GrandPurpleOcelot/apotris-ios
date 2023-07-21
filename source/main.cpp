@@ -255,10 +255,6 @@ int main(void) {
     // }
     //
 
-    for(int i = 0; i < 16; i++){
-        setPaletteColor(i, 5, RGB15(i, i, i), 1);
-    }
-
     // while(closed()){
     //     vsync();
     //     key_poll();
@@ -392,10 +388,6 @@ void reset() {
     clearTilemap(25);
     clearTilemap(26);
     clearTilemap(27);
-
-    // memset32(&se_mem[25], 0x0000, 32 * 20);
-    // memset32(&se_mem[26], 0x0000, 32 * 20);
-    // memset32(&se_mem[27], 0x0000, 32 * 20);
 
     setMosaic(0, 0);
 
@@ -789,18 +781,12 @@ void setPalette(){
         if (i < 8 && savefile->settings.colors < 2){
             loadPalette(i, 0, &palette[n][i*16], 8);
             loadPalette(i+16, 0, &palette[n][i*16], 8);
-            // memcpy16(&pal_bg_mem[i*16], &palette[n][i*16], 8);
-            // memcpy16(&pal_obj_mem[i*16], &palette[n][i*16], 8);
         }else if (i < 8){
             loadPalette(i, 4, &palette[n][i*16+4], 4);
             loadPalette(i+16, 4, &palette[n][i*16+4], 4);
-            // memcpy16(&pal_bg_mem[i*16+4], &palette[n][i*16+4], 4);
-            // memcpy16(&pal_obj_mem[i*16+4], &palette[n][i*16+4], 4);
         }else if (i > 9){
             loadPalette(i, 0, &palette[n][i*16], 16);
             loadPalette(i+16, 0, &palette[n][i*16], 16);
-            // memcpy16(&pal_bg_mem[i*16], &palette[n][i*16], 16);
-            // memcpy16(&pal_obj_mem[i*16], &palette[n][i*16], 16);
         }
     }
 
@@ -810,23 +796,17 @@ void setPalette(){
         for(int i = 0; i < 9; i++){
             loadPalette(i, 0, classic_pal_bin, 4);
             loadPalette(i+16, 0, classic_pal_bin, 4);
-            // memcpy16(&pal_bg_mem[i*16], classic_pal_bin,4);
-            // memcpy16(&pal_obj_mem[i*16], classic_pal_bin,4);
         }
     }else if(savefile->settings.colors == 3){
         //set frame color
         loadPalette(8, 0, &palette[n][color*16], 16);
         loadPalette(8+16, 0, &palette[n][color*16], 16);
-        // memcpy16(&pal_obj_mem[8 * 16], &palette[n][color * 16], 16);
-        // memcpy16(&pal_bg_mem[8 * 16], &palette[n][color * 16], 16);
 
         int n = getClassicPalette();
 
         for(int i = 0; i < 8; i++){
             loadPalette(i,1, &nesPalette[n][0],4);
             loadPalette(i+16,1, &nesPalette[n][0],4);
-            // memcpy16(&pal_bg_mem[i*16+1], &nesPalette[n][0],4);
-            // memcpy16(&pal_obj_mem[i*16+1], &nesPalette[n][0],4);
         }
 
     }else if(savefile->settings.colors == 4){
@@ -840,56 +820,39 @@ void setPalette(){
         for(int i = 0; i < 9; i++){
             setPaletteColor(i, 1, c, 4);
             setPaletteColor(i+16, 1, c, 4);
-            // memset16(&pal_bg_mem[i*16+1], c,4);
-            // memset16(&pal_obj_mem[i*16+1], c,4);
         }
 
         // if(!savefile->settings.lightMode){
         //     setPaletteColor(7, 0, 0x7fff, 2);
         //     setPaletteColor(7+16, 0, 0x7fff, 2);
-        //     // memset16(&pal_bg_mem[7], 0x7fff,2);
-        //     // memset16(&pal_obj_mem[7], 0x7fff,2);
         // }else{
         //     setPaletteColor(7, 0, 0x0421, 2);
         //     setPaletteColor(7+16, 0, 0x0421, 2);
-        //     // memset16(&pal_bg_mem[7], 0x0421,2);
-        //     // memset16(&pal_obj_mem[7], 0x0421,2);
         // }
 
     }else if(savefile->settings.colors == 5){
         for(int i = 0; i < 8; i++){
             loadPalette(i, 1, &arsPalette[0][i], 4);
             loadPalette(i+16, 1, &arsPalette[0][i], 4);
-            // memcpy16(&pal_bg_mem[i*16+1], &arsPalette[0][i],4);
-            // memcpy16(&pal_obj_mem[i*16+1], &arsPalette[0][i],4);
         }
 
         //set frame color
         loadPalette(8, 0, &palette[0][color*16], 16);
         loadPalette(8+16, 0, &palette[0][color*16], 16);
-        // memcpy16(&pal_obj_mem[8 * 16], &palette[0][color * 16], 16);
-        // memcpy16(&pal_bg_mem[8 * 16], &palette[0][color * 16], 16);
     }else if(savefile->settings.colors == 6){
         for(int i = 0; i < 8; i++){
             loadPalette(i, 1, &arsPalette[1][i], 4);
             loadPalette(i+16, 1, &arsPalette[1][i], 4);
-            // memcpy16(&pal_bg_mem[i*16+1], &arsPalette[1][i],4);
-            // memcpy16(&pal_obj_mem[i*16+1], &arsPalette[1][i],4);
         }
         //set frame color
         loadPalette(8, 0, &palette[1][color*16], 16);
         loadPalette(8+16, 0, &palette[1][color*16], 16);
-        // memcpy16(&pal_obj_mem[8 * 16], &palette[1][color * 16], 16);
-        // memcpy16(&pal_bg_mem[8 * 16], &palette[1][color * 16], 16);
     }else{
         //set frame color
         loadPalette(8, 0, &palette[n][color*16], 16);
         loadPalette(8+16, 0, &palette[n][color*16], 16);
-        // memcpy16(&pal_obj_mem[8 * 16], &palette[n][color * 16], 16);
-        // memcpy16(&pal_bg_mem[8 * 16], &palette[n][color * 16], 16);
     }
 
-    // memcpy16(&pal_obj_mem[13 * 16], title_pal_bin, title_pal_bin_size / 2);
     setLightMode();
 
     //faded Text Palette

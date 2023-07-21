@@ -262,16 +262,6 @@ void checkSounds() {
                 speed = 10;
 
             sfxRate(SFX_LEVELUP,1.0 + (float)speed/10);
-
-            // mm_sound_effect clear = {
-            //     {SFX_LEVELUP},
-            //     (mm_hword)((1.0 + (float)speed / 10) * (1 << (10 - (game->zoneTimer != 0)))),
-            //     0,
-            //     (u8)(255 * (float) savefile->settings.sfxVolume / 10),
-            //     128,
-            // };
-
-            // mmEffectEx(&clear);
         }else{
             sfx(SFX_MULTICLEAR);
         }
@@ -353,9 +343,6 @@ void checkSounds() {
             for(int i = 0; i < 8; i++){
                 loadPalette(i, 1, &nesPalette[n][0], 4);
                 loadPalette(i+16, 1, &nesPalette[n][0], 4);
-                // memcpy16(&pal_bg_mem[i*16+1], &nesPalette[n][0],4);
-
-                // memcpy16(&pal_obj_mem[i*16+1], &nesPalette[n][0],4);
             }
         }
 
@@ -410,32 +397,20 @@ void checkSounds() {
         flashTimer = flashTimerMax;
         zoneFlash();
 
-        // u16 * dest = (u16*) &se_mem[26];
         for(int i = 0; i < 20; i++){
             setTile(25, 9, i, tileBuild(4, false, false, 0));
             setTile(25, 20, i, tileBuild(4, true, false, 0));
-            // dest[i * 32 + 9] = 4;
-            // dest[i * 32 + 20] = 4 + 0x400;
         }
 
         if (savefile->settings.lightMode){
             for(int i = 0; i < 4; i++){
                 COLOR c = RGB15(10-i, 10-i, 10-i);
-                //TODO:
-                //needs to add color to palette address, not simply assign it
-                // setPaletteColor(i, 5, c, 1);
                 addColorToPalette(i, 5, c, 1);
-                // pal_bg_mem[(0+i) * 16 + 5] += c;
             }
         }
 
-        // if(savefile->settings.lightMode)
-        //     memset16(&pal_bg_mem[4 * 16 + 5], 0x4a52, 1);
-
         setMusicTempo(512);
         setMusicVolume(512 * ((float)savefile->settings.volume / 20));
-        // mmSetModuleTempo(512);
-        // mmSetModuleVolume(512 * ((float)savefile->settings.volume / 20));
 
         sfx(SFX_ZONESTART);
     } else if (game->sounds.zone == 2) {
@@ -445,9 +420,6 @@ void checkSounds() {
         if (savefile->settings.lightMode){
             for(int i = 0; i < 4; i++){
                 COLOR c = RGB15(10-i, 10-i, 10-i);
-                // pal_bg_mem[(0+i) * 16 + 5] += c;
-                //needs to add color to palette address, not simply assign it
-                // setPaletteColor(i, 5, c, 1);
                 addColorToPalette(i, 5, c, 1);
             }
         }
@@ -491,7 +463,7 @@ void showBackground(int offset) {
     startY = 1;
     #endif
 
-    for (int i = startY; i < game->lengthY; i++) {
+    for (int i = startY; i < game->lengthY && (i - 20 + offset) < 20; i++) {
         if (game->linesToClear.size() > 0) {
             before = after = false;
             for(auto const& l : game->linesToClear){
@@ -947,6 +919,7 @@ bool GameScene::control() {
 
     if(demo && key_hit(KEY_FULL)){
         exitGame = true;
+        demo = false;
         return true;
     }
 
@@ -1024,8 +997,9 @@ bool GameScene::control() {
     }
 
     if (key_is_down(KEY_L) && key_is_down(KEY_R) && !(game->gameMode == BATTLE || game->gameMode == MASTER) && !eventPauseTimer) {
-        if(restartTimer++ > maxRestartTimer || !savefile->settings.resetHold)
+        if(restartTimer++ > maxRestartTimer || !savefile->settings.resetHold){
             playAgain = true;
+        }
     }else{
         restartTimer = 0;
     }
@@ -1269,7 +1243,7 @@ void showClearText() {
 }
 
 void gameLoop(){
-    changeScene(new GameScene(),FADE);
+    changeScene(new GameScene(),Transitions::FADE);
 
     exitGame = false;
 }
@@ -1326,6 +1300,8 @@ void GameScene::countdown() {
     showSprites(128);
     gradient(1);
 
+    paused = true;
+
     while (closed() && timer++ < timerMax - 1) {
         canDraw = true;
         vsync();
@@ -1348,6 +1324,8 @@ void GameScene::countdown() {
                 sfx(SFX_GO);
         }
     }
+
+    paused = false;
 
     showBackground(0);
     clearText();
@@ -1424,9 +1402,6 @@ void screenShake() {
     }
 
     #endif
-
-    // REG_BG0HOFS = -push;
-    // REG_BG1HOFS = -push;
 
     if (game->pushDir != 0) {
         if (abs(push) < pushMax * (savefile->settings.shakeAmount)/4)
@@ -2654,6 +2629,7 @@ void replayControl(){
 }
 
 void GameScene::init(){
+    reset();
     loadSpriteTiles(512, sprite6tiles_bin,4,4);
 
     loadSpriteTiles(512 + 16, sprite6tiles_bin,4,3);
@@ -2670,6 +2646,7 @@ void GameScene::init(){
     clearTilemap(25);
 
     clearTiles(2,110,400);
+    clearSpriteTiles(512 + 138, 8 * 5, 3);
     setSmallTextArea(110, 3, 7, 9, 10);
     clearText();
     gameSeconds = 0;
@@ -2712,6 +2689,11 @@ void GameScene::init(){
 
     // enableBlend((0b000000 << 8) + (1 << 6) + (0 << 3));
     enableBlend((0b101010 << 8) + (1 << 6) + (0b1010));
+
+    //fluid sim palette
+    for(int i = 0; i < 16; i++){
+        setPaletteColor(i, 5, RGB15(i, i, i), 1);
+    }
 }
 
 void GameScene::update(){
@@ -2723,8 +2705,9 @@ void GameScene::update(){
     diagnose();
 
     if(exitGame){
-        changeScene(new newTitleScene(),FADE);
+        changeScene(new newTitleScene(),Transitions::FADE);
         exitGame = false;
+        enableBot = false;
         return;
     }
 
@@ -2848,7 +2831,6 @@ void GameScene::update(){
     }
 
     if (paused){
-
         if(pauseMenu()){
             paused = false;
             return;
@@ -2858,6 +2840,7 @@ void GameScene::update(){
 
     if (playAgain) {
         playAgain = false;
+        paused = true;
         startGame();
         changeScene(new GameScene());
         return;
@@ -2914,4 +2897,6 @@ void GameScene::update(){
 
 void GameScene::deinit(){
     gradient(0);
+
+    setPalette();
 }

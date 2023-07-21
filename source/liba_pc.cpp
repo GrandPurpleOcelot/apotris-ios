@@ -36,6 +36,8 @@ static int offsety = (SCREEN_HEIGHT - 160)/2;
 
 int spriteVOffset = 0;
 
+bool render = true;
+
 void loadAudio(){
 
     for(int i = 0; i < SFX_COUNT; i++){
@@ -338,9 +340,8 @@ void vsync(){
     sprite.setTexture(frameTexture);
     sprite.setScale(windowScale,windowScale);
     sprite.setPosition(0,0);
-    // sprite.setPosition()
 
-    if(ENABLE_SHADERS){
+    if(ENABLE_SHADERS && render){
         window.draw(sprite, &shader);
 
         sf::Color c = sf::Color::Black;
@@ -380,7 +381,8 @@ void vsync(){
         // }
 
     }else{
-        window.draw(sprite);
+        if(render)
+            window.draw(sprite);
     }
 
     window.display();
@@ -1348,8 +1350,8 @@ uint8_t customBlend(uint8_t a, uint8_t b){
     return (a + b + b + b + b) /5;
 }
 
-void toggleRendering(bool states){
-
+void toggleRendering(bool state){
+    render = state;
 }
 
 #endif

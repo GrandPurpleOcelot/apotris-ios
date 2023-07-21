@@ -133,8 +133,6 @@ void songListMenu() {
             }
         }
 
-
-
         aprint(" DONE ", 12, 17);
 
         aprint("Menu:", startX, startY);
@@ -176,11 +174,9 @@ void songListMenu() {
         }
 
         showSprites(128);
-        // oam_copy(oam_mem, obj_buffer, 128);
     }
 
     stopSong();
-    // mmStop();
     playSongRandom(0);
 
     savefile->settings.cycleSongs = previous;
@@ -191,7 +187,6 @@ int endScreen() {
     setSmallTextArea(110, 1, 1, 10, 20);
 
     stopSong();
-    // mmStop();
 
     saveReplay();
 
@@ -217,12 +212,9 @@ int endScreen() {
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1));
 
-    // int prevBld = REG_BLDCNT;
-    // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
     setTiles(25,0,32*32,tileBuild(12, false, false, 4*savefile->settings.lightMode));
 
     drawFrame(1);
-    // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
     if(savefile->settings.announcer){
         if (game->gameMode == ULTRA || game->gameMode == BLITZ) {
@@ -324,13 +316,10 @@ int endScreen() {
             clearText();
 
             clearSprites(128);
-            // oam_init(obj_buffer, 128);
             showHold();
             showQueue();
             showSprites(128);
-            // oam_copy(oam_mem, obj_buffer, 128);
             clearTilemap(25);
-            // memset16(&se_mem[25], 0, 32 * 20);
             // countdown();
             updateText();
             break;
@@ -398,25 +387,18 @@ int endScreen() {
     }
 
     enableBlend(prevBld);
-    // REG_BLDCNT = prevBld;
     return 0;
 }
 
 void endAnimation() {
     clearText();
     clearSprites(128);
-    // oam_init(obj_buffer, 128);
     showHold();
     showQueue();
     showSprites(128);
-    // oam_copy(oam_mem, obj_buffer, 128);
 
     setLayerScroll(0, 0, 0);
     setLayerScroll(1, 0, 0);
-    // REG_BG0HOFS = 0;
-    // REG_BG0VOFS = 0;
-    // REG_BG1HOFS = 0;
-    // REG_BG1VOFS = 0;
 
     //TODO::
     #ifdef GBA
@@ -431,13 +413,9 @@ void endAnimation() {
         showClearText();
         // setLayerScroll(0, 0, -4 * i);
         // setLayerScroll(1, 0, -4 * i);
-        // REG_BG0VOFS = -1 * i * 4;
-        // u16* dest = (u16*)se_mem[25];
 
         if (i % 2 != 0)
             continue;
-
-        // dest += 32 * (20 - i / 2) + 10;
 
         showBackground(i/2);
         for (int j = 0; j < 10; j++) {
@@ -451,7 +429,6 @@ void endAnimation() {
     int counter = 0;
     while (!floatingList.empty()) {
         vsync();
-        // VBlankIntrWait();
         showClearText();
 
         if(++counter > 120)
@@ -459,27 +436,8 @@ void endAnimation() {
     }
     clearText();
 
-    // u16*dest,*dest2;
-    // for(int i = 19; i >= 0; i--){
-    // 	dest = (u16*)se_mem[25];
-    // 	dest += i * 32;
-
-    // 	dest2 = (u16*)se_mem[26];
-    // 	dest2 += i * 32;
-
-    // 	// int timer = 0;
-    // 	VBlankIntrWait();
-
-    // 	for(int j = 0; j < 32; j++)
-    // 		*dest++ = *dest2++ = 0;
-    // }
-
     setLayerScroll(0, 0, 0);
     setLayerScroll(1, 0, 0);
-    // REG_BG0HOFS = 0;
-    // REG_BG0VOFS = 0;
-    // REG_BG1HOFS = 0;
-    // REG_BG1VOFS = 0;
 }
 
 void showScore(){
@@ -614,18 +572,13 @@ int pauseMenu(){
 
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1));
-    // int prevBld = REG_BLDCNT;
-    // REG_BLDCNT = (1 << 6) + (0b11111 << 9) + (1);
     setTiles(25,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
 
     drawFrame(1);
     if(game->zoneTimer)
         frameSnow(1);
-    // memset16(&se_mem[25], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
 
     setLayerScroll(0, 0, 0);
-    // REG_BG0HOFS = 0;
-    // REG_BG0VOFS = 0;
 
     //hide Sprites
     hideMinos();
@@ -636,7 +589,6 @@ int pauseMenu(){
         sprite_hide(&obj_buffer[16+i]);
 
     showSprites(128);
-    // oam_copy(oam_mem, obj_buffer, 128);
 
     //calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
@@ -718,7 +670,6 @@ int pauseMenu(){
                     updateText();
                     paused = false;
                     resumeSong();
-                    // mmResume();
                     break;
                 } else if (n == 1) {
                     // restart = true;
@@ -738,9 +689,8 @@ int pauseMenu(){
                     showModeText();
                 } else if (n == 4) {
                     enableBlend(prevBld);
-                    // REG_BLDCNT = prevBld;
                     sfx(SFX_MENUCANCEL);
-                    changeScene(new MainMenuScene(), FADE);
+                    changeScene(new MainMenuScene(), Transitions::FADE);
                     return 1;
                 }
             }
@@ -846,11 +796,9 @@ int pauseMenu(){
         }
 
         showSprites(128);
-        // oam_copy(oam_mem, obj_buffer, 128);
     }
 
     enableBlend(prevBld);
-    // REG_BLDCNT = prevBld;
 
     clearTilemap(25);
     clearTilemap(26);
@@ -859,7 +807,6 @@ int pauseMenu(){
     if(game->zoneTimer)
         frameSnow(0);
 
-    // memset16(&se_mem[25], 0 , 32 * 20);
     showBackground(0);
     setSmallTextArea(110, 3, 7, 9, 10);
 
