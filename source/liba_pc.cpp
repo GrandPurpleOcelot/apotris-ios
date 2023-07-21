@@ -546,8 +546,8 @@ void showSprites(int n ){
             // TLN_SetSpriteBlendMode(counter, (blendSprites)?BLEND_MIX25:BLEND_MIX75 , 0);
 
         // TLN_SetSpriteBlendMode(counter, BLEND_MIX75, 0);
-        TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + (sprite->rotate * FLAG_ROTATE) + ((sprite->priority == 1) * FLAG_PRIORITY));
-        // TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + (sprite->rotate * FLAG_ROTATE));
+        TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + ((sprite->priority == 1) * FLAG_PRIORITY));
+        // TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + (sprite->rotate * FLAG_ROTATE) + ((sprite->priority == 1) * FLAG_PRIORITY));
 
         counter++;
     }
