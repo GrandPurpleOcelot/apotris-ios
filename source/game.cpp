@@ -225,11 +225,13 @@ void checkSounds() {
     if (game->sounds.place) {
         sfx(SFX_PLACE);
 
-
         #ifdef GBA
+
         shake = (shakeMax * (savefile->settings.shakeAmount) / 4) /2;
 
-        #elifdef PC
+        #endif
+
+        #ifdef PC
 
         shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))/2) * 2;
 
@@ -1373,13 +1375,12 @@ void screenShake() {
             shake++;
         shake *= -1;
     }
-    #elifdef PC
+    #endif
+
+    #ifdef PC
     shake = fx2int(shakeBuff);
-    // const FIXED deccel = (0b11 << 6);
     const FIXED deccel = float2fx(0.768);
     if(shakeBuff){
-
-        // log(std::to_string(shake));
 
         shakeBuff = fxmul(shakeBuff,deccel);
         // shake *= deccel;
@@ -1395,6 +1396,8 @@ void screenShake() {
         if(shakeVelocity <= 0){
             shakeVelocity = 0;
         }
+
+        log(savefile->settings.shakeAmount);
 
         if(shake >= (shakeMax * (savefile->settings.shakeAmount) / 4)){
             shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
@@ -2755,7 +2758,9 @@ void GameScene::update(){
             // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
             #ifdef GBA
             shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
-            #elifdef PC
+            #endif
+
+            #ifdef PC
             // shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))) * 2;
             #endif
             rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
@@ -2800,7 +2805,9 @@ void GameScene::update(){
 
         #ifdef GBA
         shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
-        #elifdef PC
+        #endif
+
+        #ifdef PC
         shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
         #endif
 

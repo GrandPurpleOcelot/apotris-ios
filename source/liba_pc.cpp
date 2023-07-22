@@ -858,31 +858,14 @@ void setPaletteColor(int palette, int index, u16 color, int count){
         TLN_SetBGColor(c.r,c.g,c.b);
 
     for(int i = 0; i < count; i++){
-        // if(palette == 8 && index == 5){
-        //     log(std::to_string(palette) + " " + std::to_string(index));
-        //     char buff [64];
-        //     snprintf(buff,64, "%d %d %d", c.r, c.g, c.b);
-        //     log(buff);
-        // }
         TLN_SetPaletteColor(palettes[palette], index+i, c.r, c.g, c.b);
     }
 }
 
 void clearSpriteTiles(int index, int lengthX, int lengthY){
-    // u8* source = (u8*) src;
-    // const int count = lengthX * lengthY;
     uint8_t tmp[8 * 8];
     memset(tmp,0,8 * 8);
 
-    // for(int ii = 0; ii < count; ii++){
-    //     for(int i = 0; i < 8; i++){
-    //         for(int j = 0; j < 4; j++){
-    //             tmp[ii * 64 + i * 8 + j * 2] = source[ii * 32 + i * 4 + j] & 0xf;
-    //             tmp[ii * 64 + i * 8 + j * 2 + 1] = (source[ii * 32 + i * 4 + j] >> 4) & 0xf;
-
-    //         }
-    //     }
-    // }
 
     TLN_SpriteData d;
     memcpy(d.name,"clear",4);

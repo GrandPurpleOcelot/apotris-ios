@@ -63,7 +63,7 @@ bool bigMode = false;
 int bigModeMessageTimer = 0;
 int bigModeMessageMax = 180;
 
-const std::list<std::string> menuOptions = {"Play","Settings","Achievements","Stats","Links","Skin Editor","Credits"};
+const std::list<std::string> menuOptions = {"Play","Settings","Links","Skin Editor","Credits"};
 const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","2P Battle","CPU Battle","Training"};
 const std::list<std::string> settingsOptions = {"Graphics","Audio","Controls","Handling"};
 
@@ -2686,9 +2686,8 @@ void SimpleListScene::draw(){
         if(counter == selection){
             for(int i = 0; i < 2; i++){
                 sprite_unhide(cursorSprites[i],0);
-                // sprite_enable_affine(cursorSprites[i], i, true);
-                // sprite_set_size(cursorSprites[i], scale , i);
-                if(i) sprite_enable_flip(cursorSprites[1], false, true);
+                sprite_enable_affine(cursorSprites[i], i, true);
+                sprite_set_size(cursorSprites[i], scale , i);
 
                 int x = 240/2 - ((len + 8) / 2 + offset + 4) * ((i)?-1:1) - 8;
 
