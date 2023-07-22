@@ -6,5 +6,7 @@ build/
 *.sav
 *.pnproj
 *.el
+.clangd
+bin/
 compile_commands.json
 apotris*.png

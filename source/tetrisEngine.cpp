@@ -1157,7 +1157,7 @@ int Game::clear(Drop drop) {
             add += scoring[clearCount - 1 + 11][0] * level;
         else
             add += 3500 * level;
-        attack = scoring[clearCount - 1 + 11][2];
+        attack += scoring[clearCount - 1 + 11][2];
 
         statTracker.perfectClears++;
     }
