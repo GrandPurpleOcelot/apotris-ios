@@ -98,7 +98,7 @@ void sceneSwitcher(std::string str){
     }else if(str == "Achievements"){
 
     }else if(str == "Stats"){
-
+        changeScene(new StatScene(),Transitions::FADE);
     }else if(str == "Links"){
 
     }else if(str == "Skin Editor"){

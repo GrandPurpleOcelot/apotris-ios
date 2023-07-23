@@ -63,7 +63,7 @@ bool bigMode = false;
 int bigModeMessageTimer = 0;
 int bigModeMessageMax = 180;
 
-const std::list<std::string> menuOptions = {"Play","Settings","Links","Skin Editor","Credits"};
+const std::list<std::string> menuOptions = {"Play","Settings","Stats","Links","Skin Editor","Credits"};
 const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","2P Battle","CPU Battle","Training"};
 const std::list<std::string> settingsOptions = {"Graphics","Audio","Controls","Handling"};
 

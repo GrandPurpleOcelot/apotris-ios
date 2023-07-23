@@ -175,26 +175,14 @@ class ModeListScene: public SimpleListScene{
 class Element{
     public:
 
-        // std::string label;
-        // std::list<std::string> options;
-        // int cursorType = 0;
-
-        // virtual void control(int dir){};
-        // virtual void setLabel(){};
-        // virtual void setOptions(){};
-
         virtual std::string getLabel(){return "";};
-        // virtual std::list<std::string> getOptions(){return {};};
         virtual std::string getCursor(std::string text){return "";};
         virtual void action(int dir){};
         virtual void action(){};
         virtual int getValue(){return 0;};
         virtual std::string getCurrentOption(){return "";};
 
-        Element(){
-            // setLabel();
-            // setOptions();
-        }
+        Element(){}
 
         virtual ~Element(){}
 };
@@ -677,9 +665,9 @@ class InitialSystemElement : public Element{
 
         std::string getCurrentOption() override {
             if(savefile->settings.initialType)
-                return "ON";
+                return "TYPE B";
             else
-                return "OFF";
+                return "TYPE A";
         }
 };
 
@@ -1153,7 +1141,58 @@ class OptionListScene : public Scene{
     ~OptionListScene(){
         deinit();
     };
+};
 
+class StatListScene : public Scene{
+    public:
+    int maxDas = 16;
+    int dasHor = 0;
+    int dasVer = 0;
+
+    int maxArr = 3;
+    int arr = 0;
+
+    bool moving = false;
+    bool movingHor = false;
+    int movingTimer = 0;
+    int movingDirection = 0;
+
+    virtual std::list<Element*> getElementList() = 0;
+    std::list<Element*> elementList;
+
+    virtual std::string name() = 0;
+
+    int options = 0;
+    int selection = 0;
+    WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+    WordSprite* labels[7];
+
+    WordSprite cursorText = WordSprite(0,20,2);
+
+    OBJ_ATTR * cursorSprites[2];
+
+    OBJ_ATTR * arrowSprites[2];
+
+    int cursorFloat = 0;
+
+    bool refreshText = true;
+
+    int listStart = 0;
+    const int elementMax = 5;
+
+    int startY = 0;
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    virtual Scene* previousScene(){return NULL;};
+
+    ~StatListScene(){
+        deinit();
+    };
 };
 
 class ConfirmSaveScene : public Scene{
@@ -1353,6 +1392,66 @@ class PlayOptionScene : public OptionListScene{
     virtual void start();
 
     Scene* previousScene(){return new ModeListScene();};
+};
+
+class PlayTimeElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Play Time";
+        }
+
+        std::string getCursor(std::string text) override {
+            return " " + text + " ";
+        }
+
+        std::string getCurrentOption() override {
+            return timeToStringHours(savefile->stats.timePlayed);
+        }
+};
+
+class GamesStartedElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Games Started";
+        }
+
+        std::string getCursor(std::string text) override {
+            return " " + text + " ";
+        }
+
+        std::string getCurrentOption() override {
+            return std::to_string(savefile->stats.gamesStarted);
+        }
+};
+
+class GamesCompletedElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Games Completed";
+        }
+
+        std::string getCursor(std::string text) override {
+            return " " + text + " ";
+        }
+
+        std::string getCurrentOption() override {
+            return std::to_string(savefile->stats.gamesCompleted);
+        }
+};
+
+class StatScene : public OptionListScene{
+    public:
+        std::string name(){return "Stats";};
+
+        std::list<Element*> getElementList(){
+            return {
+                new PlayTimeElement(),
+                new GamesStartedElement(),
+                new GamesCompletedElement(),
+            };
+        };
+
+    Scene* previousScene(){return new SettingsScene();};
 };
 
 class LevelSelectorElement : public Element{
