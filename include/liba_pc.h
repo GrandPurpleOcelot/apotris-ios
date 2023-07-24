@@ -1,6 +1,9 @@
 #pragma once
 #include <string>
 #include <iostream>
+
+#define TLN_EXCLUDE_WINDOW
+
 #include "Tilengine.h"
 #include <cstring>
 #include "audio_files.h"

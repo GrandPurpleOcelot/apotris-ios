@@ -11,7 +11,9 @@
 #ifndef _TILENGINE_H
 #define _TILENGINE_H
 
+#ifndef TLN_EXCLUDE_WINDOW
 #include "SDL2/SDL.h"
+#endif
 
 /**
  * \defgroup types
@@ -292,11 +294,14 @@ typedef struct
 }
 TLN_SpriteState;
 
-/* callbacks */
-typedef union SDL_Event SDL_Event;
 typedef void(*TLN_VideoCallback)(int scanline);
 typedef uint8_t(*TLN_BlendFunction)(uint8_t src, uint8_t dst);
+
+#ifndef TLN_EXCLUDE_WINDOW
+/* callbacks */
+typedef union SDL_Event SDL_Event;
 typedef void(*TLN_SDLCallback)(SDL_Event*);
+#endif
 
 /*! Player index for input assignment functions */
 typedef enum
@@ -462,12 +467,14 @@ TLNAPI void TLN_EnableBlur (bool mode);
 TLNAPI void TLN_ConfigCRTEffect(TLN_CRT type, bool blur);
 TLNAPI void TLN_EnableCRTEffect (int overlay, uint8_t overlay_factor, uint8_t threshold, uint8_t v0, uint8_t v1, uint8_t v2, uint8_t v3, bool blur, uint8_t glow_factor);
 TLNAPI void TLN_DisableCRTEffect (void);
+#ifndef TLN_EXCLUDE_WINDOW
 TLNAPI void TLN_SetSDLCallback(TLN_SDLCallback);
+TLNAPI SDL_Window * TLN_GetWindow(void);
+#endif
 TLNAPI void TLN_Delay (uint32_t msecs);
 TLNAPI uint32_t TLN_GetTicks (void);
 TLNAPI int TLN_GetWindowWidth(void);
 TLNAPI int TLN_GetWindowHeight(void);
-TLNAPI SDL_Window * TLN_GetWindow(void);
 /**@}*/
 
 /**
