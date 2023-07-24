@@ -701,19 +701,46 @@ class QuickResetElement : public Element{
         }
 
         std::string getCursor(std::string text) override {
-            return "[" + text + "]";
+            std::string result;
+            if(!savefile->settings.resetHoldToggle)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(!savefile->settings.resetHoldType)
+                result += ">";
+
+            return result;
         }
 
         void action(int dir) override{
-            savefile->settings.resetHold = !savefile->settings.resetHold;
-            sfx(SFX_MENUCONFIRM);
+            if(dir > 0){
+                if(savefile->settings.resetHoldToggle){
+                    savefile->settings.resetHoldToggle = 0;
+                }else if(!savefile->settings.resetHoldType){
+                    savefile->settings.resetHoldType = 1;
+                }
+            }else{
+                if(!savefile->settings.resetHoldType){
+                    savefile->settings.resetHoldToggle = 1;
+                }else if(savefile->settings.resetHoldType){
+                    savefile->settings.resetHoldType = 0;
+                }
+            }
+
+            sfx(SFX_MENUMOVE);
         }
 
         std::string getCurrentOption() override {
-            if(savefile->settings.resetHold)
+            if(savefile->settings.resetHoldToggle)
+                return "OFF";
+
+            if(savefile->settings.resetHoldType)
                 return "HOLD";
-            else
-                return "PRESS";
+
+            return "PRESS";
         }
 };
 

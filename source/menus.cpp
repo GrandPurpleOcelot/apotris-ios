@@ -590,7 +590,9 @@ int pauseMenu(){
 
     showSprites(128);
 
+    #ifdef GBA
     rumble_set_state(rumble_stop);
+    #endif
 
     //calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
