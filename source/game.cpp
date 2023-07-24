@@ -1397,8 +1397,6 @@ void screenShake() {
             shakeVelocity = 0;
         }
 
-        log(savefile->settings.shakeAmount);
-
         if(shake >= (shakeMax * (savefile->settings.shakeAmount) / 4)){
             shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
         }
