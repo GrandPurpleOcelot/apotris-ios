@@ -1295,16 +1295,17 @@ class newGraphicsScene : public Scene{
     int movingTimer = 0;
     int movingDirection = 0;
 
-        std::list<Element*> getElementList(){
-            return {
-                new GradientElement(),
-                new GridElement(),
-                new SkinElement(),
-                new GhostElement(),
-                new FrameColorElement(),
-                new PaletteElement(),
-            };
+    std::list<Element*> getElementList(){
+        return {
+            new GradientElement(),
+            new GridElement(),
+            new SkinElement(),
+            new GhostElement(),
+            new FrameColorElement(),
+            new PaletteElement(),
         };
+    };
+
     std::list<Element*> elementList;
 
     std::string name() {return "Graphics";};
@@ -1330,6 +1331,10 @@ class newGraphicsScene : public Scene{
     const int elementMax = 5;
 
     int startY = 0;
+
+    int pathCount = 0;
+
+    std::string p = "";
 
     void draw();
     void update();

@@ -321,14 +321,16 @@ void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
         if(a[pos] == -1)
             break;
 
-        // log("setting layer " + std::to_string(a[pos]) + " to slot " + std::to_string(pos));
+        // log("layer " + std::to_string(a[pos]) + " prio " + std::to_string((layerInfo[a[pos]].priority >> 4) & 0x3));
         layerInfo[a[pos]].id = pos;
         TLN_SetTilemapTileset(tilemaps[layerInfo[a[pos]].sbb], tilesets[layerInfo[a[pos]].cbb]);
-        TLN_SetLayerPriority(pos, (a[pos] == 2));
+        TLN_SetLayerPriority(pos, (a[pos] == 2) || (((layerInfo[a[pos]].priority >> 4) & 0x3) == 0));
         TLN_SetLayerTilemap(pos, tilemaps[layerInfo[a[pos]].sbb]);
 
         toggleBG(pos,layerInfo[pos].enabled);
     }
+
+    enableBlend(blendInfo);
 }
 
 void vsync(){
@@ -750,7 +752,8 @@ void key_poll(){
 void enableBlend(int info){
 
     int top = info & 0x3f;
-    int bot = (info >> 8) & 0x3f;
+    // int bot = (info >> 8) & 0x3f;
+    int bot = 0;
     // int mode = (info >> 6) & 0x3;
 
     for(int i = 0; i < 4; i++){

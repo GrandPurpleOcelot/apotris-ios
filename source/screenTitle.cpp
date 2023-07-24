@@ -3446,7 +3446,7 @@ void newGraphicsScene::init(){
     loadSpriteTiles(255, blockSprite, 1, 1);
     for(int i = 0; i < 2; i++){
         cursorSprites[i] = &obj_buffer[14 + i];
-        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 255, 5, 1);
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 255, 5, 0);
         sprite_enable_affine(cursorSprites[i], 10, true);
         sprite_hide(cursorSprites[i]);
     }
@@ -3477,7 +3477,6 @@ void newGraphicsScene::init(){
         }
     }
 
-    std::string p;
     int i = 0;
     auto it = path.begin();
     while(it != path.end()){
@@ -3491,13 +3490,13 @@ void newGraphicsScene::init(){
     }
 
     int width = getVariableWidth(p) >> 3;
-    int count = (width) / 12 + 1;
+    pathCount = (width) / 12 + 1;
 
-    int wordIndex = MAX_WORD_SPRITES - count - 1;
+    int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
 
     wordSprites[wordIndex]->setText(p);
 
-    for(int i = 0; i < count; i++)
+    for(int i = 0; i < pathCount; i++)
         wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
 
     setPalette();
@@ -3527,7 +3526,7 @@ void newGraphicsScene::init(){
     enableBlend((1 << 6) + (0b111011 << 8) + (1 << 3));
     // enableBlend(0);
 
-    buildBG(3, 0, 27, 0, 1, 0);
+    buildBG(3, 0, 27, 0, 0, 0);
 
     drawFrameBackgrounds();
 
@@ -3620,7 +3619,6 @@ void newGraphicsScene::draw(){
             labels[index]->hide();
         }
     }
-
 
     if(refreshGame){
         refreshGame = false;
@@ -3731,11 +3729,29 @@ bool newGraphicsScene::control(){
         if(showText){
             setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
 
+            int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
+            for(int i = 0; i < pathCount; i++)
+                wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+
         }else{
             clearTilemap(27);
+
+            for(int j = 0; j < elementMax + 2; j++){
+                int index = (j + listStart) % (elementMax + 2);
+
+                wordSprites[index]->hide();
+                labels[index]->hide();
+            }
+
+            for(int i = 0; i < 2; i++)
+                sprite_hide(cursorSprites[i]);
+
+            int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
+            for(int i = 0; i < pathCount; i++)
+                wordSprites[wordIndex+i]->hide();
         }
 
-        clearSprites(32);
+        refreshGame = true;
     }
 
     int prev = listStart;
@@ -3843,6 +3859,8 @@ bool newGraphicsScene::control(){
 }
 
 void newGraphicsScene::deinit(){
+    buildBG(3, 0, 27, 0, 1, true);
+
     clearSprites(128);
     showSprites(128);
 
