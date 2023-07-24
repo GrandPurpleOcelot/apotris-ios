@@ -10,5 +10,6 @@ bin/
 *.el
 .clangd
 bin/
+Makefile
 compile_commands.json
 apotris*.png
