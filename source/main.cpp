@@ -7,9 +7,6 @@
 #include "tetrisEngine.h"
 #include "sprites.h"
 
-// #include "soundbank.h"
-// #include "soundbank_bin.h"
-
 #include "LinkConnection.h"
 
 #include "logging.h"
@@ -85,17 +82,7 @@ bool gradientEnabled = false;
 
 Options *previousGameOptions = nullptr;
 
-// bool resumeJourney = false;
-// bool journeyLevelUp = false;
-// bool journeySaveExists = false;
-// Tetris::Game* journeySave;
-
 u16 gradientTable[SCREEN_HEIGHT + 1];
-
-// void onHBlank() {
-//     if(REG_VCOUNT < 160)
-//         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
-// }
 
 void initialize(){
     toggleSprites(true);
@@ -131,38 +118,9 @@ void initialize(){
 
     loadTiles(2,1,font1tiles_bin,font1tiles_bin_size/32);
 
-    //hold tiles
-    // memcpy16(&tile_mem[5][0], sprite6tiles_bin, sprite6tiles_bin_size / 2);
-
-    //queue frame Tiles
-
-    // memcpy16(&tile_mem[5][16], sprite6tiles_bin, sprite6tiles_bin_size / 2 * 3 / 4);
-    // memcpy16(&tile_mem[5][16 + 12], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 1 / 4);
-    // memcpy16(&tile_mem[5][32], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 2 / 4);
-    // memcpy16(&tile_mem[5][32 + 8], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 2 / 4);
-    // memcpy16(&tile_mem[5][48], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 1 / 4);
-    // memcpy16(&tile_mem[5][48 + 4], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 3 / 4);
-
-    // memcpy16(&tile_mem[5][64], title1tiles_bin, title1tiles_bin_size / 2);
-    // memcpy16(&tile_mem[5][96], title2tiles_bin, title2tiles_bin_size / 2);
-
-    // for(int i = 0; i < 8; i++)
-    //     memcpy16(&tile_mem[5][128+i], moveSpriteTiles[i], 16);
-
-    // memcpy16(&tile_mem[2][0], fontTiles, fontTilesLen / 2);
-
-    //load tetriminoes into tile memory for menu screen animation
-
     setSkin();
     setPalette();
     setClearEffect();
-
-    // REG_BLDCNT = BLD_BUILD(BLD_BG1,BLD_BACKDROP,BLD_STD);
-
-    // enableLayerBlend(1);
-
-    // REG_BLDCNT = (1 << 6) + (1 << 13) + (1 << 1);
-    // REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(2);
 
     initFallingBlocks();
 
@@ -229,12 +187,6 @@ void genWidths(){
 
 }
 
-// IWRAM_CODE void showGrid(){
-//     for(int i = 0; i < 20; i++)
-//         for(int j = 0; j < 10; j++)
-//             setTile(25, j + 10, i, tileBuild(31,false,false,prep(current[i+1][j+1])));
-// }
-
 int main(void) {
 
     loadSave();
@@ -253,49 +205,6 @@ int main(void) {
 
     //     showSprites(128);
     // }
-    //
-
-    // while(closed()){
-    //     vsync();
-    //     key_poll();
-
-    //     if(++t >= tm){
-    //         t = 0;
-
-    //         profile_start();
-    //         updateGrid();
-    //         log("update:" + std::to_string(profile_stop()));
-
-    //         profile_start();
-    //         showGrid();
-    //         log("show:" + std::to_string(profile_stop()));
-
-    //         profile_start();
-    //         FIXED temp[22][11];
-
-    //         memcpy32(temp, current, 22 * 12);
-    //         memcpy32(current, previous, 22 * 12);
-    //         memcpy32(previous, temp, 22 * 12);
-
-    //         log("swap:" + std::to_string(profile_stop()));
-    //     }
-
-
-    //     if(key_hit(KEY_START))
-    //         break;
-
-    //     if(key_hit(KEY_A)){
-    //         for(int i = 0; i < 20; i++){
-    //             for(int j = 0; j < 2; j++){
-    //                 current[i + 1][j + 1 + 4] = c;
-    //             }
-    //         }
-    //         // current[10][5] = c;
-    //         // current[11][5] = c;
-    //         // current[10][6] = c;
-    //         // current[11][6] = c;
-    //     }
-    // }
 
     changeScene(new newTitleScene());
 
@@ -303,41 +212,15 @@ int main(void) {
     while(closed()){
         vsync();
         scene->update();
-        // reset();
-
-        // if(!playAgain){
-        //     newStart();
-        //     // startScreen();
-        // }else{
-        //     playAgain = false;
-
-        //     if(game->gameMode != BATTLE){
-        //         startGame();
-        //     }else{
-        //         int seed = qran();
-
-        //         startGame(seed);
-        //         startBotGame(seed);
-        //     }
-        //     // int goal = game->goal;
-        //     // int training = game->trainingMode;
-        //     // int rs = game->rotationSystem;
-
-        //     // delete game;
-        //     // game = new Game(game->gameMode,bigMode);
-        //     // game->setGoal(goal);
-        //     // game->setLevel(initialLevel);
-        //     // game->setTuning(getTuning());
-        //     // game->setTrainingMode(training);
-        //     // game->pawn.big = bigMode;
-        //     // game->bTypeHeight = goalSelection;
-        //     // game->setSubMode(subMode);
-        //     // game->setRotationSystem(rs);
-        // }
-
-        // gameLoop();
     }
 }
+
+#ifdef PC
+int WinMain(void){
+    main();
+    return 0;
+}
+#endif
 
 std::string timeToString(int frames) {
     int t = (int)frames * 0.0167f;
@@ -365,10 +248,7 @@ void reset() {
     clearText();
     setLayerScroll(0, 0, 0);
     setLayerScroll(1, 0, 0);
-    // REG_BG0HOFS = 0;
-    // REG_BG0VOFS = 0;
-    // REG_BG1HOFS = 0;
-    // REG_BG1VOFS = 0;
+
     shake = 0;
     shakeBuff = 0;
     shakeVelocity = 0;
@@ -378,6 +258,7 @@ void reset() {
     floatingList.clear();
     placeEffectList.clear();
     rumbleTimer = 0;
+
     //TODO:
     #ifdef GBA
     rumble_set_state(RumbleState(rumble_stop));
@@ -440,7 +321,6 @@ std::string nameInput(int place) {
 
     while (closed()) {
         vsync();
-        // VBlankIntrWait();
 
         if (place == 0 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ))
             aprint("New Record", 10, 5);
@@ -565,7 +445,6 @@ std::string nameInput(int place) {
 
 
 void setSkin() {
-    // setPalette();
 
     switch (savefile->settings.skin) {
     case 0:
@@ -593,14 +472,12 @@ void setSkin() {
 
         for(int i = 0; i < 8; i++)
             loadTiles(0,48+i,classicTiles[0][i],classic1tiles_bin_size/32);
-        //     memcpy16(&tile_mem[0][48+i],classicTiles[0][i],classic1tiles_bin_size/2);
 
         blockSprite = (u8*)classicTiles[0][0];
         break;
     case 8:
         for(int i = 0; i < 8; i++)
             loadTiles(0,48+i,classicTiles[1][i],classic1tiles_bin_size/32);
-            // memcpy16(&tile_mem[0][48+i],classicTiles[1][i],classic1tiles_bin_size/2);
 
         blockSprite = (u8*)classicTiles[1][0];
         break;
@@ -614,19 +491,16 @@ void setSkin() {
         blockSprite = (u8*)&sprite38tiles_bin[12*32];
 
         loadTiles(0,128,sprite38tiles_bin,sprite38tiles_bin_size/32);
-        // memcpy32(&tile_mem[0][128],sprite38tiles_bin,sprite38tiles_bin_size/4);
         break;
     case 12:
         blockSprite = (u8*)&sprite39tiles_bin[12*32];
 
         loadTiles(0,128,sprite39tiles_bin,sprite39tiles_bin_size/32);
-        // memcpy32(&tile_mem[0][128],sprite39tiles_bin,sprite39tiles_bin_size/4);
         break;
     case 13:
         blockSprite = (u8*)&sprite40tiles_bin[12*32];
 
         loadTiles(0,128,sprite40tiles_bin,sprite40tiles_bin_size/32);
-        // memcpy32(&tile_mem[0][128],sprite40tiles_bin,sprite40tiles_bin_size/4);
         break;
     default:
         if(savefile->settings.skin < 0){
@@ -640,11 +514,9 @@ void setSkin() {
     }
 
 
-    // if(savefile->settings.skin < 7){
     if(savefile->settings.skin < 7 || savefile->settings.skin == 9 || savefile->settings.skin == 10){
         //TODO:
         //vsync might not be necessary here
-        // VBlankIntrWait();
         vsync();
         int n = savefile->settings.skin;
         if(savefile->settings.skin < 0){
@@ -661,9 +533,6 @@ void setSkin() {
 
     loadTiles(0,1,blockSprite,1);
     loadTiles(2,97,blockSprite,1);
-
-    // memcpy16(&tile_mem[0][1], blockSprite, sprite1tiles_bin_size / 2);
-    // memcpy16(&tile_mem[2][97], blockSprite, sprite1tiles_bin_size / 2);
 
     int* board;
     for (int i = 0; i < 7; i++) {
@@ -692,27 +561,12 @@ void setSkin() {
                         loadSpriteTilesPartial(iy, blockSprite,k,j,1,1,4);
                     else
                         loadSpriteTilesPartial(iy, classicTiles[savefile->settings.skin-7][i],k,j,1,1,4);
-                        // memcpy16(&tile_mem[4][index], classicTiles[savefile->settings.skin-7][i], sprite1tiles_bin_size / 2);
-                    // if(savefile->settings.skin == 11)
-                    //     memcpy16(&tile_mem[4][index], &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4] * 32], sprite1tiles_bin_size / 2);
-                    // else if(savefile->settings.skin == 12)
-                    //     memcpy16(&tile_mem[4][index], &sprite39tiles_bin[GameInfo::connectedConversion[(board[ix])>>4] * 32], sprite1tiles_bin_size / 2);
-                    // else if(savefile->settings.skin == 13)
-                    //     memcpy16(&tile_mem[4][index], &sprite40tiles_bin[GameInfo::connectedConversion[(board[ix])>>4] * 32], sprite1tiles_bin_size / 2);
-                    // else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
-                    //     memcpy16(&tile_mem[4][index], blockSprite, sprite1tiles_bin_size / 2);
-                    // else
-                    //     memcpy16(&tile_mem[4][index], classicTiles[savefile->settings.skin-7][i], sprite1tiles_bin_size / 2);
                 }else{
                     clearSpriteTile(iy, k, j, 4);
-                    // clearSpriteTiles(0,1,1);
-                    // memcpy16(&tile_mem[4][index], &tile_mem[4][0], sprite1tiles_bin_size / 2);
                 }
             }
         }
 
-        // for (int i = 0; i < 4; i++)
-        //     delete[] board[i];
         delete[] board;
     }
 }
@@ -886,8 +740,6 @@ void buildMini(TILE * customSkin){
     //lengthX and Y might be wrong on pc
     clearSpriteTiles(9*16, 8 * 7, 4);
 
-    // memset32(&tile_mem[4][9*16],0,8*8*7);
-
     int add = 0;
     int rs = SRS;
     if(game != nullptr){
@@ -909,16 +761,11 @@ void buildMini(TILE * customSkin){
                 for(int ii = 0; ii < 6; ii++){
                     for(int jj = 0; jj < 6; jj++){
                         setSpritePixel(tileStart, (x * 6 + jj)/8, (y*6+ii)/8, 4, ((x*6+jj)%8), (y*6+ii)%8, (customSkin->data[ii] >> (4*jj)) & 0xf);
-                        // t = &tile_mem[4][tileStart + (x*6+jj)/8 + ((y*6+ii)/8)*4];
-
-                        // t->data[(y*6+ii)%8] |= ((customSkin->data[ii] >> (4*jj)) & 0xf) << (((x*6+jj)%8)*4);
                     }
                 }
             }
         }
 
-        // for(int i = 0; i < 4; i++)
-        //     delete p[i];
         delete p;
     }
 }
