@@ -797,12 +797,14 @@ void startScreen() {
                                     clearText();
                                 }
                                 connected = 1;
-                            } else if (data[i] > 100)
+                            } else if (data[i] > 100){
                                 nextSeed = data[i] - 100;
+                            }
                         }
 
                         if (linkState->playerCount == 2) {
                             if (linkState->currentPlayerId != 0) {
+                                log(std::to_string(nextSeed));
                                 if (nextSeed > 100) {
                                     startMultiplayerGame(nextSeed);
                                     break;
@@ -881,7 +883,10 @@ void startScreen() {
                         // game->setSubMode(subMode);
                         mode = goalSelection;
 
-                        // game->pawn.big = bigMode;
+                        //IMPORTANT:
+                        multiplayer = false;
+
+                        game->pawn.big = bigMode;
 
                         // if(training && goalSelection)
                         //     game->setTrainingMode(true);
@@ -1137,7 +1142,7 @@ void startText() {
     const int titleY = 1;
 
     if (!onSettings) {
-        aprint("v3.4.5", 0, 19);
+        aprint("v3.4.6", 0, 19);
 
         aprint("akouzoukos", 20, 19);
 
@@ -1565,7 +1570,7 @@ void startText() {
             }
 
             std::string levelText = std::to_string(level - 1);
-            if(level < 10)
+            if(level <= 10)
                 levelText = " " + levelText;
             aprint(levelText, 26 , levelHeight);
 

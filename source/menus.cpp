@@ -68,11 +68,10 @@ void songListMenu() {
     int selection = 0;
     int options = 7;
 
-    bool previous = savefile->settings.cycleSongs;
-    savefile->settings.cycleSongs = false;
-
     stopSong();
     playSong(0, 0);
+    bool previous = savefile->settings.cycleSongs;
+    savefile->settings.cycleSongs = false;
 
     while (closed()) {
         vsync();
@@ -258,7 +257,7 @@ int endScreen() {
     showStats(showingStats, totalTime, ppsStr);
 
     while (closed()) {
-        handleMultiplayer();
+        handleMultiplayer(1);
         vsync();
         key_poll();
 
@@ -349,6 +348,7 @@ int endScreen() {
                 enableBlend(prevBld);
                 // REG_BLDCNT = prevBld;
                 goToOptions = true;
+                nextSeed = 0;
                 return 1;
             } else if (selection == 2){
                 sfx(SFX_MENUCANCEL);
@@ -452,8 +452,8 @@ void showScore(){
 
     } else if (game->gameMode == MASTER){
         int grade = game->grade + game->coolCount + (int) game->creditGrade;
-        if(grade > 34)
-            grade = 34;
+        if(grade > 32)
+            grade = 32;
 
         std::string gradeText = GameInfo::masterGrades[grade];
 
@@ -590,6 +590,8 @@ int pauseMenu(){
 
     showSprites(128);
 
+    rumble_set_state(rumble_stop);
+
     //calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
     FIXED pps = 0;
@@ -724,7 +726,8 @@ int pauseMenu(){
                         sfx(SFX_MENUCANCEL);
                     }
                 } else if (selection == 1) {
-                    delete quickSave;
+                    if(saveExists)
+                        delete quickSave;
                     quickSave = new Game(*game);
                     saveExists = true;
 
@@ -736,6 +739,7 @@ int pauseMenu(){
                     updateText();
                     onStates = false;
                     selection = 0;
+                    break;
                 }
             }
         }
@@ -746,7 +750,6 @@ int pauseMenu(){
             updateText();
             paused = false;
             resumeSong();
-            // mmResume();
             break;
         }
 
@@ -762,7 +765,6 @@ int pauseMenu(){
                 updateText();
                 paused = false;
                 resumeSong();
-                // mmResume();
             }
             break;
         }
@@ -783,14 +785,14 @@ int pauseMenu(){
             sfx(SFX_MENUMOVE);
         }
 
-        if(key == KEY_L){
+        if(key == KEY_L && !onStates){
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
             showStats(showingStats, totalTime, ppsStr);
         }
 
-        if(!shown){
+        if(!shown && !onStates){
             shown = true;
             showStats(showingStats, totalTime, ppsStr);
         }
@@ -950,8 +952,8 @@ int onRecord() {
         } else if (game->gameMode == MASTER) {
             int grade = game->grade + game->coolCount + (int) game->creditGrade;
 
-            if(grade > 34)
-                grade = 34;
+            if(grade > 32)
+                grade = 32;
 
             if (grade < savefile->master[subMode].grade[i] || (grade == savefile->master[subMode].grade[i] && gameSeconds > savefile->master[subMode].times[i].frames))
                 continue;

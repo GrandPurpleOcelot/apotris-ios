@@ -65,32 +65,29 @@ int Game::checkSpecialRotation(int dx, int r){
 void Pawn::setBlock(int system) {
     memset32(boardLowest,-1,16);
     memset32(heighest,-1,4);
+    memset32(lowestBlock,0,4);
 
-    for (int i = 0; i < 4; i++){
-        int * shape = getShape(current,i,system);
+    for (int r = 0; r < 4; r++){
+        int * shape = getShape(current,r,system);
 
         for(int iy = 0; iy < 4; iy++){
             for(int ix = 0; ix < 4; ix++){
-                board[i][iy][ix] = shape[iy * 4 + ix];
+                board[r][iy][ix] = shape[iy * 4 + ix];
 
                 if(shape[iy * 4 + ix]){
-                    if(boardLowest[i][ix] < iy)
-                        boardLowest[i][ix] = iy;
-                    if(heighest[i] == -1)
-                        heighest[i] = iy;
+                    if(boardLowest[r][ix] < iy)
+                        boardLowest[r][ix] = iy;
+
+                    if(lowestBlock[r] < iy)
+                        lowestBlock[r] = iy;
+
+                    if(heighest[r] == -1)
+                        heighest[r] = iy;
                 }
             }
         }
 
         delete[] shape;
-    }
-
-    int lowestBlock = 0;
-    for(int i = 0; i < 4; i++){
-        for(int j = 0; j < 4; j++){
-            if(boardLowest[j][i] > lowestBlock)
-                lowestBlock = boardLowest[j][i];
-        }
     }
 }
 
@@ -135,6 +132,9 @@ void Game::rotateCCW(int dir) {
 }
 
 void Game::rotateTwice(int dir) {
+    if(rotationSystem == NRS)
+        return;
+
     rotates[2] = dir;
 
     replay.push_back(Timestamp(timer,4,dir));
@@ -166,7 +166,6 @@ void Game::rotate(int dir, int on){
         r += 4;
 
     moveCounter++;
-    lastMoveRotation = dir;
 
     if(rotationSystem == SRS){
         for (int i = 0; i < 5 + (dir > 1); i++) {
@@ -181,6 +180,15 @@ void Game::rotate(int dir, int on){
             }
 
             if (checkRotation(dx, dy, r)) {
+                specialTspin = (pawn.current == 5 && (abs(dx) + abs(dy) >= 2));
+                lastMoveRotation = dir;
+
+                if(dy < 0)
+                    verticalKick++;
+
+                if(verticalKick >= verticalKickMax)
+                    hardDrop();
+
                 rotatePlace(dir,dx,dy,r);
                 return;
 
@@ -378,10 +386,9 @@ void Game::hardDrop() {
         finesseStreak = 0;
 
         if(trainingMode){
-            log("here");
-            canHold = true;
             lockTimer = maxLockTimer;
             lockMoveCounter = 15;
+            verticalKick = 0;
             sounds.finesse = 1;
             refresh = 1;
             dropLockTimer = dropLockMax;
@@ -441,14 +448,7 @@ void Game::update() {
         next();
     }
 
-    if (!(left || right)){
-        if(gameMode != CLASSIC){
-            das = 0;
-            arrCounter = 0;
-        }
-    }else if (das < maxDas){
-        das++;
-    }
+    updateDas();
 
     if(entryDelay)
         return;
@@ -461,6 +461,12 @@ void Game::update() {
                     moveLeft();
                 else if(right)
                     moveRight();
+
+                if(speed == 20){
+                    int counter = 0;
+                    while(counter++ < 20 && checkRotation(0,1,pawn.rotation))
+                        pawn.y++;
+                }
             }
             arrCounter = arr;
         }else if(arr < 0){
@@ -470,6 +476,12 @@ void Game::update() {
                     c = moveLeft();
                 else if(right)
                     c = moveRight();
+
+                if(speed == 20){
+                    int counter = 0;
+                    while(counter++ < 20 && checkRotation(0,1,pawn.rotation))
+                        pawn.y++;
+                }
             }
         }
     }
@@ -489,8 +501,12 @@ void Game::update() {
             generateGarbage(1,0);
             refresh = 1;
 
-            while(!checkRotation(0,0,pawn.rotation))
-                pawn.y--;
+            while(!checkRotation(0,0,pawn.rotation)){
+                if(!checkRotation(0,-1,pawn.rotation))
+                    lost = 1;
+                else
+                    pawn.y--;
+            }
         }
     }else if(gameMode == MASTER && !disappearing){
         if(level < 500 && timer >= 25200)
@@ -660,9 +676,16 @@ void Game::place() {
         }
     }
 
-    if ((pawn.y+pawn.lowestBlock) < (lengthY / 2 - 2)) {
-        lost = 1;
-        return;
+    toEndZone = false;
+    if ((pawn.y+pawn.lowestBlock[pawn.rotation]) * (1+pawn.big) + pawn.big <= (lengthY / 2 - 1)) {
+        if(zoneTimer)
+            toEndZone = true;
+        else if(gameMode == TRAINING)
+            clearBoard();
+        else{
+            lost = 1;
+            return;
+        }
     }
 
     int prevLevel = level;
@@ -727,8 +750,12 @@ void Game::place() {
             level++;
 
         if (level % 100 >= 70 && prevLevel % 100 < 70){
-            if(sectionTimeGoal[(level / 100)][0] > timer-sectionStart && (timer-sectionStart < previousSectionTime+120))
+            if(sectionTimeGoal[(level / 100)][0] > timer-sectionStart && (timer-sectionStart < previousSectionTime+120)){
                 cool = true;
+                previousSectionTime = timer-sectionStart;
+            }else{
+                previousSectionTime = 1000000;
+            }
         }else if(cool && level % 100 >= 82 && prevLevel % 100 < 82){
             sounds.section = 1;
         }else if((level % 100 == 99 && prevLevel % 100 < 99 && level != 999) || (level == 998 && prevLevel != 998)){
@@ -743,13 +770,13 @@ void Game::place() {
 
     canHold = true;
 
-    // profile_start();
-    if (!clearLock && !entryDelay && !(zoneTimer == 1 && comboCounter > 0))
+    // if (!clearLock && !entryDelay && !(zoneTimer == 1 && comboCounter > 0))
+    if (!clearLock && !entryDelay)
         next();
-    // log(std::to_string(profile_stop()));
 
     lockTimer = maxLockTimer;
     lockMoveCounter = 15;
+    verticalKick = 0;
     dropLockTimer = dropLockMax;
     stopLockReset = false;
 
@@ -762,7 +789,7 @@ void Game::place() {
 
     moveHistory.clear();
 
-    if(zoneTimer == 1)
+    if(zoneTimer == 1 || toEndZone)
         endZone();
 
     if((maxClearDelay == 1 || gameMode == SURVIVAL) && clearLock){
@@ -771,7 +798,6 @@ void Game::place() {
 }
 
 int Game::clear(Drop drop) {
-
     int clearCount = 0;
     int attack = 0;
     int isTSpin = 0;
@@ -899,11 +925,10 @@ int Game::clear(Drop drop) {
         linesToMove.clear();
     }
 
-    // if(pawn.big)
-    //     garbageToRemove/=2;
-
     garbageHeight-=garbageToRemove;
     garbageCleared+=garbageToRemove;
+
+    //FIXME: perfect clears should be counted during zone
 
     if (clearCount == 0){
         return 0;
@@ -967,8 +992,12 @@ int Game::clear(Drop drop) {
         }
         break;
     case MASTER:
-        if(level == 999)
+        if(level == 999){
+            if(clearCount && disappearing)
+                creditGrade += creditPoints[clearCount-1][disappearing-1];
+
             break;
+        }
 
         level += clearCount + (clearCount > 2) + (clearCount > 3);
 
@@ -997,7 +1026,7 @@ int Game::clear(Drop drop) {
             }
         }
 
-        int currentSectionLevel = level / 100 ;
+        int currentSectionLevel = level / 100;
 
         if(currentSectionLevel > prevLevel / 100){
             int currentSession = timer-sectionStart;
@@ -1021,15 +1050,11 @@ int Game::clear(Drop drop) {
                 sounds.section = -1;
             }
 
-            previousSectionTime = currentSession;
             sounds.levelUp = 1;
             sectionStart = timer;
             setMasterTuning();
         }
 
-        if(disappearing && clearCount){
-            creditGrade += creditPoints[clearCount-1][disappearing-1];
-        }
         break;
     }
 
@@ -1076,6 +1101,9 @@ int Game::clear(Drop drop) {
         if(gradePoints >= 100){
             gradePoints = 0;
             internalGrade++;
+
+            if(internalGrade > 31)
+                internalGrade = 31;
         }
 
         grade = gradeTable[internalGrade][0];
@@ -1103,7 +1131,7 @@ int Game::clear(Drop drop) {
             add += scoring[clearCount - 1 + 11][0] * level;
         else
             add += 3500 * level;
-        attack = scoring[clearCount - 1 + 11][2];
+        attack += scoring[clearCount - 1 + 11][2];
 
         statTracker.perfectClears++;
     }
@@ -1191,17 +1219,6 @@ void Game::next() {//~21-29k cycles
     pawn.y = (int)lengthY / 2;
     pawn.x = (int)lengthX / 2 - 2;
 
-    if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
-        int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
-
-        pawn.rotation = sum + 4 * (sum < 0);
-
-        sounds.initial = 1;
-    } else
-        pawn.rotation = 0;
-
-    speedCounter = 0;
-
     pawn.current = queue.front();
     activePiece = pawn.current;
     queue.pop_front();
@@ -1225,14 +1242,49 @@ void Game::next() {//~21-29k cycles
     //     pawn.y/=2;
     // }
 
-    bool check = bitboard[30] != 0;
+    pawn.rotation = 0;
+    if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
+        if(rotationSystem == ARS){
+            if(rotates[0])
+                rotate(1,1);
+            else if(rotates[1]){
+                rotate(-1,1);
+                if(rotates[2] && rotationSystem == ARS)
+                    rotate(-1,1);
+            } else if(rotates[2] && rotationSystem != ARS)
+                rotate(2,1);
+        }else{
+            int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
+
+            pawn.rotation = sum + 4 * (sum < 0);
+        }
+
+        sounds.initial = 1;
+    }
+
+    //check if stack has reached top 3 lines
+    const int line = 21 + 3 * (1 + pawn.big);
+    bool check = bitboard[line] != 0;
+
+    if(pawn.rotation && rotationSystem == SRS){
+        int lowestPart = pawn.lowestBlock[pawn.rotation];
+
+        int n = 0;
+        if(!pawn.big)
+            n = (40 - 19) - (lowestPart + pawn.y);
+        else
+            n = (20 - 9) - (lowestPart + pawn.y);
+
+        pawn.y += std::min(n,0);
+    }
 
     if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
         pawn.y-=1;
         if (!checkRotation(0, 0, pawn.rotation)){
-            if(zoneTimer && zonedLines)
-                endZone();
-            else if(gameMode == TRAINING || gameMode == NO_MODE)
+            if(zoneTimer && zonedLines) {
+                if(!toEndZone)
+                    endZone();
+            } else if(gameMode == TRAINING || gameMode == NO_MODE)
                 clearBoard();
             else{
                 lost = 1;
@@ -1245,15 +1297,16 @@ void Game::next() {//~21-29k cycles
 
     arrCounter = 0;
 
-    softDrop = false;
+    speedCounter = 0;
 
-    fromLockRotate = false;
+    softDrop = false;
 
     if(holding && canHold && ((ihs && ((fromLockHold && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS)){
         hold(1);
 
         sounds.initial = 1;
     }
+    fromLockRotate = false;
 }
 
 void Game::fillQueue(int count) {
@@ -1368,16 +1421,18 @@ void Game::hold(int dir) {
     canHold = false;
 
     if (held == -1) {
+        int temp = fromLockRotate;
         held = pawn.current;
         next();
+        fromLockRotate = temp;
     } else {
         int temp = held;
         held = pawn.current;
         pawn.current = temp;
         activePiece = temp;
         pawn.setBlock(rotationSystem);
-        pawn.x = (int)lengthX / 2 - 2;
 		pawn.y = (int)lengthY / 2;
+        pawn.x = (int)lengthX / 2 - 2;
 
         // if(pawn.big){
         //     pawn.x/=2;
@@ -1385,25 +1440,57 @@ void Game::hold(int dir) {
         // }
     }
 
+    pawn.rotation = 0;
     if(rotationSystem == ARS || (irs && ((fromLockRotate && maxClearDelay > 1) || !initialType))){
-        int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
-        pawn.rotation = sum + (sum < 0) * 4;
+        if(rotationSystem == ARS){
+            if(rotates[0])
+                rotate(1,1);
+            else if(rotates[1]){
+                rotate(-1,1);
+                if(rotates[2] && rotationSystem == ARS)
+                    rotate(-1,1);
+            } else if(rotates[2] && rotationSystem != ARS)
+                rotate(2,1);
+        }else{
+            int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
+
+            pawn.rotation = sum + 4 * (sum < 0);
+        }
 
         sounds.initial = 1;
-    } else
-        pawn.rotation = 0;
+    }
 
     //check if stack has reached top 3 lines
     bool check = false;
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 10; j++){
-            if(board[21+i][j] != 0){
-                check = true;
-                break;
-            }
-        }
-        if(check)
+    const int line = 21 + 3 * (1 + pawn.big);
+    for(int j = 0; j < 10; j++){
+        if(board[line][j] != 0){
+            check = true;
             break;
+        }
+    }
+
+    if(pawn.rotation && rotationSystem == SRS){
+        int lowestPart = 0;
+        for(int i = 3; i >= 0; i--){//find height of lowest block in column
+            for(int j = 0; j < 4; j++){
+                if(pawn.board[pawn.rotation][i][j]){
+                    lowestPart = i;
+                    break;
+                }
+            }
+
+            if(lowestPart == i)
+                break;
+        }
+
+        int n = 0;
+        if(!pawn.big)
+            n = (40 - 19) - (lowestPart + pawn.y);
+        else
+            n = (20 - 9) - (lowestPart + pawn.y);
+
+        pawn.y += std::min(n,0);
     }
 
     if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
@@ -1424,6 +1511,7 @@ void Game::hold(int dir) {
 
     lockTimer = maxLockTimer;
     lockMoveCounter = 15;
+    verticalKick = 0;
     arrCounter = 0;
 
     dropLockTimer = 0;
@@ -1608,7 +1696,7 @@ void Game::removeClearLock() {
     }
 
     if(gameMode == COMBO){
-        for(int i = lengthY/2-1; i < lengthY; i++){
+        for(int i = lengthY/2-4; i < lengthY; i++){
             if(board[i][0] != 0)
                 break;
             for(int j = 0; j < 10; j++){
@@ -1620,10 +1708,13 @@ void Game::removeClearLock() {
         }
     }
 
-    linesToClear = std::list<int>();
+    linesToClear.clear();
 
-    if(!entryDelay)
+    if(!entryDelay && !zoneExit){
         next();
+    }else if(zoneExit){
+        zoneExit = false;
+    }
 
     refresh = 2;
     zonedLines = 0;
@@ -1693,10 +1784,14 @@ void Game::generateGarbage(int height,int mode){
 
 void Game::keyDrop(int dir){
     replay.push_back(Timestamp(timer, 7,dir));
+
+    if(dir == 0 && gameMode == MASTER)
+        dropping = false;
+
     if(!dir)
         return;
 
-    if(gameMode == CLASSIC || entryDelay)
+    if(gameMode == CLASSIC)
         return;
 
     dropping = true;
@@ -1796,6 +1891,7 @@ void Game::setTuning(Tuning newTune){
 }
 
 void Game::setMasterTuning(){
+
     int n = 0;
     int speedLevel = level + coolCount * 100;
 
@@ -2073,12 +2169,17 @@ void Game::activateZone(int dir){
 
 void Game::endZone(){
     if(zonedLines > statTracker.maxZonedLines)
-        statTracker.maxZonedLines = zonedLines;
+        statTracker.maxZonedLines = zonedLines / (1 + pawn.big);
 
     zoneTimer = 0;
     sounds.zone = -1;
+
     clear(Drop());
+
     eventLock = true;
+    zoneExit = true;
+
+    previousClear.isPerfectClear = false;
 }
 
 void Game::clearBoard(){
@@ -2235,4 +2336,22 @@ void Game::updateColumns(int height){
             columnHeights[x] = 0;
         }
     }
+}
+
+void Game::updateDas(){
+    if (!(left || right)){
+        if(gameMode != CLASSIC){
+            das = 0;
+            arrCounter = 0;
+        }
+    }else if (das < maxDas){
+        das++;
+    }
+}
+
+void Game::chargeDas(){
+    if(!(left || right))
+        return;
+
+    das = maxDas;
 }

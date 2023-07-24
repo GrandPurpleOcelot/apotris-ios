@@ -29,7 +29,7 @@ int enemyHeight = 0;
 Game *botGame;
 
 int botIncomingHeight = 0;
-void handleMultiplayer() {
+void handleMultiplayer(int state) {
     //TODO:
     #ifdef GBA
     if (!multiplayer)
@@ -104,7 +104,8 @@ void handleMultiplayer() {
             }
         }
         if (game->lost) {
-            linkConnection->send((u16)(2 << 13) + 0x123);
+            if(!state)
+                linkConnection->send((u16)(2 << 13) + 0x123);
         } else {
             if (receivedAttack) {
                 linkConnection->send((u16)((4 << 13) + receivedAttack));
@@ -119,8 +120,8 @@ void handleMultiplayer() {
                     if (game->board[currentScanHeight + 20][i])
                         row += 1 << i;
 
-                linkConnection->send((u16)(((5) << 13) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
-
+                if(!state)
+                    linkConnection->send((u16)(((5) << 13) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
             } else {
                 Tetris::Garbage atck = game->attackQueue.front();
 

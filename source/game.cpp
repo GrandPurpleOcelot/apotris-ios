@@ -436,8 +436,8 @@ void checkSounds() {
         flashTimer = flashTimerMax;
         eventPauseTimer = flashTimerMax + 2;
 
-        // setPalette();
-        // zoneFlash();
+        //FIXME:
+        //zoneFlash();
     }
 
     if(game->sounds.meter){
@@ -657,10 +657,19 @@ void showPawn() {
     }
 
     if(!game->pawn.big){
+        if(game->pawn.y < 16){
+            sprite_hide(pawnSprite);
+            return;
+        }
+
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
         sprite_enable_mosaic(pawnSprite);
         sprite_set_pos(pawnSprite, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->pawn.y - game->boardOffset) * 8 + shake * savefile->settings.shake);
     }else{
+        if(game->pawn.y * 2 < 16){
+            sprite_hide(pawnSprite);
+            return;
+        }
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
         sprite_enable_mosaic(pawnSprite);
         sprite_enable_affine(pawnSprite, 31, true);
@@ -724,18 +733,22 @@ void showShadow() {
     }
 
     if(!game->pawn.big){
+        if(game->pawn.y < 16){
+            sprite_hide(pawnShadow);
+            return;
+        }
 
         sprite_set_attr(pawnShadow, ShapeSquare, 2, 16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
-        // obj_set_attr(pawnShadow, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(16 * (8 - (savefile->settings.shadow == 3)), 10, 2));
         sprite_set_pos(pawnShadow, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->lowest() - game->boardOffset) * 8 + shake * savefile->settings.shake);
     }else{
+        if(game->pawn.y * 2 < 16){
+            sprite_hide(pawnShadow);
+            return;
+        }
         sprite_set_attr(pawnShadow, ShapeSquare, 2, 16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
         sprite_enable_mosaic(pawnShadow);
         sprite_enable_affine(pawnShadow,30,true);
 
-        // obj_set_attr(pawnShadow, ATTR0_SQUARE | ATTR0_AFF_DBL | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(30), ATTR2_BUILD(16 * (8 - (savefile->settings.shadow == 3)), 10, 2));
-        // obj_aff_identity(&obj_aff_buffer[30]);
-        // obj_aff_scale(&obj_aff_buffer[30],1<<7,1<<7);
         sprite_set_pos(pawnShadow, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->lowest()*2 - game->boardOffset) * 8 + shake * savefile->settings.shake);
     }
 }
@@ -748,7 +761,6 @@ void showHold() {
     if(game->gameMode != CLASSIC && !game->zoneTimer){
         sprite_unhide(holdFrameSprite, 0);
         sprite_set_attr(holdFrameSprite,ShapeSquare,2,512,8,3);
-        // sprite_set_attr(holdFrameSprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
         sprite_set_pos(holdFrameSprite, 4 * 8 + 7 + (push < 0) * push, 9 * 8 - 2);
 
         sprite_unhide(background,0);
@@ -835,20 +847,17 @@ void showQueue() {
             sprite_unhide(background[i], 0);
             sprite_set_attr(background[i], ShapeSquare, 2, 512 + 416 + i * 16, 8, 3);
             sprite_enable_blend(background[i]);
-            // sprite_set_pos(background[i], 173 + (push > 0) * push, 12 + 32 * i - (i * 9 * (5-maxQueue)));
             sprite_set_pos(background[i], 173 + (push > 0) * push, 12 + 32 * i);
         }
     }else{
         sprite_unhide(queueFrameSprites[0], 0);
         sprite_set_attr(queueFrameSprites[0], ShapeSquare, 2, 512, 8, 3);
         sprite_enable_mosaic(queueFrameSprites[0]);
-        // obj_set_attr(queueFrameSprites[0], ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_BUILD(512, 8, 3));
         sprite_set_pos(queueFrameSprites[0], 173 + (push > 0) * push, 12);
 
         sprite_unhide(background[0], 0);
         sprite_set_attr(background[0], ShapeSquare, 2, 512 + 416, 8, 3);
         sprite_enable_blend(background[0]);
-        // sprite_set_pos(background[i], 173 + (push > 0) * push, 12 + 32 * i - (i * 9 * (5-maxQueue)));
         sprite_set_pos(background[0], 173 + (push > 0) * push, 12);
 
         for(int i = 1; i < 3; i++){
@@ -927,7 +936,7 @@ bool GameScene::control() {
 
     Keys k = savefile->settings.keys;
 
-    if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer) {
+    if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
         paused = true;
         pauseSong();
@@ -973,7 +982,7 @@ bool GameScene::control() {
         game->rotateTwice(1);
     }
 
-    if(savefile->settings.abHold && key_released(KEY_A) && key_released(KEY_B)){
+    if(savefile->settings.abHold && (key_released(KEY_A) || key_released(KEY_B))){
         game->hold(0);
     }
 
@@ -987,6 +996,9 @@ bool GameScene::control() {
         game->rotateTwice(0);
     }
 
+    if (key_released(k.hardDrop))
+        game->keyDrop(0);
+
     if (key_released(k.softDrop))
         game->keyDown(0);
 
@@ -999,14 +1011,14 @@ bool GameScene::control() {
     }
 
     if (key_is_down(KEY_L) && key_is_down(KEY_R) && !(game->gameMode == BATTLE || game->gameMode == MASTER) && !eventPauseTimer) {
-        if(restartTimer++ > maxRestartTimer || !savefile->settings.resetHold){
+        if(!savefile->settings.resetHoldToggle && (restartTimer++ > maxRestartTimer || !savefile->settings.resetHoldType)){
             playAgain = true;
         }
     }else{
         restartTimer = 0;
     }
 
-    if(key_is_down(k.zone) && game->gameMode == MARATHON && game->subMode && !game->zoneTimer){
+    if(key_hit(k.zone) && game->gameMode == MARATHON && game->subMode && !game->zoneTimer){
         game->activateZone(1);
     }
 
@@ -1333,11 +1345,28 @@ void GameScene::countdown() {
     clearText();
     updateText();
 
-    if(key_is_down(KEY_LEFT)){
+    game->update();
+
+    Keys k = savefile->settings.keys;
+
+    if(key_is_down(k.hold))
+        game->hold(1);
+    if(key_is_down(k.rotateCW))
+        game->rotateCW(1);
+    if(key_is_down(k.rotateCCW))
+        game->rotateCCW(1);
+    if(key_is_down(k.rotate180))
+        game->rotateTwice(1);
+    if(key_is_down(k.hardDrop))
+        game->keyDrop(1);
+
+    if(key_is_down(k.moveLeft)){
         game->keyLeft(1);
-    }else if(key_is_down(KEY_RIGHT)){
+    }else if(key_is_down(k.moveRight)){
         game->keyRight(1);
     }
+
+    game->chargeDas();
 
     if (!(game->gameMode == TRAINING)) {
         playSongRandom(1);
@@ -1603,7 +1632,6 @@ void drawGrid() {
         case 5: gridTile = 0x0020; break;
         default: gridTile = 0x0002; break;
     }
-
 
     #ifdef GBA
     setTiles(26,31*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
@@ -2111,8 +2139,7 @@ void showZoneMeter(){
 
     sprite_set_attr(sprite, ShapeSquare, 2, 256 + 3, 15, 0);
     sprite_enable_mosaic(sprite);
-    // obj_set_attr(sprite, ATTR0_SQUARE | ATTR0_MOSAIC, ATTR1_SIZE(2),ATTR2_BUILD(256 + 3, 15, 0));
-    sprite_set_pos(sprite, 14 + (push < 0) * push, 74);
+    sprite_set_pos(sprite, 9, 74);
     sprite_unhide(sprite,0);
 
     const int color = 0x7fff;
@@ -2121,11 +2148,10 @@ void showZoneMeter(){
 
     int n;
     if(!game->zoneTimer){
-        n = game->zoneCharge / 3;
-        if(game->zoneCharge == 32)
-            n = 12;
+        int part = game->zoneCharge / 8;
+        n = part * 3 + (game->zoneCharge % 8) / 3;
     }else{
-        n = game->zoneTimer / 100 + 1;
+        n = game->zoneTimer / 100 + !(game->zoneTimer == 1);
     }
 
     for(int i = 0; i < 12; i++){
@@ -2349,7 +2375,7 @@ void rainbowPalette(){
 }
 
 void showZoneText(){
-    if(game->zonedLines == 0 || !savefile->settings.floatText)
+    if(game->zonedLines == 0)
         return;
 
     aprintClearArea(10, 0, 10, 20);
@@ -2358,13 +2384,15 @@ void showZoneText(){
 
     char buff[4];
 
-    posprintf(buff, "%d",game->zonedLines);
+    int lines = game->zonedLines / (1 + game->pawn.big);
+
+    posprintf(buff, "%d", lines);
 
     std::string text = buff;
 
     text += " line";
 
-    if(game->zonedLines > 1)
+    if(lines > 1)
         text+= "s";
 
     const u16 pal[2][2] = {{0x5294,0x0421},{0x5294,0x318c}};
@@ -2717,7 +2745,7 @@ void GameScene::update(){
         game->update();
         // log(std::to_string(profile_stop()));
     }
-    handleMultiplayer();
+    handleMultiplayer(0);
 
     progressBar(0);
 
@@ -2858,7 +2886,6 @@ void GameScene::update(){
 
         if(!flashTimer)
             rainbowPalette();
-
     }
 
     if(game->gameMode == MARATHON && game->subMode && gameSeconds % 2 == 0){

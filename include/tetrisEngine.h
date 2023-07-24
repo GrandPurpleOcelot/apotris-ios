@@ -233,7 +233,7 @@ namespace Tetris
         int board[4][4][4];
         int boardLowest[4][4];
         int heighest[4];
-        int lowestBlock;
+        int lowestBlock[4];
         int lowest;
         bool big = false;
         void setBlock(int system);
@@ -257,11 +257,11 @@ namespace Tetris
             current = oldPawn.current;
             rotation = oldPawn.rotation;
             lowest = oldPawn.lowest;
-            lowestBlock = oldPawn.lowestBlock;
             big = oldPawn.big;
 
             memcpy32(board, oldPawn.board, 4 * 4 * 4);
             memcpy32(boardLowest, oldPawn.boardLowest, 4 * 4);
+            memcpy32(lowestBlock, oldPawn.lowestBlock, 4);
             memcpy32(heighest, oldPawn.heighest, 4);
         }
     };
@@ -420,6 +420,8 @@ namespace Tetris
 
         bool rotates[3] = {false,false,false};
 
+        bool zoneExit = false;
+
     public:
         int lengthX = 10;
         int lengthY = 40;
@@ -520,6 +522,10 @@ namespace Tetris
         int activePiece = -1;
 
         std::list<Timestamp> replay;
+        bool toEndZone = false;
+
+        int verticalKick = 0;
+        int verticalKickMax = 8;
 
         int checkRotation(int, int, int);
         void rotateCW(int dir);
@@ -558,6 +564,8 @@ namespace Tetris
         void activateZone(int);
         void liftKeys();
         void setOptions(Options newOptions);
+        void updateDas();
+        void chargeDas();
 
         Game(){
             seed = initSeed = qran();
@@ -608,7 +616,7 @@ namespace Tetris
                     generateGarbage(4,0);
             }else if(gameMode == COMBO){
                 if(!big){
-                    for(int i = lengthY/2-1; i < lengthY; i++){
+                    for(int i = lengthY/2-4; i < lengthY; i++){
                         for(int j = 0; j < 10; j++){
                             if(j > 2 && j < 7 && !(i == lengthY-2 && j < 5) && !(i == lengthY-1 && j < 4))
                                 continue;
@@ -703,6 +711,7 @@ namespace Tetris
             pieceCounter = oldGame.pieceCounter;
             speed = oldGame.speed;
             activePiece = oldGame.activePiece;
+            statTracker = Stats(oldGame.statTracker);
         }
 
 

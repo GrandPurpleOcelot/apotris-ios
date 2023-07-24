@@ -84,8 +84,9 @@ typedef struct Settings{
     bool abHold;
     struct Keys keys;
     int clearEffect;
-    bool resetHold;
+    bool resetHoldType;
     bool placeEffect;
+    bool resetHoldToggle;
     int rumble;
     int diagonalType;
     bool delaySoftDrop;
@@ -289,7 +290,7 @@ extern void hideMinos();
 extern void reset();
 extern void sleep();
 
-extern void handleMultiplayer();
+extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
 extern void progressBar(int layer);
 
@@ -438,6 +439,9 @@ extern FIXED shakeVelocity;
 
 extern std::list<Tetris::Timestamp>::iterator replayIterator;
 extern std::list<Tetris::Timestamp> currentReplay;
+
+extern Tetris::Game *quickSave;
+extern bool saveExists;
 
 #define shakeMax 10
 

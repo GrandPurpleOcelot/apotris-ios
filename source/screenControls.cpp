@@ -102,7 +102,19 @@ bool controlsControl(){
         }else if (selection == 9) {
             savefile->settings.abHold = !savefile->settings.abHold;
         }else if (selection == 10) {
-            savefile->settings.resetHold = !savefile->settings.resetHold;
+            if(key_hit(KEY_RIGHT) || key_hit(KEY_A)){
+                if(savefile->settings.resetHoldToggle){
+                    savefile->settings.resetHoldToggle = 0;
+                }else if(!savefile->settings.resetHoldType){
+                    savefile->settings.resetHoldType = 1;
+                }
+            }else{
+                if(!savefile->settings.resetHoldType){
+                    savefile->settings.resetHoldToggle = 1;
+                }else if(savefile->settings.resetHoldType){
+                    savefile->settings.resetHoldType = 0;
+                }
+            }
         }else if (selection == 11) {
             if (key_hit(KEY_LEFT)) {
                 if (savefile->settings.rumble > 0) {
@@ -239,7 +251,9 @@ void controlsText(){
     else
         aprint("OFF", endX-1, startY+space*9);
 
-    if(savefile->settings.resetHold)
+    if(savefile->settings.resetHoldToggle)
+        aprint("OFF", endX-1, startY+space*10);
+    else if(savefile->settings.resetHoldType)
         aprint("HOLD", endX-1, startY+space*10);
     else
         aprint("PRESS", endX-1, startY+space*10);
@@ -253,8 +267,10 @@ void controlsText(){
         aprint("[", endX - 2, startY + space * selection);
         aprint("]", endX + 1 + (!savefile->settings.abHold), startY + space * selection);
     }else if (selection == 10) {
-        aprint("[", endX - 2, startY + space * selection);
-        aprint("]", endX + 3 + (!savefile->settings.resetHold), startY + space * selection);
+        if(!savefile->settings.resetHoldToggle)
+            aprint("<", endX - 2, startY + space * selection);
+        if(!savefile->settings.resetHoldType)
+            aprint(">", endX + 4 - 2 * (savefile->settings.resetHoldToggle), startY + space * selection);
     } else if (selection == 11) {
         if (savefile->settings.rumble > 0)
             aprint("<", endX - 1 - (savefile->settings.rumble != 0) - (savefile->settings.rumble == 4), startY + selection);
@@ -337,6 +353,11 @@ void changeInput(int selection){
 
                 counter++;
             }while(temp != 0);
+
+            if((int)currentKeys.size() > 2){
+                sfx(SFX_MENUCANCEL);
+                break;
+            }
 
             for(int i = 0; i < 9; i++){
                 foundKeys.clear();

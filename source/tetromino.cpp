@@ -1046,10 +1046,10 @@ namespace GameInfo{
         {2520,3000},
         {2280,3000},
         {2280,3000},
-        {0,3000},
+        {   0,3000},
     };
 
-    const char* masterGrades[36] = {
+    const char* masterGrades[33] = {
         " 9",
         " 8",
         " 7",

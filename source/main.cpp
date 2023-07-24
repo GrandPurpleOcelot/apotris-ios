@@ -389,6 +389,11 @@ void reset() {
     clearTilemap(26);
     clearTilemap(27);
 
+    if(saveExists){
+        delete quickSave;
+        saveExists = false;
+    }
+
     setMosaic(0, 0);
 
     //reset glow
@@ -730,7 +735,6 @@ void setLightMode() {
         // setPaletteColor(30,3,0x5ad6,1);//obj font shadow
 
         setPaletteColor(16 + 8,6,0x6739,1);//frame background
-
     } else {
         setPaletteColor(0,0,0x0000,1);//background gray
         setPaletteColor(8,4,0x7fff,1);//progressbar
@@ -970,6 +974,7 @@ void setGradient(int color){
             gradientTable[i + start] = 0x5ad6;
     }
 
+    gradientTable[SCREEN_HEIGHT] = 0x1f;
 }
 
 void setDefaultGradient(){
@@ -994,6 +999,11 @@ void setDefaultGradient(){
 void gradient(int state){
     if(state == 1){
         gradientEnabled = true;
+        bool light = savefile->settings.lightMode;
+        if((!light && gradientTable[0] == 0) || (light && gradientTable[0] == 0x5ad6)){
+            setPaletteColor(0, 0, gradientTable[0], 1);
+            return;
+        }
         toggleHBlank(false);
     }else if(state == 2){
         stopDMA();
@@ -1068,10 +1078,8 @@ void setPawnPalette(int dest, int n, int blend){
     if (!savefile->settings.lightMode){
         if(savefile->settings.colors == 2)
             color_fade_palette(dest,0,(COLOR*)classic_pal_bin,0x0000,8,blend);
-            // clr_fade((COLOR*)classic_pal_bin, 0x0000, &pal_obj_mem[dest * 16], 8, blend);
         else if(savefile->settings.colors == 3){
             color_fade_palette(dest,1,(COLOR*)classic_pal_bin,0x0000,4,blend);
-            // clr_fade((COLOR*)&nesPalette[getClassicPalette()][0], 0x0000, &pal_obj_mem[dest * 16+1], 4, blend);
         }else if(savefile->settings.colors == 4){
             COLOR c;
             if(savefile->settings.palette < 7){
@@ -1084,16 +1092,12 @@ void setPawnPalette(int dest, int n, int blend){
             memset16(mono,c,4);
 
             color_fade_palette(dest,1,(COLOR*)&mono[0],0x0000,4,blend);
-            // clr_fade((COLOR*)&monoPalette[0][0], 0x0000, &pal_obj_mem[dest * 16+1], 4, blend);
         }else if(savefile->settings.colors == 5){
             color_fade_palette(dest,1,(COLOR*)&arsPalette[0][n],0x0000,4,blend);
-            // clr_fade((COLOR*)&arsPalette[0][n], 0x0000, &pal_obj_mem[dest * 16+1], 4, blend);
         }else if(savefile->settings.colors == 6){
             color_fade_palette(dest,1,(COLOR*)&arsPalette[1][n],0x0000,4,blend);
-            // clr_fade((COLOR*)&arsPalette[1][n], 0x0000, &pal_obj_mem[dest * 16+1], 4, blend);
         } else
             color_fade_palette(dest,0,(COLOR*)&palette[savefile->settings.colors][n*16],0x0000,8,blend);
-            // clr_fade_fast((COLOR*)&palette[savefile->settings.colors][n * 16], 0x0000, &pal_obj_mem[dest * 16], 8, blend);
     }else{
         if(dest == 11+16)
             blend = int2fx(blend) >> 5;
@@ -1102,10 +1106,8 @@ void setPawnPalette(int dest, int n, int blend){
 
         if(savefile->settings.colors == 2)
             color_adj_brightness(dest, 0, (COLOR*)classic_pal_bin, 8, blend);
-            // clr_adj_brightness(&pal_obj_mem[dest * 16], (COLOR*)classic_pal_bin, 8, blend);
         else if(savefile->settings.colors == 3){
-            color_adj_brightness(dest, 1, (COLOR*)&nesPalette[getClassicPalette()][0], 8, blend);
-            // clr_adj_brightness(&pal_obj_mem[dest * 16+1], (COLOR*)&nesPalette[getClassicPalette()][0], 8, blend);
+            color_adj_brightness(dest, 1, (COLOR*)&nesPalette[getClassicPalette()][0], 4, blend);
         }else if(savefile->settings.colors == 4){
             COLOR c;
             if(savefile->settings.palette < 7){
@@ -1118,15 +1120,11 @@ void setPawnPalette(int dest, int n, int blend){
             memset16(mono,c,4);
 
             color_adj_brightness(dest, 1, (COLOR*)&mono[0], 4, blend);
-            // clr_adj_brightness(&pal_obj_mem[dest * 16+1], (COLOR*)&monoPalette[1][0], 4, blend);
         }else if(savefile->settings.colors == 5){
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[0][n], 4, blend);
-            // clr_adj_brightness(&pal_obj_mem[dest * 16+1], (COLOR*)&arsPalette[0][n], 4, blend);
         }else if(savefile->settings.colors == 6){
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[1][n], 4, blend);
-            // clr_adj_brightness(&pal_obj_mem[dest * 16+1], (COLOR*)&arsPalette[1][n], 4, blend);
         }else
             color_adj_brightness(dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16], 8, blend);
-            // clr_adj_brightness(&pal_obj_mem[dest * 16], (COLOR*)&palette[savefile->settings.colors][n * 16], 8, blend);
     }
 }

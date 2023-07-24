@@ -291,8 +291,10 @@ void sleep() {
         }
     }
 
+    bool prevGradient = gradientEnabled;
     irq_disable(II_VBLANK);
     gradient(false);
+
     int stat_value = REG_SNDSTAT;
     int dsc_value = REG_SNDDSCNT;
     int dmg_value = REG_SNDDMGCNT;
@@ -327,7 +329,9 @@ void sleep() {
     irq_enable(II_SERIAL);
     irq_delete(II_KEYPAD);
     irq_enable(II_VBLANK);
-    gradient(true);
+
+    if(prevGradient)
+        gradient(true);
 }
 
 void sfx(int s){
