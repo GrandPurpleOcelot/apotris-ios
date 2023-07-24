@@ -3217,7 +3217,6 @@ bool OptionListScene::control(){
                 (*it)->action(dir);
 
                 refreshText = true;
-                sfx(SFX_MENUMOVE);
             }
         }
     } else {
@@ -3844,7 +3843,6 @@ bool newGraphicsScene::control(){
                 (*it)->action(dir);
 
                 refreshText = true;
-                sfx(SFX_MENUMOVE);
             }
         }
     } else {

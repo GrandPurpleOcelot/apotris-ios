@@ -210,13 +210,16 @@ class MusicVolumeElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if(savefile->settings.volume < 10)
+                if(savefile->settings.volume < 10){
                     savefile->settings.volume++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.volume > 0)
+                if(savefile->settings.volume > 0){
                     savefile->settings.volume--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
             setMusicVolume(512 * ((float)savefile->settings.volume / 10));
         }
@@ -249,13 +252,16 @@ class SFXVolumeElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if(savefile->settings.sfxVolume < 10)
+                if(savefile->settings.sfxVolume < 10){
                     savefile->settings.sfxVolume++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.sfxVolume > 0)
+                if(savefile->settings.sfxVolume > 0){
                     savefile->settings.sfxVolume--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
         }
 
@@ -347,6 +353,7 @@ class DASElement : public Element{
         }
 
         void action(int dir) override{
+            int prev = savefile->settings.das;
             int n = 0;
 
             if(savefile->settings.customDas){
@@ -378,7 +385,8 @@ class DASElement : public Element{
                 savefile->settings.das = n;
             }
 
-            sfx(SFX_MENUMOVE);
+            if(prev != savefile->settings.das)
+                sfx(SFX_MENUMOVE);
         }
 
         std::string getCurrentOption() override {
@@ -420,13 +428,16 @@ class ARRElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if(savefile->settings.arr > -1)
+                if(savefile->settings.arr > -1){
                     savefile->settings.arr--;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.arr < 3)
+                if(savefile->settings.arr < 3){
                     savefile->settings.arr++;
+                    sfx(SFX_MENUMOVE);
+                }
             }
         }
 
@@ -465,13 +476,16 @@ class SDFElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if(savefile->settings.sfr > -1)
+                if(savefile->settings.sfr > -1){
                     savefile->settings.sfr--;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.sfr < 3)
+                if(savefile->settings.sfr < 3){
                     savefile->settings.sfr++;
+                    sfx(SFX_MENUMOVE);
+                }
             }
         }
 
@@ -533,13 +547,16 @@ class DropProtectionElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if(savefile->settings.dropProtectionFrames < 20)
+                if(savefile->settings.dropProtectionFrames < 20){
                     savefile->settings.dropProtectionFrames++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.dropProtectionFrames > 0)
+                if(savefile->settings.dropProtectionFrames > 0){
                     savefile->settings.dropProtectionFrames--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
         }
 
@@ -583,13 +600,16 @@ class DisableDiagonalsElement : public Element{
 
         void action(int dir) override{
             if(dir > 0){
-                if(savefile->settings.diagonalType < 2)
+                if(savefile->settings.diagonalType < 2){
                     savefile->settings.diagonalType++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.diagonalType > 0)
+                if(savefile->settings.diagonalType > 0){
                     savefile->settings.diagonalType--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
-            sfx(SFX_MENUCONFIRM);
         }
 
         std::string getCurrentOption() override {
@@ -719,18 +739,20 @@ class QuickResetElement : public Element{
             if(dir > 0){
                 if(savefile->settings.resetHoldToggle){
                     savefile->settings.resetHoldToggle = 0;
+                    sfx(SFX_MENUMOVE);
                 }else if(!savefile->settings.resetHoldType){
                     savefile->settings.resetHoldType = 1;
+                    sfx(SFX_MENUMOVE);
                 }
             }else{
                 if(!savefile->settings.resetHoldType){
                     savefile->settings.resetHoldToggle = 1;
+                    sfx(SFX_MENUMOVE);
                 }else if(savefile->settings.resetHoldType){
                     savefile->settings.resetHoldType = 0;
+                    sfx(SFX_MENUMOVE);
                 }
             }
-
-            sfx(SFX_MENUMOVE);
         }
 
         std::string getCurrentOption() override {
@@ -767,13 +789,16 @@ class RumbleElement : public Element{
 
         void action(int dir) override{
             if(dir > 0){
-                if(savefile->settings.rumble < 4)
+                if(savefile->settings.rumble < 4){
                     savefile->settings.rumble++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.rumble > 0)
+                if(savefile->settings.rumble > 0){
                     savefile->settings.rumble--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
-            sfx(SFX_MENUCONFIRM);
         }
 
         std::string getCurrentOption() override {
@@ -804,6 +829,8 @@ class ResetControlsElement : public Element{
             k.zone = KEY_SELECT;
 
             savefile->settings.keys = k;
+
+            sfx(SFX_MENUCONFIRM);
         }
 
         std::string getCurrentOption() override {
@@ -880,6 +907,7 @@ class RebindElement : public Element{
                     }
 
                     keys[index] = key;
+                    sfx(SFX_MENUCONFIRM);
                     break;
                 }
             }
@@ -942,13 +970,16 @@ class GridElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if(savefile->settings.backgroundGrid < MAX_BACKGROUNDS - 1)
+                if(savefile->settings.backgroundGrid < MAX_BACKGROUNDS - 1){
                     savefile->settings.backgroundGrid++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(savefile->settings.backgroundGrid > 0)
+                if(savefile->settings.backgroundGrid > 0){
                     savefile->settings.backgroundGrid--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
             drawGrid();
         }
@@ -981,13 +1012,16 @@ class SkinElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if (savefile->settings.skin < MAX_SKINS - 1)
+                if (savefile->settings.skin < MAX_SKINS - 1){
                     savefile->settings.skin++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if (savefile->settings.skin > -(MAX_CUSTOM_SKINS))
+                if (savefile->settings.skin > -(MAX_CUSTOM_SKINS)){
                     savefile->settings.skin--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
             setSkin();
         }
@@ -1024,13 +1058,16 @@ class GhostElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if (savefile->settings.shadow < MAX_SHADOWS - 1)
+                if (savefile->settings.shadow < MAX_SHADOWS - 1){
                     savefile->settings.shadow++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if (savefile->settings.shadow > 0)
+                if (savefile->settings.shadow > 0){
                     savefile->settings.shadow--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
         }
 
@@ -1062,13 +1099,16 @@ class FrameColorElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if (savefile->settings.palette < 7)
+                if (savefile->settings.palette < 7){
                     savefile->settings.palette++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if (savefile->settings.palette > 0)
+                if (savefile->settings.palette > 0){
                     savefile->settings.palette--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
             setPalette();
         }
@@ -1101,13 +1141,16 @@ class PaletteElement : public Element{
         }
 
         void action(int dir) override{
-            sfx(SFX_MENUMOVE);
             if(dir > 0){
-                if (savefile->settings.colors < MAX_COLORS - 1)
+                if (savefile->settings.colors < MAX_COLORS - 1){
                     savefile->settings.colors++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if (savefile->settings.colors > 0)
+                if (savefile->settings.colors > 0){
                     savefile->settings.colors--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
 
             setPalette();
@@ -1522,14 +1565,16 @@ class LevelSelectorElement : public Element{
 
         void action(int dir) override{
             if(dir > 0){
-                if(value < 20)
+                if(value < 20){
                     value++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(value > 1)
+                if(value > 1){
                     value--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
-
-            sfx(SFX_MENUMOVE);
         }
 
         std::string getCurrentOption() override {
@@ -1572,14 +1617,16 @@ class StringSelectorElement : public Element{
 
         void action(int dir) override {
             if(dir > 0){
-                if(value < options - 1)
+                if(value < options - 1){
                     value++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(value > 0)
+                if(value > 0){
                     value--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
-
-            sfx(SFX_MENUMOVE);
         }
 
         std::string getCurrentOption() override {
@@ -1643,14 +1690,16 @@ class IntSelectorElement : public Element{
 
         void action(int dir) override {
             if(dir > 0){
-                if(value < options - 1)
+                if(value < options - 1){
                     value++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(value > 0)
+                if(value > 0){
                     value--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
-
-            sfx(SFX_MENUMOVE);
         }
 
         std::string getCurrentOption() override {
@@ -1720,14 +1769,16 @@ class TupleSelectorElement : public Element{
 
         void action(int dir) override {
             if(dir > 0){
-                if(value < options - 1)
+                if(value < options - 1){
                     value++;
+                    sfx(SFX_MENUMOVE);
+                }
             }else{
-                if(value > 0)
+                if(value > 0){
                     value--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
-
-            sfx(SFX_MENUMOVE);
         }
 
         std::string getCurrentOption() override {
