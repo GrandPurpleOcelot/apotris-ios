@@ -29,6 +29,9 @@ INCLUDES	:= include
 DATA		:= data
 MUSIC		:= audio
 
+export GAME_TITLE := APOTRIS
+export GAME_CODE := 2ATE -p
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
