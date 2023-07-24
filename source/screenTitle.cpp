@@ -1,6 +1,5 @@
 #include "def.h"
 #include "menu.h"
-#include "platform.hpp"
 #include "sprite41tiles_bin.h"
 #include "tetrisEngine.h"
 #include "tetromino.hpp"
@@ -25,7 +24,6 @@ void toggleBigMode();
 std::string timeToStringHours(int frames);
 void resetScoreboard(int,int,int);
 void drawBackgroundGrid();
-bool checkSettingsChange();
 void initFallingBlocks();
 
 using namespace Tetris;
@@ -301,6 +299,7 @@ void startScreen() {
                         refreshText = true;
                     } else if (selection == 1) {
                         n = -1;
+
                         previousSettings = savefile->settings;
 
                         for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
@@ -1009,7 +1008,7 @@ void startScreen() {
                         refreshText = true;
                     }
                 }else {
-                    bool change = checkSettingsChange();
+                    // bool change = checkSettingsChange();
 
                     bool exit = true;
                     // if(change){
@@ -2217,7 +2216,7 @@ void TitleScene::draw(){
     }
 }
 
-bool checkSettingsChange(){
+bool settingsChanged(){
     u8 * v1 = (u8 *) &savefile->settings;
     u8 * v2 = (u8 *) &previousSettings;
 
@@ -3278,7 +3277,7 @@ void OptionListScene::deinit(){
 
 void ConfirmSaveScene::init(){
     clearTilemap(29);
-    naprint("Save settings?", 64 , 56);
+    naprint("Save changes?", 64 , 56);
 
     naprint("SAVE", 48, 104);
     naprint("DON'T SAVE", 120, 104);
@@ -3347,9 +3346,6 @@ bool ConfirmSaveScene::control(){
         if(cancel){
             savefile->settings = previousSettings;
 
-            for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
-                savefile->customSkins[i] = previousSkins[i];
-
             setMusicVolume(512 * ((float)savefile->settings.volume / 10));
             setSkin();
             setLightMode();
@@ -3369,15 +3365,6 @@ bool ConfirmSaveScene::control(){
 }
 
 void ConfirmSaveScene::deinit(){
-}
-
-void SettingsScene::init(){
-    SimpleListScene::init();
-
-    previousSettings = savefile->settings;
-
-    for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
-        previousSkins[i] = savefile->customSkins[i];
 }
 
 bool PlayOptionScene::control(){

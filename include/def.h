@@ -350,6 +350,8 @@ extern void initFallingBlocks();
 
 extern void gradientEditor();
 
+extern bool settingsChanged();
+
 extern Tetris::Game *game;
 extern Tetris::Game *quickSave;
 extern Tetris::Game *botGame;
@@ -454,6 +456,8 @@ extern int current[22][12];
 extern int previous[22][12];
 
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+extern Settings previousSettings;
 
 class Function{
     private:

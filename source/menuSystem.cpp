@@ -94,6 +94,8 @@ void sceneSwitcher(std::string str){
     if(str == "Play"){
         changeScene(new ModeListScene(),Transitions::FADE);
     }else if(str == "Settings"){
+        previousSettings = savefile->settings;
+
         changeScene(new SettingsScene(),Transitions::FADE);
     }else if(str == "Achievements"){
 

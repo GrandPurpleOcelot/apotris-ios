@@ -1247,12 +1247,15 @@ class ConfirmSaveScene : public Scene{
 
 class SettingsScene : public SimpleListScene{
     public:
-        Scene* previousScene(){return new ConfirmSaveScene();};
+        Scene* previousScene(){
+            if(settingsChanged())
+                return new ConfirmSaveScene();
+            else
+                return new MainMenuScene();
+        };
 
         std::list<std::string> getOptionList(){return settingsOptions;};
         std::string name(){return "Settings";};
-
-        void init();
 };
 
 class GraphicsScene : public Scene{

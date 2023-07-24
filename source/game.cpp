@@ -105,7 +105,6 @@ int eventPauseTimer = 0;
 Tetris::Drop latestDrop;
 
 static bool holdingSave = false;
-static Settings previousSettings;
 
 #define flashTimerMax 16
 static int flashTimer = 0;
@@ -387,6 +386,7 @@ void checkSounds() {
         gradient(false);
 
         holdingSave = true;
+
         previousSettings = savefile->settings;
 
         savefile->settings.colors = 4;
