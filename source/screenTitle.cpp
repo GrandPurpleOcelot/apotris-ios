@@ -735,7 +735,7 @@ void startScreen() {
                             case 0: windowSettings(); break;
                             case 1: audioSettings(); break;
                             case 2: controlsSettings(); break;
-                            case 3: handlingSettings(); break;
+                            // case 3: handlingSettings(); break;
                             case 4: skinEditor(); break;
                         }
                         clearText();
