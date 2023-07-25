@@ -1621,7 +1621,7 @@ void drawGrid() {
     }
 
     u32 gridTile;
-    int palOffset = 4;
+    // int palOffset = 4;
 
     switch (savefile->settings.backgroundGrid) {
         case 0: gridTile = 0x0002; break;

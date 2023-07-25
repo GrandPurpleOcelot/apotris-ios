@@ -6,7 +6,6 @@
 #include "text.h"
 #include <string>
 #include <list>
-// #include "soundbank.h"
 #include "LinkConnection.h"
 #include "flashSaves.h"
 
@@ -15,6 +14,13 @@
 #include "sprites.h"
 #include "classic_pal_bin.h"
 #include "scene.hpp"
+
+#include "sceneGraphics.hpp"
+#include "sceneAudio.hpp"
+#include "sceneControls.hpp"
+#include "sceneHandling.hpp"
+#include "sceneModes.hpp"
+#include "sceneStats.hpp"
 
 void drawUIFrame(int, int, int, int);
 void fallingBlocks();

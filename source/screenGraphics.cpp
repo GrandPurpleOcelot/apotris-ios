@@ -7,6 +7,7 @@
 #include "posprintf.h"
 #include "logging.h"
 #include "scene.hpp"
+#include "sceneGraphics.hpp"
 
 using namespace Tetris;
 

@@ -4,6 +4,12 @@
 #include "menu.h"
 #include <string>
 #include "scene.hpp"
+#include "sceneGraphics.hpp"
+#include "sceneAudio.hpp"
+#include "sceneControls.hpp"
+#include "sceneHandling.hpp"
+#include "sceneModes.hpp"
+#include "sceneStats.hpp"
 
 #define FADE_LENGTH 4
 
