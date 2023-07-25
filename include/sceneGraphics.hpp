@@ -503,6 +503,29 @@ class PreviewsElement : public Element{
         }
 };
 
+class ResetGraphicsElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Reset Graphics";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action() override{
+            setDefaultGraphics(savefile, 0);
+            setSkin();
+            setPalette();
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            return "";
+        }
+};
+
 class newGraphicsScene : public Scene{
     int maxDas = 16;
     int dasHor = 0;
@@ -537,6 +560,7 @@ class newGraphicsScene : public Scene{
         l.push_back(new ScreenShakeElement());
         l.push_back(new ClearTextElement());
         l.push_back(new PreviewsElement());
+        l.push_back(new ResetGraphicsElement());
 
         return l;
     };

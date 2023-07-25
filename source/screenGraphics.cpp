@@ -1278,6 +1278,7 @@ bool newGraphicsScene::control(){
         (*it)->action();
 
         refreshText = true;
+        refreshGame = true;
     }
 
     if(key_hit(KEY_R)){
@@ -1419,7 +1420,8 @@ bool newGraphicsScene::control(){
         setDefaultGraphics(savefile, 0);
         setSkin();
         setPalette();
-        setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+
+        sfx(SFX_MENUCONFIRM);
     }
 
     return false;

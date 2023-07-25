@@ -746,8 +746,6 @@ void buildMini(TILE * customSkin){
     }
 
     for (int i = 0; i < 7; i++){
-
-        // TILE * t;
         int* p = getShape(i, 0, rs);
         int tileStart = 9 * 16 + i * 8;
 
