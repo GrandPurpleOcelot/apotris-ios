@@ -526,7 +526,7 @@ class ResetGraphicsElement : public Element{
         }
 };
 
-class newGraphicsScene : public Scene{
+class GraphicsScene : public Scene{
     int maxDas = 16;
     int dasHor = 0;
     int dasVer = 0;
@@ -602,7 +602,7 @@ class newGraphicsScene : public Scene{
     void deinit();
     virtual Scene* previousScene(){return new SettingsScene();};
 
-    ~newGraphicsScene(){
+    ~GraphicsScene(){
         deinit();
     };
 };
@@ -626,7 +626,7 @@ class GradientEditorScene : public Scene{
     bool control();
     void init();
     void deinit();
-    Scene* previousScene(){return new newGraphicsScene();};
+    Scene* previousScene(){return new GraphicsScene();};
 
     ~GradientEditorScene(){
         deinit();

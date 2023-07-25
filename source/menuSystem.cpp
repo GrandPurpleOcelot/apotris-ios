@@ -114,7 +114,7 @@ void sceneSwitcher(std::string str){
     }else if(str == "Credits"){
 
     }else if(str == "Graphics"){
-        changeScene(new newGraphicsScene(),Transitions::FADE);
+        changeScene(new GraphicsScene(),Transitions::FADE);
     }else if(str == "Audio"){
         changeScene(new AudioOptionScene(),Transitions::FADE);
     }else if(str == "Controls"){

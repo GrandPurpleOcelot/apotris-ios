@@ -275,30 +275,6 @@ class SettingsScene : public SimpleListScene{
         std::string name(){return "Settings";};
 };
 
-class GraphicsScene : public Scene{
-    void draw(){};
-    void update();
-    bool control();
-    void init();
-    void deinit();
-    Scene* previousScene(){return new SettingsScene();};
-
-    bool showOptions = true;
-    bool showGame = true;
-
-    int selection = 0;
-
-    const int maxDas = 16;
-    int dasVer = 0;
-    int dasHor = 0;
-    int dasOffset = 0;
-
-    const int maxArr = 3;
-    int arr = 0;
-
-    int prevBld = blendInfo;
-};
-
 enum class Transitions{
     INSTANT,
     FADE,

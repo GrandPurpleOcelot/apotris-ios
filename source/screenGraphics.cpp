@@ -175,7 +175,7 @@ void GradientElement::action(){
     changeScene(new GradientEditorScene(),Transitions::FADE);
 }
 
-void newGraphicsScene::init(){
+void GraphicsScene::init(){
     loadTiles(2,102,sprite37tiles_bin,sprite37tiles_bin_size/32);
     loadTiles(2,105,sprite41tiles_bin,sprite41tiles_bin_size/32);
 
@@ -301,7 +301,7 @@ void newGraphicsScene::init(){
     refreshGame = true;
 }
 
-void newGraphicsScene::draw(){
+void GraphicsScene::draw(){
     if(showText){
         if(refreshText){
             setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
@@ -412,7 +412,7 @@ void newGraphicsScene::draw(){
     refreshText = false;
 }
 
-void newGraphicsScene::update(){
+void GraphicsScene::update(){
     canDraw = 1;
     key_poll();
     gradient(1);
@@ -439,7 +439,7 @@ void newGraphicsScene::update(){
     control();
 }
 
-bool newGraphicsScene::control(){
+bool GraphicsScene::control(){
     // if(key_hit(KEY_A)){
     //     sfx(SFX_MENUCONFIRM);
     //     if(selection < options - 1)
@@ -641,7 +641,7 @@ bool newGraphicsScene::control(){
     return false;
 }
 
-void newGraphicsScene::deinit(){
+void GraphicsScene::deinit(){
     buildBG(3, 0, 27, 0, 1, true);
 
     clearSprites(128);
