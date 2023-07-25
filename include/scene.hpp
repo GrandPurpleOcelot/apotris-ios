@@ -258,7 +258,7 @@ class ConfirmSaveScene : public Scene{
     void update();
     bool control();
     void init();
-    void deinit();
+    void deinit(){};
     Scene* previousScene(){return new MainMenuScene();};
 };
 
