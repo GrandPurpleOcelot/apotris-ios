@@ -634,6 +634,9 @@ bool GraphicsScene::control(){
         setDefaultGraphics(savefile, 0);
         setSkin();
         setPalette();
+        drawFrameBackgrounds();
+
+        refreshGame = true;
 
         sfx(SFX_MENUCONFIRM);
     }

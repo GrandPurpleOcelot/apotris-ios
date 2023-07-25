@@ -496,6 +496,7 @@ class PreviewsElement : public Element{
                     sfx(SFX_MENUMOVE);
                 }
             }
+            drawFrameBackgrounds();
         }
 
         std::string getCurrentOption() override {
@@ -517,6 +518,7 @@ class ResetGraphicsElement : public Element{
             setDefaultGraphics(savefile, 0);
             setSkin();
             setPalette();
+            drawFrameBackgrounds();
 
             sfx(SFX_MENUCONFIRM);
         }
