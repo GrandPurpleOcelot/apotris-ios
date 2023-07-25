@@ -84,6 +84,30 @@ Options *previousGameOptions = nullptr;
 
 u16 gradientTable[SCREEN_HEIGHT + 1];
 
+const std::list<std::string> controlOptions = {
+    "Move Left",
+    "Move Right",
+    "Rotate Left",
+    "Rotate Right",
+    "Rotate 180",
+    "Soft Drop",
+    "Hard Drop",
+    "Hold",
+    "Activate Zone",
+};
+
+std::map<int,std::string> keyMap = {
+    {KEY_LEFT,"Left"},
+    {KEY_RIGHT,"Right"},
+    {KEY_UP,"Up"},
+    {KEY_DOWN,"Down"},
+    {KEY_A,"A"},
+    {KEY_B,"B"},
+    {KEY_L,"L"},
+    {KEY_R,"R"},
+    {KEY_SELECT,"Select"},
+};
+
 void initialize(){
     toggleSprites(true);
 

@@ -266,7 +266,6 @@ extern void songListMenu();
 extern void graphicTest();
 extern void windowSettings();
 extern void audioSettings();
-extern void controlsSettings();
 extern void showTitleSprites();
 extern void setLightMode();
 extern void setSkin();
