@@ -225,15 +225,11 @@ void checkSounds() {
         sfx(SFX_PLACE);
 
         #ifdef GBA
-
         shake = (shakeMax * (savefile->settings.shakeAmount) / 4) /2;
-
         #endif
 
         #ifdef PC
-
         shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))/2) * 2;
-
         #endif
 
         if(!game->sounds.finesse && game->trainingMode)
@@ -1621,7 +1617,6 @@ void drawGrid() {
     }
 
     u32 gridTile;
-    // int palOffset = 4;
 
     switch (savefile->settings.backgroundGrid) {
         case 0: gridTile = 0x0002; break;
@@ -1634,6 +1629,7 @@ void drawGrid() {
     }
 
     #ifdef GBA
+    int palOffset = 4;
     setTiles(26,31*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     setTiles(26,20*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     #endif
@@ -1866,6 +1862,8 @@ void showPlaceEffect(){
     return;
     #endif
 
+    const int tileStart = 927 - 32 * 3;
+
     for(int i = 0; i < 3; i++)
         sprite_hide(&obj_buffer[19+i]);
 
@@ -1887,7 +1885,7 @@ void showPlaceEffect(){
 
         switch(it->piece){
         case 0:
-            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n], 8, 3);
+            loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n], 8, 3);
             // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n],size/2);
             if(game->rotationSystem == NRS){
                 if(r % 2 == 1)
@@ -1902,7 +1900,7 @@ void showPlaceEffect(){
             }
             break;
         case 1:
-            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 3], 8, 3);
+            loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 3], 8, 3);
             // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
             xoffset = yoffset = -4;
 
@@ -1914,7 +1912,7 @@ void showPlaceEffect(){
 
             break;
         case 2:
-            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 3], 8, 3);
+            loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 3], 8, 3);
             // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
             xoffset = yoffset = -4;
             flip = true;
@@ -1926,13 +1924,13 @@ void showPlaceEffect(){
                 r = (r+2) % 4;
             break;
         case 3:
-            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 6], 8, 3);
+            loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 6], 8, 3);
             // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+6],size/2);
             yoffset = -4 + (game->rotationSystem == NRS || game-> rotationSystem == ARS) * 8;
             r = 0;
             break;
         case 4:
-            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 9], 8, 3);
+            loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 9], 8, 3);
             // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
             xoffset = -4;
             yoffset = -4;
@@ -1944,7 +1942,7 @@ void showPlaceEffect(){
             }
             break;
         case 5:
-            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 12], 8, 3);
+            loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 12], 8, 3);
             // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+12],size/2);
             xoffset = yoffset = -4;
 
@@ -1955,7 +1953,7 @@ void showPlaceEffect(){
                 r = (r+2) % 4;
             break;
         case 6:
-            loadSpriteTiles(512 + 138 + 32 * i, placeEffectTiles[n + 9], 8, 3);
+            loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 9], 8, 3);
             // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
             xoffset = -4;
             yoffset = -4;
@@ -2009,11 +2007,9 @@ void showPlaceEffect(){
 
         it->sprite = &obj_buffer[19+i];
         sprite_unhide(it->sprite,ATTR0_AFF_DBL);
-        sprite_set_attr(it->sprite, ShapeWide, 3, 650 + 32 * i, (game->zoneTimer != 0)?11:it->piece, 3 - (it->rotating != 0));
+        sprite_set_attr(it->sprite, ShapeWide, 3, tileStart + 32 * i, (game->zoneTimer != 0)?11:it->piece, 3 - (it->rotating != 0));
         sprite_enable_affine(it->sprite, 7+i, true);
-        // obj_set_attr(it->sprite, ATTR0_WIDE | ATTR0_AFF_DBL, ATTR1_SIZE(3) | ATTR1_AFF_ID(7+i), ATTR2_BUILD(650 + 32 * i, (game->zoneTimer != 0)?11:it->piece, 3 - (it->rotating != 0)));
         sprite_set_pos(it->sprite, x, y);
-        // obj_aff_identity(&obj_aff_buffer[7+i]);
         sprite_rotscale(it->sprite, ((flip)?-1:1) << 8, 1<<8, - 0x4000 * (r) + spin,7+i);
 
         it->timer--;
@@ -2179,13 +2175,11 @@ void zoneFlash(){
 
     flashTimer--;
 
-    // REG_MOSAIC = MOS_BUILD(flashTimer,flashTimer,flashTimer,flashTimer);
     setMosaic(flashTimer, flashTimer);
 
     int n = ((float)flashTimer/flashTimerMax) * 31;
 
     color_fade_fast(16, 0, previousPalette, 0x7fff, 128, n);
-    // clr_fade_fast(previousPalette, 0x7fff, pal_obj_mem, 128, n);
 
     bool cond = ((flashTimer < flashTimerMax/2) && eventPauseTimer);
 
@@ -2197,10 +2191,8 @@ void zoneFlash(){
     if(flashTimer < flashTimerMax/2 && game->gameMode == MASTER){
         if(!savefile->settings.lightMode)
             setPaletteColor(0, 0, 0x0000, 1);
-            // memset16(pal_bg_mem, 0x0000, 1);
         else
             setPaletteColor(0, 0, 0x5ad6, 1);
-            // memset16(pal_bg_mem, 0x5ad6, 1);//background gray
     }
 }
 
@@ -2675,7 +2667,7 @@ void GameScene::init(){
     clearTilemap(25);
 
     clearTiles(2,110,400);
-    clearSpriteTiles(512 + 138, 8 * 5, 3);
+    clearSpriteTiles((927 - 32 * 3), 8 * 5, 3); // clear tiles in place Effect area
     setSmallTextArea(110, 3, 7, 9, 10);
     clearText();
     gameSeconds = 0;
@@ -2787,7 +2779,7 @@ void GameScene::update(){
             #endif
 
             #ifdef PC
-            // shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))) * 2;
+            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))) * 2;
             #endif
             rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
             clearTimer = 0;

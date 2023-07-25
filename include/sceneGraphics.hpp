@@ -57,7 +57,7 @@ class GridElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return std::to_string(savefile->settings.backgroundGrid);
+            return std::to_string(savefile->settings.backgroundGrid + 1);
         }
 };
 
@@ -100,7 +100,7 @@ class SkinElement : public Element{
 
         std::string getCurrentOption() override {
             if(savefile->settings.skin >= 0){
-                return std::to_string(savefile->settings.skin);
+                return std::to_string(savefile->settings.skin + 1);
             }else{
                 return "C" + std::to_string(- (savefile->settings.skin));
             }
@@ -144,7 +144,7 @@ class GhostElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return std::to_string(savefile->settings.shadow);
+            return std::to_string(savefile->settings.shadow + 1);
         }
 };
 
@@ -186,7 +186,7 @@ class FrameColorElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return std::to_string(savefile->settings.palette);
+            return std::to_string(savefile->settings.palette + 1);
         }
 };
 
@@ -229,7 +229,277 @@ class PaletteElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return std::to_string(savefile->settings.colors);
+            return std::to_string(savefile->settings.colors + 1);
+        }
+};
+
+class BlockEdgesElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Block Edges";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.edges = !savefile->settings.edges;
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.edges)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
+class LightModeElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Light Mode";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.lightMode = !savefile->settings.lightMode;
+            setSkin();
+            setLightMode();
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.lightMode)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
+class BoardEffectsElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Board Effects";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.effects = !savefile->settings.effects;
+            if (savefile->settings.effects) {
+                effectList.push_back(Effect(1, 4, 5));
+            }
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.effects)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
+class ClearStyleElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Clear Style";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.clearEffect > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.clearEffect < MAX_CLEAR_EFFECTS - 1)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if (savefile->settings.clearEffect < MAX_CLEAR_EFFECTS - 1){
+                    savefile->settings.clearEffect++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if (savefile->settings.clearEffect > 0){
+                    savefile->settings.clearEffect--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+            setClearEffect();
+        }
+
+        std::string getCurrentOption() override {
+            return std::to_string(savefile->settings.clearEffect + 1);
+        }
+};
+
+class PlaceEffectElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Place Effect";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.placeEffect = !savefile->settings.placeEffect;
+            if(savefile->settings.placeEffect && (int)placeEffectList.size() < 3){
+                placeEffectList.push_back(PlaceEffect(game->pawn.x, game->pawn.y-20, 0, 0, game->pawn.current, 0, false));
+            }
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.placeEffect)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
+class ScreenShakeElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Screen Shake";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+            if(savefile->settings.shakeAmount > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.shakeAmount < 4)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if(savefile->settings.shakeAmount < 4){
+                    savefile->settings.shakeAmount++;
+                    savefile->settings.shake = true;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.shakeAmount > 0){
+                    savefile->settings.shakeAmount--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+
+            #ifdef GBA
+            shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+            #endif
+
+            #ifdef PC
+            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))/2);
+            #endif
+        }
+
+        std::string getCurrentOption() override {
+            return std::to_string(savefile->settings.shakeAmount * 25) + "%";
+        }
+};
+
+class ClearTextElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Clear Text";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.floatText = !savefile->settings.floatText;
+
+            if(savefile->settings.floatText){
+                floatingList.push_back(FloatText("quad"));
+            }else{
+                for(auto const & floating : floatingList){
+                    int height;
+                    if (floating.timer < 2 * 100 / 3)
+                        height = 5 * (float)floating.timer / ((float)2 * 100 / 3);
+                    else
+                        height = (30 * (float)(floating.timer) / 100) - 15;
+                    aprintClearArea(9, 15-height, 12, 1);
+                }
+
+                floatingList.clear();
+            }
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.floatText)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
+class PreviewsElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Previews";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+            if(savefile->settings.maxQueue > 1)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.maxQueue < 5)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if(savefile->settings.maxQueue < 5){
+                    savefile->settings.maxQueue++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.maxQueue > 1){
+                    savefile->settings.maxQueue--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+        }
+
+        std::string getCurrentOption() override {
+            return std::to_string(savefile->settings.maxQueue);
         }
 };
 
@@ -247,14 +517,28 @@ class newGraphicsScene : public Scene{
     int movingDirection = 0;
 
     std::list<Element*> getElementList(){
-        return {
-            new GradientElement(),
-            new GridElement(),
-            new SkinElement(),
-            new GhostElement(),
-            new FrameColorElement(),
-            new PaletteElement(),
-        };
+        std::list<Element*> l;
+
+        l.push_back(new GradientElement());
+        l.push_back(new GridElement());
+        l.push_back(new SkinElement());
+        l.push_back(new GhostElement());
+        l.push_back(new FrameColorElement());
+        l.push_back(new PaletteElement());
+        l.push_back(new BlockEdgesElement());
+        l.push_back(new LightModeElement());
+        l.push_back(new BoardEffectsElement());
+        l.push_back(new ClearStyleElement());
+
+        #ifdef GBA
+        l.push_back(new PlaceEffectElement());
+        #endif
+
+        l.push_back(new ScreenShakeElement());
+        l.push_back(new ClearTextElement());
+        l.push_back(new PreviewsElement());
+
+        return l;
     };
 
     std::list<Element*> elementList;

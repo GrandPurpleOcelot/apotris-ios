@@ -2,6 +2,7 @@
 #include "scene.hpp"
 #include <string>
 #include <list>
+#include "logging.h"
 
 #include "sprite41tiles_bin.h"
 #include "sprites.h"

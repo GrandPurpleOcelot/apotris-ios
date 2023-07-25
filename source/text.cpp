@@ -436,7 +436,7 @@ void naprintColor(std::string str, int x, int y, int palette){
 	}
 }
 
-void naprintSprite(std::string str, int tile){
+IWRAM_CODE void naprintSprite(std::string str, int tile){
 
 	// if(str.size() > 12)
 	// 	str = str.substr(0,12);

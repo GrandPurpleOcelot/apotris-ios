@@ -362,7 +362,7 @@ void GraphicsScene::update(){
             break;
             #endif
             savefile->settings.placeEffect = !savefile->settings.placeEffect;
-            if(savefile->settings.placeEffect && (int)placeEffectList.size() <= 3){
+            if(savefile->settings.placeEffect && (int)placeEffectList.size() < 3){
                 placeEffectList.push_back(PlaceEffect(game->pawn.x, game->pawn.y-20, 0, 0, game->pawn.current, 0, false));
             }
 
@@ -596,21 +596,16 @@ void GraphicsScene::update(){
         showBackground(0);
 
         if(selection == 9){
-            // u16 *dest = (u16*) &se_mem[25];
             for(int i = 0; i < game->lengthX; i++){
                 setTile(25, 10 + i, 18, tileBuild(3, false, false, savefile->settings.lightMode));
                 setTile(25, 10 + i, 19, tileBuild(3, false, false, savefile->settings.lightMode));
-                // dest[10+i+32*18] = 3 + savefile->settings.lightMode * 0x1000;
-                // dest[10+i+32*19] = 3 + savefile->settings.lightMode * 0x1000;
             }
         }
     } else {
         clearSprites(128);
-        // oam_init(obj_buffer, 128);
     }
 
     showSprites(128);
-    // oam_copy(oam_mem, obj_buffer, 128);
 
 }
 
@@ -1094,6 +1089,10 @@ void newGraphicsScene::init(){
 
 void newGraphicsScene::draw(){
     if(showText){
+        if(refreshText){
+            setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+        }
+
         const int space = 1;
         const int startX = 3 * 8;
         const int endX = 30-4;
@@ -1173,16 +1172,26 @@ void newGraphicsScene::draw(){
 
         drawGrid();
         drawFrame(0);
-        // screenShake();
-        showPlaceEffect();
 
         showQueue();
         showHold();
         showBackground(0);
+
+        for(int i = 0; i < game->lengthX; i++){
+            setTile(25, 10 + i, 18, tileBuild(3, false, false, savefile->settings.lightMode));
+            setTile(25, 10 + i, 19, tileBuild(3, false, false, savefile->settings.lightMode));
+        }
     }
 
     showPawn();
     showShadow();
+    screenShake();
+
+    showPlaceEffect();
+
+    if(savefile->settings.floatText){
+        showClearText();
+    }
 
     showSprites(128);
 
@@ -1192,7 +1201,7 @@ void newGraphicsScene::draw(){
 void newGraphicsScene::update(){
     canDraw = 1;
     key_poll();
-    gradient(2);
+    gradient(1);
 
     toggleBG(0, true);
     toggleBG(1, true);
@@ -1249,6 +1258,7 @@ bool newGraphicsScene::control(){
         (*it)->action(-1);
 
         refreshText = true;
+        refreshGame = true;
     }
 
     if(key_hit(KEY_RIGHT)){
@@ -1258,13 +1268,12 @@ bool newGraphicsScene::control(){
         (*it)->action(1);
 
         refreshText = true;
+        refreshGame = true;
     }
 
     if(key_hit(KEY_A)){
         auto it = elementList.begin();
         std::advance(it,selection);
-
-        refreshText = true;
 
         (*it)->action();
 
@@ -1322,6 +1331,7 @@ bool newGraphicsScene::control(){
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
+        // refreshGame = true;
     }
 
     if (key_hit(KEY_DOWN)) {
@@ -1339,6 +1349,7 @@ bool newGraphicsScene::control(){
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
+        // refreshGame = true;
     }
 
     if (key_is_down(KEY_UP) || key_is_down(KEY_DOWN)) {
@@ -1371,6 +1382,7 @@ bool newGraphicsScene::control(){
                 }
 
                 refreshText = true;
+                // refreshGame = true;
                 sfx(SFX_MENUMOVE);
             }
         }
@@ -1392,6 +1404,7 @@ bool newGraphicsScene::control(){
                 (*it)->action(dir);
 
                 refreshText = true;
+                refreshGame = true;
             }
         }
     } else {

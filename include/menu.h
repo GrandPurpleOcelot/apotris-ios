@@ -77,29 +77,6 @@ public:
         clearSpriteTiles(startTiles, (big)?20:12, 1);
 
         naprintSprite(text,startTiles);
-
-        // int n = min((int)text.size(),12);
-
-        // TILE* font = (TILE*)font1tiles_bin;
-        // int i;
-        // for (i = 0; i < n; i++) {
-        //     int c = text[i] - 32 - 1;
-
-        //     if(c >= 0)
-        //         setSpriteTile(startTiles,i,0,0,&font[c]);
-        //     else
-        //         clearSpriteTiles(startTiles + i, 1, 1);
-        //     // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
-        //     // dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
-        // }
-
-        // if(i < 12){
-
-        //     //TODO:
-        //     //"+ i" might be wrong
-        //     clearSpriteTiles(startTiles + i, 12-i, 1);
-        //     // memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
-        // }
     }
 
     WordSprite(int _id,int _index, int _tiles) {
