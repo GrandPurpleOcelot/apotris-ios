@@ -74,6 +74,8 @@ int currentSong = -1;
 int sfxVolume = 1024;
 int musicVolume = 0;
 
+const int sfxVolumeMultiplier = 4;
+
 void onHBlank(int line);
 uint8_t customBlend(uint8_t a,uint8_t b);
 
@@ -459,7 +461,7 @@ void vsync(){
         }
     }
 
-    if(currentSong >= 0 && musicArray[currentSong].getStatus() == sfmod::Mod::Stopped  && musicVolume / 2 != 0){
+    if(currentSong >= 0 && musicArray[currentSong].getStatus() == sfmod::Mod::Stopped && musicVolume / 2 != 0){
         if(savefile->settings.cycleSongs){
             log("next");
             playNextSong();
@@ -780,7 +782,7 @@ void setMusicVolume(int volume){
     musicVolume = volume;
 
     if(currentSong != -1){
-        int f = volume / 2;
+        int f = volume / 4;
 
         if(f){
             musicArray[currentSong].setMasterVolume(f);
@@ -815,7 +817,7 @@ void sfx(int n){
     sf::Sound * sound = new sf::Sound();
     sound->setBuffer(sfxBuffers[n]);
     sound->play();
-    sound->setVolume(savefile->settings.sfxVolume * 5);
+    sound->setVolume(savefile->settings.sfxVolume * sfxVolumeMultiplier);
 
     soundList.push_back(sound);
 }
@@ -824,7 +826,7 @@ void sfxRate(int n, float rate){
     sf::Sound * sound = new sf::Sound();
     sound->setBuffer(sfxBuffers[n]);
     sound->play();
-    sound->setVolume(savefile->settings.sfxVolume * 5);
+    sound->setVolume(savefile->settings.sfxVolume * sfxVolumeMultiplier);
 
     sound->setPitch(rate);
 
