@@ -1415,6 +1415,13 @@ bool newGraphicsScene::control(){
         moving = true;
     }
 
+    if(key_hit(KEY_SELECT)){
+        setDefaultGraphics(savefile, 0);
+        setSkin();
+        setPalette();
+        setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    }
+
     return false;
 }
 
