@@ -211,7 +211,7 @@ int endScreen() {
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1));
 
-    setTiles(25,0,32*32,tileBuild(12, false, false, 4*savefile->settings.lightMode));
+    setTiles(25,0,32*32,tileBuild(34, false, false, 0));
 
     drawFrame(1);
 
@@ -572,7 +572,7 @@ int pauseMenu(){
 
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1));
-    setTiles(25,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    setTiles(25,0,32*32,tileBuild(34, false, false, 0));
 
     drawFrame(1);
     if(game->zoneTimer)

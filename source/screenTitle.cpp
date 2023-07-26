@@ -1871,7 +1871,7 @@ void drawUIFrame(int x, int y, int w, int h) {
     // dest += (y + 1) * 32 + x + 1;
     for (int i = 1; i < h - 1; i++) {
         for (int j = 1; j < w - 1; j++) {
-            setTile(26, x + j, y + i, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+            setTile(26, x + j, y + i, tileBuild(34, false, false, 0));
             // *dest++ = 12 + 4 * 0x1000 * (savefile->settings.lightMode);
         }
         // dest += 32 - w + 2;
@@ -2252,7 +2252,7 @@ void newTitleScene::init(){
     playSongRandom(0);
 
     //backgroundGrid
-    setTiles(26,0,32*32, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
+    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
     clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
@@ -2374,9 +2374,9 @@ void ConfirmSaveScene::init(){
     naprint("DON'T SAVE", 120, 104);
 
     //backgroundGrid
-    setTiles(26,0,32*32, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
+    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
-    setTiles(27,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    setTiles(27,0,32*32, tileBuild(34, false, false, 0));
 
     lengths[0] = getVariableWidth("SAVE");
     lengths[1] = getVariableWidth("DON'T SAVE");

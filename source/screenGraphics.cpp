@@ -17,15 +17,12 @@ void setClearEffect(){
     switch(savefile->settings.clearEffect){
     case 0:
         loadTiles(0, 3, sprite4tiles_bin, sprite4tiles_bin_size/32);
-        // memcpy16(&tile_mem[0][3], sprite4tiles_bin, sprite4tiles_bin_size / 2);
         break;
     case 1:
         loadTiles(0, 3, sprite25tiles_bin, sprite25tiles_bin_size/32);
-        // memcpy16(&tile_mem[0][3], sprite25tiles_bin, sprite25tiles_bin_size / 2);
         break;
     case 2:
         loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
-        // memcpy16(&tile_mem[0][3], sprite26tiles_bin, sprite26tiles_bin_size / 2);
         break;
     default:
         loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
@@ -192,7 +189,7 @@ void GraphicsScene::init(){
     selection = 0;
 
     //transparent gray
-    setTiles(27,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i, 32 + i * 3, 256 + i * 12);
@@ -280,8 +277,7 @@ void GraphicsScene::init(){
 
     game->pawn.y += 1;
 
-    enableBlend((1 << 6) + (0b111011 << 8) + (1 << 3));
-    // enableBlend(0);
+    enableBlend((1 << 6) + (0b111011 << 8) + (0b1010));
 
     buildBG(3, 0, 27, 0, 0, 0);
 
@@ -304,7 +300,7 @@ void GraphicsScene::init(){
 void GraphicsScene::draw(){
     if(showText){
         if(refreshText){
-            setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+            setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
         }
 
         const int space = 1;
@@ -384,7 +380,6 @@ void GraphicsScene::draw(){
     if(refreshGame){
         refreshGame = false;
 
-        drawGrid();
         drawFrame(0);
 
         showQueue();
@@ -400,6 +395,7 @@ void GraphicsScene::draw(){
     showPawn();
     showShadow();
     screenShake();
+    drawGrid();
 
     showPlaceEffect();
 
@@ -434,6 +430,23 @@ void GraphicsScene::update(){
             movingDirection = 0;
             refreshText = true;
         }
+    }
+
+    if(++gridUpdateTimer >= gridUpdateTimerMax){
+        gridUpdateTimer = 0;
+        updateGrid();
+
+        FIXED temp[22][12];
+
+        memcpy32(temp, current, 22 * 12);
+        memcpy32(current, previous, 22 * 12);
+        memcpy32(previous, temp, 22 * 12);
+    }
+
+    if(dampTimer){
+        dampTimer--;
+        if(!dampTimer)
+            damp = 2;
     }
 
     control();
@@ -499,7 +512,7 @@ bool GraphicsScene::control(){
         showText = !showText;
 
         if(showText){
-            setTiles(27, 0, 32 * 32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+            setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
 
             int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
             for(int i = 0; i < pathCount; i++)

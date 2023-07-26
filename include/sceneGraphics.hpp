@@ -330,20 +330,48 @@ class BoardEffectsElement : public Element{
         }
 
         std::string getCursor(std::string text) override {
-            return "[" + text + "]";
+            std::string result;
+
+            if(savefile->settings.effects > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.effects < 3 - 1)
+                result += ">";
+
+            return result;
         }
 
         void action(int dir) override{
-            savefile->settings.effects = !savefile->settings.effects;
-            if (savefile->settings.effects) {
-                effectList.push_back(Effect(1, 4, 5));
+            if(dir > 0){
+                if (savefile->settings.effects < 3 - 1){
+                    savefile->settings.effects++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if (savefile->settings.effects > 0){
+                    savefile->settings.effects--;
+                    sfx(SFX_MENUMOVE);
+                }
             }
-            sfx(SFX_MENUCONFIRM);
+
+            if (savefile->settings.effects == 1) {
+                effectList.push_back(Effect(1, 4, 5));
+
+            }else if(savefile->settings.effects == 2){
+                for (int i = 9; i < 11; i++)
+                    for (int j = 4; j < 6; j++)
+                        current[i+1][j+1] = 1024;
+            }
+            setPalette();
         }
 
         std::string getCurrentOption() override {
             if(savefile->settings.effects)
-                return "ON";
+                return std::to_string(savefile->settings.effects);
             else
                 return "OFF";
         }

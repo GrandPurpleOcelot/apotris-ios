@@ -1565,11 +1565,6 @@ void drawFrameBackgrounds(){
     delete temp;
 }
 
-// INLINE int prep(int n){
-//     n = clamp(n + 1024, 0, 2047);
-//     return n / 128;
-// }
-
 INLINE int prep(int n){
     return clamp((n + 500) / 8, 0, 255) / 16;
 }
@@ -1633,6 +1628,7 @@ void drawGrid() {
     }
 
     u32 gridTile;
+    int palOffset = 4;
 
     switch (savefile->settings.backgroundGrid) {
         case 0: gridTile = 0x0002; break;
@@ -1646,41 +1642,38 @@ void drawGrid() {
     }
 
     #ifdef GBA
-    int palOffset = 4;
     setTiles(26,31*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     setTiles(26,20*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     #endif
 
-    // u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer));
+    if(savefile->settings.effects < 2){
+        u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer));
 
-    // for (int i = 0; i < 20; i++) {
-    //     for (int j = 0; j < 10; j++) {
-    //         if (glow[i][j] == 0 || !savefile->settings.effects) {
-    //             setTile(26, 10 + j, i, t);
-    //             // *dest++ = gridTile;
-    //         } else if (glow[i][j] > glowDuration) {
-    //             glow[i][j]--;
-    //             setTile(26, 10 + j, i, t);
-    //             // *dest++ = gridTile;
-    //         } else if (glow[i][j] > 0) {
-    //             glow[i][j]--;
-    //             int color = 0;
-    //             if (glow[i][j] >= glowDuration * 3 / 4)
-    //                 color = 3;
-    //             else if (glow[i][j] >= glowDuration * 2 / 4)
-    //                 color = 2;
-    //             else if (glow[i][j] >= glowDuration * 1 / 4)
-    //                 color = 1;
-    //             setTile(26, 10 + j, i, tileBuild(gridTile, false, false, color + (palOffset) * (savefile->settings.lightMode && !game->zoneTimer)));
-    //             // *dest++ = gridTile + color * 0x1000;
-    //         }
-    //     }
-    //     // dest += 22;
-    // }
-
-    for(int i = 0; i < 20; i++)
-        for(int j = 0; j < 10; j++)
-            setTile(26, j + 10, i, tileBuild(gridTile,false,false,prep(current[i+1][j+1])));
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 10; j++) {
+                if (glow[i][j] == 0 || !savefile->settings.effects) {
+                    setTile(26, 10 + j, i, t);
+                } else if (glow[i][j] > glowDuration) {
+                    glow[i][j]--;
+                    setTile(26, 10 + j, i, t);
+                } else if (glow[i][j] > 0) {
+                    glow[i][j]--;
+                    int color = 0;
+                    if (glow[i][j] >= glowDuration * 3 / 4)
+                        color = 3;
+                    else if (glow[i][j] >= glowDuration * 2 / 4)
+                        color = 2;
+                    else if (glow[i][j] >= glowDuration * 1 / 4)
+                        color = 1;
+                    setTile(26, 10 + j, i, tileBuild(gridTile, false, false, color + (palOffset) * (savefile->settings.lightMode && !game->zoneTimer)));
+                }
+            }
+        }
+    }else if(savefile->settings.effects == 2){
+        for(int i = 0; i < 20; i++)
+            for(int j = 0; j < 10; j++)
+                setTile(26, j + 10, i, tileBuild(gridTile,false,false,prep(current[i+1][j+1])));
+    }
 }
 
 void progressBar(int layer) {
@@ -2725,13 +2718,9 @@ void GameScene::init(){
 
     updateText();
 
-    // enableBlend((0b000000 << 8) + (1 << 6) + (0 << 3));
     enableBlend((0b101010 << 8) + (1 << 6) + (0b1010));
 
-    //fluid sim palette
-    for(int i = 0; i < 16; i++){
-        setPaletteColor(i, 5, RGB15(i, i, i), 1);
-    }
+    setPalette();
 }
 
 void GameScene::update(){

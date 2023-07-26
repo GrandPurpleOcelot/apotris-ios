@@ -135,6 +135,8 @@ void initialize(){
     loadTiles(0,31,sprite23tiles_bin,sprite23tiles_bin_size/32);
     loadTiles(0,32,sprite24tiles_bin,sprite24tiles_bin_size/32);
     loadTiles(0,33,sprite42tiles_bin,sprite42tiles_bin_size/32);
+    loadTiles(0,34,sprite45tiles_bin,sprite45tiles_bin_size/32);
+    loadTiles(0,35,sprite46tiles_bin,sprite46tiles_bin_size/32);
 
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
@@ -598,6 +600,7 @@ void setLightMode() {
     if (savefile->settings.lightMode) {
         setPaletteColor(0,0,0x5ad6,1);//background gray
         setPaletteColor(8,4,0x0421,1);//progressbar
+        setPaletteColor(0,8,0x6739,1);
 
         //activated font
         // setPaletteColor(15,2,0x0000,1);//font main
@@ -615,6 +618,7 @@ void setLightMode() {
     } else {
         setPaletteColor(0,0,0x0000,1);//background gray
         setPaletteColor(8,4,0x7fff,1);//progressbar
+        setPaletteColor(0,8,0x0c63,1);
 
         //activated font
         // setPaletteColor(15,2,0x7fff,1);//font main
@@ -739,6 +743,10 @@ void setPalette(){
     //faded Text Palette
     color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
     color_fade_palette(13, 0, &palette[1][14*16], 0, 8, 15);
+
+    if(savefile->settings.effects == 2)
+        for(int i = 0; i < 16; i++)
+            setPaletteColor(i, 5, RGB15(i, i, i), 1);
 }
 
 int getClassicPalette(){

@@ -39,9 +39,9 @@ void SimpleListScene::init(){
     }
 
     //backgroundGrid
-    setTiles(26,0,32*32, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
+    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
-    setTiles(27,0,32*32,tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
@@ -362,9 +362,9 @@ void OptionListScene::init(){
     selection = 0;
 
     //backgroundGrid
-    setTiles(26,0,32*32, tileBuild(2 * (!savefile->settings.lightMode), false, false, 0));
+    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
-    setTiles(27,0,32*32, tileBuild(12, false, false, 4 * savefile->settings.lightMode));
+    setTiles(27,0,32*32, tileBuild(34, false, false, 0));
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,32 + i * 3, 256 + i * 12);

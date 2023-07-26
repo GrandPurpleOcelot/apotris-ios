@@ -68,7 +68,7 @@ typedef struct Settings{
     bool finesse;
     bool floatText;
     bool shake;
-    bool effects;
+    int effects;
     int volume;
     int das;
     int arr;
@@ -364,6 +364,8 @@ extern bool settingsChanged();
 
 extern void fallingBlocks();
 
+extern void updateGrid();
+
 extern std::string modeToString(Tetris::Modes mode);
 
 extern Tetris::Game *game;
@@ -475,6 +477,12 @@ extern Settings previousSettings;
 
 extern std::list<std::string> path;
 extern std::string previousElement;
+
+extern int gridUpdateTimer;
+extern int gridUpdateTimerMax;
+extern int damp;
+extern int dampTimer;
+extern int dampTimerMax;
 
 class Function{
     private:
