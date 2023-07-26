@@ -2293,7 +2293,34 @@ void newTitleScene::draw(){
 }
 
 bool newTitleScene::control(){
-    if(key_hit(KEY_FULL)){
+    if(key_hit(KEY_SELECT)){
+        sfx(SFX_MENUCONFIRM);
+
+        QuickStart q = savefile->quickStart;
+
+        Tetris::Options newOptions;
+
+        newOptions.mode = q.mode;
+        newOptions.goal = q.goal;
+        newOptions.level = q.level;
+        newOptions.tuning = getTuning();
+        newOptions.bigMode = q.big;
+        newOptions.subMode = q.submode;
+        savefile->stats.gamesStarted++;
+
+        if(toStart != BATTLE){
+            startGame(newOptions,qran());
+        }else{
+            int seed = qran();
+
+            startGame(newOptions,seed);
+            startBotGame(seed);
+        }
+
+        gameLoop();
+
+        return true;
+    }else if(key_hit(KEY_FULL)){
         sfx(SFX_MENUCONFIRM);
         changeScene(new MainMenuScene(),Transitions::FADE);
         return true;
@@ -2437,6 +2464,12 @@ bool PlayOptionScene::control(){
         start();
     }
 
+    if(key_hit(KEY_SELECT)){
+        savefile->quickStart = quick();
+        saveSavefile();
+        sfx(SFX_SECRET);
+    }
+
     return false;
 }
 
@@ -2477,6 +2510,34 @@ void PlayOptionScene::start(){
     }
 
     gameLoop();
+}
+
+QuickStart PlayOptionScene::quick(){
+    for(auto const& element : elementList){
+        std::string s = element->getLabel();
+        int value = element->getValue();
+        log(s);
+        log(value);
+        if(s == "Level"){
+            level = value;
+        }else if(s == "Type"){
+            subMode = value;
+        }else if(s == "Lines"){
+            goal = value;
+        }else if(s == "Minutes"){
+            goal = value;
+        }
+    }
+
+    QuickStart q;
+
+    q.mode = getMode();
+    q.submode = subMode;
+    q.goal = goal;
+    q.level = level;
+    q.big = bigMode;
+
+    return q;
 }
 
 void MainMenuScene::init(){

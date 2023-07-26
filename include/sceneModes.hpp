@@ -15,6 +15,8 @@ class PlayOptionScene : public OptionListScene{
 
     virtual void start();
 
+    QuickStart quick();
+
     Scene* previousScene(){return new ModeListScene();};
 };
 

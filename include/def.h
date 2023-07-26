@@ -54,6 +54,14 @@ typedef struct Keys{
     int placeHolder[19];
 }ALIGN(4) Keys;
 
+typedef struct QuickStart{
+    int mode;
+    int submode;
+    int goal;
+    int level;
+    int big;
+}ALIGN(4) QuickStart;
+
 typedef struct Settings{
 
     bool announcer;
@@ -156,6 +164,8 @@ typedef struct Save{
     int placeHolder2[100];
 
     Skin customSkins[MAX_CUSTOM_SKINS];
+
+    QuickStart quickStart;
 }ALIGN(4) Save;
 
 typedef struct ReplayHeader{
@@ -351,6 +361,8 @@ extern void gradientEditor();
 extern bool settingsChanged();
 
 extern void fallingBlocks();
+
+extern std::string modeToString(Tetris::Modes mode);
 
 extern Tetris::Game *game;
 extern Tetris::Game *quickSave;

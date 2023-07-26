@@ -1,5 +1,4 @@
-#include "platform.hpp"
-#include "menuSystem.h"
+#include "def.h"
 #include "logging.h"
 #include "menu.h"
 #include <string>
@@ -139,5 +138,23 @@ void sceneSwitcher(std::string str){
         changeScene(new ClassicScene(),Transitions::FADE);
     }else{
         log("invalid option: " + str);
+    }
+}
+
+std::string modeToString(Tetris::Modes mode){
+    switch(mode){
+        case Tetris::NO_MODE: return "None";
+        case Tetris::MARATHON: return "Marathon";
+        case Tetris::SPRINT: return "Sprint";
+        case Tetris::DIG: return "Dig";
+        case Tetris::BATTLE: return "Battle";
+        case Tetris::ULTRA: return "Ultra";
+        case Tetris::BLITZ: return "Blitz";
+        case Tetris::COMBO: return "Combo";
+        case Tetris::SURVIVAL: return "Survival";
+        case Tetris::CLASSIC: return "Classic";
+        case Tetris::MASTER: return "Master";
+        case Tetris::TRAINING: return "Training";
+        default: return "";
     }
 }
