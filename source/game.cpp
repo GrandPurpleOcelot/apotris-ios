@@ -1488,21 +1488,35 @@ void drawFrameBackgrounds(){
 
     const int l = queueBGLengths[maxQueue-1];
 
-    TILE *t = (TILE *) &sprite43tiles_bin;
+    TILE *t;
+
+    u8 * src;
+
+    int n = savefile->settings.frameBackground;
+
+    switch(n){
+        case 0: src = (u8 *) sprite44tiles_bin; break;
+        case 1: src = (u8 *) sprite43tiles_bin; break;
+        case 2:
+            for(int i = 0; i < 4; i++)
+                clearSpriteTiles(512 + 400 + i * 16, 4, 4);
+            return;
+        default: src = (u8 *) sprite43tiles_bin;
+    }
 
     //draw hold background
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
             if(i == 0 && j == 0){
-                t = (TILE *) &sprite43tiles_bin[32];
+                t = (TILE *) &src[32];
             }else if(i == 0 && j == 3){
-                t = (TILE *) &sprite43tiles_bin[64];
+                t = (TILE *) &src[64];
             }else if(i == 3 && j == 0){
-                t = (TILE *) &sprite43tiles_bin[96];
+                t = (TILE *) &src[96];
             }else if(i == 3 && j == 3){
-                t = (TILE *) &sprite43tiles_bin[128];
+                t = (TILE *) &src[128];
             }else{
-                t = (TILE *) &sprite43tiles_bin;
+                t = (TILE *) src;
             }
 
             loadSpriteTilesPartial(512 + 400, t, j, i, 1, 1, 4);
@@ -1523,15 +1537,15 @@ void drawFrameBackgrounds(){
     for(int i = 0; i < segments; i++){
         for(int j = 0; j < 4; j++){
             if(i == 0 && j == 0){
-                t = (TILE *) &sprite43tiles_bin[32];
+                t = (TILE *) &src[32];
             }else if(i == 0 && j == 3){
-                t = (TILE *) &sprite43tiles_bin[64];
+                t = (TILE *) &src[64];
             }else if((i == 3 || i == 11) && j == 0){
-                t = (TILE *) &sprite43tiles_bin[96];
+                t = (TILE *) &src[96];
             }else if((i == 3 || i == 11) && j == 3){
-                t = (TILE *) &sprite43tiles_bin[128];
+                t = (TILE *) &src[128];
             }else{
-                t = (TILE *) &sprite43tiles_bin;
+                t = (TILE *) src;
             }
 
             loadSpriteTilesPartial(512 + 416 + 16 * ((int) i/4), t, j, i % 4, 1, 1, 4);
@@ -1539,9 +1553,11 @@ void drawFrameBackgrounds(){
     }
 
     TILE *temp = new TILE();
+    u32 * c = (u32 *) src;
 
-    for(int i = 0; i < 8; i++)
-        temp->data[i] = 0x66666666 * (i < pixelRows);
+    for(int i = 0; i < 8; i++){
+        temp->data[i] = (*c++) * (i < pixelRows);
+    }
 
     for(int i = 0; i < 4; i++)
         loadSpriteTilesPartial(512 + 416 + 16 * ((int) segments/4), temp, i, segments % 4, 1, 1, 4);

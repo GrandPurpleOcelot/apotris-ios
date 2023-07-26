@@ -90,7 +90,7 @@ typedef struct Settings{
     bool cycleSongs;
     int dropProtectionFrames;
     bool abHold;
-    struct Keys keys;
+    Keys keys;
     int clearEffect;
     bool resetHoldType;
     bool placeEffect;
@@ -103,8 +103,9 @@ typedef struct Settings{
     int ihs;
     int irs;
     int initialType;
+    int frameBackground;
 
-    int placeHolder[93];
+    int placeHolder[92];
 }ALIGN(4) Settings;
 
 typedef struct Test{
@@ -253,6 +254,7 @@ public:
 #define MAX_BACKGROUNDS 7
 #define MAX_COLORS 7
 #define MAX_CLEAR_EFFECTS 4
+#define MAX_FRAME_BACKGROUNDS 3
 
 #define MAX_MENU_SONGS 3
 #define MAX_GAME_SONGS 6

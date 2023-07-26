@@ -190,6 +190,48 @@ class FrameColorElement : public Element{
         }
 };
 
+class FrameBackgroundsElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Frame Backgrounds";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.frameBackground > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.frameBackground < MAX_FRAME_BACKGROUNDS - 1)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if (savefile->settings.frameBackground < MAX_FRAME_BACKGROUNDS - 1){
+                    savefile->settings.frameBackground++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if (savefile->settings.frameBackground > 0){
+                    savefile->settings.frameBackground--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+            drawFrameBackgrounds();
+        }
+
+        std::string getCurrentOption() override {
+            return std::to_string(savefile->settings.frameBackground + 1);
+        }
+};
+
 class PaletteElement : public Element{
     public:
         std::string getLabel() override {
@@ -549,6 +591,7 @@ class GraphicsScene : public Scene{
         l.push_back(new SkinElement());
         l.push_back(new GhostElement());
         l.push_back(new FrameColorElement());
+        l.push_back(new FrameBackgroundsElement());
         l.push_back(new PaletteElement());
         l.push_back(new BlockEdgesElement());
         l.push_back(new LightModeElement());
