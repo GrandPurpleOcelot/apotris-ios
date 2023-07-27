@@ -36,7 +36,7 @@ std::string getDescription(std::string element){
         return "Go against an AI opponent";
 
     }else if(element == "Training"){
-        return "Try ou new strategies or improve your playing";
+        return "Try out new strategies or improve your playing";
 
     }
 
