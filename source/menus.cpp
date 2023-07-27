@@ -356,9 +356,9 @@ int endScreen() {
             } else if (selection == 2){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
-                // REG_BLDCNT = prevBld;
                 goalSelection = 0;
                 level = 1;
+                changeScene(new MainMenuScene, Transitions::FADE);
                 return 1;
             }
         }
