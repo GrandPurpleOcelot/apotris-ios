@@ -455,8 +455,8 @@ extern Tetris::Options *previousGameOptions;
 extern FIXED shakeBuff;
 extern FIXED shakeVelocity;
 
-extern std::list<Tetris::Timestamp>::iterator replayIterator;
-extern std::list<Tetris::Timestamp> currentReplay;
+extern std::list<Tetris::Timestamp*>::iterator replayIterator;
+extern std::list<Tetris::Timestamp*> currentReplay;
 
 extern Tetris::Game *quickSave;
 extern bool saveExists;

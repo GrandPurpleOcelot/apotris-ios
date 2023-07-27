@@ -278,7 +278,6 @@ void reset() {
     shakeBuff = 0;
     shakeVelocity = 0;
     push = 0;
-    replaying = false;
 
     floatingList.clear();
     placeEffectList.clear();

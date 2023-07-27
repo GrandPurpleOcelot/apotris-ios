@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include <fstream>
 
 #define TLN_EXCLUDE_WINDOW
 

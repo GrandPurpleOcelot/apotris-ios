@@ -2624,12 +2624,14 @@ void setJourneyGraphics(Save *save, int level){
     }
 }
 
-std::list<Timestamp>::iterator replayIterator;
+std::list<Timestamp*>::iterator replayIterator;
 
 void replayControl(){
-    while(replayIterator->timer == game->timer && replayIterator != currentReplay.end()){
-        bool dir = replayIterator->dir;
-        switch(replayIterator->move){
+    Timestamp* t = *replayIterator;
+
+    while(replayIterator != currentReplay.end() && t->timer == game->timer){
+        bool dir = t->dir;
+        switch(t->move){
         case 0:
             game->keyLeft(dir);
             break;
@@ -2655,7 +2657,9 @@ void replayControl(){
             game->keyDrop(dir);
             break;
         }
+
         ++replayIterator;
+        t = *replayIterator;
     }
 }
 

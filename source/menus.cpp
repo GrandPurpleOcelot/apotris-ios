@@ -187,7 +187,10 @@ int endScreen() {
 
     stopSong();
 
-    saveReplay();
+    if(!replaying)
+        saveReplay();
+    else
+        replaying = false;
 
     int selection = 0;
 
@@ -1038,116 +1041,136 @@ void showModeText(){
     }
 }
 
-// Replay * test = nullptr;
+Replay * test = nullptr;
 // ReplayHeader test;
 
 void saveReplay(){
-    // if(replaying)
-    //     return;
+    if(replaying)
+        return;
 
-    // const int len = game->replay.size();
-    // if(len >= 4096){
-    //     log("replay size too big (" + std::to_string(len) + ")");
-    //     return;
-    // }
+    const int len = game->replay.size();
+    if(len >= 4096){
+        log("replay size too big (" + std::to_string(len) + ")");
+        return;
+    }
 
-    // if(test != nullptr)
-    //     delete test;
+    if(!game->replayElligible){
+        log("replay not elligible");
+        return;
+    }
 
-    // test = new Replay();
+    if(test != nullptr)
+        delete test;
 
-    // test->header.tag = savefile->newGame;
-    // test->header.length = len;
-    // test->header.duration = game->timer;
-    // test->header.seed = game->initSeed;
-    // test->header.options = *previousGameOptions;
+    test = new Replay();
 
-    // auto it = game->replay.begin();
-    // for(int i = 0; i < len; i++){
-    //     Timestamp move = *it;
+    test->header.tag = savefile->newGame;
+    test->header.length = len;
+    test->header.duration = game->timer;
+    test->header.seed = game->initSeed;
 
-    //     // char buff[64];
-    //     // posprintf(buff, "%d. %d %d %d", i, move.timer, move.move, move.dir);
-    //     // log(buff);
+    test->header.options = *previousGameOptions;
 
-    //     test->moves[i] = (((move.timer & 0x3fffff) << 11) + ((move.dir & 1) << 9) + (move.move & 0x1ff));
+    auto it = game->replay.begin();
+    for(int i = 0; i < len; i++){
+        Timestamp *move = *it;
 
-    //     // log(move.timer)
+        test->moves[i] = (((move->timer & 0x3fffff) << 11) + ((move->dir & 1) << 9) + (move->move & 0x1ff));
 
-    //     it++;
-    // }
+        ++it;
+    }
 
-    // std::ofstream output("replay.sav",std::ios::binary | std::ios::out);
+    #ifdef PC
+    std::ofstream output("replay.sav",std::ios::binary | std::ios::out);
 
-    // char * src = (char * ) &test;
-    // output.write(src, sizeof(Replay));
+    char * src = (char * ) test;
+    output.write(src, sizeof(Replay));
 
-    // if(!output){
-    //     log("Error when trying to write replay.");
-    //     return;
-    // }
+    if(!output){
+        log("Error when trying to write replay.");
+        return;
+    }else{
+        log("Wrote save to file.");
+    }
 
-    // output.close();
+    output.close();
+    #endif
 }
 
-ReplayHeader *curRepHeader;
-std::list<Timestamp> currentReplay;
+ReplayHeader *curRepHeader = nullptr;
+std::list<Timestamp*> currentReplay;
 
 void loadReplay(){
-    // currentReplay.clear();
+    currentReplay.clear();
 
-    // std::ifstream input("replay.sav",std::ios::binary | std::ios::in);
+    if(test != nullptr){
+        if(curRepHeader == nullptr)
+            curRepHeader = new ReplayHeader();
 
-    // Replay rep;
-    // char * dst = (char * ) &rep;
+        memcpy32(curRepHeader,&test->header,sizeof(ReplayHeader) / 4);
 
-    // log(std::to_string(sizeof(Replay)));
+        for(int i = 0; i < (int)test->header.length; i++){
+            currentReplay.push_back(new Timestamp(test->moves[i]));
+        }
 
-    // input.read(dst,sizeof(Replay));
+        startGame(curRepHeader->options, curRepHeader->seed);
+        replaying = true;
+        replayIterator = currentReplay.begin();
 
-    // if(!input){
-    //     log("Error when trying to load replay.");
-    //     return;
-    // }
+        gameLoop();
+        return;
+    }
 
-    // if(rep.header.tag != savefile->newGame){
-    //     log("Invalid replay (old version).");
-    //     return;
-    // }
+    #ifdef PC
 
-    // if(rep.header.length > 4096){
-    //     log("Invalid replay (too large).");
-    //     return;
-    // }
+    std::ifstream input("replay.sav",std::ios::binary | std::ios::in);
 
-    // for(int i = 0; i < (int)rep.header.length; i++){
-    //     currentReplay.push_back(Timestamp(rep.moves[i]));
-    // }
+    Replay rep;
+    char * dst = (char * ) &rep;
 
-    // curRepHeader = rep.header;
+    log(std::to_string(sizeof(Replay)));
 
-    // startGame(curRepHeader.options,curRepHeader.seed);
-    // replaying = true;
+    input.read(dst,sizeof(Replay));
 
-    // replayIterator = currentReplay.begin();
+    input.close();
 
-    // input.close();
+    if(!input){
+        log("Error when trying to load replay.");
+        return;
+    }else{
+        log("Found replay file.");
+    }
 
-    // int t1 = curRepHeader.options.mode;
-    // int t2 = curRepHeader.options.goal;
-    // int t3 = curRepHeader.options.tuning.das;
-    // int t4 = curRepHeader.options.rotationSystem;
+    if(rep.header.tag != savefile->newGame){
+        log("Invalid replay (old version, tag: " + std::to_string(rep.header.tag) + " ).");
+        return;
+    }else{
+        log("Correct version number.");
+    }
 
-    // char buff[64];
+    if(rep.header.length > 4096){
+        log("Invalid replay (too large).");
+        return;
+    }
 
-    // posprintf(buff, "%d %d %d %d", t1, t2, t3, t4);
-    // log(buff);
+    log("Attemping to load moves...");
+    for(int i = 0; i < (int)rep.header.length; i++){
+        currentReplay.push_back(new Timestamp(rep.moves[i]));
+    }
+    log("Loaded moves.");
 
-    // while(closed()){
-    //     vsync();
-    //     key_poll();
+    if(curRepHeader == nullptr)
+        curRepHeader = new ReplayHeader();
 
-    //     if(key_hit(KEY_FULL))
-    //         break;
-    // }
+    memcpy32(curRepHeader,&rep.header,sizeof(ReplayHeader) / 4);
+
+    replaying = true;
+    replayIterator = currentReplay.begin();
+
+    log("trying to start game...");
+    startGame(curRepHeader->options,curRepHeader->seed);
+
+    gameLoop();
+
+    #endif
 }

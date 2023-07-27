@@ -14,6 +14,8 @@
 
 #endif
 
+#define MAX_REPLAY_SIZE 10000
+
 extern void onVBlank();
 
 extern OBJ_ATTR obj_buffer[128];

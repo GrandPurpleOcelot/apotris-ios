@@ -2320,6 +2320,8 @@ bool newTitleScene::control(){
         gameLoop();
 
         return true;
+    }else if(key_hit(KEY_R)){
+        loadReplay();
     }else if(key_hit(KEY_FULL)){
         sfx(SFX_MENUCONFIRM);
         changeScene(new MainMenuScene(),Transitions::FADE);

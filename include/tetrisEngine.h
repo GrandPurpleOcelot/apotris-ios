@@ -521,11 +521,13 @@ namespace Tetris
 
         int activePiece = -1;
 
-        std::list<Timestamp> replay;
+        std::list<Timestamp*> replay;
         bool toEndZone = false;
 
         int verticalKick = 0;
         int verticalKickMax = 8;
+
+        bool replayElligible = true;
 
         int checkRotation(int, int, int);
         void rotateCW(int dir);
