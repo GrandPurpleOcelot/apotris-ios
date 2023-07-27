@@ -292,6 +292,30 @@ class SettingsScene : public SimpleListScene{
         std::string name(){return "Settings";};
 };
 
+class CreditsScene : public Scene{
+    public:
+
+    virtual std::list<std::string> getOptionList(){return menuOptions;};
+    std::list<std::string> optionList;
+
+    std::string name(){return "Credits";};
+
+    WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene(){return new MainMenuScene();};
+
+    ~CreditsScene(){
+        deinit();
+    };
+
+};
+
+
 enum class Transitions{
     INSTANT,
     FADE,

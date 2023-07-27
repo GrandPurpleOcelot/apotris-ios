@@ -366,19 +366,12 @@ void naprintColor(std::string str, int x, int y, int palette){
 	const int len = str.size();
 
 	//count total width for variable width font
-	int widthCount = 0;
-	for(int i = 0; i < len; i++){
-		if(str[i]-32){
-			widthCount += ((fontWidths[str[i]-32][1]) + fontGap);
-		} else{
-			widthCount += spaceWidth;
-		}
-	}
+	int widthCount = getVariableWidth(str);
 
-	//divide pixel width by 8 to get tile count and add
-	//1 if pixel width / 8 has a remainder
-	const int tileW = ((widthCount) >> 3) + (((x+widthCount) & 0x7) != 0);
-	const int tileH = ((fontHeight) >> 3) + (((y+fontHeight) & 0x7) != 0);
+	//divide pixel width by 8 to get tile count andadd
+	//add 1 if pixel width / 8 has a remainder
+	const int tileW = ((widthCount) >> 3) + (((x+widthCount) & 0x7) != 0) + 1;
+	const int tileH = ((fontHeight) >> 3) + (((y+fontHeight) & 0x7) != 0) + 1;
 
 	//allocate tiles
 	const int allocatePosition = allocateStart + allocatedTiles;

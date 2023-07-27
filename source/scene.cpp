@@ -140,7 +140,6 @@ void SimpleListScene::draw(){
         verticalOffset = lerp(temp,0,64*movingTimer);
     }
 
-
     int i = 0;//drawing index, starts at listStart
     int counter = 0;//element index
     for(auto const & option : optionList){
@@ -385,6 +384,9 @@ void SimpleListScene::deinit(){
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         delete wordSprites[i];
+
+    for(int i = 0; i < 3; i++)
+        delete scrollingText[i];
 }
 
 Scene* ModeListScene::previousScene(){
