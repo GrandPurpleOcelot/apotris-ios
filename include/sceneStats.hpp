@@ -59,5 +59,5 @@ class StatScene : public OptionListScene{
             };
         };
 
-    Scene* previousScene(){return new SettingsScene();};
+    Scene* previousScene(){return new MainMenuScene();};
 };
