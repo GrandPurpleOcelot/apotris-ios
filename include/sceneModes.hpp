@@ -38,14 +38,14 @@ class LevelSelectorElement : public Element{
         std::string getCursor(std::string text) override {
             std::string result;
 
-            if(value > 1)
+            if(value > min)
                 result += "<";
             else
                 result += " ";
 
             result += text;
 
-            if(value < 20)
+            if(value < max)
                 result += ">";
 
             return result;
@@ -53,12 +53,12 @@ class LevelSelectorElement : public Element{
 
         void action(int dir) override{
             if(dir > 0){
-                if(value < 20){
+                if(value < max){
                     value++;
                     sfx(SFX_MENUMOVE);
                 }
             }else{
-                if(value > 1){
+                if(value > min){
                     value--;
                     sfx(SFX_MENUMOVE);
                 }
@@ -72,6 +72,8 @@ class LevelSelectorElement : public Element{
         LevelSelectorElement(int _min, int _max){
             min = _min;
             max = _max;
+
+            value = min;
         }
 };
 
@@ -423,4 +425,19 @@ class MasterScene : public PlayOptionScene{
     };
 
     std::string name(){return "Master";};
+};
+
+class TrainingScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::TRAINING;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new LevelSelectorElement(0,20),
+            new StringSelectorElement("Finesse Training",{"OFF","ON"}),
+        };
+    };
+
+    std::string name(){return "Training";};
 };

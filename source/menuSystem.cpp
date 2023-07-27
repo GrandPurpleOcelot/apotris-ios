@@ -138,6 +138,8 @@ void sceneSwitcher(std::string str){
         changeScene(new ClassicScene(),Transitions::FADE);
     }else if(str == "Master"){
         changeScene(new MasterScene(),Transitions::FADE);
+    }else if(str == "Training"){
+        changeScene(new TrainingScene(),Transitions::FADE);
     }else{
         log("invalid option: " + str);
     }

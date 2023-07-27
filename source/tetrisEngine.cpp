@@ -2062,9 +2062,12 @@ void Game::setSubMode(int sm){
 }
 
 void Game::setSpeed(){
-    if ((gameMode == MARATHON || gameMode == TRAINING) && !(subMode && zoneTimer))
-        speed = gravity[(level < 19) ? level - 1 : 18];
-    else if(gameMode == BLITZ)
+    if ((gameMode == MARATHON || gameMode == TRAINING) && !(subMode && zoneTimer)){
+        if(level)
+            speed = gravity[(level < 19) ? level - 1 : 18];
+        else
+            speed = 0;
+    } else if(gameMode == BLITZ)
         speed = blitzGravity[(level < 15) ? level - 1 : 14];
     else if(gameMode == CLASSIC)
         speed = classicGravity[(level < 30) ? level: 29];

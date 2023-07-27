@@ -2476,6 +2476,8 @@ bool PlayOptionScene::control(){
 }
 
 void PlayOptionScene::start(){
+    bool training = false;
+
     for(auto const& element : elementList){
         std::string s = element->getLabel();
         int value = element->getValue();
@@ -2487,6 +2489,8 @@ void PlayOptionScene::start(){
             subMode = value;
         }else if(s == "Lines"){
             goal = value;
+        }else if(s == "Finesse Training"){
+            training = value;
         }else if(s == "Minutes"){
             goal = value;
         }
@@ -2500,6 +2504,7 @@ void PlayOptionScene::start(){
     newOptions.tuning = getTuning();
     newOptions.bigMode = bigMode;
     newOptions.subMode = subMode;
+    newOptions.trainingMode = training;
     savefile->stats.gamesStarted++;
 
     if(toStart != BATTLE){
