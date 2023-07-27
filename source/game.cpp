@@ -788,7 +788,7 @@ void showHold() {
 
     if (skin < 7 || skin == 9 || skin == 10) {
         sprite_unhide(holdSprite, 0);
-        sprite_set_attr(holdSprite, ShapeSquare, 2, 9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
+        sprite_set_attr(holdSprite, ShapeWide, 2, 9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
         sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS));
     } else {
         sprite_unhide(holdSprite, ATTR0_AFF);
