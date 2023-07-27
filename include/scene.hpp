@@ -17,6 +17,8 @@ extern const std::list<std::string> settingsOptions;
 extern const std::list<std::string> controlOptions;
 extern std::map<int,std::string> keyMap;
 
+extern std::string getDescription(std::string element);
+
 class Scene{
 public:
         virtual void draw() = 0;
@@ -125,9 +127,24 @@ class SimpleListScene : public Scene{
 
     virtual std::string name(){return "";};
 
+    std::string currentOption = "";
+    std::string scrollText = "";
+
+    int scrollTextLength = 0;
+
+    int scrollTimer = 0;
+    const int scrollTimerMax = 1;
+    int scrollOffset = 0;
+    int scrollDelay = 0;
+    int scrollDelayMax = 60;
+
+    int endDelay = 0;
+    int endDelayMax = 80;
+
     int options = 0;
     int selection = 0;
     WordSprite* wordSprites[MAX_WORD_SPRITES];
+    WordSprite* scrollingText[3];
 
     OBJ_ATTR * cursorSprites[2];
 

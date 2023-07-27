@@ -436,7 +436,11 @@ void naprintColor(std::string str, int x, int y, int palette){
 	}
 }
 
-IWRAM_CODE void naprintSprite(std::string str, int tile){
+void naprintSprite(std::string str, int tile){
+	naprintSpriteOffset(str, tile, 0);
+}
+
+IWRAM_CODE void naprintSpriteOffset(std::string str, int tile, int col){
 
 	// if(str.size() > 12)
 	// 	str = str.substr(0,12);
@@ -452,7 +456,7 @@ IWRAM_CODE void naprintSprite(std::string str, int tile){
 	const int tileW = ((widthCount) >> 3);
 
 	//write font to tiles
-	int cursor = 0;
+	int cursor = col;
 	for(int i = 0; i < len; i++){
 		const int character = str[i]-32;
 

@@ -46,6 +46,9 @@ void SimpleListScene::init(){
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
 
+    for (int i = 0; i < 3; i++)
+        scrollingText[i] = new WordSprite(MAX_WORD_SPRITES + i,64 + MAX_WORD_SPRITES * 3 + i * 3, 672 + i * 12);
+
     loadSpriteTiles(1, sprite41tiles_bin, 2, 1);
     for(int i = 0; i < 2; i++){
         arrowSprites[i] = &obj_buffer[3 + i];
@@ -115,6 +118,10 @@ void SimpleListScene::init(){
     for(int i = 0; i < count; i++)
         wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
 
+    for(int i = 0; i < 3; i++)
+        scrollingText[i]->show(12 * 8 * i,160-8,15);
+
+    scrollingText[0]->setTextSlow(scrollText);
 }
 
 
@@ -158,6 +165,7 @@ void SimpleListScene::draw(){
 
         wordSprites[index]->setPriority(0);
         if(counter == selection){
+            currentOption = option;
             for(int i = 0; i < 2; i++){
                 sprite_unhide(cursorSprites[i],0);
                 sprite_enable_affine(cursorSprites[i], i, true);
@@ -193,6 +201,17 @@ void SimpleListScene::draw(){
         sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * (1 + space) * 8 + startY + 0);
     }else{
         sprite_hide(arrowSprites[1]);
+    }
+
+    if(refreshText){
+        scrollText = getDescription(currentOption);
+        scrollTextLength = getVariableWidth(scrollText);
+
+        endDelay = 0;
+        scrollOffset = - max((240 - scrollTextLength),0) / 2;
+        scrollDelay = 0;
+        clearSpriteTiles(672, 144, 1);
+        scrollingText[0]->setTextSlow(scrollText);
     }
 
     refreshText = false;
@@ -324,6 +343,30 @@ void SimpleListScene::update(){
         }
     }
 
+    if(endDelay){
+        endDelay--;
+        if(!endDelay){
+            scrollOffset = 0;
+            scrollDelay = 0;
+            clearSpriteTiles(672, scrollTextLength / 8 , 1);
+            scrollingText[0]->setTextSlow(scrollText);
+        }
+    }else if(scrollDelay < scrollDelayMax){
+        scrollDelay++;
+    }else if(scrollTextLength > 240){
+        if(++scrollTimer >= scrollTimerMax){
+            scrollTimer = 0;
+            if(++scrollOffset >= max(scrollTextLength-240,0)){
+                endDelay = endDelayMax;
+            }
+        }
+    }
+
+    for(int i = 0; i < 3; i++){
+        scrollingText[i]->setScroll(scrollOffset);
+        scrollingText[i]->show(12 * 8 * i,160-8,14);
+    }
+
     control();
 }
 
@@ -339,6 +382,9 @@ void SimpleListScene::deinit(){
     clearSpriteTiles(256, 256, 1);
 
     clearText();
+
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        delete wordSprites[i];
 }
 
 Scene* ModeListScene::previousScene(){
@@ -738,4 +784,10 @@ void OptionListScene::deinit(){
         delete *it;
         it++;
     }
+
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        delete wordSprites[i];
+
+    for(int i = 0; i < 7; i++)
+        delete labels[i];
 }

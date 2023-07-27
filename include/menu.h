@@ -20,16 +20,29 @@ public:
     int width = 0;
     bool big = false;
 
+    int timer = 0;
+    bool slow = false;
+    int cursor = 0;
+    int w = 0;
+    const int timerMax = 1;
+    const int count = 1;
+    int scroll = 0;
+    int startDelay = 0;
+    const int startDelayMax = 10;
+
     void show(int x, int y, int palette) {
         for (int i = 0; i < 3 * (1+big) - big; i++) {
             sprite_unhide(sprites[i], 0);
-            sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4, palette, priority);
+            sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4 + (scroll >> 3), palette, priority);
 
             if(blend)
                 sprite_enable_blend(sprites[i]);
 
-            sprite_set_pos(sprites[i], x + i * 32, y);
+            sprite_set_pos(sprites[i], x + i * 32 - (scroll & 0x7), y);
         }
+
+        if(slow)
+            slowPrint();
     }
 
     void show(int x, int y, int palette, FIXED scale) {
@@ -45,6 +58,9 @@ public:
             sprite_set_size(sprites[i], scale, affId);
             sprite_enable_affine(sprites[i], affId, true);
         }
+
+        if(slow)
+            slowPrint();
     }
 
     void setPriority(int newPriority){
@@ -58,6 +74,35 @@ public:
 
     void enableBlend(bool state){
         blend = state;
+    }
+
+    void setScroll(int s){
+        scroll = s;
+    }
+
+    void slowPrint(){
+        if(cursor >= (int) text.size())
+            return;
+
+        if(startDelay){
+            startDelay--;
+            return;
+        }
+
+        if(++timer >= timerMax){
+            timer = 0;
+
+            int counter = count;
+            while(counter--){
+                std::string c = text.substr(cursor,1);
+
+                naprintSpriteOffset(c, startTiles, w);
+
+                w += getVariableWidth(c);
+
+                cursor++;
+            }
+        }
     }
 
     void setText(std::string _text) {
@@ -77,6 +122,29 @@ public:
         clearSpriteTiles(startTiles, (big)?20:12, 1);
 
         naprintSprite(text,startTiles);
+    }
+
+    void setTextSlow(std::string _text) {
+        // if (_text == text)
+        //     return;
+
+        text = _text;
+
+        if(text == ""){
+            clearSpriteTiles(startTiles, (big)?20:12 , 0);
+            // memset32(&tile_mem[4][startTiles], 0, 12 * 8);
+            return;
+        }
+
+        width = getVariableWidth(text);
+
+        clearSpriteTiles(startTiles, (big)?20:12, 1);
+
+        slow = true;
+        timer = 0;
+        cursor = 0;
+        w = 0;
+        startDelay = startDelayMax;
     }
 
     WordSprite(int _id,int _index, int _tiles) {
