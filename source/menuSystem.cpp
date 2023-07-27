@@ -136,6 +136,8 @@ void sceneSwitcher(std::string str){
         changeScene(new SurvivalScene(),Transitions::FADE);
     }else if(str == "Classic"){
         changeScene(new ClassicScene(),Transitions::FADE);
+    }else if(str == "Master"){
+        changeScene(new MasterScene(),Transitions::FADE);
     }else{
         log("invalid option: " + str);
     }

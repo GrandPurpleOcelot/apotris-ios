@@ -410,3 +410,17 @@ class ClassicScene : public PlayOptionScene{
 
     std::string name(){return "Classic";};
 };
+
+class MasterScene : public PlayOptionScene{
+    public:
+
+    Tetris::Modes getMode(){return Tetris::MASTER;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new StringSelectorElement("Rules",{"Normal","Classic"}),
+        };
+    };
+
+    std::string name(){return "Master";};
+};

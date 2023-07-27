@@ -2483,7 +2483,7 @@ void PlayOptionScene::start(){
         log(value);
         if(s == "Level"){
             level = value;
-        }else if(s == "Type"){
+        }else if(s == "Type" || s == "Rules"){
             subMode = value;
         }else if(s == "Lines"){
             goal = value;
@@ -2522,7 +2522,7 @@ QuickStart PlayOptionScene::quick(){
         log(value);
         if(s == "Level"){
             level = value;
-        }else if(s == "Type"){
+        }else if(s == "Type" || s == "Rules"){
             subMode = value;
         }else if(s == "Lines"){
             goal = value;

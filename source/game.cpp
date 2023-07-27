@@ -788,16 +788,13 @@ void showHold() {
 
     if (skin < 7 || skin == 9 || skin == 10) {
         sprite_unhide(holdSprite, 0);
-        sprite_set_attr(holdSprite, ShapeWide, 2, 9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
-        // obj_set_attr(holdSprite, ATTR0_WIDE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_PALBANK(palette));
-        // holdSprite->attr2 = ATTR2_BUILD(9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
+        sprite_set_attr(holdSprite, ShapeSquare, 2, 9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
         sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS));
     } else {
         sprite_unhide(holdSprite, ATTR0_AFF);
-        sprite_set_attr(holdSprite, ShapeWide, 2, 16 * game->held, palette * (game->zoneTimer == 0), 3);
+        sprite_set_attr(holdSprite, ShapeSquare, 2, 16 * game->held, palette * (game->zoneTimer == 0), 3);
         sprite_enable_affine(holdSprite, 5, false);
-        // obj_set_attr(holdSprite, ATTR0_SQUARE | ATTR0_AFF | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(5), ATTR2_PALBANK(palette));
-        // holdSprite->attr2 = ATTR2_BUILD(16 * game->held, palette * (game->zoneTimer == 0), 3);
+
         FIXED size;
         if(skin < 9)
             size = 357;//~1.4
@@ -805,7 +802,6 @@ void showHold() {
             size = 349;//~1.4
 
         sprite_set_size(holdSprite, size,5);
-        // obj_aff_scale(&obj_aff_buffer[5], size, size);
         sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) - 3 + yoffset);
     }
 }

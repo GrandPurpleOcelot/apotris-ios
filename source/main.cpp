@@ -537,7 +537,6 @@ void setSkin() {
         break;
     }
 
-
     if(savefile->settings.skin < 7 || savefile->settings.skin == 9 || savefile->settings.skin == 10){
         //TODO:
         //vsync might not be necessary here
@@ -554,7 +553,6 @@ void setSkin() {
         }
     }
 
-
     loadTiles(0,1,blockSprite,1);
     loadTiles(2,97,blockSprite,1);
 
@@ -570,10 +568,8 @@ void setSkin() {
 
         int iy = 16 * i;
         for (int j = 0; j < 4; j++) {
-
             for (int k = 0; k < 4; k++) {
                 int ix = j * 4 + k;
-                // int index = iy + ix;
                 if (board[ix]) {
                     if(savefile->settings.skin == 11)
                         loadSpriteTilesPartial(iy, &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
