@@ -1,11 +1,5 @@
 #!/usr/bin/env make
 
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
-endif
-
-LIBGBA := $(DEVKITPRO)/libgba
-
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -flto -Wno-array-bounds
 PRE_FLAGS := -MMD -MP -DPC
@@ -31,7 +25,7 @@ LDFLAGS := -lTilengine -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system 
 LDPATHS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB))
 
 # Include directories
-INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA) $(LIBGBA)/include
+INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 # Construct build output and dependency filenames
