@@ -38,6 +38,8 @@ int spriteVOffset = 0;
 
 bool render = true;
 
+void resize(int width, int height);
+
 void loadAudio(){
 
     for(int i = 0; i < SFX_COUNT; i++){
@@ -256,6 +258,8 @@ void platformInit(){
     }else{
         log("no controller connected");
     }
+
+    resize(windowWidth * windowScale, windowHeight * windowScale);
 }
 
 
@@ -409,15 +413,8 @@ void vsync(){
                 windowScale--;
             }
 
-            sf::FloatRect visibleArea(sf::Vector2f(0,0), sf::Vector2f(event.size.width, event.size.height));
-            sf::View view(visibleArea);
-            view.setCenter(256 * windowScale,256 * windowScale);
-            window.setView(view);
+            resize(event.size.width, event.size.height);
 
-            rowStart = (512 - (event.size.height/windowScale))/2;
-            rowEnd = (512 + (event.size.height/windowScale))/2;
-
-            setGradient(savefile->settings.backgroundGradient);
         }else if(event.type == sf::Event::KeyPressed){
             if(event.key.code == sf::Keyboard::F11){
                 isFullscreen = !isFullscreen;
@@ -1340,6 +1337,18 @@ uint8_t customBlend(uint8_t a, uint8_t b){
 
 void toggleRendering(bool state){
     render = state;
+}
+
+void resize(int width, int height){
+    sf::FloatRect visibleArea(sf::Vector2f(0,0), sf::Vector2f(width, height));
+    sf::View view(visibleArea);
+    view.setCenter(256 * windowScale,256 * windowScale);
+    window.setView(view);
+
+    rowStart = (512 - (height/windowScale))/2;
+    rowEnd = (512 + (height/windowScale))/2;
+
+    setGradient(savefile->settings.backgroundGradient);
 }
 
 #endif
