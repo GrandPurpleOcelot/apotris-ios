@@ -118,6 +118,8 @@ void SimpleListScene::init(){
     for(int i = 0; i < count; i++)
         wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
 
+    clearSpriteTiles(672,144,1);
+
     for(int i = 0; i < 3; i++)
         scrollingText[i]->show(12 * 8 * i,160-8,15);
 
@@ -204,13 +206,16 @@ void SimpleListScene::draw(){
 
     if(refreshText){
         scrollText = getDescription(currentOption);
-        scrollTextLength = getVariableWidth(scrollText);
-
-        endDelay = 0;
-        scrollOffset = - max((240 - scrollTextLength),0) / 2;
-        scrollDelay = 0;
         clearSpriteTiles(672, 144, 1);
-        scrollingText[0]->setTextSlow(scrollText);
+        if(scrollText != ""){
+            scrollTextLength = getVariableWidth(scrollText);
+
+            endDelay = 0;
+            scrollOffset = - max((240 - scrollTextLength),0) / 2;
+            scrollDelay = 0;
+            scrollingText[0]->setTextSlow(scrollText);
+
+        }
     }
 
     refreshText = false;
