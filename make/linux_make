@@ -1,5 +1,8 @@
 #!/usr/bin/env make
 
+
+CXX := i686-w64-mingw32-g++
+
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -flto -Wno-array-bounds
 PRE_FLAGS := -MMD -MP -DPC

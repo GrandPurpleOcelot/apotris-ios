@@ -4,9 +4,12 @@ if [ "$1" == "gba" ]
 then
     cp ./make/gba_make ./Makefile
 
-elif [ "$1" == "pc" ]
+elif [ "$1" == "linux" ]
 then
-    cp ./make/pc_make ./Makefile
+    cp ./make/linux_make ./Makefile
+elif [ "$1" == "w32" ]
+then
+    cp ./make/w32_make ./Makefile
 else
     echo "Unknown platform.\n"
 fi
