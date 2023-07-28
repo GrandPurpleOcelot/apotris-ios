@@ -11,9 +11,9 @@
 class WordSprite {
 public:
     std::string text = "";
-    int startIndex;
-    int startTiles;
-    int id;
+    int startIndex = 0;
+    int startTiles = 0;
+    int id = 0;
     int priority = 0;
     bool blend = false;
     OBJ_ATTR* sprites[5];
@@ -147,17 +147,7 @@ public:
         startDelay = startDelayMax;
     }
 
-    WordSprite(int _id,int _index, int _tiles) {
-        id = _id;
-        startIndex = _index;
-        startTiles = _tiles;
-
-        for (int i = 0; i < 3; i++) {
-            sprites[i] = &obj_buffer[startIndex + i];
-        }
-    }
-
-    WordSprite(int _id,int _index, int _tiles, bool _big) {
+    void setup(int _id,int _index, int _tiles, bool _big){
         id = _id;
         startIndex = _index;
         startTiles = _tiles;
@@ -166,6 +156,18 @@ public:
         for (int i = 0; i < 3 * (1 + big) - big; i++) {
             sprites[i] = &obj_buffer[startIndex + i];
         }
+    }
+
+    WordSprite(){
+        setup(0,0,0,false);
+    }
+
+    WordSprite(int _id,int _index, int _tiles) {
+        setup(_id,_index,_tiles,false);
+    }
+
+    WordSprite(int _id,int _index, int _tiles, bool _big) {
+        setup(_id,_index,_tiles,_big);
     }
 };
 

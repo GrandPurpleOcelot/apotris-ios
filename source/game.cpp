@@ -1063,86 +1063,86 @@ void showTimer() {
 }
 
 void showText() {
-    if (game->gameMode == MARATHON || game->gameMode == ULTRA || game->gameMode == BLITZ || game->gameMode == CLASSIC) {
+    // if (game->gameMode == MARATHON || game->gameMode == ULTRA || game->gameMode == BLITZ || game->gameMode == CLASSIC) {
 
-        aprint("Score", 3, 3);
+    //     aprint("Score", 3, 3);
 
-        std::string score = std::to_string(game->score);
+    //     std::string score = std::to_string(game->score);
 
-        int x = 8 - score.size();
-        aprintClearArea(0, 5, 10, 1);
-        aprint(score, (x > 0)? x : 0, 5);
+    //     int x = 8 - score.size();
+    //     aprintClearArea(0, 5, 10, 1);
+    //     aprint(score, (x > 0)? x : 0, 5);
 
-        if (game->gameMode != ULTRA) {
-            aprint("Level", 2, 14);
+    //     if (game->gameMode != ULTRA) {
+    //         aprint("Level", 2, 14);
 
-            aprintClearArea(0, 15, 10, 1);
-            aprintf(game->level, 4, 15);
-        }
+    //         aprintClearArea(0, 15, 10, 1);
+    //         aprintf(game->level, 4, 15);
+    //     }
 
-    } else if (game->gameMode == TRAINING) {
-        aprint("Training", 1, 1);
-    } else if (game->gameMode == DIG && game->subMode) {
-        aprint("Pieces", 2, 14);
+    // } else if (game->gameMode == TRAINING) {
+    //     aprint("Training", 1, 1);
+    // } else if (game->gameMode == DIG && game->subMode) {
+    //     aprint("Pieces", 2, 14);
 
-        aprintClearArea(0, 15, 10, 1);
-        aprintf(game->pieceCounter, 4, 15);
-    } else if (game->gameMode == MASTER){
-        aprint("Level", 3, 14);
+    //     aprintClearArea(0, 15, 10, 1);
+    //     aprintf(game->pieceCounter, 4, 15);
+    // } else if (game->gameMode == MASTER){
+    //     aprint("Level", 3, 14);
 
-        std::string str = std::to_string(game->level);
+    //     std::string str = std::to_string(game->level);
 
-        aprint(str, 7-str.size(), 16);
+    //     aprint(str, 7-str.size(), 16);
 
-        showSpeedMeter((int)game->speed);
+    //     showSpeedMeter((int)game->speed);
 
-        int n = ((game->level / 100)+1) * 100;
+    //     int n = ((game->level / 100)+1) * 100;
 
-        if(n == 1000)
-            n--;
+    //     if(n == 1000)
+    //         n--;
 
-        aprintf(n, 4, 18);
+    //     aprintf(n, 4, 18);
 
-        aprint("Grade",3,3);
+    //     aprint("Grade",3,3);
 
-        str = GameInfo::masterGrades[game->grade + game->coolCount];
+    //     str = GameInfo::masterGrades[game->grade + game->coolCount];
 
-        aprintClearArea(0, 5, 10, 1);
-        aprint(str,4 - (str.length() == 1),5);
-    }
+    //     aprintClearArea(0, 5, 10, 1);
+    //     aprint(str,4 - (str.length() == 1),5);
+    // }
 
-    if (game->gameMode != BATTLE && game->gameMode != BLITZ && !(game->gameMode == SPRINT && game->subMode == 1) && game->gameMode != MASTER){
-        aprint("Lines", 2, 17);
-        aprintClearArea(0, 18, 10, 1);
-        if (game->gameMode == DIG)
-            aprintf(game->garbageCleared, 4, 18);
-        else
-            aprintf(game->linesCleared, 4, 18);
+    // if (game->gameMode != BATTLE && game->gameMode != BLITZ && !(game->gameMode == SPRINT && game->subMode == 1) && game->gameMode != MASTER){
+    //     aprint("Lines", 2, 17);
+    //     aprintClearArea(0, 18, 10, 1);
+    //     if (game->gameMode == DIG)
+    //         aprintf(game->garbageCleared, 4, 18);
+    //     else
+    //         aprintf(game->linesCleared, 4, 18);
 
-    } else if(game->gameMode == BLITZ){
-        aprint("Lines", 2, 17);
-        std::string str;
+    // } else if(game->gameMode == BLITZ){
+    //     aprint("Lines", 2, 17);
+    //     std::string str;
 
-        if(game->level > 1)
-            str+= std::to_string(game->linesCleared-GameInfo::blitzLevels[game->level-2]);
-        else
-            str+= std::to_string(game->linesCleared);
+    //     if(game->level > 1)
+    //         str+= std::to_string(game->linesCleared-GameInfo::blitzLevels[game->level-2]);
+    //     else
+    //         str+= std::to_string(game->linesCleared);
 
-        str+= " / ";
+    //     str+= " / ";
 
-        if(game->level > 1)
-            str+= std::to_string(GameInfo::blitzLevels[game->level-1] - GameInfo::blitzLevels[game->level-2]);
-        else
-            str+= "3";
+    //     if(game->level > 1)
+    //         str+= std::to_string(GameInfo::blitzLevels[game->level-1] - GameInfo::blitzLevels[game->level-2]);
+    //     else
+    //         str+= "3";
 
-        aprintClearArea(0, 18, 10, 1);
-        aprint(str,2,18);
+    //     aprintClearArea(0, 18, 10, 1);
+    //     aprint(str,2,18);
 
-    } else if(game->gameMode == BATTLE || (game->gameMode == SPRINT && game->subMode == 1)){
-        aprint("Attack", 2, 17);
-        aprintClearArea(0, 18, 10, 1);
-        aprintf(game->linesSent, 4, 18);
-    }
+    // } else if(game->gameMode == BATTLE || (game->gameMode == SPRINT && game->subMode == 1)){
+    //     aprint("Attack", 2, 17);
+    //     aprintClearArea(0, 18, 10, 1);
+    //     aprintf(game->linesSent, 4, 18);
+    // }
 }
 
 void showPPS(){
@@ -2721,6 +2721,10 @@ void GameScene::init(){
     enableBlend((0b101010 << 8) + (1 << 6) + (0b1010));
 
     setPalette();
+
+    for(int i = 0; i < MAX_WORD_SPRITES; i++){
+        wordSprites[i].setup(0,0,0,false);
+    }
 }
 
 void GameScene::update(){

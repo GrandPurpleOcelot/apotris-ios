@@ -42,6 +42,8 @@ class GameScene : public Scene{
     void init();
     void deinit();
 
+    WordSprite wordSprites[MAX_WORD_SPRITES];
+
     void countdown();
 
     bool counted = false;

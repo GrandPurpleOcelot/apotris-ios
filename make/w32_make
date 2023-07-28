@@ -4,7 +4,7 @@
 CXX := i686-w64-mingw32-g++
 
 # Pre-compiler and Compiler flags
-CXX_FLAGS := -Wall -O2 -flto -Wno-array-bounds
+CXX_FLAGS := -Wall -O2 -Wno-array-bounds
 PRE_FLAGS := -MMD -MP -DPC
 
 # Project directory structure
@@ -23,9 +23,9 @@ BINLIBS_PATH := $(BIN)/lib
 BUILD := build
 
 # Library search directories and flags
-EXT_LIB :=
-LDFLAGS := -lTilengine -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lmodplug
-LDPATHS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB))
+EXT_LIB := /usr/i686-w64-mingw32/SFML-2.6.0/lib /usr/i686-w64-mingw32/lib
+LDFLAGS := -D SFML_STATIC -lTilengine -lsfml-graphics-s -lsfml-audio-s -lsfml-window-s -lsfml-system-s -lmodplug -lopengl32 -lfreetype -lwinmm -lgdi32 -lOpenAL32 -lFLAC -lvorbisenc -lvorbisfile -lvorbis -logg -lws2_32
+LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB))
 
 # Include directories
 INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA)

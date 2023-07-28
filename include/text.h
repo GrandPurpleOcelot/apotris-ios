@@ -14,7 +14,7 @@ extern void setSmallTextArea(int, int, int, int, int);
 extern void clearSmallText();
 extern void clearText();
 extern void aprintClearLine(int);
-extern void aprintClearArea(int,int,int,int);
+extern void aprintClearArea(int x, int y, int w, int h);
 
 extern int getVariableWidth(std::string str);
 extern void naprint(std::string str, int x, int y);

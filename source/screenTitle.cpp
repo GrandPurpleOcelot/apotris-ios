@@ -28,7 +28,6 @@ void settingsText();
 void toggleBigMode();
 std::string timeToStringHours(int frames);
 void resetScoreboard(int,int,int);
-void drawBackgroundGrid();
 void initFallingBlocks();
 
 using namespace Tetris;
@@ -78,8 +77,6 @@ static int toStart = 0;
 static bool onSettings = false;
 int subMode = 0;
 bool proMode = false;
-
-static bool gridDrawn = false;
 
 bool refreshText = true;
 
@@ -453,8 +450,6 @@ void startScreen() {
             }
 
         } else {
-            gridDrawn = false;
-
             for (int i = 0; i < MAX_WORD_SPRITES; i++)
                 wordSprites[i]->hide();
 
@@ -2191,33 +2186,13 @@ void resetScoreboard(int mode, int goal, int subMode){
     }
 
     saveSavefile();
-    // saveToSram();
     clearText();
-}
-
-void drawBackgroundGrid(){
-    gridDrawn = true;
-
-    // u16 * dest = (u16*) &se_mem[26];
-
-    // for(int i = 0; i < 20; i++){
-    //     for(int j = 0; j < 30; j++){
-    //         *dest++ = 2 * (!savefile->settings.lightMode);
-    //     }
-    //     dest+=2;
-    // }
 }
 
 void TitleScene::draw(){
     if(refreshText){
         refreshText = false;
-        // startText();
         toggleBG(3, onSettings);
-        // if (onSettings) {
-        //     // REG_DISPCNT |= DCNT_BG3;
-        // } else {
-        //     REG_DISPCNT &= ~DCNT_BG3;
-        // }
     }
 }
 
