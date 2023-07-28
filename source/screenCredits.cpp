@@ -3,29 +3,41 @@
 #include "sprites.h"
 #include "logging.h"
 
-std::string creditsText = "\
-Menu Music:\n\
-  - veryshorty-extended\n\
-        by supernao\n\
-  - optikal innovation\n\
-        by substance\n\
-  - space taxi\n\
-        by schmid\n\
-\n\
-In-Game Music:\n\
-  - Thirno\n\
-        by Nikku4211\n\
-  - oh my god!\n\
-        by kb-zip\n\
-  - unsespected <h>\n\
-        by curt cool\n\
-  - Warning Infected!\n\
-        by Basq\n\
-  - __detersive__\n\
-        by xtd\n\
-  - schizofrenium_long\n\
-        by panther, karl\n\
-";
+std::list<std::string> creditsText = {
+    "",
+    "",
+    "",
+    "",
+    "Menu Music:",
+    "  - veryshorty-extended",
+    "        by supernao",
+    "",
+    "  - optikal innovation",
+    "       by substance",
+    "",
+    "  - space taxi",
+    "        by schmid",
+    "",
+    "",
+    "In-Game Music:",
+    "  - Thirno",
+    "        by Nikku4211",
+    "",
+    "  - oh my god!",
+    "        by kb-zip",
+    "",
+    "  - unsespected <h>",
+    "        by curt cool",
+    "",
+    "  - Warning Infected!",
+    "        by Basq",
+    "",
+    "  - __detersive__",
+    "        by xtd",
+    "",
+    "  - schizofrenium_long",
+    "        by panther, karl",
+};
 
 void CreditsScene::init(){
     clearSprites(128);
@@ -36,34 +48,79 @@ void CreditsScene::init(){
     setTiles(27,0,32*32,tileBuild(34, false, false, 0));
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i] = new WordSprite(i,64 + i * 5, 256 + i * 20);
+        wordSprites[i] = new WordSprite(i,64 + i * 5, 256 + i * 20, true);
 
     //faded Text Palette
     color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
-
-    int startX = 30;
-    int startY = 20;
-
-    int space = 12;
-    int counter = 0;
 }
 
 void CreditsScene::draw(){
     fallingBlocks();
     toggleBG(3,true);
 
+    int startX = 30;
+    int counter = 0;
+    int height = 0;
+    int i = 0;
+    int gaps = 0;
+
+    for(auto option = creditsText.begin(); option != creditsText.end(); ++option){
+        if(counter < listStart){
+            counter++;
+            if(*option == "")
+                gaps++;
+
+            continue;
+        }
+
+        if(*option == ""){
+            height += space;
+            continue;
+        }
+
+        if(i >= maxShow)
+            break;
+
+        int index = (i + listStart-gaps) % maxShow;
+
+        wordSprites[index]->setText(*option);
+
+        int y = height - scrollOffset;
+
+        if(y > SCREEN_HEIGHT)
+            break;
+
+        wordSprites[index]->show(startX,height - scrollOffset,15);
+
+        i++;
+        height += space;
+    }
+
+    for(int j = i; j < maxShow; j++){
+        int index = (j + listStart - gaps) % maxShow;
+
+        wordSprites[index]->hide();
+    }
+
     showSprites(128);
 }
 
 bool CreditsScene::control(){
 
-    if(key_hit(KEY_FULL)){
+
+    if(key_hit(KEY_B)){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
 
         changeScene(previousScene(),Transitions::FADE);
+    }else if(key_is_down(KEY_A)){
+        scrollTimerMax = 1;
+    }else if(key_is_down(KEY_FULL)){
+        scrollTimerMax = 0xffff;
+    }else{
+        scrollTimerMax = 4;
     }
 
     return false;
@@ -72,6 +129,21 @@ bool CreditsScene::control(){
 void CreditsScene::update(){
     canDraw = 1;
     key_poll();
+
+    if(delay < delayMax){
+        delay++;
+    }else if(++scrollTimer >= scrollTimerMax){
+        scrollTimer = 0;
+        if(++scrollOffset >= space){
+            scrollOffset = 0;
+            listStart++;
+        }
+    }
+
+    if(listStart > 35){
+        changeScene(previousScene(),Transitions::FADE);
+        return;
+    }
 
     control();
 }
