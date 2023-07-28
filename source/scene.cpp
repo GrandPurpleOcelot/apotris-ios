@@ -17,26 +17,7 @@ void SimpleListScene::init(){
 
     startY = 40;
 
-    if(previousElement.size()){
-        bool found = false;
-        int i = 0;
-        for(auto const& option : optionList){
-            if(option == previousElement){
-                found = true;
-                break;
-            }
-            i++;
-        }
-
-        if(found)
-            selection = i;
-        else
-            selection = 0;
-
-        previousElement = "";
-    }else{
-        selection = previousSelection;
-    }
+    selection = 0;
 
     //backgroundGrid
     setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
