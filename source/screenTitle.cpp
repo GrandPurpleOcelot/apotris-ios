@@ -2345,7 +2345,7 @@ void newTitleScene::update(){
         enableBot = true;
         demo = true;
 
-        startGame();
+        startGame(Options(),qran());
 
         changeScene(new GameScene(), Transitions::FADE);
     }
