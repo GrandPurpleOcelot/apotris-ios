@@ -162,3 +162,54 @@ std::string modeToString(Tetris::Modes mode){
         default: return "";
     }
 }
+
+void WordSprite::setText(std::string _text){
+    if (_text == text)
+        return;
+
+    text = _text;
+
+    if(text == ""){
+        clearSpriteTiles(startTiles, (big)?20:12 , 0);
+        return;
+    }
+
+    width = getVariableWidth(text);
+
+    clearSpriteTiles(startTiles, (big)?20:12, 1);
+
+    naprintSprite(text,startTiles);
+}
+
+void WordSprite::setTextNum(int n){
+    char buff[64];
+    posprintf(buff, "%d",n);
+
+    std::string _text = buff;
+    if (_text == text)
+        return;
+
+    text = _text;
+
+    if(text == ""){
+        clearSpriteTiles(startTiles, (big)?20:12 , 0);
+        return;
+    }
+
+    width = getVariableWidth(text);
+
+    clearSpriteTiles(startTiles, (big)?20:12, 1);
+
+    aprintSprite(text,startTiles);
+}
+
+void WordSprite::setup(int _id,int _index, int _tiles, bool _big) {
+    id = _id;
+    startIndex = _index;
+    startTiles = _tiles;
+    big = _big;
+
+    for (int i = 0; i < 3 * (1 + big) - big; i++) {
+        sprites[i] = &obj_buffer[startIndex + i];
+    }
+}

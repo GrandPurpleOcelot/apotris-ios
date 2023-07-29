@@ -4,6 +4,7 @@
 
 extern void aprint(std::string, int, int);
 extern void aprintColor(std::string, int, int, int);
+extern void aprintSprite(std::string str, int tile);
 
 extern void aprintf(int, int, int);
 

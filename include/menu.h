@@ -105,24 +105,8 @@ public:
         }
     }
 
-    void setText(std::string _text) {
-        if (_text == text)
-            return;
-
-        text = _text;
-
-        if(text == ""){
-            clearSpriteTiles(startTiles, (big)?20:12 , 0);
-            // memset32(&tile_mem[4][startTiles], 0, 12 * 8);
-            return;
-        }
-
-        width = getVariableWidth(text);
-
-        clearSpriteTiles(startTiles, (big)?20:12, 1);
-
-        naprintSprite(text,startTiles);
-    }
+    void setText(std::string _text);
+    void setTextNum(int n);
 
     void setTextSlow(std::string _text) {
         // if (_text == text)
@@ -147,16 +131,7 @@ public:
         startDelay = startDelayMax;
     }
 
-    void setup(int _id,int _index, int _tiles, bool _big){
-        id = _id;
-        startIndex = _index;
-        startTiles = _tiles;
-        big = _big;
-
-        for (int i = 0; i < 3 * (1 + big) - big; i++) {
-            sprites[i] = &obj_buffer[startIndex + i];
-        }
-    }
+    void setup(int _id,int _index, int _tiles, bool _big);
 
     WordSprite(){
         setup(0,0,0,false);

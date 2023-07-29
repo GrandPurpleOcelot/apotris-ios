@@ -48,6 +48,14 @@ void aprint(std::string str, int x, int y){
 	// log("text: " + str + " " + result);
 }
 
+void aprintSprite(std::string str, int tile){
+	for(int i = 0; i < (int) str.length(); i++){
+		int c = str[i]-32;
+		u8 *src = (u8*) &font1tiles_bin[(c-1) * 32];
+		setSpriteTile(tile, i, 0, 1, src);
+	}
+}
+
 void aprintClearLine(int y){
 	// profile_start();
 

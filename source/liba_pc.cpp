@@ -917,7 +917,6 @@ void posprintf(char * buff, const char * str, ...){
     va_start(args,str);
     vsnprintf(buff, 64, str, args);
     va_end(args);
-    // snprintf(buff, 64 , );
 }
 
 }

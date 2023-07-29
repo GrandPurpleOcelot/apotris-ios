@@ -321,7 +321,7 @@ int endScreen() {
             showSprites(128);
             clearTilemap(25);
             // countdown();
-            updateText();
+            // updateText();
             break;
         }
 
@@ -670,7 +670,7 @@ int pauseMenu(){
                 if (n == 0) {
                     sfx(SFX_MENUCONFIRM);
                     clearText();
-                    updateText();
+                    // updateText();
                     paused = false;
                     resumeSong();
                     break;
@@ -737,7 +737,7 @@ int pauseMenu(){
                 } else if (selection == 2) {
                     sfx(SFX_MENUCONFIRM);
                     clearText();
-                    updateText();
+                    // updateText();
                     onStates = false;
                     selection = 0;
                     break;
@@ -748,7 +748,7 @@ int pauseMenu(){
         if (key_hit(KEY_START) || key_hit(KEY_SELECT)) {
             sfx(SFX_MENUCONFIRM);
             clearText();
-            updateText();
+            // updateText();
             paused = false;
             resumeSong();
             break;
@@ -760,10 +760,10 @@ int pauseMenu(){
                 clearText();
                 onStates = false;
                 selection = 0;
-                updateText();
+                // updateText();
             }else{
                 clearText();
-                updateText();
+                // updateText();
                 paused = false;
                 resumeSong();
             }

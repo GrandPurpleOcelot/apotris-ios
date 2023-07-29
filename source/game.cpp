@@ -34,7 +34,6 @@ void progressBar(int layer);
 void showBar(int, int, int, int, int);
 void showBestMove();
 bool checkDiagonal(int);
-void showFinesse();
 void showSpeedMeter(int);
 void hideMinos();
 void disappear();
@@ -42,8 +41,6 @@ INLINE int getBoard(int,int);
 void zoneFlash();
 void resetZonePalette();
 // void control();
-void showTimer();
-void updateText();
 void rainbowPalette();
 void frameSnow(int layer);
 void showZoneText();
@@ -177,15 +174,13 @@ void GameScene::draw(){
     showPlaceEffect();// 300 idle, 3600 per effect when on
     // prof+= std::to_string(profile_stop()) + " ";
 
+    if(game->refresh)
+        updateText();
+
     showSprites(128);
-    // oam_copy(oam_mem, obj_buffer, 32);
     // // profile_start();
-    // if(game->eventTimer)
-    //     oam_copy(&oam_mem[64], &obj_buffer[64], 27);
-    // obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
 
     if (game->refresh) {
-        updateText();
         showBackground(0);
         game->resetRefresh();
     }else if (game->clearLock && !eventPauseTimer){
@@ -200,7 +195,7 @@ void GameScene::draw(){
     // log(prof);
 }
 
-void updateText() {
+void GameScene::updateText() {
     if(!game->zoneTimer)
         showText();
     else{
@@ -1039,7 +1034,7 @@ bool GameScene::control() {
     return false;
 }
 
-void showTimer() {
+void GameScene::showTimer() {
     if (!(game->gameMode == TRAINING)) {
 
         std::string timer = timeToString(gameSeconds);
@@ -1048,12 +1043,15 @@ void showTimer() {
     }
 
     if(game->trainingMode){
-    //
-        // aprints("Finesse:",0,7,2);
-        // showFinesse();
-        aprint("Finesse", 1, 14);
-        aprintClearArea(0, 15, 10, 15);
-        aprintf(game->finesseFaults, 4, 15);
+
+        // aprint("Finesse", 1, 14);
+        wordSprites[4].setText("Finesse");
+        wordSprites[4].show(2 * 8, 14 * 8,15);
+
+        // aprintClearArea(0, 15, 10, 15);
+        // aprintf(game->finesseFaults, 4, 15);
+        wordSprites[5].setTextNum(game->finesseFaults);
+        wordSprites[5].show(5 * 8, 15 * 8,15);
     }
 
     if(proMode){
@@ -1062,87 +1060,126 @@ void showTimer() {
     }
 }
 
-void showText() {
-    // if (game->gameMode == MARATHON || game->gameMode == ULTRA || game->gameMode == BLITZ || game->gameMode == CLASSIC) {
+void GameScene::showText() {
+    if (game->gameMode == MARATHON || game->gameMode == ULTRA || game->gameMode == BLITZ || game->gameMode == CLASSIC) {
 
-    //     aprint("Score", 3, 3);
+        // aprint("Score", 3, 3);
+        wordSprites[0].setText("Score");
+        wordSprites[0].show(3 * 8, 3 * 8,15);
 
-    //     std::string score = std::to_string(game->score);
+        std::string score = std::to_string(game->score);
+        int x = 8 - score.size();
 
-    //     int x = 8 - score.size();
-    //     aprintClearArea(0, 5, 10, 1);
-    //     aprint(score, (x > 0)? x : 0, 5);
+        wordSprites[1].setTextNum(game->score);
+        wordSprites[1].show((max(x,0)) * 8, 5 * 8,15);
 
-    //     if (game->gameMode != ULTRA) {
-    //         aprint("Level", 2, 14);
+        if (game->gameMode != ULTRA) {
+            wordSprites[2].setText("Level");
+            wordSprites[2].show(3 * 8, 14 * 8,15);
 
-    //         aprintClearArea(0, 15, 10, 1);
-    //         aprintf(game->level, 4, 15);
-    //     }
+            wordSprites[3].setTextNum(game->level);
+            wordSprites[3].show(5 * 8, 15 * 8,15);
+        }
 
-    // } else if (game->gameMode == TRAINING) {
-    //     aprint("Training", 1, 1);
-    // } else if (game->gameMode == DIG && game->subMode) {
-    //     aprint("Pieces", 2, 14);
+    } else if (game->gameMode == TRAINING) {
+        // aprint("Training", 1, 1);
+        wordSprites[0].setText("Training");
+        wordSprites[0].show(1 * 8, 1 * 8,15);
+    } else if (game->gameMode == DIG && game->subMode) {
+        // aprint("Pieces", 2, 14);
+        wordSprites[0].setText("Pieces");
+        wordSprites[0].show(2 * 8, 14 * 8,15);
 
-    //     aprintClearArea(0, 15, 10, 1);
-    //     aprintf(game->pieceCounter, 4, 15);
-    // } else if (game->gameMode == MASTER){
-    //     aprint("Level", 3, 14);
+        // aprintClearArea(0, 15, 10, 1);
+        // aprintf(game->pieceCounter, 4, 15);
+        wordSprites[1].setTextNum(game->pieceCounter);
+        wordSprites[1].show(4 * 8, 15 * 8,15);
+    } else if (game->gameMode == MASTER){
+        // aprint("Grade",3,3);
+        wordSprites[0].setText("Grade");
+        wordSprites[0].show(3 * 8, 3 * 8,15);
 
-    //     std::string str = std::to_string(game->level);
+        std::string str = GameInfo::masterGrades[game->grade + game->coolCount];
 
-    //     aprint(str, 7-str.size(), 16);
+        // aprintClearArea(0, 5, 10, 1);
+        // aprint(str,4 - (str.length() == 1),5);
+        wordSprites[1].setText(str);
+        wordSprites[1].show((4 - (str.length()) * 8), 5 * 8,15);
 
-    //     showSpeedMeter((int)game->speed);
+        // aprint("Level", 3, 14);
+        wordSprites[2].setText("Level");
+        wordSprites[2].show(4 * 8, 14 * 8,15);
 
-    //     int n = ((game->level / 100)+1) * 100;
+        str = std::to_string(game->level);
+        // aprint(str, 7-str.size(), 16);
+        wordSprites[3].setTextNum(game->level);
+        wordSprites[3].show((7-str.size()) * 8, 16 * 8,15);
 
-    //     if(n == 1000)
-    //         n--;
+        showSpeedMeter((int)game->speed);
 
-    //     aprintf(n, 4, 18);
+        int n = ((game->level / 100)+1) * 100;
 
-    //     aprint("Grade",3,3);
+        if(n == 1000)
+            n--;
 
-    //     str = GameInfo::masterGrades[game->grade + game->coolCount];
+        // aprintf(n, 4, 18);
+        wordSprites[4].setTextNum(n);
+        wordSprites[4].show(4 * 8, 18 * 8,15);
+    }
 
-    //     aprintClearArea(0, 5, 10, 1);
-    //     aprint(str,4 - (str.length() == 1),5);
-    // }
+    if (game->gameMode != BATTLE && game->gameMode != BLITZ && !(game->gameMode == SPRINT && game->subMode == 1) && game->gameMode != MASTER){
+        // aprint("Lines", 2, 17);
+        // aprintClearArea(0, 18, 10, 1);
+        // if (game->gameMode == DIG)
+        //     aprintf(game->garbageCleared, 4, 18);
+        // else
+        //     aprintf(game->linesCleared, 4, 18);
 
-    // if (game->gameMode != BATTLE && game->gameMode != BLITZ && !(game->gameMode == SPRINT && game->subMode == 1) && game->gameMode != MASTER){
-    //     aprint("Lines", 2, 17);
-    //     aprintClearArea(0, 18, 10, 1);
-    //     if (game->gameMode == DIG)
-    //         aprintf(game->garbageCleared, 4, 18);
-    //     else
-    //         aprintf(game->linesCleared, 4, 18);
+        wordSprites[6].setText("Lines");
+        wordSprites[6].show(3 * 8, 17 * 8,15);
 
-    // } else if(game->gameMode == BLITZ){
-    //     aprint("Lines", 2, 17);
-    //     std::string str;
+        int n = 0;
+        if (game->gameMode == DIG)
+            n = game->garbageCleared;
+        else
+            n = game->linesCleared;
 
-    //     if(game->level > 1)
-    //         str+= std::to_string(game->linesCleared-GameInfo::blitzLevels[game->level-2]);
-    //     else
-    //         str+= std::to_string(game->linesCleared);
+        wordSprites[7].setTextNum(n);
+        wordSprites[7].show(5 * 8, 18 * 8,15);
 
-    //     str+= " / ";
+    } else if(game->gameMode == BLITZ){
+        // aprint("Lines", 2, 17);
+        wordSprites[6].setText("Lines");
+        wordSprites[6].show(3 * 8, 17 * 8,15);
+        std::string str;
 
-    //     if(game->level > 1)
-    //         str+= std::to_string(GameInfo::blitzLevels[game->level-1] - GameInfo::blitzLevels[game->level-2]);
-    //     else
-    //         str+= "3";
+        if(game->level > 1)
+            str+= std::to_string(game->linesCleared-GameInfo::blitzLevels[game->level-2]);
+        else
+            str+= std::to_string(game->linesCleared);
 
-    //     aprintClearArea(0, 18, 10, 1);
-    //     aprint(str,2,18);
+        str+= " / ";
 
-    // } else if(game->gameMode == BATTLE || (game->gameMode == SPRINT && game->subMode == 1)){
-    //     aprint("Attack", 2, 17);
-    //     aprintClearArea(0, 18, 10, 1);
-    //     aprintf(game->linesSent, 4, 18);
-    // }
+        if(game->level > 1)
+            str+= std::to_string(GameInfo::blitzLevels[game->level-1] - GameInfo::blitzLevels[game->level-2]);
+        else
+            str+= "3";
+
+        // aprintClearArea(0, 18, 10, 1);
+        // aprint(str,2,18);
+        wordSprites[7].setText(str);
+        wordSprites[7].show(3 * 8, 18 * 8,15);
+
+    } else if(game->gameMode == BATTLE || (game->gameMode == SPRINT && game->subMode == 1)){
+        // aprint("Attack", 2, 17);
+        // aprintClearArea(0, 18, 10, 1);
+        wordSprites[6].setText("Attack");
+        wordSprites[6].show(3 * 8, 17 * 8,15);
+
+        // aprintf(game->linesSent, 4, 18);
+        wordSprites[7].setTextNum(game->linesSent);
+        wordSprites[7].show(4 * 8, 18 * 8,15);
+    }
 }
 
 void showPPS(){
@@ -1172,12 +1209,6 @@ void showPPS(){
     aprints(str,25,0,2);
 
     aprints("PPS:",0,0,2);
-}
-
-void showFinesse(){
-    if(gameSeconds == 0)
-        return;
-    aprints(std::to_string(game->finesseFaults),4*9,7,2);
 }
 
 void showClearText() {
@@ -2687,9 +2718,13 @@ void GameScene::init(){
     for(int i = 0; i < 3; i++)
         moveSprites[i] = &obj_buffer[16+i];
 
-    updateText();
+    for(int i = 0; i < MAX_WORD_SPRITES; i++){
+        wordSprites[i].setup(i, 40 + i * 3, 672 + i * 12,false);
+    }
 
     clearSprites(128);
+    updateText();
+
     drawFrame(0);
     drawFrameBackgrounds();
 
@@ -2716,15 +2751,9 @@ void GameScene::init(){
         game->maxClearDelay = 20;
     }
 
-    updateText();
-
     enableBlend((0b101010 << 8) + (1 << 6) + (0b1010));
 
     setPalette();
-
-    for(int i = 0; i < MAX_WORD_SPRITES; i++){
-        wordSprites[i].setup(0,0,0,false);
-    }
 }
 
 void GameScene::update(){

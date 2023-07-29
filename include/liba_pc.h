@@ -44,8 +44,8 @@ typedef signed long long s64;
 #define KEY_B sf::Keyboard::Z
 #define KEY_SELECT sf::Keyboard::Backspace
 #define KEY_START sf::Keyboard::Enter
-#define KEY_RIGHT sf::Keyboard::Left
-#define KEY_LEFT sf::Keyboard::Right
+#define KEY_RIGHT sf::Keyboard::Right
+#define KEY_LEFT sf::Keyboard::Left
 #define KEY_UP sf::Keyboard::Up
 #define KEY_DOWN sf::Keyboard::Down
 #define KEY_R sf::Keyboard::A
@@ -429,6 +429,10 @@ extern void color_fade_fast(int palette, int index, const COLOR * src, COLOR col
 extern void clr_rgbscale(COLOR *dst, const COLOR *src, uint nclrs, COLOR clr);
 
 extern void rumble_set_state(int);
+
+extern "C"{
+    extern void posprintf(char * buff, const char * str, ...);
+}
 
 // extern void sfx(int n);
 // extern void sfx

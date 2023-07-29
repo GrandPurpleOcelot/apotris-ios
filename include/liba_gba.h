@@ -3,6 +3,7 @@
 #include <tonc.h>
 #include "mm_types.h"
 #include "soundbank.h"
+#include "posprintf.h"
 
 static inline void setTile(int sbb, int x, int y, uint32_t value){
     se_mem[sbb][y * 32 + x] = value & 0xffff;
