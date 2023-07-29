@@ -20,7 +20,7 @@ build:
   before_script:
     - ./set_platform.sh w32
   script:
-    - ./make
+    - make
   artifacts:
     paths:
       - bin
