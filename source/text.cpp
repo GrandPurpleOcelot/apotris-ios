@@ -450,7 +450,7 @@ IWRAM_CODE void naprintSpriteOffset(std::string str, int tile, int col){
 	// const int len = min((int)str.size(),12);
 	const int len = (int) str.size();
 
-	int widthCount = getVariableWidth(str);
+	const int widthCount = getVariableWidth(str);
 
 	//divide pixel width by 8 to get tile count and add
 	//1 if pixel width / 8 has a remainder
@@ -468,22 +468,24 @@ IWRAM_CODE void naprintSpriteOffset(std::string str, int tile, int col){
 
 		TILE *src = (TILE*) &font1tiles_bin[(character - 1) * 32];
 		const int start = fontWidths[character][0];
-		const int end = fontWidths[character][1];
+		const int x = cursor & 0x7;
 
 		for(int py = 0; py < fontHeight; py++){
 			const int row = src->data[py];
 			if(!row)
 				continue;
 
-			const int toy = (tile + ((py) >> 3) * (tileW));
+			const int toy = (tile + ((py) >> 3) * (tileW)) + (cursor >> 3);
 
-			for(int px = 0; px < end; px++){
-				const int color = ((row) >> (4 * (px+start))) & 0xf;
+			if(x){
+				int part = (row >> (4 * start)) & ((1 << ((8 - x)*4))-1);
+				setSpriteTileRow(toy, py & 0x7, part << (x*4));
 
-				if(color){
-					const int cx = (px + cursor);
-					setSpritePixel(toy + ((cx) >> 3), 0, 0, 1, cx & 0x7, py & 0x7, color);
-				}
+				part = (row >> (4 * (start + 8 - x))) & ((1 << (x*4))-1);
+				setSpriteTileRow(toy + 1, py & 0x7, part);
+			}else{
+				int part = (row >> (4 * start));
+				setSpriteTileRow(toy, py & 0x7, part << (x*4));
 			}
 		}
 

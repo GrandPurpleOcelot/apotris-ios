@@ -222,6 +222,10 @@ int main(void) {
 
     // genWidths();
 
+    profile_start();
+    naprintSprite("test",1);
+    log("test: " + std::to_string(profile_stop()));
+
     changeScene(new newTitleScene());
 
     //start screen animation

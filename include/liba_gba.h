@@ -50,6 +50,12 @@ INLINE s16 sinLut(int angle){
     return sin_lut[angle];
 }
 
+INLINE void setSpriteTileRow(int index, int y, int n){
+    TILE* tile = &tile_mem[4][index];
+
+    tile->data[y] |= n;
+}
+
 extern OBJ_AFFINE* obj_aff_buffer;
 
 extern mm_word myEventHandler(mm_word msg, mm_word param);

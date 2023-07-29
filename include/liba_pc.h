@@ -401,6 +401,14 @@ INLINE void setSpritePixel(int index, u8 tx, u8 ty, u8 width, u8 x, u8 y, u8 col
     *dst = color;
 }
 
+INLINE void setSpriteTileRow(int index, int y, int n){
+    u8 *dst = TLN_GetBitmapPtr(spriteBitmap, (index) * 8, y);
+
+    for(int i = 0; i < 8; i++){
+        *dst++ |= (n >> (i * 4)) & 0xf;
+    }
+}
+
 INLINE void setTilesetPixel(int cbb, int index, int x, int y, u8 color){
     u8 *dst = TLN_GetTilesetPtr(tilesets[cbb],index,x,y);
 

@@ -1040,6 +1040,8 @@ void GameScene::showTimer() {
         std::string timer = timeToString(gameSeconds);
         aprintClearArea(0, 1, 10, 1);
         aprint(timer, 1 - (timer.size() > 8), 1);
+        // wordSprites[11].setText(timer);
+        // wordSprites[11].show(8, 8,15);
     }
 
     if(game->trainingMode){
