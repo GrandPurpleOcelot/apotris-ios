@@ -128,18 +128,7 @@ class ResetControlsElement : public Element{
         }
 
         void action() override{
-            Keys k;
-            k.moveLeft = KEY_LEFT;
-            k.moveRight = KEY_RIGHT;
-            k.rotateCW = KEY_A;
-            k.rotateCCW = KEY_B;
-            k.rotate180 = 0;
-            k.softDrop = KEY_DOWN;
-            k.hardDrop = KEY_UP;
-            k.hold = KEY_R | KEY_L;
-            k.zone = KEY_SELECT;
-
-            savefile->settings.keys = k;
+            setDefaultKeys();
 
             sfx(SFX_MENUCONFIRM);
         }
@@ -179,6 +168,8 @@ class RebindElement : public Element{
                     sfx(SFX_MENUCANCEL);
                     break;
                 }
+
+                #ifdef GBA
 
                 u16 key = key_hit(KEY_FULL);
 
@@ -221,6 +212,26 @@ class RebindElement : public Element{
                     sfx(SFX_MENUCONFIRM);
                     break;
                 }
+
+                #endif
+
+                #ifdef PC
+
+                bool found = false;
+                for(int i = 0; i < sf::Keyboard::KeyCount; i++){
+                    if(key_hit(i)){
+                        keys[index] = i;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(found){
+                    sfx(SFX_MENUCONFIRM);
+                    break;
+                }
+
+                #endif
             }
 
             reading = false;
@@ -232,7 +243,13 @@ class RebindElement : public Element{
             }
 
             int *keys = (int *) &savefile->settings.keys;
+
+            #ifdef GBA
             return keyMap[keys[index]];
+            #endif
+            #ifdef PC
+            return keyToString[keys[index]];
+            #endif
         }
 
         RebindElement(int _index, std::string _label){

@@ -303,8 +303,6 @@ int endScreen() {
             aprint(">", 10, 17);
         }
 
-        u16 key = key_hit(KEY_FULL);
-
         if (playAgain && multiplayer) {
             startMultiplayerGame(nextSeed);
 
@@ -327,7 +325,7 @@ int endScreen() {
             break;
         }
 
-        if (key == KEY_A || key == KEY_START) {
+        if (key_hit(KEY_A) || key_hit(KEY_START)) {
             if (selection == 0) {
                 shake = 0;
 
@@ -363,7 +361,7 @@ int endScreen() {
             }
         }
 
-        if (key == KEY_UP) {
+        if (key_hit(KEY_UP)) {
             if (selection == 0)
                 selection = 2;
             else
@@ -371,7 +369,7 @@ int endScreen() {
             sfx(SFX_MENUMOVE);
         }
 
-        if (key == KEY_DOWN || key == KEY_SELECT) {
+        if (key_hit(KEY_DOWN) || key_hit(KEY_SELECT)) {
             if (selection == 2)
                 selection = 0;
             else
@@ -379,7 +377,7 @@ int endScreen() {
             sfx(SFX_MENUMOVE);
         }
 
-        if(key == KEY_L){
+        if(key_hit(KEY_L)){
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
@@ -648,8 +646,6 @@ int pauseMenu(){
 
         aprint("PAUSE!", 12, 4);
 
-        u16 key = key_hit(KEY_FULL);
-
         if (!onStates) {
             optionsCounter = 0;
             aprint("Resume", 12, optionsHeight + optionsCounter++ * 2);
@@ -663,7 +659,7 @@ int pauseMenu(){
 
             aprint("Quit", 12, optionsHeight + optionsCounter++ * 2);
 
-            if (key == KEY_A) {
+            if (key_hit(KEY_A)) {
                 int n = selection;
                 if(!showSleep && selection >= 2)
                     n++;
@@ -707,7 +703,7 @@ int pauseMenu(){
             aprint("Save", 12, optionsHeight + optionsCounter++ * 2);
             aprint("Back", 12, optionsHeight + optionsCounter++ * 2);
 
-            if (key == KEY_A) {
+            if (key_hit(KEY_A)) {
                 if (selection == 0) {
                     if (saveExists) {
                         delete game;
@@ -749,7 +745,7 @@ int pauseMenu(){
             }
         }
 
-        if (key == KEY_START || key == KEY_SELECT) {
+        if (key_hit(KEY_START) || key_hit(KEY_SELECT)) {
             sfx(SFX_MENUCONFIRM);
             clearText();
             updateText();
@@ -758,7 +754,7 @@ int pauseMenu(){
             break;
         }
 
-        if (key == KEY_B) {
+        if (key_hit(KEY_B)) {
             sfx(SFX_MENUCONFIRM);
             if(onStates){
                 clearText();
@@ -774,7 +770,7 @@ int pauseMenu(){
             break;
         }
 
-        if (key == KEY_UP) {
+        if (key_hit(KEY_UP)) {
             if (selection == 0)
                 selection = maxSelection - 1;
             else
@@ -782,7 +778,7 @@ int pauseMenu(){
             sfx(SFX_MENUMOVE);
         }
 
-        if (key == KEY_DOWN) {
+        if (key_hit(KEY_DOWN)) {
             if (selection == maxSelection - 1)
                 selection = 0;
             else
@@ -790,7 +786,7 @@ int pauseMenu(){
             sfx(SFX_MENUMOVE);
         }
 
-        if(key == KEY_L && !onStates){
+        if(key_hit(KEY_L) && !onStates){
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();

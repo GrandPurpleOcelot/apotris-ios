@@ -180,6 +180,7 @@ void loadSave() {
 
 void setDefaultKeys(){
     Keys k;
+
     k.moveLeft = KEY_LEFT;
     k.moveRight = KEY_RIGHT;
     k.rotateCW = KEY_A;
@@ -187,8 +188,13 @@ void setDefaultKeys(){
     k.rotate180 = 0;
     k.softDrop = KEY_DOWN;
     k.hardDrop = KEY_UP;
-    k.hold = KEY_R | KEY_L;
     k.zone = KEY_SELECT;
+
+    k.hold = KEY_R;
+
+    #ifdef GBA
+    k.hold |= KEY_L;
+    #endif
 
     savefile->settings.keys = k;
 }

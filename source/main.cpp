@@ -222,15 +222,6 @@ int main(void) {
 
     // genWidths();
 
-    // naprint("S",4,4);
-
-    // while(closed()){
-    //     vsync();
-
-
-    //     showSprites(128);
-    // }
-
     changeScene(new newTitleScene());
 
     //start screen animation
@@ -355,12 +346,10 @@ std::string nameInput(int place) {
 
         key_poll();
 
-        u16 key = key_hit(KEY_FULL);
-
         aprint(result, 13, nameHeight);
 
         if (!onDone) {
-            if (key == KEY_A || key == KEY_RIGHT) {
+            if (key_hit(KEY_A) || key_hit(KEY_RIGHT)) {
                 cursor++;
                 if (cursor > 7) {
                     onDone = true;
@@ -371,26 +360,26 @@ std::string nameInput(int place) {
                 }
             }
 
-            if (key == KEY_B) {
+            if (key_hit(KEY_B)) {
                 result[cursor] = ' ';
                 if (cursor > 0)
                     cursor--;
                 sfx(SFX_MENUCANCEL);
             }
 
-            if (key == KEY_LEFT) {
+            if (key_hit(KEY_LEFT)) {
                 if (cursor > 0)
                     cursor--;
                 sfx(SFX_MENUMOVE);
             }
 
-            if (key == KEY_START) {
+            if (key_hit(KEY_START)) {
                 onDone = true;
                 sfx(SFX_MENUCONFIRM);
             }
 
             char curr = result.at(cursor);
-            if (key == KEY_UP) {
+            if (key_hit(KEY_UP)) {
                 if (curr == 'A')
                     result[cursor] = ' ';
                 else if (curr == ' ')
@@ -399,7 +388,7 @@ std::string nameInput(int place) {
                     result[cursor] = curr - 1;
 
                 sfx(SFX_MENUMOVE);
-            } else if (key == KEY_DOWN) {
+            } else if (key_hit(KEY_DOWN)) {
                 if (curr == 'Z')
                     result[cursor] = ' ';
                 else if (curr == ' ')
@@ -444,12 +433,12 @@ std::string nameInput(int place) {
         } else {
             aprint(">", 12, 16);
 
-            if (key == KEY_A || key == KEY_START) {
+            if (key_hit(KEY_A) || key_hit(KEY_START)) {
                 sfx(SFX_MENUCONFIRM);
                 break;
             }
 
-            if (key == KEY_B) {
+            if (key_hit(KEY_B)) {
                 onDone = false;
                 sfx(SFX_MENUCANCEL);
             }

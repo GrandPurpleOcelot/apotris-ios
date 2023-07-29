@@ -19,6 +19,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "sfMod.h"
+#include <map>
 
 #define TLN_EXCLUDE_WINDOW
 
@@ -37,6 +38,9 @@ static int offsety = (SCREEN_HEIGHT - 160)/2;
 int spriteVOffset = 0;
 
 bool render = true;
+
+std::list<sf::Keyboard::Key> currentKeys;
+std::list<sf::Keyboard::Key> previousKeys;
 
 void resize(int width, int height);
 
@@ -136,25 +140,6 @@ TLN_Bitmap spriteBitmap;
 
 LayerInfo layerInfo[4];
 
-u16 __key_curr = 0;
-u16 __key_prev = 0;
-
-// static Uint64 frame_start;
-
-void setInputs(){
-    // TLN_DefineInputKey(PLAYER1, INPUT_UP, SDLK_c);
-    // TLN_DefineInputKey(PLAYER1, INPUT_DOWN, SDLK_k);
-    // TLN_DefineInputKey(PLAYER1, INPUT_LEFT, SDLK_j);
-    // TLN_DefineInputKey(PLAYER1, INPUT_RIGHT, SDLK_l);
-    // TLN_DefineInputKey(PLAYER1, INPUT_BUTTON1, SDLK_i);
-    // TLN_DefineInputKey(PLAYER1, INPUT_BUTTON2, SDLK_SEMICOLON);
-    // TLN_DefineInputKey(PLAYER1, INPUT_BUTTON3, SDLK_z);
-    // TLN_DefineInputKey(PLAYER1, INPUT_BUTTON4, SDLK_s);
-    // TLN_DefineInputKey(PLAYER1, INPUT_START, SDLK_RETURN);
-    // TLN_DefineInputKey(PLAYER1, INPUT_QUIT, SDLK_ESCAPE);
-    // TLN_DefineInputKey(PLAYER1, INPUT_CRT, SDLK_BACKSPACE);
-}
-
 int windowScale = 3;
 // int windowWidth = 256;
 // int windowHeight = 192;
@@ -209,8 +194,6 @@ void platformInit(){
 
     TLN_SetBitmapPalette(spriteBitmap, palettes[16]);//  NECESSARY ! ! !
     spriteset = TLN_CreateSpriteset(spriteBitmap, spriteData, 128);
-
-    setInputs();
 
     TLN_SetRasterCallback(onHBlank);
 
@@ -706,46 +689,40 @@ void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int leng
 }
 
 void key_poll(){
-    __key_prev = __key_curr;
+    previousKeys = currentKeys;
+    currentKeys.clear();
 
-    __key_curr = 0;
     if(!window.hasFocus()){
         return;
     }
 
-    if(sf::Joystick::isConnected(0)){
+    // if(sf::Joystick::isConnected(0)){
 
-        __key_curr |= (sf::Joystick::isButtonPressed(0, 1)) * KEY_A;
-        __key_curr |= (sf::Joystick::isButtonPressed(0, 0)) * KEY_B;
-        __key_curr |= (sf::Joystick::isButtonPressed(0, 5)) * KEY_R;
-        __key_curr |= (sf::Joystick::isButtonPressed(0, 4)) * KEY_L;
-        __key_curr |= (sf::Joystick::isButtonPressed(0, 7)) * KEY_START;
-        __key_curr |= (sf::Joystick::isButtonPressed(0, 6)) * KEY_SELECT;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 1)) * KEY_A;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 0)) * KEY_B;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 5)) * KEY_R;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 4)) * KEY_L;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 7)) * KEY_START;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 6)) * KEY_SELECT;
 
-        float pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(7));
-        if(pos < 0)
-            __key_curr |= (1) * KEY_UP;
-        else if (pos > 0)
-            __key_curr |= (1) * KEY_DOWN;
+    //     float pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(7));
+    //     if(pos < 0)
+    //         __key_curr |= (1) * KEY_UP;
+    //     else if (pos > 0)
+    //         __key_curr |= (1) * KEY_DOWN;
 
-        pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(6));
-        if(pos < 0)
-            __key_curr |= (1) * KEY_LEFT;
-        else if (pos > 0)
-            __key_curr |= (1) * KEY_RIGHT;
+    //     pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(6));
+    //     if(pos < 0)
+    //         __key_curr |= (1) * KEY_LEFT;
+    //     else if (pos > 0)
+    //         __key_curr |= (1) * KEY_RIGHT;
 
+    // }
+
+    for(int i = 0; i < sf::Keyboard::KeyCount; i++){
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i)))
+            currentKeys.push_back(sf::Keyboard::Key(i));
     }
-
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::I)) * KEY_A;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::SemiColon)) * KEY_B;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) * KEY_R;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) * KEY_L;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) * KEY_START;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace)) * KEY_SELECT;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) * KEY_UP;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) * KEY_DOWN;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::J)) * KEY_LEFT;
-    __key_curr |= (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) * KEY_RIGHT;
 }
 
 void enableBlend(int info){
@@ -1350,5 +1327,109 @@ void resize(int width, int height){
 
     setGradient(savefile->settings.backgroundGradient);
 }
+
+std::vector<std::string> keyToString = {
+    "A",        //!< The A key
+    "B",            //!< The B key
+    "C",            //!< The C key
+    "D",            //!< The D key
+    "E",            //!< The E key
+    "F",            //!< The F key
+    "G",            //!< The G key
+    "H",            //!< The H key
+    "I",            //!< The I key
+    "J",            //!< The J key
+    "K",            //!< The K key
+    "L",            //!< The L key
+    "M",            //!< The M key
+    "N",            //!< The N key
+    "O",            //!< The O key
+    "P",            //!< The P key
+    "Q",            //!< The Q key
+    "R",            //!< The R key
+    "S",            //!< The S key
+    "T",            //!< The T key
+    "U",            //!< The U key
+    "V",            //!< The V key
+    "W",            //!< The W key
+    "X",            //!< The X key
+    "Y",            //!< The Y key
+    "Z",            //!< The Z key
+    "0",         //!< The 0 key
+    "1",         //!< The 1 key
+    "2",         //!< The 2 key
+    "3",         //!< The 3 key
+    "4",         //!< The 4 key
+    "5",         //!< The 5 key
+    "6",         //!< The 6 key
+    "7",         //!< The 7 key
+    "8",         //!< The 8 key
+    "9",         //!< The 9 key
+    "Esc",       //!< The Escape key
+    "LCtrl",     //!< The left Control key
+    "LShift",       //!< The left Shift key
+    "LAlt",         //!< The left Alt key
+    "LWin",      //!< The left OS specific key: window (Windows and Linux), apple (macOS), ...
+    "RCtrl",     //!< The right Control key
+    "RShift",       //!< The right Shift key
+    "RAlt",         //!< The right Alt key
+    "RWin",      //!< The right OS specific key: window (Windows and Linux), apple (macOS), ...
+    "Menu",         //!< The Menu key
+    "[",     //!< The [ key
+    "]",     //!< The ] key
+    ";",    //!< The ; key
+    ",",        //!< The , key
+    ".",       //!< The . key
+    "'",   //!< The ' key
+    "/",        //!< The / key
+    "\\",    //!< The \ key
+    "`",        //!< The ` key
+    "=",        //!< The = key
+    "-",       //!< The - key (hyphen)
+    "Space",        //!< The Space key
+    "Enter",        //!< The Enter/Return keys
+    "Bckspc",    //!< The Backspace key
+    "Tab",          //!< The Tabulation key
+    "PgUp",       //!< The Page up key
+    "PgDn",     //!< The Page down key
+    "End",          //!< The End key
+    "Home",         //!< The Home key
+    "Insert",       //!< The Insert key
+    "Del",       //!< The Delete key
+    "+",          //!< The + key
+    "-",     //!< The - key (minus, usually from numpad)
+    "*",     //!< The * key
+    "/",       //!< The / key
+    "Left",         //!< Left arrow
+    "Right",        //!< Right arrow
+    "Up",           //!< Up arrow
+    "Down",         //!< Down arrow
+    "Num0",      //!< The numpad 0 key
+    "Num1",      //!< The numpad 1 key
+    "Num2",      //!< The numpad 2 key
+    "Num3",      //!< The numpad 3 key
+    "Num4",      //!< The numpad 4 key
+    "Num5",      //!< The numpad 5 key
+    "Num6",      //!< The numpad 6 key
+    "Num7",      //!< The numpad 7 key
+    "Num8",      //!< The numpad 8 key
+    "Num9",      //!< The numpad 9 key
+    "F1",           //!< The F1 key
+    "F2",           //!< The F2 key
+    "F3",           //!< The F3 key
+    "F4",           //!< The F4 key
+    "F5",           //!< The F5 key
+    "F6",           //!< The F6 key
+    "F7",           //!< The F7 key
+    "F8",           //!< The F8 key
+    "F9",           //!< The F9 key
+    "F10",          //!< The F10 key
+    "F11",          //!< The F11 key
+    "F12",          //!< The F12 key
+    "F13",          //!< The F13 key
+    "F14",          //!< The F14 key
+    "F15",          //!< The F15 key
+    "Pause",        //!< The Pause key
+};
 
 #endif
