@@ -347,6 +347,39 @@ class CreditsScene : public Scene{
 
 };
 
+class LinksScene : public Scene{
+    public:
+
+    virtual std::list<std::string> getOptionList(){return {};};
+    std::list<std::string> optionList;
+
+    std::string name(){return "Links";};
+
+    // WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+    // int listStart = 0;
+    // int maxShow = 12;
+
+    // int delay = 0;
+    // int delayMax = 60;
+
+    // int scrollTimer = 0;
+    // int scrollTimerMax = 4;
+    // int scrollOffset = 0;
+    // int space = 12;
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene(){return new MainMenuScene();};
+
+    ~LinksScene(){
+        deinit();
+    };
+
+};
 
 enum class Transitions{
     INSTANT,

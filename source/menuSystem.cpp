@@ -107,7 +107,7 @@ void sceneSwitcher(std::string str){
     }else if(str == "Stats"){
         changeScene(new StatScene(),Transitions::FADE);
     }else if(str == "Links"){
-
+        changeScene(new LinksScene(),Transitions::FADE);
     }else if(str == "Skin Editor"){
         changeScene(new EditorScene(),Transitions::FADE);
     }else if(str == "Credits"){

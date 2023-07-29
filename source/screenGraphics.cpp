@@ -754,4 +754,13 @@ void GraphicsScene::deinit(){
 
     gradient(false);
     spriteVOffset = 0;
+
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        delete wordSprites[i];
+
+    for (int i = 0; i < 7; i++)
+        delete labels[i];
+
+    for (int i = 0; i < 3; i++)
+        delete scrollingText[i];
 }
