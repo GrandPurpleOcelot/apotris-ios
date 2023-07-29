@@ -109,10 +109,13 @@ public:
     void setTextNum(int n);
 
     void setTextSlow(std::string _text) {
-        // if (_text == text)
-        //     return;
-
         text = _text;
+
+        slow = true;
+        timer = 0;
+        cursor = 0;
+        w = 0;
+        startDelay = startDelayMax;
 
         if(text == ""){
             clearSpriteTiles(startTiles, (big)?20:12 , 0);
@@ -123,12 +126,6 @@ public:
         width = getVariableWidth(text);
 
         clearSpriteTiles(startTiles, (big)?20:12, 1);
-
-        slow = true;
-        timer = 0;
-        cursor = 0;
-        w = 0;
-        startDelay = startDelayMax;
     }
 
     void setup(int _id,int _index, int _tiles, bool _big);

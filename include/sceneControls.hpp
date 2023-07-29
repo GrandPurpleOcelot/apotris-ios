@@ -28,7 +28,7 @@ class ABHoldElement : public Element{
 class QuickResetElement : public Element{
     public:
         std::string getLabel() override {
-            return "Quick Reset";
+            return "Quick Restart";
         }
 
         std::string getCursor(std::string text) override {
@@ -274,9 +274,12 @@ class ControlOptionScene : public OptionListScene{
             it++;
         }
 
+        #ifdef GBA
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
         list.push_back(new RumbleElement());
+        #endif
+
         list.push_back(new ResetControlsElement());
 
         return list;

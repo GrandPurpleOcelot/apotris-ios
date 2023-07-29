@@ -234,7 +234,10 @@ class DropProtectionElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return std::to_string(savefile->settings.dropProtectionFrames);
+            if(savefile->settings.dropProtectionFrames)
+                return std::to_string(savefile->settings.dropProtectionFrames) + "f";
+            else
+                return "OFF";
         }
 };
 

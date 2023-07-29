@@ -652,10 +652,13 @@ class GraphicsScene : public Scene{
 
     OBJ_ATTR * cursorSprites[2];
 
+    OBJ_ATTR * arrowSprites[2];
+
     int cursorFloat = 0;
 
     bool refreshText = true;
     bool refreshGame = false;
+    bool refreshOption = false;
 
     bool showText = true;
 
@@ -667,6 +670,21 @@ class GraphicsScene : public Scene{
     int pathCount = 0;
 
     std::string p = "";
+
+    std::string currentOption = "";
+    std::string scrollText = "";
+
+    int scrollTextLength = 0;
+
+    int scrollTimer = 0;
+    const int scrollTimerMax = 1;
+    int scrollOffset = 0;
+    int scrollDelay = 0;
+    int scrollDelayMax = 60;
+
+    int endDelay = 0;
+    int endDelayMax = 80;
+    WordSprite* scrollingText[3];
 
     void draw();
     void update();

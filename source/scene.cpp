@@ -406,6 +406,9 @@ void OptionListScene::init(){
     for (int i = 0; i < 7; i++)
         labels[i] = new WordSprite(MAX_WORD_SPRITES + i, 32 + 3 * MAX_WORD_SPRITES + i * 5, 512 + i * 20, true);
 
+    for (int i = 0; i < 3; i++)
+        scrollingText[i] = new WordSprite(MAX_WORD_SPRITES + 7 + i, 23 + i * 3, 672 + i * 12);
+
     loadSpriteTiles(1, sprite41tiles_bin, 2, 1);
     for(int i = 0; i < 2; i++){
         arrowSprites[i] = &obj_buffer[3 + i];
@@ -476,6 +479,11 @@ void OptionListScene::init(){
         wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
 
     draw();
+
+    for(int i = 0; i < 3; i++)
+        scrollingText[i]->show(12 * 8 * i,160-8,15);
+
+    scrollingText[0]->setTextSlow(scrollText);
 }
 
 void OptionListScene::draw(){
@@ -513,14 +521,15 @@ void OptionListScene::draw(){
 
         const int index = (i + listStart) % (elementMax + 2);
 
-        if(refreshText){
+        if(refreshOption || refreshText){
             if(counter == selection)
                 wordSprites[index]->setText(option->getCursor(opt)); //draw option with text cursor
             else
                 wordSprites[index]->setText(" " + opt); // draw option without text cursor
-
-            labels[index]->setText(option->getLabel());
         }
+
+        if(refreshText)
+            labels[index]->setText(option->getLabel());
 
         const int x = (endX) * 8 - getVariableWidth(opt);
         const int y = startY + 8 * (space + 1) * i + verticalOffset;
@@ -531,6 +540,7 @@ void OptionListScene::draw(){
         labels[index]->show(startX, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
 
         if(counter == selection){ //draw sprite cursor
+            currentOption = option->getLabel();
             for(int i = 0; i < 2; i++){
                 sprite_unhide(cursorSprites[i],0);
                 sprite_enable_affine(cursorSprites[i], i, true);
@@ -567,9 +577,25 @@ void OptionListScene::draw(){
         sprite_hide(arrowSprites[1]);
     }
 
+    if(refreshText){
+        scrollText = getDescription(currentOption);
+        clearSpriteTiles(672, 144, 1);
+        if(scrollText != ""){
+            scrollTextLength = getVariableWidth(scrollText);
+
+            endDelay = 0;
+            scrollOffset = - max((240 - scrollTextLength),0) / 2;
+            scrollDelay = 0;
+            scrollingText[0]->setTextSlow(scrollText);
+        }else{
+            scrollingText[0]->setTextSlow(scrollText);
+        }
+    }
+
     showSprites(128);
 
     refreshText = false;
+    refreshOption = false;
 }
 
 bool OptionListScene::control(){
@@ -604,7 +630,7 @@ bool OptionListScene::control(){
 
         (*it)->action(-1);
 
-        refreshText = true;
+        refreshOption = true;
     }
 
     if(key_hit(KEY_RIGHT)){
@@ -613,7 +639,7 @@ bool OptionListScene::control(){
 
         (*it)->action(1);
 
-        refreshText = true;
+        refreshOption = true;
     }
 
     if(key_hit(KEY_A)){
@@ -624,7 +650,7 @@ bool OptionListScene::control(){
 
         (*it)->action();
 
-        refreshText = true;
+        refreshOption = true;
     }
 
     int prev = listStart;
@@ -716,7 +742,7 @@ bool OptionListScene::control(){
 
                 (*it)->action(dir);
 
-                refreshText = true;
+                refreshOption = true;
             }
         }
     } else {
@@ -748,6 +774,30 @@ void OptionListScene::update(){
             movingDirection = 0;
             refreshText = true;
         }
+    }
+
+    if(endDelay){
+        endDelay--;
+        if(!endDelay){
+            scrollOffset = 0;
+            scrollDelay = 0;
+            clearSpriteTiles(672, scrollTextLength / 8 , 1);
+            scrollingText[0]->setTextSlow(scrollText);
+        }
+    }else if(scrollDelay < scrollDelayMax){
+        scrollDelay++;
+    }else if(scrollTextLength > 240){
+        if(++scrollTimer >= scrollTimerMax){
+            scrollTimer = 0;
+            if(++scrollOffset >= max(scrollTextLength-240,0)){
+                endDelay = endDelayMax;
+            }
+        }
+    }
+
+    for(int i = 0; i < 3; i++){
+        scrollingText[i]->setScroll(scrollOffset);
+        scrollingText[i]->show(12 * 8 * i,160-8,14);
     }
 
     control();

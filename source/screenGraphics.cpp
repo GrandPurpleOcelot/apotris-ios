@@ -197,12 +197,25 @@ void GraphicsScene::init(){
     for (int i = 0; i < 7; i++)
         labels[i] = new WordSprite(MAX_WORD_SPRITES + i, 32 + 3 * MAX_WORD_SPRITES + i * 5, 512 + 64 + i * 20, true);
 
+    for (int i = 0; i < 3; i++)
+        scrollingText[i] = new WordSprite(MAX_WORD_SPRITES + 7 + i, 23 + i * 3, 672 + 64 + i * 12);
+
     loadSpriteTiles(255, blockSprite, 1, 1);
     for(int i = 0; i < 2; i++){
         cursorSprites[i] = &obj_buffer[14 + i];
         sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 255, 5, 0);
         sprite_enable_affine(cursorSprites[i], 10, true);
         sprite_hide(cursorSprites[i]);
+    }
+
+    loadSpriteTiles(910, sprite41tiles_bin, 2, 1);
+    for(int i = 0; i < 2; i++){
+        arrowSprites[i] = &obj_buffer[21 + i];
+        sprite_set_attr(arrowSprites[i], ShapeWide, 0, 910, 14, 0);
+
+        if(i) sprite_enable_flip(arrowSprites[1], false, true);
+
+        sprite_hide(arrowSprites[i]);
     }
 
     //faded Text Palette
@@ -295,6 +308,11 @@ void GraphicsScene::init(){
     draw();
 
     refreshGame = true;
+
+    for(int i = 0; i < 3; i++)
+        scrollingText[i]->show(12 * 8 * i,160-8,15);
+
+    scrollingText[0]->setTextSlow(scrollText);
 }
 
 void GraphicsScene::draw(){
@@ -335,15 +353,15 @@ void GraphicsScene::draw(){
 
             int index = (i + listStart) % (elementMax + 2);
 
-            if(refreshText){
+            if(refreshText || refreshOption){
                 if(counter == selection)
                     wordSprites[index]->setText(option->getCursor(opt)); //draw option with text cursor
                 else
                     wordSprites[index]->setText(" " + opt); // draw option without text cursor
-
-                std::string label = option->getLabel();
-                labels[index]->setText(label);
             }
+
+            if(refreshText)
+                labels[index]->setText(option->getLabel());
 
             int x = (endX) * 8 - getVariableWidth(opt);
             int y = startY + 8 * (space + 1) * i + verticalOffset - spriteVOffset;
@@ -354,6 +372,7 @@ void GraphicsScene::draw(){
             labels[index]->show(startX, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
 
             if(counter == selection){ //draw sprite cursor
+                currentOption = option->getLabel();
                 for(int i = 0; i < 2; i++){
                     sprite_unhide(cursorSprites[i],0);
                     sprite_enable_affine(cursorSprites[i], 10, true);
@@ -403,9 +422,39 @@ void GraphicsScene::draw(){
         showClearText();
     }
 
+    if(listStart > 0 && showText){
+        sprite_unhide(arrowSprites[0], 0);
+        sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 11);
+    }else{
+        sprite_hide(arrowSprites[0]);
+    }
+
+    if(listStart + elementMax + 2 <  (int) elementList.size() && showText){
+        sprite_unhide(arrowSprites[1], 0);
+        sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * 2 * 8 + startY + 0);
+    }else{
+        sprite_hide(arrowSprites[1]);
+    }
+
+    if(refreshText){
+        scrollText = getDescription(currentOption);
+        clearSpriteTiles(672 + 64, 144, 1);
+        if(scrollText != ""){
+            scrollTextLength = getVariableWidth(scrollText);
+
+            endDelay = 0;
+            scrollOffset = - max((240 - scrollTextLength),0) / 2;
+            scrollDelay = 0;
+            scrollingText[0]->setTextSlow(scrollText);
+        }else{
+            scrollingText[0]->setTextSlow(scrollText);
+        }
+    }
+
     showSprites(128);
 
     refreshText = false;
+    refreshOption = false;
 }
 
 void GraphicsScene::update(){
@@ -449,6 +498,30 @@ void GraphicsScene::update(){
             damp = 2;
     }
 
+    if(endDelay){
+        endDelay--;
+        if(!endDelay){
+            scrollOffset = 0;
+            scrollDelay = 0;
+            clearSpriteTiles(672 + 64, scrollTextLength / 8 , 1);
+            scrollingText[0]->setTextSlow(scrollText);
+        }
+    }else if(scrollDelay < scrollDelayMax){
+        scrollDelay++;
+    }else if(scrollTextLength > 240){
+        if(++scrollTimer >= scrollTimerMax){
+            scrollTimer = 0;
+            if(++scrollOffset >= max(scrollTextLength-240,0)){
+                endDelay = endDelayMax;
+            }
+        }
+    }
+
+    for(int i = 0; i < 3; i++){
+        scrollingText[i]->setScroll(scrollOffset);
+        scrollingText[i]->show(12 * 8 * i,160-8,14);
+    }
+
     control();
 }
 
@@ -484,8 +557,8 @@ bool GraphicsScene::control(){
 
         (*it)->action(-1);
 
-        refreshText = true;
         refreshGame = true;
+        refreshOption = true;
     }
 
     if(key_hit(KEY_RIGHT)){
@@ -494,8 +567,8 @@ bool GraphicsScene::control(){
 
         (*it)->action(1);
 
-        refreshText = true;
         refreshGame = true;
+        refreshOption = true;
     }
 
     if(key_hit(KEY_A)){
@@ -506,6 +579,7 @@ bool GraphicsScene::control(){
 
         refreshText = true;
         refreshGame = true;
+        refreshOption = true;
     }
 
     if(key_hit(KEY_R)){
@@ -631,8 +705,8 @@ bool GraphicsScene::control(){
 
                 (*it)->action(dir);
 
-                refreshText = true;
                 refreshGame = true;
+                refreshOption = true;
             }
         }
     } else {

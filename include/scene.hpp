@@ -145,11 +145,11 @@ class SimpleListScene : public Scene{
 
     int endDelay = 0;
     int endDelayMax = 80;
+    WordSprite* scrollingText[3];
 
     int options = 0;
     int selection = 0;
     WordSprite* wordSprites[MAX_WORD_SPRITES];
-    WordSprite* scrollingText[3];
 
     OBJ_ATTR * cursorSprites[2];
 
@@ -228,6 +228,21 @@ class OptionListScene : public Scene{
 
     virtual std::string name() = 0;
 
+    std::string currentOption = "";
+    std::string scrollText = "";
+
+    int scrollTextLength = 0;
+
+    int scrollTimer = 0;
+    const int scrollTimerMax = 1;
+    int scrollOffset = 0;
+    int scrollDelay = 0;
+    int scrollDelayMax = 60;
+
+    int endDelay = 0;
+    int endDelayMax = 80;
+    WordSprite* scrollingText[3];
+
     int options = 0;
     int selection = 0;
     WordSprite* wordSprites[MAX_WORD_SPRITES];
@@ -243,6 +258,7 @@ class OptionListScene : public Scene{
     int cursorFloat = 0;
 
     bool refreshText = true;
+    bool refreshOption = true;
 
     int listStart = 0;
     const int elementMax = 5;
