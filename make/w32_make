@@ -1,6 +1,5 @@
 #!/usr/bin/env make
 
-
 CXX := i686-w64-mingw32-g++
 
 # Pre-compiler and Compiler flags
@@ -19,11 +18,11 @@ MAINFILE := $(SRC)/main.cpp
 # Build directories and output
 TARGET := $(BIN)/Apotris
 ASSETS_PATH := $(BIN)/assets
-BINLIBS_PATH := $(BIN)/lib
+BINLIBS_PATH := $(BIN)
 BUILD := build
 
 # Library search directories and flags
-EXT_LIB := /usr/i686-w64-mingw32/SFML-2.6.0/lib /usr/i686-w64-mingw32/lib
+EXT_LIB := /usr/i686-w64-mingw32/lib
 LDFLAGS := -D SFML_STATIC -lTilengine -lsfml-graphics-s -lsfml-audio-s -lsfml-window-s -lsfml-system-s -lmodplug -lopengl32 -lfreetype -lwinmm -lgdi32 -lOpenAL32 -lFLAC -lvorbisenc -lvorbisfile -lvorbis -logg -lws2_32
 LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB))
 
@@ -84,7 +83,7 @@ $(BUILD)/%.o: $(SRC)/%.cpp
 $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
 	@mkdir -p $(dir $@)
 	@echo $(notdir $<)
-	@tools/bin2s.exe -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< > /dev/null 2>&1
+	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< > /dev/null 2>&1
 	@echo "#include \"`(echo $(<F) | tr . _)`.h\"" > $(BUILD)/$(<F).cpp
 	@xxd -i $< | sed 's/data_//g' | sed 's/unsigned char/const uint8_t/g' | sed '$d' >> $(BUILD)/$(<F).cpp
 	@$(CXX) -c $(BUILD)/$(<F).cpp -o $(BUILD)/$(<F).o
