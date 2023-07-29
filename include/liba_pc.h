@@ -40,15 +40,15 @@ typedef signed long long s64;
 // #define KEY_L			0x0200	//!< Shoulder L
 // #define KEY_FULL	0xFFFFFFFF		//!< Define for checking all keys.
 
-#define KEY_A sf::Keyboard::I
-#define KEY_B sf::Keyboard::SemiColon
+#define KEY_A sf::Keyboard::X
+#define KEY_B sf::Keyboard::Z
 #define KEY_SELECT sf::Keyboard::Backspace
 #define KEY_START sf::Keyboard::Enter
-#define KEY_RIGHT sf::Keyboard::L
-#define KEY_LEFT sf::Keyboard::J
-#define KEY_UP sf::Keyboard::C
-#define KEY_DOWN sf::Keyboard::K
-#define KEY_R sf::Keyboard::Z
+#define KEY_RIGHT sf::Keyboard::Left
+#define KEY_LEFT sf::Keyboard::Right
+#define KEY_UP sf::Keyboard::Up
+#define KEY_DOWN sf::Keyboard::Down
+#define KEY_R sf::Keyboard::A
 #define KEY_L sf::Keyboard::S
 #define KEY_FULL	0xFFFFFFFF
 
