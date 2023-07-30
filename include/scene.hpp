@@ -49,6 +49,7 @@ class GameScene : public Scene{
     void showText();
     void updateText();
     void showTimer();
+    void showComboStreak();
 
     bool counted = false;
 

@@ -167,6 +167,7 @@ void GameScene::draw(){
     // prof+= std::to_string(profile_stop()) + " ";
 
     // profile_start();
+    showComboStreak();
     showClearText();//~1200
     // prof+= std::to_string(profile_stop()) + " ";
 
@@ -1213,29 +1214,40 @@ void showPPS(){
     aprints("PPS:",0,0,2);
 }
 
-void showClearText() {
-
+void GameScene::showComboStreak(){
     if(game->gameMode != CLASSIC && !game->zoneTimer){
         if (game->comboCounter > 1) {
-            aprint("Combo x", 21, clearTextHeight - 1);
+            // aprint("Combo x", 21, clearTextHeight - 1);
+            wordSprites[8].setText("Combo x");
+            wordSprites[8].show(21 * 8 + 4, (clearTextHeight - 1) * 8,15);
 
-            aprintf(game->comboCounter, 28, clearTextHeight - 1);
+            // aprintf(game->comboCounter, 28, clearTextHeight - 1);
+            wordSprites[9].setTextNum(game->comboCounter);
+            wordSprites[9].show(27 * 8 + 8, (clearTextHeight - 1) * 8,15);
         } else {
-            // aprint("          ", 20, clearTextHeight - 1);
-            aprintClearArea(20, clearTextHeight - 1, 10, 1);
+            // aprintClearArea(20, clearTextHeight - 1, 10, 1);
+            wordSprites[8].hide();
+            wordSprites[9].hide();
         }
 
         if (game->b2bCounter > 0) {
-            aprint("Streak", 22, clearTextHeight + 1);
+            // aprint("Streak", 22, clearTextHeight + 1);
+            wordSprites[10].setText("Streak");
+            wordSprites[10].show(22 * 8, (clearTextHeight + 1) * 8,15);
 
-            aprint("x", 24, clearTextHeight + 2);
-            aprintf(game->b2bCounter + 1, 25, clearTextHeight + 2);
+            // aprint("x", 24, clearTextHeight + 2);
+            // aprintf(game->b2bCounter + 1, 25, clearTextHeight + 2);
+            wordSprites[11].setText("x" + std::to_string(game->b2bCounter + 1));
+            wordSprites[11].show(25 * 8, (clearTextHeight + 2) * 8,15);
         } else {
-            // aprint("          ", 20, clearTextHeight + 1);
-            // aprint("          ", 20, clearTextHeight + 2);
-            aprintClearArea(20, clearTextHeight + 1, 10, 2);
+            // aprintClearArea(20, clearTextHeight + 1, 10, 2);
+            wordSprites[10].hide();
+            wordSprites[11].hide();
         }
     }
+}
+
+void showClearText() {
 
     if(game->zoneTimer && !game->lost)
         return;
