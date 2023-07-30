@@ -816,167 +816,96 @@ int pauseMenu(){
     return 0;
 }
 
+//dir 1 is ascending, -1 is descending
+int saveRecord(EntryBoard &board, int value, int dir){
+
+    for(int i = 0; i < 5; i++){
+        if(value * dir > board.entries[i].value * dir)
+            continue;
+
+        for (int j = 3; j >= i; j--)
+            board.entries[j+1] = board.entries[j];
+
+        std::string name = nameInput(i);
+
+        board.entries[i].value = value;
+
+        strncpy(board.entries[i].name, name.c_str(), 9);
+
+        return i;
+    }
+
+    return -1;
+}
+
 int onRecord() {
     int place = -1;
 
     if(bigMode)
         return place;
 
-    for (int i = 0; i < 5; i++) {
-        if (game->gameMode == MARATHON) {
-            if(subMode == 0){
-                if (game->score < savefile->marathon[mode].highscores[i].score)
-                    continue;
-
-                for (int j = 3; j >= i; j--)
-                    savefile->marathon[mode].highscores[j + 1] = savefile->marathon[mode].highscores[j];
-
-                std::string name = nameInput(i);
-
-                savefile->marathon[mode].highscores[i].score = game->score;
-                strncpy(savefile->marathon[mode].highscores[i].name, name.c_str(), 9);
-            }else{
-                if (game->score < savefile->zone[mode].highscores[i].score)
-                    continue;
-
-                for (int j = 3; j >= i; j--)
-                    savefile->zone[mode].highscores[j + 1] = savefile->zone[mode].highscores[j];
-
-                std::string name = nameInput(i);
-
-                savefile->zone[mode].highscores[i].score = game->score;
-                strncpy(savefile->zone[mode].highscores[i].name, name.c_str(), 9);
-            }
-        } else if (game->gameMode == SPRINT && game->won == 1) {
-            if(subMode == 0){
-                if (gameSeconds > savefile->sprint[mode].times[i].frames && savefile->sprint[mode].times[i].frames)
-                    continue;
-
-                for (int j = 3; j >= i; j--)
-                    savefile->sprint[mode].times[j + 1] = savefile->sprint[mode].times[j];
-
-                std::string name = nameInput(i);
-
-                savefile->sprint[mode].times[i].frames = gameSeconds;
-                strncpy(savefile->sprint[mode].times[i].name, name.c_str(), 9);
-            }else{
-                if (gameSeconds > savefile->sprintAttack[mode].times[i].frames && savefile->sprintAttack[mode].times[i].frames)
-                    continue;
-
-                for (int j = 3; j >= i; j--)
-                    savefile->sprintAttack[mode].times[j + 1] = savefile->sprintAttack[mode].times[j];
-
-                std::string name = nameInput(i);
-
-                savefile->sprintAttack[mode].times[i].frames = gameSeconds;
-                strncpy(savefile->sprintAttack[mode].times[i].name, name.c_str(), 9);
-            }
-        } else if (game->gameMode == DIG && game->won == 1) {
-            if(subMode == 0){
-                if (gameSeconds > savefile->dig[mode].times[i].frames && savefile->dig[mode].times[i].frames)
-                    continue;
-
-                for (int j = 3; j >= i; j--)
-                    savefile->dig[mode].times[j + 1] = savefile->dig[mode].times[j];
-
-                std::string name = nameInput(i);
-
-                savefile->dig[mode].times[i].frames = gameSeconds;
-                strncpy(savefile->dig[mode].times[i].name, name.c_str(), 9);
-            }else{
-                if (game->pieceCounter > savefile->digEfficiency[mode].highscores[i].score && savefile->digEfficiency[mode].highscores[i].score)
-                    continue;
-
-                for (int j = 3; j >= i; j--)
-                    savefile->digEfficiency[mode].highscores[j + 1] = savefile->digEfficiency[mode].highscores[j];
-
-                std::string name = nameInput(i);
-
-                savefile->digEfficiency[mode].highscores[i].score = game->pieceCounter;
-                strncpy(savefile->digEfficiency[mode].highscores[i].name, name.c_str(), 9);
-            }
-        } else if (game->gameMode == ULTRA) {
-            if (game->score < savefile->ultra[mode].highscores[i].score)
-                continue;
-
-            for (int j = 3; j >= i; j--)
-                savefile->ultra[mode].highscores[j + 1] = savefile->ultra[mode].highscores[j];
-
-            std::string name = nameInput(i);
-
-            savefile->ultra[mode].highscores[i].score = game->score;
-            strncpy(savefile->ultra[mode].highscores[i].name, name.c_str(), 9);
-        } else if (game->gameMode == BLITZ) {
-            if (game->score < savefile->blitz[mode].highscores[i].score)
-                continue;
-
-            for (int j = 3; j >= i; j--)
-                savefile->blitz[mode].highscores[j + 1] = savefile->blitz[mode].highscores[j];
-
-            std::string name = nameInput(i);
-
-            savefile->blitz[mode].highscores[i].score = game->score;
-            strncpy(savefile->blitz[mode].highscores[i].name, name.c_str(), 9);
-        } else if (game->gameMode == COMBO) {
-            if (game->linesCleared < savefile->combo.highscores[i].score)
-                continue;
-
-            for (int j = 3; j >= i; j--)
-                savefile->combo.highscores[j + 1] = savefile->combo.highscores[j];
-
-            std::string name = nameInput(i);
-
-            savefile->combo.highscores[i].score = game->linesCleared;
-            strncpy(savefile->combo.highscores[i].name, name.c_str(), 9);
-        } else if (game->gameMode == SURVIVAL) {
-            if (gameSeconds < savefile->survival[mode].times[i].frames && savefile->survival[mode].times[i].frames)
-                continue;
-
-            for (int j = 3; j >= i; j--)
-                savefile->survival[mode].times[j + 1] = savefile->survival[mode].times[j];
-
-            std::string name = nameInput(i);
-
-            savefile->survival[mode].times[i].frames = gameSeconds;
-            strncpy(savefile->survival[mode].times[i].name, name.c_str(), 9);
-        } else if (game->gameMode == CLASSIC) {
-            if (game->score < savefile->classic[subMode].highscores[i].score)
-                continue;
-
-            for (int j = 3; j >= i; j--)
-                savefile->classic[subMode].highscores[j + 1] = savefile->classic[subMode].highscores[j];
-
-            std::string name = nameInput(i);
-
-            savefile->classic[subMode].highscores[i].score = game->score;
-            strncpy(savefile->classic[subMode].highscores[i].name, name.c_str(), 9);
-        } else if (game->gameMode == MASTER) {
-            int grade = game->grade + game->coolCount + (int) game->creditGrade;
-
-            if(grade > 32)
-                grade = 32;
-
-            if (grade < savefile->master[subMode].grade[i] || (grade == savefile->master[subMode].grade[i] && gameSeconds > savefile->master[subMode].times[i].frames))
-                continue;
-
-            for (int j = 3; j >= i; j--){
-                savefile->master[subMode].times[j + 1] = savefile->master[subMode].times[j];
-                savefile->master[subMode].grade[j + 1] = savefile->master[subMode].grade[j];
-            }
-
-            std::string name = nameInput(i);
-
-            savefile->master[subMode].times[i].frames = gameSeconds;
-            strncpy(savefile->master[subMode].times[i].name, name.c_str(), 9);
-            savefile->master[subMode].grade[i] = grade;
+    if (game->gameMode == MARATHON) {
+        if(subMode == 0){
+            place = saveRecord(savefile->boards.marathon[mode], game->score, -1);
+        }else{
+            place = saveRecord(savefile->boards.zone[mode], game->score, -1);
         }
+    } else if (game->gameMode == SPRINT && game->won == 1) {
+        if(subMode == 0){
+            place = saveRecord(savefile->boards.sprint[mode], gameSeconds, 1);
+        }else{
+            place = saveRecord(savefile->boards.sprintAttack[mode], gameSeconds, 1);
+        }
+    } else if (game->gameMode == DIG && game->won == 1) {
+        if(subMode == 0){
+            place = saveRecord(savefile->boards.dig[mode], gameSeconds, 1);
+        }else{
+            place = saveRecord(savefile->boards.digEfficiency[mode], game->pieceCounter, 1);
+        }
+    } else if (game->gameMode == ULTRA) {
+        place = saveRecord(savefile->boards.ultra[mode], game->score, -1);
 
-        place = i;
+    } else if (game->gameMode == BLITZ) {
+        place = saveRecord(savefile->boards.blitz[mode], game->score, -1);
 
-        saveSavefile();
-        // saveToSram();
-        break;
+    } else if (game->gameMode == COMBO) {
+        place = saveRecord(savefile->boards.combo, game->linesCleared, -1);
+
+    } else if (game->gameMode == SURVIVAL) {
+        place = saveRecord(savefile->boards.survival[mode], gameSeconds, -1);
+
+    } else if (game->gameMode == CLASSIC) {
+        place = saveRecord(savefile->boards.classic[subMode], gameSeconds, -1);
+
+    } else if (game->gameMode == MASTER) {
+        int grade = game->grade + game->coolCount + (int) game->creditGrade;
+
+        if(grade > 32)
+            grade = 32;
+
+        EntryBoard board = savefile->boards.master[subMode];
+
+        for(int i = 0; i < 5; i++){
+            if (grade < board.entries[i].grade || (grade == board.entries[i].grade && gameSeconds > board.entries[i].value))
+                continue;
+
+            for (int j = 3; j >= i; j--)
+                board.entries[j+1] = board.entries[j];
+
+            std::string name = nameInput(i);
+
+            board.entries[i].value = gameSeconds;
+            board.entries[i].grade = grade;
+
+            strncpy(board.entries[i].name, name.c_str(), 9);
+
+            place = i;
+            break;
+        }
     }
+
+    if(place >= 0)
+        saveSavefile();
 
     return place;
 }

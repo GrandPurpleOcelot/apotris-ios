@@ -2129,61 +2129,61 @@ void resetScoreboard(int mode, int goal, int subMode){
         }
     }
 
-    switch(mode){
-    case MARATHON:
-        if(!subMode){
-            for (int j = 0; j < 5; j++)
-                savefile->marathon[goal].highscores[j].score = 0;
-        }else{
-            for (int j = 0; j < 5; j++)
-                savefile->zone[goal].highscores[j].score = 0;
-        }
-        break;
-    case SPRINT:
-        if(!subMode){
-            for (int j = 0; j < 5; j++)
-                savefile->sprint[goal].times[j].frames = 0;
-        }else{
-            for (int j = 0; j < 5; j++)
-                savefile->sprintAttack[goal].times[j].frames = 0;
-        }
-        break;
-    case DIG:
-        if(!subMode){
-            for (int j = 0; j < 5; j++)
-                savefile->dig[goal].times[j].frames = 0;
-        }else{
-            for (int j = 0; j < 5; j++)
-                savefile->digEfficiency[goal].highscores[j].score = 0;
-        }
-        break;
-    case ULTRA:
-        for (int j = 0; j < 5; j++)
-            savefile->ultra[goal].highscores[j].score = 0;
-        break;
-    case BLITZ:
-        for (int j = 0; j < 5; j++)
-            savefile->blitz[goal].highscores[j].score = 0;
-        break;
-    case COMBO:
-        for (int j = 0; j < 5; j++)
-            savefile->combo.highscores[j].score = 0;
-        break;
-    case SURVIVAL:
-        for (int j = 0; j < 5; j++)
-            savefile->survival[goal].times[j].frames = 0;
-        break;
-    case CLASSIC:
-        for (int j = 0; j < 5; j++)
-            savefile->classic[subMode].highscores[j].score = 0;
-        break;
-    case MASTER:
-        for (int j = 0; j < 5; j++){
-            savefile->master[subMode].times[j].frames = 0;
-            savefile->master[subMode].grade[j] = -1;
-        }
-        break;
-    }
+    // switch(mode){
+    // case MARATHON:
+    //     if(!subMode){
+    //         for (int j = 0; j < 5; j++)
+    //             savefile->marathon[goal].highscores[j].score = 0;
+    //     }else{
+    //         for (int j = 0; j < 5; j++)
+    //             savefile->zone[goal].highscores[j].score = 0;
+    //     }
+    //     break;
+    // case SPRINT:
+    //     if(!subMode){
+    //         for (int j = 0; j < 5; j++)
+    //             savefile->sprint[goal].times[j].frames = 0;
+    //     }else{
+    //         for (int j = 0; j < 5; j++)
+    //             savefile->sprintAttack[goal].times[j].frames = 0;
+    //     }
+    //     break;
+    // case DIG:
+    //     if(!subMode){
+    //         for (int j = 0; j < 5; j++)
+    //             savefile->dig[goal].times[j].frames = 0;
+    //     }else{
+    //         for (int j = 0; j < 5; j++)
+    //             savefile->digEfficiency[goal].highscores[j].score = 0;
+    //     }
+    //     break;
+    // case ULTRA:
+    //     for (int j = 0; j < 5; j++)
+    //         savefile->ultra[goal].highscores[j].score = 0;
+    //     break;
+    // case BLITZ:
+    //     for (int j = 0; j < 5; j++)
+    //         savefile->blitz[goal].highscores[j].score = 0;
+    //     break;
+    // case COMBO:
+    //     for (int j = 0; j < 5; j++)
+    //         savefile->combo.highscores[j].score = 0;
+    //     break;
+    // case SURVIVAL:
+    //     for (int j = 0; j < 5; j++)
+    //         savefile->survival[goal].times[j].frames = 0;
+    //     break;
+    // case CLASSIC:
+    //     for (int j = 0; j < 5; j++)
+    //         savefile->classic[subMode].highscores[j].score = 0;
+    //     break;
+    // case MASTER:
+    //     for (int j = 0; j < 5; j++){
+    //         savefile->master[subMode].times[j].frames = 0;
+    //         savefile->master[subMode].grade[j] = -1;
+    //     }
+    //     break;
+    // }
 
     saveSavefile();
     clearText();

@@ -226,17 +226,17 @@ void setDefaults(Save *save, int depth){
             savefile->latestName[i] = ' ';
         savefile->latestName[8] = '\0';
 
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 5; j++)
-                savefile->marathon[i].highscores[j].score = 0;
+        // for (int i = 0; i < 4; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         savefile->marathon[i].highscores[j].score = 0;
 
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 5; j++)
-                savefile->sprint[i].times[j].frames = 0;
+        // for (int i = 0; i < 3; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         savefile->sprint[i].times[j].frames = 0;
 
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 5; j++)
-                savefile->dig[i].times[j].frames = 0;
+        // for (int i = 0; i < 3; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         savefile->dig[i].times[j].frames = 0;
     }
 
     if(depth < 2){
@@ -244,9 +244,9 @@ void setDefaults(Save *save, int depth){
         for (int i = 0; i < 10; i++)
             save->settings.songList[i] = true;
 
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 5; j++)
-                save->ultra[i].highscores[j].score = 0;
+        // for (int i = 0; i < 3; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         save->ultra[i].highscores[j].score = 0;
     }
 
     if(depth < 3){
@@ -258,16 +258,16 @@ void setDefaults(Save *save, int depth){
         save->settings.abHold = true;
         save->settings.resetHoldType = false;
 
-        for (int i = 0; i < 2; i++)
-            for (int j = 0; j < 5; j++)
-                save->blitz[i].highscores[j].score = 0;
+        // for (int i = 0; i < 2; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         save->blitz[i].highscores[j].score = 0;
 
-        for (int j = 0; j < 5; j++)
-            save->combo.highscores[j].score = 0;
+        // for (int j = 0; j < 5; j++)
+        //     save->combo.highscores[j].score = 0;
 
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 5; j++)
-                save->survival[i].times[j].frames = 0;
+        // for (int i = 0; i < 3; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         save->survival[i].times[j].frames = 0;
     }
 
     if(depth < 4){
@@ -275,17 +275,17 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 5){
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 5; j++)
-                save->sprintAttack[i].times[j].frames = 0;
+        // for (int i = 0; i < 3; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         save->sprintAttack[i].times[j].frames = 0;
 
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 5; j++)
-                save->digEfficiency[i].highscores[j].score = 0;
+        // for (int i = 0; i < 3; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         save->digEfficiency[i].highscores[j].score = 0;
 
-        for (int i = 0; i < 2; i++)
-            for (int j = 0; j < 5; j++)
-                save->classic[i].highscores[j].score = 0;
+        // for (int i = 0; i < 2; i++)
+        //     for (int j = 0; j < 5; j++)
+        //         save->classic[i].highscores[j].score = 0;
 
         // save->stats.timePlayed = 0;
         save->stats.gamesStarted = 0;
@@ -296,16 +296,16 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 6){
-        for (int i = 0; i < 2; i++){
-            for (int j = 0; j < 5; j++){
-                save->master[i].times[j].frames = 0;
-                save->master[i].grade[j] = -1;
-            }
-        }
+        // for (int i = 0; i < 2; i++){
+        //     for (int j = 0; j < 5; j++){
+        //         save->master[i].times[j].frames = 0;
+        //         save->master[i].grade[j] = -1;
+        //     }
+        // }
 
-        for(int i = 0; i < 4; i++)
-            for(int j = 0; j < 5; j++)
-                save->zone[i].highscores[j].score = 0;
+        // for(int i = 0; i < 4; i++)
+        //     for(int j = 0; j < 5; j++)
+        //         save->zone[i].highscores[j].score = 0;
 
         save->settings.diagonalType = save->settings.noDiagonals;
         save->settings.delaySoftDrop = false;

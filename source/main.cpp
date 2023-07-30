@@ -220,7 +220,7 @@ int main(void) {
 
     initialize();
 
-    // genWidths();
+    log(sizeof(savefile->boards));
 
     changeScene(new newTitleScene());
 

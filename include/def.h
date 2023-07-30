@@ -138,13 +138,18 @@ typedef struct Skin{
 
 #define MAX_CUSTOM_SKINS 5
 
-typedef struct Save{
-    u8 newGame;
+typedef struct SaveEntry{
+    char name[9];
+    bool pro;
+    s16 grade;
+    int value;
+}ALIGN(4) SaveEntry;
 
-    Settings settings;
-    int seed;
-    char latestName[9];
+typedef struct EntryBoard{
+   SaveEntry entries[5];
+}ALIGN(4) EntryBoard;
 
+typedef struct OldScoreboards{
     Scoreboard marathon[4];
     Timeboard sprint[3];
     Timeboard dig[3];
@@ -157,6 +162,31 @@ typedef struct Save{
     Scoreboard classic[2];
     Gradeboard master[2];
     Scoreboard zone[4];
+}ALIGN(4) OldScoreboards;
+
+typedef struct ModeBoards{
+    EntryBoard marathon[4];
+    EntryBoard sprint[3];
+    EntryBoard dig[3];
+    EntryBoard ultra[3];
+    EntryBoard blitz[2];
+    EntryBoard combo;
+    EntryBoard survival[3];
+    EntryBoard sprintAttack[3];
+    EntryBoard digEfficiency[3];
+    EntryBoard classic[2];
+    EntryBoard master[2];
+    EntryBoard zone[4];
+}ALIGN(4) ModeBoards;
+
+typedef struct Save{
+    u8 newGame;
+
+    Settings settings;
+    int seed;
+    char latestName[9];
+
+    ModeBoards boards;
 
     int placeHolder[1000];
 
