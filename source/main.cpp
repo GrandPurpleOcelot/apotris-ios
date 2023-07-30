@@ -220,8 +220,6 @@ int main(void) {
 
     initialize();
 
-    log(sizeof(savefile->boards));
-
     changeScene(new newTitleScene());
 
     //start screen animation

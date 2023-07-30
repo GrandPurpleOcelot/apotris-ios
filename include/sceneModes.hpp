@@ -9,14 +9,27 @@ class PlayOptionScene : public OptionListScene{
     int goal = 0;
     int level = 0;
 
+    bool onScore = false;
+    int movingScore = 0;
+
+    int movingScoreTimer = 0;
+    int movingScoreTimerMax = 8;
+
+    virtual bool getIfTime(){return false;};
+    virtual bool getIfGrade(){return false;};
+
     std::string currentElement = "";
 
     virtual BlockEngine::Modes getMode() = 0;
 
+    void init();
     bool control();
     void draw();
+    void update();
 
     virtual void start();
+
+    virtual EntryBoard* getBoard(int submode, int goal){return nullptr;};
 
     QuickStart quick();
 
@@ -310,6 +323,16 @@ class MarathonScene : public PlayOptionScene{
         };
     };
 
+    EntryBoard* getBoard(int submode, int goal){
+        if(submode == 0){
+           return &savefile->boards.marathon[goal];
+
+        }else{
+           return &savefile->boards.zone[goal];
+
+        }
+    }
+
     std::string name(){return "Marathon";};
 };
 
@@ -317,6 +340,7 @@ class SprintScene : public PlayOptionScene{
     public:
 
     BlockEngine::Modes getMode(){return BlockEngine::SPRINT;};
+    bool getIfTime(){return true;};
 
     std::list<Element*> getElementList(){
         return {
@@ -324,6 +348,16 @@ class SprintScene : public PlayOptionScene{
             new IntSelectorElement("Lines",{20,40,100},1),
         };
     };
+
+    EntryBoard* getBoard(int submode, int goal){
+        if(submode == 0){
+           return &savefile->boards.sprint[goal];
+
+        }else{
+           return &savefile->boards.sprintAttack[goal];
+
+        }
+    }
 
     std::string name(){return "Sprint";};
 };
@@ -333,12 +367,24 @@ class DigScene : public PlayOptionScene{
 
     BlockEngine::Modes getMode(){return BlockEngine::DIG;};
 
+    bool getIfTime(){return !subMode;};
+
     std::list<Element*> getElementList(){
         return {
             new StringSelectorElement("Type",{"Normal","Efficiency"}),
             new IntSelectorElement("Lines",{10,20,100}),
         };
     };
+
+    EntryBoard* getBoard(int submode, int goal){
+        if(submode == 0){
+           return &savefile->boards.dig[goal];
+
+        }else{
+           return &savefile->boards.digEfficiency[goal];
+
+        }
+    }
 
     std::string name(){return "Dig";};
 };
@@ -354,6 +400,10 @@ class UltraScene : public PlayOptionScene{
         };
     };
 
+    EntryBoard* getBoard(int submode, int goal){
+        return &savefile->boards.ultra[goal];
+    }
+
     std::string name(){return "Ultra";};
 };
 
@@ -366,6 +416,10 @@ class BlitzScene : public PlayOptionScene{
         return {
         };
     };
+
+    EntryBoard* getBoard(int submode, int goal){
+        return &savefile->boards.blitz[goal];
+    }
 
     std::string name(){return "Blitz";};
 
@@ -384,6 +438,10 @@ class ComboScene : public PlayOptionScene{
         };
     };
 
+    EntryBoard* getBoard(int submode, int goal){
+        return &savefile->boards.combo;
+    }
+
     std::string name(){return "Combo";};
 };
 
@@ -392,11 +450,17 @@ class SurvivalScene : public PlayOptionScene{
 
     BlockEngine::Modes getMode(){return BlockEngine::SURVIVAL;};
 
+    bool getIfTime(){return true;};
+
     std::list<Element*> getElementList(){
         return {
             new TupleSelectorElement("Difficulty",{{1,"EASY"},{2,"MEDIUM"},{3,"HARD"}}),
         };
     };
+
+    EntryBoard* getBoard(int submode, int goal){
+        return &savefile->boards.survival[goal];
+    }
 
     std::string name(){return "Survival";};
 };
@@ -413,6 +477,10 @@ class ClassicScene : public PlayOptionScene{
         };
     };
 
+    EntryBoard* getBoard(int submode, int goal){
+        return &savefile->boards.classic[submode];
+    }
+
     std::string name(){return "Classic";};
 };
 
@@ -421,11 +489,18 @@ class MasterScene : public PlayOptionScene{
 
     BlockEngine::Modes getMode(){return BlockEngine::MASTER;};
 
+    bool getIfTime(){return true;};
+    bool getIfGrade(){return true;};
+
     std::list<Element*> getElementList(){
         return {
             new StringSelectorElement("Rules",{"Normal","Classic"}),
         };
     };
+
+    EntryBoard* getBoard(int submode, int goal){
+        return &savefile->boards.master[submode];
+    }
 
     std::string name(){return "Master";};
 };
