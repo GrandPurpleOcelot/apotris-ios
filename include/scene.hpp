@@ -18,6 +18,7 @@ extern const std::list<std::string> controlOptions;
 extern std::map<int,std::string> keyMap;
 
 extern std::string getDescription(std::string element);
+extern std::string getDescription(std::string mode, std::string element, std::string option);
 
 class Scene{
 public:

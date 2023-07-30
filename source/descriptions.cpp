@@ -4,96 +4,177 @@ std::string getDescription(std::string element){
 
 // MODES ---------------------------------------------------------------------------------
     if(element == "Marathon"){
-        return "Try to get the best score as the game gets faster and faster";
+        return "Try to get the best score as the game gets faster and faster.";
 
     }else if(element == "Sprint"){
-        return "Clear lines as fast as you can";
+        return "Reach the goal as fast as possible.";
 
     }else if(element == "Dig"){
-        return "Dig through lines of garbage";
+        return "Dig through lines of garbage.";
 
     }else if(element == "Ultra"){
-        return "Score as much as possible in a limited time";
+        return "Score as much as possible in a limited time.";
 
     }else if(element == "Blitz"){
-        return "Get the best score in a limited time while the game gets faster and faster";
+        return "Get the best score in a limited time while the game gets faster and faster.";
 
     }else if(element == "Combo"){
-        return "Aim for the most consecutive clears in a 4-wide well";
+        return "Aim for the most consecutive clears in a 4-wide well.";
 
     }else if(element == "Survival"){
-        return "Survive as long as possible while garbage rises from below";
+        return "Survive as long as possible while garbage rises from below.";
 
     }else if(element == "Classic"){
-        return "Old school stacking mechanics";
+        return "Old school stacking mechanics.";
 
     }else if(element == "Master"){
-        return "Become a Grandmaster";
+        return "Become a Grandmaster.";
 
     }else if(element == "2P Battle"){
-        return "Battle your friends through the Link Cable";
+        return "Battle your friends through the Link Cable.";
 
     }else if(element == "CPU Battle"){
-        return "Go against an AI opponent";
+        return "Go against an AI opponent.";
 
     }else if(element == "Training"){
-        return "Try out new strategies or improve your playing";
+        return "Try out new strategies or improve your playing.";
 
 // Graphics ---------------------------------------------------------------------------------
 
 // AUDIO ---------------------------------------------------------------------------------
     }else if(element == "Announcer"){
-        return "Announcer SFX when you clear lines";
+        return "Announcer SFX when you clear lines.";
 
     }else if(element == "Playback"){
-        return "Cycle through songs or Loop the same song";
+        return "Cycle through songs or Loop the same song.";
 
     }else if(element == "Song List"){
-        return "Enable/Disable songs";
+        return "Enable/Disable songs.";
 
 // CONTROL -------------------------------------------------------------------------------
     }else if(element == "A+B to Hold"){
-        return "Hold when pressing A and B";
+        return "Hold when pressing A and B.";
 
     }else if(element == "Quick Restart"){
-        return "Press/Hold L and R to restart the game";
+        return "Press/Hold L and R to restart the game.";
 
     }else if(element == "Rumble"){
-        return "Needs compatible hardware";
+        return "Needs compatible hardware.";
 
     }else if(element == "Reset Controls"){
-        return "Set bindings back to default";
+        return "Set bindings back to default.";
 
 // HANDLING ------------------------------------------------------------------------------
     }else if(element == "DAS"){
-        return "Delay before auto repeat starts";
+        return "Delay before auto repeat starts.";
 
     }else if(element == "ARR"){
-        return "How often auto repeat activates";
+        return "How often auto repeat activates.";
 
     }else if(element == "SDF"){
-        return "Soft Drop Auto Repeat Rate";
+        return "Soft Drop Auto Repeat Rate.";
 
     }else if(element == "Delay Soft Drop"){
-        return "Whether DAS affects Soft Drop or not";
+        return "Whether DAS affects Soft Drop or not.";
 
     }else if(element == "Drop Protection"){
-        return "Disables back-to-back hard drops for the set frames";
+        return "Disables back-to-back hard drops for the set frames.";
 
     }else if(element == "Directional Delay"){
-        return "Reset DAS on direction change";
+        return "Reset DAS on direction change.";
 
     }else if(element == "Disable Diagonals"){
-        return "STRICT ignores diagonals completely, SOFT registers the second direction when the first gets released";
+        return "STRICT ignores diagonals completely, SOFT registers the second direction when the first gets released.";
 
     }else if(element == "Initial Hold"){
-        return "Buffer hold during delays";
+        return "Buffer hold during delays.";
 
     }else if(element == "Initial Rotation"){
-        return "Buffer rotations during delays";
+        return "Buffer rotations during delays.";
 
     }else if(element == "Initial System"){
-        return "TYPE A always buffers actions, TYPE B only buffers if you started holding the button during the delay";
+        return "TYPE A always buffers actions, TYPE B only buffers if you started holding the button during the delay.";
+
+    }
+
+    return "";
+}
+
+std::string getDescription(std::string mode, std::string element,std::string option){
+    if(mode == "Marathon"){
+        if(element == "Type"){
+            if(option == "Normal"){
+                return "The traditional marathon experience.";
+
+            }else if(option == "Zone"){
+                return "Clearing lines charges the Zone meter. Activate Zone to slow time and clear as many times as you can.";
+
+            }
+        }else if(element == "Level"){
+            return "Starting Level.";
+
+        }else if(element == "Lines"){
+            return "How many lines to clear before the game ends.";
+
+        }
+    }else if(mode == "Sprint"){
+        if(element == "Type"){
+            if(option == "Normal"){
+                return "Reach the goal by clearing lines.";
+
+            }else if(option == "Attack"){
+                return "Reach the goal by sending garbage.";
+
+            }
+        }else if(element == "Lines"){
+            return "Goal lines.";
+
+        }
+    }else if(mode == "Dig"){
+        if(element == "Type"){
+            if(option == "Normal"){
+                return "Clear the garbage lines as fast as possible.";
+
+            }else if(option == "Efficiency"){
+                return "Clear the garbage lines using as few pieces as possible.";
+
+            }
+        }else if(element == "Lines"){
+            return "Goal lines.";
+
+        }
+    }else if(mode == "Classic"){
+        if(element == "Type"){
+            if(option == "A-TYPE"){
+                return "Score as much as possible while the game gets faster and faster.";
+
+            }else if(option == "Efficiency"){
+                return "Clear 25 lines while scoring as much as possible.";
+
+            }
+        }else if(element == "Level"){
+            return "Starting Level.";
+
+        }else if(element == "Lines"){
+            return "How many lines to clear before the game ends.";
+
+        }
+    }else if(mode == "Master"){
+        if(option == "Normal"){
+            return "Mechanics that mirror the other normal modes.";
+
+        }else if(option == "Classic"){
+            return "Classic mechanics for Grandmaster fanatics.";
+
+        }
+    }else if(mode == "Training"){
+        if(element == "Finesse Training"){
+            return "Forces you to play with perfect finesse, showing the correct move when you make a mistake.";
+
+        }else if(element == "Level"){
+            return "Starting Level.";
+
+        }
     }
 
     return "";

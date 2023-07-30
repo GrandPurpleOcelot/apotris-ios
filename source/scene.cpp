@@ -624,7 +624,7 @@ bool OptionListScene::control(){
         return true;
     }
 
-    if(key_hit(KEY_LEFT)){
+    if(key_hit(KEY_LEFT) && !elementList.empty()){
         auto it = elementList.begin();
         std::advance(it,selection);
 
@@ -633,7 +633,8 @@ bool OptionListScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(KEY_RIGHT)){
+    if(key_hit(KEY_RIGHT) && !elementList.empty()){
+
         auto it = elementList.begin();
         std::advance(it,selection);
 
@@ -642,7 +643,7 @@ bool OptionListScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(KEY_A)){
+    if(key_hit(KEY_A) && !elementList.empty()){
         auto it = elementList.begin();
         std::advance(it,selection);
 

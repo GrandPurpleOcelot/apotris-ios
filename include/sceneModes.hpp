@@ -9,9 +9,12 @@ class PlayOptionScene : public OptionListScene{
     int goal = 0;
     int level = 0;
 
+    std::string currentElement = "";
+
     virtual BlockEngine::Modes getMode() = 0;
 
     bool control();
+    void draw();
 
     virtual void start();
 

@@ -2522,6 +2522,123 @@ QuickStart PlayOptionScene::quick(){
     return q;
 }
 
+void PlayOptionScene::draw(){
+    fallingBlocks();
+
+    const int space = 1;
+    const int startX = 3 * 8;
+    const int endX = 30-4;
+
+    int offset = (sinLut(cursorFloat) * 2) >> 12;
+    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+    int verticalOffset = 0;
+    if(moving){
+        int temp = lerp((movingDirection) * (space + 1) * 8,0,64*movingTimer);
+        verticalOffset = lerp(temp,0,64*movingTimer);
+        setLayerScroll(2, 0, -verticalOffset);
+    }else{
+        setLayerScroll(2, 0, 0);
+    }
+
+    int i = 0;//drawing index, starts at listStart
+    int counter = 0;//element index
+    for(auto & option : elementList){
+        if(counter < listStart){
+            counter++;
+            continue;
+        }
+
+        if(i > elementMax + 1){ // break if elements drawn reached max
+            continue;
+        }
+
+        std::string opt = option->getCurrentOption();
+
+        const int index = (i + listStart) % (elementMax + 2);
+
+        if(refreshOption || refreshText){
+            if(counter == selection)
+                wordSprites[index]->setText(option->getCursor(opt)); //draw option with text cursor
+            else
+                wordSprites[index]->setText(" " + opt); // draw option without text cursor
+        }
+
+        if(refreshText)
+            labels[index]->setText(option->getLabel());
+
+        const int x = (endX) * 8 - getVariableWidth(opt);
+        const int y = startY + 8 * (space + 1) * i + verticalOffset;
+
+        wordSprites[index]->setPriority(0);
+        wordSprites[index]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
+
+        labels[index]->show(startX, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
+
+        if(counter == selection){ //draw sprite cursor
+            currentOption = option->getCurrentOption();
+            currentElement = option->getLabel();
+            for(int i = 0; i < 2; i++){
+                sprite_unhide(cursorSprites[i],0);
+                sprite_enable_affine(cursorSprites[i], i, true);
+                sprite_set_size(cursorSprites[i], scale , i);
+
+                int x = startX - ((8) + offset + 4) - 4;
+
+                sprite_set_pos(cursorSprites[i], x, y - 5);
+            }
+        }
+
+        i++;
+        counter++;
+    }
+
+    for(int j = i; j < elementMax + 2; j++){
+        int index = (j + listStart) % (elementMax + 2);
+
+        wordSprites[index]->hide();
+        labels[index]->hide();
+    }
+
+    if(listStart > 0){
+        sprite_unhide(arrowSprites[0], 0);
+        sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 11);
+    }else{
+        sprite_hide(arrowSprites[0]);
+    }
+
+    if(listStart + elementMax + 2 <  (int) elementList.size()){
+        sprite_unhide(arrowSprites[1], 0);
+        sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * (1 + space) * 8 + startY + 0);
+    }else{
+        sprite_hide(arrowSprites[1]);
+    }
+
+    if(refreshText || refreshOption){
+        std::string next = getDescription(name(),currentElement,currentOption);
+
+        if(next == "" || next != scrollText){
+            scrollText = next;
+            clearSpriteTiles(672, 144, 1);
+            if(scrollText != ""){
+                scrollTextLength = getVariableWidth(scrollText);
+
+                endDelay = 0;
+                scrollOffset = - max((240 - scrollTextLength),0) / 2;
+                scrollDelay = 0;
+                scrollingText[0]->setTextSlow(scrollText);
+            }else{
+                scrollingText[0]->setTextSlow(scrollText);
+            }
+        }
+    }
+
+    showSprites(128);
+
+    refreshText = false;
+    refreshOption = false;
+}
+
 void MainMenuScene::init(){
     path.clear();
     SimpleListScene::init();
