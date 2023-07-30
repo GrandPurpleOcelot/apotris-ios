@@ -6,11 +6,11 @@
 #include "def.h"
 #include "platform.hpp"
 #include "tetromino.hpp"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include "logging.h"
 #include "posprintf.h"
 
-using namespace Tetris;
+using namespace BlockEngine;
 using namespace GameInfo;
 
 int getNbr(int** board,int x, int y, int ex, int sy, int ey);
@@ -1523,7 +1523,7 @@ void Game::hold(int dir) {
     statTracker.holds++;
 }
 
-int* Tetris::getShape(int n,int r, int rotationSystem) {
+int* BlockEngine::getShape(int n,int r, int rotationSystem) {
     int* result;
     result = new int[4 * 4];
 

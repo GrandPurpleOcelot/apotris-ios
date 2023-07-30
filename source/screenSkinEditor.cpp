@@ -18,7 +18,7 @@
 #include <algorithm>
 
 // #include "soundbank.h"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include "scene.hpp"
 
 const int xoffset = 15-8;
@@ -310,8 +310,8 @@ void EditorScene::init(){
     //     for(int j = 0; j < 20; j++)
     //         setTile(26,i,j,);
 
-    if(game != nullptr && game->gameMode == Tetris::CLASSIC){
-        game->gameMode = Tetris::SPRINT;
+    if(game != nullptr && game->gameMode == BlockEngine::CLASSIC){
+        game->gameMode = BlockEngine::SPRINT;
         setSkin();
     }
 }

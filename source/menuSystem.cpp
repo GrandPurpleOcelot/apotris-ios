@@ -145,20 +145,20 @@ void sceneSwitcher(std::string str){
     }
 }
 
-std::string modeToString(Tetris::Modes mode){
+std::string modeToString(BlockEngine::Modes mode){
     switch(mode){
-        case Tetris::NO_MODE: return "None";
-        case Tetris::MARATHON: return "Marathon";
-        case Tetris::SPRINT: return "Sprint";
-        case Tetris::DIG: return "Dig";
-        case Tetris::BATTLE: return "Battle";
-        case Tetris::ULTRA: return "Ultra";
-        case Tetris::BLITZ: return "Blitz";
-        case Tetris::COMBO: return "Combo";
-        case Tetris::SURVIVAL: return "Survival";
-        case Tetris::CLASSIC: return "Classic";
-        case Tetris::MASTER: return "Master";
-        case Tetris::TRAINING: return "Training";
+        case BlockEngine::NO_MODE: return "None";
+        case BlockEngine::MARATHON: return "Marathon";
+        case BlockEngine::SPRINT: return "Sprint";
+        case BlockEngine::DIG: return "Dig";
+        case BlockEngine::BATTLE: return "Battle";
+        case BlockEngine::ULTRA: return "Ultra";
+        case BlockEngine::BLITZ: return "Blitz";
+        case BlockEngine::COMBO: return "Combo";
+        case BlockEngine::SURVIVAL: return "Survival";
+        case BlockEngine::CLASSIC: return "Classic";
+        case BlockEngine::MASTER: return "Master";
+        case BlockEngine::TRAINING: return "Training";
         default: return "";
     }
 }

@@ -9,7 +9,7 @@ class PlayOptionScene : public OptionListScene{
     int goal = 0;
     int level = 0;
 
-    virtual Tetris::Modes getMode() = 0;
+    virtual BlockEngine::Modes getMode() = 0;
 
     bool control();
 
@@ -297,7 +297,7 @@ class TupleSelectorElement : public Element{
 class MarathonScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::MARATHON;};
+    BlockEngine::Modes getMode(){return BlockEngine::MARATHON;};
 
     std::list<Element*> getElementList(){
         return {
@@ -313,7 +313,7 @@ class MarathonScene : public PlayOptionScene{
 class SprintScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::SPRINT;};
+    BlockEngine::Modes getMode(){return BlockEngine::SPRINT;};
 
     std::list<Element*> getElementList(){
         return {
@@ -328,7 +328,7 @@ class SprintScene : public PlayOptionScene{
 class DigScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::DIG;};
+    BlockEngine::Modes getMode(){return BlockEngine::DIG;};
 
     std::list<Element*> getElementList(){
         return {
@@ -343,7 +343,7 @@ class DigScene : public PlayOptionScene{
 class UltraScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::ULTRA;};
+    BlockEngine::Modes getMode(){return BlockEngine::ULTRA;};
 
     std::list<Element*> getElementList(){
         return {
@@ -357,7 +357,7 @@ class UltraScene : public PlayOptionScene{
 class BlitzScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::BLITZ;};
+    BlockEngine::Modes getMode(){return BlockEngine::BLITZ;};
 
     std::list<Element*> getElementList(){
         return {
@@ -374,7 +374,7 @@ class BlitzScene : public PlayOptionScene{
 class ComboScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::COMBO;};
+    BlockEngine::Modes getMode(){return BlockEngine::COMBO;};
 
     std::list<Element*> getElementList(){
         return {
@@ -387,7 +387,7 @@ class ComboScene : public PlayOptionScene{
 class SurvivalScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::SURVIVAL;};
+    BlockEngine::Modes getMode(){return BlockEngine::SURVIVAL;};
 
     std::list<Element*> getElementList(){
         return {
@@ -401,7 +401,7 @@ class SurvivalScene : public PlayOptionScene{
 class ClassicScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::CLASSIC;};
+    BlockEngine::Modes getMode(){return BlockEngine::CLASSIC;};
 
     std::list<Element*> getElementList(){
         return {
@@ -416,7 +416,7 @@ class ClassicScene : public PlayOptionScene{
 class MasterScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::MASTER;};
+    BlockEngine::Modes getMode(){return BlockEngine::MASTER;};
 
     std::list<Element*> getElementList(){
         return {
@@ -430,7 +430,7 @@ class MasterScene : public PlayOptionScene{
 class TrainingScene : public PlayOptionScene{
     public:
 
-    Tetris::Modes getMode(){return Tetris::TRAINING;};
+    BlockEngine::Modes getMode(){return BlockEngine::TRAINING;};
 
     std::list<Element*> getElementList(){
         return {

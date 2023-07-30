@@ -1,5 +1,5 @@
 #include "def.h"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include <string>
 #include <tuple>
 #include "logging.h"
@@ -12,7 +12,7 @@ int botSleepDuration = 1;
 
 int stepMax = 1;
 
-using namespace Tetris;
+using namespace BlockEngine;
 
 void showTestBoard();
 

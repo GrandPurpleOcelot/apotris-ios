@@ -7,7 +7,7 @@
 #include "sprite36tiles_bin.h"
 #include "sprite5tiles_bin.h"
 #include "sprites.h"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include "tetromino.hpp"
 #include "logging.h"
 #include <string>
@@ -21,7 +21,7 @@
 #include "posprintf.h"
 #include "scene.hpp"
 
-using namespace Tetris;
+using namespace BlockEngine;
 
 void diagnose();
 void clearGlow();
@@ -99,7 +99,7 @@ std::list<PlaceEffect> placeEffectList;
 
 int eventPauseTimer = 0;
 
-Tetris::Drop latestDrop;
+BlockEngine::Drop latestDrop;
 
 static bool holdingSave = false;
 
@@ -612,7 +612,7 @@ void showPawn() {
 
     sprite_unhide(pawnSprite, 0);
 
-    int * b = Tetris::getShape(game->activePiece, game->pawn.rotation, game->rotationSystem);
+    int * b = BlockEngine::getShape(game->activePiece, game->pawn.rotation, game->rotationSystem);
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -704,7 +704,7 @@ void showShadow() {
 
     sprite_unhide(pawnShadow, 0);
 
-    int * b = Tetris::getShape(game->activePiece, game->pawn.rotation, game->rotationSystem);
+    int * b = BlockEngine::getShape(game->activePiece, game->pawn.rotation, game->rotationSystem);
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -1287,7 +1287,7 @@ void gameLoop(){
     exitGame = false;
 }
 
-void addGlow(Tetris::Drop location) {
+void addGlow(BlockEngine::Drop location) {
     for (int i = 0; i < location.endY && i < 20; i++){
         for (int j = location.startX; j < location.endX; j++){
             glow[i][j] = glowDuration;
@@ -2056,7 +2056,7 @@ void showPlaceEffect(){
     }
 }
 
-void addPlaceEffect(Tetris::Drop drop){
+void addPlaceEffect(BlockEngine::Drop drop){
     if((int)placeEffectList.size() >= 3 || !savefile->settings.placeEffect || game->pawn.big)
         return;
 

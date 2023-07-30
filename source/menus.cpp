@@ -3,7 +3,7 @@
 #include "scene.hpp"
 #include "tetromino.hpp"
 // #include "soundbank.h"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include "logging.h"
 #include "text.h"
 #include <string>
@@ -11,7 +11,7 @@
 #include <cstring>
 #include "posprintf.h"
 
-using namespace Tetris;
+using namespace BlockEngine;
 
 void endAnimation();
 void showScore();
@@ -26,8 +26,8 @@ int mode = 0;
 bool showingStats = false;
 
 bool saveExists = false;
-Tetris::Game* quickSave;
-Tetris::Bot *testBot;
+BlockEngine::Game* quickSave;
+BlockEngine::Bot *testBot;
 
 int igt = 0;
 

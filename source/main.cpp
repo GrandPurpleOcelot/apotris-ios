@@ -4,7 +4,7 @@
 #include "platform.hpp"
 #include "sprite37tiles_bin.h"
 #include "sprite5tiles_bin.h"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include "sprites.h"
 
 #include "LinkConnection.h"
@@ -33,7 +33,7 @@
 #include "font1tiles_bin.h"
 #include "font2tiles_bin.h"
 
-using namespace Tetris;
+using namespace BlockEngine;
 
 const std::string save_type = "SRAM_Vnnn";
 int getClassicPalette();
@@ -874,7 +874,7 @@ void gradient(int state){
     }
 }
 
-void startGame(Tetris::Options options,int seed){
+void startGame(BlockEngine::Options options,int seed){
     if(game != nullptr)
         delete game;
     game = new Game(options.mode,seed,options.bigMode);

@@ -1,11 +1,11 @@
 #include "def.h"
 #include "LinkConnection.h"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include "text.h"
 #include <string>
 #include "logging.h"
 
-using namespace Tetris;
+using namespace BlockEngine;
 
 void drawEnemyBoard(int);
 
@@ -123,7 +123,7 @@ void handleMultiplayer(int state) {
                 if(!state)
                     linkConnection->send((u16)(((5) << 13) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
             } else {
-                Tetris::Garbage atck = game->attackQueue.front();
+                BlockEngine::Garbage atck = game->attackQueue.front();
 
                 linkConnection->send((u16)((3 << 13) + (atck.id << 4) + atck.amount));
             }
@@ -206,13 +206,13 @@ void handleBotGame(){
     }
 
     if(botGame->attackQueue.size()){
-        Tetris::Garbage atck = botGame->attackQueue.front();
+        BlockEngine::Garbage atck = botGame->attackQueue.front();
         game->addToGarbageQueue(atck.id,atck.amount);
         botGame->clearAttack(atck.id);
     }
 
     if(game->attackQueue.size()){
-        Tetris::Garbage atck = game->attackQueue.front();
+        BlockEngine::Garbage atck = game->attackQueue.front();
         botGame->addToGarbageQueue(atck.id,atck.amount);
         game->clearAttack(atck.id);
     }

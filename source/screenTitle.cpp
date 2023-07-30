@@ -1,7 +1,7 @@
 #include "def.h"
 #include "menu.h"
 #include "sprite41tiles_bin.h"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include "tetromino.hpp"
 #include "text.h"
 #include <string>
@@ -30,7 +30,7 @@ std::string timeToStringHours(int frames);
 void resetScoreboard(int,int,int);
 void initFallingBlocks();
 
-using namespace Tetris;
+using namespace BlockEngine;
 
 WordSprite* wordSprites[MAX_WORD_SPRITES];
 
@@ -951,7 +951,7 @@ void startScreen() {
                             break;
                         }
 
-                        Tetris::Options newOptions;
+                        BlockEngine::Options newOptions;
 
                         newOptions.mode = toStart;
                         newOptions.goal = goal;
@@ -1944,7 +1944,7 @@ void fallingBlocks() {
     if (bgSpawnBlock > bgSpawnBlockMax) {
 
         int n = qran() % 7;
-        int* p = Tetris::getShape(n, qran() % 4,SRS);
+        int* p = BlockEngine::getShape(n, qran() % 4,SRS);
 
         bool found = false;
 
@@ -2273,7 +2273,7 @@ bool newTitleScene::control(){
 
         QuickStart q = savefile->quickStart;
 
-        Tetris::Options newOptions;
+        BlockEngine::Options newOptions;
 
         newOptions.mode = q.mode;
         newOptions.goal = q.goal;
@@ -2471,7 +2471,7 @@ void PlayOptionScene::start(){
         }
     }
 
-    Tetris::Options newOptions;
+    BlockEngine::Options newOptions;
 
     newOptions.mode = getMode();
     newOptions.goal = goal;

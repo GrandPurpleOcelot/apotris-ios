@@ -1,7 +1,7 @@
 #pragma once
 
 #include "platform.hpp"
-#include "tetrisEngine.h"
+#include "blockEngine.h"
 #include "text.h"
 #include "menu.h"
 
@@ -175,7 +175,7 @@ typedef struct ReplayHeader{
     u32 duration;
     u32 seed;
 
-    Tetris::Options options;
+    BlockEngine::Options options;
 
     int placeholder[240];
 }ALIGN(4) ReplayHeader;
@@ -327,7 +327,7 @@ extern void buildMini(TILE *);
 extern void showZoneMeter();
 extern void resetZonePalette();
 extern void showBestMove();
-extern Tetris::Tuning getTuning();
+extern BlockEngine::Tuning getTuning();
 extern void showFinesseCombo();
 extern void setGradient(int);
 extern void setDefaultGradient();
@@ -340,7 +340,7 @@ extern void setupCredits();
 extern void refreshCredits();
 extern void setPawnPalette(int dest, int n, int blend);
 
-extern void startGame(Tetris::Options options, int seed);
+extern void startGame(BlockEngine::Options options, int seed);
 extern void startGame(int seed);
 extern void startGame();
 
@@ -362,11 +362,11 @@ extern void fallingBlocks();
 
 extern void updateGrid();
 
-extern std::string modeToString(Tetris::Modes mode);
+extern std::string modeToString(BlockEngine::Modes mode);
 
-extern Tetris::Game *game;
-extern Tetris::Game *quickSave;
-extern Tetris::Game *botGame;
+extern BlockEngine::Game *game;
+extern BlockEngine::Game *quickSave;
+extern BlockEngine::Game *botGame;
 
 extern u8 * blockSprite;
 
@@ -400,7 +400,7 @@ extern bool playAgain;
 // extern bool resumeJourney;
 // extern bool journeyLevelUp;
 // extern bool journeySaveExists;
-// extern Tetris::Game* journeySave;
+// extern BlockEngine::Game* journeySave;
 
 extern int connected;
 extern int multiplayerStartTimer;
@@ -413,7 +413,7 @@ extern OBJ_ATTR * queueFrameSprites[3];
 
 extern int enemyHeight;
 
-extern Tetris::Bot *testBot;
+extern BlockEngine::Bot *testBot;
 extern u8 enemyBoard[20][10];
 
 extern int mode;
@@ -446,15 +446,15 @@ extern int botSleepDuration;
 extern int clearTimer;
 extern int maxClearTimer;
 
-extern Tetris::Options *previousGameOptions;
+extern BlockEngine::Options *previousGameOptions;
 
 extern FIXED shakeBuff;
 extern FIXED shakeVelocity;
 
-extern std::list<Tetris::Timestamp*>::iterator replayIterator;
-extern std::list<Tetris::Timestamp*> currentReplay;
+extern std::list<BlockEngine::Timestamp*>::iterator replayIterator;
+extern std::list<BlockEngine::Timestamp*> currentReplay;
 
-extern Tetris::Game *quickSave;
+extern BlockEngine::Game *quickSave;
 extern bool saveExists;
 
 #define shakeMax 10
@@ -484,5 +484,5 @@ class Function{
     private:
 
     public:
-        void (Tetris::Game::*gameFunction)(int);
+        void (BlockEngine::Game::*gameFunction)(int);
 };

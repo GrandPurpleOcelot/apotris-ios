@@ -6,7 +6,7 @@
 #include "tetromino.hpp"
 #include <tuple>
 
-namespace Tetris
+namespace BlockEngine
 {
     #define MAX_DISAPPEAR 300
     #define CREDITS_LENGTH 3240 //54 seconds * 60

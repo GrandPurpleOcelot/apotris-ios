@@ -1,7 +1,26 @@
-https://akouzoukos.itch.io/apotris
+# Info
 
-A block stacking puzzle game for the Gameboy Advance, with focus on delivering responsive gameplay and satisfying visuals. It follows guideline rules, so all spins, kicks and setups should work as expected.
+https://akouzoukos.com/apotris
+
+Apotris is a block stacking game for the Gameboy Advance! It features satisfying graphics, responsive controls and a large amount of customization so that you can tailor the game to your preferences! 
 
 Join the [discord server](https://discord.com/invite/jQnxmXS7tr) for updates, beta releases, or to give me feedback!
 
-![gif](https://github.com/akouzoukos/apotris/blob/9ae4f004b6bf534fa3f3762cb3387471066d6e2f/images/image1.gif)
+# Build
+
+Run 
+
+```
+./set_platform.sh <platform>
+./make
+```
+
+Available Platforms:
+
+| Name            | Platform |
+|-----------------|----------|
+| Gameboy Advance | gba      |
+| Linux           | linux    |
+| Windows 32-bit  | w32      |
+
+PC builds are placed inside the `bin` folder.

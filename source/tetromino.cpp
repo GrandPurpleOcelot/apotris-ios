@@ -738,7 +738,7 @@ namespace GameInfo{
         {//Triple
             500,0,2
         },
-        {//Tetris
+        {//Quad
             800,1,4
         },
         {//T-Spin Mini no lines
@@ -767,9 +767,9 @@ namespace GameInfo{
             1200,0,10
         },{//Perfect Clear Triple
             1800,0,10
-        },{//Perfect Clear Tetris
+        },{//Perfect Clear Quad
             2000,0,10
-        },{//Perfect Clear Back to Back Tetris
+        },{//Perfect Clear Back to Back Quad
             3200,0,10
         },
         {//Combo

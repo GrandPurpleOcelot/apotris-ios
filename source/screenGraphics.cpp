@@ -9,7 +9,7 @@
 #include "scene.hpp"
 #include "sceneGraphics.hpp"
 
-using namespace Tetris;
+using namespace BlockEngine;
 
 void gradientEditor();
 
