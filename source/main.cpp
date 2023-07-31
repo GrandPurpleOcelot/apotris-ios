@@ -2,8 +2,6 @@
 
 #include "def.h"
 #include "platform.hpp"
-#include "sprite37tiles_bin.h"
-#include "sprite5tiles_bin.h"
 #include "blockEngine.h"
 #include "sprites.h"
 
@@ -137,6 +135,7 @@ void initialize(){
     loadTiles(0,33,sprite42tiles_bin,sprite42tiles_bin_size/32);
     loadTiles(0,34,sprite45tiles_bin,sprite45tiles_bin_size/32);
     loadTiles(0,35,sprite46tiles_bin,sprite46tiles_bin_size/32);
+    loadTiles(0,36,sprite47tiles_bin,sprite47tiles_bin_size/32);
 
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);

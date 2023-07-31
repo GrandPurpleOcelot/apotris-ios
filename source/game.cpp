@@ -1678,7 +1678,8 @@ void drawGrid() {
         case 3: gridTile = 0x001e; break;
         case 4: gridTile = 0x001f; break;
         case 5: gridTile = 0x0020; break;
-        case 6: gridTile = 0x000; break;
+        case 6: gridTile = 0x0024; break;
+        case 7: gridTile = 0x0000; break;
         default: gridTile = 0x0002; break;
     }
 
