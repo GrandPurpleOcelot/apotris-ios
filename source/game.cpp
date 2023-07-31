@@ -145,6 +145,9 @@ void GameScene::draw(){
     if (control())
         return;
 
+    if(paused)
+        return;
+
     checkSounds();
 
     showPawn();
@@ -2902,7 +2905,9 @@ void GameScene::update(){
     #endif
 
     if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
+        paused = true;
         endScreen();
+        paused = false;
         if(!(playAgain && multiplayer))
             return;
         else

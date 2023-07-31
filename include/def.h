@@ -333,9 +333,6 @@ extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
 extern void progressBar(int layer);
 
-extern int endScreen();
-extern int pauseMenu();
-extern void countdown();
 extern void screenShake();
 
 extern void saveToSram();

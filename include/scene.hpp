@@ -50,6 +50,9 @@ class GameScene : public Scene{
     void updateText();
     void showTimer();
     void showComboStreak();
+    int pauseMenu();
+    int endScreen();
+    void showModeText();
 
     bool counted = false;
 

@@ -181,9 +181,12 @@ void songListMenu() {
     savefile->settings.cycleSongs = previous;
 }
 
-int endScreen() {
+int GameScene::endScreen(){
     clearSmallText();
     setSmallTextArea(110, 1, 1, 10, 20);
+
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
 
     stopSong();
 
@@ -245,6 +248,9 @@ int endScreen() {
 
     playSongRandom(0);
 
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
+
     showScore();
     int record = onRecord();
 
@@ -258,6 +264,32 @@ int endScreen() {
         savefile->stats.gamesLost++;
 
     showStats(showingStats, totalTime, ppsStr);
+
+    const int optionsHeight = 11;
+
+    wordSprites[1].setText("Play");
+    wordSprites[1].show(12 * 8, (optionsHeight + 0) * 8, 15);
+    wordSprites[2].setText("Again");
+    wordSprites[2].show(14 * 8, (optionsHeight + 1) * 8, 15);
+
+    wordSprites[3].setText("Change");
+    wordSprites[3].show(12 * 8, (optionsHeight + 3) * 8, 15);
+    wordSprites[4].setText("Options");
+    wordSprites[4].show(14 * 8, (optionsHeight + 4) * 8, 15);
+
+    wordSprites[5].setText("Main");
+    wordSprites[5].show(12 * 8, (optionsHeight + 6) * 8, 15);
+    wordSprites[6].setText("Menu");
+    wordSprites[6].show(14 * 8, (optionsHeight + 7) * 8, 15);
+
+    int cursorFloat = 0;
+    OBJ_ATTR * cursorSprite;
+
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+    cursorSprite = &obj_buffer[1];
+    sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 1);
+    sprite_enable_affine(cursorSprite, 0, true);
+    sprite_hide(cursorSprite);
 
     while (closed()) {
         handleMultiplayer(1);
@@ -280,28 +312,20 @@ int endScreen() {
 
         showModeText();
 
-        aprint("Play", 12, 11);
-        aprint("Again", 14, 12);
+        cursorFloat += 6;
+        if(cursorFloat >= 512)
+            cursorFloat = 0;
+        int offset = (sinLut(cursorFloat) * 2) >> 12;
+        FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
-        aprint("Change", 12, 14);
-        aprint("Options", 14, 15);
+        sprite_unhide(cursorSprite,0);
+        sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprite, 0, true);
+        sprite_set_size(cursorSprite, scale , 0);
 
-        aprint("Main", 12, 17);
-        aprint("Menu", 14, 18);
+        int x = 240/2 - ((20) + offset + 4) - 16;
 
-        if (selection == 0) {
-            aprint(">", 10, 11);
-            aprint(" ", 10, 14);
-            aprint(" ", 10, 17);
-        } else if (selection == 1) {
-            aprint(" ", 10, 11);
-            aprint(">", 10, 14);
-            aprint(" ", 10, 17);
-        } else if (selection == 2) {
-            aprint(" ", 10, 11);
-            aprint(" ", 10, 14);
-            aprint(">", 10, 17);
-        }
+        sprite_set_pos(cursorSprite, x, ((optionsHeight + selection * 3) * 8) - 5);
 
         if (playAgain && multiplayer) {
             startMultiplayerGame(nextSeed);
@@ -561,7 +585,7 @@ void showStats(bool moreStats, std::string time, std::string pps) {
     }
 }
 
-int pauseMenu(){
+int GameScene::pauseMenu(){
     int selection = 0;
     int maxSelection;
 
@@ -570,6 +594,9 @@ int pauseMenu(){
 
     clearText();
     setSmallTextArea(110, 1, 1, 10, 20);
+
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
 
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1));
@@ -623,6 +650,17 @@ int pauseMenu(){
     showSleep = true;
     #endif
 
+    int cursorFloat = 0;
+    OBJ_ATTR * cursorSprites[2];
+
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+    for(int i = 0; i < 2; i++){
+        cursorSprites[i] = &obj_buffer[1 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_hide(cursorSprites[i]);
+    }
+
     while (closed()) {
         if (!onStates){
             maxSelection = 5;
@@ -640,24 +678,40 @@ int pauseMenu(){
         vsync();
         key_poll();
 
-        for (int i = 0; i < maxSelection; i++)
-            aprint(" ", 10, optionsHeight + 2 * i);
-        aprint(">", 10, optionsHeight + 2 * selection);
-
-        aprint("PAUSE!", 12, 4);
+        // aprint("PAUSE!", 12, 4);
+        wordSprites[0].setText("PAUSE!");
+        wordSprites[0].show(15 * 8 - wordSprites[0].width / 2, 4 * 8, 15);
 
         if (!onStates) {
             optionsCounter = 0;
-            aprint("Resume", 12, optionsHeight + optionsCounter++ * 2);
-            aprint("Restart", 12, optionsHeight + optionsCounter++ * 2);
+            // aprint("Resume", 12, optionsHeight + optionsCounter++ * 2);
+            wordSprites[1 + optionsCounter].setText("Resume");
+            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
+            optionsCounter++;
 
-            if(game->gameMode == TRAINING)
-                aprint("Saves", 12, optionsHeight + optionsCounter++ * 2);
+            // aprint("Restart", 12, optionsHeight + optionsCounter++ * 2);
+            wordSprites[1 + optionsCounter].setText("Restart");
+            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
+            optionsCounter++;
 
-            if(showSleep)
-                aprint("Sleep", 12, optionsHeight + optionsCounter++ * 2);
+            if(game->gameMode == TRAINING){
+                // aprint("Saves", 12, optionsHeight + optionsCounter++ * 2);
+                wordSprites[1 + optionsCounter].setText("Saves");
+                wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
+                optionsCounter++;
+            }
 
-            aprint("Quit", 12, optionsHeight + optionsCounter++ * 2);
+            if(showSleep){
+                // aprint("Sleep", 12, optionsHeight + optionsCounter++ * 2);
+                wordSprites[1 + optionsCounter].setText("Sleep");
+                wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
+                optionsCounter++;
+            }
+
+            // aprint("Quit", 12, optionsHeight + optionsCounter++ * 2);
+            wordSprites[1 + optionsCounter].setText("Quit");
+            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
+            optionsCounter++;
 
             if (key_hit(KEY_A)) {
                 int n = selection;
@@ -690,6 +744,10 @@ int pauseMenu(){
                     sleep();
                     showStats(showingStats, totalTime, ppsStr);
                     showModeText();
+                    showQueue();
+                    showHold();
+                    hideMinos();
+                    continue;
                 } else if (n == 4) {
                     enableBlend(prevBld);
                     sfx(SFX_MENUCANCEL);
@@ -699,9 +757,21 @@ int pauseMenu(){
             }
         } else {
             optionsCounter = 0;
-            aprintColor("Load", 12, optionsHeight + optionsCounter++ * 2, !(saveExists));
-            aprint("Save", 12, optionsHeight + optionsCounter++ * 2);
-            aprint("Back", 12, optionsHeight + optionsCounter++ * 2);
+            // aprintColor("Load", 12, optionsHeight + optionsCounter++ * 2, !(saveExists));
+            // aprint("Save", 12, optionsHeight + optionsCounter++ * 2);
+            // aprint("Back", 12, optionsHeight + optionsCounter++ * 2);
+            wordSprites[1 + optionsCounter].setText("Load");
+            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15 - !(saveExists));
+            optionsCounter++;
+            wordSprites[1 + optionsCounter].setText("Save");
+            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
+            optionsCounter++;
+            wordSprites[1 + optionsCounter].setText("Back");
+            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
+            optionsCounter++;
+
+            for (int i = optionsCounter + 1; i < 6; i++)
+                wordSprites[i].hide();
 
             if (key_hit(KEY_A)) {
                 if (selection == 0) {
@@ -736,13 +806,30 @@ int pauseMenu(){
                     sfx(SFX_MENUCONFIRM);
                 } else if (selection == 2) {
                     sfx(SFX_MENUCONFIRM);
-                    clearText();
-                    // updateText();
+                    showStats(showingStats, totalTime, ppsStr);
                     onStates = false;
                     selection = 0;
-                    break;
                 }
             }
+        }
+
+        int len = wordSprites[selection+1].width;
+
+        cursorFloat += 6;
+        if(cursorFloat >= 512)
+            cursorFloat = 0;
+        int offset = (sinLut(cursorFloat) * 2) >> 12;
+        FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+        for(int i = 0; i < 2; i++){
+            sprite_unhide(cursorSprites[i],0);
+            sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+            sprite_enable_affine(cursorSprites[i], i, true);
+            sprite_set_size(cursorSprites[i], scale , i);
+
+            int x = 240/2 - ((len + 8) / 2 + offset + 4) * ((i)?-1:1) - 8;
+
+            sprite_set_pos(cursorSprites[i], x, ((optionsHeight + selection * 2) * 8) - 5);
         }
 
         if (key_hit(KEY_START) || key_hit(KEY_SELECT)) {
@@ -757,17 +844,15 @@ int pauseMenu(){
         if (key_hit(KEY_B)) {
             sfx(SFX_MENUCONFIRM);
             if(onStates){
-                clearText();
                 onStates = false;
                 selection = 0;
-                // updateText();
+                showStats(showingStats, totalTime, ppsStr);
             }else{
                 clearText();
-                // updateText();
                 paused = false;
                 resumeSong();
+                break;
             }
-            break;
         }
 
         if (key_hit(KEY_UP)) {
@@ -806,12 +891,19 @@ int pauseMenu(){
     clearTilemap(25);
     clearTilemap(26);
 
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
+
+    for(int i = 0; i < 2; i++)
+        sprite_hide(cursorSprites[i]);
+
     drawFrame(0);
     if(game->zoneTimer)
         frameSnow(0);
 
     showBackground(0);
     setSmallTextArea(110, 3, 7, 9, 10);
+    showText();
 
     return 0;
 }
@@ -912,7 +1004,7 @@ int onRecord() {
     return place;
 }
 
-void showModeText(){
+void GameScene::showModeText(){
     if(game->gameMode > 0 && game->gameMode <= 11){
         int counter = 0;
         std::string str;
@@ -923,7 +1015,10 @@ void showModeText(){
         if(game->gameMode == TRAINING)
             str = "Training";
 
-        aprintColor(str,30-str.size(),counter++,0);
+        // aprintColor(str,30-str.size(),counter++,0);
+        wordSprites[7 + counter].setText(str);
+        wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+        counter++;
 
         str = "";
         if(game->gameMode == TRAINING){
@@ -938,8 +1033,12 @@ void showModeText(){
                 str = modeOptionStrings[game->gameMode-1][0];
         }
 
-        if(str != "")
-            aprintColor(str,30-str.size(),counter++,0);
+        if(str != ""){
+            // aprintColor(str,30-str.size(),counter++,0);
+            wordSprites[7 + counter].setText(str);
+            wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+            counter++;
+        }
 
         str = "";
         str2 = "";
@@ -958,13 +1057,25 @@ void showModeText(){
                 str = "A-Type";
         }
 
-        if(str != "")
-            aprintColor(str,30-str.size(),counter++,0);
-        if(str2 != "")
-            aprintColor(str2,30-str2.size(),counter++,0);
+        if(str != ""){
+            // aprintColor(str,30-str.size(),counter++,0);
+            wordSprites[7 + counter].setText(str);
+            wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+            counter++;
+        }
+        if(str2 != ""){
+            // aprintColor(str2,30-str2.size(),counter++,0);
+            wordSprites[7 + counter].setText(str);
+            wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+            counter++;
+        }
 
-        if(bigMode)
-            aprintColor("BIG MODE",22,counter++,0);
+        if(bigMode){
+            // aprintColor("BIG MODE",22,counter++,0);
+            wordSprites[7 + counter].setText("BIG MODE");
+            wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+            counter++;
+        }
     }
 }
 

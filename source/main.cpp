@@ -889,6 +889,8 @@ void startGame(BlockEngine::Options options,int seed){
     if (enableBot) {
         delete testBot;
         testBot = new Bot(game);
+    }else if(options.mode == BATTLE && !multiplayer){
+        startBotGame(seed);
     }
 }
 

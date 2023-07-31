@@ -5,6 +5,7 @@
 #include <string>
 #include "logging.h"
 #include <algorithm>
+#include <cstring>
 
 class SaveChange{
 public:
