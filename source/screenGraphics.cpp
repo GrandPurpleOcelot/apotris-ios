@@ -70,7 +70,7 @@ void GradientEditorScene::draw(){
     for(int i = 0; i < 3; i++){
         int x = 14 + (i-1)*space;
 
-        char buff[2];
+        char buff[8];
         posprintf(buff, "%02d",color[i]);
 
         aprint(buff, x, height);

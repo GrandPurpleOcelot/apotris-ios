@@ -801,6 +801,8 @@ void setGradient(int color){
 
     COLOR * src = (COLOR *) &palette[n];
 
+    COLOR test[1] = {RGB15(31, 15, 15)};
+
     int div = 20;
 
     int start = 0;
@@ -811,14 +813,14 @@ void setGradient(int color){
     start = rowStart;
     end = rowEnd;
 
-    div = (end-start)/8;
-
     #endif
+
+    div = (end-start)/16;
 
     if(!(savefile->settings.lightMode && color == 0)){
         for(int i = 0; i < end-start; i++){
-            color_fade((COLOR *) &gradientTable[i+start],src,color,1,(((end-start)-1-i) / div) * 2 + 16);
-            // color_fade(src, color, (COLOR *) &gradientTable[i], 1, ((SCREEN_HEIGHT-1-i) / 20) * 2 + 16);
+            // color_fade((COLOR *) &gradientTable[i+start],src,color,1,(((end-start)-1-i) / div) * 2 + 16);
+            color_fade((COLOR *) &gradientTable[i+start],test,color,1,(((end-start)-1-i) / div) * 2);
         }
 
         #ifdef GBA

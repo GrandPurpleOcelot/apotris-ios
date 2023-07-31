@@ -212,7 +212,7 @@ typedef struct ReplayHeader{
 
 typedef struct Replay{
     ReplayHeader header;
-    u32 moves[4096];
+    uint32_t moves[4096];
 }ALIGN(4) Replay;
 
 extern Save *savefile;

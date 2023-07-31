@@ -208,6 +208,10 @@ void color_adj_MEM(COLOR * dst, const COLOR * src, u32 count, u32 alpha){
     clr_adj_brightness(dst, src, count, alpha);
 }
 
+void color_blend(COLOR *dst, const COLOR *srca, const COLOR *srcb, uint nclrs, u32 alpha) {
+    clr_blend(srca,srcb,dst,nclrs,alpha);
+}
+
 void addColorToPalette(int palette, int index, COLOR color, int count){
     for(int i = 0; i < count; i++){
         pal_bg_mem[palette * 16 + index + i] += color;

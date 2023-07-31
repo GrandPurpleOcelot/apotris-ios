@@ -996,7 +996,38 @@ void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alph
 
         dst[ii]= color;
     }
-};
+}
+
+void color_blend(COLOR *dst, const COLOR *srca, const COLOR *srcb, uint nclrs, u32 alpha) {
+    if(!nclrs)
+        return;
+
+    int ii;
+    u32 clra, clrb, clr;
+    u32 parta, partb, part;
+    const u32 rbmask= (RED_MASK|BLUE_MASK), gmask= GREEN_MASK;
+    const u32 rbhalf= 0x4010, ghalf= 0x0200;
+
+    for(ii=0; ii<nclrs; ii++)
+    {
+        clra= srca[ii];
+        clrb= srcb[ii];
+
+        // Red and blue
+        parta= clra & rbmask;
+        partb= clrb & rbmask;
+        part = (partb-parta)*alpha + parta*32 + rbhalf;
+        clr  = (part/32 ) & rbmask;
+
+        // Green
+        parta= clra & gmask;
+        partb= clrb & gmask;
+        part = (partb-parta)*alpha + parta*32 + ghalf;
+        clr |= (part/32 ) & gmask;
+
+        dst[ii]= clr;
+    }
+}
 
 void color_adj_MEM(COLOR *dst, const COLOR *src, u32 count, u32 bright){
     u32 ii, clr;
