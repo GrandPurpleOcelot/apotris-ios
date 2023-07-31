@@ -474,6 +474,8 @@ class ClassicScene : public PlayOptionScene{
         };
     };
 
+    void update();
+
     EntryBoard* getBoard(int submode, int goal){
         return &savefile->boards.classic[submode];
     }

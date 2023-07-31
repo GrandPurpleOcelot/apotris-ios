@@ -186,6 +186,7 @@ void PlayOptionScene::start(){
     bool training = false;
     int subMode = 0;
     int goal = 0;
+    int bTypeHeight = 0;
 
     for(auto const& element : elementList){
         std::string s = element->getLabel();
@@ -198,6 +199,8 @@ void PlayOptionScene::start(){
             subMode = value;
         }else if(s == "Lines"){
             goal = value;
+        }else if(s == "Height"){
+            bTypeHeight = value;
         }else if(s == "Finesse Training"){
             training = value;
         }else if(s == "Minutes"){
@@ -214,6 +217,7 @@ void PlayOptionScene::start(){
     newOptions.bigMode = bigMode;
     newOptions.subMode = subMode;
     newOptions.trainingMode = training;
+    newOptions.bTypeHeight = bTypeHeight;
     savefile->stats.gamesStarted++;
 
     proMode = (key_is_down(KEY_L) || key_is_down(KEY_R));
@@ -338,7 +342,7 @@ void PlayOptionScene::draw(){
             labels[index]->hide();
         }
 
-        for(int i = elementMax + 2; i < 8; i++)
+        for(int i = elementMax + 2; i < 9; i++)
             wordSprites[i]->hide();
     }else{
         EntryBoard *board = getBoard(subMode, goal);
@@ -392,7 +396,7 @@ void PlayOptionScene::draw(){
 
         int i = 0;
         for(auto const& option : elementList){
-            if(option->getLabel() == "Level")
+            if(option->getLabel() == "Level" && !(name() == "Classic" && subMode))
                 continue;
 
             wordSprites[6 + i]->setText(option->getCurrentOption());
@@ -473,4 +477,25 @@ void PlayOptionScene::setOptions(){
             goal = value;
         }
     }
+}
+
+void ClassicScene::update(){
+    if(!subMode){
+        if(elementList.back()->getLabel() == "Height"){
+
+            Element *e = elementList.back();
+            elementList.pop_back();
+
+            delete e;
+            options--;
+        }
+    }else{
+        if(elementList.back()->getLabel() != "Height"){
+            elementList.push_back(new IntSelectorElement("Height",{0,1,2,3,4,5}));
+            refreshText = true;
+            options++;
+        }
+    }
+
+    PlayOptionScene::update();
 }
