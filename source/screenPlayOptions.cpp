@@ -420,7 +420,7 @@ void PlayOptionScene::draw(){
         sprite_hide(arrowSprites[0]);
     }
 
-    if(!onScore){
+    if(!onScore && getBoard(subMode, goal) != nullptr){
         sprite_unhide(arrowSprites[1], 0);
         sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * (1 + space) * 8 + startY - 48);
     }else{
