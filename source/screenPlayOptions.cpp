@@ -337,6 +337,9 @@ void PlayOptionScene::draw(){
             wordSprites[index]->hide();
             labels[index]->hide();
         }
+
+        for(int i = elementMax + 2; i < 8; i++)
+            wordSprites[i]->hide();
     }else{
         EntryBoard *board = getBoard(subMode, goal);
 
@@ -381,9 +384,21 @@ void PlayOptionScene::draw(){
             sprite_set_pos(cursorSprites[i], x, 132 - 5);
         }
 
-        for(int j = 6; j < elementMax + 2; j++){
-            wordSprites[j]->hide();
+        for(int j = 5; j < elementMax + 2; j++)
             labels[j]->hide();
+
+        for(int j = 6; j < elementMax + 2; j++)
+            wordSprites[j]->hide();
+
+        int i = 0;
+        for(auto const& option : elementList){
+            if(option->getLabel() == "Level")
+                continue;
+
+            wordSprites[6 + i]->setText(option->getCurrentOption());
+            wordSprites[6 + i]->show(30 * 8 - 4 - wordSprites[6+i]->width,4 + i * 8,14);
+
+            i++;
         }
     }
 

@@ -31,29 +31,6 @@ const std::list<SaveChange> saveChanges = {
     SaveChange(0x50,3120,4096),// add zone + buffer to scoreboards
 };
 
-// void saveToSram() {
-//     //TODO:
-//     #ifdef GBA
-//     addStats();
-
-//     volatile u8* sf = (volatile u8*)sram_mem;
-
-//     u8* arr = (u8*)savefile;
-
-//     for (int i = 0; i < (int)sizeof(Save); i++)
-//         sf[i] = (u8)arr[i];
-
-//     if(ENABLE_FLASH_SAVE)
-//         save_sram_flash();
-//     #endif
-// }
-
-// void loadFromSram() {
-//     //TODO:
-//     #ifdef GBA
-//     #endif
-// }
-
 void loadSave() {
     if(savefile != nullptr)
         delete savefile;
@@ -226,27 +203,16 @@ void setDefaults(Save *save, int depth){
             savefile->latestName[i] = ' ';
         savefile->latestName[8] = '\0';
 
-        // for (int i = 0; i < 4; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         savefile->marathon[i].highscores[j].score = 0;
-
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         savefile->sprint[i].times[j].frames = 0;
-
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         savefile->dig[i].times[j].frames = 0;
+        memset32(savefile->boards.marathon, 0, sizeof(EntryBoard) * 4 / 4);
+        memset32(savefile->boards.sprint, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32(savefile->boards.dig, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
     if(depth < 2){
-
         for (int i = 0; i < 10; i++)
             save->settings.songList[i] = true;
 
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         save->ultra[i].highscores[j].score = 0;
+        memset32(savefile->boards.ultra, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
     if(depth < 3){
@@ -258,16 +224,9 @@ void setDefaults(Save *save, int depth){
         save->settings.abHold = true;
         save->settings.resetHoldType = false;
 
-        // for (int i = 0; i < 2; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         save->blitz[i].highscores[j].score = 0;
-
-        // for (int j = 0; j < 5; j++)
-        //     save->combo.highscores[j].score = 0;
-
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         save->survival[i].times[j].frames = 0;
+        memset32(savefile->boards.blitz, 0, sizeof(EntryBoard) * 2 / 4);
+        memset32(&savefile->boards.combo, 0, sizeof(EntryBoard) * 1 / 4);
+        memset32(savefile->boards.survival, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
     if(depth < 4){
@@ -275,19 +234,11 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 5){
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         save->sprintAttack[i].times[j].frames = 0;
+        memset32(savefile->boards.sprintAttack, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32(savefile->boards.digEfficiency, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32(savefile->boards.classic, 0, sizeof(EntryBoard) * 2 / 4);
 
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         save->digEfficiency[i].highscores[j].score = 0;
-
-        // for (int i = 0; i < 2; i++)
-        //     for (int j = 0; j < 5; j++)
-        //         save->classic[i].highscores[j].score = 0;
-
-        // save->stats.timePlayed = 0;
+        save->stats.timePlayed = 0;
         save->stats.gamesStarted = 0;
         save->stats.gamesCompleted = 0;
         save->stats.gamesLost = 0;
@@ -296,16 +247,8 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 6){
-        // for (int i = 0; i < 2; i++){
-        //     for (int j = 0; j < 5; j++){
-        //         save->master[i].times[j].frames = 0;
-        //         save->master[i].grade[j] = -1;
-        //     }
-        // }
-
-        // for(int i = 0; i < 4; i++)
-        //     for(int j = 0; j < 5; j++)
-        //         save->zone[i].highscores[j].score = 0;
+        memset32(savefile->boards.master, 0, sizeof(EntryBoard) * 2 / 4);
+        memset32(savefile->boards.zone, 0, sizeof(EntryBoard) * 4 / 4);
 
         save->settings.diagonalType = save->settings.noDiagonals;
         save->settings.delaySoftDrop = false;
@@ -450,4 +393,33 @@ void setDefaultGraphics(Save *save, int depth){
         save->settings.placeEffect = true;
         save->settings.backgroundGradient = 0x7dc8;
     }
+}
+
+void convertScores(){
+    OldScoreboards *oldBoards = (OldScoreboards *) &savefile->boards;
+
+    ModeBoards newBoards;
+
+    memcpy32(&newBoards.marathon, &oldBoards->marathon, sizeof(EntryBoard) * 4 / 4);
+    memcpy32(&newBoards.sprint, &oldBoards->sprint, sizeof(EntryBoard) * 3 / 4);
+    memcpy32(&newBoards.dig, &oldBoards->dig, sizeof(EntryBoard) * 3 / 4);
+    memcpy32(&newBoards.ultra, &oldBoards->ultra, sizeof(EntryBoard) * 3 / 4);
+    memcpy32(&newBoards.blitz, &oldBoards->blitz, sizeof(EntryBoard) * 2 / 4);
+    memcpy32(&newBoards.combo, &oldBoards->combo, sizeof(EntryBoard) * 1 / 4);
+    memcpy32(&newBoards.survival, &oldBoards->survival, sizeof(EntryBoard) * 3 / 4);
+    memcpy32(&newBoards.sprintAttack, &oldBoards->sprintAttack, sizeof(EntryBoard) * 3 / 4);
+    memcpy32(&newBoards.digEfficiency, &oldBoards->digEfficiency, sizeof(EntryBoard) * 3 / 4);
+    memcpy32(&newBoards.classic, &oldBoards->classic, sizeof(EntryBoard) * 2 / 4);
+
+    for(int i = 0; i < 2; i++){
+        for(int j = 0; j < 5; j++){
+            newBoards.master[i].entries[j].grade = oldBoards->master[i].grade[j];
+            newBoards.master[i].entries[j].value = oldBoards->master[i].times[j].frames;
+            strncpy(newBoards.master[i].entries[j].name, oldBoards->master[i].times[j].name, 9);
+        }
+    }
+
+    memcpy32(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);
+
+    memcpy32(&savefile->boards, &newBoards, sizeof(ModeBoards) / 4);
 }
