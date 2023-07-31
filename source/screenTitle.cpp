@@ -72,7 +72,6 @@ int goalSelection = 0;
 int level = 1;
 static int toStart = 0;
 static bool onSettings = false;
-int subMode = 0;
 bool proMode = false;
 
 bool refreshText = true;

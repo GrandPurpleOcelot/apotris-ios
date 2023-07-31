@@ -234,6 +234,7 @@ QuickStart PlayOptionScene::quick(){
     for(auto const& element : elementList){
         std::string s = element->getLabel();
         int value = element->getValue();
+
         log(s);
         log(value);
         if(s == "Level"){
@@ -401,6 +402,7 @@ void PlayOptionScene::draw(){
     }
 
     if(refreshText || refreshOption){
+        setOptions();
         std::string next = getDescription(name(),currentElement,currentOption);
 
         if(next == "" || next != scrollText){
@@ -438,6 +440,22 @@ void PlayOptionScene::update(){
                 scrollText = "";
                 selection = elementList.size() - 1;
             }
+        }
+    }
+}
+
+void PlayOptionScene::setOptions(){
+    for(auto const& element : elementList){
+        std::string s = element->getLabel();
+        int value = element->value;
+        if(s == "Level"){
+            level = value;
+        }else if(s == "Type" || s == "Rules"){
+            subMode = value;
+        }else if(s == "Lines"){
+            goal = value;
+        }else if(s == "Minutes"){
+            goal = value;
         }
     }
 }

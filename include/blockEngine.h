@@ -12,8 +12,8 @@ namespace BlockEngine
     #define CREDITS_LENGTH 3240 //54 seconds * 60
     #define maxSleep 3;
 
-    extern const u16 connectedConversion[24];
-    extern const u16 connectedFix[3][24];
+    extern const uint16_t connectedConversion[24];
+    extern const uint16_t connectedFix[3][24];
     extern int* getShape(int piece,int rotation,int rotationSystem);
 
     enum Modes{
@@ -297,7 +297,7 @@ namespace BlockEngine
     class Timestamp{
     public:
         int timer;
-        u16 move;
+        uint16_t move;
         bool dir;
         bool shiftTimer = false;
 
@@ -311,7 +311,7 @@ namespace BlockEngine
             shiftTimer = shift;
         }
 
-        Timestamp(u32 m){
+        Timestamp(uint32_t m){
             timer = (m >> 11) & 0x3fffff;
             dir = (m >> 9) & 1;
             move = m & 0x1ff;
@@ -427,7 +427,7 @@ namespace BlockEngine
         int lengthY = 40;
         int** board;
 
-        u16 bitboard[40];
+        uint16_t bitboard[40];
         int columnHeights[10];
 
         std::list<int> queue;
@@ -501,9 +501,9 @@ namespace BlockEngine
         int maxLockTimer = 30;
         int lockTimer = maxLockTimer;
 
-        u16 ** disappearTimers;
+        uint16_t ** disappearTimers;
         int disappearing = 0;
-        std::list<std::tuple<u8,u8>> toDisappear;
+        std::list<std::tuple<uint8_t,uint8_t>> toDisappear;
 
         float creditGrade = 0;
 
@@ -762,7 +762,7 @@ namespace BlockEngine
         int dx = 0;
         int rotation = 0;
         Game* game;
-        u16 testBoard[40];
+        uint16_t testBoard[40];
         int colboard[10];
         int columnHeights[10];
 

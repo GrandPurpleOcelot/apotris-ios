@@ -473,7 +473,7 @@ void showScore(){
 
         aprint(gradeText, 15 - ((int)gradeText.size()/2),7);
 
-    } else if (game->gameMode == MARATHON || game->lost || game->gameMode >= ULTRA || (game->gameMode == DIG && subMode == 1)) {
+    } else if (game->gameMode == MARATHON || game->lost || game->gameMode >= ULTRA || (game->gameMode == DIG && game->subMode == 1)) {
         std::string score;
 
         if(game->gameMode == DIG)
@@ -844,6 +844,8 @@ int onRecord() {
     if(bigMode)
         return place;
 
+    int subMode = game->subMode;
+
     if (game->gameMode == MARATHON) {
         if(subMode == 0){
             place = saveRecord(savefile->boards.marathon[mode], game->score, -1);
@@ -931,7 +933,7 @@ void showModeText(){
             if(game->gameMode != CLASSIC && game->gameMode != MASTER)
                 str = modeOptionStrings[game->gameMode-1][mode];
             else if(game->gameMode == MASTER)
-                str = modeOptionStrings[game->gameMode-1][subMode];
+                str = modeOptionStrings[game->gameMode-1][game->subMode];
             else
                 str = modeOptionStrings[game->gameMode-1][0];
         }

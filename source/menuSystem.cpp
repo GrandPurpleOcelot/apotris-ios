@@ -200,7 +200,7 @@ void WordSprite::setTextNum(int n){
 
     clearSpriteTiles(startTiles, (big)?20:12, 1);
 
-    aprintSprite(text,startTiles);
+    naprintSprite(text,startTiles);
 }
 
 void WordSprite::setup(int _id,int _index, int _tiles, bool _big) {

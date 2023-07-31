@@ -199,6 +199,8 @@ class ModeListScene: public SimpleListScene{
 class Element{
     public:
 
+        int value = 0;
+
         virtual std::string getLabel(){return "";};
         virtual std::string getCursor(std::string text){return "";};
         virtual void action(int dir){};

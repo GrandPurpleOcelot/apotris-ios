@@ -1,6 +1,5 @@
 #pragma once
 
-#include "platform.hpp"
 #include <cstdint>
 #include <string>
 #include <list>
@@ -36,7 +35,7 @@ namespace GameInfo{
 
     extern const int finesse[7][4][10][4];
 
-    extern const u16 masterDelays[9][5];
+    extern const uint16_t masterDelays[9][5];
 
     extern const float masterGravity[30][2];
 
@@ -44,7 +43,7 @@ namespace GameInfo{
 
     extern const char* masterGrades[33];
 
-    extern const u8 gradeTable[32][6];
+    extern const uint8_t gradeTable[32][6];
 
     extern const float masterComboMultiplayer[10][4];
 
@@ -52,9 +51,9 @@ namespace GameInfo{
 
     extern const float creditPoints[5][2];
 
-    extern const u16 connectedConversion[24];
+    extern const uint16_t connectedConversion[24];
 
-    extern const u16 connectedFix[3][24];
+    extern const uint16_t connectedFix[3][24];
 
     extern const std::list<std::string> credits;
 }

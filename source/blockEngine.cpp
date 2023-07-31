@@ -3,8 +3,6 @@
 #include <string>
 #include <tuple>
 
-#include "def.h"
-#include "platform.hpp"
 #include "tetromino.hpp"
 #include "blockEngine.h"
 #include "logging.h"

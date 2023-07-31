@@ -18,6 +18,8 @@ class PlayOptionScene : public OptionListScene{
     virtual bool getIfTime(){return false;};
     virtual bool getIfGrade(){return false;};
 
+    void setOptions();
+
     std::string currentElement = "";
 
     virtual BlockEngine::Modes getMode() = 0;
@@ -38,8 +40,6 @@ class PlayOptionScene : public OptionListScene{
 
 class LevelSelectorElement : public Element{
     public:
-        int value = 1;
-
         int min = 0;
         int max = 1;
 
@@ -95,7 +95,6 @@ class LevelSelectorElement : public Element{
 
 class StringSelectorElement : public Element{
     public:
-        int value = 0;
         int options = 1;
 
         std::list<std::string> optionList;
@@ -160,7 +159,6 @@ class StringSelectorElement : public Element{
 
 class IntSelectorElement : public Element{
     public:
-        int value = 0;
         int options = 1;
 
         std::list<int> optionList;
@@ -239,7 +237,6 @@ class IntSelectorElement : public Element{
 
 class TupleSelectorElement : public Element{
     public:
-        int value = 0;
         int options = 1;
 
         std::list<std::tuple<int,std::string>> optionList;

@@ -73,7 +73,7 @@ int maxClearTimer = 20;
 
 std::string clearTypeText = "";
 #define maxClearTextTimer 100
-#define clearTextHeight 16
+#define clearTextHeight 15
 
 s16 glow[20][10];
 
@@ -1068,20 +1068,20 @@ void GameScene::showText() {
 
         // aprint("Score", 3, 3);
         wordSprites[0].setText("Score");
-        wordSprites[0].show(3 * 8, 3 * 8,15);
+        wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
 
-        std::string score = std::to_string(game->score);
-        int x = 8 - score.size();
+        // std::string score = std::to_string(game->score);
+        // int x = 8 - score.size();
 
         wordSprites[1].setTextNum(game->score);
-        wordSprites[1].show((max(x,0)) * 8, 5 * 8,15);
+        wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
 
         if (game->gameMode != ULTRA) {
             wordSprites[2].setText("Level");
-            wordSprites[2].show(3 * 8, 14 * 8,15);
+            wordSprites[2].show(9 * 8 - wordSprites[2].width, 14 * 8,15);
 
             wordSprites[3].setTextNum(game->level);
-            wordSprites[3].show(5 * 8, 15 * 8,15);
+            wordSprites[3].show(9 * 8 - wordSprites[3].width, 15 * 8,15);
         }
 
     } else if (game->gameMode == TRAINING) {
@@ -1091,23 +1091,23 @@ void GameScene::showText() {
     } else if (game->gameMode == DIG && game->subMode) {
         // aprint("Pieces", 2, 14);
         wordSprites[0].setText("Pieces");
-        wordSprites[0].show(2 * 8, 14 * 8,15);
+        wordSprites[0].show(9 * 8 - wordSprites[0].width, 14 * 8,15);
 
         // aprintClearArea(0, 15, 10, 1);
         // aprintf(game->pieceCounter, 4, 15);
         wordSprites[1].setTextNum(game->pieceCounter);
-        wordSprites[1].show(4 * 8, 15 * 8,15);
+        wordSprites[1].show(9 * 8 - wordSprites[1].width, 15 * 8,15);
     } else if (game->gameMode == MASTER){
         // aprint("Grade",3,3);
         wordSprites[0].setText("Grade");
-        wordSprites[0].show(3 * 8, 3 * 8,15);
+        wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
 
         std::string str = GameInfo::masterGrades[game->grade + game->coolCount];
 
         // aprintClearArea(0, 5, 10, 1);
         // aprint(str,4 - (str.length() == 1),5);
         wordSprites[1].setText(str);
-        wordSprites[1].show((4 - (str.length()) * 8), 5 * 8,15);
+        wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
 
         // aprint("Level", 3, 14);
         wordSprites[2].setText("Level");
@@ -1139,7 +1139,7 @@ void GameScene::showText() {
         //     aprintf(game->linesCleared, 4, 18);
 
         wordSprites[6].setText("Lines");
-        wordSprites[6].show(3 * 8, 17 * 8,15);
+        wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8,15);
 
         int n = 0;
         if (game->gameMode == DIG)
@@ -1148,7 +1148,7 @@ void GameScene::showText() {
             n = game->linesCleared;
 
         wordSprites[7].setTextNum(n);
-        wordSprites[7].show(5 * 8, 18 * 8,15);
+        wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8,15);
 
     } else if(game->gameMode == BLITZ){
         // aprint("Lines", 2, 17);
@@ -1177,11 +1177,11 @@ void GameScene::showText() {
         // aprint("Attack", 2, 17);
         // aprintClearArea(0, 18, 10, 1);
         wordSprites[6].setText("Attack");
-        wordSprites[6].show(3 * 8, 17 * 8,15);
+        wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8,15);
 
         // aprintf(game->linesSent, 4, 18);
         wordSprites[7].setTextNum(game->linesSent);
-        wordSprites[7].show(4 * 8, 18 * 8,15);
+        wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8,15);
     }
 }
 
@@ -1218,12 +1218,12 @@ void GameScene::showComboStreak(){
     if(game->gameMode != CLASSIC && !game->zoneTimer){
         if (game->comboCounter > 1) {
             // aprint("Combo x", 21, clearTextHeight - 1);
-            wordSprites[8].setText("Combo x");
+            wordSprites[8].setText("Combo");
             wordSprites[8].show(21 * 8 + 4, (clearTextHeight - 1) * 8,15);
 
             // aprintf(game->comboCounter, 28, clearTextHeight - 1);
-            wordSprites[9].setTextNum(game->comboCounter);
-            wordSprites[9].show(27 * 8 + 8, (clearTextHeight - 1) * 8,15);
+            wordSprites[9].setText("x" + std::to_string(game->comboCounter));
+            wordSprites[9].show(21 * 8 + 4, (clearTextHeight) * 8,15);
         } else {
             // aprintClearArea(20, clearTextHeight - 1, 10, 1);
             wordSprites[8].hide();
@@ -1233,12 +1233,12 @@ void GameScene::showComboStreak(){
         if (game->b2bCounter > 0) {
             // aprint("Streak", 22, clearTextHeight + 1);
             wordSprites[10].setText("Streak");
-            wordSprites[10].show(22 * 8, (clearTextHeight + 1) * 8,15);
+            wordSprites[10].show(21 * 8 + 4, (clearTextHeight + 2) * 8,15);
 
             // aprint("x", 24, clearTextHeight + 2);
             // aprintf(game->b2bCounter + 1, 25, clearTextHeight + 2);
             wordSprites[11].setText("x" + std::to_string(game->b2bCounter + 1));
-            wordSprites[11].show(25 * 8, (clearTextHeight + 2) * 8,15);
+            wordSprites[11].show(21 * 8 + 4, (clearTextHeight + 3) * 8,15);
         } else {
             // aprintClearArea(20, clearTextHeight + 1, 10, 2);
             wordSprites[10].hide();

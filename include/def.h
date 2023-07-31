@@ -460,7 +460,6 @@ extern int rumbleMax;
 extern bool rumbleInitialized;
 extern bool bigMode;
 
-extern int subMode;
 extern int goalSelection;
 extern int level;
 

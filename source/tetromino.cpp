@@ -991,7 +991,7 @@ namespace GameInfo{
     };
 
     // ARE / Line ARE / DAS / LOCK / LINE CLEAR
-    const u16 masterDelays[9][5] ={
+    const uint16_t masterDelays[9][5] ={
         {27,27,16,30,40},
         {27,27,10,30,25},
         {27,18,10,30,16},
@@ -1085,7 +1085,7 @@ namespace GameInfo{
         "GM",
     };
 
-    const u8 gradeTable[32][6] = {
+    const uint8_t gradeTable[32][6] = {
         {0,125,10,20,40,50},
         { 1,80,10,20,30,40},
         { 2,80,10,20,30,40},
@@ -1141,7 +1141,7 @@ namespace GameInfo{
         {0.5,1.6},
     };
 
-    const u16 connectedConversion[24]={
+    const uint16_t connectedConversion[24]={
         12,
         8,0,15,13,
         4,14,
@@ -1151,7 +1151,7 @@ namespace GameInfo{
         2,10,5,7,6
     };
 
-    const u16 connectedFix[3][24] = {
+    const uint16_t connectedFix[3][24] = {
         {
             0,
             1,0,3,4,
