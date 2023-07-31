@@ -203,6 +203,13 @@ void PlayOptionScene::start(){
             bTypeHeight = value;
         }else if(s == "Finesse Training"){
             training = value;
+        }else if(s == "Difficulty"){
+            if(name() == "CPU Battle"){
+                botThinkingSpeed = value*3;
+                botSleepDuration = 5-value*2;
+            }else{
+                goal = value;
+            }
         }else if(s == "Minutes"){
             goal = value;
         }

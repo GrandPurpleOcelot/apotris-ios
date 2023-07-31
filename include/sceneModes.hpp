@@ -518,3 +518,17 @@ class TrainingScene : public PlayOptionScene{
 
     std::string name(){return "Training";};
 };
+
+class CPUBattleScene : public PlayOptionScene{
+    public:
+
+    BlockEngine::Modes getMode(){return BlockEngine::BATTLE;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new TupleSelectorElement("Difficulty",{{1,"EASY"},{2,"MEDIUM"},{3,"HARD"}}),
+        };
+    };
+
+    std::string name(){return "CPU Battle";};
+};
