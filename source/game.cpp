@@ -327,6 +327,17 @@ void checkSounds() {
 
         if (savefile->settings.announcer && soundEffect != -1)
             sfx(soundEffect);
+    }else if(game->previousClear.isTSpin){
+        if(game->previousClear.isTSpin == 1){
+            clearTypeText = "t-spin mini";
+            sfx(SFX_TSPINMINI);
+        }else{
+            clearTypeText = "t-spin";
+            sfx(SFX_TSPIN);
+        }
+
+        if (savefile->settings.floatText)
+            floatingList.push_back(FloatText(clearTypeText));
     }
 
     if (game->sounds.levelUp) {

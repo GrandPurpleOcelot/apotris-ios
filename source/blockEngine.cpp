@@ -931,6 +931,11 @@ int Game::clear(Drop drop) {
     //FIXME: perfect clears should be counted during zone
 
     if (clearCount == 0){
+        if(isTSpin > 0){
+            previousClear = Score(clearCount, scoring[1 + isTSpin * 3][0], comboCounter, isTSpin, isPerfectClear, isBackToBack, isDifficult, drop);
+            statTracker.tspins++;
+        }
+
         return 0;
     }
 
@@ -1723,6 +1728,7 @@ void Game::removeClearLock() {
 
 void Game::resetSounds(){
     sounds = SoundFlags();
+    previousClear = Score();
 }
 
 void Game::resetRefresh() {
