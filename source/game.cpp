@@ -2177,7 +2177,7 @@ void showZoneMeter(){
     }
     #endif
 
-    sprite_set_attr(sprite, ShapeSquare, 2, 256 + 3, 15, 0);
+    sprite_set_attr(sprite, ShapeSquare, 2, 256 + 3, 12, 0);
     sprite_enable_mosaic(sprite);
     sprite_set_pos(sprite, 9, 74);
     sprite_unhide(sprite,0);
@@ -2196,14 +2196,11 @@ void showZoneMeter(){
 
     for(int i = 0; i < 12; i++){
         if(i < n && n <= 2 && !game->zoneTimer)
-            setPaletteColor(15 + 16, 4+i, disabled, 1);
-            // memset16(&pal_obj_mem[15*16 + 4 + i], disabled , 1);
+            setPaletteColor(12 + 16, 4+i, disabled, 1);
         else if (i < n)
-            setPaletteColor(15 + 16, 4+i, color, 1);
-            // memset16(&pal_obj_mem[15*16 + 4 + i], color , 1);
+            setPaletteColor(12 + 16, 4+i, color, 1);
         else
-            setPaletteColor(15 + 16, 4+i, anticolor, 1);
-            // memset16(&pal_obj_mem[15*16 + 4 + i], anticolor , 1);
+            setPaletteColor(12 + 16, 4+i, anticolor, 1);
     }
 
 }
@@ -2744,8 +2741,6 @@ void GameScene::init(){
     if(game->gameMode == MASTER)
         showSpeedMeter((int)game->speed);
 
-    showZoneMeter();
-
     showSprites(128);
 
     if(game->gameMode == MASTER){
@@ -2761,6 +2756,8 @@ void GameScene::init(){
     enableBlend((0b101010 << 8) + (1 << 6) + (0b1010));
 
     setPalette();
+
+    showZoneMeter();
 }
 
 void GameScene::update(){
