@@ -29,6 +29,9 @@ int enemyHeight = 0;
 Game *botGame;
 
 int botIncomingHeight = 0;
+
+const int boardTile = 804 - 8;
+
 void handleMultiplayer(int state) {
     #ifdef GBA
     if (!multiplayer)
@@ -141,7 +144,7 @@ void handleMultiplayer(int state) {
 }
 
 void startMultiplayerGame(int seed) {
-    clearSpriteTiles(512 + 256, 2,4);
+    clearSpriteTiles(boardTile, 2,4);
 
     for (int i = 0; i < 20; i++)
         for (int j = 0; j < 10; j++)
@@ -163,7 +166,7 @@ void startMultiplayerGame(int seed) {
 void drawEnemyBoard(int height) {
 
     enemyBoardSprite = &obj_buffer[25];
-    sprite_set_attr(enemyBoardSprite, ShapeTall, 2, 768, 15, 1);
+    sprite_set_attr(enemyBoardSprite, ShapeTall, 2, boardTile, 15, 1);
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
     sprite_enable_affine(enemyBoardSprite, 6, true);
     sprite_set_pos(enemyBoardSprite, 43, 24);
@@ -172,13 +175,11 @@ void drawEnemyBoard(int height) {
     if (height > 19)
         return;
 
-
-
     for (int j = 0; j < 10; j++) {
         if (enemyBoard[height][j])
-            setSpritePixel(512 + 256, j / 8, height/8, 2, j % 8, height % 8, ((enemyBoard[height][j]) + 1 + savefile->settings.lightMode));
+            setSpritePixel(boardTile, j / 8, height/8, 2, j % 8, height % 8, ((enemyBoard[height][j]) + 1 + savefile->settings.lightMode));
         else
-            setSpritePixel(512 + 256, j / 8, height/8, 2, j % 8, height % 8, 0);
+            setSpritePixel(boardTile, j / 8, height/8, 2, j % 8, height % 8, 0);
     }
 }
 

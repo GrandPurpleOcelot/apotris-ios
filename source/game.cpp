@@ -1906,7 +1906,7 @@ void showPlaceEffect(){
     return;
     #endif
 
-    const int tileStart = 927 - 32 * 3;
+    const int tileStart = 804; // 900 - 32 * 3
 
     for(int i = 0; i < 3; i++)
         sprite_hide(&obj_buffer[19+i]);
