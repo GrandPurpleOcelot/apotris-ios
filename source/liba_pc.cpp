@@ -1239,6 +1239,9 @@ void loadSavefile(){
 
     std::ifstream input("Apotris.sav",std::ios::binary | std::ios::in);
 
+    if(savefile == nullptr)
+        savefile = new Save();
+
     char * src = (char * ) savefile;
 
     input.read(src,sizeof(Save));
@@ -1355,7 +1358,8 @@ void resize(int width, int height){
     rowStart = (512 - (height/windowScale))/2;
     rowEnd = (512 + (height/windowScale))/2;
 
-    setGradient(savefile->settings.backgroundGradient);
+    if(savefile != nullptr)
+        setGradient(savefile->settings.backgroundGradient);
 }
 
 std::vector<std::string> keyToString = {
