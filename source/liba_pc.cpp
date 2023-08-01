@@ -197,8 +197,6 @@ void platformInit(){
 
     TLN_SetRasterCallback(onHBlank);
 
-    // SDL_Surface * icon = SDL_LoadBMP("assets/favicon32.bmp");
-
     sf::Image icon;
     icon.loadFromFile("assets/favicon32.bmp");
 
