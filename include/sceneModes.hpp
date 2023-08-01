@@ -519,6 +519,25 @@ class TrainingScene : public PlayOptionScene{
     std::string name(){return "Training";};
 };
 
+class MultBattleScene : public PlayOptionScene{
+    public:
+
+    BlockEngine::Modes getMode(){return BlockEngine::BATTLE;};
+
+    std::list<Element*> getElementList(){
+        return {
+        };
+    };
+
+    void init();
+    bool control();
+    void update();
+    void deinit();
+    void draw();
+
+    std::string name(){return "2P Battle";};
+};
+
 class CPUBattleScene : public PlayOptionScene{
     public:
 

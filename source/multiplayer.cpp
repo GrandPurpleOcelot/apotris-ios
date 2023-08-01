@@ -30,13 +30,11 @@ Game *botGame;
 
 int botIncomingHeight = 0;
 void handleMultiplayer(int state) {
-    //TODO:
     #ifdef GBA
     if (!multiplayer)
         return;
     if (multiplayerStartTimer) {
         if (--multiplayerStartTimer == 0) {
-            // startMultiplay8erGame(nextSeed & 0x1fff);
             playAgain = true;
         } else {
             linkConnection->send((u16)((1 << 13) + (nextSeed & 0x1fff)));
@@ -145,8 +143,6 @@ void handleMultiplayer(int state) {
 void startMultiplayerGame(int seed) {
     clearSpriteTiles(512 + 256, 2,4);
 
-    // memset32(&tile_mem[5][256], 0, 8 * 8);
-
     for (int i = 0; i < 20; i++)
         for (int j = 0; j < 10; j++)
             enemyBoard[i][j] = 0;
@@ -158,8 +154,9 @@ void startMultiplayerGame(int seed) {
     game->setGoal(100);
     multiplayer = true;
 
-    //TODO:
-    //linkConnection->send(50);
+    #ifdef GBA
+    linkConnection->send(50);
+    #endif
     nextSeed = 0;
 }
 
@@ -169,12 +166,8 @@ void drawEnemyBoard(int height) {
     sprite_set_attr(enemyBoardSprite, ShapeTall, 2, 768, 15, 1);
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
     sprite_enable_affine(enemyBoardSprite, 6, true);
-    // obj_set_attr(enemyBoardSprite, ATTR0_TALL | ATTR0_AFF_DBL, ATTR1_SIZE(2) | ATTR1_AFF_ID(6), 0);
-    // enemyBoardSprite->attr2 = ATTR2_BUILD(768, 15, 1);
     sprite_set_pos(enemyBoardSprite, 43, 24);
     sprite_set_size(enemyBoardSprite, float2fx(0.5), 6);
-    // obj_aff_identity(&obj_aff_buffer[6]);
-    // obj_aff_scale(&obj_aff_buffer[6], float2fx(0.5), float2fx(0.5));
 
     if (height > 19)
         return;
@@ -182,18 +175,10 @@ void drawEnemyBoard(int height) {
 
 
     for (int j = 0; j < 10; j++) {
-        // dest2 = (TILE*)&tile_mem[5][256 + ((height) / 8) * 2 + (j) / 8];
-
         if (enemyBoard[height][j])
-            setSpritePixel(512 + 256, j / 8, height/8, 2, j % 8, height % 8, ((enemyBoard[height][j]) + 1 * savefile->settings.lightMode));
+            setSpritePixel(512 + 256, j / 8, height/8, 2, j % 8, height % 8, ((enemyBoard[height][j]) + 1 + savefile->settings.lightMode));
         else
             setSpritePixel(512 + 256, j / 8, height/8, 2, j % 8, height % 8, 0);
-            // dest2->data[(height) % 8] &= ~(0xffff << ((j % 8) * 4));
-
-        // if (enemyBoard[height][j])
-        //     dest2->data[(height) % 8] |= ((enemyBoard[height][j]) + 1 * savefile->settings.lightMode) << ((j % 8) * 4);
-        // else
-        //     dest2->data[(height) % 8] &= ~(0xffff << ((j % 8) * 4));
     }
 }
 
@@ -217,28 +202,9 @@ void handleBotGame(){
         game->clearAttack(atck.id);
     }
 
-    // bool clearing = false;
-    // for(auto const& line : botGame->linesToClear){
-    //     if(line == botIncomingHeight+20){
-    //         clearing = true;
-    //         break;
-    //     }
-    // }
-
-    // auto it = botGame->linesToClear.begin();
     for(int i = 0; i < 20; i++){
-        // bool clearing = false;
-        // if(botGame->linesToClear.size() && it != botGame->linesToClear.end()){
-        //     if(*it == i+20){
-        //         clearing = true;
-        //     }
-        // }
-
         for(int j = 0; j < 10; j++){
-            // if(!clearing)
-                enemyBoard[i][j] = (botGame->board[i+20][j] > 0) * 2;
-            // else
-            //     enemyBoard[i][j] = 3;
+            enemyBoard[i][j] = (botGame->board[i+20][j] > 0) * 1;
         }
     }
 

@@ -2271,7 +2271,7 @@ bool newTitleScene::control(){
 
         BlockEngine::Options newOptions;
 
-        newOptions.mode = q.mode;
+        newOptions.mode = BlockEngine::Modes(q.mode);
         newOptions.goal = q.goal;
         newOptions.level = q.level;
         newOptions.tuning = getTuning();

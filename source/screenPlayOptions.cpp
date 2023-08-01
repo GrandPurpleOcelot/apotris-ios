@@ -15,7 +15,7 @@ bool PlayOptionScene::control(){
 
     if(key_hit(KEY_B)){
         sfx(SFX_MENUCANCEL);
-        if(!onScore){
+        if(!onScore || options == 0){
             previousElement = name();
             previousSelection = selection;
 
@@ -505,4 +505,140 @@ void ClassicScene::update(){
     }
 
     PlayOptionScene::update();
+}
+
+void MultBattleScene::init(){
+    PlayOptionScene::init();
+
+    #ifdef GBA
+
+    linkConnection->activate();
+
+    #endif
+
+    clearSpriteTiles(672, 144, 1);
+}
+
+void MultBattleScene::draw(){
+    fallingBlocks();
+
+    if (connected < 1) {
+        aprint("Waiting for", 7, 7);
+        aprint("Link Cable", 9, 9);
+        aprint("connection...", 11, 11);
+    } else {
+        aprint("Connected!", 10, 6);
+    }
+
+    showSprites(128);
+}
+
+bool MultBattleScene::control(){
+    if(key_hit(KEY_B)){
+        sfx(SFX_MENUCANCEL);
+        if(!onScore || options == 0){
+            previousElement = name();
+            previousSelection = selection;
+
+            if(path.size())
+                path.pop_back();
+
+            changeScene(previousScene(),Transitions::FADE);
+
+            #ifdef GBA
+            linkConnection->deactivate();
+            #endif
+
+            return true;
+        }else{
+            onScore = false;
+            refreshText = true;
+            movingDirection = -1;
+            listStart = 0;
+        }
+
+    }
+
+    return false;
+}
+
+void MultBattleScene::update(){
+    PlayOptionScene::update();
+
+    #ifdef GBA
+    if(multiplayerStartTimer){
+        if(--multiplayerStartTimer == 0){
+            startMultiplayerGame(nextSeed);
+            gameLoop();
+        }else{
+            linkConnection->send((u16)nextSeed + 100);
+        }
+        return;
+    }
+
+    auto linkState = linkConnection->linkState.get();
+
+    if (linkState->isConnected()) {
+        u16 data[LINK_MAX_PLAYERS];
+        for (u32 i = 0; i < LINK_MAX_PLAYERS; i++)
+            data[i] = 0;
+        for (u32 i = 0; i < linkState->playerCount; i++) {
+            while (linkState->hasMessage(i))
+                data[i] = linkState->readMessage(i);
+        }
+
+        for (u32 i = 0; i < LINK_MAX_PLAYERS; i++) {
+            if (data[i] == 2) {
+                if (connected < 1) {
+                    refreshText = true;
+                    clearText();
+                }
+                connected = 1;
+            } else if (data[i] > 100){
+                nextSeed = data[i] - 100;
+            }
+        }
+
+        if (linkState->playerCount == 2) {
+            if (linkState->currentPlayerId != 0) {
+                if (nextSeed > 100) {
+                    startMultiplayerGame(nextSeed);
+                    gameLoop();
+                    return;
+                }
+                aprint("Waiting", 12, 13);
+                aprint("for host...", 12, 14);
+            } else {
+                aprint("Press Start", 10, 13);
+
+            }
+        } else if (linkState->playerCount == 1) {
+            if (connected > -1) {
+                refreshText = true;
+                clearText();
+            }
+            connected = -1;
+        }
+
+        if (key_hit(KEY_START) && linkState->currentPlayerId == 0) {
+            nextSeed = (u16)qran() & 0x1fff;
+            multiplayerStartTimer = 3;
+        } else {
+            linkConnection->send(2);
+        }
+
+        aprint("             ", 0, 19);
+    } else {
+        if (connected > -1) {
+            refreshText = true;
+            clearText();
+        }
+        connected = -1;
+    }
+
+    #endif
+}
+
+void MultBattleScene::deinit(){
+    PlayOptionScene::deinit();
 }

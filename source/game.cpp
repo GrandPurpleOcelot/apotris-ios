@@ -40,7 +40,6 @@ void disappear();
 INLINE int getBoard(int,int);
 void zoneFlash();
 void resetZonePalette();
-// void control();
 void rainbowPalette();
 void frameSnow(int layer);
 void showZoneText();
@@ -1022,16 +1021,6 @@ bool GameScene::control() {
                 Function f = getActionFromKey(KEY_DOWN);
                 (game->*f.gameFunction)(1);
             }
-        }
-    }
-
-    if(key_hit(KEY_SELECT)){
-        for(int i = 0; i < 20; i++){
-            std::string str;
-            for(int j = 0; j < 10; j++){
-                str += std::to_string(prep(current[i+1][j+1])) + " ";
-            }
-            log(str);
         }
     }
 

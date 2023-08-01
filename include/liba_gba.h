@@ -4,6 +4,7 @@
 #include "mm_types.h"
 #include "soundbank.h"
 #include "posprintf.h"
+#include "LinkConnection.h"
 
 static inline void setTile(int sbb, int x, int y, uint32_t value){
     se_mem[sbb][y * 32 + x] = value & 0xffff;
@@ -20,7 +21,10 @@ INLINE u32 tileBuild(u16 value){
 INLINE void setSpritePixel(int index, u8 tx, u8 ty, u8 width, u8 x, u8 y, u8 color){
     TILE * t = &tile_mem[4][index + ty * width + tx];
 
-    t->data[y] |= color << (x * 4);
+    if(color)
+        t->data[y] |= color << (x * 4);
+    else
+        t->data[y] &= ~(0xf << (x * 4));
 }
 
 INLINE void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src){

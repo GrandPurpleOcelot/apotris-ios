@@ -5,7 +5,6 @@
 #include "liba_gba.h"
 #include "tonc.h"
 #include "maxmod.h"
-
 #endif
 
 #ifdef PC

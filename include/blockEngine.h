@@ -281,7 +281,7 @@ namespace BlockEngine
 
     class Options{
         public:
-            int mode = NO_MODE;
+            Modes mode = NO_MODE;
             int goal = 0;
             int level = 0;
             Tuning tuning;

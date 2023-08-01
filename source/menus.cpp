@@ -256,7 +256,7 @@ int GameScene::endScreen(){
 
     if (multiplayer) {
         enemyHeight = 0;
-        progressBar(0);
+        progressBar(1);
     }
 
     savefile->stats.gamesCompleted++;
@@ -287,8 +287,6 @@ int GameScene::endScreen(){
 
     loadSpriteTiles(16*7, blockSprite, 1, 1);
     cursorSprite = &obj_buffer[1];
-    sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 1);
-    sprite_enable_affine(cursorSprite, 0, true);
     sprite_hide(cursorSprite);
 
     while (closed()) {
@@ -320,8 +318,8 @@ int GameScene::endScreen(){
 
         sprite_unhide(cursorSprite,0);
         sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 1);
-        sprite_enable_affine(cursorSprite, 0, true);
-        sprite_set_size(cursorSprite, scale , 0);
+        sprite_enable_affine(cursorSprite, 6, true);
+        sprite_set_size(cursorSprite, scale , 6);
 
         int x = 240/2 - ((20) + offset + 4) - 16;
 
@@ -336,7 +334,7 @@ int GameScene::endScreen(){
             floatingList.clear();
             placeEffectList.clear();
 
-            drawFrame(0);
+            drawFrame(1);
             clearText();
 
             clearSprites(128);
@@ -371,8 +369,10 @@ int GameScene::endScreen(){
             } else if (selection == 1){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
-                // REG_BLDCNT = prevBld;
-                goToOptions = true;
+                path.clear();
+                path.push_back("Play");
+                clearText();
+                sceneSwitcher(modeToString(previousGameOptions->mode));
                 nextSeed = 0;
                 return 1;
             } else if (selection == 2){
@@ -897,7 +897,7 @@ int GameScene::pauseMenu(){
     for(int i = 0; i < 2; i++)
         sprite_hide(cursorSprites[i]);
 
-    drawFrame(0);
+    drawFrame(1);
     if(game->zoneTimer)
         frameSnow(0);
 

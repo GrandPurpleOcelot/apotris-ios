@@ -195,7 +195,15 @@ class ModeListScene: public SimpleListScene{
     public:
     Scene* previousScene();
 
-    std::list<std::string> getOptionList(){return gameOptions;};
+    std::list<std::string> getOptionList(){
+        std::list<std::string> l = gameOptions;
+
+        #ifdef PC
+        l.remove("2P Battle");
+        #endif
+
+        return l;
+    };
     std::string name(){return "Play";};
 };
 
