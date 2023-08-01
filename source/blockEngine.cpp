@@ -1706,6 +1706,7 @@ void Game::removeClearLock() {
             }
             connectBoard(i, i);
         }
+        stackHeight = lengthY/2 - 4;
     }
 
     linesToClear.clear();

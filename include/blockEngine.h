@@ -630,6 +630,7 @@ namespace BlockEngine
                         }
                         connectBoard(i, i);
                     }
+                    stackHeight = lengthY/2 - 4;
                 }else{
                     for(int i = (lengthY/4-1); i < lengthY/2; i++){
                         for(int j = 0; j < 5; j++){
