@@ -181,7 +181,6 @@ void GameScene::draw(){
         updateText();
 
     showSprites(128);
-    // // profile_start();
 
     if (game->refresh) {
         showBackground(0);
@@ -456,11 +455,29 @@ void checkSounds() {
     game->resetSounds();
 }
 
+int edges[16] = {
+    0x0000,//none
+    0x080f,
+    0x0410,
+    0x0c16,
+    0x0010,
+    0x0816,
+    0x0011,
+    0x0817,
+    0x000f,
+    0x0012,
+    0x0416,
+    0x0418,
+    0x0016,
+    0x0018,
+    0x0017,
+    0x0019,//all
+};
+
 void showBackground(int offset) {
 
     bool showEdges = savefile->settings.edges;
 
-    std::list<int>::iterator l2c = game->linesToClear.begin();
     bool up, down, left, right;
     bool before = false, after = false;
 
@@ -471,31 +488,23 @@ void showBackground(int offset) {
     #endif
 
     for (int i = startY; i < game->lengthY && (i - 20 + offset) < 20; i++) {
-        if (game->linesToClear.size() > 0) {
-            before = after = false;
-            for(auto const& l : game->linesToClear){
-                if(l == i - 1)
-                    before = true;
-                if(l == i + 1)
-                    after = true;
-                if(l > i + 1)
-                    break;
-            }
+        int y = i - 20 + offset;
+
+        if(!game->bitboard[i] && !(i < game->lengthY - 1 && game->bitboard[i+1])){
+            setTiles(25, 32 * y + 10, 10, 0);
+            continue;
         }
 
-        int y = i - 20 + offset;
-        // int y = i - game->boardOffset + offset;
+        if(game->clearLock){
+            before = game->lineClearArray[i - 1];
 
-        // if(y >= 20)
-        //     return;
+            after = (i < game->lengthY-1 && game->lineClearArray[i + 1]);
+        }
 
-        if(game->clearLock && i != *l2c && clearTimer != 1)
-            continue;
+        for(int j = 0; j < game->lengthX; j++){
+            int b = game->board[i][j];
 
-        for (int j = 0; j < 10; j++) {
-            if ((!game->board[i][j]) ||
-                (game->clearLock && i == *l2c && showEdges) ||
-                (game->disappearing && game->disappearTimers[i][j] == 1)) {
+            if(!b || game->lineClearArray[i] || game->disappearTimers[i][j] == 1){
                 if (!showEdges) {
                     setTile(25, 10+j, y, 0);
                     continue;
@@ -503,109 +512,63 @@ void showBackground(int offset) {
 
                 if(!game->disappearing){
                     up = (game->board[i - 1][j] > 0 && !before);
-                    left = (j - 1 >= 0 && game->board[i][j - 1] > 0 && !(i == *l2c && game->clearLock));
-                    right = (j + 1 <= 9 && game->board[i][j + 1] > 0 && !(i == *l2c && game->clearLock));
+                    left = (j - 1 >= 0 && game->board[i][j - 1] > 0 && !(game->lineClearArray[i]));
+                    right = (j + 1 <= 9 && game->board[i][j + 1] > 0 && !(game->lineClearArray[i]));
                     down = (i + 1 <= 39 && game->board[i + 1][j] > 0 && !after);
                 }else{
                     up = (getBoard(j,i-1) > 0 && !before);
-                    left = (j - 1 >= 0 && getBoard(j-1, i) > 0 && !(i == *l2c && game->clearLock));
-                    right = (j + 1 <= 9 && getBoard(j+1,i) > 0 && !(i == *l2c && game->clearLock));
+                    left = (j - 1 >= 0 && getBoard(j-1, i) > 0 && !(game->lineClearArray[i]));
+                    right = (j + 1 <= 9 && getBoard(j+1,i) > 0 && !(game->lineClearArray[i]));
                     down = (i + 1 <= 39 && getBoard(j,i+1) > 0 && !after);
                 }
 
-                int count = up + down + left + right;
+                int count = (up << 3) + (left << 2) + (right << 1) + down;
 
-                int n = 0;
-                if (count == 0) {
-                    n = 0;
-                } else if (count == 4) {
-                    // if(up && left && right && down)//full
-                    n = 0x0019;
-                } else if (count == 3) {
-                    if (up && left && !right && down)//1 side missing
-                        n = 0x0018;
-                    else if (up && !left && right && down)
-                        n = 0x0418;
-                    else if (up && left && right && !down)
-                        n = 0x0017;
-                    else if (!up && left && right && down)
-                        n = 0x0817;
-                    else
-                        n = 0x000a;
-                } else if (count == 2) {
-                    if (up && left && !right && !down)//2 sides missing
-                        n = 0x0016;
-                    else if (up && !left && right && !down)
-                        n = 0x0416;
-                    else if (!up && left && !right && down)
-                        n = 0x0816;
-                    else if (!up && !left && right && down)
-                        n = 0x0c16;
-                    else if (up && !left && !right && down)
-                        n = 0x0012;
-                    else if (!up && left && right && !down)
-                        n = 0x0011;
-                    else
-                        n = 0x000b;
-                } else if (count == 1) {
-                    if (!up && left && !right && !down)//4 sides missing
-                        n = 0x0010;
-                    else if (!up && !left && right && !down)
-                        n = 0x0410;
-                    else if (up && !left && !right && !down)
-                        n = 0x000f;
-                    else if (!up && !left && !right && down)
-                        n = 0x080f;
-                    else
-                        n = 0;
-                }
-                setTile(25, 10+j, y, tileBuild(n + (savefile->settings.lightMode * 0x1000)));
-            } else{
-                int offset = 1;
-
-                int b = game->board[i][j];
-                int n = (b - 1) & 0xf;
-                int r = (b) >> 4;
-
-                if(savefile->settings.skin == 7 || savefile->settings.skin == 8)
-                    offset = 48 + (n);
-                else if(savefile->settings.skin >= 11)
-                    offset = 128 + GameInfo::connectedConversion[r];
-
-                if(n != 8)
-                    setTile(25, 10+j, y, tileBuild(offset, false, false, n * !game->zoneTimer));
-                else
-                    setTile(25, 10+j, y, tileBuild(3, false, false, 0));
+                setTile(25, 10+j, y, tileBuild(edges[count] + (savefile->settings.lightMode * 0x1000)));
+                continue;
             }
 
-            if (game->clearLock && i == *l2c) {
-                if (!showEdges)
-                    setTile(25, 10+j, y, 0);
-                if(savefile->settings.clearEffect < 3){
-                    if (j < 5) {
-                        if (clearTimer < maxClearTimer - 10 + j * 2)
-                            setTile(25, 10+j, y, tileBuild(3, false, false, savefile->settings.lightMode));
-                    } else {
-                        if (clearTimer < maxClearTimer - 10 + (9 - j) * 2)
-                            setTile(25, 10+j, y, tileBuild(3, false, false, savefile->settings.lightMode));
-                    }
-                }else if(savefile->settings.clearEffect == 3){
-                    if (j < 5) {
-                        if (clearTimer < maxClearTimer - 10 + (4 - j) * 2)
-                            setTile(25, 10+j, y, tileBuild(3, false, false, savefile->settings.lightMode));
-                    } else {
-                        if (clearTimer < maxClearTimer - 10 + (j-5) * 2)
-                            setTile(25, 10+j, y, tileBuild(3, false, false, savefile->settings.lightMode));
-                    }
-                }
+            int offset = 1;
 
-                if(clearTimer < 0){
-                    aprint("ERROR",12,i);
-                }
+            int n = (b - 1) & 0xf;
+
+            if(savefile->settings.skin == 7 || savefile->settings.skin == 8)
+                offset = 48 + (n);
+            else if(savefile->settings.skin >= 11)
+                offset = 128 + GameInfo::connectedConversion[b >> 4];
+
+            if(n != 8)
+                setTile(25, 10+j, y, tileBuild(offset, false, false, n * !game->zoneTimer));
+            else
+                setTile(25, 10+j, y, tileBuild(3, false, false, 0));
+
+        }
+    }
+
+    const int clearTile = tileBuild(3, false, false, savefile->settings.lightMode);
+
+    for(auto const& i : game->linesToClear){
+        int y = i - 20 + offset;
+
+        if(savefile->settings.clearEffect < 3){
+            for(int j = 0; j < 5; j++) {
+                if (clearTimer < maxClearTimer - 10 + j * 2)
+                    setTile(25, 10+j, y, clearTile);
+            }
+            for(int j = 5; j < 10; j++) {
+                if (clearTimer < maxClearTimer - 10 + (9 - j) * 2)
+                    setTile(25, 10+j, y, clearTile);
+            }
+        }else if(savefile->settings.clearEffect == 3){
+            for(int j = 0; j < 5; j++){
+                if (clearTimer < maxClearTimer - 10 + (4 - j) * 2)
+                    setTile(25, 10+j, y, clearTile);
+            }
+            for(int j = 5; j < 10; j++){
+                if (clearTimer < maxClearTimer - 10 + (j-5) * 2)
+                    setTile(25, 10+j, y, clearTile);
             }
         }
-        if (i == *l2c)
-            ++l2c;
     }
 }
 
@@ -2155,8 +2118,8 @@ void disappear(){
         int x = std::get<0>(coords);
         int y = std::get<1>(coords);
 
-        clearTiles(25,(y-20)*32 + x + 10,1);
-        // dest[(y-20)*32 + x + 10] = 0;
+        // clearTiles(25,(y-20)*32 + x + 10,1);
+        setTile(25,x+10,y-20,0);
 
         found = true;
 
@@ -2948,7 +2911,7 @@ void GameScene::update(){
         showZoneMeter();
     }
 
-    if(game->eventTimer){
+    if(game->gameMode == MASTER && game->eventTimer){
         showCredits();
     }
 

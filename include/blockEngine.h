@@ -343,6 +343,7 @@ namespace BlockEngine
         void fixConnected(std::list<int>);
         void connectBoard(int startY, int endY);
         void updateColumns(int height);
+        void initDisappear();
 
         int bigBag[35];
 
@@ -439,12 +440,13 @@ namespace BlockEngine
         int score = 0;
         int comboCounter = 0;
         std::list<int> linesToClear;
+        bool lineClearArray[40];
         int clearLock = 0;
         int lost = 0;
         int gameMode;
         SoundFlags sounds;
         Score previousClear = Score(0, 0, 0, 0, 0, 0, 0, Drop());
-        int timer = 0;
+        int timer = 100;
         int refresh = 0;
         int won = 0;
         int goal = 40;
@@ -580,9 +582,11 @@ namespace BlockEngine
 
             for (int i = 0; i < lengthY; i++) {
                 board[i] = new int[lengthX];
+                bitboard[i] = 0;
+                lineClearArray[i] = false;
+
                 for (int j = 0; j < lengthX; j++)
                     board[i][j] = 0;
-                bitboard[i] = 0;
             }
 
             for(int j = 0; j < lengthX; j++)
@@ -654,6 +658,8 @@ namespace BlockEngine
                 lengthX /= 2;
                 boardOffset = lengthY/2;
             }
+
+            initDisappear();
         }
 
         Game(int gm,bool big) : Game(gm,qran(),big){}
@@ -667,6 +673,8 @@ namespace BlockEngine
                 bitboard[i] = oldGame.bitboard[i];
                 for (int j = 0; j < lengthX; j++)
                     board[i][j] = oldGame.board[i][j];
+
+                lineClearArray[i] = oldGame.lineClearArray[i];
             }
 
             for (int j = 0; j < lengthX; j++)

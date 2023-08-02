@@ -529,7 +529,7 @@ void Game::update() {
        if(gameMode == CLASSIC && goal){
            score+= (level + bTypeHeight) * 1000;
        }
-    }else if(disappearing && (eventTimer) >= CREDITS_LENGTH){
+    }else if(gameMode == MASTER && disappearing && (eventTimer) >= CREDITS_LENGTH){
         won = 1;
 
         creditGrade += creditPoints[4][disappearing-1];
@@ -867,6 +867,7 @@ int Game::clear(Drop drop) {
         if (toClear) {
             if(!zoneTimer){
                 linesToClear.push_back(i);
+                lineClearArray[i] = true;
                 clearCount++;
                 if(gameMode == DIG && i >= lengthY-(garbageHeight))
                     garbageToRemove++;
@@ -1013,12 +1014,7 @@ int Game::clear(Drop drop) {
 
             disappearing = 1 + (coolCount == 9);
 
-            disappearTimers = new u16*[lengthY];
-            for(int i = 0; i < lengthY; i++){
-                disappearTimers[i] = new u16[lengthX];
-                for(int j = 0; j < lengthX; j++)
-                    disappearTimers[i][j] = 0;
-            }
+            initDisappear();
 
             sectionStart = timer;
 
@@ -1715,6 +1711,7 @@ void Game::removeClearLock() {
     }
 
     linesToClear.clear();
+    memset32(lineClearArray, 0, 40 / 4);
 
     if(!entryDelay && !zoneExit){
         next();
@@ -2138,6 +2135,7 @@ void Game::updateDisappear(){
 
             if(disappearTimers[i][j] == 1){
                 found = true;
+                log("here: " + std::to_string(j) + " " + std::to_string(i));
                 toDisappear.push_back(std::make_tuple(j,i));
             }
         }
@@ -2364,4 +2362,16 @@ void Game::chargeDas(){
         return;
 
     das = maxDas;
+}
+
+void Game::initDisappear(){
+    if(!disappearing)
+        return;
+
+    disappearTimers = new u16 *[lengthY];
+    for (int i = 0; i < lengthY; i++) {
+        disappearTimers[i] = new u16[lengthX];
+        for (int j = 0; j < lengthX; j++)
+            disappearTimers[i][j] = 0;
+    }
 }
