@@ -797,12 +797,6 @@ Tuning getTuning(){
 void setGradient(int color){
     stopDMA();
 
-    int n = (savefile->settings.colors < 2)?savefile->settings.colors:0;
-
-    COLOR * src = (COLOR *) &palette[n];
-
-    COLOR test[1] = {RGB15(31, 15, 15)};
-
     int div = 20;
 
     int start = 0;
@@ -817,10 +811,13 @@ void setGradient(int color){
 
     div = (end-start)/16;
 
+    COLOR color1 = color & 0xffff;
+    COLOR color2 = (color >> 16) & 0xffff;
+
     if(!(savefile->settings.lightMode && color == 0)){
         for(int i = 0; i < end-start; i++){
             // color_fade((COLOR *) &gradientTable[i+start],src,color,1,(((end-start)-1-i) / div) * 2 + 16);
-            color_fade((COLOR *) &gradientTable[i+start],test,color,1,(((end-start)-1-i) / div) * 2);
+            color_fade((COLOR *) &gradientTable[i+start],&color2,color1,1,(((end-start)-1-i) / div) * 2);
         }
 
         #ifdef GBA
@@ -936,9 +933,10 @@ void setPawnPalette(int dest, int n, int blend){
 
     if (!savefile->settings.lightMode){
         if(savefile->settings.colors == 2)
-            color_fade_palette(dest,0,(COLOR*)classic_pal_bin,0x0000,8,blend);
+            color_fade_palette(dest,0,(COLOR*)classic_pal_bin,0x0000,4,blend);
         else if(savefile->settings.colors == 3){
-            color_fade_palette(dest,1,(COLOR*)classic_pal_bin,0x0000,4,blend);
+            int n = getClassicPalette();
+            color_fade_palette(dest,1, &nesPalette[n][0],0x0000,4,blend);
         }else if(savefile->settings.colors == 4){
             COLOR c;
             if(savefile->settings.palette < 7){

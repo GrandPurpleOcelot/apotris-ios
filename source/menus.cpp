@@ -419,6 +419,7 @@ void endAnimation() {
     clearText();
     clearSprites(128);
     showHold();
+
     showQueue();
     showSprites(128);
 

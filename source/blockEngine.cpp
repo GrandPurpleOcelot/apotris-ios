@@ -650,6 +650,8 @@ void Game::place() {
     if(pawn.current == -1)
         return;
 
+    log("placing...");
+
     lastDrop = calculateDrop();
 
     for (int j = 0; j < 4; j++) {
@@ -798,6 +800,7 @@ void Game::place() {
 }
 
 int Game::clear(Drop drop) {
+    log("clearing...");
     int clearCount = 0;
     int attack = 0;
     int isTSpin = 0;
@@ -1282,6 +1285,7 @@ void Game::next() {//~21-29k cycles
     if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
         pawn.y-=1;
         if (!checkRotation(0, 0, pawn.rotation)){
+            log("LOSING!");
             if(zoneTimer && zonedLines) {
                 if(!toEndZone)
                     endZone();
@@ -1745,22 +1749,22 @@ void Game::generateGarbage(int height,int mode){
     int hole = qran() % lengthX;
     // shift up
     for(int i = 0; i < lengthY; i++){
-        for(int j = 0; j < lengthX; j++){
-            if(i < lengthY-height)
+        if(i < lengthY-height){
+            for(int j = 0; j < lengthX; j++)
                 board[i][j] = board[i+height][j];
-            else
-                board[i][j] = 0;
+            bitboard[i] = bitboard[i+height];
+        } else{
+            memset32(board[i],0,10);
+            bitboard[i] = 0;
         }
-
-        bitboard[i] = bitboard[i+height];
     }
 
     for(int i = lengthY-height; i < lengthY; i++){
         int prevHole = hole;
         int count = 0;
-        if(!mode || rand() % 10 < 3){
+        if(!mode || qran() % 10 < 3){
             do{
-                hole = rand() % lengthX;
+                hole = qran() % lengthX;
             }while(++count < 11 && ((!board[i-1][hole] && height < garbageHeight) || hole == prevHole));
         }
         for(int j = 0; j < lengthX; j++){
@@ -2135,7 +2139,6 @@ void Game::updateDisappear(){
 
             if(disappearTimers[i][j] == 1){
                 found = true;
-                log("here: " + std::to_string(j) + " " + std::to_string(i));
                 toDisappear.push_back(std::make_tuple(j,i));
             }
         }
@@ -2365,9 +2368,6 @@ void Game::chargeDas(){
 }
 
 void Game::initDisappear(){
-    if(!disappearing)
-        return;
-
     disappearTimers = new u16 *[lengthY];
     for (int i = 0; i < lengthY; i++) {
         disappearTimers[i] = new u16[lengthX];

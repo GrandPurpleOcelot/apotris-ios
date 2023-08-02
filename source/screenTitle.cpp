@@ -63,7 +63,7 @@ int bigModeMessageTimer = 0;
 int bigModeMessageMax = 180;
 
 const std::list<std::string> menuOptions = {"Play","Settings","Stats","Links","Skin Editor","Credits"};
-const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","2P Battle","CPU Battle","Training"};
+const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","Zen","2P Battle","CPU Battle","Training"};
 const std::list<std::string> settingsOptions = {"Graphics","Audio","Controls","Handling"};
 
 const int secretCombo[11] = {KEY_UP,KEY_UP,KEY_DOWN,KEY_DOWN,KEY_LEFT,KEY_RIGHT,KEY_LEFT,KEY_RIGHT,KEY_B,KEY_A,KEY_START};
@@ -416,7 +416,6 @@ void startScreen() {
                 if (n != 0) {
                     previousOptionScreen = toStart = n;
                     onSettings = true;
-                    // log("here");
                     gradient(true);
 
                     clearTilemap(25);

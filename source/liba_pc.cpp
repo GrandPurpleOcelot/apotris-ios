@@ -470,7 +470,7 @@ void showSprites(int n ){
     for(int i = 4; i >= 1; i--){
         for(int counter = 127; counter >= 0; counter--){
             OBJ_ATTR *sprite = &obj_buffer[counter];
-            if(sprite->priority == i){
+            if(sprite->enabled && sprite->priority == i && sprite->id >= 0 && sprite->id < 128){
                 spriteList.push_back(sprite->id);
                 sum++;
             }

@@ -446,7 +446,7 @@ namespace BlockEngine
         int gameMode;
         SoundFlags sounds;
         Score previousClear = Score(0, 0, 0, 0, 0, 0, 0, Drop());
-        int timer = 100;
+        int timer = 0;
         int refresh = 0;
         int won = 0;
         int goal = 40;
@@ -731,11 +731,9 @@ namespace BlockEngine
                 delete[] board[i];
             delete[] board;
 
-            if(disappearing){
-                for(int i = 0; i < 40; i++)
-                    delete[] disappearTimers[i];
-                delete[] disappearTimers;
-            }
+            for(int i = 0; i < 40; i++)
+                delete[] disappearTimers[i];
+            delete[] disappearTimers;
         }
     };
 

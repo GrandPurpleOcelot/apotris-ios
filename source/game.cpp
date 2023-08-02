@@ -118,7 +118,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterAnimationLength 15
 
 bool enableBot = false;
-// static bool refreshSkin = false;
+static bool refreshSkin = false;
 // Bot *testBot;
 
 FIXED shakeBuff;
@@ -353,10 +353,13 @@ void checkSounds() {
 
         if(game->gameMode == MASTER){
             maxClearTimer = game->maxClearDelay;
+        } else if(game->gameMode == MARATHON){
+            flashTimer = flashTimerMax;
+            setJourneyGraphics(savefile, game->level);
+            setPalette();
+            zoneFlash();
+            refreshSkin = true;
         }
-          // else if(game->gameMode == MARATHON){
-          //      journeyLevelUp = true;
-        // }
     }
 
     if(game->sounds.initial){
@@ -490,8 +493,9 @@ void showBackground(int offset) {
     for (int i = startY; i < game->lengthY && (i - 20 + offset) < 20; i++) {
         int y = i - 20 + offset;
 
-        if(!game->bitboard[i] && !(i < game->lengthY - 1 && game->bitboard[i+1])){
-            setTiles(25, 32 * y + 10, 10, 0);
+        if(game->bitboard[i] == 0 && !(i < game->lengthY - 1 && game->bitboard[i+1] != 0)){
+            for(int j = 0; j < 10; j++)
+                setTile(25, 10+j, y, 0);
             continue;
         }
 
@@ -551,11 +555,11 @@ void showBackground(int offset) {
         int y = i - 20 + offset;
 
         if(savefile->settings.clearEffect < 3){
-            for(int j = 0; j < 5; j++) {
+            for(int j = 0; j < 5; j++){
                 if (clearTimer < maxClearTimer - 10 + j * 2)
                     setTile(25, 10+j, y, clearTile);
             }
-            for(int j = 5; j < 10; j++) {
+            for(int j = 5; j < 10; j++){
                 if (clearTimer < maxClearTimer - 10 + (9 - j) * 2)
                     setTile(25, 10+j, y, clearTile);
             }
@@ -2586,43 +2590,50 @@ void setRandomGraphics(Save *save){
     save->settings.skin = qran() % (MAX_SKINS - 1);
     save->settings.palette = qran() % 8;
     save->settings.shadow = qran() % (MAX_SHADOWS - 1);
-    save->settings.lightMode = qran() % 2;
     save->settings.colors = qran() % (MAX_COLORS - 1);
-    save->settings.backgroundGradient = RGB15(qran() % 31, qran() % 31, qran() % 31);
+    save->settings.backgroundGradient = (RGB15(qran() % 31, qran() % 31, qran() % 31) << 16) + RGB15(qran() % 31, qran() % 31, qran() % 31);
+    save->settings.frameBackground = qran() % (MAX_FRAME_BACKGROUNDS - 1);
+
+    if(save->settings.colors == 3){
+        save->settings.shadow = 3;
+    }
+
+    if(qran() % 10 == 0)
+        save->settings.backgroundGradient = 0;
 }
 
 void setJourneyGraphics(Save *save, int level){
     switch (level){
-        case 1:
-            save->settings.backgroundGradient = 0x7dc8;
-            save->settings.backgroundGrid = 5;
-            save->settings.skin = 11;
-            save->settings.shadow = 3;
-            save->settings.palette = 5;
-            save->settings.colors = 1;
-            save->settings.edges = true;
-            save->settings.lightMode = false;
-            break;
-        case 2:
-            save->settings.backgroundGradient = RGB15(0,0,0);
-            save->settings.backgroundGrid = 0;
-            save->settings.skin = 0;
-            save->settings.shadow = 3;
-            save->settings.palette = 0;
-            save->settings.colors = 1;
-            save->settings.edges = false;
-            save->settings.lightMode = false;
-            break;
-        case 3:
-            save->settings.backgroundGradient = RGB15(0,0,0);
-            save->settings.backgroundGrid = 0;
-            save->settings.skin = 0;
-            save->settings.shadow = 3;
-            save->settings.palette = 0;
-            save->settings.colors = 4;
-            save->settings.edges = false;
-            save->settings.lightMode = false;
-            break;
+        // case 1:
+        //     save->settings.backgroundGradient = 0x7dc8;
+        //     save->settings.backgroundGrid = 5;
+        //     save->settings.skin = 11;
+        //     save->settings.shadow = 3;
+        //     save->settings.palette = 5;
+        //     save->settings.colors = 1;
+        //     save->settings.edges = true;
+        //     save->settings.lightMode = false;
+        //     break;
+        // case 2:
+        //     save->settings.backgroundGradient = RGB15(0,0,0);
+        //     save->settings.backgroundGrid = 0;
+        //     save->settings.skin = 0;
+        //     save->settings.shadow = 3;
+        //     save->settings.palette = 0;
+        //     save->settings.colors = 1;
+        //     save->settings.edges = false;
+        //     save->settings.lightMode = false;
+        //     break;
+        // case 3:
+        //     save->settings.backgroundGradient = RGB15(0,0,0);
+        //     save->settings.backgroundGrid = 0;
+        //     save->settings.skin = 0;
+        //     save->settings.shadow = 3;
+        //     save->settings.palette = 0;
+        //     save->settings.colors = 4;
+        //     save->settings.edges = false;
+        //     save->settings.lightMode = false;
+        //     break;
         default:
             setRandomGraphics(save);
             break;
@@ -2735,6 +2746,12 @@ void GameScene::init(){
 }
 
 void GameScene::update(){
+
+    if(refreshSkin){
+        refreshSkin = false;
+        setSkin();
+        drawFrameBackgrounds();
+    }
 
     if(!counted){
         countdown();
