@@ -450,10 +450,8 @@ void OptionListScene::init(){
             int n = path.size() - count;
             for(int i = 0; i < n; i++)
                 path.pop_back();
-            log("popped");
         }else{
             path.push_back(name());
-            log("pushed");
         }
     }
 

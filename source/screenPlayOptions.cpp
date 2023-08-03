@@ -52,12 +52,6 @@ bool PlayOptionScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(KEY_A)){
-        if(onScore){
-            start();
-        }
-    }
-
     int prev = listStart;
 
     if (key_hit(KEY_UP)) {
@@ -164,7 +158,7 @@ bool PlayOptionScene::control(){
         moving = true;
     }
 
-    if(key_hit(KEY_START)){
+    if(key_hit(KEY_START) || key_hit(KEY_A)){
         if(!onScore && getBoard(subMode, goal) != nullptr){
             movingScore = true;
             sfx(SFX_MENUCONFIRM);
