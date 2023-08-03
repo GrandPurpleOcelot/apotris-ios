@@ -313,7 +313,7 @@ void checkSounds() {
 
         if (savefile->settings.announcer && soundEffect != -1)
             sfx(soundEffect);
-    }else if(game->previousClear.isTSpin){
+    }else if(game->sounds.tspin){
         if(game->previousClear.isTSpin == 1){
             clearTypeText = "t-spin mini";
             sfx(SFX_TSPINMINI);
