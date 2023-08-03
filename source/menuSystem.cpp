@@ -109,6 +109,7 @@ void sceneSwitcher(std::string str){
     }else if(str == "Links"){
         changeScene(new LinksScene(),Transitions::FADE);
     }else if(str == "Skin Editor"){
+        previousSettings = savefile->settings;
         changeScene(new EditorScene(),Transitions::FADE);
     }else if(str == "Credits"){
         changeScene(new CreditsScene(),Transitions::FADE);

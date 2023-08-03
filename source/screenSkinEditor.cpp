@@ -305,10 +305,10 @@ void EditorScene::init(){
     clearTilemap(27);
     buildBG(3, 0, 27, 0, 2, 0);
 
-    setTiles(26, 0, 32*32, 2 * !(savefile->settings.lightMode));
-    // for(int i = 0; i < 32; i++)
-    //     for(int j = 0; j < 20; j++)
-    //         setTile(26,i,j,);
+    prevBld = blendInfo;
+    enableBlend(0);
+
+    setTiles(26, 0, 32*32, 35 * !(savefile->settings.lightMode));
 
     if(game != nullptr && game->gameMode == BlockEngine::CLASSIC){
         game->gameMode = BlockEngine::SPRINT;
@@ -322,7 +322,7 @@ void EditorScene::update(){
 
     if(selector()){
         previousSelection = 5;
-        changeScene(new MainMenuScene,Transitions::FADE);
+        changeScene(new ConfirmSaveScene(),Transitions::FADE);
         return;
     }
 
@@ -398,6 +398,7 @@ void EditorScene::deinit(){
     setLayerScroll(3, 0, 0);
 
     clearTiles(2,110,400);
+    enableBlend(prevBld);
 }
 
 bool EditorScene::control(){
@@ -560,18 +561,6 @@ bool EditorScene::control(){
     }
 
     return false;
-}
-
-void skinEditor(){
-    EditorScene * s = new EditorScene();
-    changeScene(s);
-
-    while(closed()){
-    }
-
-    // memset32(&tile_mem[2][110],0,8 * 400);
-    TitleScene* newScene = new TitleScene();
-    changeScene(newScene);
 }
 
 int selector(){

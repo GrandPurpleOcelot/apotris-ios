@@ -347,7 +347,6 @@ extern void startScreen();
 extern void showPlaceEffect();
 extern void checkSounds();
 extern int getClassicPalette();
-extern void skinEditor();
 extern void maxModInit();
 extern void drawUIFrame(int,int,int,int);
 extern void buildMini(TILE *);

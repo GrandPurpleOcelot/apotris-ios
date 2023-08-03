@@ -82,6 +82,7 @@ class EditorScene : public Scene{
 
     int currentColor = 2;
     int currentTool = 1;
+    int prevBld;
 
     u8 das = 0;
     const int arr = 4;

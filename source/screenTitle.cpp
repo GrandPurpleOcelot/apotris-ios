@@ -726,7 +726,6 @@ void startScreen() {
                             case 1: audioSettings(); break;
                             // case 2: controlsSettings(); break;
                             // case 3: handlingSettings(); break;
-                            case 4: skinEditor(); break;
                         }
                         clearText();
                         refreshText = true;
@@ -2339,6 +2338,8 @@ Scene* MainMenuScene::previousScene(){
 }
 
 void ConfirmSaveScene::init(){
+    clearSprites(128);
+    showSprites(128);
     clearTilemap(29);
     naprint("Save changes?", 64 , 56);
 
