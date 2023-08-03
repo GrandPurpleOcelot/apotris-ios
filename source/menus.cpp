@@ -318,7 +318,7 @@ int GameScene::endScreen(){
         FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
         sprite_unhide(cursorSprite,0);
-        sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 0);
         sprite_enable_affine(cursorSprite, 6, true);
         sprite_set_size(cursorSprite, scale , 6);
 
@@ -662,7 +662,7 @@ int GameScene::pauseMenu(){
     loadSpriteTiles(16*7, blockSprite, 1, 1);
     for(int i = 0; i < 2; i++){
         cursorSprites[i] = &obj_buffer[1 + i];
-        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
         sprite_enable_affine(cursorSprites[i], i, true);
         sprite_hide(cursorSprites[i]);
     }
@@ -830,7 +830,7 @@ int GameScene::pauseMenu(){
 
         for(int i = 0; i < 2; i++){
             sprite_unhide(cursorSprites[i],0);
-            sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+            sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
             sprite_enable_affine(cursorSprites[i], i, true);
             sprite_set_size(cursorSprites[i], scale , i);
 

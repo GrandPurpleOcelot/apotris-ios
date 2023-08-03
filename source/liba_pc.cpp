@@ -143,8 +143,8 @@ LayerInfo layerInfo[4];
 int windowScale = 3;
 // int windowWidth = 256;
 // int windowHeight = 192;
-int windowWidth = 240;
-int windowHeight = 160;
+int windowWidth = 480;
+int windowHeight = 272;
 
 int rowStart = (512 - windowHeight)/2;
 int rowEnd = (512 + windowHeight)/2;
