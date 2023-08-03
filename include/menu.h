@@ -33,6 +33,7 @@ public:
     void show(int x, int y, int palette) {
         for (int i = 0; i < 3 * (1+big) - big; i++) {
             sprite_unhide(sprites[i], 0);
+            sprite_enable_mosaic(sprites[i]);
             sprite_set_attr(sprites[i], ShapeWide, 1, startTiles+i*4 + (scroll >> 3), palette, priority);
 
             if(blend)
@@ -57,6 +58,7 @@ public:
             sprite_set_pos(sprites[i], x + fx2int(fxdiv(int2fx( i * 32 ),scale)), y);
             sprite_set_size(sprites[i], scale, affId);
             sprite_enable_affine(sprites[i], affId, true);
+            sprite_enable_mosaic(sprites[i]);
         }
 
         if(slow)

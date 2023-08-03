@@ -650,8 +650,6 @@ void Game::place() {
     if(pawn.current == -1)
         return;
 
-    log("placing...");
-
     lastDrop = calculateDrop();
 
     for (int j = 0; j < 4; j++) {
@@ -679,7 +677,7 @@ void Game::place() {
     }
 
     toEndZone = false;
-    if ((pawn.y+pawn.lowestBlock[pawn.rotation]) * (1+pawn.big) + pawn.big <= (lengthY / 2 - 1)) {
+    if ((pawn.y+pawn.lowestBlock[pawn.rotation]) <= (lengthY / 2 - 1)) {
         if(zoneTimer)
             toEndZone = true;
         else if(gameMode == TRAINING)
@@ -800,7 +798,6 @@ void Game::place() {
 }
 
 int Game::clear(Drop drop) {
-    log("clearing...");
     int clearCount = 0;
     int attack = 0;
     int isTSpin = 0;
@@ -855,7 +852,7 @@ int Game::clear(Drop drop) {
 
     std::list<int> linesToMove;
 
-    int start = lastDrop.startY + 20;
+    int start = lastDrop.startY + boardOffset;
     int end = lastDrop.rawEndY + 1;
 
     if(zonedLines && !zoneTimer){
@@ -865,7 +862,7 @@ int Game::clear(Drop drop) {
 
     for (int i = start ; i < end; i++) {
 
-        bool toClear = (bitboard[i] == 0x3ff);
+        bool toClear = (bitboard[i] == fullLine);
 
         if (toClear) {
             if(!zoneTimer){
@@ -902,7 +899,7 @@ int Game::clear(Drop drop) {
             for (int j = 0; j < lengthX; j++)
                 board[lengthY-zonedLines][j] = 9;
 
-            bitboard[lengthY-zonedLines] = 0x3ff;
+            bitboard[lengthY-zonedLines] = fullLine;
 
             offset++;
         }
@@ -1241,11 +1238,6 @@ void Game::next() {//~21-29k cycles
             pawn.y--;
     }
 
-    // if(pawn.big){
-    //     pawn.x/=2;
-    //     pawn.y/=2;
-    // }
-
     pawn.rotation = 0;
     if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
         if(rotationSystem == ARS){
@@ -1267,17 +1259,13 @@ void Game::next() {//~21-29k cycles
     }
 
     //check if stack has reached top 3 lines
-    const int line = 21 + 3 * (1 + pawn.big);
+    const int line = 24;
     bool check = bitboard[line] != 0;
 
     if(pawn.rotation && rotationSystem == SRS){
         int lowestPart = pawn.lowestBlock[pawn.rotation];
 
-        int n = 0;
-        if(!pawn.big)
-            n = (40 - 19) - (lowestPart + pawn.y);
-        else
-            n = (20 - 9) - (lowestPart + pawn.y);
+        int n = (40 - 19) - (lowestPart + pawn.y);
 
         pawn.y += std::min(n,0);
     }
@@ -1285,7 +1273,6 @@ void Game::next() {//~21-29k cycles
     if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
         pawn.y-=1;
         if (!checkRotation(0, 0, pawn.rotation)){
-            log("LOSING!");
             if(zoneTimer && zonedLines) {
                 if(!toEndZone)
                     endZone();
@@ -1466,14 +1453,7 @@ void Game::hold(int dir) {
     }
 
     //check if stack has reached top 3 lines
-    bool check = false;
-    const int line = 21 + 3 * (1 + pawn.big);
-    for(int j = 0; j < 10; j++){
-        if(board[line][j] != 0){
-            check = true;
-            break;
-        }
-    }
+    bool check = (bitboard[24] != 0);
 
     if(pawn.rotation && rotationSystem == SRS){
         int lowestPart = 0;
@@ -1489,11 +1469,7 @@ void Game::hold(int dir) {
                 break;
         }
 
-        int n = 0;
-        if(!pawn.big)
-            n = (40 - 19) - (lowestPart + pawn.y);
-        else
-            n = (20 - 9) - (lowestPart + pawn.y);
+        int n = (40 - 19) - (lowestPart + pawn.y);
 
         pawn.y += std::min(n,0);
     }
@@ -1868,9 +1844,9 @@ Drop Game::calculateDrop(){
     //     result.rawEndY *=2;
     // }
 
-    result.startY -= 20;
-    result.endY -= 20;
-    result.y -= 20;
+    result.startY -= boardOffset;
+    result.endY -= boardOffset;
+    result.y -= boardOffset;
 
     return result;
 }
@@ -2180,7 +2156,7 @@ void Game::activateZone(int dir){
 
 void Game::endZone(){
     if(zonedLines > statTracker.maxZonedLines)
-        statTracker.maxZonedLines = zonedLines / (1 + pawn.big);
+        statTracker.maxZonedLines = zonedLines;
 
     zoneTimer = 0;
     sounds.zone = -1;
@@ -2368,10 +2344,10 @@ void Game::chargeDas(){
 }
 
 void Game::initDisappear(){
-    disappearTimers = new u16 *[lengthY];
-    for (int i = 0; i < lengthY; i++) {
-        disappearTimers[i] = new u16[lengthX];
-        for (int j = 0; j < lengthX; j++)
+    disappearTimers = new u16 *[40];
+    for (int i = 0; i < 40; i++) {
+        disappearTimers[i] = new u16[10];
+        for (int j = 0; j < 10; j++)
             disappearTimers[i][j] = 0;
     }
 }

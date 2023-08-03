@@ -531,6 +531,8 @@ namespace BlockEngine
 
         bool replayElligible = true;
 
+        int fullLine = 0x3ff;
+
         int checkRotation(int, int, int);
         void rotateCW(int dir);
         void rotateCCW(int dir);
@@ -578,14 +580,14 @@ namespace BlockEngine
         Game(int gm, int sd, bool big){
             gameMode = gm;
             seed = initSeed = sd;
-            board = new int* [lengthY];
+            board = new int* [40];
 
-            for (int i = 0; i < lengthY; i++) {
-                board[i] = new int[lengthX];
+            for (int i = 0; i < 40; i++) {
+                board[i] = new int[10];
                 bitboard[i] = 0;
                 lineClearArray[i] = false;
 
-                for (int j = 0; j < lengthX; j++)
+                for (int j = 0; j < 10; j++)
                     board[i][j] = 0;
             }
 
@@ -657,6 +659,7 @@ namespace BlockEngine
                 lengthY /= 2;
                 lengthX /= 2;
                 boardOffset = lengthY/2;
+                fullLine >>= 5;
             }
 
             initDisappear();
@@ -666,12 +669,12 @@ namespace BlockEngine
 
         Game(const Game& oldGame){
 
-            board = new int* [lengthY];
+            board = new int* [40];
 
-            for (int i = 0; i < lengthY; i++) {
-                board[i] = new int[lengthX];
+            for (int i = 0; i < 40; i++) {
+                board[i] = new int[10];
                 bitboard[i] = oldGame.bitboard[i];
-                for (int j = 0; j < lengthX; j++)
+                for (int j = 0; j < 10; j++)
                     board[i][j] = oldGame.board[i][j];
 
                 lineClearArray[i] = oldGame.lineClearArray[i];
