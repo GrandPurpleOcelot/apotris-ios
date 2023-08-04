@@ -15,7 +15,6 @@
 // #include <string>
 // #include "scene.hpp"
 // #include "main.hpp"
-void initRumble();
 bool unlock_gbp();
 
 int spriteVOffset = 0;
@@ -64,17 +63,8 @@ void vsync(){
 }
 
 void showSprites(int count){
-
-
-    // oam_init(oam_mem,128);
-
     oam_copy(oam_mem,obj_buffer,count);
     obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
-
-    // OBJ_ATTR* dest = (OBJ_ATTR*) MEM_OAM;
-    // for(auto const& sprite : sprite_list){
-    //     *dest++ = *sprite.sprite;
-    // }
 }
 
 void platformInit(){
@@ -94,8 +84,6 @@ void platformInit(){
 
     // irq_add(II_HBLANK, onHBlank);
     irq_disable(II_HBLANK);
-
-    initRumble();
 
     mmInitDefault((mm_addr)soundbank_bin, 12);
     mmSetEventHandler((mm_callback)myEventHandler);

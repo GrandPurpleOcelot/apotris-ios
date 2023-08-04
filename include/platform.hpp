@@ -54,8 +54,6 @@ extern void loadTiles8(int tileset, int index, const void * src, int count);
 extern void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY);
 extern void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY, int rowLength);
 
-// extern void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src);
-
 extern void setPaletteColor(int palette, int index, u16 color, int count);
 
 extern void sprite_set_id(OBJ_ATTR * sprite,int id);
@@ -121,6 +119,7 @@ extern void savePalette(COLOR * dst);
 extern void mirrorPalettes(int index, int count);
 
 extern void toggleRendering(bool state);
+extern void initRumble();
 
 // //TEMPORARY
 // extern COLOR rgb8to5(u32 *c);

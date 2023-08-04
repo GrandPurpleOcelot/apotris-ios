@@ -106,6 +106,8 @@ std::map<int,std::string> keyMap = {
 };
 
 void initialize(){
+    initRumble();
+
     toggleSprites(true);
 
     buildBG(0, 0, 25, 0, 2, true);

@@ -1464,4 +1464,6 @@ std::vector<std::string> keyToString = {
     "Pause",        //!< The Pause key
 };
 
+void initRumble(){}
+
 #endif

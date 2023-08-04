@@ -184,7 +184,6 @@ void songListMenu() {
 int GameScene::endScreen(){
     clearSmallText();
     setSmallTextArea(110, 1, 1, 10, 20);
-    buildBG(0, 0, 25, 0, 0, 0);
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
@@ -216,9 +215,11 @@ int GameScene::endScreen(){
     endAnimation();
 
     int prevBld = blendInfo;
-    enableBlend((1 << 6) + (0b11101 << 9) + (1));
+    enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
 
-    setTiles(25,0,32*32,tileBuild(34, false, false, 0));
+    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    buildBG(3, 0, 27, 0, 0, true);
+    clearTilemap(25);
 
     drawFrame(1);
 
@@ -342,7 +343,7 @@ int GameScene::endScreen(){
             showHold();
             showQueue();
             showSprites(128);
-            clearTilemap(25);
+            clearTilemap(27);
             // countdown();
             // updateText();
             break;
@@ -373,7 +374,7 @@ int GameScene::endScreen(){
                 path.clear();
                 path.push_back("Play");
                 clearText();
-                buildBG(0, 0, 25, 0, 2, true);
+                buildBG(3, 0, 27, 0, 1, true);
                 sceneSwitcher(modeToString(previousGameOptions->mode));
                 nextSeed = 0;
                 return 1;
@@ -382,7 +383,7 @@ int GameScene::endScreen(){
                 enableBlend(prevBld);
                 goalSelection = 0;
                 level = 1;
-                buildBG(0, 0, 25, 0, 2, true);
+                buildBG(3, 0, 27, 0, 1, true);
                 changeScene(new MainMenuScene, Transitions::FADE);
                 return 1;
             }
@@ -414,7 +415,7 @@ int GameScene::endScreen(){
         showSprites(128);
     }
 
-    buildBG(0, 0, 25, 0, 2, true);
+    buildBG(3, 0, 27, 0, 1, true);
     enableBlend(prevBld);
     return 0;
 }
@@ -604,9 +605,10 @@ int GameScene::pauseMenu(){
         wordSprites[i].hide();
 
     int prevBld = blendInfo;
-    enableBlend((1 << 6) + (0b11101 << 9) + (1));
-    setTiles(25,0,32*32,tileBuild(34, false, false, 0));
-    buildBG(0, 0, 25, 0, 0, 0);
+    enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
+    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    buildBG(3, 0, 27, 0, 0, 0);
+    clearTilemap(25);
 
     drawFrame(1);
     if(game->zoneTimer)
@@ -757,7 +759,7 @@ int GameScene::pauseMenu(){
                 } else if (n == 4) {
                     enableBlend(prevBld);
                     sfx(SFX_MENUCANCEL);
-                    buildBG(0, 0, 25, 0, 2, true);
+                    buildBG(3, 0, 27, 0, 1, true);
                     changeScene(new MainMenuScene(), Transitions::FADE);
                     return 1;
                 }
@@ -895,9 +897,9 @@ int GameScene::pauseMenu(){
 
     enableBlend(prevBld);
 
-    clearTilemap(25);
+    clearTilemap(27);
     clearTilemap(26);
-    buildBG(0, 0, 25, 0, 2, true);
+    buildBG(3, 0, 27, 0, 1, true);
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
