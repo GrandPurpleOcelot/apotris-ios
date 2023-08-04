@@ -935,7 +935,7 @@ void setPawnPalette(int dest, int n, int blend){
 
     if (!savefile->settings.lightMode){
         if(savefile->settings.colors == 2)
-            color_fade_palette(dest,0,(COLOR*)classic_pal_bin,0x0000,4,blend);
+            color_fade_palette(dest,0,(COLOR*)classic_pal_bin,0x0000,5,blend);
         else if(savefile->settings.colors == 3){
             int n = getClassicPalette();
             color_fade_palette(dest,1, &nesPalette[n][0],0x0000,4,blend);
@@ -964,7 +964,7 @@ void setPawnPalette(int dest, int n, int blend){
             blend = float2fx(0.25);
 
         if(savefile->settings.colors == 2)
-            color_adj_brightness(dest, 0, (COLOR*)classic_pal_bin, 8, blend);
+            color_adj_brightness(dest, 0, (COLOR*)classic_pal_bin, 5, blend);
         else if(savefile->settings.colors == 3){
             color_adj_brightness(dest, 1, (COLOR*)&nesPalette[getClassicPalette()][0], 4, blend);
         }else if(savefile->settings.colors == 4){

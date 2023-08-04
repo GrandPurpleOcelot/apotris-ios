@@ -760,6 +760,7 @@ int GameScene::pauseMenu(){
                     enableBlend(prevBld);
                     sfx(SFX_MENUCANCEL);
                     buildBG(3, 0, 27, 0, 1, true);
+
                     changeScene(new MainMenuScene(), Transitions::FADE);
                     return 1;
                 }

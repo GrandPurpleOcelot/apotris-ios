@@ -345,7 +345,6 @@ namespace BlockEngine
         void fixConnected(std::list<int>);
         void connectBoard(int startY, int endY);
         void updateColumns(int height);
-        void initDisappear();
 
         int bigBag[35];
 
@@ -428,7 +427,7 @@ namespace BlockEngine
     public:
         int lengthX = 10;
         int lengthY = 40;
-        int** board;
+        int board[40][10];
 
         uint16_t bitboard[40];
         int columnHeights[10];
@@ -505,7 +504,7 @@ namespace BlockEngine
         int maxLockTimer = 30;
         int lockTimer = maxLockTimer;
 
-        uint16_t ** disappearTimers;
+        uint16_t disappearTimers[40][10];
         int disappearing = 0;
         std::list<std::tuple<uint8_t,uint8_t>> toDisappear;
 
@@ -582,10 +581,8 @@ namespace BlockEngine
         Game(int gm, int sd, bool big){
             gameMode = gm;
             seed = initSeed = sd;
-            board = new int* [40];
 
             for (int i = 0; i < 40; i++) {
-                board[i] = new int[10];
                 bitboard[i] = 0;
                 lineClearArray[i] = false;
 
@@ -664,17 +661,16 @@ namespace BlockEngine
                 fullLine >>= 5;
             }
 
-            initDisappear();
+            for (int i = 0; i < 40; i++) {
+                for (int j = 0; j < 10; j++)
+                    disappearTimers[i][j] = 0;
+            }
         }
 
         Game(int gm,bool big) : Game(gm,qran(),big){}
 
         Game(const Game& oldGame){
-
-            board = new int* [40];
-
             for (int i = 0; i < 40; i++) {
-                board[i] = new int[10];
                 bitboard[i] = oldGame.bitboard[i];
                 for (int j = 0; j < 10; j++)
                     board[i][j] = oldGame.board[i][j];
@@ -682,8 +678,9 @@ namespace BlockEngine
                 lineClearArray[i] = oldGame.lineClearArray[i];
             }
 
-            for (int j = 0; j < lengthX; j++)
+            for (int j = 0; j < 10; j++)
                 columnHeights[j] = oldGame.columnHeights[j];
+
 
             queue = oldGame.queue;
             canHold = oldGame.canHold;
@@ -721,25 +718,15 @@ namespace BlockEngine
             clearLock = oldGame.clearLock;
             linesToClear = oldGame.linesToClear;
             linesCleared = oldGame.linesCleared;
-            pawn.big = oldGame.pawn.big;
             dropping = oldGame.dropping;
             stackHeight = oldGame.stackHeight;
             pieceCounter = oldGame.pieceCounter;
             speed = oldGame.speed;
             activePiece = oldGame.activePiece;
-            statTracker = Stats(oldGame.statTracker);
         }
 
 
-        ~Game(){
-            for(int i = 0; i < 40; i++)
-                delete[] board[i];
-            delete[] board;
-
-            for(int i = 0; i < 40; i++)
-                delete[] disappearTimers[i];
-            delete[] disappearTimers;
-        }
+        ~Game(){}
     };
 
     typedef struct Weights{

@@ -1016,8 +1016,6 @@ int Game::clear(Drop drop) {
 
             disappearing = 1 + (coolCount == 9);
 
-            initDisappear();
-
             sectionStart = timer;
 
             eventLock = true;
@@ -2229,7 +2227,7 @@ void Game::connectBoard(int startY,int endY){
             if(!board[iy][ix] || (board[iy][ix] >> 4) != 0)
                 continue;
 
-            int n = getNbr(board, ix, iy, ex, sy, ey);
+            int n = getNbr((int**)board, ix, iy, ex, sy, ey);
 
             if(n == 1){
                 if(iy > sy && board[iy-1][ix])
@@ -2342,13 +2340,4 @@ void Game::chargeDas(){
         return;
 
     das = maxDas;
-}
-
-void Game::initDisappear(){
-    disappearTimers = new u16 *[40];
-    for (int i = 0; i < 40; i++) {
-        disappearTimers[i] = new u16[10];
-        for (int j = 0; j < 10; j++)
-            disappearTimers[i][j] = 0;
-    }
 }

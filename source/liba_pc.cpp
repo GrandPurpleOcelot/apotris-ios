@@ -1260,7 +1260,14 @@ void saveSavefile(){
 
     char * dst = (char * ) savefile;
 
-    output.write(dst,sizeof(Save));
+    const int saveSize = 1 << 15;
+
+    char temp[saveSize];
+
+    memset32(temp, 0, saveSize / 4);
+    memcpy32(temp, dst, sizeof(Save) / 4);
+
+    output.write(temp, saveSize);
 
     if(!output){
         log("Error when trying to write save.");
