@@ -361,6 +361,7 @@ extern void gradient(int state);
 extern std::string timeToString(int frames);
 extern std::string timeToStringHours(int frames);
 extern void setDefaultGraphics(Save * save, int depth);
+extern void setRandomGraphics(Save *save);
 extern void showCredits();
 extern void setupCredits();
 extern void refreshCredits();

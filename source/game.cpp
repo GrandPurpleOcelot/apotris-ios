@@ -2758,7 +2758,7 @@ void liftKeys(){
 }
 
 void setRandomGraphics(Save *save){
-    save->settings.edges = true;
+    save->settings.edges = qran () % 2;
     save->settings.backgroundGrid = qran() % (MAX_BACKGROUNDS - 1);
     save->settings.skin = qran() % (MAX_SKINS - 1);
     save->settings.palette = qran() % 8;

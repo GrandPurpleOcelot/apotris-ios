@@ -574,6 +574,30 @@ class PreviewsElement : public Element{
         }
 };
 
+class RandomGraphicsElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Randomize Options";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action() override{
+            setRandomGraphics(savefile);
+            setSkin();
+            setPalette();
+            drawFrameBackgrounds();
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            return "";
+        }
+};
+
 class ResetGraphicsElement : public Element{
     public:
         std::string getLabel() override {
@@ -633,6 +657,7 @@ class GraphicsScene : public Scene{
         l.push_back(new ScreenShakeElement());
         l.push_back(new ClearTextElement());
         l.push_back(new PreviewsElement());
+        l.push_back(new RandomGraphicsElement());
         l.push_back(new ResetGraphicsElement());
 
         return l;
