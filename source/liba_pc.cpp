@@ -278,11 +278,12 @@ void toggleSprites(bool state){
 }
 
 INLINE u8 buildLayerPrio(int layer, int priority){
-    return ((priority & 0x3) << 4) + 4 - (layer & 0x3);
+    return ((priority & 0x3) << 4) + (layer & 0x3);
 }
 
 void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
     int p = buildLayerPrio(layer, prio);
+
     layerInfo[layer].priority = p;
     layerInfo[layer].sbb = sbb;
     layerInfo[layer].cbb = cbb;
@@ -290,7 +291,7 @@ void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
     int a[4] = {-1,-1,-1,-1};
 
     for(int l = 0; l < 4; l++){
-        for(int pos = 0; pos < 4; pos ++){
+        for(int pos = 0; pos < 4; pos++){
             if(a[pos] == -1){
                 a[pos] = l;
                 break;
@@ -311,7 +312,7 @@ void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
         // log("layer " + std::to_string(a[pos]) + " prio " + std::to_string((layerInfo[a[pos]].priority >> 4) & 0x3));
         layerInfo[a[pos]].id = pos;
         TLN_SetTilemapTileset(tilemaps[layerInfo[a[pos]].sbb], tilesets[layerInfo[a[pos]].cbb]);
-        TLN_SetLayerPriority(pos, (a[pos] == 2) || (((layerInfo[a[pos]].priority >> 4) & 0x3) == 0));
+        TLN_SetLayerPriority(pos, (((layerInfo[a[pos]].priority >> 4) & 0x3) == 0));
         TLN_SetLayerTilemap(pos, tilemaps[layerInfo[a[pos]].sbb]);
 
         toggleBG(pos,layerInfo[pos].enabled);
