@@ -1719,7 +1719,6 @@ void Game::setGoal(int newGoal){
 }
 
 void Game::generateGarbage(int height,int mode){
-    log("h here1");
     int hole = qran() % lengthX;
     // shift up
     for(int i = 0; i < lengthY; i++){
@@ -1732,7 +1731,6 @@ void Game::generateGarbage(int height,int mode){
             bitboard[i] = 0;
         }
     }
-    log("h here2");
 
     for(int i = lengthY-height; i < lengthY; i++){
         int prevHole = hole;
@@ -1750,14 +1748,12 @@ void Game::generateGarbage(int height,int mode){
 
         bitboard[i] = 0x3ff & ~(1 << hole);
     }
-    log("h here3");
 
     garbageHeight+=height;
 
     stackHeight -= height;
 
     updateColumns(height);
-    log("h here4 " + std::to_string(height));
 
     if(pawn.big)
         return;
@@ -1765,7 +1761,6 @@ void Game::generateGarbage(int height,int mode){
     for(int i = lengthY-height; i < lengthY; i++){
         connectBoard(i, i);
     }
-    log("h here5");
 }
 
 void Game::keyDrop(int dir){

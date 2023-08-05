@@ -104,8 +104,9 @@ typedef struct Settings{
     int irs;
     int initialType;
     int frameBackground;
+    int backgroundType;
 
-    int placeHolder[92];
+    int placeHolder[91];
 }ALIGN(4) Settings;
 
 typedef struct Test{

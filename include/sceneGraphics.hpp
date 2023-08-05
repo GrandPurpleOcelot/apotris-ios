@@ -726,7 +726,14 @@ class GraphicsScene : public Scene{
 class GradientEditorScene : public Scene{
     int color[3];
 
+    int color2[3];
+
     int selection = 0;
+    int colorSelection = 0;
+
+    int maxSelection = 3;
+
+    bool onValues = false;
 
     int das = 0;
 
@@ -736,6 +743,22 @@ class GradientEditorScene : public Scene{
     int c = 0;
 
     bool refreshText = false;
+
+    OBJ_ATTR * cursorSprite;
+    int cursorFloat = 0;
+
+    OBJ_ATTR * colorSprites[6];
+
+    WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+    void setMaxSelection(){
+        maxSelection = 2;
+
+        if(savefile->settings.backgroundType == 1)
+            maxSelection++;
+    }
+
+    void drawText();
 
     void draw();
     void update();

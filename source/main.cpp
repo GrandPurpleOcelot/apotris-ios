@@ -804,6 +804,8 @@ void setGradient(int color){
     int start = 0;
     int end = SCREEN_HEIGHT;
 
+    COLOR src = 0;
+
     #ifdef PC
 
     start = rowStart;
@@ -811,15 +813,20 @@ void setGradient(int color){
 
     #endif
 
-    div = (end-start)/16;
+    if(savefile->settings.backgroundType == 0)
+        div = (end-start)/8;
+    else if(savefile->settings.backgroundType == 1)
+        div = (end-start)/16;
 
     COLOR color1 = color & 0xffff;
     COLOR color2 = (color >> 16) & 0xffff;
 
     if(!(savefile->settings.lightMode && color == 0)){
         for(int i = 0; i < end-start; i++){
-            // color_fade((COLOR *) &gradientTable[i+start],src,color,1,(((end-start)-1-i) / div) * 2 + 16);
-            color_fade((COLOR *) &gradientTable[i+start],&color2,color1,1,(((end-start)-1-i) / div) * 2);
+            if(savefile->settings.backgroundType == 0)
+                color_fade((COLOR *) &gradientTable[i+start], &src, color, 1, (((end-start)-1-i) / div) * 2 + 16);
+            else if(savefile->settings.backgroundType == 1)
+                color_fade((COLOR *) &gradientTable[i+start], &color2, color1, 1, (((end-start)-1-i) / div) * 2);
         }
 
         #ifdef GBA
