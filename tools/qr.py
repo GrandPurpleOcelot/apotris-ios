@@ -55,5 +55,3 @@ for y in range(h):
         fout.write(struct.pack('<h',num))
 
 fout.close()
-
-img.save("temp.png")
