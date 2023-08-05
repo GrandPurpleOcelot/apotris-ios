@@ -9,3 +9,5 @@ do
         bash "$script"
     done
 done
+
+python3 ./tools/qr.py https://apotris.com ./data/site_qr.bin

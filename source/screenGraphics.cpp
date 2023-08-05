@@ -272,16 +272,15 @@ void GraphicsScene::init(){
 
     if (savefile->settings.lightMode)
         setPaletteColor(0, 0, 0x5ad6, 1);
-        // memset16(pal_bg_mem, 0x5ad6, 1);//background gray
     else
         setPaletteColor(0, 0, 0x0000, 1);
-        // memset16(pal_bg_mem, 0x0000, 1);
 
     clearTilemap(26);
-    // memset16(&se_mem[26], 0x0000, 32 * 20);
+    if(game != nullptr)
+        delete game;
 
-    delete game;
     game = new Game(DIG,bigMode);
+
     game->setGoal(0);
     game->setLevel(1);
     game->rotationSystem = SRS;

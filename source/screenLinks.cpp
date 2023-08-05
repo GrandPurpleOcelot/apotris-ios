@@ -2,6 +2,8 @@
 #include "sprites.h"
 #include "logging.h"
 
+#include "site_qr_bin.h"
+
 void LinksScene::init(){
     clearSprites(128);
 
@@ -17,6 +19,25 @@ void LinksScene::init(){
     color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
+
+    qr = &obj_buffer[0];
+
+    const int qrTile = 300;
+
+    sprite_unhide(qr,0);
+    sprite_set_attr(qr, ShapeSquare, 2, qrTile, 0, 1);
+    sprite_enable_affine(qr, 8, true);
+    sprite_set_size(qr, 1 << 7, 8);
+    sprite_set_pos(qr,0,0);
+
+    u16 * src = (u16 *) site_qr_bin;
+
+    for(int i = 0; i < 29; i++){
+        for(int j = 0; j < 29; j++){
+            int color = (src[i * 29 + j] != 0)? 7 : 6;
+            setSpritePixel(qrTile, j / 8, i / 8, 4, j % 8, i % 8, color);
+        }
+    }
 }
 
 void LinksScene::draw(){

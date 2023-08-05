@@ -371,6 +371,8 @@ class LinksScene : public Scene{
 
     std::string name(){return "Links";};
 
+    OBJ_ATTR * qr;
+
     // WordSprite* wordSprites[MAX_WORD_SPRITES];
 
     // int listStart = 0;

@@ -11,8 +11,6 @@
 using namespace BlockEngine;
 using namespace GameInfo;
 
-int getNbr(int** board,int x, int y, int ex, int sy, int ey);
-
 int Game::checkRotation(int dx, int dy, int r) {
     const int x = dx + pawn.x;
     const int y = dy + pawn.y;
@@ -89,7 +87,7 @@ void Pawn::setBlock(int system) {
     }
 }
 
-int getNbr(int **board, int x, int y, int ex, int sy , int ey){
+int Game::getNbr(int x, int y, int ex, int sy , int ey){
     int count = 0;
 
     if(y - 1 >= sy && board[y-1][x])
@@ -1721,6 +1719,7 @@ void Game::setGoal(int newGoal){
 }
 
 void Game::generateGarbage(int height,int mode){
+    log("h here1");
     int hole = qran() % lengthX;
     // shift up
     for(int i = 0; i < lengthY; i++){
@@ -1733,6 +1732,7 @@ void Game::generateGarbage(int height,int mode){
             bitboard[i] = 0;
         }
     }
+    log("h here2");
 
     for(int i = lengthY-height; i < lengthY; i++){
         int prevHole = hole;
@@ -1750,19 +1750,22 @@ void Game::generateGarbage(int height,int mode){
 
         bitboard[i] = 0x3ff & ~(1 << hole);
     }
+    log("h here3");
 
     garbageHeight+=height;
 
     stackHeight -= height;
 
     updateColumns(height);
+    log("h here4 " + std::to_string(height));
 
-    if(bigMode)
+    if(pawn.big)
         return;
 
     for(int i = lengthY-height; i < lengthY; i++){
         connectBoard(i, i);
     }
+    log("h here5");
 }
 
 void Game::keyDrop(int dir){
@@ -2227,7 +2230,7 @@ void Game::connectBoard(int startY,int endY){
             if(!board[iy][ix] || (board[iy][ix] >> 4) != 0)
                 continue;
 
-            int n = getNbr((int**)board, ix, iy, ex, sy, ey);
+            int n = getNbr(ix, iy, ex, sy, ey);
 
             if(n == 1){
                 if(iy > sy && board[iy-1][ix])
