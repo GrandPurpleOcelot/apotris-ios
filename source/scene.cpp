@@ -205,7 +205,7 @@ void SimpleListScene::draw(){
 }
 
 bool SimpleListScene::control(){
-    if(key_hit(KEY_A)){
+    if(key_hit(KEY_A) || key_hit(KEY_START)){
         sfx(SFX_MENUCONFIRM);
         auto it = optionList.begin();
         std::advance(it,selection);
@@ -250,7 +250,7 @@ bool SimpleListScene::control(){
         refreshText = true;
     }
 
-    if (key_hit(KEY_DOWN) || key_hit(KEY_A)) {
+    if (key_hit(KEY_DOWN)) {
         movingDirection = 1;
 
         if (selection == options - 1)
