@@ -15,23 +15,22 @@ class PlayOptionScene : public OptionListScene{
     int movingScoreTimer = 0;
     int movingScoreTimerMax = 8;
 
-    virtual bool getIfTime(){return false;};
-    virtual bool getIfGrade(){return false;};
-
-    void setOptions();
+    OBJ_ATTR * proSprites[5];
 
     std::string currentElement = "";
 
+    virtual bool getIfTime(){return false;};
+    virtual bool getIfGrade(){return false;};
     virtual BlockEngine::Modes getMode() = 0;
+    virtual void start();
+    virtual EntryBoard* getBoard(int submode, int goal){return nullptr;};
+
+    void setOptions();
 
     void init();
     bool control();
     void draw();
     void update();
-
-    virtual void start();
-
-    virtual EntryBoard* getBoard(int submode, int goal){return nullptr;};
 
     QuickStart quick();
 

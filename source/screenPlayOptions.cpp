@@ -10,8 +10,14 @@ void PlayOptionScene::init(){
     if(elementList.empty())
         onScore = true;
 
-    clearSpriteTiles(620, 2, 1);
-    aprintsSprite("pro", 0,0, 620);
+
+    loadSpriteTiles(620,&sprite49tiles_bin,1,1);
+    for(int i = 0; i < 5; i++){
+        proSprites[i] = &obj_buffer[20 + i];
+
+        sprite_set_attr(proSprites[i], ShapeSquare, 0, 620, 15, 0);
+        sprite_hide(proSprites[i]);
+    }
 }
 
 bool PlayOptionScene::control(){
@@ -196,6 +202,7 @@ void PlayOptionScene::start(){
             subMode = value;
         }else if(s == "Lines"){
             goal = value;
+            mode = element->value;
         }else if(s == "Height"){
             bTypeHeight = value;
         }else if(s == "Finesse Training"){
@@ -209,6 +216,7 @@ void PlayOptionScene::start(){
             }
         }else if(s == "Minutes"){
             goal = value;
+            mode = element->value;
         }
     }
 
@@ -348,6 +356,9 @@ void PlayOptionScene::draw(){
 
         for(int i = elementMax + 2; i < 9; i++)
             wordSprites[i]->hide();
+
+        for(int i = 0; i < 5; i++)
+            sprite_hide(proSprites[i]);
     }else{
         EntryBoard *board = getBoard(subMode, goal);
 
@@ -376,6 +387,13 @@ void PlayOptionScene::draw(){
                 const int x = (endX) * 8 - getVariableWidth(str);
                 wordSprites[i]->setText(str);
                 wordSprites[i]->show(x,y,15);
+
+                if(board->entries[i].pro){
+                    sprite_unhide(proSprites[i],0);
+                    sprite_set_pos(proSprites[i],endX * 8+ 4,y);
+                }else{
+                    sprite_hide(proSprites[i]);
+                }
             }
         }
 

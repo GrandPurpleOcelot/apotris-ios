@@ -923,7 +923,7 @@ int GameScene::pauseMenu(){
 int saveRecord(EntryBoard &board, int value, int dir){
 
     for(int i = 0; i < 5; i++){
-        if(value * dir > board.entries[i].value * dir)
+        if(value * dir > board.entries[i].value * dir && !(dir == 1 && board.entries[i].value == 0))
             continue;
 
         for (int j = 3; j >= i; j--)
@@ -932,6 +932,8 @@ int saveRecord(EntryBoard &board, int value, int dir){
         std::string name = nameInput(i);
 
         board.entries[i].value = value;
+
+        board.entries[i].pro = proMode;
 
         strncpy(board.entries[i].name, name.c_str(), 9);
 
