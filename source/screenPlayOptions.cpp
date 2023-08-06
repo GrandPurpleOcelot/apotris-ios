@@ -13,7 +13,7 @@ void PlayOptionScene::init(){
 
     loadSpriteTiles(620,&sprite49tiles_bin,1,1);
     for(int i = 0; i < 5; i++){
-        proSprites[i] = &obj_buffer[20 + i];
+        proSprites[i] = &obj_buffer[10 + i];
 
         sprite_set_attr(proSprites[i], ShapeSquare, 0, 620, 15, 0);
         sprite_hide(proSprites[i]);
@@ -42,23 +42,24 @@ bool PlayOptionScene::control(){
 
     }
 
-    if(key_hit(KEY_LEFT) && !elementList.empty()){
-        auto it = elementList.begin();
-        std::advance(it,selection);
+    if(!onScore){
+        if(key_hit(KEY_LEFT) && !elementList.empty()){
+            auto it = elementList.begin();
+            std::advance(it,selection);
 
-        (*it)->action(-1);
+            (*it)->action(-1);
 
-        refreshOption = true;
-    }
+            refreshOption = true;
+        }
 
-    if(key_hit(KEY_RIGHT) && !elementList.empty()){
+        if(key_hit(KEY_RIGHT) && !elementList.empty()){
+            auto it = elementList.begin();
+            std::advance(it,selection);
 
-        auto it = elementList.begin();
-        std::advance(it,selection);
+            (*it)->action(1);
 
-        (*it)->action(1);
-
-        refreshOption = true;
+            refreshOption = true;
+        }
     }
 
     int prev = listStart;
@@ -100,13 +101,12 @@ bool PlayOptionScene::control(){
                 listStart = 0;
             else if(selection > listStart + elementMax)
                 listStart++;
+            refreshText = true;
+            sfx(SFX_MENUMOVE);
         }
-
-        sfx(SFX_MENUMOVE);
-        refreshText = true;
     }
 
-    if (key_is_down(KEY_UP) || key_is_down(KEY_DOWN)) {
+    if (!onScore && (key_is_down(KEY_UP) || key_is_down(KEY_DOWN))) {
         if (dasVer < maxDas) {
             dasVer++;
         } else {
@@ -143,7 +143,7 @@ bool PlayOptionScene::control(){
         dasVer = 0;
     }
 
-    if (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)) {
+    if (!onScore && (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT))) {
         if (dasHor < maxDas) {
             dasHor++;
         } else{
