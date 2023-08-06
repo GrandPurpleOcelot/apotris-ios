@@ -497,6 +497,7 @@ extern int previous[22][12];
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
 
 extern Settings previousSettings;
+extern Skin previousSkins[MAX_CUSTOM_SKINS];
 
 extern std::list<std::string> path;
 extern std::string previousElement;

@@ -2340,6 +2340,7 @@ Scene* MainMenuScene::previousScene(){
 void ConfirmSaveScene::init(){
     clearSprites(128);
     showSprites(128);
+
     clearTilemap(29);
     naprint("Save changes?", 64 , 56);
 
@@ -2411,6 +2412,9 @@ bool ConfirmSaveScene::control(){
 
         if(cancel){
             savefile->settings = previousSettings;
+
+            for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
+                savefile->customSkins[i] = previousSkins[i];
 
             setMusicVolume(512 * ((float)savefile->settings.volume / 10));
             setSkin();

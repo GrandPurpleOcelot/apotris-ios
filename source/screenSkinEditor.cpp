@@ -65,7 +65,9 @@ void EditorScene::update(){
 
     if(selector()){
         previousSelection = 5;
+
         changeScene(new ConfirmSaveScene(),Transitions::FADE);
+
         return;
     }
 

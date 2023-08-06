@@ -4,7 +4,7 @@
 
 #include "site_qr_bin.h"
 
-void LinksScene::init(){
+void QRScene::init(){
     clearSprites(128);
 
     //backgroundGrid
@@ -20,82 +20,91 @@ void LinksScene::init(){
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 
+    if(name() != ""){
+        bool found = false;
+        int count = 0;
+        auto it = path.begin();
+        while(it != path.end()){
+            if(*it == name()){
+                found = true;
+                break;
+            }
+            count++;
+            it++;
+        }
+
+        if(found){
+            log(count);
+            int n = path.size() - (count+1);
+            for(int i = 0; i < n; i++)
+                path.pop_back();
+        }else{
+            path.push_back(name());
+        }
+    }
+
+    std::string p;
+    int i = 0;
+    auto it = path.begin();
+    while(it != path.end()){
+        if(i != 0)
+            p += " > ";
+
+        p += *it;
+
+        it++;
+        i++;
+    }
+
+    int width = getVariableWidth(p) >> 3;
+    int count = (width) / 12 + 1;
+
+    int wordIndex = MAX_WORD_SPRITES - count - 1;
+
+    wordSprites[wordIndex]->setText(p);
+
+    for(int i = 0; i < count; i++)
+        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+
     qr = &obj_buffer[0];
 
     const int qrTile = 300;
 
     sprite_unhide(qr,0);
-    sprite_set_attr(qr, ShapeSquare, 2, qrTile, 0, 1);
+    sprite_set_attr(qr, ShapeSquare, 3, qrTile, 0, 1);
     sprite_enable_affine(qr, 8, true);
     sprite_set_size(qr, 1 << 7, 8);
-    sprite_set_pos(qr,0,0);
+    sprite_set_pos(qr,120 - qrX, 80 - 16);
 
-    u16 * src = (u16 *) site_qr_bin;
+    u16 * src = (u16 *) getData();
 
-    for(int i = 0; i < 29; i++){
-        for(int j = 0; j < 29; j++){
-            int color = (src[i * 29 + j] != 0)? 7 : 6;
-            setSpritePixel(qrTile, j / 8, i / 8, 4, j % 8, i % 8, color);
+    for(int i = 0; i < qrY; i++){
+        for(int j = 0; j < qrX; j++){
+            int color = (src[i * qrX + j] != 0)? 7 : 6;
+            setSpritePixel(qrTile, j / 8, i / 8, 8, j % 8, i % 8, color);
         }
     }
+
+    std::string link = getLink();
+
+    naprint(link, 15 * 8 - getVariableWidth(link) / 2, 5 * 8);
 }
 
-void LinksScene::draw(){
+void QRScene::draw(){
     fallingBlocks();
     toggleBG(3,true);
-
-    // int startX = 30;
-    // int counter = 0;
-    // int height = 0;
-    // int i = 0;
-    // int gaps = 0;
-
-    // for(auto option = creditsText.begin(); option != creditsText.end(); ++option){
-    //     if(counter < listStart){
-    //         counter++;
-    //         if(*option == "")
-    //             gaps++;
-
-    //         continue;
-    //     }
-
-    //     if(*option == ""){
-    //         height += space;
-    //         continue;
-    //     }
-
-    //     if(i >= maxShow)
-    //         break;
-
-    //     int index = (i + listStart-gaps) % maxShow;
-
-    //     wordSprites[index]->setText(*option);
-
-    //     int y = height - scrollOffset;
-
-    //     if(y > SCREEN_HEIGHT)
-    //         break;
-
-    //     wordSprites[index]->show(startX,height - scrollOffset,15);
-
-    //     i++;
-    //     height += space;
-    // }
-
-    // for(int j = i; j < maxShow; j++){
-    //     int index = (j + listStart - gaps) % maxShow;
-
-    //     wordSprites[index]->hide();
-    // }
 
     showSprites(128);
 }
 
-bool LinksScene::control(){
+bool QRScene::control(){
 
     if(key_hit(KEY_B)){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
+
+        if(path.size())
+            path.pop_back();
 
         changeScene(previousScene(),Transitions::FADE);
     }
@@ -103,29 +112,14 @@ bool LinksScene::control(){
     return false;
 }
 
-void LinksScene::update(){
+void QRScene::update(){
     canDraw = 1;
     key_poll();
-
-    // if(delay < delayMax){
-    //     delay++;
-    // }else if(++scrollTimer >= scrollTimerMax){
-    //     scrollTimer = 0;
-    //     if(++scrollOffset >= space){
-    //         scrollOffset = 0;
-    //         listStart++;
-    //     }
-    // }
-
-    // if(listStart > 35){
-    //     changeScene(previousScene(),Transitions::FADE);
-    //     return;
-    // }
 
     control();
 }
 
-void LinksScene::deinit(){
+void QRScene::deinit(){
     clearSprites(128);
     showSprites(128);
 

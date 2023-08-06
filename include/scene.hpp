@@ -344,40 +344,138 @@ class CreditsScene : public Scene{
 
 };
 
-class LinksScene : public Scene{
-    public:
+class LinksScene : public SimpleListScene{
 
-    virtual std::list<std::string> getOptionList(){return {};};
-    std::list<std::string> optionList;
+    public:
+    // void init();
+    Scene* previousScene(){return new MainMenuScene();};
+
+    std::list<std::string> getOptionList(){
+        return {
+            "Website",
+            "Wiki",
+            "Donate",
+            "Discord",
+        };
+    };
 
     std::string name(){return "Links";};
+};
+
+class QRScene : public Scene{
+    public:
+
+    virtual u8* getData() = 0;
+
+    virtual std::string name() = 0;
+
+    virtual std::string getLink() = 0;
 
     OBJ_ATTR * qr;
 
-    // WordSprite* wordSprites[MAX_WORD_SPRITES];
+    int qrX = 0;
+    int qrY = 0;
 
-    // int listStart = 0;
-    // int maxShow = 12;
-
-    // int delay = 0;
-    // int delayMax = 60;
-
-    // int scrollTimer = 0;
-    // int scrollTimerMax = 4;
-    // int scrollOffset = 0;
-    // int space = 12;
+    WordSprite* wordSprites[MAX_WORD_SPRITES];
 
     void draw();
     void update();
     bool control();
     void init();
     void deinit();
-    Scene* previousScene(){return new MainMenuScene();};
+    Scene* previousScene(){return new LinksScene();};
 
-    ~LinksScene(){
+    ~QRScene(){
         deinit();
     };
+};
 
+#include "site_qr_bin.h"
+
+class WebsiteLinkScene : public QRScene{
+public:
+    std::string name() override {
+        return "Website";
+    }
+
+    u8* getData() override {
+        return (u8*) site_qr_bin;
+    }
+
+    std::string getLink() override {
+        return "https://apotris.com";
+    }
+
+    WebsiteLinkScene(){
+        qrX = 29;
+        qrY = 29;
+    }
+};
+
+#include "wiki_qr_bin.h"
+
+class WikiLinkScene : public QRScene{
+public:
+    std::string name() override {
+        return "Wiki";
+    }
+
+    u8* getData() override {
+        return (u8*) wiki_qr_bin;
+    }
+
+    std::string getLink() override {
+        return "https://apotris.com/wiki";
+    }
+
+    WikiLinkScene(){
+        qrX = 29;
+        qrY = 29;
+    }
+};
+
+#include "paypal_qr_bin.h"
+
+class DonateLinkScene : public QRScene{
+public:
+    std::string name() override {
+        return "Donate";
+    }
+
+    u8* getData() override {
+        return (u8*) paypal_qr_bin;
+    }
+
+    std::string getLink() override {
+        return "https://apotris.com/donate";
+    }
+
+    DonateLinkScene(){
+        qrX = 29;
+        qrY = 29;
+    }
+};
+
+#include "discord_qr_bin.h"
+
+class DiscordLinkScene : public QRScene{
+public:
+    std::string name() override {
+        return "Discord";
+    }
+
+    u8* getData() override {
+        return (u8*) discord_qr_bin;
+    }
+
+    std::string getLink() override {
+        return "https://apotris.com/discord";
+    }
+
+    DiscordLinkScene(){
+        qrX = 33;
+        qrY = 33;
+    }
 };
 
 enum class Transitions{

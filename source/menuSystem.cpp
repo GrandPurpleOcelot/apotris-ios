@@ -101,6 +101,8 @@ void sceneSwitcher(std::string str){
         changeScene(new ModeListScene(),Transitions::FADE);
     }else if(str == "Settings"){
         previousSettings = savefile->settings;
+        for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
+            previousSkins[i] = savefile->customSkins[i];
 
         changeScene(new SettingsScene(),Transitions::FADE);
     }else if(str == "Achievements"){
@@ -111,6 +113,9 @@ void sceneSwitcher(std::string str){
         changeScene(new LinksScene(),Transitions::FADE);
     }else if(str == "Skin Editor"){
         previousSettings = savefile->settings;
+        for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
+            previousSkins[i] = savefile->customSkins[i];
+
         changeScene(new EditorScene(),Transitions::FADE);
     }else if(str == "Credits"){
         changeScene(new CreditsScene(),Transitions::FADE);
@@ -146,6 +151,14 @@ void sceneSwitcher(std::string str){
         changeScene(new CPUBattleScene(),Transitions::FADE);
     }else if(str == "Training"){
         changeScene(new TrainingScene(),Transitions::FADE);
+    }else if(str == "Website"){
+        changeScene(new WebsiteLinkScene(),Transitions::FADE);
+    }else if(str == "Wiki"){
+        changeScene(new WikiLinkScene(),Transitions::FADE);
+    }else if(str == "Donate"){
+        changeScene(new DonateLinkScene(),Transitions::FADE);
+    }else if(str == "Discord"){
+        changeScene(new DiscordLinkScene(),Transitions::FADE);
     }else{
         log("invalid option: " + str);
     }
