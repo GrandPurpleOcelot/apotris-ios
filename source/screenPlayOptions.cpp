@@ -5,12 +5,6 @@
 #include <cstring>
 
 void PlayOptionScene::init(){
-    OptionListScene::init();
-
-    if(elementList.empty())
-        onScore = true;
-
-
     loadSpriteTiles(620,&sprite49tiles_bin,1,1);
     for(int i = 0; i < 5; i++){
         proSprites[i] = &obj_buffer[10 + i];
@@ -18,6 +12,11 @@ void PlayOptionScene::init(){
         sprite_set_attr(proSprites[i], ShapeSquare, 0, 620, 15, 0);
         sprite_hide(proSprites[i]);
     }
+
+    OptionListScene::init();
+
+    if(elementList.empty())
+        onScore = true;
 }
 
 bool PlayOptionScene::control(){

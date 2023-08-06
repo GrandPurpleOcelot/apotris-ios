@@ -345,9 +345,11 @@ std::string nameInput(int place) {
 
         key_poll();
 
+        aprintClearArea(13, nameHeight, 10, 1);
         aprint(result, 13, nameHeight);
 
         if (!onDone) {
+            #ifdef GBA
             if (key_hit(KEY_A) || key_hit(KEY_RIGHT)) {
                 cursor++;
                 if (cursor > 7) {
@@ -370,11 +372,6 @@ std::string nameInput(int place) {
                 if (cursor > 0)
                     cursor--;
                 sfx(SFX_MENUMOVE);
-            }
-
-            if (key_hit(KEY_START)) {
-                onDone = true;
-                sfx(SFX_MENUCONFIRM);
             }
 
             char curr = result.at(cursor);
@@ -426,6 +423,41 @@ std::string nameInput(int place) {
 
                 if (timer < 10)
                     aprint("_", 13 + cursor, nameHeight);
+            }
+            #endif
+
+            #ifdef PC
+            for(int i = 0; i < 26; i++){
+                if(key_hit(i) && result.size() < 9){
+                    result += keyToString[i];
+                    sfx(SFX_MENUMOVE);
+                    break;
+                }
+            }
+
+            if(key_hit(sf::Keyboard::Backspace) && !result.empty()){
+                result.pop_back();
+                sfx(SFX_MENUMOVE);
+            }
+
+            if(key_hit(sf::Keyboard::Space) && result.size() < 9){
+                result += " ";
+                sfx(SFX_MENUMOVE);
+            }
+
+            cursor = result.size();
+
+            if (timer++ > 19)
+                timer = 0;
+
+            if (timer < 10)
+                aprint("_", 13 + cursor, nameHeight);
+
+            #endif
+
+            if (key_hit(KEY_START)) {
+                onDone = true;
+                sfx(SFX_MENUCONFIRM);
             }
 
             aprint(" ", 12, 16);

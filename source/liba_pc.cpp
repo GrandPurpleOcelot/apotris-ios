@@ -418,7 +418,7 @@ void vsync(){
 
         if(currentSong >= 0)
             musicArray[currentSong].setPitch(3);
-    }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::T)){
+    }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num4)){
         window.setFramerateLimit(5);
     }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num5)){
         window.setFramerateLimit(1);
