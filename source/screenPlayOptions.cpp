@@ -9,6 +9,9 @@ void PlayOptionScene::init(){
 
     if(elementList.empty())
         onScore = true;
+
+    clearSpriteTiles(620, 2, 1);
+    aprintsSprite("pro", 0,0, 620);
 }
 
 bool PlayOptionScene::control(){

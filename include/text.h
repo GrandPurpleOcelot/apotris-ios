@@ -13,6 +13,7 @@ extern void aprintsSprite(std::string, int, int, int);
 
 extern void setSmallTextArea(int, int, int, int, int);
 extern void clearSmallText();
+extern void resetSmallText();
 extern void clearText();
 extern void aprintClearLine(int);
 extern void aprintClearArea(int x, int y, int w, int h);

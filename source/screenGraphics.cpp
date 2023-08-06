@@ -33,9 +33,6 @@ void GradientEditorScene::init(){
     toggleBG(2, true);
     toggleBG(3, false);
 
-    setSmallTextArea(110,0,0,0,0);
-    clearSmallText();
-
     for(int i = 0; i < 3; i++){
         color[i] = (savefile->settings.backgroundGradient >> (5*i)) & 0x1f;
     }
@@ -48,6 +45,7 @@ void GradientEditorScene::init(){
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i, 32 + i * 3, 256 + i * 12);
 
+    resetSmallText();
     drawText();
 
     setMaxSelection();
@@ -63,16 +61,13 @@ void GradientEditorScene::init(){
     for(int i = 0; i < 6; i++){
         colorSprites[i] = &obj_buffer[15 + i];
 
-        int p = 0;
-        switch(i % 3){
-            case 0: p = 6; break;
-            case 1: p = 4; break;
-            case 2: p = 1; break;
-        }
-
-        sprite_set_attr(colorSprites[i], ShapeSquare, 0, 254, p, 0);
+        sprite_set_attr(colorSprites[i], ShapeSquare, 0, 254, i % 3, 0);
         sprite_hide(colorSprites[i]);
     }
+
+    setPaletteColor(16 + 0, 15, RGB15(31, 0, 0), 1);
+    setPaletteColor(16 + 1, 15, RGB15(0, 31, 0), 1);
+    setPaletteColor(16 + 2, 15, RGB15(5, 5, 31), 1);
 }
 
 void GradientEditorScene::draw(){
@@ -307,22 +302,23 @@ bool GradientEditorScene::control(){
             if(key_hit(KEY_RIGHT) || key_hit(KEY_A)){
                 onValues = true;
                 colorSelection = 0;
-                sfx(SFX_MENUMOVE);
+                sfx(SFX_MENUCONFIRM);
             }
         }
     }else{
         if(key_hit(KEY_LEFT)){
-            if(colorSelection > 0)
+            if(colorSelection > 0){
                 colorSelection--;
-            else
+                sfx(SFX_MENUMOVE);
+            } else{
                 onValues = false;
-
-            sfx(SFX_MENUMOVE);
+                sfx(SFX_MENUCANCEL);
+            }
         }
 
         if(key_hit(KEY_B)){
             onValues = false;
-            sfx(SFX_MENUMOVE);
+            sfx(SFX_MENUCANCEL);
         }
 
         if(key_hit(KEY_RIGHT)){

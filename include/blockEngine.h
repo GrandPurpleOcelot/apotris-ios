@@ -350,8 +350,6 @@ namespace BlockEngine
 
         int bigBag[35];
 
-        std::list<int> bag;
-
         float speedCounter = 0;
 
         //7  117
@@ -413,8 +411,6 @@ namespace BlockEngine
         bool fromLockHold = false;
         bool fromLockRotate = false;
 
-        std::list<int> historyList;
-
         int pieceDrought[7];
         bool delaySoftDrop = true;
 
@@ -426,6 +422,9 @@ namespace BlockEngine
 
         bool zoneExit = false;
 
+        std::list<int> bag;
+        std::list<int> historyList;
+
     public:
         int lengthX = 10;
         int lengthY = 40;
@@ -434,7 +433,6 @@ namespace BlockEngine
         uint16_t bitboard[40];
         int columnHeights[10];
 
-        std::list<int> queue;
         Pawn pawn = Pawn(0, 0);
         int held = -1;
         float speed;
@@ -442,7 +440,6 @@ namespace BlockEngine
         int level = 0;
         int score = 0;
         int comboCounter = 0;
-        std::list<int> linesToClear;
         bool lineClearArray[40];
         int clearLock = 0;
         int lost = 0;
@@ -462,10 +459,6 @@ namespace BlockEngine
         int linesSent = 0;
         int moveCounter = 0;
         int pieceCounter = 0;
-        std::list<Garbage> attackQueue;
-        std::list<Garbage> garbageQueue;
-        std::list<int> moveHistory;
-        std::list<int> previousBest;
         int previousKey = 0;
         bool softDrop = false;
         bool canHold = true;
@@ -508,7 +501,6 @@ namespace BlockEngine
 
         uint16_t disappearTimers[40][10];
         int disappearing = 0;
-        std::list<std::tuple<uint8_t,uint8_t>> toDisappear;
 
         float creditGrade = 0;
 
@@ -526,7 +518,6 @@ namespace BlockEngine
 
         int activePiece = -1;
 
-        std::list<Timestamp*> replay;
         bool toEndZone = false;
 
         int verticalKick = 0;
@@ -535,6 +526,15 @@ namespace BlockEngine
         bool replayElligible = true;
 
         int fullLine = 0x3ff;
+
+        std::list<int> queue;
+        std::list<int> linesToClear;
+        std::list<int> moveHistory;
+        std::list<int> previousBest;
+        std::list<Garbage> attackQueue;
+        std::list<Garbage> garbageQueue;
+        std::list<std::tuple<uint8_t,uint8_t>> toDisappear;
+        std::list<Timestamp*> replay;
 
         int checkRotation(int, int, int);
         void rotateCW(int dir);
