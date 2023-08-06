@@ -19,263 +19,7 @@
 
 // #include "soundbank.h"
 #include "blockEngine.h"
-#include "scene.hpp"
-
-const int xoffset = 15-8;
-const int yoffset = 10-8;
-
-class Cursor{
-public:
-    int x = 0;
-    int y = 0;
-    OBJ_ATTR* sprite;
-
-    void show(bool mini){
-        int sx = (x+mini) * 16 + xoffset * 8;
-        int sy = (y+mini) * 16 + yoffset * 8;
-
-        sprite_set_pos(sprite,sx,sy);
-        sprite_unhide(sprite,0);
-    }
-
-    bool move(int dx, int dy,bool mini){
-        bool sound = false;
-        bool moved = false;
-
-        if(dx){
-            if(x+dx >= 0 && x+dx <= (7-(mini*2))){
-                x += dx;
-                sfx(SFX_SHIFT2);
-                moved = true;
-                sound = true;
-            }
-        }
-        if(dy){
-            if(y+dy >= 0 && y+dy <= 7-(mini*2)){
-                y += dy;
-                moved = true;
-                if(!sound)
-                    sfx(SFX_SHIFT2);
-            }
-        }
-
-        return moved;
-    }
-
-    Cursor(){
-        sprite = &obj_buffer[0];
-        sprite_set_attr(sprite, ShapeSquare, 1, 712, 15, 0);
-
-        // obj_set_attr(sprite,ATTR0_SQUARE,ATTR1_SIZE(1),ATTR2_BUILD(712, 15, 0));
-    }
-};
-
-class Move{
-    public:
-        int x = 0;
-        int y = 0;
-
-        int previousValue = 0;
-        int currentValue = 0;
-        int tool = 0;
-
-        Move(int _x, int _y, int previous, int current, int _tool){
-            x = _x;
-            y = _y;
-
-            previousValue = previous;
-            currentValue = current;
-
-            tool = _tool;
-        }
-};
-
-class Board{
-    public:
-        int board[8][8];
-        Cursor cursor;
-
-        std::list<Move> history;
-
-        std::list<std::tuple<int,int>> queue;
-
-        void set(int value, bool record){
-            if(record)
-                history.push_back(Move(cursor.x,cursor.y,board[cursor.y][cursor.x],value,1));
-
-            if(history.size() > 10)
-                history.pop_front();
-
-            board[cursor.y][cursor.x] = value;
-            int s = (cursor.x) * 4;
-            customSkin->data[cursor.y] = (customSkin->data[cursor.y] & ~(0xf << (s))) | ((value + (value == 5)) << (s));
-        }
-
-        void fill(int value, int record){
-            int previous = board[cursor.y][cursor.x];
-            if(value == previous)
-                return;
-            if(record)
-                history.push_back(Move(cursor.x,cursor.y,previous,value,2));
-
-            int x,y;
-
-            queue.push_back(std::make_tuple(cursor.x,cursor.y));
-
-            do{
-                std::tuple<int,int> coords = queue.front();
-                x = std::get<0>(coords);
-                y = std::get<1>(coords);
-
-                board[y][x] = value;
-                int s = (x) * 4;
-                customSkin->data[y] = (customSkin->data[y] & ~(0xf << (s))) | ((value + (value == 5)) << (s));
-
-                if(y - 1 >= 0 && board[y-1][x] == previous){
-                    auto n = std::make_tuple(x,y-1);
-                    if(std::find(queue.begin(),queue.end(),n) == queue.end())
-                        queue.push_back(n);
-                }
-                if(y + 1 <= 7 && board[y+1][x] == previous){
-                    auto n = std::make_tuple(x,y+1);
-                    if(std::find(queue.begin(),queue.end(),n) == queue.end())
-                        queue.push_back(n);
-                }
-                if(x - 1 >= 0 && board[y][x-1] == previous){
-                    auto n = std::make_tuple(x-1,y);
-                    if(std::find(queue.begin(),queue.end(),n) == queue.end())
-                        queue.push_back(n);
-                }
-                if(x + 1 <= 7 && board[y][x+1] == previous){
-                    auto n = std::make_tuple(x+1,y);
-                    if(std::find(queue.begin(),queue.end(),n) == queue.end())
-                        queue.push_back(n);
-                }
-
-                queue.pop_front();
-            }while(!queue.empty());
-
-        }
-
-        void clear(){
-            for(int i = 0; i < 8; i++){
-                for(int j = 0; j < 8; j++)
-                    board[i][j] = 0;
-
-                customSkin->data[i] = 0;
-            }
-        }
-
-        void show(bool mini){
-            // u16* dest = (u16*) &se_mem[25];
-
-            for(int i = 0; i < 8; i++){
-                int y = ((i * 2)+yoffset);
-                for(int j = 0; j < 8; j++){
-                    int x = j * 2 + xoffset;
-                    if(!mini){
-                        if(board[i][j] != 0){
-                            int n = board[i][j] + 100 - (board[i][j] == 6);
-                            setTile(25, x, y, tileBuild(n, false, false, 0));
-                            setTile(25, x+1, y, tileBuild(n, false, false, 0));
-                            setTile(25, x, y+1, tileBuild(n, false, false, 0));
-                            setTile(25, x+1, y+1, tileBuild(n, false, false, 0));
-                            // dest[y+x] = n;
-                            // dest[y+x+1] = n;
-                            // dest[y+32+x] = n;
-                            // dest[y+32+x+1] = n;
-                        }else{
-                            setTile(25, x, y, tileBuild(0x6a, false, false, 15));
-                            setTile(25, x+1, y, tileBuild(0x6b, false, false, 15));
-                            setTile(25, x, y+1, tileBuild(0x6c, false, false, 15));
-                            setTile(25, x+1, y+1, tileBuild(0x6c, false, false, 15));
-                            // dest[y+x] = 0xf06a;
-                            // dest[y+x+1] = 0xf06b;
-                            // dest[y+32+x] = 0xf06c;
-                            // dest[y+32+x+1] = 0xf06d;
-                        }
-                    }else{
-                        if(i == 0 || j == 0 || i > 6 || j > 6){
-                            setTile(25, x, y, 0);
-                            setTile(25, x+1, y, 0);
-                            setTile(25, x, y+1, 0);
-                            setTile(25, x+1, y+1, 0);
-                            // dest[y+x] = 0;
-                            // dest[y+x+1] = 0;
-                            // dest[y+32+x] = 0;
-                            // dest[y+32+x+1] = 0;
-                        }else if(board[i-1][j-1] != 0){
-                            int n = board[i-1][j-1] + 100 - (board[i-1][j-1] == 6);
-                            setTile(25, x, y, tileBuild(n, false, false, 0));
-                            setTile(25, x+1, y, tileBuild(n, false, false, 0));
-                            setTile(25, x, y+1, tileBuild(n, false, false, 0));
-                            setTile(25, x+1, y+1, tileBuild(n, false, false, 0));
-                            // dest[y+x] = n;
-                            // dest[y+x+1] = n;
-                            // dest[y+32+x] = n;
-                            // dest[y+32+x+1] = n;
-                        }else{
-                            setTile(25, x, y, tileBuild(0x6a, false, false, 15));
-                            setTile(25, x+1, y, tileBuild(0x6b, false, false, 15));
-                            setTile(25, x, y+1, tileBuild(0x6c, false, false, 15));
-                            setTile(25, x+1, y+1, tileBuild(0x6c, false, false, 15));
-                            // dest[y+x] = 0xf06a;
-                            // dest[y+x+1] = 0xf06b;
-                            // dest[y+32+x] = 0xf06c;
-                            // dest[y+32+x+1] = 0xf06d;
-                        }
-                    }
-                }
-            }
-
-            cursor.show(mini);
-        }
-
-        bool undo(){
-            if(history.empty())
-               return false;
-
-            Move previous = history.back();
-
-            cursor.x = previous.x;
-            cursor.y = previous.y;
-
-
-            switch(previous.tool){
-            case 1: set(previous.previousValue,false); break;
-            case 2: fill(previous.previousValue,false); break;
-            }
-
-            history.pop_back();
-
-            return true;
-        }
-
-        void setBoard(TILE * t,int type){
-            if(type == 0){
-                for(int i = 0; i < 8; i++){
-                    for(int j = 0; j < 8; j++){
-                        board[i][j] = (t->data[i] >> (j * 4)) & 0xf;
-                    }
-                }
-            }else{
-                for(int i = 0; i < 8; i++){
-                    for(int j = 0; j < 8; j++){
-                        if(i < 6 && j < 6)
-                            board[i][j] = (t->data[i] >> ((j) * 4)) & 0xf;
-                        else
-                            board[i][j] = 0;
-                    }
-                }
-            }
-        }
-
-        Board(){
-            for(int i = 0; i < 8; i++)
-                for(int j = 0; j < 8; j++)
-                    board[i][j] = 0;
-        }
-};
+#include "skinEditor.hpp"
 
 void generateTiles();
 void showColorPalette(int);
@@ -289,7 +33,6 @@ void helpScreen();
 int optionsMenu();
 
 TILE * customSkin;
-Board board;
 
 static int cursorTimer = 0;
 static int toolTimer = 0;
@@ -367,7 +110,7 @@ void EditorScene::update(){
         showColorPalette(currentColor);
         showTools(currentTool);
 
-        showSprites(32);
+        showSprites(128);
     }
 
     refreshSkin();
@@ -478,18 +221,19 @@ bool EditorScene::control(){
             }
 
             board.setBoard(customSkin,onMini);
+            sfx(SFX_MENUCONFIRM);
         }
 
     }else{
-        if(key_hit(KEY_LEFT | KEY_RIGHT)){
+        if(key_hit(KEY_LEFT) || key_hit(KEY_RIGHT)){
             dx = ((key_hit(KEY_RIGHT) != 0) - (key_hit(KEY_LEFT) != 0));
         }
 
-        if(key_hit(KEY_UP | KEY_DOWN)){
+        if(key_hit(KEY_UP) || key_hit(KEY_DOWN)){
             dy = ((key_hit(KEY_DOWN) != 0) - (key_hit(KEY_UP) != 0));
         }
 
-        if(key_is_down(KEY_LEFT | KEY_RIGHT | KEY_UP | KEY_DOWN))
+        if(key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT) || key_is_down(KEY_UP) || key_is_down(KEY_DOWN))
             das++;
         else
             das = 0;
@@ -512,8 +256,8 @@ bool EditorScene::control(){
         bool moved = board.cursor.move(dx,dy,onMini);
         if((dx || dy) && key_is_down(KEY_A)){
             switch(currentTool){
-            case 0: board.set(0,true); break;
-            case 1: board.set(currentColor,true); break;
+                case 0: board.set(0,true); break;
+                case 1: board.set(currentColor,true); break;
             }
             if(moved)
                 sfx(SFX_PLACE);
@@ -523,9 +267,9 @@ bool EditorScene::control(){
 
     if(key_hit(KEY_A)){
         switch(currentTool){
-        case 0: board.set(0,true); break;
-        case 1: board.set(currentColor,true); break;
-        case 2: board.fill(currentColor,true); break;
+            case 0: board.set(0,true); break;
+            case 1: board.set(currentColor,true); break;
+            case 2: board.fill(currentColor,true); break;
         }
 
         sfx(SFX_PLACE);

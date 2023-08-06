@@ -9,6 +9,7 @@
 #include "sceneHandling.hpp"
 #include "sceneModes.hpp"
 #include "sceneStats.hpp"
+#include "skinEditor.hpp"
 
 #define FADE_LENGTH 4
 

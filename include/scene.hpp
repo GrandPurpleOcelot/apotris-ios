@@ -72,25 +72,6 @@ class TitleScene : public Scene{
     Scene* previousScene(){return NULL;};
 };
 
-class EditorScene : public Scene{
-    void draw();
-    void update();
-    bool control();
-    void init();
-    void deinit();
-    Scene* previousScene(){return NULL;};
-
-    int currentColor = 2;
-    int currentTool = 1;
-    int prevBld;
-
-    u8 das = 0;
-    const int arr = 4;
-    const int dasMax = 20;
-
-    u8 timer = 0;
-};
-
 class newTitleScene : public Scene{
     WordSprite* wordSprites[MAX_WORD_SPRITES];
 
