@@ -1676,12 +1676,15 @@ void Game::removeClearLock() {
 
     if(gameMode == COMBO){
         for(int i = lengthY/2-4; i < lengthY; i++){
-            if(board[i][0] != 0)
+            if(bitboard[i] != 0){
+                log("broke at " + std::to_string(i));
                 break;
+            }
             for(int j = 0; j < 10; j++){
                 if(j > 2 && j < 7)
                     continue;
                 board[i][j] = (i+comboCounter) % 7 + 1;
+                bitboard[i] |= 1 << j;
             }
             connectBoard(i, i);
         }
