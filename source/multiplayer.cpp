@@ -30,7 +30,7 @@ Game *botGame;
 
 int botIncomingHeight = 0;
 
-const int boardTile = 804 - 8;
+const int boardTile = 512 - 32 * 3 - 8;
 
 void handleMultiplayer(int state) {
     #ifdef GBA
