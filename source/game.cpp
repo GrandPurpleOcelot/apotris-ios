@@ -1298,7 +1298,7 @@ void GameScene::showText() {
     } else if(game->gameMode == BLITZ){
         // aprint("Lines", 2, 17);
         wordSprites[6].setText("Lines");
-        wordSprites[6].show(3 * 8, 17 * 8,15);
+        wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8,15);
         std::string str;
 
         if(game->level > 1)
@@ -1316,7 +1316,7 @@ void GameScene::showText() {
         // aprintClearArea(0, 18, 10, 1);
         // aprint(str,2,18);
         wordSprites[7].setText(str);
-        wordSprites[7].show(3 * 8, 18 * 8,15);
+        wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8,15);
 
     } else if(game->gameMode == BATTLE || (game->gameMode == SPRINT && game->subMode == 1)){
         // aprint("Attack", 2, 17);
