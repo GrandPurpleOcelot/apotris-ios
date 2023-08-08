@@ -8,8 +8,6 @@ void PlayOptionScene::init(){
     loadSpriteTiles(620,&sprite49tiles_bin,1,1);
     for(int i = 0; i < 5; i++){
         proSprites[i] = &obj_buffer[10 + i];
-
-        sprite_set_attr(proSprites[i], ShapeSquare, 0, 620, 15, 0);
         sprite_hide(proSprites[i]);
     }
 
@@ -393,6 +391,8 @@ void PlayOptionScene::draw(){
 
                 if(board->entries[i].pro){
                     sprite_unhide(proSprites[i],0);
+
+                    sprite_set_attr(proSprites[i], ShapeSquare, 0, 620, 15, 0);
                     sprite_set_pos(proSprites[i],endX * 8+ 4,y);
                 }else{
                     sprite_hide(proSprites[i]);
