@@ -414,7 +414,7 @@ class BlitzScene : public PlayOptionScene{
     };
 
     EntryBoard* getBoard(int submode, int goal){
-        return &savefile->boards.blitz[goal];
+        return &savefile->boards.blitz[0];
     }
 
     std::string name(){return "Blitz";};

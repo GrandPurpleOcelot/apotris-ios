@@ -222,6 +222,10 @@ void PlayOptionScene::start(){
     BlockEngine::Options newOptions;
 
     newOptions.mode = getMode();
+
+    if(newOptions.mode == BlockEngine::BLITZ)
+        goal = 2 * 3600;
+
     newOptions.goal = goal;
     newOptions.level = level;
     newOptions.tuning = getTuning();
@@ -426,7 +430,6 @@ void PlayOptionScene::draw(){
             i++;
         }
     }
-
     if(listStart > 0){
         sprite_unhide(arrowSprites[0], 0);
         sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 11 - 16);

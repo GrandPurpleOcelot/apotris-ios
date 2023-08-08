@@ -611,7 +611,6 @@ bool OptionListScene::control(){
     //     // previousElement = "";
     //     return true;
     // }
-
     if(key_hit(KEY_B)){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
