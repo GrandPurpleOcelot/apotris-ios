@@ -576,7 +576,7 @@ void showStats(bool moreStats, std::string time, std::string pps) {
     if(game->gameMode != CLASSIC){
         aprints("T-Spins: " + std::to_string(game->statTracker.tspins), 0, 7*counter++, 2);
         aprints("Perfect Clears: " + std::to_string(game->statTracker.perfectClears), 0, 7*counter++, 2);
-        aprints("Max Streak: " + std::to_string(game->statTracker.maxStreak), 0, 7*counter++, 2);
+        aprints("Max Streak: " + std::to_string(game->statTracker.maxStreak+1), 0, 7*counter++, 2);
         aprints("Max Combo: " + std::to_string(game->statTracker.maxCombo), 0, 7*counter++, 2);
         aprints("Times Held: " + std::to_string(game->statTracker.holds), 0, 7*counter++, 2);
     }
