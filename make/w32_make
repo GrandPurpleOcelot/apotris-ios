@@ -23,7 +23,7 @@ BUILD := build
 
 # Library search directories and flags
 EXT_LIB := /usr/i686-w64-mingw32/lib
-LDFLAGS := -D SFML_STATIC -lTilengine -lsfml-graphics-s -lsfml-audio-s -lsfml-window-s -lsfml-system-s -lmodplug -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbisfile -lvorbis -logg -lws2_32
+LDFLAGS := -D SFML_STATIC -lTilengine -lsfml-graphics-s -lsfml-audio-s -lsfml-window-s -lsfml-system-s -lsfml-main -lmodplug -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbisfile -lvorbis -logg -lws2_32
 LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB))
 
 # Include directories
