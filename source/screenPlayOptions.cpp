@@ -224,6 +224,12 @@ void PlayOptionScene::start(){
     if(newOptions.mode == BlockEngine::BLITZ)
         goal = 2 * 3600;
 
+
+    if(newOptions.mode == BlockEngine::CLASSIC)
+        newOptions.rotationSystem = BlockEngine::NRS;
+    else
+        newOptions.rotationSystem = BlockEngine::SRS;
+
     newOptions.goal = goal;
     newOptions.level = level;
     newOptions.tuning = getTuning();

@@ -850,14 +850,12 @@ void clearSpriteTiles(int index, int lengthX, int lengthY){
     d.w = 8;
     d.h = 8;
 
-    int counter = 0;
     for(int i = 0; i < lengthY; i++){
+        d.y = 8 * i;
         for(int j = 0; j < lengthX; j++){
             d.x = 8 * (j + index);
-            d.y = 8 * i;
 
             TLN_SetSpritesetData(spriteset, 127, &d, &tmp, 8);
-            counter++;
         }
     }
 

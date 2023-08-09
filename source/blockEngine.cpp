@@ -1855,7 +1855,6 @@ void Game::setTuning(Tuning newTune){
     if(gameMode == CLASSIC)
         return;
 
-
     if(rotationSystem != ARS){
         ihs = newTune.ihs;
         irs = newTune.irs;

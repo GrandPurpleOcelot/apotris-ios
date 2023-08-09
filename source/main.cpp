@@ -782,7 +782,8 @@ int getClassicPalette(){
 }
 
 void buildMini(TILE * customSkin){
-    clearSpriteTiles(9*16, 4 * 7, 2);
+    for(int i = 0; i < 7; i++)
+        clearSpriteTiles(9*16 + 8 * i, 4, 2);
 
     int add = 0;
     int rs = SRS;
