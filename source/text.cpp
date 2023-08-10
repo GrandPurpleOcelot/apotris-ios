@@ -147,6 +147,9 @@ void clearSmallText(){
 }
 
 void resetSmallText(){
+	if(textArea == nullptr)
+		return;
+
 	clearSmallText();
 
 	if(textArea != nullptr){
