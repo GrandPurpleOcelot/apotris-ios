@@ -359,13 +359,17 @@ void Game::hardDrop() {
     }
 
     std::list<int> bestFinesse = getBestFinesse(pawn.current,pawn.x+offset,pawn.rotation);
-    previousBest = bestFinesse;
+
+    previousBest.clear();
+    for(auto item : bestFinesse){
+        previousBest.push_back(item);
+    }
 
     int difference = 0;
     bool correct = false;
-    if(moveHistory.size() > bestFinesse.size()-1){
+    if(moveHistory.size() > (int) bestFinesse.size()-1){
         for(const auto& move : bestFinesse){
-            if(move == 6 && moveHistory.size() == bestFinesse.size()){
+            if(move == 6 && moveHistory.size() == (int) bestFinesse.size()){
                 correct = true;
                 break;
             }

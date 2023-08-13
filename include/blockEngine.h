@@ -36,6 +36,81 @@ const u8 fumenBoard[20][10] = {
     {1,1,1,1,1, 1,1,1,1,0},
 };
 
+class List{
+    public:
+        const static int maxSize = 10;
+        int array[maxSize];
+        int length = 0;
+
+        void push_back(int n){
+            if(length == maxSize)
+                return;
+
+            array[length++] = n;
+        }
+
+        void push_front(int n){
+            if(length == maxSize)
+                return;
+
+            for(int i = length; i > 0; i--){
+                array[i] = array[i-1];
+            }
+
+            array[0] = n;
+
+            length++;
+        }
+
+        void pop_front(){
+            if(length == 0)
+                return;
+
+            for(int i = 0; i < length - 1; i++){
+                array[i] = array[i+1];
+            }
+
+            length--;
+        }
+
+        void pop_back(){
+            if(length == 0)
+                return;
+
+            length--;
+        }
+
+        int front(){
+            if(length == 0)
+                return 0;
+
+            return array[0];
+        }
+
+        int back(){
+            if(length == 0)
+                return 0;
+
+            return array[length-1];
+        }
+
+        bool empty(){
+            return (length== 0);
+        }
+
+        void clear(){
+            length = 0;
+        }
+
+
+        int size(){
+            return length;
+        }
+
+        List(){
+            memset32(array,0,maxSize);
+        }
+};
 
 namespace BlockEngine
 {
@@ -562,14 +637,14 @@ namespace BlockEngine
 
         int fullLine = 0x3ff;
 
-        std::list<int> queue;
-        std::list<int> linesToClear;
-        std::list<int> moveHistory;
-        std::list<int> previousBest;
-        std::list<Garbage> attackQueue;
-        std::list<Garbage> garbageQueue;
-        std::list<std::tuple<uint8_t,uint8_t>> toDisappear;
-        std::list<Timestamp> replay;
+        List queue;
+        List moveHistory;//max 10
+        List previousBest;//max 10? but probably even less
+        std::list<int> linesToClear;//max 40
+        std::list<Garbage> attackQueue;//no max but should be small
+        std::list<Garbage> garbageQueue;//no max but should be small
+        std::list<std::tuple<uint8_t,uint8_t>> toDisappear;//no max, depends on pps but gets cleared every frame
+        std::list<Timestamp> replay;//max is MAX_REPLAY_SIZE
 
         int checkRotation(int, int, int);
         void rotateCW(int dir);

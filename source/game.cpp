@@ -1021,32 +1021,24 @@ void showQueue() {
     const int skin = savefile->settings.skin;
     int yoffset = 4 * (maxQueue == 1) - (5 * (game->rotationSystem != SRS && (skin >= 7 && !(skin == 9 || skin == 10))));
 
-    std::list<int>::iterator q = game->queue.begin();
     for (int k = 0; k < 5; k++){
-        if(k >= maxQueue){
+        if(k >= maxQueue || k >= game->queue.size()){
             sprite_hide(queueSprites[k]);
             continue;
         }
 
-        int n = *q;
+        int n = game->queue.array[k];
 
         int add = !(n == 0 || n == 3);
         if (skin < 7 || skin == 9 || skin == 10) {
             sprite_unhide(queueSprites[k], 0);
             sprite_set_attr(queueSprites[k], ShapeWide, 2, 16 * 9 + 8 * n, n * (game->zoneTimer == 0), 3);
             sprite_enable_mosaic(queueSprites[k]);
-            // obj_set_attr(queueSprites[k], ATTR0_WIDE | ATTR0_MOSAIC, ATTR1_SIZE(2), ATTR2_PALBANK(n));
-            // queueSprites[k]->attr2 = ATTR2_BUILD(16 * 9 + 8 * n, n * (game->zoneTimer == 0), 3);
             sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push, (3 + (k * 3)) * 6 - 3 * (n == 0) + yoffset + 8 * (game->rotationSystem == ARS && n == 0));
         } else {
             sprite_unhide(queueSprites[k], ATTR0_AFF);
             sprite_set_attr(queueSprites[k], ShapeSquare, 2, 16 * n, n * (game->zoneTimer == 0), 3);
-            // sprite_enable_mosaic(queueSprites[k]);
             sprite_enable_affine(queueSprites[k], k, false);
-            // obj_set_attr(queueSprites[k], ATTR0_SQUARE | ATTR0_AFF | ATTR0_MOSAIC, ATTR1_SIZE(2) | ATTR1_AFF_ID(k), ATTR2_PALBANK(n));
-            // queueSprites[k]->attr2 = ATTR2_BUILD(16 * n, n * (game->zoneTimer == 0), 3);
-            // obj_aff_identity(&obj_aff_buffer[k]);
-            // FIXED size = 358 + sizeControl;//~1.4
             FIXED size;
             if(skin < 9)
                 size = 357;//~1.4
@@ -1057,11 +1049,6 @@ void showQueue() {
 
             sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == 0) - 4 + yoffset);
         }
-
-        if(q != game->queue.end())
-            ++q;
-        else
-            break;
     }
 }
 
@@ -2046,15 +2033,12 @@ void showBar(int current, int max, int x, int palette, int layer) {
 }
 
 void showBestMove(){
-    std::list<int> moveList = game->previousBest;
+    List moveList = game->previousBest;
 
-    if((int) moveList.size() > 1)
-        moveList.pop_back();
+    moveList.pop_back();
 
     for(int i = 0; i < 3; i++)
         moveSprites[i] = &obj_buffer[16+i];
-
-    auto move = moveList.begin();
 
     for(int i = 0; i < 3; i++){
         if(i > (int) moveList.size() - 1){
@@ -2063,12 +2047,10 @@ void showBestMove(){
         }
         sprite_unhide(moveSprites[i],0);
 
-        sprite_set_attr(moveSprites[i], ShapeSquare, 0, 512 + 128 + *move, 15, 2);
+        sprite_set_attr(moveSprites[i], ShapeSquare, 0, 512 + 128 + moveList.array[i], 15, 2);
         // obj_set_attr(moveSprites[i], 0, 0, ATTR2_BUILD(512 + 128 + *move, 15, 2));
 
         sprite_set_pos(moveSprites[i], 38 + 12 * i, 54);
-
-        ++move;
     }
 }
 
