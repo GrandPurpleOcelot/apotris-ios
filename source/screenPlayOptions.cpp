@@ -208,6 +208,7 @@ void PlayOptionScene::start(){
             if(name() == "CPU Battle"){
                 botThinkingSpeed = value*3;
                 botSleepDuration = 5-value*2;
+                botStepMax = 10;
             }else{
                 goal = value;
             }

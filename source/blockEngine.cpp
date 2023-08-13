@@ -114,7 +114,7 @@ int Game::getNbr(int x, int y, int ex, int sy , int ey){
 void Game::rotateCW(int dir) {
     rotates[0] = dir;
 
-    replay.push_back(new Timestamp(timer,2,dir));
+    replay.push_back(Timestamp(timer,2,dir));
 
     rotate(1,dir);
 }
@@ -122,7 +122,7 @@ void Game::rotateCW(int dir) {
 void Game::rotateCCW(int dir) {
     rotates[1] = dir;
 
-    replay.push_back(new Timestamp(timer,3,dir));
+    replay.push_back(Timestamp(timer,3,dir));
 
     rotate(-1,dir);
 }
@@ -133,7 +133,7 @@ void Game::rotateTwice(int dir) {
 
     rotates[2] = dir;
 
-    replay.push_back(new Timestamp(timer,4,dir));
+    replay.push_back(Timestamp(timer,4,dir));
 
     rotate(2,dir);
 }
@@ -1392,7 +1392,7 @@ void Game::fillQueue(int count) {
 void Game::hold(int dir) {
     holding = dir;
 
-    replay.push_back(new Timestamp(timer,5,dir));
+    replay.push_back(Timestamp(timer,5,dir));
 
     if((clearLock || entryDelay) && gameMode != CLASSIC){
         // holding = dir;
@@ -1535,7 +1535,7 @@ void Game::lockCheck() {
 void Game::keyLeft(int dir) {
     moveCounter++;
 
-    replay.push_back(new Timestamp(timer,0,dir));
+    replay.push_back(Timestamp(timer,0,dir));
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         left = dir;
@@ -1567,7 +1567,7 @@ void Game::keyLeft(int dir) {
 void Game::keyRight(int dir) {
     moveCounter++;
 
-    replay.push_back(new Timestamp(timer,1,dir));
+    replay.push_back(Timestamp(timer,1,dir));
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         right = dir;
@@ -1597,7 +1597,7 @@ void Game::keyRight(int dir) {
 
 void Game::keyDown(int dir) {
     moveCounter++;
-    replay.push_back(new Timestamp(timer,6,dir));
+    replay.push_back(Timestamp(timer,6,dir));
     if (clearLock || eventLock || entryDelay) {
         if(!(entryDelay && rotationSystem == NRS))
             down = dir;
@@ -1767,7 +1767,7 @@ void Game::generateGarbage(int height,int mode){
 }
 
 void Game::keyDrop(int dir){
-    replay.push_back(new Timestamp(timer, 7,dir));
+    replay.push_back(Timestamp(timer, 7,dir));
 
     if(dir == 0 && gameMode == MASTER)
         dropping = false;
@@ -2340,4 +2340,26 @@ void Game::chargeDas(){
         return;
 
     das = maxDas;
+}
+
+void Game::loadFumen(){
+
+    for(int i = 0; i < 20; i++){
+        for(int j = 0; j < 10; j++){
+            if(!fumenBoard[i][j])
+                continue;
+
+            int y = i + 20;
+            int x = j;
+
+            board[y][x] = fumenBoard[i][j];
+
+            bitboard[y] |= 1 << x;
+            if((lengthY-y) > columnHeights[x])
+                columnHeights[x] = lengthY-y;
+
+            if(stackHeight > y)
+                stackHeight = y;
+        }
+    }
 }

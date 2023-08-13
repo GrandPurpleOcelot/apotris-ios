@@ -5,16 +5,14 @@
 #include "logging.h"
 #include "posprintf.h"
 
-#define MAX_MOVELIST_SIZE 5
-
-int botThinkingSpeed = 9;
+int botThinkingSpeed = 11;
 int botSleepDuration = 1;
 
-int stepMax = 1;
+int botStepMax = 10;
 
 using namespace BlockEngine;
 
-void showTestBoard();
+void showTestBoard(u16 * testBoard);
 
 INLINE bool bitGet(u16 *bitboard,int x, int y){
     return (bitboard[y] >> x) & 0b1;
@@ -39,21 +37,15 @@ u8 bitcount[] = {
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8,
 };
 
-int countBits(u16 n) {
-    int result = 0;
-
-    for(int i = 0; i < 2; i++){
-        result += bitcount[(n >> (8*i) & 0xff)];
-    }
-
-    return result;
+INLINE int countBits(u16 n) {
+    return bitcount[n & 0xff] + bitcount[(n >> 8) & 0xff];
 }
 
-int countTransitions(u16 a){
+INLINE int countTransitions(u16 a){
     return countBits((a >> 1) ^ a);
 }
 
-Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int startY){
+IWRAM_CODE Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int startY){
     int start = max(1,startY-1);
 
     int rowTrans = 0;
@@ -62,7 +54,7 @@ Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int st
     int wells = 0;
     int quadWell = 0;
 
-    std::string str;
+    // std::string str;
 
     // profile_start();
 
@@ -135,37 +127,7 @@ Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int st
     result.holes = holes;
     result.wells = wells;
     result.quadWell = quadWell;
-
-    // if(key_is_down(KEY_SELECT)){
-    //     for(int i = lengthY-20; i < lengthY; i++){
-    //         std::string str;
-
-    //         for(int j = 0; j < 16; j++)
-    //             str += std::to_string((board[i] >> j) & 0b1);
-
-    //         log(str);
-    //     }
-
-    //     std::string str;
-    //     int *r = (int*) &result;
-    //     for(int i = 0; i < 5; i++)
-    //         str += std::to_string(r[i]) + " ";
-    //     log(str);
-    //     log(std::to_string(start) + " " + std::to_string(lengthY));
-    //     for(int i = start; i < lengthY; i++){
-    //         if(board[i])
-    //             log(std::to_string(countTransitions(board[i])));
-    //     }
-
-    //     while(1){
-    //         VBlankIntrWait();
-    //         key_poll();
-
-    //         if(key_hit(KEY_A)){
-    //             break;
-    //         }
-    //     }
-    // }
+    result.wellX = lowestX;
 
     return result;
 }
@@ -187,24 +149,19 @@ void Bot::run(){
     if(--sleepTimer > 0)
         return;
     if(thinking){
-        if(game->clearLock || game->dropping || game->pawn.current == -1)
+        if(game->clearLock || game->dropping || game->pawn.current == -1){
             return;
+        }
 
         if(thinkingI == -6){
             // profile_start();
-            currentValues = evaluate(game->bitboard,game->columnHeights,game->lengthX,game->lengthY,game->stackHeight);
+            // currentValues = evaluate(testGame->bitboard, testGame->columnHeights, testGame->lengthX, testGame->lengthY, testGame->stackHeight);
             // log("first: " + std::to_string(profile_stop())); //3-8k cycle;
 
-            // char buff[30];
-            // posprintf(buff,"%d", currentValues.quadWell);
-
-            // log(buff);
-
-            if(checking == 0){
-
-                // moves.clear();
-                // delete quickSave;
-                // quickSave = new Game(*game);
+            if(checking == 0 && exploring == 0){
+                if(testGame != nullptr)
+                    delete testGame;
+                testGame = new Game(*game);
             }
         }
 
@@ -213,7 +170,7 @@ void Bot::run(){
                 if(thinkingI >= 6)
                     break;
                 if(thinkingJ < 4){
-                    while(!findBestDrop(thinkingI,thinkingJ)){
+                    while(!findBestDrop(thinkingI,thinkingJ,testGame,moves,weights)){
                         if(thinkingJ < 3){
                             thinkingJ++;
                         }else{
@@ -234,48 +191,152 @@ void Bot::run(){
             if(thinkingI >= 6){
                 thinkingI = -6;
                 thinkingJ = 0;
-                // thinking = false;
                 sleepTimer = botSleepDuration;
 
                 if(checking == 1){
-                    thinking = false;
-                    checking = 0;
-                    game->pawn.current = previous;
-                    game->pawn.setBlock(SRS);
-                    // int t = game->timer;
-                    // int igt = game->inGameTimer;
-                    // delete game;
-                    // game = new Game(*quickSave);
-                    // game->setTuning(getTuning());
-
-                    // game->timer = t;
-                    // game->inGameTimer = igt;
-
+                    stopThinking();
                 }else{
                     checking++;
 
-                    previous = game->pawn.current;
+                    // previous = testGame->pawn.current;
 
-                    if(game->held != -1)
-                        game->pawn.current = game->held;
-                    else
-                        game->pawn.current = game->queue.front();
+                    if(testGame->canHold){
+                        if(testGame->held != -1)
+                            testGame->pawn.current = testGame->held;
+                        else
+                            testGame->pawn.current = testGame->queue.front();
 
-                    // std::cout << "previous: " << std::to_string(previous) << " current: " << std::to_string(game->pawn.current) << "\n";
+                        testGame->pawn.setBlock(SRS);
 
-                    game->pawn.setBlock(SRS);
-                    return;
+                    }else{
+                        stopThinking();
+                    }
                 }
-                current = best;
-                best = Move();
 
                 // log("x: " + std::to_string(current.dx + game->pawn.x) + " y: " + std::to_string(current.rotation));
             }
         }
     }
 
-    if(!thinking)
+    if(!thinking)//not in an else block because "thinking" can change during the above block and I want this to run in the same call if possible
         move();
+}
+
+void Bot::stopThinking(){
+    if(SEARCH_DEPTH <= 1){
+        thinking = false;
+        checking = 0;
+        exploring = 0;
+
+        current = moves.front();
+
+        if(testGame != nullptr)
+            delete testGame;
+        testGame = new Game(*game);
+
+        moves.clear();
+
+        return;
+    }
+
+    if(exploring == MAX_MOVELIST_SIZE){
+        thinking = false;
+        checking = 0;
+
+        // current = firstMoves[0];
+        current = firstMoves[bestFuture];
+        exploring = 0;
+
+        // log("best move: " + std::to_string(current.dx) + " with score " + std::to_string(current.score));
+
+        if(bestFuture != 0){
+            log("best future: " + std::to_string(bestFuture) + ", using piece: " + std::to_string(firstMoves[bestFuture].piece));
+            log("move: " + std::to_string(bestMoves[bestFuture].dx) + " " + std::to_string(bestMoves[bestFuture].rotation) + " " + std::to_string(bestMoves[bestFuture].score));
+        }
+        // else
+        //     log("no better move found");
+
+        if(testGame != nullptr)
+            delete testGame;
+        testGame = new Game(*game);
+    }else{
+        if(exploring == 0){//populate first moves array (best moves from search depth = 0)
+            int i = 0;
+            auto it = moves.begin();
+            while(it != moves.end() && i < MAX_MOVELIST_SIZE){
+                firstMoves[i] = *it;
+                ++it;
+                ++i;
+            }
+        }else{
+            //populate/replace bestMoves with the results from the previous search
+            if(exploring == 1 || moves.front().score > bestMoves[0].score){
+                int i = 0;
+                auto it = moves.begin();
+                while(it != moves.end() && i < MAX_MOVELIST_SIZE){
+                    bestMoves[i] = *it;
+                    ++it;
+                    ++i;
+                }
+                bestFuture = exploring - 1;
+            }
+
+            // reset testGame to current game to prepare to execute the next move. Only necessary the second time since testGame
+            // is the same as current game initially
+            if(testGame != nullptr)
+                delete testGame;
+            testGame = new Game(*game);
+        }
+
+        executeMove(firstMoves[exploring]);
+
+        exploring++;
+        checking = 0;
+    }
+
+    moves.clear();
+}
+
+void Bot::executeMove(Move move){
+    if(testGame->pawn.current != move.piece){
+        if(testGame->held == move.piece || testGame->queue.front() == move.piece){
+            testGame->hold(1);
+            testGame->hold(0);
+        }
+    }
+
+    if(testGame->pawn.rotation != move.rotation){
+        while(testGame->pawn.rotation != move.rotation){
+            testGame->rotateCW(1);
+            testGame->rotateCW(0);
+        }
+    }
+
+    int step = 0;
+    int botStepMax = 20;
+    int dx = 0;
+    if(dx > move.dx){
+        while(dx != move.dx && step++ < botStepMax){
+            testGame->keyLeft(1);
+            testGame->keyLeft(0);
+            dx--;
+        }
+    }else if(dx < move.dx){
+        while(dx != move.dx && step++ < botStepMax){
+            testGame->keyRight(1);
+            testGame->keyRight(0);
+            dx++;
+        }
+    }
+
+    if(dx == move.dx && testGame->pawn.rotation == move.rotation){
+        testGame->keyDrop(1);
+    }
+
+    if(testGame->clearLock){
+        testGame->removeClearLock();
+        log("removed clearlock");
+    }
 }
 
 void Bot::move(){
@@ -292,34 +353,28 @@ void Bot::move(){
             game->hold(1);
             game->hold(0);
         }else{
-            log("error hold");
+            log("error hold!");
         }
         return;
     }
 
     if(game->pawn.rotation != current.rotation){
-        // if(current.rotation == 3){
-        //     game->rotateCCW(1);
-        //     game->rotateCCW(0);
-        //     // rotation = 3;
-        // }else{
-            while(game->pawn.rotation != current.rotation){
-                game->rotateCW(1);
-                game->rotateCW(0);
-                // rotation++;
-            }
-        // }
+        while(game->pawn.rotation != current.rotation){
+            game->rotateCW(1);
+            game->rotateCW(0);
+            // rotation++;
+        }
     }
 
     int step = 0;
     if(dx > current.dx){
-        while(dx != current.dx && step++ < stepMax){
+        while(dx != current.dx && step++ < botStepMax){
             game->keyLeft(1);
             game->keyLeft(0);
             dx--;
         }
     }else if(dx < current.dx){
-        while(dx != current.dx && step++ < stepMax){
+        while(dx != current.dx && step++ < botStepMax){
             game->keyRight(1);
             game->keyRight(0);
             dx++;
@@ -339,11 +394,11 @@ void Bot::move(){
     }
 }
 
-int Bot::findBestDrop(int ii,int jj){
+int findBestDrop(int ii,int jj, Game * game, std::list<Move> &moves, Weights weights){
     if(!game->checkRotation(ii,0,jj))
         return 0;
 
-    std::string str;
+    // std::string str;
     // profile_start();
 
     int prevR = game->pawn.rotation;
@@ -357,15 +412,14 @@ int Bot::findBestDrop(int ii,int jj){
 
     const int height = 32;
 
+    uint16_t testBoard[40];
+    int columnHeights[10];
     memcpy16(testBoard,&game->bitboard[8],height);
     memcpy32(columnHeights,game->columnHeights,10);
 
     // for(int i = 0; i < game->lengthY; i++)
     //     testBoard[i] = game->bitboard[i];
         // memcpy32(testBoard[i],game->board[i+20],10);
-
-    // str += std::to_string(profile_stop()) + " ";
-    // profile_start();
 
     int minH = -1;
     int count = 0;
@@ -390,37 +444,25 @@ int Bot::findBestDrop(int ii,int jj){
         if(count == 4)
             break;
     }
-    // str += std::to_string(profile_stop()) + " ";
 
-    // // showTestBoard();
+    // showTestBoard(testBoard);
 
-    // profile_start();
     int clears = countClears(testBoard,game->lengthX,height,lowest+minH-8);
     int afterHeight = min(game->stackHeight,lowest+minH) + clears;
 
     Values v = evaluate(testBoard, columnHeights, game->lengthX,height,afterHeight-8);
-    // str += std::to_string(profile_stop()) + " ";
-    // profile_start();
-    // int afterJag = v.jag;
-    int afterColTrans = v.colTrans;
-    int afterRowTrans = v.rowTrans;
-    int afterHoles = v.holes;
-    int afterWells = v.wells;
-    int afterQuad = v.quadWell;
-    // int holeDiff = afterHoles - currentValues.holes;
-    int wellDiff = afterWells - currentValues.wells;
-    // int rowDiff = afterRowTrans - currentValues.rowTrans;
-    // int colDiff = afterColTrans - currentValues.colTrans;
-    // int quadDiff = afterQuad - currentValues.quadWell;
 
-    int holeDiff = afterHoles;
-    // int wellDiff = afterWells;
-    int rowDiff = afterRowTrans;
-    int colDiff = afterColTrans;
-    int quadDiff = afterQuad;
+    // int wellDiff = v.wells - currentValues.wells;
+    int wellDiff = v.wells;
 
-    int score = (clears * clears) * weights.clears + holeDiff * (weights.holes) + (game->lengthY-lowest) * weights.lowest +
-        wellDiff * (weights.well) + rowDiff * (weights.row) + colDiff * (weights.col) + quadDiff * (weights.quadWell);
+    int score = (clears * clears) * weights.clears + v.holes * (weights.holes) + (game->lengthY-lowest) * weights.lowest +
+        wellDiff * (weights.well) + v.rowTrans * (weights.row) + v.colTrans * (weights.col) + v.quadWell * (weights.quadWell);
+
+    // char buff[64];
+
+    // posprintf(buff,"%d %d %d %d %d %d %d %d", clears, v.holes, game->lengthY-lowest, wellDiff, v.rowTrans, v.colTrans, v.quadWell, v.wellX);
+
+    // log(buff);
 
     // log( "score " + std::to_string(score) + " best score: " + std::to_string(best.score));
     Move m;
@@ -429,31 +471,31 @@ int Bot::findBestDrop(int ii,int jj){
     m.rotation = jj;
     m.piece = game->pawn.current;
 
-    //~2500 cycles
-    // if(moves.empty()){
-    //     moves.push_back(m);
-    // }else{
-    //     // log("checking: " + std::to_string(m.score));
-    //     auto it = moves.begin();
-    //     while(it != moves.end()){
-    //         // log("comparing: " + std::to_string(it->score)  + " " + std::to_string(m.score));
-    //         if(it->score < m.score){
-    //             moves.insert(it,m);
-    //             break;
-    //         }
-    //         ++it;
-    //     }
+    // ~2500 cycles
+    if(moves.empty()){
+        moves.push_back(m);
+    }else{
+        // log("checking: " + std::to_string(m.score));
+        auto it = moves.begin();
+        while(it != moves.end()){
+            // log("comparing: " + std::to_string(it->score)  + " " + std::to_string(m.score));
+            if(it->score < m.score){
+                moves.insert(it,m);
+                break;
+            }
+            ++it;
+        }
 
-    //     if(it == moves.end()){
-    //         moves.push_back(m);
-    //     }
+        if(it == moves.end()){
+            moves.push_back(m);
+        }
 
-    //     if(moves.size() > MAX_MOVELIST_SIZE){
-    //         moves.pop_back();
-    //     }
-    // }
+        if(moves.size() > MAX_MOVELIST_SIZE){
+            moves.pop_back();
+        }
+    }
 
-    //print move list
+    // print move list
 
     // std::string str;
     // for(auto const& move : moves){
@@ -461,30 +503,25 @@ int Bot::findBestDrop(int ii,int jj){
     // }
     // log(str);
 
-    if(score > best.score){
-        best = m;
-        // best.score = score;
-        // best.dx = ii;
-        // best.rotation = jj;
-
-        // log("qd: " + std::to_string(quadDiff));
-
-        // log("setting to: " + std::to_string(game->pawn.current));
-        // best.piece = game->pawn.current;
-    }
-
-    // str += std::to_string(profile_stop()) + " ";
-    // log(std::to_string(profile_stop()));
-    // log(str);
-
     return 1;
 }
 
-void showTestBoard(){
-    // OBJ_ATTR* enemyBoardSprite = &obj_buffer[25];
+void showTestBoard(u16 * testBoard){
+    log("testboard: ");
+    for(int i = 0; i < 20; i++){
+        std::string str;
+
+        for(int j = 0; j < 10; j++){
+            str += std::to_string((testBoard[i + 12] >> j) & 0b1);
+        }
+
+        log(str);
+    }
+
+    // OBJ_ATTR* enemyBoardSprite = &obj_buffer[20];
     // obj_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
     // obj_set_attr(enemyBoardSprite, ATTR0_TALL | ATTR0_AFF_DBL, ATTR1_SIZE(2) | ATTR1_AFF_ID(6), 0);
-    // enemyBoardSprite->attr2 = ATTR2_BUILD(768, 0, 1);
+    // enemyBoardSprite->attr2 = ATTR2_BUILD(360, 0, 1);
     // obj_set_pos(enemyBoardSprite, 43, 24);
     // obj_aff_identity(&obj_aff_buffer[6]);
     // obj_aff_scale(&obj_aff_buffer[6], float2fx(0.5), float2fx(0.5));
@@ -493,9 +530,9 @@ void showTestBoard(){
 
     // for(int height = 10; height < 20; height++){
     //     for (int j = 0; j < 10; j++) {
-    //         dest2 = (TILE*)&tile_mem[5][256 + ((height) / 8) * 2 + (j) / 8];
+    //         dest2 = (TILE*)&tile_mem[4][360 + ((height) / 8) * 2 + (j) / 8];
 
-    //         if (testBot->testBoard[height][j])
+    //         if ((testBoard[30+height] >> j) & 0b1)
     //             dest2->data[(height) % 8] |= (4 + 2 * savefile->settings.lightMode) << ((j % 8) * 4);
     //         else
     //             dest2->data[(height) % 8] &= ~(0xffff << ((j % 8) * 4));

@@ -657,6 +657,12 @@ void diagnose() {
     if (!DIAGNOSE)
         return;
 
+    if(game->linesCleared == 100){
+        log("100 lines:");
+        for(int i = 0; i < 4; i++)
+            log(game->statTracker.clears[i]);
+    }
+
     // std::string str = "";
 
     // for(int i = 0; i < 10; i++){

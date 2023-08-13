@@ -26,8 +26,8 @@ int mode = 0;
 bool showingStats = false;
 
 bool saveExists = false;
-BlockEngine::Game* quickSave;
-BlockEngine::Bot *testBot;
+BlockEngine::Game* quickSave = nullptr;
+BlockEngine::Bot *testBot = nullptr;
 
 int igt = 0;
 
@@ -1124,9 +1124,9 @@ void saveReplay(){
 
     auto it = game->replay.begin();
     for(int i = 0; i < len; i++){
-        Timestamp *move = *it;
+        Timestamp move = *it;
 
-        test->moves[i] = (((move->timer & 0x3fffff) << 11) + ((move->dir & 1) << 9) + (move->move & 0x1ff));
+        test->moves[i] = (((move.timer & 0x3fffff) << 11) + ((move.dir & 1) << 9) + (move.move & 0x1ff));
 
         ++it;
     }

@@ -2314,7 +2314,12 @@ void newTitleScene::update(){
         enableBot = true;
         demo = true;
 
+        botThinkingSpeed = 6;
+        botSleepDuration = 5;
+        botStepMax = 1;
+
         startGame(BlockEngine::Options(),qran());
+        startGame(BlockEngine::Options(), 0x1234);
 
         changeScene(new GameScene(), Transitions::FADE);
     }

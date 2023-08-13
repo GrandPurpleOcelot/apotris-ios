@@ -4,6 +4,7 @@
 #include "platform.hpp"
 #include <string>
 #include "font1tiles_bin.h"
+#include "save.h"
 #include "text.h"
 
 #define MAX_WORD_SPRITES 12
@@ -31,6 +32,15 @@ public:
     const int startDelayMax = 10;
 
     void show(int x, int y, int palette) {
+        int tempX = x - (scroll & 0x7);
+
+        if(savefile->settings.aspectRatio == 1){
+            if(tempX < 13)
+                tempX += 13;
+            else if(tempX + width > 227)
+                tempX -= 13;
+        }
+
         for (int i = 0; i < 3 * (1+big) - big; i++) {
             sprite_unhide(sprites[i], 0);
             sprite_enable_mosaic(sprites[i]);
@@ -39,7 +49,7 @@ public:
             if(blend)
                 sprite_enable_blend(sprites[i]);
 
-            sprite_set_pos(sprites[i], x + i * 32 - (scroll & 0x7), y);
+            sprite_set_pos(sprites[i], tempX + i * 32 , y);
         }
 
         if(slow)

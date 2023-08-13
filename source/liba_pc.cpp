@@ -143,8 +143,8 @@ LayerInfo layerInfo[4];
 int windowScale = 3;
 // int windowWidth = 256;
 // int windowHeight = 192;
-int windowWidth = 480;
-int windowHeight = 272;
+int windowWidth = 214;
+int windowHeight = 160;
 
 int rowStart = (512 - windowHeight)/2;
 int rowEnd = (512 + windowHeight)/2;
@@ -719,7 +719,7 @@ void key_poll(){
     // }
 
     for(int i = 0; i < sf::Keyboard::KeyCount; i++){
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i)))
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i)) && sf::Keyboard::Key(i) != sf::Keyboard::Tab)
             currentKeys.push_back(sf::Keyboard::Key(i));
     }
 }

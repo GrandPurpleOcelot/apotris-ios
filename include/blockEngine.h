@@ -6,11 +6,46 @@
 #include "tetromino.hpp"
 #include <tuple>
 
+const bool enableFumen = false;
+
+const u8 fumenQueue[5] = {5,0,0,0,0};
+
+const u8 fumenBoard[20][10] = {
+    {0,0,0,0,0, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0},
+
+    {0,0,0,0,0, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0},
+
+    {1,1,0,0,0, 0,0,0,0,0},
+    {1,1,0,0,1, 0,0,0,0,0},
+    {1,1,1,1,1, 1,1,0,0,0},
+    {1,1,1,1,1, 1,1,1,0,0},
+    {1,1,1,1,1, 1,1,1,1,0},
+
+    {1,1,1,1,1, 1,1,1,1,0},
+    {1,1,1,1,1, 1,1,1,1,0},
+    {1,1,1,0,1, 1,1,1,1,1},
+    {1,1,1,1,1, 1,1,1,1,0},
+    {1,1,1,1,1, 1,1,1,1,0},
+};
+
+
 namespace BlockEngine
 {
     #define MAX_DISAPPEAR 300
     #define CREDITS_LENGTH 3240 //54 seconds * 60
-    #define maxSleep 3;
+    #define maxSleep 1;
+
+    #define MAX_MOVELIST_SIZE 5
+
+    #define SEARCH_DEPTH 1
 
     extern const uint16_t connectedConversion[24];
     extern const uint16_t connectedFix[3][24];
@@ -126,7 +161,7 @@ namespace BlockEngine
         int holes = 0;
         int piece = -1;
         int clears = 0;
-        int wells = 0;
+        // int wells = 0;
         int score = -0x7fffffff;
 
         Move(){}
@@ -534,7 +569,7 @@ namespace BlockEngine
         std::list<Garbage> attackQueue;
         std::list<Garbage> garbageQueue;
         std::list<std::tuple<uint8_t,uint8_t>> toDisappear;
-        std::list<Timestamp*> replay;
+        std::list<Timestamp> replay;
 
         int checkRotation(int, int, int);
         void rotateCW(int dir);
@@ -576,6 +611,8 @@ namespace BlockEngine
         void updateDas();
         void chargeDas();
 
+        void loadFumen();
+
         Game(){
             seed = initSeed = qran();
         }
@@ -607,7 +644,10 @@ namespace BlockEngine
                 gracePeriod = 90;
 
                 rotationSystem = NRS;
-            }else
+            }else if(enableFumen){
+                for(int i = 0; i < 5; i++)
+                    queue.push_back(fumenQueue[i]);
+            } else
                 fillQueue(5);
 
             pawn = Pawn(0,0);
@@ -667,6 +707,9 @@ namespace BlockEngine
                 for (int j = 0; j < 10; j++)
                     disappearTimers[i][j] = 0;
             }
+
+            if(enableFumen)
+                loadFumen();
         }
 
         Game(int gm,bool big) : Game(gm,qran(),big){}
@@ -682,7 +725,6 @@ namespace BlockEngine
 
             for (int j = 0; j < 10; j++)
                 columnHeights[j] = oldGame.columnHeights[j];
-
 
             queue = oldGame.queue;
             canHold = oldGame.canHold;
@@ -749,6 +791,7 @@ namespace BlockEngine
         int holes;
         int wells;
         int quadWell;
+        int wellX;
     }Values;
 
     class Bot{
@@ -759,51 +802,56 @@ namespace BlockEngine
         Move current;
         Move best;
         int sleepTimer = 0;
+        int exploring = 0;
 
         int dx = 0;
         int rotation = 0;
         Game* game;
-        uint16_t testBoard[40];
-        int colboard[10];
-        int columnHeights[10];
+        Game* testGame = nullptr;
+        // uint16_t testBoard[40];
+        // int columnHeights[10];
 
         Values currentValues;
 
         std::list<Move> moves;
-
-        // int currentHoles = 0;
-        // int currentJag = 0;
-        // int currentWells = 0;
-        // int currentRowTrans = 0;
-        // int currentColTrans = 0;
+        Move firstMoves[MAX_MOVELIST_SIZE];
+        Move bestMoves[MAX_MOVELIST_SIZE];
+        int bestFuture = 0;
 
         int checking = 0;
         int previous = 0;
 
         Weights weights{
-        1,
-        -4,
+        1,//clears
+        -4,//holes
         0,
-        -1,
+        -1,//lowest
         0,
-        -1,
-        -1,
-        -1,
-        8,
+        -1,//well
+        -1,//row
+        -1,//col
+        8,//quadwell
         };
 
         void run();
 
         void move();
 
-        int findBestDrop(int ii,int jj);
+        // int findBestDrop(int ii,int jj, Game * game);
+
+        void stopThinking();
+
+        void executeMove(Move move);
 
         Bot(){}
         Bot(Game* _game){
             game = _game;
+            testGame = new Game(*game);
         }
 
         ~Bot(){
+            if(testGame != nullptr)
+                delete testGame;
         }
     };
 

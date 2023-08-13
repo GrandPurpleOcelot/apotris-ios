@@ -1177,6 +1177,32 @@ bool GameScene::control() {
         }
     }
 
+    if(key_hit(KEY_SELECT)){
+        // Values v = evaluate(game->bitboard, game->columnHeights, game->lengthX, game->lengthY, game->stackHeight);
+        // int clears = countClears(game->bitboard, game->lengthX, 40, game->stackHeight);
+
+        Weights weights{
+        1,
+        -4,
+        0,
+        -1,
+        0,
+        0,
+        -1,
+        -1,
+        8,
+        };
+
+        // int score = (clears * clears) * weights.clears + v.holes * (weights.holes) + (game->lengthY-game->lowest()) * weights.lowest +
+        //     v.wells * (weights.well) + v.rowTrans * (weights.row) + v.colTrans * (weights.col) + v.quadWell * (weights.quadWell);
+
+        // log(score);
+        std::list<BlockEngine::Move> moves;
+        findBestDrop(0, game->pawn.rotation, game, moves, weights);
+
+        log(moves.front().score);
+    }
+
     return false;
 }
 
