@@ -2793,6 +2793,8 @@ void setRandomGraphics(Save *save){
     save->settings.backgroundGradient = (RGB15(qran() % 31, qran() % 31, qran() % 31) << 16) + RGB15(qran() % 31, qran() % 31, qran() % 31);
     save->settings.frameBackground = qran() % (MAX_FRAME_BACKGROUNDS - 1);
 
+    save->settings.backgroundType = ((qran() % 10) > 3);
+
     if(save->settings.colors == 3){
         save->settings.shadow = 3;
     }
