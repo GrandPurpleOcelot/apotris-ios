@@ -35,6 +35,7 @@ const std::list<SaveChange> saveChanges = {
 void loadSave() {
     if(savefile != nullptr)
         delete savefile;
+
     savefile = new Save();
     loadSavefile();
 

@@ -214,7 +214,6 @@ void genWidths(){
 }
 
 int main(void) {
-
     platformInit();
 
     loadSave();

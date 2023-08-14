@@ -2289,6 +2289,16 @@ bool newTitleScene::control(){
         gameLoop();
 
         return true;
+    }else if(key_hit(KEY_L) && savefile->gameExists){
+        if(game != nullptr)
+            delete game;
+        game = new BlockEngine::Game(savefile->savedGame);
+
+        game->setOptions(savefile->savedGameOptions);
+
+        sfx(SFX_MENUCONFIRM);
+        gameLoop();
+
     }else if(key_hit(KEY_R)){
         loadReplay();
     }else if(key_hit(KEY_FULL)){

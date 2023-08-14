@@ -166,7 +166,8 @@ typedef struct ModeBoards{
     EntryBoard zone[4];
 }ALIGN(4) ModeBoards;
 
-typedef struct Save{
+class Save{
+public:
     u8 newGame;
 
     Settings settings;
@@ -184,7 +185,12 @@ typedef struct Save{
     Skin customSkins[MAX_CUSTOM_SKINS];
 
     QuickStart quickStart;
-}ALIGN(4) Save;
+
+    bool gameExists = false;
+    BlockEngine::Options savedGameOptions;
+    BlockEngine::Game savedGame;
+
+}ALIGN(4);
 
 typedef struct ReplayHeader{
     u8 tag;

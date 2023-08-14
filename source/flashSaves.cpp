@@ -45,13 +45,7 @@ __attribute__((section(".ewram")))
 u32 get_flash_type() {
 
 	//test if able to write to SRAM/FRAM
-    volatile u8* sf = (volatile u8*)sram_mem;
-
-    savefile = new Save();
-    u8* arr = (u8*)savefile;
-
-    for (int i = 0; i < (int)sizeof(Save); i++)
-		arr[i] = (u8)sf[i];
+	loadSavefile();
 
 	if(savefile->newGame >= 0x4b && savefile->newGame <= SAVE_TAG){
 		escape = true;

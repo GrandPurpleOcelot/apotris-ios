@@ -1241,7 +1241,7 @@ void loadSavefile(){
 
     char * src = (char * ) savefile;
 
-    input.read(src,sizeof(Save));
+    input.read(src,sizeof(Save) - sizeof(BlockEngine::Game));
 
     if(!input){
         log("Error when trying to load save.");
@@ -1249,6 +1249,13 @@ void loadSavefile(){
     }
 
     input.close();
+
+    if(savefile->newGame != SAVE_TAG || !savefile->gameExists){
+        savefile->savedGame = BlockEngine::Game();
+    }else{
+
+        input.read(&src[sizeof(Save) - sizeof(BlockEngine::Game)],sizeof(BlockEngine::Game));
+    }
 }
 
 void saveSavefile(){

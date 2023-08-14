@@ -761,6 +761,10 @@ int GameScene::pauseMenu(){
                     sfx(SFX_MENUCANCEL);
                     buildBG(3, 0, 27, 0, 1, true);
 
+                    savefile->savedGame = Game(game);
+                    savefile->savedGameOptions = *previousGameOptions;
+                    savefile->gameExists = true;
+
                     changeScene(new MainMenuScene(), Transitions::FADE);
                     return 1;
                 }
@@ -787,7 +791,7 @@ int GameScene::pauseMenu(){
                 if (selection == 0) {
                     if (saveExists) {
                         delete game;
-                        game = new Game(*quickSave);
+                        game = new Game(quickSave);
                         game->setTuning(getTuning());
                         floatingList.clear();
                         placeEffectList.clear();
@@ -809,7 +813,7 @@ int GameScene::pauseMenu(){
                 } else if (selection == 1) {
                     if(saveExists)
                         delete quickSave;
-                    quickSave = new Game(*game);
+                    quickSave = new Game(game);
                     saveExists = true;
 
                     aprint(" Saved!", 22, 18);

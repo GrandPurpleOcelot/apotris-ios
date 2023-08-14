@@ -93,6 +93,8 @@ void platformInit(){
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
 
     REG_WAITCNT = 0x4317;
+
+    log("iwram usage: " + std::to_string(iwramUsage()));
 }
 
 void deinitialize(){
@@ -327,8 +329,8 @@ void sleep() {
 }
 
 void sfx(int s){
-	mm_sfxhand h = mmEffect(s);
-	mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
+    mm_sfxhand h = mmEffect(s);
+    mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
 
     if((s == SFX_PLACE) && game->zoneTimer){
         mmEffectRate(h,512);
@@ -440,18 +442,30 @@ void resumeSong(){
 }
 
 void clearTilemapEntries(int tilemap, int index, int count){
-	u16 * dst = (u16*) &se_mem[tilemap];
+    u16 * dst = (u16*) &se_mem[tilemap];
 
-	memset16(&dst[index],0,count);
+    memset16(&dst[index],0,count);
 }
 
 void loadSavefile(){
+    if(savefile != nullptr)
+        delete savefile;
+
+    savefile = new Save();
+
     volatile u8* sf = (volatile u8*)sram_mem;
 
     u8* arr = (u8*)savefile;
 
-    for (int i = 0; i < (int)sizeof(Save); i++)
+    for (int i = 0; i < (int)(sizeof(Save) - sizeof(BlockEngine::Game)); i++)
         arr[i] = (u8)sf[i];
+
+    if(savefile->newGame != SAVE_TAG || !savefile->gameExists){
+        savefile->savedGame = BlockEngine::Game();
+    }else{
+        for (int i = (sizeof(Save) - sizeof(BlockEngine::Game)); i < (int)(sizeof(Save)); i++)
+            arr[i] = (u8)sf[i];
+    }
 }
 
 void saveSavefile(){

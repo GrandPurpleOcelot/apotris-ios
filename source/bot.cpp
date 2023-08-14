@@ -161,7 +161,7 @@ void Bot::run(){
             if(checking == 0 && exploring == 0){
                 if(testGame != nullptr)
                     delete testGame;
-                testGame = new Game(*game);
+                testGame = new Game(game);
             }
         }
 
@@ -232,7 +232,7 @@ void Bot::stopThinking(){
 
         if(testGame != nullptr)
             delete testGame;
-        testGame = new Game(*game);
+        testGame = new Game(game);
 
         moves.clear();
 
@@ -258,7 +258,7 @@ void Bot::stopThinking(){
 
         if(testGame != nullptr)
             delete testGame;
-        testGame = new Game(*game);
+        testGame = new Game(game);
     }else{
         if(exploring == 0){//populate first moves array (best moves from search depth = 0)
             int i = 0;
@@ -285,7 +285,7 @@ void Bot::stopThinking(){
             // is the same as current game initially
             if(testGame != nullptr)
                 delete testGame;
-            testGame = new Game(*game);
+            testGame = new Game(game);
         }
 
         executeMove(firstMoves[exploring]);

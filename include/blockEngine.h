@@ -2,6 +2,7 @@
 
 #include "platform.hpp"
 #include <list>
+#include <vector>
 #include <string>
 #include "tetromino.hpp"
 #include <tuple>
@@ -102,9 +103,28 @@ class List{
             length = 0;
         }
 
-
         int size(){
             return length;
+        }
+
+        void erase(int index){
+            if(length == 0)
+                return;
+
+            for(int i = index; i < length - 1; i++){
+                array[i] = array[i+1];
+            }
+
+            length--;
+        }
+
+        int find(int n){
+            for(int i = 0; i < length; i++){
+                if(array[i] == n)
+                    return i;
+            }
+
+            return -1;
         }
 
         List(){
@@ -504,8 +524,6 @@ namespace BlockEngine
 
         int gracePeriod = 0;
 
-        int rotating = 0;
-
         int section = 0;
         int sectionStart = 0;
         int previousSectionTime = 1000000;
@@ -532,8 +550,8 @@ namespace BlockEngine
 
         bool zoneExit = false;
 
-        std::list<int> bag;
-        std::list<int> historyList;
+        List bag;
+        List historyList;
 
     public:
         int lengthX = 10;
@@ -551,7 +569,7 @@ namespace BlockEngine
         int score = 0;
         int comboCounter = 0;
         bool lineClearArray[40];
-        int clearLock = 0;
+        bool clearLock = false;
         int lost = 0;
         int gameMode;
         SoundFlags sounds;
@@ -594,7 +612,6 @@ namespace BlockEngine
         int zoneCharge = 0;
         int zoneTimer = 0;
         int zonedLines = 0;
-        int zoneClearCounter = 0;
         int zoneScore = 0;
         int zoneStart = 0;
         bool fullZone = false;
@@ -688,164 +705,15 @@ namespace BlockEngine
 
         void loadFumen();
 
-        Game(){
-            seed = initSeed = qran();
-        }
+        Game() : Game(0,0,0){}
 
-        Game(int gm, int sd, bool big){
-            gameMode = gm;
-            seed = initSeed = sd;
-
-            for (int i = 0; i < 40; i++) {
-                bitboard[i] = 0;
-                lineClearArray[i] = false;
-
-                for (int j = 0; j < 10; j++)
-                    board[i][j] = 0;
-            }
-
-            for(int j = 0; j < lengthX; j++)
-                columnHeights[j] = 0;
-
-            fillBag();
-
-            if(gameMode == CLASSIC){
-                maxLockTimer = 1;
-                fillQueue(1);
-
-                maxDas = 16;
-                arr = 6;
-                softDropSpeed = 2;
-                gracePeriod = 90;
-
-                rotationSystem = NRS;
-            }else if(enableFumen){
-                for(int i = 0; i < 5; i++)
-                    queue.push_back(fumenQueue[i]);
-            } else
-                fillQueue(5);
-
-            pawn = Pawn(0,0);
-            pawn.big = big;
-
-            if(gameMode == SPRINT)
-                goal = 40;
-            else if(gameMode == MARATHON)
-                goal = 150;
-            else if(gameMode == DIG){
-                goal = 100;
-                if(!big)
-                    generateGarbage(9,0);
-                else
-                    generateGarbage(4,0);
-            }else if(gameMode == COMBO){
-                if(!big){
-                    for(int i = lengthY/2-4; i < lengthY; i++){
-                        for(int j = 0; j < 10; j++){
-                            if(j > 2 && j < 7 && !(i == lengthY-2 && j < 5) && !(i == lengthY-1 && j < 4))
-                                continue;
-                            board[i][j] = i % 7 + 1;
-                            bitboard[i] |= 1 << j;
-
-                            if((lengthY-i) > columnHeights[j])
-                                columnHeights[j] = lengthY-i;
-                        }
-                        connectBoard(i, i);
-                    }
-                    stackHeight = lengthY/2 - 4;
-                }else{
-                    for(int i = (lengthY/4-1); i < lengthY/2; i++){
-                        for(int j = 0; j < 5; j++){
-                            if(j != 0 && !(i == (lengthY/2)-2 && j < 3) && !(i == (lengthY/2)-1 && j < 2))
-                                continue;
-                            board[i*2][j*2] = i % 7 + 1;
-                            board[i*2][j*2+1] = i % 7 + 1;
-                            board[i*2+1][j*2] = i % 7 + 1;
-                            board[i*2+1][j*2+1] = i % 7 + 1;
-                        }
-                    }
-                }
-            }else if(gameMode == MASTER){
-                level = 0;
-                speed = GameInfo::masterGravity[0][1];
-                setMasterTuning();
-            }
-
-            if(big){
-                lengthY /= 2;
-                lengthX /= 2;
-                boardOffset = lengthY/2;
-                fullLine >>= 5;
-            }
-
-            for (int i = 0; i < 40; i++) {
-                for (int j = 0; j < 10; j++)
-                    disappearTimers[i][j] = 0;
-            }
-
-            if(enableFumen)
-                loadFumen();
-        }
+        Game(int gm, int sd, bool big);
 
         Game(int gm,bool big) : Game(gm,qran(),big){}
 
-        Game(const Game& oldGame){
-            for (int i = 0; i < 40; i++) {
-                bitboard[i] = oldGame.bitboard[i];
-                for (int j = 0; j < 10; j++)
-                    board[i][j] = oldGame.board[i][j];
+        Game(Game * oldGame);
 
-                lineClearArray[i] = oldGame.lineClearArray[i];
-            }
-
-            for (int j = 0; j < 10; j++)
-                columnHeights[j] = oldGame.columnHeights[j];
-
-            queue = oldGame.queue;
-            canHold = oldGame.canHold;
-            bag = oldGame.bag;
-
-            pawn = Pawn(oldGame.pawn);
-            statTracker = Stats(oldGame.statTracker);
-
-            held = oldGame.held;
-            level = oldGame.level;
-            score = oldGame.score;
-            comboCounter = oldGame.comboCounter;
-            linesCleared = oldGame.linesCleared;
-            clearLock = oldGame.clearLock;
-            gameMode = oldGame.gameMode;
-            // sounds = SoundFlags(oldGame.sounds);
-            previousClear = Score(oldGame.previousClear);
-            timer = oldGame.timer;
-            inGameTimer = oldGame.inGameTimer;
-            refresh = oldGame.refresh;
-            won = oldGame.won;
-            lost = oldGame.lost;
-            goal = oldGame.goal;
-            finesseFaults = oldGame.finesseFaults;
-            garbageCleared = oldGame.garbageCleared;
-            garbageHeight = oldGame.garbageHeight;
-            pushDir = oldGame.pushDir;
-            b2bCounter = oldGame.b2bCounter;
-            bagCounter = oldGame.bagCounter;
-            seed = oldGame.seed;
-            initSeed = oldGame.initSeed;
-            subMode = oldGame.subMode;
-            initialLevel = oldGame.initialLevel;
-            trainingMode = oldGame.trainingMode;
-            clearLock = oldGame.clearLock;
-            linesToClear = oldGame.linesToClear;
-            linesCleared = oldGame.linesCleared;
-            dropping = oldGame.dropping;
-            stackHeight = oldGame.stackHeight;
-            pieceCounter = oldGame.pieceCounter;
-            speed = oldGame.speed;
-            activePiece = oldGame.activePiece;
-        }
-
-
-        ~Game(){}
+        ~Game();
     };
 
     typedef struct Weights{
@@ -921,7 +789,7 @@ namespace BlockEngine
         Bot(){}
         Bot(Game* _game){
             game = _game;
-            testGame = new Game(*game);
+            testGame = new Game(game);
         }
 
         ~Bot(){

@@ -1504,8 +1504,11 @@ void GameScene::countdown() {
     int timerMax = 120;
     showQueue();
     showHold();
+    showPawn();
+    showShadow();
     showSprites(128);
     gradient(1);
+    showBackground(0);
 
     paused = true;
 
@@ -1534,7 +1537,6 @@ void GameScene::countdown() {
 
     paused = false;
 
-    showBackground(0);
     clearText();
     updateText();
 
