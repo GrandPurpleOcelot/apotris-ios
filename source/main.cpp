@@ -236,7 +236,7 @@ int WinMain(void){
 }
 #endif
 
-std::string timeToString(int frames) {
+std::string timeToString(int frames, bool small) {
     int t = (int)frames * 0.0167f;
     int millis = (int)(frames * 1.67f) % 100;
     int seconds = t % 60;
@@ -244,7 +244,10 @@ std::string timeToString(int frames) {
 
     char res[30];
 
-    posprintf(res,"%02d:%02d.%02d",minutes,seconds,millis);
+    if(!small)
+        posprintf(res,"%02d:%02d.%02d",minutes,seconds,millis);
+    else
+        posprintf(res,"%02d:%02d",minutes,seconds);
 
     std::string result = "";
 
@@ -322,11 +325,13 @@ std::string nameInput(int place) {
 
     int timer = 0;
 
-    // int das = 0;
-    // int maxDas = 12;
+    #ifdef GBA
+    int das = 0;
+    int maxDas = 12;
 
-    // int arr = 0;
-    // int maxArr = 5;
+    int arr = 0;
+    int maxArr = 5;
+    #endif
 
     bool onDone = false;
 

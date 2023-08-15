@@ -97,7 +97,7 @@ void SimpleListScene::init(){
     wordSprites[wordIndex]->setText(p);
 
     for(int i = 0; i < count; i++)
-        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
 
     clearSpriteTiles(672,144,1);
 
@@ -191,8 +191,10 @@ void SimpleListScene::draw(){
         if(scrollText != ""){
             scrollTextLength = getVariableWidth(scrollText);
 
+            const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
             endDelay = 0;
-            scrollOffset = - max((240 - scrollTextLength),0) / 2;
+            scrollOffset = - max((width - scrollTextLength),0) / 2;
             scrollDelay = 0;
             scrollingText[0]->setTextSlow(scrollText);
 
@@ -328,6 +330,8 @@ void SimpleListScene::update(){
         }
     }
 
+    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
     if(endDelay){
         endDelay--;
         if(!endDelay){
@@ -338,10 +342,10 @@ void SimpleListScene::update(){
         }
     }else if(scrollDelay < scrollDelayMax){
         scrollDelay++;
-    }else if(scrollTextLength > 240){
+    }else if(scrollTextLength > width){
         if(++scrollTimer >= scrollTimerMax){
             scrollTimer = 0;
-            if(++scrollOffset >= max(scrollTextLength-240,0)){
+            if(++scrollOffset >= max(scrollTextLength-width,0)){
                 endDelay = endDelayMax;
             }
         }
@@ -349,7 +353,7 @@ void SimpleListScene::update(){
 
     for(int i = 0; i < 3; i++){
         scrollingText[i]->setScroll(scrollOffset);
-        scrollingText[i]->show(12 * 8 * i,160-8,14);
+        scrollingText[i]->show(12 * 8 * i + 13 * savefile->settings.aspectRatio,160-8,14);
     }
 
     control();
@@ -476,7 +480,7 @@ void OptionListScene::init(){
     wordSprites[wordIndex]->setText(p);
 
     for(int i = 0; i < count; i++)
-        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
 
     draw();
 
@@ -577,6 +581,8 @@ void OptionListScene::draw(){
         sprite_hide(arrowSprites[1]);
     }
 
+    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
     if(refreshText){
         scrollText = getDescription(currentOption);
         clearSpriteTiles(672, 144, 1);
@@ -584,7 +590,7 @@ void OptionListScene::draw(){
             scrollTextLength = getVariableWidth(scrollText);
 
             endDelay = 0;
-            scrollOffset = - max((240 - scrollTextLength),0) / 2;
+            scrollOffset = - max((width - scrollTextLength),0) / 2;
             scrollDelay = 0;
             scrollingText[0]->setTextSlow(scrollText);
         }else{
@@ -776,6 +782,8 @@ void OptionListScene::update(){
         }
     }
 
+    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
     if(endDelay){
         endDelay--;
         if(!endDelay){
@@ -786,10 +794,10 @@ void OptionListScene::update(){
         }
     }else if(scrollDelay < scrollDelayMax){
         scrollDelay++;
-    }else if(scrollTextLength > 240){
+    }else if(scrollTextLength > width){
         if(++scrollTimer >= scrollTimerMax){
             scrollTimer = 0;
-            if(++scrollOffset >= max(scrollTextLength-240,0)){
+            if(++scrollOffset >= max(scrollTextLength-width,0)){
                 endDelay = endDelayMax;
             }
         }
@@ -797,7 +805,7 @@ void OptionListScene::update(){
 
     for(int i = 0; i < 3; i++){
         scrollingText[i]->setScroll(scrollOffset);
-        scrollingText[i]->show(12 * 8 * i,160-8,14);
+        scrollingText[i]->show(12 * 8 * i + 13 * savefile->settings.aspectRatio,160-8,14);
     }
 
     control();

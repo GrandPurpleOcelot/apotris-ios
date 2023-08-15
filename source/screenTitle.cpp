@@ -70,7 +70,7 @@ const int secretCombo[11] = {KEY_UP,KEY_UP,KEY_DOWN,KEY_DOWN,KEY_LEFT,KEY_RIGHT,
 
 int goalSelection = 0;
 int level = 1;
-static int toStart = 0;
+// static int toStart = 0;
 static bool onSettings = false;
 bool proMode = false;
 

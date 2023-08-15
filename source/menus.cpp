@@ -183,7 +183,7 @@ void songListMenu() {
 
 int GameScene::endScreen(){
     clearSmallText();
-    setSmallTextArea(110, 1, 1, 10, 20);
+    setSmallTextArea(110, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
@@ -210,7 +210,7 @@ int GameScene::endScreen(){
         fractional &= 0xff;
     }
 
-    std::string totalTime = timeToString(gameSeconds);
+    std::string totalTime = timeToString(gameSeconds,false);
 
     endAnimation();
 
@@ -517,11 +517,11 @@ void showScore(){
         if (game->gameMode == MARATHON || game->gameMode == ULTRA || game->gameMode == BLITZ || game->gameMode == COMBO || game->gameMode == DIG || game->gameMode == CLASSIC)
             aprint(score, 15 - ((int)score.size() / 2), 7);
         else if (game->gameMode == SURVIVAL)
-            aprint(timeToString(gameSeconds), 11, 7);
+            aprint(timeToString(gameSeconds,false), 11, 7);
     } else {
         aprint("CLEAR!", 12, 3);
 
-        aprint(timeToString(gameSeconds), 11, 7);
+        aprint(timeToString(gameSeconds,false), 11, 7);
     }
 }
 
@@ -538,7 +538,7 @@ void showStats(bool moreStats, std::string time, std::string pps) {
 
     aprints("Time: " + time,0,7*counter++,2);
     if(!proMode)
-        aprints("IGT: " + timeToString(igt),0,7*counter++,2);
+        aprints("IGT: " + timeToString(igt,false),0,7*counter++,2);
 
     if(g == MARATHON || g == BLITZ || g == CLASSIC){
         if(g != BLITZ)
@@ -567,7 +567,12 @@ void showStats(bool moreStats, std::string time, std::string pps) {
 
     if(game->gameMode != CLASSIC){
         aprints("T-Spins: " + std::to_string(game->statTracker.tspins), 0, 7*counter++, 2);
-        aprints("Perfect Clears: " + std::to_string(game->statTracker.perfectClears), 0, 7*counter++, 2);
+
+        if(savefile->settings.aspectRatio == 0)
+            aprints("Perfect Clears: " + std::to_string(game->statTracker.perfectClears), 0, 7*counter++, 2);
+        else if(savefile->settings.aspectRatio == 1)
+            aprints("PCs: " + std::to_string(game->statTracker.perfectClears), 0, 7*counter++, 2);
+
         aprints("Max Streak: " + std::to_string(game->statTracker.maxStreak+1), 0, 7*counter++, 2);
         aprints("Max Combo: " + std::to_string(game->statTracker.maxCombo), 0, 7*counter++, 2);
         aprints("Times Held: " + std::to_string(game->statTracker.holds), 0, 7*counter++, 2);
@@ -591,7 +596,7 @@ int GameScene::pauseMenu(){
     int optionsCounter = 0;
 
     clearText();
-    setSmallTextArea(110, 1, 1, 10, 20);
+    setSmallTextArea(110, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
@@ -637,7 +642,7 @@ int GameScene::pauseMenu(){
         fractional &= 0xff;
     }
 
-    std::string totalTime = timeToString(gameSeconds);
+    std::string totalTime = timeToString(gameSeconds,false);
     igt = game->inGameTimer;
 
     showModeText();

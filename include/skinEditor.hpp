@@ -14,7 +14,7 @@ public:
 
     void show(bool mini){
         int sx = (x+mini) * 16 + xoffset * 8;
-        int sy = (y+mini) * 16 + yoffset * 8;
+        int sy = (y+mini) * 16 + yoffset * 8 + 8 * (savefile->settings.aspectRatio != 0);
 
         sprite = &obj_buffer[20];
         sprite_unhide(sprite,0);
@@ -148,7 +148,7 @@ class Board{
         void show(bool mini){
 
             for(int i = 0; i < 8; i++){
-                int y = ((i * 2)+yoffset);
+                int y = ((i * 2)+yoffset) + 1 * (savefile->settings.aspectRatio != 0);
                 for(int j = 0; j < 8; j++){
                     int x = j * 2 + xoffset;
                     if(!mini){

@@ -606,6 +606,30 @@ class PreviewsElement : public Element{
         }
 };
 
+class AspectRatioElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Aspect Ratio";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.aspectRatio = !savefile->settings.aspectRatio;
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.aspectRatio == 0)
+                return "3:2";
+            else
+                return "4:3";
+        }
+};
+
 class RandomGraphicsElement : public Element{
     public:
         std::string getLabel() override {
@@ -690,6 +714,7 @@ class GraphicsScene : public Scene{
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
         l.push_back(new PreviewsElement());
+        l.push_back(new AspectRatioElement());
         l.push_back(new RandomGraphicsElement());
         l.push_back(new ResetGraphicsElement());
 

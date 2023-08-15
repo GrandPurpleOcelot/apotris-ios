@@ -34,7 +34,7 @@ public:
     void show(int x, int y, int palette) {
         int tempX = x - (scroll & 0x7);
 
-        if(savefile->settings.aspectRatio == 1){
+        if(savefile->settings.aspectRatio == 1 && !(scroll || slow)){
             if(tempX < 13)
                 tempX += 13;
             else if(tempX + width > 227)

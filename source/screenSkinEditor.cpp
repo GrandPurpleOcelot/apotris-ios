@@ -66,8 +66,9 @@ void EditorScene::update(){
     if(selector()){
         previousSelection = 5;
 
-        changeScene(new ConfirmSaveScene(),Transitions::FADE);
+        buildBG(3, 0, 27, 0, 1, 0);
 
+        changeScene(new ConfirmSaveScene(),Transitions::FADE);
         return;
     }
 
@@ -123,7 +124,6 @@ void EditorScene::update(){
     clearTilemap(25);
 
     clearText();
-    toggleBG(3, false);
 
     delete customSkin;
 }
@@ -139,7 +139,6 @@ void EditorScene::deinit(){
 
     gradient(true);
     drawUIFrame(0, 0, 30, 20);
-    buildBG(3, 0, 27, 0, 3, 0);
     setLayerScroll(3, 0, 0);
 
     clearTiles(2,110,400);
@@ -445,21 +444,23 @@ void generateTiles(){
 void showColorPalette(int c){
     // u16* dest = (u16*) &se_mem[27];
 
+    const int add = 2 * (savefile->settings.aspectRatio != 0);
+
     for(int i = 0; i < 3; i++){
         for(int j = 0; j < 8; j++){
             if(i == 1){
                 if(j > 0 && j < 7)
-                    setTile(27, j, i, tileBuild(100+j-1, false, false, 0));
+                    setTile(27, j + add, i, tileBuild(100+j-1, false, false, 0));
                     // *dest++ = 100 + j - 1;
                 else
-                    setTile(27, j, i, tileBuild(27, (j==7), false, 6));
+                    setTile(27, j + add, i, tileBuild(27, (j==7), false, 6));
                     // *dest++ = 27 + 0x400 * (j == 7) + 0x6000;
             }else{
                 if(j > 0 && j < 7)
-                    setTile(27, j, i, tileBuild(28, false, (i==2), 6));
+                    setTile(27, j + add, i, tileBuild(28, false, (i==2), 6));
                     // *dest++ = 28 + 0x800 * (i == 2) + 0x6000;
                 else
-                    setTile(27, j, i, tileBuild(29, (j==7), (i==2), 6));
+                    setTile(27, j + add, i, tileBuild(29, (j==7), (i==2), 6));
                     // *dest++ = 29 + 0x400 * (j == 7) + 0x800 * (i == 2) + 0x6000;
 
             }
@@ -471,15 +472,12 @@ void showColorPalette(int c){
     aprint("      ",0,1);
 
     setLayerScroll(3, 4, 4);
-    // REG_BG3VOFS = 4;
-    // REG_BG3HOFS = 4;
 
     OBJ_ATTR * sprite = &obj_buffer[11];
 
     sprite_set_attr(sprite, ShapeSquare, 1, 512 + 216, 15, 0);
-    // obj_set_attr(sprite,ATTR0_SQUARE,ATTR1_SIZE(1),ATTR2_BUILD(512 + 216, 15, 0));
-    sprite_set_pos(sprite,3+c*8,3);
-    sprite_unhide(sprite,0);
+    sprite_set_pos(sprite, 3 + c * 8 + 16 * (savefile->settings.aspectRatio != 0), 3);
+    sprite_unhide(sprite, 0);
 }
 
 void showTools(int c){
@@ -493,14 +491,14 @@ void showTools(int c){
         int offset = 0;
 
         if(i == c){
-            aprint("<",3,4+i*2);
+            aprint("<",3 + 2 * (savefile->settings.aspectRatio != 0),4+i*2);
 
             offset = ((sinLut(toolTimer)*2)>>12);
 
         } else
-            aprint(" ",3,4+i*2);
+            aprint(" ",3 + 2 * (savefile->settings.aspectRatio != 0),4+i*2);
 
-        sprite_set_pos(sprites[i],4,32+(i*16) - 4 + offset);
+        sprite_set_pos(sprites[i], 4 + 13 * (savefile->settings.aspectRatio != 0), 32+(i*16) - 4 + offset);
         sprite_unhide(sprites[i],0);
     }
 
@@ -525,7 +523,7 @@ void showMinos(){
             // obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(2), ATTR2_BUILD(9 * 16 + 8 * i, i, 3));
             // obj_set_pos(sprite, 192, i * 24 + 4);
         }
-        sprite_set_pos(sprite,208 - (4-onMini) * (i == 0 || i == 3),i * 24 - 4);
+        sprite_set_pos(sprite,208 - (4-onMini) * (i == 0 || i == 3) - 13 * (savefile->settings.aspectRatio != 0),i * 24 - 4);
     }
 }
 

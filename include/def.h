@@ -159,7 +159,7 @@ extern void showFinesseCombo();
 extern void setGradient(int);
 extern void setDefaultGradient();
 extern void gradient(int state);
-extern std::string timeToString(int frames);
+extern std::string timeToString(int frames, bool small);
 extern std::string timeToStringHours(int frames);
 extern void setDefaultGraphics(Save * save, int depth);
 extern void setRandomGraphics(Save *save);

@@ -390,7 +390,7 @@ void PlayOptionScene::draw(){
                     posprintf(buff, "%d",board->entries[i].value);
                     str += buff;
                 } else
-                    str += timeToString(board->entries[i].value);
+                    str += timeToString(board->entries[i].value,false);
 
                 const int x = (endX) * 8 - getVariableWidth(str);
                 wordSprites[i]->setText(str);

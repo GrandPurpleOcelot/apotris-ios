@@ -1195,9 +1195,9 @@ bool GameScene::control() {
 void GameScene::showTimer() {
     if (!(game->gameMode == TRAINING)) {
 
-        std::string timer = timeToString(gameSeconds);
+        std::string timer = timeToString(gameSeconds, savefile->settings.aspectRatio);
         aprintClearArea(0, 1, 10, 1);
-        aprint(timer, 1 - (timer.size() > 8), 1);
+        aprint(timer, 9 - (int) timer.size(), 1);
         // wordSprites[11].setText(timer);
         // wordSprites[11].show(8, 8,15);
     }
