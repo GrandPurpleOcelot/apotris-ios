@@ -322,11 +322,11 @@ std::string nameInput(int place) {
 
     int timer = 0;
 
-    int das = 0;
-    int maxDas = 12;
+    // int das = 0;
+    // int maxDas = 12;
 
-    int arr = 0;
-    int maxArr = 5;
+    // int arr = 0;
+    // int maxArr = 5;
 
     bool onDone = false;
 

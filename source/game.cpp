@@ -206,13 +206,12 @@ void checkSounds() {
     if (game->sounds.place) {
         sfx(SFX_PLACE);
 
-        #ifdef GBA
-        shake = (shakeMax * (savefile->settings.shakeAmount) / 4) /2;
-        #endif
+        if(savefile->settings.screenShakeType == 0){
+            shake = (shakeMax * (savefile->settings.shakeAmount) / 4) /2;
 
-        #ifdef PC
-        shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))/2) * 2;
-        #endif
+        }else if(savefile->settings.screenShakeType == 1){
+            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))/2) * 2;
+        }
 
         if(!game->sounds.finesse && game->trainingMode)
             for(int i = 0; i < 3; i++)
@@ -228,6 +227,7 @@ void checkSounds() {
 
     if (game->sounds.rotate)
         sfx(SFX_ROTATE);
+
     if (game->sounds.finesse){
         if(game->trainingMode)
             showBestMove();
@@ -1587,46 +1587,38 @@ void screenShake() {
     setLayerScroll(1, -push, -(shake));
     setLayerScroll(3, -push, -(shake));
 
-    // REG_BG0VOFS = -shake;
-
-    // REG_BG1VOFS = -shake;
-
-    #ifdef GBA
-    if (shake) {
-        if (shake > 0)
-            shake--;
-        else
-            shake++;
-        shake *= -1;
-    }
-    #endif
-
-    #ifdef PC
-    shake = fx2int(shakeBuff);
-    const FIXED deccel = float2fx(0.768);
-    if(shakeBuff){
-
-        shakeBuff = fxmul(shakeBuff,deccel);
-        // shake *= deccel;
-        // shake = fx2int(shake*deccel);
-
-        if(abs(shakeBuff) < int2fx(1))
-            shakeBuff = 0;
-    }
-
-    if(shakeVelocity){
-        shakeBuff += shakeVelocity;
-        shakeVelocity = fxmul(shakeVelocity, deccel);
-        if(shakeVelocity <= 0){
-            shakeVelocity = 0;
+    if(savefile->settings.screenShakeType == 0){
+        if (shake) {
+            if (shake > 0)
+                shake--;
+            else
+                shake++;
+            shake *= -1;
         }
 
-        if(shake >= (shakeMax * (savefile->settings.shakeAmount) / 4)){
-            shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+    }else if(savefile->settings.screenShakeType == 1){
+        shake = fx2int(shakeBuff);
+        const FIXED deccel = float2fx(0.768);
+        if(shakeBuff){
+
+            shakeBuff = fxmul(shakeBuff,deccel);
+
+            if(abs(shakeBuff) < int2fx(1))
+                shakeBuff = 0;
+        }
+
+        if(shakeVelocity){
+            shakeBuff += shakeVelocity;
+            shakeVelocity = fxmul(shakeVelocity, deccel);
+            if(shakeVelocity <= 0){
+                shakeVelocity = 0;
+            }
+
+            if(shake >= (shakeMax * (savefile->settings.shakeAmount) / 4)){
+                shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+            }
         }
     }
-
-    #endif
 
     if (game->pushDir != 0) {
         if (abs(push) < pushMax * (savefile->settings.shakeAmount)/4)
@@ -2980,20 +2972,19 @@ void GameScene::update(){
     if (game->clearLock && !(game->eventLock && game->gameMode != MASTER)) {
         clearTimer++;
 
-        if(clearTimer >= 100){
-            game->removeClearLock();
-            // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
-            #ifdef GBA
-            shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
-            #endif
+        // if(clearTimer >= 100){
+        //     game->removeClearLock();
+        //     #ifdef GBA
+        //     shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+        //     #endif
 
-            #ifdef PC
-            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))) * 2;
-            #endif
-            rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
-            clearTimer = 0;
-            updateText();
-        }
+        //     #ifdef PC
+        //     shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))) * 2;
+        //     #endif
+        //     rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
+        //     clearTimer = 0;
+        //     updateText();
+        // }
     }
 
     if(game->eventLock){
@@ -3030,15 +3021,13 @@ void GameScene::update(){
     if (clearTimer >= maxClearTimer || maxClearTimer <= 0) {
         game->removeClearLock();
 
-        #ifdef GBA
-        shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
-        #endif
+        if(savefile->settings.screenShakeType == 0){
+            shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
 
-        #ifdef PC
-        shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
-        #endif
+        }else if(savefile->settings.screenShakeType == 1){
+            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
+        }
 
-        // shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
         rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
         clearTimer = 0;
         updateText();

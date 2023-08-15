@@ -91,8 +91,9 @@ typedef struct Settings{
     int frameBackground;
     int backgroundType;
     int aspectRatio;
+    int screenShakeType;
 
-    int placeHolder[90];
+    int placeHolder[89];
 }ALIGN(4) Settings;
 
 typedef struct Test{

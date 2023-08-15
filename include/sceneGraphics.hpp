@@ -480,17 +480,49 @@ class ScreenShakeElement : public Element{
                 }
             }
 
-            #ifdef GBA
-            shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
-            #endif
+            if(savefile->settings.screenShakeType == 0){
+                shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
 
-            #ifdef PC
-            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))/2);
-            #endif
+            }else if(savefile->settings.screenShakeType == 1){
+                shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))/2);
+            }
         }
 
         std::string getCurrentOption() override {
             return std::to_string(savefile->settings.shakeAmount * 25) + "%";
+        }
+};
+
+class ScreenShakeTypeElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Shake Type";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.screenShakeType = !savefile->settings.screenShakeType;
+
+            if(savefile->settings.screenShakeType == 0){
+                shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+
+            }else if(savefile->settings.screenShakeType == 1){
+                shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))/2);
+            }
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.screenShakeType == 0){
+                return "NORMAL";
+
+            }else if(savefile->settings.screenShakeType == 1){
+                return "SMOOTH";
+            }
+
+            return "";
         }
 };
 
@@ -655,6 +687,7 @@ class GraphicsScene : public Scene{
         #endif
 
         l.push_back(new ScreenShakeElement());
+        l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
         l.push_back(new PreviewsElement());
         l.push_back(new RandomGraphicsElement());
