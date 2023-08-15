@@ -1229,7 +1229,7 @@ void GameScene::showText() {
         // std::string score = std::to_string(game->score);
         // int x = 8 - score.size();
 
-        wordSprites[1].setTextNum(game->score);
+        wordSprites[1].setText(std::to_string(game->score));
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
 
         if (game->gameMode != ULTRA) {
