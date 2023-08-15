@@ -473,10 +473,6 @@ void showBackground(int offset) {
 
     const int clearTile = tileBuild(3, false, false, savefile->settings.lightMode);
 
-    #ifdef PC
-    startY = 1;
-    #endif
-
     if(!game->pawn.big){
         for (int i = startY; i < game->lengthY && (i - 20 + offset) < 20; i++) {
             int y = i - 20 + offset;
@@ -647,6 +643,9 @@ void showBackground(int offset) {
             }
         }
     }
+
+    for(int i = 0; i < 10; i++)
+        setTile(25, 10 + i, offset-1, 0);
 }
 
 void showBackgroundBig(int offset){

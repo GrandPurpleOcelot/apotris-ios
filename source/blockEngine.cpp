@@ -1681,7 +1681,6 @@ void Game::removeClearLock() {
     if(gameMode == COMBO){
         for(int i = lengthY/2-4; i < lengthY; i++){
             if(bitboard[i] != 0){
-                log("broke at " + std::to_string(i));
                 break;
             }
             for(int j = 0; j < 10; j++){

@@ -442,19 +442,11 @@ void endAnimation() {
         vsync();
         drawGrid();
         showClearText();
-        // setLayerScroll(0, 0, -4 * i);
-        // setLayerScroll(1, 0, -4 * i);
 
         if (i % 2 != 0)
             continue;
 
         showBackground(i/2);
-        for (int j = 0; j < 10; j++) {
-            setTile(25, j + 10, i/2,0);
-            // setTile(25, j + 10, 20-(i/2),0);
-            // *dest++ = 0;
-        }
-
     }
 
     int counter = 0;
