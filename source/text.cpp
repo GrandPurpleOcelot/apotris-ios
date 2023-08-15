@@ -158,7 +158,7 @@ void resetSmallText(){
 	}
 }
 
-void aprints(std::string str, int x, int y, int colorIndex){//x and y are pixel
+IWRAM_CODE void aprints(std::string str, int x, int y, int colorIndex){//x and y are pixel
 	if(textArea == nullptr)
 		return;
 	// TILE* dest2;
@@ -189,7 +189,7 @@ void aprints(std::string str, int x, int y, int colorIndex){//x and y are pixel
 		for(int j = 0; j < 5; j++){
 			for(int k = 0; k < 3; k++){
 				if((character >> (15-counter)) & 1)
-					setTilesetPixel(2, textArea->tileId+((y+j+drop)/8)*rowSize+(x+w+k)/8, (x+w+k)%8, (y+j+drop)%8, colorIndex);
+					setTilesetPixel(2, textArea->tileId+((y+j+drop)/8)*rowSize+(x+w+k)/8, (x+w+k)%8, (y+j+drop)%8, colorIndex + 2 * (j > 2));
 				// dest2 = (TILE *) &tile_mem[2][textArea->tileId+((y+j+drop)/8)*rowSize+(x+w+k)/8];
 
 				//TODO:
@@ -202,7 +202,7 @@ void aprints(std::string str, int x, int y, int colorIndex){//x and y are pixel
 	}
 }
 
-void aprintsSprite(std::string str, int x, int y, int tileId){//x and y are pixel
+IWRAM_CODE void aprintsSprite(std::string str, int x, int y, int tileId){//x and y are pixel
     //width of current line, acts like a cursor position so that
     //text is drawn on the next line if w is greater than text area width
 	int w = 0;
@@ -231,7 +231,7 @@ void aprintsSprite(std::string str, int x, int y, int tileId){//x and y are pixe
                 int draw = (character >> (15-counter)) & 1;
 
 				if(draw)
-					setSpritePixel(tileId,(x+w+k)/8 + ((y+j+drop)/8), 0, 0, (((x+w+k)%8)), (y+j+drop)%8, 2);
+					setSpritePixel(tileId,(x+w+k)/8 + ((y+j+drop)/8), 0, 0, (((x+w+k)%8)), (y+j+drop)%8, 2 + 2 * (j > 2));
 				counter++;
 			}
 		}

@@ -1198,8 +1198,7 @@ void GameScene::showTimer() {
         std::string timer = timeToString(gameSeconds, savefile->settings.aspectRatio);
         aprintClearArea(0, 1, 10, 1);
         aprint(timer, 9 - (int) timer.size(), 1);
-        // wordSprites[11].setText(timer);
-        // wordSprites[11].show(8, 8,15);
+
     }
 
     if(game->trainingMode){
@@ -1365,7 +1364,7 @@ void showPPS(){
     }
 
     clearTiles(2, 113, 3);
-    // memset32(&tile_mem[2][113],0,8*3);
+
     aprints(str,25,0,2);
 
     aprints("PPS:",0,0,2);
