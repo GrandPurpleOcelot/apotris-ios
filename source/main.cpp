@@ -994,7 +994,7 @@ void setPawnPalette(int dest, int n, int blend){
         }else if(savefile->settings.colors == 6){
             color_fade_palette(dest,1,(COLOR*)&arsPalette[1][n],0x0000,4,blend);
         } else
-            color_fade_palette(dest,0,(COLOR*)&palette[savefile->settings.colors][n*16],0x0000,8,blend);
+            color_fade_palette(dest,0,(COLOR*)&palette[savefile->settings.colors][n*16],0x0000,5,blend);
     }else{
         if(dest == 11+16)
             blend = int2fx(blend) >> 5;
@@ -1022,6 +1022,6 @@ void setPawnPalette(int dest, int n, int blend){
         }else if(savefile->settings.colors == 6){
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[1][n], 4, blend);
         }else
-            color_adj_brightness(dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16], 8, blend);
+            color_adj_brightness(dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16], 5, blend);
     }
 }

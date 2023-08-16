@@ -2181,8 +2181,6 @@ void hideMinos(){
 }
 
 void showSpeedMeter(int fill){
-    //TODO:
-    #ifdef GBA
     const int maxLength = 20;
 
     fill *= 2;
@@ -2193,41 +2191,27 @@ void showSpeedMeter(int fill){
     setPaletteColor(16 + 13, 1, 0x03e0, 1);
     setPaletteColor(16 + 13, 2, 0x001f, 1);
     setPaletteColor(16 + 13, 3, 0x4a52, 1);
-    // memset16(&pal_obj_mem[13*16+1],0x03e0,1); //green
-    // memset16(&pal_obj_mem[13*16+2],0x001f,1); //red
-    // memset16(&pal_obj_mem[13*16+3],0x4a52,1); //gray
 
-    //initialize tile with 0s
-    TILE *dest;
-    for(int x = 0; x < 4; x++){
-        dest = (TILE *) &tile_mem[4][256 + x];
-        for(int y = 0; y < 8; y++){
-            dest->data[y] = 0;
-        }
-    }
+    clearSpriteTiles(256, 4, 1);
 
     if(fill > maxLength)
         fill = maxLength;
 
-    //write color c at specific location depending on if x is less than max length
+    //write color at specific location depending on if x is less than max length
     for(int x = 0; x < maxLength+1; x++){
-        dest = (TILE *) &tile_mem[4][256 + x / 8];
-        int shift = ((x%8) * 4);
-        int c = (1 + (x < fill)) << shift;//color
+        int shift = (x%8);
         if(x < maxLength){
-            dest->data[0] |= c;//set color
+            setSpritePixel(256, x / 8, 0, 4, shift, 0, (1 + (x < fill)));
             if(x > 0)
-                dest->data[1] |= 3 << shift;//gray
+                setSpritePixel(256, x / 8, 0, 4, shift, 1, 3);
         }else{
-            dest->data[1] |= 3 << shift;//gray
+            setSpritePixel(256, x / 8, 0, 4, shift, 1, 3);
         }
     }
 
-    obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(1), ATTR2_BUILD(256, 13, 0));
-    obj_set_pos(sprite,35, 139);
-    obj_unhide(sprite, 0);
-
-    #endif
+    sprite_unhide(sprite, 0);
+    sprite_set_attr(sprite, ShapeWide, 1, 256, 13, 0);
+    sprite_set_pos(sprite,35, 139);
 }
 
 void disappear(){
@@ -2845,9 +2829,6 @@ void GameScene::init(){
 
     showQueue();
 
-    if(game->gameMode == MASTER)
-        showSpeedMeter((int)game->speed);
-
     showSprites(128);
 
     if(game->gameMode == MASTER){
@@ -2863,6 +2844,9 @@ void GameScene::init(){
     enableBlend((0b101010 << 8) + (1 << 6) + (0b1010));
 
     setPalette();
+
+    if(game->gameMode == MASTER)
+        showSpeedMeter((int)game->speed);
 
     showZoneMeter();
 }
