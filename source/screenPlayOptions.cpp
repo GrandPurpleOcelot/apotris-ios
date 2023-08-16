@@ -211,6 +211,7 @@ void PlayOptionScene::start(){
                 botStepMax = 10;
             }else{
                 goal = value;
+                mode = element->value;
             }
         }else if(s == "Minutes"){
             goal = value;
@@ -224,7 +225,6 @@ void PlayOptionScene::start(){
 
     if(newOptions.mode == BlockEngine::BLITZ)
         goal = 2 * 3600;
-
 
     if(newOptions.mode == BlockEngine::CLASSIC)
         newOptions.rotationSystem = BlockEngine::NRS;
@@ -507,6 +507,8 @@ void PlayOptionScene::setOptions(){
         }else if(s == "Lines"){
             goal = value;
         }else if(s == "Minutes"){
+            goal = value;
+        }else if(s == "Difficulty"){
             goal = value;
         }
     }
