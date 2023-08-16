@@ -669,26 +669,6 @@ void diagnose() {
     if (!DIAGNOSE)
         return;
 
-    if(game->linesCleared == 100){
-        log("100 lines:");
-        for(int i = 0; i < 4; i++)
-            log(game->statTracker.clears[i]);
-    }
-
-    // std::string str = "";
-
-    // for(int i = 0; i < 10; i++){
-    //     str += std::to_string(game->columnHeights[i]) + " ";
-    // }
-
-    // log(str);
-
-    // str+= "Garbage Height: " + std::to_string(game->garbageHeight);
-
-    // str += std::to_string(game->previousBest.size()) + " " + std::to_string(game->moveHistory.size());
-
-    // str += std::to_string(profileResults[0]);
-
 }
 
 void setPalette(){

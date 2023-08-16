@@ -146,9 +146,6 @@ INLINE void setTile(int sbb, int x, int y, u32 value){
 
     TLN_Tile t = new Tile();
     t->value = value;
-    // t->index = 1;
-    // t->flags = 0;
-    //
 
     //TODO:
     if(y < 0)

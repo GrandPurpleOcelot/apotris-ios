@@ -1,11 +1,6 @@
 #include "def.h"
-#include "LinkConnection.h"
 #include "menu.h"
 #include "meter1_tiles_bin.h"
-// #include "soundbank.h"
-#include "platform.hpp"
-#include "sprite36tiles_bin.h"
-#include "sprite5tiles_bin.h"
 #include "sprites.h"
 #include "blockEngine.h"
 #include "tetromino.hpp"
@@ -1174,37 +1169,11 @@ bool GameScene::control() {
         }
     }
 
-    if(key_hit(KEY_SELECT)){
-        // Values v = evaluate(game->bitboard, game->columnHeights, game->lengthX, game->lengthY, game->stackHeight);
-        // int clears = countClears(game->bitboard, game->lengthX, 40, game->stackHeight);
-
-        Weights weights{
-        1,
-        -4,
-        0,
-        -1,
-        0,
-        0,
-        -1,
-        -1,
-        8,
-        };
-
-        // int score = (clears * clears) * weights.clears + v.holes * (weights.holes) + (game->lengthY-game->lowest()) * weights.lowest +
-        //     v.wells * (weights.well) + v.rowTrans * (weights.row) + v.colTrans * (weights.col) + v.quadWell * (weights.quadWell);
-
-        // log(score);
-        std::list<BlockEngine::Move> moves;
-        findBestDrop(0, game->pawn.rotation, game, moves, weights);
-
-        log(moves.front().score);
-    }
-
     return false;
 }
 
 void GameScene::showTimer() {
-    if (!(game->gameMode == TRAINING)) {
+    if (!(game->gameMode == TRAINING || game->gameMode == ZEN)) {
 
         std::string timer = timeToString(gameSeconds, savefile->settings.aspectRatio);
         aprintClearArea(0, 1, 10, 1);
@@ -1230,19 +1199,17 @@ void GameScene::showTimer() {
 }
 
 void GameScene::showText() {
-    if (game->gameMode == MARATHON || game->gameMode == ULTRA || game->gameMode == BLITZ || game->gameMode == CLASSIC) {
+    int gm = game->gameMode;
 
-        // aprint("Score", 3, 3);
+    if (gm == MARATHON || gm == ULTRA || gm == BLITZ || gm == CLASSIC || gm == ZEN) {
+
         wordSprites[0].setText("Score");
         wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
-
-        // std::string score = std::to_string(game->score);
-        // int x = 8 - score.size();
 
         wordSprites[1].setText(std::to_string(game->score));
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
 
-        if (game->gameMode != ULTRA) {
+        if (gm != ULTRA && gm != ZEN) {
             wordSprites[2].setText("Level");
             wordSprites[2].show(9 * 8 - wordSprites[2].width, 14 * 8,15);
 
@@ -1250,37 +1217,29 @@ void GameScene::showText() {
             wordSprites[3].show(9 * 8 - wordSprites[3].width, 15 * 8,15);
         }
 
-    } else if (game->gameMode == TRAINING) {
-        // aprint("Training", 1, 1);
+    } else if (gm == TRAINING) {
         wordSprites[0].setText("Training");
         wordSprites[0].show(1 * 8, 1 * 8,15);
-    } else if (game->gameMode == DIG && game->subMode) {
-        // aprint("Pieces", 2, 14);
+    } else if (gm == DIG && game->subMode) {
         wordSprites[0].setText("Pieces");
         wordSprites[0].show(9 * 8 - wordSprites[0].width, 14 * 8,15);
 
-        // aprintClearArea(0, 15, 10, 1);
-        // aprintf(game->pieceCounter, 4, 15);
         wordSprites[1].setTextNum(game->pieceCounter);
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 15 * 8,15);
-    } else if (game->gameMode == MASTER){
-        // aprint("Grade",3,3);
+    } else if (gm == MASTER){
         wordSprites[0].setText("Grade");
         wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
 
         std::string str = GameInfo::masterGrades[game->grade + game->coolCount];
 
-        // aprintClearArea(0, 5, 10, 1);
-        // aprint(str,4 - (str.length() == 1),5);
         wordSprites[1].setText(str);
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
 
-        // aprint("Level", 3, 14);
         wordSprites[2].setText("Level");
         wordSprites[2].show(4 * 8, 14 * 8,15);
 
         str = std::to_string(game->level);
-        // aprint(str, 7-str.size(), 16);
+
         wordSprites[3].setTextNum(game->level);
         wordSprites[3].show((7-str.size()) * 8, 16 * 8,15);
 
@@ -1291,24 +1250,16 @@ void GameScene::showText() {
         if(n == 1000)
             n--;
 
-        // aprintf(n, 4, 18);
         wordSprites[4].setTextNum(n);
         wordSprites[4].show(4 * 8, 18 * 8,15);
     }
 
-    if (game->gameMode != BATTLE && game->gameMode != BLITZ && !(game->gameMode == SPRINT && game->subMode == 1) && game->gameMode != MASTER){
-        // aprint("Lines", 2, 17);
-        // aprintClearArea(0, 18, 10, 1);
-        // if (game->gameMode == DIG)
-        //     aprintf(game->garbageCleared, 4, 18);
-        // else
-        //     aprintf(game->linesCleared, 4, 18);
-
+    if (gm != BATTLE && gm != BLITZ && !(gm == SPRINT && game->subMode == 1) && gm != MASTER){
         wordSprites[6].setText("Lines");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8,15);
 
         int n = 0;
-        if (game->gameMode == DIG)
+        if (gm == DIG)
             n = game->garbageCleared;
         else
             n = game->linesCleared;
@@ -1316,12 +1267,11 @@ void GameScene::showText() {
         wordSprites[7].setTextNum(n);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8,15);
 
-    } else if(game->gameMode == BLITZ){
-        // aprint("Lines", 2, 17);
+    } else if(gm == BLITZ){
         wordSprites[6].setText("Lines");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8,15);
-        std::string str;
 
+        std::string str;
         if(game->level > 1)
             str+= std::to_string(game->linesCleared-GameInfo::blitzLevels[game->level-2]);
         else
@@ -1334,18 +1284,13 @@ void GameScene::showText() {
         else
             str+= "3";
 
-        // aprintClearArea(0, 18, 10, 1);
-        // aprint(str,2,18);
         wordSprites[7].setText(str);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8,15);
 
-    } else if(game->gameMode == BATTLE || (game->gameMode == SPRINT && game->subMode == 1)){
-        // aprint("Attack", 2, 17);
-        // aprintClearArea(0, 18, 10, 1);
+    } else if(gm == BATTLE || (gm == SPRINT && game->subMode == 1)){
         wordSprites[6].setText("Attack");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8,15);
 
-        // aprintf(game->linesSent, 4, 18);
         wordSprites[7].setTextNum(game->linesSent);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8,15);
     }

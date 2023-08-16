@@ -31,7 +31,7 @@ BlockEngine::Bot *testBot = nullptr;
 
 int igt = 0;
 
-const std::string modeStrings[11] = {
+const std::string modeStrings[] = {
     "Marathon",
     "Sprint",
     "Dig",
@@ -43,9 +43,10 @@ const std::string modeStrings[11] = {
     "Classic",
     "Master",
     "Training",
+    "Zen",
 };
 
-const std::string modeOptionStrings[11][4] = {
+const std::string modeOptionStrings[][4] = {
     {"150","200","300","Endless"},
     {"20","40","100"},
     {"10","20","100"},
@@ -56,6 +57,7 @@ const std::string modeOptionStrings[11][4] = {
     {"EASY","MEDIUM","HARD"},
     {"",""},
     {"Normal","Classic"},
+    {""},
     {""},
 };
 
@@ -1024,7 +1026,7 @@ int onRecord() {
 }
 
 void GameScene::showModeText(){
-    if(game->gameMode > 0 && game->gameMode <= 11){
+    if(game->gameMode > 0 && game->gameMode <= 12){
         int counter = 0;
         std::string str;
         std::string str2;

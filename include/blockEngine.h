@@ -159,6 +159,7 @@ namespace BlockEngine
         CLASSIC,
         MASTER,
         TRAINING,
+        ZEN,
     };
 
     enum RotationSystems{

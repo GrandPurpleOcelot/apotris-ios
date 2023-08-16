@@ -503,6 +503,19 @@ class MasterScene : public PlayOptionScene{
     std::string name(){return "Master";};
 };
 
+class ZenScene : public PlayOptionScene{
+    public:
+
+    BlockEngine::Modes getMode(){return BlockEngine::ZEN;};
+
+    std::list<Element*> getElementList(){
+        return {
+        };
+    };
+
+    std::string name(){return "Zen";};
+};
+
 class TrainingScene : public PlayOptionScene{
     public:
 
