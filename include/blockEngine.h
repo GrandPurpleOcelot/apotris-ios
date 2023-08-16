@@ -461,7 +461,6 @@ namespace BlockEngine
         void moveDown();
         int clear(Drop);
         void lockCheck();
-        void next();
         void place();
         void generateGarbage(int,int);
         Drop calculateDrop();
@@ -665,6 +664,7 @@ namespace BlockEngine
         std::list<Timestamp> replay;//max is MAX_REPLAY_SIZE
 
         int checkRotation(int, int, int);
+        void next();
         void rotateCW(int dir);
         void rotateCCW(int dir);
         void rotateTwice(int dir);

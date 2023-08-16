@@ -148,7 +148,7 @@ void Bot::run(){
     if(--sleepTimer > 0)
         return;
     if(thinking){
-        if(game->clearLock || game->dropping || game->pawn.current == -1){
+        if(game->clearLock || game->dropping){
             return;
         }
 
@@ -161,6 +161,10 @@ void Bot::run(){
                 if(testGame != nullptr)
                     delete testGame;
                 testGame = new Game(game);
+
+                if(game->pawn.current == -1){
+                    testGame->next();
+                }
             }
         }
 
@@ -339,7 +343,7 @@ void Bot::executeMove(Move move){
 }
 
 void Bot::move(){
-    if(game->dropping)
+    if(game->dropping || game->pawn.current == -1)
         return;
     if(--sleepTimer > 0)
         return;
