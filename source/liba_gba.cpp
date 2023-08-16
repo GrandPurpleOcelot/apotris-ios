@@ -249,6 +249,10 @@ bool unlock_gbp(){
 
     RegisterRamReset(RESET_VRAM);
 
+    REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
+    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
+    REG_WAITCNT = 0x4317;
+
     return gbp_detected;
 }
 
