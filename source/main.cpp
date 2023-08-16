@@ -484,6 +484,8 @@ std::string nameInput(int place) {
                 sfx(SFX_MENUCANCEL);
             }
         }
+        updateFluid();
+        drawGrid();
     }
 
     clearText();

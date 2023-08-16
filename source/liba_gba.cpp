@@ -457,15 +457,8 @@ void loadSavefile(){
 
     u8* arr = (u8*)savefile;
 
-    for (int i = 0; i < (int)(sizeof(Save) - sizeof(BlockEngine::Game)); i++)
+    for (int i = 0; i < (int)(sizeof(Save)); i++)
         arr[i] = (u8)sf[i];
-
-    if(savefile->newGame != SAVE_TAG || !savefile->gameExists){
-        savefile->savedGame = BlockEngine::Game();
-    }else{
-        for (int i = (sizeof(Save) - sizeof(BlockEngine::Game)); i < (int)(sizeof(Save)); i++)
-            arr[i] = (u8)sf[i];
-    }
 }
 
 void saveSavefile(){

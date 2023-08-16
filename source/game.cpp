@@ -1057,9 +1057,21 @@ bool GameScene::control() {
     key_poll();
 
     if(demo && key_hit(KEY_FULL)){
-        exitGame = true;
-        demo = false;
-        return true;
+        if(key_hit(KEY_SELECT)){
+            if(botThinkingSpeed != 11){
+                botThinkingSpeed = 11;
+                botSleepDuration = 1;
+                botStepMax = 10;
+            }else{
+                botThinkingSpeed = 6;
+                botSleepDuration = 5;
+                botStepMax = 1;
+            }
+        }else{
+            exitGame = true;
+            demo = false;
+            return true;
+        }
     }
 
     Keys k = savefile->settings.keys;
@@ -3097,6 +3109,16 @@ void GameScene::update(){
 
     sqran(qran() % frameCounter);
 
+    updateFluid();
+}
+
+void GameScene::deinit(){
+    gradient(0);
+
+    setPalette();
+}
+
+void updateFluid(){
     if(++gridUpdateTimer >= gridUpdateTimerMax){
         gridUpdateTimer = 0;
         updateGrid();
@@ -3113,10 +3135,4 @@ void GameScene::update(){
         if(!dampTimer)
             damp = 2;
     }
-}
-
-void GameScene::deinit(){
-    gradient(0);
-
-    setPalette();
 }

@@ -7,7 +7,6 @@
 
 int botThinkingSpeed = 11;
 int botSleepDuration = 1;
-
 int botStepMax = 10;
 
 using namespace BlockEngine;

@@ -413,6 +413,10 @@ int GameScene::endScreen(){
         }
 
         showSprites(128);
+
+        updateGrid();
+        updateFluid();
+        drawGrid();
     }
 
     buildBG(3, 0, 27, 0, 1, true);
@@ -443,6 +447,8 @@ void endAnimation() {
         drawGrid();
         showClearText();
 
+        updateFluid();
+
         if (i % 2 != 0)
             continue;
 
@@ -456,6 +462,8 @@ void endAnimation() {
 
         if(++counter > 120)
             break;
+        updateFluid();
+        drawGrid();
     }
     clearText();
 
@@ -757,10 +765,6 @@ int GameScene::pauseMenu(){
                     enableBlend(prevBld);
                     sfx(SFX_MENUCANCEL);
                     buildBG(3, 0, 27, 0, 1, true);
-
-                    savefile->savedGame = Game(game);
-                    savefile->savedGameOptions = *previousGameOptions;
-                    savefile->gameExists = true;
 
                     changeScene(new MainMenuScene(), Transitions::FADE);
                     return 1;

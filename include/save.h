@@ -186,11 +186,6 @@ public:
     Skin customSkins[MAX_CUSTOM_SKINS];
 
     QuickStart quickStart;
-
-    bool gameExists = false;
-    BlockEngine::Options savedGameOptions;
-    BlockEngine::Game savedGame;
-
 }ALIGN(4);
 
 typedef struct ReplayHeader{

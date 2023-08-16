@@ -188,6 +188,8 @@ extern void fallingBlocks();
 
 extern void updateGrid();
 
+extern void updateFluid();
+
 extern std::string modeToString(BlockEngine::Modes mode);
 
 extern int countClears(u16 *board, int lengthX, int lengthY, int startY);
