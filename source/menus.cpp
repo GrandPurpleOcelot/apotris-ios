@@ -901,11 +901,11 @@ int GameScene::pauseMenu(){
         showSprites(128);
     }
 
-    enableBlend(prevBld);
-
     clearTilemap(27);
     clearTilemap(26);
     buildBG(3, 0, 27, 0, 1, true);
+
+    enableBlend(prevBld);
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
@@ -913,7 +913,7 @@ int GameScene::pauseMenu(){
     for(int i = 0; i < 2; i++)
         sprite_hide(cursorSprites[i]);
 
-    drawFrame(1);
+    drawFrame(0);
     if(game->zoneTimer)
         frameSnow(0);
 
