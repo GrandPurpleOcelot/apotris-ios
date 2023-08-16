@@ -965,6 +965,8 @@ void GraphicsScene::deinit(){
     clearTilemap(27);
     clearSpriteTiles(2, 100, 1);
     clearSpriteTiles(256, 256, 1);
+    for(int i = 0; i < 7; i++)
+        clearSpriteTiles(512 + 64 + i * 20, 20, 1);
 
     clearText();
 

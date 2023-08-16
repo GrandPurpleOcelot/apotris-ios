@@ -461,8 +461,10 @@ void PlayOptionScene::draw(){
             if(scrollText != ""){
                 scrollTextLength = getVariableWidth(scrollText);
 
+                const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
                 endDelay = 0;
-                scrollOffset = - max((240 - scrollTextLength),0) / 2;
+                scrollOffset = - max((width - scrollTextLength),0) / 2;
                 scrollDelay = 0;
                 scrollingText[0]->setTextSlow(scrollText);
             }else{
