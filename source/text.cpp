@@ -190,11 +190,7 @@ IWRAM_CODE void aprints(std::string str, int x, int y, int colorIndex){//x and y
 			for(int k = 0; k < 3; k++){
 				if((character >> (15-counter)) & 1)
 					setTilesetPixel(2, textArea->tileId+((y+j+drop)/8)*rowSize+(x+w+k)/8, (x+w+k)%8, (y+j+drop)%8, colorIndex + 2 * (j > 2));
-				// dest2 = (TILE *) &tile_mem[2][textArea->tileId+((y+j+drop)/8)*rowSize+(x+w+k)/8];
 
-				//TODO:
-				// if((character >> (15-counter)) & 1) //figure out if pixel at j,k should be drawn
-				// 	dest2->data[(y+j+drop)%8] |= colorIndex << (((x+w+k)%8)*4);
 				counter++;
 			}
 		}

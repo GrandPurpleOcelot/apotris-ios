@@ -88,3 +88,5 @@ INLINE int ewramUsage(){
 
     return ewram_end - ewram_start;
 }
+
+extern u16 gradientTable[192 + 1];

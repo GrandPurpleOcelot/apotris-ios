@@ -99,8 +99,6 @@ extern void toggleHBlank(bool state);
 
 extern void setMosaic(int sx ,int sy);
 
-extern u16 gradientTable[SCREEN_HEIGHT + 1];
-
 extern void setMusicTempo(int tempo);
 extern void setMusicVolume(int volume);
 extern void setSFXVolume(int volume);

@@ -1214,7 +1214,6 @@ void GameScene::showTimer() {
     }
 
     if(proMode){
-        // clearSmallText();
         showPPS();
     }
 }

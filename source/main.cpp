@@ -79,7 +79,13 @@ bool gradientEnabled = false;
 
 Options *previousGameOptions = nullptr;
 
+#ifdef GBA
+u16 gradientTable[192 + 1];
+#endif
+
+#ifdef PC
 u16 gradientTable[SCREEN_HEIGHT + 1];
+#endif
 
 const std::list<std::string> controlOptions = {
     "Move Left",
@@ -845,7 +851,7 @@ void setGradient(int color){
     int div = 20;
 
     int start = 0;
-    int end = SCREEN_HEIGHT;
+    int end = 160;
 
     COLOR src = 0;
 
@@ -873,14 +879,14 @@ void setGradient(int color){
         }
 
         #ifdef GBA
-        gradientTable[SCREEN_HEIGHT-1] = gradientTable[0];
+        memset16(&gradientTable[SCREEN_HEIGHT-1], gradientTable[0], 192 - SCREEN_HEIGHT);
+        // gradientTable[SCREEN_HEIGHT-1] = gradientTable[0];
+        // gradientTable[192-1] = gradientTable[0];
         #endif
     }else{
         for(int i = 0; i < end-start; i++)
             gradientTable[i + start] = 0x5ad6;
     }
-
-    gradientTable[SCREEN_HEIGHT] = 0x1f;
 }
 
 void setDefaultGradient(){

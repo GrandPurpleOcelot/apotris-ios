@@ -442,5 +442,7 @@ extern "C"{
     extern void posprintf(char * buff, const char * str, ...);
 }
 
+extern u16 gradientTable[SCREEN_HEIGHT + 1];
+
 // extern void sfx(int n);
 // extern void sfx
