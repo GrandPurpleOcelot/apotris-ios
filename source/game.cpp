@@ -535,7 +535,7 @@ void showBackground(int offset) {
         for(auto const& i : game->linesToClear){
             int y = i - 20 + offset;
 
-            if(savefile->settings.clearEffect < 3){
+            if(savefile->settings.clearDirection == 0){
                 for(int j = 0; j < 5; j++){
                     if (clearTimer < maxClearTimer - 10 + j * 2)
                         setTile(25, 10+j, y, clearTile);
@@ -544,7 +544,7 @@ void showBackground(int offset) {
                     if (clearTimer < maxClearTimer - 10 + (9 - j) * 2)
                         setTile(25, 10+j, y, clearTile);
                 }
-            }else if(savefile->settings.clearEffect == 3){
+            }else if(savefile->settings.clearDirection == 1){
                 for(int j = 0; j < 5; j++){
                     if (clearTimer < maxClearTimer - 10 + (4 - j) * 2)
                         setTile(25, 10+j, y, clearTile);
@@ -620,7 +620,7 @@ void showBackground(int offset) {
             int l = line*2 - 20 + offset;
 
             for(int y = l; y < l+2; y++){
-                if(savefile->settings.clearEffect < 3){
+                if(savefile->settings.clearDirection == 0){
                     for(int j = 0; j < 5; j++){
                         if (clearTimer < maxClearTimer - 10 + j * 2)
                             setTile(25, 10+j, y, clearTile);
@@ -629,7 +629,7 @@ void showBackground(int offset) {
                         if (clearTimer < maxClearTimer - 10 + (9 - j) * 2)
                             setTile(25, 10+j, y, clearTile);
                     }
-                }else if(savefile->settings.clearEffect == 3){
+                }else if(savefile->settings.clearDirection == 1){
                     for(int j = 0; j < 5; j++){
                         if (clearTimer < maxClearTimer - 10 + (4 - j) * 2)
                             setTile(25, 10+j, y, clearTile);

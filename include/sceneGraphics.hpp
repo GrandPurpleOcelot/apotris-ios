@@ -419,6 +419,29 @@ class ClearStyleElement : public Element{
         }
 };
 
+class ClearDirectionElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Clear Direction";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.clearDirection = !savefile->settings.clearDirection;
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.clearDirection)
+                return "OUT";
+            else
+                return "IN";
+        }
+};
+
 class PlaceEffectElement : public Element{
     public:
         std::string getLabel() override {
@@ -705,6 +728,7 @@ class GraphicsScene : public Scene{
         l.push_back(new LightModeElement());
         l.push_back(new BoardEffectsElement());
         l.push_back(new ClearStyleElement());
+        l.push_back(new ClearDirectionElement());
 
         #ifdef GBA
         l.push_back(new PlaceEffectElement());
