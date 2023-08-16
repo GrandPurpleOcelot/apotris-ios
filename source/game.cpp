@@ -1642,11 +1642,6 @@ void screenShake() {
 void drawFrame(int layer) {
     int l = 25 + layer;
 
-    // u16* dest = (u16*)se_mem[26];
-
-    // dest += 9;
-
-    // int color = 8 * 0x1000;
     int p = 8;
     if(game->zoneTimer)
         p = 0;
@@ -1654,10 +1649,7 @@ void drawFrame(int layer) {
     for (int i = 0; i < 20; i++) {
         for (int j = 0; j < 2; j++) {
             setTile(l, j * 11 + 9, i, tileBuild(0x4,(j > 0), false, p));
-            // *dest++ = 0x0004 + j * 0x400 + color;
-            // dest += 10;
         }
-        // dest += 32 - 22;
     }
 
     #ifdef PC
