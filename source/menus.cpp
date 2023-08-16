@@ -733,7 +733,6 @@ int GameScene::pauseMenu(){
                 if(!(game->gameMode == TRAINING) && selection >= 2)
                     n++;
 
-
                 if (n == 0) {
                     sfx(SFX_MENUCONFIRM);
                     clearText();
@@ -918,6 +917,8 @@ int GameScene::pauseMenu(){
         frameSnow(0);
 
     showBackground(0);
+    resetSmallText();
+    clearText();
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 

@@ -2319,7 +2319,6 @@ void newTitleScene::update(){
         botStepMax = 1;
 
         startGame(BlockEngine::Options(),qran());
-        startGame(BlockEngine::Options(), 0x1234);
 
         changeScene(new GameScene(), Transitions::FADE);
     }
