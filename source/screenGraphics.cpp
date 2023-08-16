@@ -668,6 +668,10 @@ void GraphicsScene::draw(){
         }
     }
 
+    int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
+    for(int i = 0; i < pathCount; i++)
+        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
+
     showSprites(128);
 
     refreshText = false;
