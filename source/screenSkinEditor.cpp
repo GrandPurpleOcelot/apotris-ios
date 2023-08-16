@@ -66,7 +66,9 @@ void EditorScene::update(){
     if(selector()){
         previousSelection = 5;
 
+        clearTilemap(27);
         buildBG(3, 0, 27, 0, 1, 0);
+        toggleBG(3, true);
 
         changeScene(new ConfirmSaveScene(),Transitions::FADE);
         return;
@@ -94,8 +96,17 @@ void EditorScene::update(){
 
     setSmallTextArea(110, 0, 10, 10, 20);
     clearText();
-    aprints("Press SELECT",2,64,2);
-    aprints("for help",2,72,2);
+
+    if(savefile->settings.aspectRatio == 0){
+        aprints("Press SELECT",2,64,2);
+        aprints("for help",2,72,2);
+
+    }else if(savefile->settings.aspectRatio == 1){
+        aprints("Press",15,48,2);
+        aprints("SELECT",15,56,2);
+        aprints("for",15,64,2);
+        aprints("help",15,72,2);
+    }
 
     while(closed()){
         canDraw = true;
@@ -124,6 +135,7 @@ void EditorScene::update(){
     clearTilemap(25);
 
     clearText();
+    toggleBG(3, false);
 
     delete customSkin;
 }
@@ -324,20 +336,16 @@ int selector(){
         OBJ_ATTR * sprite = &obj_buffer[i+1];
 
         loadSpriteTiles(512 + 200 + i, &savefile->customSkins[i].board, 1, 1);
-        // memcpy16(&tile_mem[5][200+i],&savefile->customSkins[i].board,16);
 
         sprite_set_attr(sprite, ShapeSquare, 0, 712+i, 5, 0);
-        // obj_set_attr(sprite, ATTR0_SQUARE, ATTR1_SIZE(0), ATTR2_BUILD(712+i, 5, 0));
         sprite_set_pos(sprite,(4+i*5)*8 + 4,(slotHeight * 8) + 12);
         sprite_unhide(sprite,0);
     }
 
     showSprites(32);
-    // oam_copy(oam_mem, obj_buffer, 32);
 
     while(closed()){
         vsync();
-        // VBlankIntrWait();
         key_poll();
 
         aprintColor(" C1   C2   C3   C4   C5 ",3, slotHeight, 1);
@@ -430,7 +438,6 @@ void generateTiles(){
             t->data[j] = n;
 
         loadTiles(0, 100+i, t, 1);
-        // memcpy16(&tile_mem[0][100+i],t,16);
     }
 
     delete t;
@@ -442,7 +449,6 @@ void generateTiles(){
 }
 
 void showColorPalette(int c){
-    // u16* dest = (u16*) &se_mem[27];
 
     const int add = 2 * (savefile->settings.aspectRatio != 0);
 
@@ -451,22 +457,15 @@ void showColorPalette(int c){
             if(i == 1){
                 if(j > 0 && j < 7)
                     setTile(27, j + add, i, tileBuild(100+j-1, false, false, 0));
-                    // *dest++ = 100 + j - 1;
                 else
                     setTile(27, j + add, i, tileBuild(27, (j==7), false, 6));
-                    // *dest++ = 27 + 0x400 * (j == 7) + 0x6000;
             }else{
                 if(j > 0 && j < 7)
                     setTile(27, j + add, i, tileBuild(28, false, (i==2), 6));
-                    // *dest++ = 28 + 0x800 * (i == 2) + 0x6000;
                 else
                     setTile(27, j + add, i, tileBuild(29, (j==7), (i==2), 6));
-                    // *dest++ = 29 + 0x400 * (j == 7) + 0x800 * (i == 2) + 0x6000;
-
             }
         }
-
-        // dest+=32-8;
     }
 
     aprint("      ",0,1);
@@ -486,7 +485,6 @@ void showTools(int c){
     for(int i = 0; i < 3; i++){
         sprites[i] = &obj_buffer[i+8];
         sprite_set_attr(sprites[i], ShapeSquare, 1, 716 + i * 4, 15, 2);
-        // obj_set_attr(sprites[i], ATTR0_SQUARE, ATTR1_SIZE(1), ATTR2_BUILD(716 + i * 4, 15, 2));
 
         int offset = 0;
 
@@ -515,13 +513,10 @@ void showMinos(){
 
         if(!onMini){
             sprite_set_attr(sprite, ShapeSquare, 2, 16 * i, i, 2);
-            // obj_set_attr(sprite, ATTR0_SQUARE, ATTR1_SIZE(2), ATTR2_BUILD(16 * i, i, 2));
             sprite_unhide(sprite,0);
         }else{
             sprite_unhide(sprite, 0);
             sprite_set_attr(sprite, ShapeWide, 2, 9 * 16 + 8 * i, i, 3);
-            // obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(2), ATTR2_BUILD(9 * 16 + 8 * i, i, 3));
-            // obj_set_pos(sprite, 192, i * 24 + 4);
         }
         sprite_set_pos(sprite,208 - (4-onMini) * (i == 0 || i == 3) - 13 * (savefile->settings.aspectRatio != 0),i * 24 - 4);
     }
@@ -550,10 +545,8 @@ void showCursor(){
 
     if(cursorTimer < animationLength/2){
         loadSpriteTiles(512+200, sprite29tiles_bin, 2, 2);
-        // memcpy16(&tile_mem[5][200],sprite29tiles_bin,sprite29tiles_bin_size/2);
     }else{
         loadSpriteTiles(512+200, sprite30tiles_bin, 2, 2);
-        // memcpy16(&tile_mem[5][200],sprite30tiles_bin,sprite30tiles_bin_size/2);
         if(cursorTimer >= animationLength-1)
             cursorTimer = 0 ;
     }
@@ -567,7 +560,6 @@ void showMini(){
 
         sprite_unhide(sprite, 0);
         sprite_set_attr(sprite, ShapeWide, 2, 9*16 + 8*i, i, 3);
-        // sprite_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(2), ATTR2_BUILD(9 * 16 + 8 * i, i, 3));
         sprite_set_pos(sprite, 192, i * 24 + 4);
     }
 }
@@ -619,11 +611,6 @@ void helpScreen(){
     toggleBG(0, false);
     toggleBG(3, false);
 
-    // oam_init(obj_mem, 128);
-
-    // REG_DISPCNT &= ~DCNT_BG0;
-    // REG_DISPCNT &= ~DCNT_BG3;
-
     while(true){
         vsync();
         key_poll();
@@ -634,12 +621,22 @@ void helpScreen(){
 
     toggleBG(0, true);
     toggleBG(3, true);
-    // REG_DISPCNT |= DCNT_BG0;
-    // REG_DISPCNT |= DCNT_BG3;
+
     setSmallTextArea(110, 0, 10, 10, 20);
     clearText();
-    aprints("Press SELECT",2,64,2);
-    aprints("for help",2,72,2);
+
+    if(savefile->settings.aspectRatio == 0){
+        aprints("Press SELECT",2,64,2);
+        aprints("for help",2,72,2);
+
+    }else if(savefile->settings.aspectRatio == 1){
+        aprints("Press",15,48,2);
+        aprints("SELECT",15,56,2);
+        aprints("for",15,64,2);
+        aprints("help",15,72,2);
+    }
+
+
     sfx(SFX_MENUCANCEL);
 }
 

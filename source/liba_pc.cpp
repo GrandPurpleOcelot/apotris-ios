@@ -995,7 +995,7 @@ void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alph
     }
 }
 
-void color_blend(COLOR *dst, const COLOR *srca, const COLOR *srcb, uint nclrs, u32 alpha) {
+void color_blend(COLOR *dst, const COLOR *srca, const COLOR *srcb, int nclrs, u32 alpha) {
     if(!nclrs)
         return;
 

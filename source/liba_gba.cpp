@@ -198,7 +198,7 @@ void color_adj_MEM(COLOR * dst, const COLOR * src, u32 count, u32 alpha){
     clr_adj_brightness(dst, src, count, alpha);
 }
 
-void color_blend(COLOR *dst, const COLOR *srca, const COLOR *srcb, uint nclrs, u32 alpha) {
+void color_blend(COLOR *dst, const COLOR *srca, const COLOR *srcb, int nclrs, u32 alpha) {
     clr_blend(srca,srcb,dst,nclrs,alpha);
 }
 

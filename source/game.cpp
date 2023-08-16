@@ -46,7 +46,6 @@ void showZoneText();
 void showFullMeter();
 Function getActionFromKey(int key);
 void liftKeys();
-// void journeyFlash();
 void setJourneyGraphics(Save * save, int level);
 void replayControl();
 void showBackgroundBig(int offset);
