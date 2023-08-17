@@ -2400,7 +2400,7 @@ Game::Game(int gm, int sd, bool big){
         gracePeriod = 90;
 
         rotationSystem = NRS;
-    }else if(enableFumen){
+    }else if(enableFumen && enableFumenQueue){
         for(int i = 0; i < 5; i++)
             queue.push_back(fumenQueue[i]);
     } else

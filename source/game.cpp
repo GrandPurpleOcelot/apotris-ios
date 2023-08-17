@@ -112,7 +112,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
 
-bool enableBot = true;
+bool enableBot = false;
 static bool refreshSkin = false;
 // Bot *testBot;
 
@@ -334,12 +334,12 @@ void checkSounds() {
 
         if(game->gameMode == MASTER){
             maxClearTimer = game->maxClearDelay;
-        } else if(game->gameMode == MARATHON){
-            flashTimer = flashTimerMax;
-            setJourneyGraphics(savefile, game->level);
-            setPalette();
-            zoneFlash();
-            refreshSkin = true;
+        // } else if(game->gameMode == MARATHON){
+        //     flashTimer = flashTimerMax;
+        //     setJourneyGraphics(savefile, game->level);
+        //     setPalette();
+        //     zoneFlash();
+        //     refreshSkin = true;
         }
     }
 
