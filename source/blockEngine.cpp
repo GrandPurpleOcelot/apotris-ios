@@ -1068,6 +1068,9 @@ int Game::clear(Drop drop) {
         sounds.levelUp = 1;
     }
 
+    if(gameMode == ZEN)
+        prevLevel = 1;
+
     //calculate score
     int add = 0;
     if(clearCount <= 4){
@@ -1278,7 +1281,7 @@ void Game::next() {//~21-29k cycles
             if(zoneTimer && zonedLines) {
                 if(!toEndZone)
                     endZone();
-            } else if(gameMode == TRAINING || gameMode == NO_MODE)
+            } else if(gameMode == TRAINING || gameMode == NO_MODE || gameMode == ZEN)
                 clearBoard();
             else{
                 lost = 1;
@@ -1481,7 +1484,7 @@ void Game::hold(int dir) {
         if (!checkRotation(0, 0, pawn.rotation)){
             if(zoneTimer && zonedLines)
                 endZone();
-            else if(gameMode == TRAINING || gameMode == NO_MODE)
+            else if(gameMode == TRAINING || gameMode == NO_MODE || gameMode == ZEN)
                 clearBoard();
             else{
                 lost = 1;
