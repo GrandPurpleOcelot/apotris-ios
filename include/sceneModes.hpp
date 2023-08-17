@@ -10,12 +10,15 @@ class PlayOptionScene : public OptionListScene{
     int level = 0;
 
     bool onScore = false;
+    bool onStart = false;
     int movingScore = 0;
 
     int movingScoreTimer = 0;
     int movingScoreTimerMax = 8;
 
     OBJ_ATTR * proSprites[5];
+
+    WordSprite startSprite = WordSprite(0, 20, 150);
 
     std::string currentElement = "";
 

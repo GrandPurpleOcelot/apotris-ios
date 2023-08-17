@@ -13,15 +13,20 @@ void PlayOptionScene::init(){
 
     OptionListScene::init();
 
-    if(elementList.empty())
-        onScore = true;
+    if(elementList.empty()){
+        onStart = true;
+        if(getBoard(subMode, goal) != nullptr)
+            onScore = true;
+    }
+
+    startSprite.setText("START");
 }
 
 bool PlayOptionScene::control(){
 
     if(key_hit(KEY_B)){
         sfx(SFX_MENUCANCEL);
-        if(!onScore || options == 0){
+        if(!(onScore || onStart) || options == 0){
             previousElement = name();
             previousSelection = selection;
 
@@ -30,16 +35,21 @@ bool PlayOptionScene::control(){
 
             changeScene(previousScene(),Transitions::FADE);
             return true;
-        }else{
+        }else if(onStart){
+            onStart = false;
+        }
+
+        if(onScore){
             onScore = false;
             refreshText = true;
             movingDirection = -1;
             listStart = 0;
+
         }
 
     }
 
-    if(!onScore){
+    if(!(onScore || onStart)){
         if(key_hit(KEY_LEFT) && !elementList.empty()){
             auto it = elementList.begin();
             std::advance(it,selection);
@@ -67,6 +77,8 @@ bool PlayOptionScene::control(){
         if(onScore && !elementList.empty()) {
             onScore = false;
             refreshText = true;
+        }else if(onStart){
+            onStart = false;
         }else{
             if (selection > 0)
                 selection--;
@@ -91,6 +103,8 @@ bool PlayOptionScene::control(){
             if (selection == options - 1){
                 if(getBoard(subMode, goal) != nullptr)
                     movingScore = true;
+                else
+                    onStart = true;
             } else
                 selection++;
 
@@ -140,7 +154,7 @@ bool PlayOptionScene::control(){
         dasVer = 0;
     }
 
-    if (!onScore && (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT))) {
+    if (!(onScore || onStart) && (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT))) {
         if (dasHor < maxDas) {
             dasHor++;
         } else{
@@ -167,6 +181,9 @@ bool PlayOptionScene::control(){
     if(key_hit(KEY_START) || key_hit(KEY_A)){
         if(!onScore && getBoard(subMode, goal) != nullptr){
             movingScore = true;
+            sfx(SFX_MENUCONFIRM);
+        } else if(!onStart){
+            onStart = true;
             sfx(SFX_MENUCONFIRM);
         } else{
             start();
@@ -302,6 +319,8 @@ void PlayOptionScene::draw(){
         setLayerScroll(2, 0, 0);
     }
 
+    EntryBoard *board = getBoard(subMode, goal);
+
     if(!onScore){
         int i = 0;//drawing index, starts at listStart
         int counter = 0;//element index
@@ -368,8 +387,6 @@ void PlayOptionScene::draw(){
         for(int i = 0; i < 5; i++)
             sprite_hide(proSprites[i]);
     }else{
-        EntryBoard *board = getBoard(subMode, goal);
-
         if(board != nullptr){
             for(int i = 0; i < 5; i++){
                 const int y = startY + 8 * (1) * i + verticalOffset;
@@ -407,19 +424,6 @@ void PlayOptionScene::draw(){
             }
         }
 
-        wordSprites[5]->setText("START");
-        wordSprites[5]->show((240 - 43) /2, 132,15);
-
-        for(int i = 0; i < 2; i++){
-            sprite_unhide(cursorSprites[i],0);
-            sprite_enable_affine(cursorSprites[i], i, true);
-            sprite_set_size(cursorSprites[i], scale , i);
-
-            int x = 240/2 - ((43 + 8) / 2 + offset + 4) * ((i)?-1:1) - 10;
-
-            sprite_set_pos(cursorSprites[i], x, 132 - 5);
-        }
-
         for(int j = 5; j < elementMax + 2; j++)
             labels[j]->hide();
 
@@ -437,6 +441,25 @@ void PlayOptionScene::draw(){
             i++;
         }
     }
+
+    if(onScore || board == nullptr){
+        startSprite.show((240 - 43) /2, 132,15);
+
+        if(onScore || onStart){
+            for( int i = 0; i < 2; i++){
+                sprite_unhide(cursorSprites[i],0);
+                sprite_enable_affine(cursorSprites[i], i, true);
+                sprite_set_size(cursorSprites[i], scale , i);
+
+                int x = 240/2 - ((43 + 8) / 2 + offset + 4) * ((i)?-1:1) - 10;
+
+                sprite_set_pos(cursorSprites[i], x, 132 - 5);
+            }
+        }
+    }else{
+        startSprite.hide();
+    }
+
     if(listStart > 0){
         sprite_unhide(arrowSprites[0], 0);
         sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 11 - 16);
@@ -487,6 +510,7 @@ void PlayOptionScene::update(){
             if(++listStart >= options - 1){
                 movingScore = 0;
                 onScore = true;
+                onStart = true;
                 clearSpriteTiles(672, 144, 1);
                 scrollingText[0]->setText("");
                 scrollText = "";
