@@ -15,9 +15,26 @@ void SimpleListScene::init(){
     optionList = getOptionList();
     options = (int) optionList.size();
 
-    startY = 40;
+    int index = -1;
+    int counter = 0;
+    for(auto option : optionList){
+        if(option == previousElement){
+            index = counter;
+            break;
+        }
+        counter++;
+    }
 
-    selection = 0;
+    if(index >= 0){
+        selection = index;
+
+        while(selection > listStart + elementMax)
+            listStart++;
+    }else{
+        selection = 0;
+    }
+
+    startY = 40;
 
     //backgroundGrid
     setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));

@@ -64,7 +64,7 @@ void EditorScene::update(){
     setPalette();
 
     if(selector()){
-        previousSelection = 5;
+        previousElement = "Skin Editor";
 
         clearTilemap(27);
         buildBG(3, 0, 27, 0, 1, 0);

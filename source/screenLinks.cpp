@@ -5,6 +5,9 @@
 #include "site_qr_bin.h"
 
 void QRScene::init(){
+    resetSmallText();
+    clearText();
+
     clearSprites(128);
 
     //backgroundGrid
