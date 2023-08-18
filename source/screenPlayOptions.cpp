@@ -24,6 +24,12 @@ void PlayOptionScene::init(){
 
 bool PlayOptionScene::control(){
 
+    if(onScore && key_is_down(KEY_L) && key_is_down(KEY_R) && key_is_down(KEY_SELECT)){
+        resetScoreboard();
+        refreshText = true;
+        return false;
+    }
+
     if(key_hit(KEY_B)){
         sfx(SFX_MENUCANCEL);
         if(!(onScore || onStart) || options == 0){
@@ -46,7 +52,6 @@ bool PlayOptionScene::control(){
             listStart = 0;
 
         }
-
     }
 
     if(!(onScore || onStart)){
@@ -76,6 +81,7 @@ bool PlayOptionScene::control(){
 
         if(onScore && !elementList.empty()) {
             onScore = false;
+            onStart = false;
             refreshText = true;
         }else if(onStart){
             onStart = false;
@@ -361,6 +367,7 @@ void PlayOptionScene::draw(){
                 currentElement = option->getLabel();
                 for(int i = 0; i < 2; i++){
                     sprite_unhide(cursorSprites[i],0);
+                    sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
                     sprite_enable_affine(cursorSprites[i], i, true);
                     sprite_set_size(cursorSprites[i], scale , i);
 
@@ -448,6 +455,7 @@ void PlayOptionScene::draw(){
         if(onScore || onStart){
             for( int i = 0; i < 2; i++){
                 sprite_unhide(cursorSprites[i],0);
+                sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
                 sprite_enable_affine(cursorSprites[i], i, true);
                 sprite_set_size(cursorSprites[i], scale , i);
 
@@ -462,6 +470,7 @@ void PlayOptionScene::draw(){
 
     if(listStart > 0){
         sprite_unhide(arrowSprites[0], 0);
+        sprite_set_attr(arrowSprites[0], ShapeWide, 0, 1, 14, 0);
         sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 11 - 16);
     }else{
         sprite_hide(arrowSprites[0]);
@@ -469,6 +478,8 @@ void PlayOptionScene::draw(){
 
     if(!onScore && getBoard(subMode, goal) != nullptr){
         sprite_unhide(arrowSprites[1], 0);
+        sprite_set_attr(arrowSprites[1], ShapeWide, 0, 1, 14, 0);
+        sprite_enable_flip(arrowSprites[1], false, true);
         sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * (1 + space) * 8 + startY - 48);
     }else{
         sprite_hide(arrowSprites[1]);
@@ -693,4 +704,109 @@ void MultBattleScene::update(){
 
 void MultBattleScene::deinit(){
     PlayOptionScene::deinit();
+}
+
+void PlayOptionScene::resetScoreboard(){
+    vsync();
+
+    resetSmallText();
+    clearText();
+
+    clearSprites(128);
+    showSprites(128);
+
+    int timer = 0;
+
+    int s = 1;
+
+    naprint("Are you sure you", 6 * 8, 6 * 8);
+    naprint("want to reset the", 6 * 8, 8 * 8);
+    naprint("current scoreboard?", 6 * 8, 10 * 8);
+
+    bool reset = false;
+
+    while (closed()) {
+        vsync();
+        key_poll();
+
+        fallingBlocks();
+
+        if(timer < 200){
+            timer++;
+        }else{
+            aprint(" YES      NO ", 8, 15);
+
+            int cursorX = 0;
+            int length = 0;
+            if(s == 0){
+                cursorX = 11 * 8 - 2;
+                length = 3 * 8;
+            }else{
+                cursorX = 19 * 8 + 2;
+                length = 2 * 8;
+            }
+
+            int offset = (sinLut(cursorFloat) * 2) >> 12;
+            FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+            for( int i = 0; i < 2; i++){
+                sprite_unhide(cursorSprites[i],0);
+                sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+                sprite_enable_affine(cursorSprites[i], i, true);
+                sprite_set_size(cursorSprites[i], scale , i);
+
+                int x = cursorX - ((length + 8) / 2 + offset + 4) * ((i)?-1:1) - 10;
+
+                sprite_set_pos(cursorSprites[i], x, 15 * 8 - 5);
+            }
+
+            if (key_hit(KEY_A)) {
+                clearText();
+                clearSprites(128);
+                sfx(SFX_MENUCONFIRM);
+                if(s == 0){
+                    reset = true;
+                    break;
+                } else{
+                    break;
+                }
+            }
+
+            if (key_hit(KEY_B)) {
+                clearText();
+                sfx(SFX_MENUCANCEL);
+                break;
+            }
+
+            if(key_hit(KEY_LEFT)){
+                if(s > 0){
+                    s--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+
+            if(key_hit(KEY_RIGHT)){
+                if(s < 1){
+                    s++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+        }
+
+        showSprites(128);
+
+        cursorFloat += 6;
+        if(cursorFloat >= 512)
+            cursorFloat = 0;
+    }
+
+    if(reset){
+        EntryBoard * board = getBoard(subMode, goal);
+
+        memset32(board, 0, sizeof(EntryBoard) / 4);
+
+        saveSavefile();
+    }
+
+    showPath();
 }

@@ -84,7 +84,6 @@ void SimpleListScene::init(){
         }
 
         if(found){
-            log(count);
             int n = path.size() - (count+1);
             for(int i = 0; i < n; i++)
                 path.pop_back();
@@ -476,28 +475,8 @@ void OptionListScene::init(){
         }
     }
 
-    std::string p;
-    int i = 0;
-    auto it = path.begin();
-    while(it != path.end()){
-        if(i != 0)
-            p += " > ";
 
-        p += *it;
-
-        it++;
-        i++;
-    }
-
-    int width = getVariableWidth(p) >> 3;
-    int count = (width) / 12 + 1;
-
-    int wordIndex = MAX_WORD_SPRITES - count - 1;
-
-    wordSprites[wordIndex]->setText(p);
-
-    for(int i = 0; i < count; i++)
-        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
+    showPath();
 
     draw();
 
@@ -853,4 +832,29 @@ void OptionListScene::deinit(){
 
     for(int i = 0; i < 7; i++)
         delete labels[i];
+}
+
+void OptionListScene::showPath(){
+    std::string p;
+    int i = 0;
+    auto it = path.begin();
+    while(it != path.end()){
+        if(i != 0)
+            p += " > ";
+
+        p += *it;
+
+        it++;
+        i++;
+    }
+
+    int width = getVariableWidth(p) >> 3;
+    int count = (width) / 12 + 1;
+
+    int wordIndex = MAX_WORD_SPRITES - count - 1;
+
+    wordSprites[wordIndex]->setText(p);
+
+    for(int i = 0; i < count; i++)
+        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
 }

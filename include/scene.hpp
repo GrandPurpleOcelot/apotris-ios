@@ -262,6 +262,8 @@ class OptionListScene : public Scene{
 
     int startY = 0;
 
+    void showPath();
+
     void draw();
     void update();
     bool control();

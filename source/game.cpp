@@ -112,7 +112,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
 
-bool enableBot = false;
+bool enableBot = true;
 static bool refreshSkin = false;
 // Bot *testBot;
 
@@ -1169,10 +1169,6 @@ bool GameScene::control() {
         }
     }
 
-    if(key_hit(KEY_SELECT)){
-        game->getFumen();
-    }
-
     return false;
 }
 
@@ -1182,17 +1178,12 @@ void GameScene::showTimer() {
         std::string timer = timeToString(gameSeconds, savefile->settings.aspectRatio);
         aprintClearArea(0, 1, 10, 1);
         aprint(timer, 9 - (int) timer.size(), 1);
-
     }
 
     if(game->trainingMode){
-
-        // aprint("Finesse", 1, 14);
         wordSprites[4].setText("Finesse");
         wordSprites[4].show(2 * 8, 14 * 8,15);
 
-        // aprintClearArea(0, 15, 10, 15);
-        // aprintf(game->finesseFaults, 4, 15);
         wordSprites[5].setTextNum(game->finesseFaults);
         wordSprites[5].show(5 * 8, 15 * 8,15);
     }
@@ -1297,6 +1288,18 @@ void GameScene::showText() {
 
         wordSprites[7].setTextNum(game->linesSent);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8,15);
+    }
+
+    if(replaying){
+        OBJ_ATTR * replaySprite = &obj_buffer[108];
+
+        sprite_unhide(replaySprite,0);
+
+        sprite_set_attr(replaySprite, ShapeSquare, 1, 250, 15, 1);
+
+        const int width = (savefile->settings.aspectRatio == 0)? 240 : 227;
+
+        sprite_set_pos(replaySprite, width - 16 - 4, 4);
     }
 }
 
@@ -2799,6 +2802,8 @@ void GameScene::init(){
     loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2,4);
     loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
     loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
+
+    loadSpriteTiles(250, &sprite50tiles_bin, 2, 2);
 
     setGradient(savefile->settings.backgroundGradient);
 

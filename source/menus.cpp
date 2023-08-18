@@ -258,6 +258,9 @@ int GameScene::endScreen(){
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
 
+    log("mode:");
+    log(mode);
+
     showScore();
     int record = onRecord();
 
@@ -1179,9 +1182,9 @@ void loadReplay(){
             currentReplay.push_back(new Timestamp(test->moves[i]));
         }
 
-        startGame(curRepHeader->options, curRepHeader->seed);
         replaying = true;
         replayIterator = currentReplay.begin();
+        startGame(curRepHeader->options, curRepHeader->seed);
 
         gameLoop();
         return;

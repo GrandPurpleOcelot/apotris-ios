@@ -29,6 +29,7 @@ class PlayOptionScene : public OptionListScene{
     virtual EntryBoard* getBoard(int submode, int goal){return nullptr;};
 
     void setOptions();
+    void resetScoreboard();
 
     void init();
     bool control();
@@ -350,11 +351,9 @@ class SprintScene : public PlayOptionScene{
 
     EntryBoard* getBoard(int submode, int goal){
         if(submode == 0){
-           return &savefile->boards.sprint[goal];
-
+            return &savefile->boards.sprint[goal];
         }else{
-           return &savefile->boards.sprintAttack[goal];
-
+            return &savefile->boards.sprintAttack[goal];
         }
     }
 
