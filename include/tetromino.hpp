@@ -3,11 +3,12 @@
 #include <cstdint>
 #include <string>
 #include <list>
+#include <map>
 
 namespace GameInfo{
     extern const int colors[7][3];
 
-    extern const int tetraminos[7][4][4][4];
+    extern const int tetrominos[7][4][4][4];
 
     extern const int classic[7][4][4][4];
 
@@ -56,4 +57,8 @@ namespace GameInfo{
     extern const uint16_t connectedFix[3][24];
 
     extern const std::list<std::string> credits;
+
+    extern const std::map<std::string,int> fumenFormat;
+
+    extern const uint8_t fumenBlocks[9];
 }

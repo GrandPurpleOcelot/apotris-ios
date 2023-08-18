@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <string>
 #include <tuple>
+#include <math.h>
 
 #include "tetromino.hpp"
 #include "blockEngine.h"
@@ -1515,7 +1516,7 @@ int* BlockEngine::getShape(int n,int r, int rotationSystem) {
 
     switch(rotationSystem){
     case SRS:
-        source = (int * )tetraminos[n][r];
+        source = (int * )tetrominos[n][r];
         break;
     case NRS:
         source = (int * )classic[n][r];
@@ -1524,7 +1525,7 @@ int* BlockEngine::getShape(int n,int r, int rotationSystem) {
         source = (int * )ars[n][r];
         break;
     default:
-        source = (int * )tetraminos[n][r];
+        source = (int * )tetrominos[n][r];
         break;
     }
 
@@ -2348,17 +2349,75 @@ void Game::chargeDas(){
     das = maxDas;
 }
 
+int poll(int max, std::string buffer){
+    int result = 0;
+
+    for(int i = 0; i < max; i++){
+        std::string c = buffer.substr(i,1);
+
+        int n = fumenFormat.at(c);
+
+        result += n * pow(64,i);
+    }
+
+    return result;
+}
+
 void Game::loadFumen(){
 
-    for(int i = 0; i < 20; i++){
-        for(int j = 0; j < 10; j++){
-            if(!fumenBoard[i][j])
+    // for(int i = 0; i < 20; i++){
+    //     for(int j = 0; j < 10; j++){
+    //         if(!fumenBoard[i][j])
+    //             continue;
+
+    //         int y = i + 20;
+    //         int x = j;
+
+    //         board[y][x] = fumenBoard[i][j];
+
+    //         bitboard[y] |= 1 << x;
+    //         if((lengthY-y) > columnHeights[x])
+    //             columnHeights[x] = lengthY-y;
+
+    //         if(stackHeight > y)
+    //             stackHeight = y;
+    //     }
+    // }
+
+    if((int) fumenString.size() < 5 || fumenString.substr(0,5) != "v115@"){
+        log("invalid fumen");
+        return;
+    }
+
+    log("valid fumen!");
+
+    std::string buffer = fumenString.substr(5);
+
+    int blockCount = 0;
+    while(blockCount < 240 && buffer.size() >= 2){
+
+        if(buffer[0] == '?')
+            buffer = buffer.substr(1);
+
+        int n = poll(2,buffer);
+        buffer = buffer.substr(2);
+
+        int block = n / 240 - 8;
+        int count = n % 240 + 1;
+
+        if(block == 0){
+            blockCount += count;
+            continue;
+        }
+
+        for(int i = 0; i < count; i++){
+            int x = (blockCount + i) % 10;
+            int y = (blockCount + i) / 10 + 17;
+
+            if(y > 39)
                 continue;
 
-            int y = i + 20;
-            int x = j;
-
-            board[y][x] = fumenBoard[i][j];
+            board[y][x] = fumenBlocks[block];
 
             bitboard[y] |= 1 << x;
             if((lengthY-y) > columnHeights[x])
@@ -2367,6 +2426,8 @@ void Game::loadFumen(){
             if(stackHeight > y)
                 stackHeight = y;
         }
+
+        blockCount += count;
     }
 }
 

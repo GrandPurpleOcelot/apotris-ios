@@ -38,6 +38,9 @@ const u8 fumenBoard[20][10] = {
     {5,5,0,0,5, 5,5,5,5,5},
 };
 
+// const std::string fumenString = "v115@9gh0hlDeR4g0RpglCeR4wwg0RpglBeBtxwzhCeBtww?JeAgH";
+const std::string fumenString = "v115@pgxwAe3wDe6wBexwHezwBewwEexwBe1wJeixXRAMoo?2Aw+kkDloo2ATPEXEUBAAAvhLAgluh1AAu11AAW7mxh1aAy?3WeD0488AwkUNEjhd5Dz488AQud5DjoBAAJimpw1aAy3WeD?0488AwkUNEjhd5Dz488AQud5DjoBAAB7m0c1dAy3WeD0488?AwUrhEOPNXEDj7kDroo2A0TukDFBAAAchm8wmk1mpgxwgWR?p0w7eAg0AAXgwwIexwHewwCfAgWRAUoo2Aw+kkDloo2ATPE?XEUBAAAvhNAgHxh1aAy3WeD0488AwkUNEjhd5Dz488AQud5?DjoBAAJimpwmB7m0c1aAy3WeD0488AwkUNEjhd5Dz488AQu?d5DjoBAAsh1aAy3WeD0488AwkUNEjhd5Dz488AQud5DjoBA?AMwmk1IXemvjmPymH3IAgWAA";
+
 class List{
     public:
         const static int maxSize = 10;
