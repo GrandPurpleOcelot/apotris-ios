@@ -2355,7 +2355,7 @@ int poll(int max, std::string buffer){
     for(int i = 0; i < max; i++){
         std::string c = buffer.substr(i,1);
 
-        int n = fumenFormat.at(c);
+        int n = base64Decode.at(c);
 
         result += n * pow(64,i);
     }
@@ -2364,26 +2364,6 @@ int poll(int max, std::string buffer){
 }
 
 void Game::loadFumen(){
-
-    // for(int i = 0; i < 20; i++){
-    //     for(int j = 0; j < 10; j++){
-    //         if(!fumenBoard[i][j])
-    //             continue;
-
-    //         int y = i + 20;
-    //         int x = j;
-
-    //         board[y][x] = fumenBoard[i][j];
-
-    //         bitboard[y] |= 1 << x;
-    //         if((lengthY-y) > columnHeights[x])
-    //             columnHeights[x] = lengthY-y;
-
-    //         if(stackHeight > y)
-    //             stackHeight = y;
-    //     }
-    // }
-
     if((int) fumenString.size() < 5 || fumenString.substr(0,5) != "v115@"){
         log("invalid fumen");
         return;
@@ -2417,7 +2397,7 @@ void Game::loadFumen(){
             if(y > 39)
                 continue;
 
-            board[y][x] = fumenBlocks[block];
+            board[y][x] = fumenBlocksDecode[block];
 
             bitboard[y] |= 1 << x;
             if((lengthY-y) > columnHeights[x])
@@ -2429,6 +2409,38 @@ void Game::loadFumen(){
 
         blockCount += count;
     }
+}
+
+INLINE std::string fumenData(int block, int count){
+    int n = (fumenBlocksEncode[block] + 8) * 240 + count - 1;
+
+    return base64Encode.at(n % 64) + base64Encode.at(n / 64);
+}
+
+void Game::getFumen(){
+    std::string result = "v115@";
+
+    int previous = 0;
+    int count = 0;
+    for(int i = 17; i < 40; i++){
+        for(int j = 0; j < 10; j++){
+            if(board[i][j] == previous){
+                count++;
+            }else{
+                result += fumenData(previous,count);
+
+                count = 1;
+                previous = board[i][j] & 0xf;
+            }
+        }
+    }
+
+    result += fumenData(previous,count);
+    result += fumenData(0,10);
+    result += "AgH";
+
+    log("Fumen: ");
+    log(result);
 }
 
 Game::~Game(){

@@ -1169,6 +1169,10 @@ bool GameScene::control() {
         }
     }
 
+    if(key_hit(KEY_SELECT)){
+        game->getFumen();
+    }
+
     return false;
 }
 

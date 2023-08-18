@@ -58,7 +58,9 @@ namespace GameInfo{
 
     extern const std::list<std::string> credits;
 
-    extern const std::map<std::string,int> fumenFormat;
+    extern const std::map<std::string,int> base64Decode;
+    extern const std::map<int,std::string> base64Encode;
 
-    extern const uint8_t fumenBlocks[9];
+    extern const uint8_t fumenBlocksDecode[9];
+    extern const uint8_t fumenBlocksEncode[9];
 }
