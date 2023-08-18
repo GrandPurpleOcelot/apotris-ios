@@ -11,6 +11,8 @@
 #include <cstring>
 #include "posprintf.h"
 
+#include "qrcodegen.h"
+
 using namespace BlockEngine;
 
 void endAnimation();
@@ -19,6 +21,7 @@ void showStats(bool, std::string, std::string);
 int onRecord();
 std::string nameInput(int);
 void showModeText();
+void qrScene();
 
 void saveReplay();
 
@@ -848,13 +851,17 @@ int GameScene::pauseMenu(){
             sprite_set_pos(cursorSprites[i], x, ((optionsHeight + selection * 2) * 8) - 5);
         }
 
-        if (key_hit(KEY_START) || key_hit(KEY_SELECT)) {
+        if (key_hit(KEY_START)) {
             sfx(SFX_MENUCONFIRM);
             clearText();
             // updateText();
             paused = false;
             resumeSong();
             break;
+        }
+
+        if(key_hit(KEY_SELECT)){
+            qrScene();
         }
 
         if (key_hit(KEY_B)) {
@@ -1232,4 +1239,70 @@ void loadReplay(){
     gameLoop();
 
     #endif
+}
+
+void qrScene(){
+
+    const std::string base = "https://knewjade.github.io/fumen-for-mobile/#?d=";
+
+    const std::string fumen = game->getFumen();
+
+    log(base + fumen);
+
+    // const std::string link = base + fumen;
+
+    // enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW;  // Error correction level
+
+    // const char *text = link.c_str();
+
+    // // Make and print the QR Code symbol
+    // uint8_t *qrcode = new uint8_t[qrcodegen_BUFFER_LEN_MAX];
+    // uint8_t *tempBuffer = new uint8_t[qrcodegen_BUFFER_LEN_MAX];
+    // bool ok = qrcodegen_encodeText(text, tempBuffer, qrcode, errCorLvl,
+    //     qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX, qrcodegen_Mask_AUTO, true);
+
+    // if(ok){
+    //     int size = qrcodegen_getSize(qrcode);
+
+    //     log(size);
+    //     int border = 4;
+
+    //     clearSprites(128);
+
+    //     OBJ_ATTR * qr = &obj_buffer[0];
+    //     const int qrTile = 300;
+
+    //     clearSpriteTiles(qrTile, 8, 8);
+
+    //     sprite_unhide(qr,0);
+    //     sprite_set_attr(qr, ShapeSquare, 3, qrTile, 0, 0);
+    //     sprite_enable_affine(qr, 8, true);
+    //     sprite_set_size(qr, 1 << 7, 8);
+    //     sprite_set_pos(qr,120 - (size + 4), 10);
+
+    //     for (int y = -border; y < size + border; y++) {
+    //         for (int x = -border; x < size + border; x++) {
+    //             int color = (qrcodegen_getModule(qrcode, x, y) ? 6 : 7);
+
+    //             int i = y + border;
+    //             int j = x + border;
+    //             setSpritePixel(qrTile, j / 8, i / 8, 8, j % 8, i % 8, color);
+    //         }
+    //     }
+
+    //     showSprites(128);
+
+    //     while(closed()){
+    //         vsync();
+    //         key_poll();
+
+    //         if(key_hit(KEY_FULL)){
+
+    //             break;
+    //         }
+    //     }
+    // }
+
+    // delete [] qrcode;
+    // delete [] tempBuffer;
 }

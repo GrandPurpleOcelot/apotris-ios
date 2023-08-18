@@ -2417,7 +2417,7 @@ INLINE std::string fumenData(int block, int count){
     return base64Encode.at(n % 64) + base64Encode.at(n / 64);
 }
 
-void Game::getFumen(){
+std::string Game::getFumen(){
     std::string result = "v115@";
 
     int previous = 0;
@@ -2441,6 +2441,7 @@ void Game::getFumen(){
 
     log("Fumen: ");
     log(result);
+    return result;
 }
 
 Game::~Game(){

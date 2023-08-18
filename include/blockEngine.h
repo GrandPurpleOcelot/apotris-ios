@@ -709,7 +709,7 @@ namespace BlockEngine
         void chargeDas();
 
         void loadFumen();
-        void getFumen();
+        std::string getFumen();
 
         Game() : Game(0,0,0){}
 
