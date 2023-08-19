@@ -3109,18 +3109,17 @@ void showGoalLine(){
 
     TILE d;
     memset32(&d, 0, 8);
-    memset32(&d, 0x88888888, 2);
+    // d.data[0] = 0x00333300;
+    d.data[0] = 0x33333333;
 
     for(int i = 0; i < 4; i++)
         loadSpriteTiles(196+i, &d, 1, 1);
-
-    setPaletteColor(16, 8, RGB15(31, 10, 10), 1);
 
     for(int i = 0; i < 3; i++){
         OBJ_ATTR * sprite = &obj_buffer[100+i];
 
         sprite_unhide(sprite, 0);
-        sprite_set_attr(sprite, ShapeWide, 2, 196, 0, 0);
+        sprite_set_attr(sprite, ShapeWide, 2, 196, 8, 1);
         sprite_set_pos(sprite, (10 + 3 * i) * 8 + push * savefile->settings.shake, height * 8 - 1 + shake * savefile->settings.shake);
     }
 }
