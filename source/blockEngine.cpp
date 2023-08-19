@@ -2091,7 +2091,7 @@ void Game::setRotationSystem(int rs){
         queue.clear();
 
         fillBag();
-        fillQueue(3);
+        fillQueue(5);
     }
 }
 

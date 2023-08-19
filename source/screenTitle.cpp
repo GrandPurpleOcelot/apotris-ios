@@ -1962,7 +1962,7 @@ void fallingBlocks() {
 
             for (i = 0; i < 8; i++)
                 for (j = 0; j < 8; j++)
-                    if (backgroundArray[i][j + x*2])
+                    if (j + x * 2 >= 30 || backgroundArray[i][j + x*2])
                         found = true;
 
             if(!found){

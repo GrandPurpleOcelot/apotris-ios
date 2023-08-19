@@ -96,8 +96,9 @@ typedef struct Settings{
     int big;
     int pro;
     int goalLine;
+    int rotationSystem;
 
-    int placeHolder[86];
+    int placeHolder[84];
 }ALIGN(4) Settings;
 
 typedef struct Test{

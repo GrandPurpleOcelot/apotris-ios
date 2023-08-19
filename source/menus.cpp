@@ -967,7 +967,7 @@ int saveRecord(EntryBoard &board, int value, int dir){
 int onRecord() {
     int place = -1;
 
-    if(bigMode)
+    if(game->pawn.big || (savefile->settings.rotationSystem != SRS && !((game->gameMode == MASTER && game->subMode) || game->gameMode == CLASSIC)))
         return place;
 
     int subMode = game->subMode;

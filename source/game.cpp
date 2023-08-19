@@ -113,7 +113,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
 
-bool enableBot = true;
+bool enableBot = false;
 static bool refreshSkin = false;
 // Bot *testBot;
 
@@ -3079,7 +3079,7 @@ void updateFluid(){
 }
 
 void showGoalLine(){
-    if(!proMode)
+    if(!proMode || !savefile->settings.goalLine)
         return;
 
     int height = 0;
@@ -3109,8 +3109,11 @@ void showGoalLine(){
 
     TILE d;
     memset32(&d, 0, 8);
-    // d.data[0] = 0x00333300;
-    d.data[0] = 0x33333333;
+
+    if(savefile->settings.goalLine == 1)
+        d.data[0] = 0x00333300;
+    else if(savefile->settings.goalLine == 2)
+        d.data[0] = 0x33333333;
 
     for(int i = 0; i < 4; i++)
         loadSpriteTiles(196+i, &d, 1, 1);

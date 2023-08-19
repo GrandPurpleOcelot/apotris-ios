@@ -14,6 +14,9 @@ class BigModeElement : public Element{
 
         void action(int dir) override{
             savefile->settings.big = !savefile->settings.big;
+            bigMode = savefile->settings.big;
+            initFallingBlocks();
+
             sfx(SFX_MENUCONFIRM);
         }
 
@@ -93,6 +96,50 @@ class GoalLineElement : public Element{
         }
 };
 
+class RotationSystemElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Rotation System";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.rotationSystem > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.rotationSystem < BlockEngine::ARS)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if(savefile->settings.rotationSystem < BlockEngine::ARS){
+                    savefile->settings.rotationSystem++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.rotationSystem > 0){
+                    savefile->settings.rotationSystem--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+        }
+
+        std::string getCurrentOption() override {
+            switch(savefile->settings.rotationSystem){
+                case BlockEngine::NRS: return "NRS";
+                case BlockEngine::ARS: return "ARS";
+                default : return "SRS";
+            }
+        }
+};
 
 class GameplayOptionScene : public OptionListScene{
     public:
@@ -102,6 +149,7 @@ class GameplayOptionScene : public OptionListScene{
                 new BigModeElement(),
                 new ProModeElement(),
                 new GoalLineElement(),
+                new RotationSystemElement(),
             };
         };
 

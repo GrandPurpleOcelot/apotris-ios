@@ -251,19 +251,24 @@ void PlayOptionScene::start(){
 
     if(newOptions.mode == BlockEngine::CLASSIC)
         newOptions.rotationSystem = BlockEngine::NRS;
-    else
-        newOptions.rotationSystem = BlockEngine::SRS;
+    else{
+        if(savefile->settings.rotationSystem >= 0 && savefile->settings.rotationSystem <= 2){
+            newOptions.rotationSystem = savefile->settings.rotationSystem;
+        }else{
+            newOptions.rotationSystem = BlockEngine::SRS;
+        }
+    }
 
     newOptions.goal = goal;
     newOptions.level = level;
     newOptions.tuning = getTuning();
-    newOptions.bigMode = bigMode;
+    newOptions.bigMode = savefile->settings.big;
     newOptions.subMode = subMode;
     newOptions.trainingMode = training;
     newOptions.bTypeHeight = bTypeHeight;
     savefile->stats.gamesStarted++;
 
-    proMode = (key_is_down(KEY_L) || key_is_down(KEY_R));
+    proMode = (key_is_down(KEY_L) || key_is_down(KEY_R)) ^ (savefile->settings.pro);
 
     if(newOptions.mode != BlockEngine::BATTLE){
         startGame(newOptions,qran());
