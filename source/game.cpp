@@ -1462,6 +1462,7 @@ void clearGlow() {
 void GameScene::countdown() {
     int timer = 0;
     int timerMax = 120;
+    showTimer();
     showQueue();
     showHold();
     showPawn();
