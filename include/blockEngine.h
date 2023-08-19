@@ -683,6 +683,7 @@ namespace BlockEngine
 
         void loadFumen();
         std::string getFumen();
+        void demoGarbage();
 
         Game() : Game(0,0,0){}
 

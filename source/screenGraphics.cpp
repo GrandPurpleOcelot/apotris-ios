@@ -492,11 +492,16 @@ void GraphicsScene::init(){
         setPaletteColor(0, 0, 0x0000, 1);
 
     clearTilemap(26);
+
+    enableFumen = true;
+    fumenString = "v115@fgY4Aeo0Ae4wAeItAeYpAeolAe4hKeAgHfg4DAeoHA?eYLAeIPAe4SAeoWAeQaQ4WaKeAAAchAAA8QeAAA";
+
     if(game != nullptr)
         delete game;
 
-    game = new Game(DIG,bigMode);
+    game = new Game(NO_MODE,bigMode);
 
+    game->demoGarbage();
     game->setGoal(0);
     game->setLevel(1);
     game->rotationSystem = SRS;
@@ -504,6 +509,8 @@ void GraphicsScene::init(){
     game->update();
 
     game->pawn.y += 1;
+
+    enableFumen = false;
 
     enableBlend((1 << 6) + (0b111011 << 8) + (0b1010));
 

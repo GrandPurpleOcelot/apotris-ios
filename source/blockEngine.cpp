@@ -12,12 +12,12 @@
 using namespace BlockEngine;
 using namespace GameInfo;
 
-bool enableFumen = false;
-bool enableFumenQueue = false;
+bool BlockEngine::enableFumen = false;
+bool BlockEngine::enableFumenQueue = false;
 
-u8 fumenQueue[5] = {PIECE_T,0,0,0,0};
+u8 BlockEngine::fumenQueue[5] = {PIECE_T,0,0,0,0};
 
-std::string fumenString = "v115@ZgAtGeCtFeCtglFeAtilEei0FewhRpg0Cei0whRpgl?BeR4wwg0whilAeR4ywwhJelnm";
+std::string BlockEngine::fumenString = "v115@ZgAtGeCtFeCtglFeAtilEei0FewhRpg0Cei0whRpgl?BeR4wwg0whilAeR4ywwhJelnm";
 
 int Game::checkRotation(int dx, int dy, int r) {
     const int x = dx + pawn.x;
@@ -2490,6 +2490,9 @@ Game::Game(int gm, int sd, bool big){
     pawn = Pawn(0,0);
     pawn.big = big;
 
+    if(enableFumen)
+        loadFumen();
+
     if(gameMode == SPRINT)
         goal = 40;
     else if(gameMode == MARATHON)
@@ -2544,9 +2547,6 @@ Game::Game(int gm, int sd, bool big){
         for (int j = 0; j < 10; j++)
             disappearTimers[i][j] = 0;
     }
-
-    if(enableFumen)
-        loadFumen();
 }
 
 Game::Game(Game * oldGame) {
@@ -2605,4 +2605,11 @@ Game::Game(Game * oldGame) {
     speed = oldGame->speed;
     activePiece = oldGame->activePiece;
     linesToClear = oldGame->linesToClear;
+}
+
+void Game::demoGarbage(){
+    generateGarbage(3,0);
+
+    for(int i = 20; i < 40; i++)
+        connectBoard(i, i);
 }
