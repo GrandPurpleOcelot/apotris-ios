@@ -149,13 +149,12 @@ namespace BlockEngine
         PIECE_Z,
     };
 
+    extern bool enableFumen;
+    extern bool enableFumenQueue;
 
-    const bool enableFumen = false;
-    const bool enableFumenQueue = false;
+    extern u8 fumenQueue[5];
 
-    const u8 fumenQueue[5] = {PIECE_T,0,0,0,0};
-
-    const std::string fumenString = "v115@ZgAtGeCtFeCtglFeAtilEei0FewhRpg0Cei0whRpgl?BeR4wwg0whilAeR4ywwhJelnm";
+    extern std::string fumenString;
 
     class Stats{
     public:

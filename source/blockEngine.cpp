@@ -12,6 +12,13 @@
 using namespace BlockEngine;
 using namespace GameInfo;
 
+bool enableFumen = false;
+bool enableFumenQueue = false;
+
+u8 fumenQueue[5] = {PIECE_T,0,0,0,0};
+
+std::string fumenString = "v115@ZgAtGeCtFeCtglFeAtilEei0FewhRpg0Cei0whRpgl?BeR4wwg0whilAeR4ywwhJelnm";
+
 int Game::checkRotation(int dx, int dy, int r) {
     const int x = dx + pawn.x;
     const int y = dy + pawn.y;
