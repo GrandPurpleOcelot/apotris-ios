@@ -258,9 +258,6 @@ int GameScene::endScreen(){
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
 
-    log("mode:");
-    log(mode);
-
     showScore();
     int record = onRecord();
 
@@ -667,6 +664,8 @@ int GameScene::pauseMenu(){
 
     bool showSleep = false;
 
+    bool count = true;
+
     #ifdef GBA
     showSleep = true;
     #endif
@@ -753,6 +752,7 @@ int GameScene::pauseMenu(){
                     startGame();
                     changeScene(new GameScene());
                     paused = false;
+                    count = false;
                     sfx(SFX_MENUCONFIRM);
                     break;
                 } else if (n == 2) {
@@ -934,7 +934,8 @@ int GameScene::pauseMenu(){
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 
-    countdown();
+    if(count)
+        countdown();
 
     return 0;
 }

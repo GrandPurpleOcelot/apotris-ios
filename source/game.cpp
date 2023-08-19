@@ -44,6 +44,7 @@ void liftKeys();
 void setJourneyGraphics(Save * save, int level);
 void replayControl();
 void showBackgroundBig(int offset);
+
 INLINE int prep(int n);
 
 IWRAM_CODE void updateGrid();
@@ -151,6 +152,8 @@ void GameScene::draw(){
     showQueue();
 
     drawGrid();//10k idle, 20k when clearing
+
+    showGoalLine();
 
     screenShake();//~320
 
@@ -1173,7 +1176,7 @@ bool GameScene::control() {
 }
 
 void GameScene::showTimer() {
-    if (!(game->gameMode == TRAINING || game->gameMode == ZEN)) {
+    if (!(game->gameMode == TRAINING || game->gameMode == ZEN || demo)) {
 
         std::string timer = timeToString(gameSeconds, savefile->settings.aspectRatio);
         aprintClearArea(0, 1, 10, 1);
@@ -1190,6 +1193,14 @@ void GameScene::showTimer() {
 
     if(proMode){
         showPPS();
+    }
+
+    if(demo){
+        const int x = (savefile->settings.aspectRatio == 0)? 1 : 3;
+        if(frameCounter % 60 < 30)
+            aprint("DEMO", x, 1);
+        else
+            aprint("    ", x, 1);
     }
 }
 
@@ -2269,7 +2280,7 @@ void showZoneMeter(){
 
     sprite_set_attr(sprite, ShapeSquare, 2, 256 + 3, 12, 0);
     sprite_enable_mosaic(sprite);
-    sprite_set_pos(sprite, 9, 74);
+    sprite_set_pos(sprite, 13, 74);
     sprite_unhide(sprite,0);
 
     const int color = 0x7fff;
@@ -2626,7 +2637,6 @@ void refreshCredits(){
     if(pos != std::string::npos){
         std::string part1 = text.substr(0, pos);
         std::string part2 = text.substr(pos + 1);
-
 
         wordSprites[creditIndex*3+0]->setText(part1);
         wordSprites[creditIndex*3+1]->setText(part2);
@@ -3065,5 +3075,52 @@ void updateFluid(){
         dampTimer--;
         if(!dampTimer)
             damp = 2;
+    }
+}
+
+void showGoalLine(){
+    if(!proMode)
+        return;
+
+    int height = 0;
+
+    const int gm = game->gameMode;
+
+    int goal = 0;
+    if (gm == DIG)
+        goal = game->garbageCleared;
+    else if (gm == ULTRA || gm == BLITZ)
+        goal = game->timer;
+    else if (gm == SPRINT && game->subMode)
+        goal = game->linesSent;
+    else if (gm != SURVIVAL)
+        goal = game->linesCleared;
+    else{
+        return;
+    }
+
+    int remaining = game->goal - goal;
+
+    if(remaining < 20 && remaining > 0){
+        height = 20 - remaining;
+    }else{
+        return;
+    }
+
+    TILE d;
+    memset32(&d, 0, 8);
+    memset32(&d, 0x88888888, 2);
+
+    for(int i = 0; i < 4; i++)
+        loadSpriteTiles(196+i, &d, 1, 1);
+
+    setPaletteColor(16, 8, RGB15(31, 10, 10), 1);
+
+    for(int i = 0; i < 3; i++){
+        OBJ_ATTR * sprite = &obj_buffer[100+i];
+
+        sprite_unhide(sprite, 0);
+        sprite_set_attr(sprite, ShapeWide, 2, 196, 0, 0);
+        sprite_set_pos(sprite, (10 + 3 * i) * 8 + push * savefile->settings.shake, height * 8 - 1 + shake * savefile->settings.shake);
     }
 }

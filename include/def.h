@@ -142,6 +142,7 @@ extern void addToResults(int,int);
 extern void drawEnemyBoard();
 extern void handleBotGame();
 extern void showPPS();
+extern void showGoalLine();
 extern void setPalette();
 extern void loadSave();
 extern void startScreen();
