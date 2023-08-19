@@ -93,8 +93,11 @@ typedef struct Settings{
     int aspectRatio;
     int screenShakeType;
     int clearDirection;
+    int big;
+    int pro;
+    int goalLine;
 
-    int placeHolder[88];
+    int placeHolder[86];
 }ALIGN(4) Settings;
 
 typedef struct Test{
