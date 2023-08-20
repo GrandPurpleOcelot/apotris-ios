@@ -1251,6 +1251,10 @@ void Game::next() {//~21-29k cycles
             pawn.y--;
     }
 
+    if(game->pawn.big){
+        pawn.x++;
+    }
+
     pawn.rotation = 0;
     if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
         if(rotationSystem == ARS){
@@ -1439,10 +1443,9 @@ void Game::hold(int dir) {
 		pawn.y = (int)lengthY / 2;
         pawn.x = (int)lengthX / 2 - 2;
 
-        // if(pawn.big){
-        //     pawn.x/=2;
-        //     pawn.y/=2;
-        // }
+        if(pawn.big){
+            pawn.x++;
+        }
     }
 
     pawn.rotation = 0;
@@ -1690,17 +1693,28 @@ void Game::removeClearLock() {
     }
 
     if(gameMode == COMBO){
-        for(int i = lengthY/2-4; i < lengthY; i++){
-            if(bitboard[i] != 0){
-                break;
+        if(!pawn.big){
+            for(int i = lengthY/2-4; i < lengthY; i++){
+                if(bitboard[i] != 0){
+                    break;
+                }
+                for(int j = 0; j < 10; j++){
+                    if(j > 2 && j < 7)
+                        continue;
+                    board[i][j] = (i+comboCounter) % 7 + 1;
+                    bitboard[i] |= 1 << j;
+                }
+                connectBoard(i, i);
             }
-            for(int j = 0; j < 10; j++){
-                if(j > 2 && j < 7)
-                    continue;
-                board[i][j] = (i+comboCounter) % 7 + 1;
-                bitboard[i] |= 1 << j;
+        }else{
+            for(int i = lengthY/2-4; i < lengthY; i++){
+                if(bitboard[i] != 0){
+                    break;
+                }
+                board[i][0] = (i+comboCounter) % 7 + 1;
+                bitboard[i] |= 1;
+                connectBoard(i, i);
             }
-            connectBoard(i, i);
         }
         stackHeight = lengthY/2 - 4;
     }
@@ -2493,6 +2507,13 @@ Game::Game(int gm, int sd, bool big){
     if(enableFumen)
         loadFumen();
 
+    if(big){
+        lengthY /= 2;
+        lengthX /= 2;
+        boardOffset = lengthY/2;
+        fullLine >>= 5;
+    }
+
     if(gameMode == SPRINT)
         goal = 40;
     else if(gameMode == MARATHON)
@@ -2519,28 +2540,25 @@ Game::Game(int gm, int sd, bool big){
             }
             stackHeight = lengthY/2 - 4;
         }else{
-            for(int i = (lengthY/4-1); i < lengthY/2; i++){
+            for(int i = (lengthY/2) - 4; i < lengthY; i++){
                 for(int j = 0; j < 5; j++){
-                    if(j != 0 && !(i == (lengthY/2)-2 && j < 3) && !(i == (lengthY/2)-1 && j < 2))
+                    if(j != 0 && !(i == (lengthY)-2 && j < 3) && !(i == (lengthY)-1 && j < 2))
+                    // if(j != 0)
                         continue;
-                    board[i*2][j*2] = i % 7 + 1;
-                    board[i*2][j*2+1] = i % 7 + 1;
-                    board[i*2+1][j*2] = i % 7 + 1;
-                    board[i*2+1][j*2+1] = i % 7 + 1;
+                    board[i][j] = i % 7 + 1;
+                    bitboard[i] |= 1 << j;
+
+                    if((lengthY-i) > columnHeights[j])
+                        columnHeights[j] = lengthY-i;
                 }
+                connectBoard(i, i);
             }
+            stackHeight = lengthY/2 - 4;
         }
     }else if(gameMode == MASTER){
         level = 0;
         speed = GameInfo::masterGravity[0][1];
         setMasterTuning();
-    }
-
-    if(big){
-        lengthY /= 2;
-        lengthX /= 2;
-        boardOffset = lengthY/2;
-        fullLine >>= 5;
     }
 
     for (int i = 0; i < 40; i++) {
