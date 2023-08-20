@@ -150,7 +150,6 @@ void EditorScene::deinit(){
     clearTilemap(27);
 
     gradient(true);
-    drawUIFrame(0, 0, 30, 20);
     setLayerScroll(3, 0, 0);
 
     clearTiles(2,110,400);

@@ -104,11 +104,7 @@ extern void gameLoop();
 extern void playSong(int,int);
 extern void playSongRandom(int);
 extern void playNextSong();
-extern void settingsText();
 extern void songListMenu();
-extern void graphicTest();
-extern void windowSettings();
-extern void audioSettings();
 extern void showTitleSprites();
 extern void setLightMode();
 extern void setSkin();
@@ -128,7 +124,6 @@ extern void showClearText();
 extern void hideMinos();
 
 extern void reset();
-extern void sleep();
 
 extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
@@ -139,18 +134,14 @@ extern void screenShake();
 extern void saveToSram();
 extern void addToResults(int,int);
 
-extern void drawEnemyBoard();
 extern void handleBotGame();
 extern void showPPS();
 extern void showGoalLine();
 extern void setPalette();
 extern void loadSave();
-extern void startScreen();
 extern void showPlaceEffect();
 extern void checkSounds();
 extern int getClassicPalette();
-extern void maxModInit();
-extern void drawUIFrame(int,int,int,int);
 extern void buildMini(TILE *);
 extern void showZoneMeter();
 extern void resetZonePalette();
@@ -262,9 +253,6 @@ extern int rumbleMax;
 
 extern bool rumbleInitialized;
 extern bool bigMode;
-
-extern int goalSelection;
-extern int level;
 
 extern TILE* customSkin;
 

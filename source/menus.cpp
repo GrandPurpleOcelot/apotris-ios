@@ -387,8 +387,6 @@ int GameScene::endScreen(){
             } else if (selection == 2){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
-                goalSelection = 0;
-                level = 1;
                 buildBG(3, 0, 27, 0, 1, true);
                 changeScene(new MainMenuScene, Transitions::FADE);
                 return 1;
