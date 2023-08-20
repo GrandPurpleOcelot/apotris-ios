@@ -24,6 +24,7 @@ void showModeText();
 void qrScene();
 
 void saveReplay();
+void sleepMenu();
 
 int mode = 0;
 bool showingStats = false;
@@ -761,7 +762,7 @@ int GameScene::pauseMenu(){
                     // update();
                     clearText();
                 } else if (n == 3) {
-                    sleep();
+                    sleepMenu();
                     showStats(showingStats, totalTime, ppsStr);
                     showModeText();
                     showQueue();
@@ -1311,4 +1312,48 @@ void qrScene(){
 
     // delete [] qrcode;
     // delete [] tempBuffer;
+}
+
+void sleepMenu(){
+    toggleBG(0, false);
+    toggleBG(1, false);
+    toggleBG(3, false);
+
+    clearText();
+
+    clearSprites(128);
+    showSprites(128);
+
+    while (closed()) {
+        aprint("Entering sleep...", 7, 4);
+        aprint("Press", 13, 8);
+        aprint("L + R + SELECT", 9, 10);
+        aprint("to leave sleep", 8, 12);
+
+        aprint("A: Sleep      B: Cancel", 4, 17);
+
+        vsync();
+
+        key_poll();
+
+        if (key_hit(KEY_A)) {
+            clearText();
+            break;
+        }
+
+        if (key_hit(KEY_B)) {
+            toggleBG(0, true);
+            toggleBG(1, true);
+            toggleBG(3, true);
+            clearText();
+            sfx(SFX_MENUCANCEL);
+            return;
+        }
+    }
+
+    sleep();
+
+    toggleBG(0, true);
+    toggleBG(1, true);
+    toggleBG(3, true);
 }

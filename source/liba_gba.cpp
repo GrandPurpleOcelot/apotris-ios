@@ -258,36 +258,6 @@ bool unlock_gbp(){
 
 void sleep() {
     int display_value = REG_DISPCNT;
-    REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG2; //Disable all backgrounds except text
-    clearText();
-
-    oam_init(obj_buffer, 128);
-    oam_copy(oam_mem, obj_buffer, 128);
-
-    while (closed()) {
-        aprint("Entering sleep...", 7, 4);
-        aprint("Press", 13, 8);
-        aprint("L + R + SELECT", 9, 10);
-        aprint("to leave sleep", 8, 12);
-
-        aprint("A: Sleep      B: Cancel", 4, 17);
-
-        VBlankIntrWait();
-
-        key_poll();
-
-        if (key_hit(KEY_A)) {
-            clearText();
-            break;
-        }
-
-        if (key_hit(KEY_B)) {
-            REG_DISPCNT = display_value;
-            clearText();
-            sfx(SFX_MENUCANCEL);
-            return;
-        }
-    }
 
     bool prevGradient = gradientEnabled;
     irq_disable(II_VBLANK);
