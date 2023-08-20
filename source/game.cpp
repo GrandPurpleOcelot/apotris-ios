@@ -2880,7 +2880,7 @@ void GameScene::update(){
             shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
 
         }else if(savefile->settings.screenShakeType == 1){
-            shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
+            // shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
         rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
