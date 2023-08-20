@@ -1427,6 +1427,13 @@ void gameLoop(){
 }
 
 void addGlow(BlockEngine::Drop location) {
+    if(game->pawn.big){
+        location.startY *= 2;
+        location.endY *= 2;
+        location.startX *= 2;
+        location.endX *= 2;
+    }
+
     for (int i = 0; i < location.endY && i < 20; i++){
         for (int j = location.startX; j < location.endX; j++){
             glow[i][j] = glowDuration;
