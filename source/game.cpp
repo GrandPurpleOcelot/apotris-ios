@@ -2525,7 +2525,7 @@ void showZoneText(){
 
     char buff[4];
 
-    int lines = game->zonedLines / (1 + game->pawn.big);
+    int lines = game->zonedLines;
 
     posprintf(buff, "%d", lines);
 
