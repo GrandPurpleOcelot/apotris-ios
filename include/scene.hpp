@@ -308,7 +308,16 @@ class SettingsScene : public SimpleListScene{
                 return new MainMenuScene();
         };
 
-        std::list<std::string> getOptionList(){return settingsOptions;};
+        std::list<std::string> getOptionList(){
+            std::list<std::string> result = settingsOptions;
+
+            #ifdef PC
+            result.push_front("Video");
+            #endif
+
+            return result;
+        };
+
         std::string name(){return "Settings";};
 };
 

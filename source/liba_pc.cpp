@@ -140,7 +140,7 @@ TLN_Bitmap spriteBitmap;
 
 LayerInfo layerInfo[4];
 
-int windowScale = 3;
+float windowScale = 3;
 int windowWidth = 256;
 int windowHeight = 192;
 // int windowWidth = 214;
@@ -388,13 +388,6 @@ void vsync(){
 
             exit(0);
         }else if(event.type == sf::Event::Resized){
-            while(event.size.height / windowScale > 160 * 2){
-                windowScale++;
-            }
-            while(windowScale > 1 && event.size.height / windowScale < 160){
-                windowScale--;
-            }
-
             resize(event.size.width, event.size.height);
 
         }else if(event.type == sf::Event::KeyPressed){
@@ -1354,6 +1347,22 @@ void toggleRendering(bool state){
 }
 
 void resize(int width, int height){
+    if(savefile != nullptr && savefile->settings.integerScale != 1){
+
+        float zoom = ((float) max(savefile->settings.zoom,10) / 20);
+
+        windowScale = ((float) height / 160) * zoom;
+    }else{
+        windowScale = (int) windowScale;
+
+        while(height / windowScale > 160 * 2){
+            windowScale++;
+        }
+        while(windowScale > 1 && height / windowScale < 160){
+            windowScale--;
+        }
+    }
+
     sf::FloatRect visibleArea(sf::Vector2f(0,0), sf::Vector2f(width, height));
     sf::View view(visibleArea);
     view.setCenter(256 * windowScale,256 * windowScale);
@@ -1364,6 +1373,10 @@ void resize(int width, int height){
 
     if(savefile != nullptr)
         setGradient(savefile->settings.backgroundGradient);
+}
+
+void refreshWindowSize(){
+    resize(window.getSize().x, window.getSize().y);
 }
 
 std::vector<std::string> keyToString = {

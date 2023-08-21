@@ -9,6 +9,7 @@
 #include "sceneHandling.hpp"
 #include "sceneGameplay.hpp"
 #include "sceneModes.hpp"
+#include "sceneWindow.hpp"
 #include "sceneStats.hpp"
 #include "skinEditor.hpp"
 
@@ -130,6 +131,8 @@ void sceneSwitcher(std::string str){
         changeScene(new HandlingOptionScene(),Transitions::FADE);
     }else if(str == "Gameplay"){
         changeScene(new GameplayOptionScene(),Transitions::FADE);
+    }else if(str == "Video"){
+        changeScene(new WindowOptionScene(),Transitions::FADE);
     }else if(str == "Marathon"){
         changeScene(new MarathonScene(),Transitions::FADE);
     }else if(str == "Sprint"){

@@ -435,6 +435,8 @@ extern void clr_rgbscale(COLOR *dst, const COLOR *src, uint nclrs, COLOR clr);
 
 extern void rumble_set_state(int);
 
+extern void refreshWindowSize();
+
 extern "C"{
     extern void posprintf(char * buff, const char * str, ...);
 }
