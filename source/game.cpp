@@ -983,6 +983,12 @@ bool GameScene::control() {
         }
     }
 
+    if(replaying && key_hit(KEY_FULL)){
+        exitGame = true;
+        replaying = false;
+        return true;
+    }
+
     Keys k = savefile->settings.keys;
 
     if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer && !flashTimer) {
@@ -1431,6 +1437,9 @@ void GameScene::countdown() {
     updateText();
 
     game->update();
+
+    if(replaying)
+        replayControl();
 
     Keys k = savefile->settings.keys;
 
