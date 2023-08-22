@@ -73,7 +73,7 @@ extern unsigned __iwram_top;
 extern unsigned __fini_array_end;
 extern unsigned __ewram_start;
 extern unsigned __ewram_end;
-
+extern char __eheap_start[], __eheap_end[];
 
 INLINE int iwramUsage(){
     auto iwram_start = reinterpret_cast<uint8_t*>(&__iwram_start__);
@@ -85,6 +85,13 @@ INLINE int iwramUsage(){
 INLINE int ewramUsage(){
     auto ewram_start = reinterpret_cast<uint8_t*>(&__ewram_start);
     auto ewram_end = reinterpret_cast<uint8_t*>(&__ewram_end);
+
+    return ewram_end - ewram_start;
+}
+
+INLINE int ewramHeapUsage(){
+    auto ewram_start = reinterpret_cast<uint8_t*>(&__eheap_start);
+    auto ewram_end = reinterpret_cast<uint8_t*>(&__eheap_end);
 
     return ewram_end - ewram_start;
 }

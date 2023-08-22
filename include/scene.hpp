@@ -73,7 +73,7 @@ class TitleScene : public Scene{
 };
 
 class newTitleScene : public Scene{
-    WordSprite* wordSprites[MAX_WORD_SPRITES];
+    WordSprite wordSprites[MAX_WORD_SPRITES];
 
     WordSprite versionText = WordSprite(0,20,2);
     WordSprite nameText = WordSprite(0,23,2 + 12);

@@ -613,7 +613,7 @@ void Game::update() {
     while((int)moveHistory.size() > 10)
         moveHistory.pop_front();
 
-    if(enableBot || replay.size() > MAX_REPLAY_SIZE){
+    if(replay.size() > MAX_REPLAY_SIZE){
         replay.clear();
 
         replayElligible = false;
@@ -636,9 +636,6 @@ int Game::lowest() {
         return lengthY-(max)-1;
     }else{
         int start = pawn.y;
-        // int start = stackHeight-4;
-        // if(stackHeight-4 < pawn.y)
-        //     start = pawn.y;
 
         for(int i = start; i < lengthY; i++){
             for(int j = 0; j < 4; j++){

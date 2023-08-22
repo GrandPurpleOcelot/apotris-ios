@@ -426,7 +426,7 @@ namespace BlockEngine
             dir = (m >> 9) & 1;
             move = m & 0x1ff;
         }
-    };
+    }ALIGN(4);
 
     class Game {
     private:

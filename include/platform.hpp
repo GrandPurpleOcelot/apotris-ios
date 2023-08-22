@@ -13,7 +13,7 @@
 
 #endif
 
-#define MAX_REPLAY_SIZE 10000
+#define MAX_REPLAY_SIZE 4000
 
 extern void onVBlank();
 

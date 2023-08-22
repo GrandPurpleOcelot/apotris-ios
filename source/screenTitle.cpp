@@ -241,10 +241,10 @@ void newTitleScene::init(){
 
     clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i] = new WordSprite(i,64 + i * 3, 256 + i * 12);
+        wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
 
-    wordSprites[0]->setText("Press Any");
-    wordSprites[1]->setText("Button");
+    wordSprites[0].setText("Press Any");
+    wordSprites[1].setText("Button");
 
     versionText.setText("v4.0.0a");
 
@@ -263,13 +263,13 @@ void newTitleScene::draw(){
     nameText.show(240 - nameText.width, y, 15);
 
     if(flashTimer < flashMax/2){
-        int w = wordSprites[0]->width + wordSprites[1]->width + 6;
+        int w = wordSprites[0].width + wordSprites[1].width + 6;
 
-        wordSprites[0]->show((240 - w)/2,14*8,15);
-        wordSprites[1]->show((240 - w)/2 + wordSprites[0]->width + 6,14*8,15);
+        wordSprites[0].show((240 - w)/2,14*8,15);
+        wordSprites[1].show((240 - w)/2 + wordSprites[0].width + 6,14*8,15);
     }else{
-        wordSprites[0]->hide();
-        wordSprites[1]->hide();
+        wordSprites[0].hide();
+        wordSprites[1].hide();
     }
 
     if(++flashTimer > flashMax-1){

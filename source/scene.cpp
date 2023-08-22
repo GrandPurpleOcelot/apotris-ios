@@ -832,6 +832,9 @@ void OptionListScene::deinit(){
 
     for(int i = 0; i < 7; i++)
         delete labels[i];
+
+    for(int i = 0; i < 3; i++)
+        delete scrollingText[i];
 }
 
 void OptionListScene::showPath(){
