@@ -276,7 +276,6 @@ void PlayOptionScene::start(){
         int seed = qran();
 
         startGame(newOptions,seed);
-        startBotGame(seed);
     }
 
     gameLoop();

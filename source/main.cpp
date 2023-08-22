@@ -965,12 +965,6 @@ void startBotGame(int seed){
 }
 
 void setPawnPalette(int dest, int n, int blend){
-    // COLOR c;
-    // if(savefile->settings.palette < 7){
-    //     int *clr = (int *) GameInfo::colors[savefile->settings.palette];
-    //     c = RGB15_SAFE(clr[0] >> 3, clr[1] >> 3, clr[2] >> 3);
-    // } else
-    //     c = monoPalette[savefile->settings.lightMode][0];
     dest += 16;
 
     if (!savefile->settings.lightMode){

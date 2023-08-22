@@ -151,7 +151,7 @@ void startMultiplayerGame(int seed) {
             enemyBoard[i][j] = 0;
 
     delete game;
-    game = new Game(4, seed & 0x1fff,bigMode);
+    game = new Game(4, seed & 0x1fff,false);
     game->setLevel(1);
     game->setTuning(getTuning());
     game->setGoal(100);

@@ -2372,6 +2372,7 @@ Game::~Game(){
 }
 
 Game::Game(int gm, int sd, bool big){
+    log("starting! : " + std::to_string(big));
     gameMode = gm;
     seed = initSeed = sd;
 

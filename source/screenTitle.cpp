@@ -108,7 +108,7 @@ void fallingBlocks() {
         }
     }
 
-    // u16* dest = (u16*)se_mem[25];
+    bool bigMode = savefile->settings.big;
 
     int offset = 4 + 6 * bigMode;
 

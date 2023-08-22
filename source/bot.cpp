@@ -53,10 +53,6 @@ IWRAM_CODE Values evaluate(u16 *board, int *columnHeights, int lengthX, int leng
     int wells = 0;
     int quadWell = 0;
 
-    // std::string str;
-
-    // profile_start();
-
     //~300-600 cycles
     for(int i = start; i < lengthY; i++){
         if(board[i]){
@@ -64,10 +60,6 @@ IWRAM_CODE Values evaluate(u16 *board, int *columnHeights, int lengthX, int leng
         }
     }
 
-    // str += std::to_string(profile_stop()) + " ";
-    // profile_start();
-
-    int counter = 0;
     for(int j = 0; j < lengthX; j++){
         bool prev = false;
         for(int i = lengthY - columnHeights[j]; i < lengthY; i++){
@@ -79,17 +71,11 @@ IWRAM_CODE Values evaluate(u16 *board, int *columnHeights, int lengthX, int leng
             holes += (n != prev) && !n;
 
             prev = n;
-            // log(std::to_string(profile_stop()));
-            counter++;
         }
     }
-    // log(std::to_string(counter));
-    // str += std::to_string(profile_stop()) + " ";
 
     int lowestX = 0;
     int lowestCount = 255;
-
-    // profile_start();
 
     //~1200-1400 cycles
     for(int x = 0; x < lengthX; x++){
@@ -108,11 +94,6 @@ IWRAM_CODE Values evaluate(u16 *board, int *columnHeights, int lengthX, int leng
 
         wells += count;
     }
-
-    // str += std::to_string(profile_stop()) + " ";
-    // log("calc: " + std::to_string(profile_stop()));
-
-    // log(str);
 
     int i = lengthY - columnHeights[lowestX] - 1;
     while(countBits(board[i]) == 9 && i >= 0){
@@ -153,10 +134,6 @@ void Bot::run(){
         }
 
         if(thinkingI == -6){
-            // profile_start();
-            // currentValues = evaluate(testGame->bitboard, testGame->columnHeights, testGame->lengthX, testGame->lengthY, testGame->stackHeight);
-            // log("first: " + std::to_string(profile_stop())); //3-8k cycle;
-
             if(checking == 0 && exploring == 0){
                 if(testGame != nullptr)
                     delete testGame;
@@ -201,8 +178,6 @@ void Bot::run(){
                 }else{
                     checking++;
 
-                    // previous = testGame->pawn.current;
-
                     if(testGame->canHold){
                         if(testGame->held != -1)
                             testGame->pawn.current = testGame->held;
@@ -215,8 +190,6 @@ void Bot::run(){
                         stopThinking();
                     }
                 }
-
-                // log("x: " + std::to_string(current.dx + game->pawn.x) + " y: " + std::to_string(current.rotation));
             }
         }
     }
