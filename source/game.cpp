@@ -310,6 +310,15 @@ void checkSounds() {
 
         if (savefile->settings.announcer && soundEffect != -1)
             sfx(soundEffect);
+
+        if(game->gameMode == ZEN && game->linesCleared / 10 > (game->linesCleared - game->previousClear.linesCleared) / 10){
+            flashTimer = flashTimerMax;
+            setJourneyGraphics(savefile, game->linesCleared / 10);
+            setPalette();
+            zoneFlash();
+            refreshSkin = true;
+            sfx(SFX_LEVELUPSOUND);
+        }
     }else if(game->sounds.tspin){
         if(game->previousClear.isTSpin == 1){
             clearTypeText = "t-spin mini";
@@ -337,12 +346,6 @@ void checkSounds() {
 
         if(game->gameMode == MASTER){
             maxClearTimer = game->maxClearDelay;
-        // } else if(game->gameMode == MARATHON){
-        //     flashTimer = flashTimerMax;
-        //     setJourneyGraphics(savefile, game->level);
-        //     setPalette();
-        //     zoneFlash();
-        //     refreshSkin = true;
         }
     }
 
