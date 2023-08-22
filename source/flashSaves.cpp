@@ -313,6 +313,7 @@ void save_sram_flash()
 
 	aprint("Saving...",21,19);
     irq_disable(II_VBLANK);
+	int prev = gradientEnabled;
 	gradient(false);
     int stat_value = REG_SNDSTAT;
     int dsc_value = REG_SNDDSCNT;
@@ -343,6 +344,9 @@ void save_sram_flash()
     irq_enable(II_SERIAL);
     irq_delete(II_KEYPAD);
     irq_enable(II_VBLANK);
+
+	if(prev)
+		gradient(1);
 
 	aprint("   Saved!",21,19);//spaces necessary to "erase" the previous text
 }
