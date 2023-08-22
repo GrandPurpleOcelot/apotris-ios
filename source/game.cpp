@@ -3010,6 +3010,10 @@ void showGoalLine(){
 
     int remaining = game->goal - goal;
 
+    if(game->pawn.big){
+        remaining *= 2;
+    }
+
     if(remaining < 20 && remaining > 0){
         height = 20 - remaining;
     }else{
