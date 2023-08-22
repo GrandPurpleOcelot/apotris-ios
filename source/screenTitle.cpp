@@ -291,7 +291,6 @@ bool newTitleScene::control(){
         newOptions.tuning = getTuning();
         newOptions.bigMode = q.big;
         newOptions.subMode = q.submode;
-        savefile->stats.gamesStarted++;
 
         if(newOptions.mode != BlockEngine::BATTLE){
             startGame(newOptions,qran());

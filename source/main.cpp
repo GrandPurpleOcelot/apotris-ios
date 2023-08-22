@@ -914,8 +914,9 @@ void startGame(BlockEngine::Options options,int seed){
     if(game != nullptr)
         delete game;
     game = new Game(options.mode,seed,options.bigMode);
-
     game->setOptions(options);
+
+    savefile->stats.gamesStarted++;
 
     if(previousGameOptions != nullptr)
         delete previousGameOptions;

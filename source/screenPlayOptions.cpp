@@ -266,7 +266,6 @@ void PlayOptionScene::start(){
     newOptions.subMode = subMode;
     newOptions.trainingMode = training;
     newOptions.bTypeHeight = bTypeHeight;
-    savefile->stats.gamesStarted++;
 
     proMode = (key_is_down(KEY_L) || key_is_down(KEY_R)) ^ (savefile->settings.pro);
 
