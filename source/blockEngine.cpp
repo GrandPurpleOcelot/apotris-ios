@@ -1233,6 +1233,10 @@ void Game::next() {//~21-29k cycles
     pawn.y = (int)lengthY / 2;
     pawn.x = (int)lengthX / 2 - 2;
 
+    if(game->pawn.big){
+        pawn.x++;
+    }
+
     pawn.current = queue.front();
     activePiece = pawn.current;
     queue.pop_front();
@@ -1251,55 +1255,7 @@ void Game::next() {//~21-29k cycles
             pawn.y--;
     }
 
-    if(game->pawn.big){
-        pawn.x++;
-    }
-
-    pawn.rotation = 0;
-    if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
-        if(rotationSystem == ARS){
-            if(rotates[0])
-                rotate(1,1);
-            else if(rotates[1]){
-                rotate(-1,1);
-                if(rotates[2] && rotationSystem == ARS)
-                    rotate(-1,1);
-            } else if(rotates[2] && rotationSystem != ARS)
-                rotate(2,1);
-        }else{
-            int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
-
-            pawn.rotation = sum + 4 * (sum < 0);
-        }
-
-        sounds.initial = 1;
-    }
-
-    //check if stack has reached top 3 lines
-    const int line = 24;
-    bool check = bitboard[line] != 0;
-
-    if(pawn.rotation && rotationSystem == SRS){
-        int lowestPart = pawn.lowestBlock[pawn.rotation];
-
-        int n = (40 - 19) - (lowestPart + pawn.y);
-
-        pawn.y += std::min(n,0);
-    }
-
-    if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
-        pawn.y-=1;
-        if (!checkRotation(0, 0, pawn.rotation)){
-            if(zoneTimer && zonedLines) {
-                if(!toEndZone)
-                    endZone();
-            } else if(gameMode == TRAINING || gameMode == NO_MODE || gameMode == ZEN)
-                clearBoard();
-            else{
-                lost = 1;
-            }
-        }
-    }
+    setupPawnSpawn();
 
     lastMoveDx = 0;
     lastMoveDy = 0;
@@ -1448,60 +1404,7 @@ void Game::hold(int dir) {
         }
     }
 
-    pawn.rotation = 0;
-    if(rotationSystem == ARS || (irs && ((fromLockRotate && maxClearDelay > 1) || !initialType))){
-        if(rotationSystem == ARS){
-            if(rotates[0])
-                rotate(1,1);
-            else if(rotates[1]){
-                rotate(-1,1);
-                if(rotates[2] && rotationSystem == ARS)
-                    rotate(-1,1);
-            } else if(rotates[2] && rotationSystem != ARS)
-                rotate(2,1);
-        }else{
-            int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
-
-            pawn.rotation = sum + 4 * (sum < 0);
-        }
-
-        sounds.initial = 1;
-    }
-
-    //check if stack has reached top 3 lines
-    bool check = (bitboard[24] != 0);
-
-    if(pawn.rotation && rotationSystem == SRS){
-        int lowestPart = 0;
-        for(int i = 3; i >= 0; i--){//find height of lowest block in column
-            for(int j = 0; j < 4; j++){
-                if(pawn.board[pawn.rotation][i][j]){
-                    lowestPart = i;
-                    break;
-                }
-            }
-
-            if(lowestPart == i)
-                break;
-        }
-
-        int n = (40 - 19) - (lowestPart + pawn.y);
-
-        pawn.y += std::min(n,0);
-    }
-
-    if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
-        pawn.y-=1;
-        if (!checkRotation(0, 0, pawn.rotation)){
-            if(zoneTimer && zonedLines)
-                endZone();
-            else if(gameMode == TRAINING || gameMode == NO_MODE || gameMode == ZEN)
-                clearBoard();
-            else{
-                lost = 1;
-            }
-        }
-    }
+    setupPawnSpawn();
 
     sounds.hold = 1;
     holdCounter++;
@@ -2630,4 +2533,56 @@ void Game::demoGarbage(){
 
     for(int i = 20; i < 40; i++)
         connectBoard(i, i);
+}
+
+void Game::setupPawnSpawn(){
+    pawn.rotation = 0;
+    if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
+        if(rotationSystem == ARS){
+            if(rotates[0])
+                rotate(1,1);
+            else if(rotates[1]){
+                rotate(-1,1);
+                if(rotates[2] && rotationSystem == ARS)
+                    rotate(-1,1);
+            } else if(rotates[2] && rotationSystem != ARS)
+                rotate(2,1);
+        }else{
+            int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
+
+            pawn.rotation = sum + 4 * (sum < 0);
+        }
+
+        sounds.initial = 1;
+    }
+
+    //check if stack has reached top 3 lines
+    const int line = 24 / (1 + pawn.big);
+    bool check = bitboard[line] != 0;
+
+    if(pawn.rotation && rotationSystem == SRS){
+        int lowestPart = pawn.lowestBlock[pawn.rotation];
+
+        int n = (40 - 19) - (lowestPart + pawn.y);
+
+        if(pawn.big){
+            n = (20 - 9) - (lowestPart + pawn.y);
+        }
+
+        pawn.y += std::min(n,0);
+    }
+
+    if (check || !checkRotation(0, 0, pawn.rotation) || gameMode == CLASSIC){
+        pawn.y-=1;
+        if (!checkRotation(0, 0, pawn.rotation)){
+            if(zoneTimer && zonedLines) {
+                if(!toEndZone)
+                    endZone();
+            } else if(gameMode == TRAINING || gameMode == NO_MODE || gameMode == ZEN)
+                clearBoard();
+            else{
+                lost = 1;
+            }
+        }
+    }
 }

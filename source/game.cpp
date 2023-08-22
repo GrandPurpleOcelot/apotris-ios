@@ -707,8 +707,9 @@ void showPawn() {
         sprite_enable_mosaic(pawnSprite);
         sprite_set_pos(pawnSprite, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->pawn.y - game->boardOffset) * 8 + shake * savefile->settings.shake);
     }else{
-        if(game->pawn.y * 2 < 16){
+        if(game->pawn.y * 2 < 14){
             sprite_hide(pawnSprite);
+            log("here!");
             return;
         }
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
@@ -782,7 +783,7 @@ void showShadow() {
         sprite_set_attr(pawnShadow, ShapeSquare, 2, 16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
         sprite_set_pos(pawnShadow, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->lowest() - game->boardOffset) * 8 + shake * savefile->settings.shake);
     }else{
-        if(game->pawn.y * 2 < 16){
+        if(game->pawn.y * 2 < 14){
             sprite_hide(pawnShadow);
             return;
         }

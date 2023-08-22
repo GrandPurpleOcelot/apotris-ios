@@ -452,6 +452,7 @@ namespace BlockEngine
         void fixConnected(std::list<int>);
         void connectBoard(int startY, int endY);
         void updateColumns(int height);
+        void setupPawnSpawn();
 
         int getNbr(int x, int y, int ex, int sy, int ey);
 
