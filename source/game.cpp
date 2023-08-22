@@ -533,6 +533,9 @@ void showBackground(int offset) {
             }
         }
 
+        if(savefile->settings.clearEffect == 3)
+            return;
+
         for(auto const& i : game->linesToClear){
             int y = i - 20 + offset;
 
@@ -616,6 +619,9 @@ void showBackground(int offset) {
 
             }
         }
+
+        if(savefile->settings.clearEffect == 3)
+            return;
 
         for(auto const& line : game->linesToClear){
             int l = line*2 - 20 + offset;

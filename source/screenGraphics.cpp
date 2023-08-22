@@ -21,6 +21,9 @@ void setClearEffect(){
     case 2:
         loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
         break;
+    case 3:
+        clearTiles(0, 3, 1);
+        break;
     default:
         loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
         break;
