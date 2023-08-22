@@ -43,6 +43,7 @@
 #include "../build/sprite48tiles_bin.h"
 #include "../build/sprite49tiles_bin.h"
 #include "../build/sprite50tiles_bin.h"
+#include "../build/sprite51tiles_bin.h"
 
 
 #include "../build/title1tiles_bin.h"

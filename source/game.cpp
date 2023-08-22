@@ -214,7 +214,7 @@ void checkSounds() {
             for(int i = 0; i < 3; i++)
                 sprite_hide(moveSprites[i]);
 
-        // rumbleTimer = rumbleMax * savefile->settings.rumble;
+        rumbleTimer = rumbleMax * savefile->settings.rumble;
     }
 
     if (game->sounds.invalid){
@@ -667,6 +667,7 @@ void showPawn() {
 
     int * b = BlockEngine::getShape(game->activePiece, game->pawn.rotation, game->rotationSystem);
 
+    clearSpriteTiles(16 * 7, 4, 4);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             int n = b[i * 4 + j];
@@ -681,8 +682,6 @@ void showPawn() {
                     setSpriteTile(16 * 7, j, i, 4, blockSprite);
                 else
                     setSpriteTile(16 * 7, j, i, 4, classicTiles[savefile->settings.skin-7][game->activePiece]);
-            }else{
-                clearSpriteTile(16*7,j,i,4);
             }
         }
     }
@@ -712,7 +711,6 @@ void showPawn() {
     }else{
         if(game->pawn.y * 2 < 14){
             sprite_hide(pawnSprite);
-            log("here!");
             return;
         }
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
@@ -760,12 +758,16 @@ void showShadow() {
 
     int * b = BlockEngine::getShape(game->activePiece, game->pawn.rotation, game->rotationSystem);
 
+    clearSpriteTiles(16 * 8, 4, 4);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            if(b[i * 4 + j] > 0){
-                setSpriteTile(16 * 8, j, i, 4, shadowTexture);
-            } else
-                clearSpriteTile(16*8, j, i, 4);
+            int n = b[i * 4 + j];
+            if(n > 0){
+                if(savefile->settings.shadow == 5)
+                    setSpriteTile(16 * 8, j, i, 4, &sprite51tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
+                else
+                    setSpriteTile(16 * 8, j, i, 4, shadowTexture);
+            }
         }
     }
 
