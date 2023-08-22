@@ -2553,7 +2553,8 @@ void Game::setupPawnSpawn(){
             pawn.rotation = sum + 4 * (sum < 0);
         }
 
-        sounds.initial = 1;
+        if(pawn.rotation)
+            sounds.initial = 1;
     }
 
     //check if stack has reached top 3 lines

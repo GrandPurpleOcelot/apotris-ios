@@ -347,7 +347,7 @@ void checkSounds() {
     }
 
     if(game->sounds.initial){
-        // sfx(SFX_INITIAL);
+        sfx(SFX_INITIAL);
     }
 
     std::string sectionText = "";
@@ -1441,10 +1441,6 @@ void GameScene::countdown() {
     }
 
     game->chargeDas();
-
-    if (!(game->gameMode == TRAINING)) {
-        playSongRandom(1);
-    }
 
     counted = true;
 }
@@ -2788,6 +2784,9 @@ void GameScene::update(){
 
     if(!counted){
         countdown();
+
+        if (!(game->gameMode == TRAINING))
+            playSongRandom(1);
     }
 
     diagnose();

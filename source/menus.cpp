@@ -858,7 +858,6 @@ int GameScene::pauseMenu(){
             clearText();
             // updateText();
             paused = false;
-            resumeSong();
             break;
         }
 
@@ -875,7 +874,6 @@ int GameScene::pauseMenu(){
             }else{
                 clearText();
                 paused = false;
-                resumeSong();
                 break;
             }
         }
@@ -935,6 +933,8 @@ int GameScene::pauseMenu(){
 
     if(count)
         countdown();
+
+    resumeSong();
 
     return 0;
 }
