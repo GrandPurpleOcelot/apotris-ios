@@ -43,7 +43,6 @@ Function getActionFromKey(int key);
 void liftKeys();
 void setJourneyGraphics(Save * save, int level);
 void replayControl();
-void showBackgroundBig(int offset);
 
 INLINE int prep(int n);
 
@@ -113,7 +112,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
 
-bool enableBot = true;
+bool enableBot = false;
 static bool refreshSkin = false;
 // Bot *testBot;
 
@@ -533,8 +532,12 @@ void showBackground(int offset) {
             }
         }
 
-        if(savefile->settings.clearEffect == 3)
+        if(savefile->settings.clearEffect == 3){
+            for (int i = 0; i < 10; i++)
+                setTile(25, 10 + i, offset - 1, 0);
+
             return;
+        }
 
         for(auto const& i : game->linesToClear){
             int y = i - 20 + offset;
@@ -620,8 +623,12 @@ void showBackground(int offset) {
             }
         }
 
-        if(savefile->settings.clearEffect == 3)
+        if(savefile->settings.clearEffect == 3){
+            for (int i = 0; i < 10; i++)
+                setTile(25, 10 + i, offset - 1, 0);
+
             return;
+        }
 
         for(auto const& line : game->linesToClear){
             int l = line*2 - 20 + offset;
