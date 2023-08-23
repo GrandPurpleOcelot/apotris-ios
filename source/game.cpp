@@ -3015,8 +3015,6 @@ void showGoalLine(){
     int goal = 0;
     if (gm == DIG)
         goal = game->garbageCleared;
-    else if (gm == ULTRA || gm == BLITZ)
-        goal = game->timer;
     else if (gm == SPRINT && game->subMode)
         goal = game->linesSent;
     else if (gm != SURVIVAL)
