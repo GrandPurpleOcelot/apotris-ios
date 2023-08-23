@@ -922,7 +922,7 @@ int Game::clear(Drop drop) {
         }
 
         for(int x = 0; x < lengthX; x++){
-            for(int y = lengthY-stackHeight; y < lengthY; y++){
+            for(int y = stackHeight; y < lengthY; y++){
                 if(board[y][x]){
                     columnHeights[x] = lengthY-y;
                     break;
@@ -955,14 +955,8 @@ int Game::clear(Drop drop) {
     if(!zoneTimer)
         linesCleared+=clearCount;
 
-    auto index = linesToClear.begin();
-    for (int j = 0; j < lengthY; j++) {
-        if(j == *index){
-            ++index;
-            continue;
-        }
-
-        if(bitboard[j]){
+    for(int y = lengthY - 1; y >= stackHeight; y--){
+        if(bitboard[y] != 0 && bitboard[y] != fullLine){
             isPerfectClear = false;
             break;
         }
@@ -1104,8 +1098,9 @@ int Game::clear(Drop drop) {
         }
     }
 
-    if(!zoneTimer)
-        stackHeight += clearCount;
+    // if(!zoneTimer){
+    //     stackHeight += clearCount;
+    // }
 
     if(gameMode == MASTER && !disappearing){
         gradePoints += (int) ((float) gradeTable[internalGrade][clearCount+1] * masterComboMultiplayer[(comboCounter < 10)?comboCounter:9][clearCount-1] + 1) * ((int)(level/250)+1);
@@ -1546,10 +1541,9 @@ void Game::removeClearLock() {
     const int len = (int)linesToClear.size();
 
     int pos = linesToClear.back();
-    for(int i = pos; i >= stackHeight-len; i--){
-        if(*index == i){
-            if(index != linesToClear.rend())
-                index++;
+    for(int i = pos; i >= stackHeight; i--){
+        if(index != linesToClear.rend() && *index == i){
+            index++;
         }else{
             memcpy32(board[pos],board[i],10);
             bitboard[pos] = bitboard[i];
@@ -1559,12 +1553,14 @@ void Game::removeClearLock() {
         }
     }
 
-    for(int i = stackHeight-len-1; i < stackHeight; i++){
+    for(int i = stackHeight; i < stackHeight + len; i++){
         memset32(board[i],0,10);
         bitboard[i] = 0;
         if(disappearing)
             memset16(disappearTimers[i],0,10);
     }
+
+    stackHeight += len;
 
     for(int x = 0; x < lengthX; x++){
         int found = -1;
