@@ -2583,6 +2583,8 @@ void refreshCredits(){
 }
 
 void showFullMeter(){
+    setPaletteColor(16 + 12, 2, 0x7fff, 1);
+
     if(game->zoneCharge != 32){
         if(fullMeterTimer < fullMeterAnimationLength){
             fullMeterTimer = 0;
