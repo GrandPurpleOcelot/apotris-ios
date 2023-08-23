@@ -1104,7 +1104,8 @@ int Game::clear(Drop drop) {
         }
     }
 
-    stackHeight += clearCount;
+    if(!zoneTimer)
+        stackHeight += clearCount;
 
     if(gameMode == MASTER && !disappearing){
         gradePoints += (int) ((float) gradeTable[internalGrade][clearCount+1] * masterComboMultiplayer[(comboCounter < 10)?comboCounter:9][clearCount-1] + 1) * ((int)(level/250)+1);
@@ -1393,7 +1394,7 @@ void Game::hold(int dir) {
         pawn.current = temp;
         activePiece = temp;
         pawn.setBlock(rotationSystem);
-		pawn.y = (int)lengthY / 2;
+        pawn.y = (int)lengthY / 2;
         pawn.x = (int)lengthX / 2 - 2;
 
         if(pawn.big){
@@ -1564,17 +1565,6 @@ void Game::removeClearLock() {
         if(disappearing)
             memset16(disappearTimers[i],0,10);
     }
-
-    // for (int i = 0; i < len; i++) {
-    //     for (int j = *index; j >= stackHeight-len; j--){
-    //         log(std::to_string(j));
-    //         memcpy32(board[j],board[j-1],10);
-    //         bitboard[j] = bitboard[j-1];
-    //         if(disappearing)
-    //             memcpy16(disappearTimers[j],disappearTimers[j-1],10);
-    //     }
-    //     ++index;
-    // }
 
     for(int x = 0; x < lengthX; x++){
         int found = -1;
