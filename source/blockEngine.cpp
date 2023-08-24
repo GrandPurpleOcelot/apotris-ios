@@ -1663,7 +1663,7 @@ void Game::generateGarbage(int height,int mode){
             board[i][j]=8;
         }
 
-        bitboard[i] = 0x3ff & ~(1 << hole);
+        bitboard[i] = fullLine & ~(1 << hole);
     }
 
     garbageHeight+=height;
