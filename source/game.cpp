@@ -112,7 +112,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
 
-bool enableBot = false;
+bool enableBot = true;
 static bool refreshSkin = false;
 // Bot *testBot;
 
@@ -151,6 +151,7 @@ void GameScene::draw(){
     showQueue();
 
     drawGrid();//10k idle, 20k when clearing
+    drawFrame(-1);
 
     showGoalLine();
 
@@ -1230,7 +1231,7 @@ void GameScene::showText() {
 
         sprite_unhide(replaySprite,0);
 
-        sprite_set_attr(replaySprite, ShapeSquare, 1, 250, 15, 1);
+        sprite_set_attr(replaySprite, ShapeSquare, 1, 255, 15, 1);
 
         const int width = (savefile->settings.aspectRatio == 0)? 240 : 227;
 
@@ -1540,23 +1541,52 @@ void drawFrame(int layer) {
     if(game->zoneTimer)
         p = 0;
 
-    for (int i = 0; i < 20; i++) {
-        for (int j = 0; j < 2; j++) {
-            setTile(l, j * 11 + 9, i, tileBuild(0x4,(j > 0), false, p));
+    if(layer >= 0){
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 2; j++) {
+                setTile(l, j * 11 + 9, i, tileBuild(0x4,(j > 0), false, p));
+            }
+        }
+
+        #ifdef PC
+
+        if(!game->zoneTimer){
+            setTile(l,20,20,tileBuild(29,true,true,p));// right bottom frame corner
+            setTile(l,9,20,tileBuild(29,false,true,p));// left bottom frame corner
+
+            for(int i = 0; i < 10; i++)
+                setTile(l,10+i,20,tileBuild(28,false,true,p));
+        }
+
+        #endif
+
+    }else{
+        //left
+        for(int i = 0; i < 5; i++){
+            OBJ_ATTR* frameSprite = &obj_buffer[77+i];
+            sprite_unhide(frameSprite, 0);
+            sprite_set_attr(frameSprite, ShapeTall, 1, 200 + i * 4, p, 1);
+            sprite_set_pos(frameSprite, 9 * 8 + push * savefile->settings.shake, i * 32 + shake * savefile->settings.shake);
+        }
+
+        //right
+        for(int i = 0; i < 5; i++){
+            OBJ_ATTR* frameSprite = &obj_buffer[77+5+i];
+            sprite_unhide(frameSprite, 0);
+            sprite_set_attr(frameSprite, ShapeTall, 1, 220 + i * 4, p, 1);
+            sprite_enable_flip(frameSprite, true, false);
+            sprite_set_pos(frameSprite, 20 * 8 + push * savefile->settings.shake, i * 32 + shake * savefile->settings.shake);
+        }
+
+        //bottom
+        for(int i = 0; i < 3; i++){
+            OBJ_ATTR* frameSprite = &obj_buffer[77+10+i];
+            sprite_unhide(frameSprite, 0);
+            sprite_set_attr(frameSprite, ShapeWide, 1, 240 + i * 4, p, 1);
+            sprite_enable_flip(frameSprite, false, true);
+            sprite_set_pos(frameSprite, 9 * 8 + i * 32 + push * savefile->settings.shake, 20 * 8 + shake * savefile->settings.shake);
         }
     }
-
-    #ifdef PC
-
-    if(!game->zoneTimer){
-        setTile(l,20,20,tileBuild(29,true,true,p));// right bottom frame corner
-        setTile(l,9,20,tileBuild(29,false,true,p));// left bottom frame corner
-
-        for(int i = 0; i < 10; i++)
-            setTile(l,10+i,20,tileBuild(28,false,true,p));
-    }
-
-    #endif
 
     progressBar(layer);
 
@@ -1768,7 +1798,7 @@ void progressBar(int layer) {
 
     int l = 25 + layer;
 
-    int current;
+    int current = 0;
     int max = game->goal;
 
     if (game->gameMode == DIG)
@@ -1779,38 +1809,38 @@ void progressBar(int layer) {
         current = game->linesSent;
     else if (game->gameMode != SURVIVAL)
         current = game->linesCleared;
-    else{
-        setTile(l,20,20,tileBuild(29,true,true,8));// right bottom frame corner
-        return;
-    }
-
 
     if (game->gameMode != BATTLE) {
         showBar(current, max, 20, 8, layer);
-        setTile(l,20,20,tileBuild(33,false,false,8));// right bottom frame corner
-        setTile(l,9,20,tileBuild(29,false,true,8));// left bottom frame corner
+
+        if(layer >= 0){
+            setTile(l,20,20,tileBuild(33,false,false,8));// right bottom frame corner
+            setTile(l,9,20,tileBuild(29,false,true,8));// left bottom frame corner
+        }
     }else{
         if (++attackFlashTimer > attackFlashMax)
             attackFlashTimer = 0;
 
+        int p = 8;
+
+        if(layer < 0)
+            p += 16;
+
         if (attackFlashTimer < attackFlashMax / 2) {
-            setPaletteColor(8, 4, 0x421f, 1);
-            // memset32(&pal_bg_mem[8 * 16 + 5], 0x421f, 1);
+            setPaletteColor(p, 4, 0x421f, 1);
         } else {
-            setPaletteColor(8, 4, 0x7fff, 1);
-            // memset32(&pal_bg_mem[8 * 16 + 5], 0x7fff, 1);
+            setPaletteColor(p, 4, 0x7fff, 1);
         }
 
         //attack bar
         showBar(game->getIncomingGarbage(), 20, 9, 8, layer);
-        setTile(l,9,20,tileBuild(33,true,false,8)); // left bottom frame corner
+
+        if(layer >= 0)
+            setTile(l,9,20,tileBuild(33,true,false,8)); // left bottom frame corner
     }
 }
 
 void showBar(int current, int max, int x, int palette, int layer) {
-    // #ifdef GBA
-    // palette *= 0x1000;
-
     if (max > 10000) {
         current /= 10;
         max /= 10;
@@ -1821,103 +1851,145 @@ void showBar(int current, int max, int x, int palette, int layer) {
     int pixels = fx2int(fxmul(fxdiv(int2fx(current), int2fx(max)), int2fx(158)));
     int segments = fx2int(fxdiv(int2fx(current), fxdiv(int2fx(max), int2fx(20))));
     int edge = pixels - segments * 8 + 1 * (segments != 0);
+    int t = 0;
 
-    // u16* dest = (u16*)se_mem[26];
-
-    // dest += x;
-    for (int i = 0; i < 20; i++) {
-
-        if (i == 0) {
-            if (segments == 19) {
-                if (edge == 0)
-                    setTile(l,x,i,tileBuild(0x6,false,false,palette));
-                    // *dest = 0x0006 + palette;
-                else {
-                    setTile(l,x,i,tileBuild(0xa,false,false,palette));
-                    // *dest = 0x000a + palette;
-                    for (int j = 0; j < 7; j++) {
-                        // TILE* tile = &tile_mem[0][10];
-                        if (j == 0) {
-                            if (6 - j > edge)
-                                setTileRow(0,10,j+1,0x13300332);
-                                // tile->data[j + 1] = 0x13300332;
-                            else
-                                setTileRow(0,10,j+1,0x13344332);
-                                // tile->data[j + 1] = 0x13344332;
-                        } else {
-                            if (6 - j > edge)
-                                setTileRow(0,10,j+1,0x13000032);
-                                // tile->data[j + 1] = 0x13000032;
-                            else
-                                setTileRow(0,10,j+1,0x13444432);
-                                // tile->data[j + 1] = 0x13444432;
-                        }
-                    }
+    if(layer >= 0){
+        //top
+        t = 6;
+        if (segments == 19 && edge != 0) {
+            t = 10;
+            for (int j = 0; j < 7; j++) {
+                if (j == 0) {
+                    if (6 - j > edge)
+                        setTileRow(0,10,j+1,0x13300332);
+                    else
+                        setTileRow(0,10,j+1,0x13344332);
+                } else {
+                    if (6 - j > edge)
+                        setTileRow(0,10,j+1,0x13000032);
+                    else
+                        setTileRow(0,10,j+1,0x13444432);
                 }
-            } else if (segments >= 20)
-                setTile(l,x,i,tileBuild(0x8,false,false,palette));
-                // *dest = 0x0008 + palette;
-            else
-                setTile(l,x,i,tileBuild(0x6,false,false,palette));
-                // *dest = 0x0006 + palette;
+            }
+        } else if (segments >= 20){
+            t = 8;
+        }
 
-        } else if (i == 19) {
-            if (segments == 0) {
-                if (edge == 0)
-                    setTile(l,x,i,tileBuild(0x6,false,true,palette));
-                    // *dest = 0x0806 + palette;
-                else {
-                    // *dest = 0x080a + palette;
-                    setTile(l,x,i,tileBuild(0xa,false,true,palette));
-                    for (int j = 0; j < 7; j++) {
-                        // TILE* tile = &tile_mem[0][10];
-                        if (j == 0) {
-                            if (j >= edge)
-                                setTileRow(0,10,j+1,0x13300332);
-                                // tile->data[j + 1] = 0x13300332;
-                            else
-                                setTileRow(0,10,j+1,0x13344332);
-                                // tile->data[j + 1] = 0x13344332;
-                        } else {
-                            if (j >= edge)
-                                setTileRow(0,10,j+1,0x13000032);
-                                // tile->data[j + 1] = 0x13000032;
-                            else
-                                setTileRow(0,10,j+1,0x13444432);
-                                // tile->data[j + 1] = 0x13444432;
-                        }
-                    }
-                }
-            } else
-                setTile(l,x,i,tileBuild(0x8,false,true,palette));
-                // *dest = 0x0808 + palette;
-        } else {
-            if (19 - i > segments) {
-                setTile(l,x,i,tileBuild(0x7,false,false,palette));
-                // *dest = 0x0007 + palette;
-            } else if (19 - i == segments) {
-                setTile(l,x,i,tileBuild(0xb,false,false,palette));
-                // *dest = 0x000b + palette;
+        setTile(l,x,0,tileBuild(t,false,false,palette));
+
+        //bottom
+        t = 8;
+        if (segments == 0) {
+            t = 6;
+            if (edge != 0){
+                t = 10;
                 for (int j = 0; j < 7; j++) {
-                    // TILE* tile = &tile_mem[0][11];
-                    if (7 - j > edge) {
-                        setTileRow(0,11,j+1,0x13000032);
-                        // tile->data[j] = 0x13000032;
+                    if (j == 0) {
+                        if (j >= edge)
+                            setTileRow(0,10,j+1,0x13300332);
+                        else
+                            setTileRow(0,10,j+1,0x13344332);
                     } else {
-                        setTileRow(0,11,j+1,0x13444432);
-                        // tile->data[j] = 0x13444432;
+                        if (j >= edge)
+                            setTileRow(0,10,j+1,0x13000032);
+                        else
+                            setTileRow(0,10,j+1,0x13444432);
                     }
                 }
-            } else {
-                setTile(l,x,i,tileBuild(0x9,false,false,palette));
-                // *dest = 0x0009 + palette;
             }
         }
 
-        // dest += 32;
-    }
+        setTile(l,x,19,tileBuild(t,false,true,palette));
 
-    // #endif
+        //middle
+        for (int i = 1; i < 19; i++) {
+            t = 9;
+            if (19 - i > segments) {
+                t = 7;
+            } else if (19 - i == segments) {
+                t = 11;
+                for (int j = 0; j < 7; j++) {
+                    if (7 - j > edge) {
+                        setTileRow(0,11,j+1,0x13000032);
+                    } else {
+                        setTileRow(0,11,j+1,0x13444432);
+                    }
+                }
+            }
+
+            setTile(l,x,i,tileBuild(t,false,false,palette));
+        }
+    }else{
+        // TILE temp;
+
+        //top
+        t = 6;
+        if (segments == 19 && edge != 0) {
+            t = 10;
+
+            // memcpy32(&temp,&sprite8tiles_bin[32 * t],8);
+            // for (int j = 0; j < 7; j++) {
+            //     if (j == 0) {
+            //         if (6 - j > edge)
+            //             setTileRow(0,10,j+1,0x13300332);
+            //         else
+            //             setTileRow(0,10,j+1,0x13344332);
+            //     } else {
+            //         if (6 - j > edge)
+            //             setTileRow(0,10,j+1,0x13000032);
+            //         else
+            //             setTileRow(0,10,j+1,0x13444432);
+            //     }
+            // }
+        } else if (segments >= 20){
+            t = 8;
+        }
+
+        setSpriteTile(200 + (x > 9) * 20, 0, 0, 1, &sprite8tiles_bin[32 * (t-6)]);
+
+        //bottom
+        t = 13;
+        if (segments == 0) {
+            t = 12;
+            if (edge != 0){
+                t = 14;
+                // for (int j = 0; j < 7; j++) {
+                //     if (j == 0) {
+                //         if (j >= edge)
+                //             setTileRow(0,10,j+1,0x13300332);
+                //         else
+                //             setTileRow(0,10,j+1,0x13344332);
+                //     } else {
+                //         if (j >= edge)
+                //             setTileRow(0,10,j+1,0x13000032);
+                //         else
+                //             setTileRow(0,10,j+1,0x13444432);
+                //     }
+                // }
+            }
+        }
+
+        setSpriteTile(200 + (x > 9) * 20 + 16, 0, 3, 1, &sprite8tiles_bin[32 * (t-6)]);
+
+        //middle
+        for (int i = 1; i < 19; i++) {
+            t = 9;
+            if (19 - i > segments) {
+                t = 7;
+            } else if (19 - i == segments) {
+                t = 11;
+                // for (int j = 0; j < 7; j++) {
+                //     if (7 - j > edge) {
+                //         setTileRow(0,11,j+1,0x13000032);
+                //     } else {
+                //         setTileRow(0,11,j+1,0x13444432);
+                //     }
+                // }
+            }
+
+            setSpriteTile(200 + (x > 9) * 20 + (i/4) * 4, 0, i % 4, 1, &sprite8tiles_bin[32 * (t-6)]);
+        }
+    }
 }
 
 void showBestMove(){
@@ -2737,8 +2809,11 @@ void replayControl(){
 
 void GameScene::init(){
     reset();
+
+    //hold frame tiles
     loadSpriteTiles(512, sprite6tiles_bin,4,4);
 
+    //queue frame tiles
     loadSpriteTiles(512 + 16, sprite6tiles_bin,4,3);
     loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3,4,1,4);
     loadSpriteTiles(512 + 32, &sprite6tiles_bin[128],4,2);
@@ -2746,7 +2821,21 @@ void GameScene::init(){
     loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
     loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
 
-    loadSpriteTiles(250, &sprite50tiles_bin, 2, 2);
+    //replay sprite tiles
+    loadSpriteTiles(255, &sprite50tiles_bin, 2, 2);
+
+    //board side frame tiles
+    for(int i = 0; i < 10; i++)
+        for(int j = 0; j < 4; j++)
+            loadSpriteTilesPartial(200 + i * 4, &sprite5tiles_bin, 0, j, 1, 1, 1);
+
+    //board side frame tiles
+    for(int i = 1; i < 11; i++)
+        loadSpriteTilesPartial(240 + (i / 4) * 4, &sprite20tiles_bin[32], i % 4, 0, 1, 1, 4);
+
+    //board frame corners
+    loadSpriteTilesPartial(240, &sprite20tiles_bin[32 * 2], 0, 0, 1, 1, 4);
+    loadSpriteTilesPartial(248, &sprite20tiles_bin[32 * 3], 3, 0, 1, 1, 4);
 
     setGradient(savefile->settings.backgroundGradient);
 
@@ -2755,7 +2844,10 @@ void GameScene::init(){
     clearTilemap(25);
 
     clearTiles(2,110,400);
-    clearSpriteTiles((927 - 32 * 3), 8 * 5, 3); // clear tiles in place Effect area
+
+    for(int i = 0; i < 3; i++)
+        clearSpriteTiles((927 - 32 * 3) + i * 8 * 4, 8, 4); // clear tiles in place Effect area
+
     setSmallTextArea(110, 3, 7, 9, 10);
     clearText();
     gameSeconds = 0;
@@ -2772,7 +2864,7 @@ void GameScene::init(){
     clearSprites(128);
     updateText();
 
-    drawFrame(0);
+    drawFrame(-1);
     drawFrameBackgrounds();
 
     stopSong();
@@ -2834,7 +2926,7 @@ void GameScene::update(){
     }
     handleMultiplayer(0);
 
-    progressBar(0);
+    progressBar(-1);
 
     if(game->gameMode == BATTLE && !multiplayer){
 
@@ -2949,7 +3041,7 @@ void GameScene::update(){
 
     if (playAgain) {
         playAgain = false;
-        addStats();
+        addGameStats();
         paused = true;
         startGame();
         changeScene(new GameScene());

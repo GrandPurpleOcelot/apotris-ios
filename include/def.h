@@ -182,7 +182,7 @@ extern void updateGrid();
 
 extern void updateFluid();
 
-extern void addStats();
+extern void addGameStats();
 
 extern std::string modeToString(BlockEngine::Modes mode);
 

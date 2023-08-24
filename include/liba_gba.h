@@ -27,10 +27,8 @@ INLINE void setSpritePixel(int index, u8 tx, u8 ty, u8 width, u8 x, u8 y, u8 col
         t->data[y] &= ~(0xf << (x * 4));
 }
 
-//FIXME:
-//width is ignored, it's hardcoded to `4`
 INLINE void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src){
-    memcpy32(&tile_mem[4][index + ty * 4 + tx], src, 8);
+    memcpy32(&tile_mem[4][index + ty * width + tx], src, 8);
 }
 
 INLINE void clearSpriteTile(int index, u8 tx, u8 ty, u8 width){

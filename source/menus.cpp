@@ -270,7 +270,7 @@ int GameScene::endScreen(){
     if(game->lost)
         savefile->stats.gamesLost++;
 
-    addStats();
+    addGameStats();
 
     showStats(showingStats, totalTime, ppsStr, true);
 
@@ -779,7 +779,7 @@ int GameScene::pauseMenu(){
                     resumeSong();
                     break;
                 } else if (n == 1) {
-                    addStats();
+                    addGameStats();
                     startGame();
                     changeScene(new GameScene());
                     paused = false;
@@ -802,7 +802,7 @@ int GameScene::pauseMenu(){
                     enableBlend(prevBld);
                     sfx(SFX_MENUCANCEL);
                     buildBG(3, 0, 27, 0, 1, true);
-                    addStats();
+                    addGameStats();
                     changeScene(new MainMenuScene(), Transitions::FADE);
                     return 1;
                 }
@@ -1387,7 +1387,7 @@ void sleepMenu(){
     toggleBG(3, true);
 }
 
-void addStats(){
+void addGameStats(){
     savefile->stats.gameStats.add(game->statTracker);
 
     if(game->gameMode == MARATHON && game->level > savefile->stats.maxLevel)
