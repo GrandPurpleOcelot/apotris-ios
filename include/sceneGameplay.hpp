@@ -146,10 +146,10 @@ class GameplayOptionScene : public OptionListScene{
     std::string name(){return "Gameplay";};
         std::list<Element*> getElementList(){
             return {
-                new BigModeElement(),
                 new ProModeElement(),
                 new GoalLineElement(),
                 new RotationSystemElement(),
+                new BigModeElement(),
             };
         };
 

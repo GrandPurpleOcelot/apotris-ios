@@ -28,7 +28,10 @@ std::string getDescription(std::string element){
         return "Old school stacking mechanics.";
 
     }else if(element == "Master"){
-        return "Become a Grandmaster.";
+        return "Get the highest Grade while the game gets aggressively faster.";
+
+    }else if(element == "Zen"){
+        return "The goal is to relax...";
 
     }else if(element == "2P Battle"){
         return "Battle your friends through the Link Cable.";
@@ -59,7 +62,7 @@ std::string getDescription(std::string element){
         return "Press/Hold L and R to restart the game.";
 
     }else if(element == "Rumble"){
-        return "Needs compatible hardware.";
+        return "Enables rumble on compatible hardware (REQUIRES RESTART!)";
 
     }else if(element == "Reset Controls"){
         return "Set bindings back to default.";
@@ -94,6 +97,18 @@ std::string getDescription(std::string element){
 
     }else if(element == "Initial System"){
         return "TYPE A always buffers actions, TYPE B only buffers if you started holding the button during the delay.";
+// GAMEPLAY ------------------------------------------------------------------------------
+    }else if(element == "Pro Mode"){
+        return "Removes clear delays and enables features for advanced players.";
+
+    }else if(element == "Goal Line"){
+        return "Shows the remaining lines to clear (Pro Mode Only)";
+
+    }else if(element == "Rotation System"){
+        return "Changes how minos are rotated.";
+
+    }else if(element == "Big Mode"){
+        return "Minos are twice as big! (Disables Highscores)";
 
     }
 

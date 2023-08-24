@@ -113,7 +113,10 @@ class RumbleElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return std::to_string(savefile->settings.rumble * 25) + "%";
+            if(savefile->settings.rumble)
+                return std::to_string(savefile->settings.rumble * 25) + "%";
+            else
+                return "OFF";
         }
 };
 
