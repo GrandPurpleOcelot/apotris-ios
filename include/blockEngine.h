@@ -165,6 +165,7 @@ namespace BlockEngine
         int maxCombo = 0;
         int holds = 0;
         int maxZonedLines = 0;
+        int secretGrade = 0;
 
         Stats(){}
 
@@ -178,6 +179,28 @@ namespace BlockEngine
             maxCombo = old.maxCombo;
             holds = old.holds;
             maxZonedLines = old.maxZonedLines;
+            secretGrade = old.secretGrade;
+        }
+
+        void add(const Stats& old){
+            for(int i = 0; i < 4; i++)
+                clears[i] += old.clears[i];
+
+            tspins += old.tspins;
+            perfectClears += old.perfectClears;
+            holds += old.holds;
+
+            if(old.maxStreak > maxStreak)
+                maxStreak = old.maxStreak;
+
+            if(old.maxCombo > maxCombo)
+                maxCombo = old.maxCombo;
+
+            if(old.maxZonedLines > maxZonedLines)
+                maxZonedLines += old.maxZonedLines;
+
+            if(old.secretGrade > secretGrade)
+                secretGrade += old.secretGrade;
         }
     };
 
@@ -633,8 +656,6 @@ namespace BlockEngine
         bool replayElligible = true;
 
         int fullLine = 0x3ff;
-
-        int secretGrade = 0;
 
         List queue;
         List moveHistory;//max 10

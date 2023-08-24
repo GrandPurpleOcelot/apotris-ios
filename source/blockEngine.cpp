@@ -2504,7 +2504,6 @@ Game::Game(Game * oldGame) {
     speed = oldGame->speed;
     activePiece = oldGame->activePiece;
     linesToClear = oldGame->linesToClear;
-    secretGrade = oldGame->secretGrade;
 }
 
 void Game::demoGarbage(){
@@ -2592,5 +2591,5 @@ void Game::checkSecretGrade(){
         result++;
     }
 
-    secretGrade = max(result - (lengthX-1),0);
+    statTracker.secretGrade = max(result - (lengthX-1),0);
 }

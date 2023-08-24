@@ -270,6 +270,8 @@ int GameScene::endScreen(){
     if(game->lost)
         savefile->stats.gamesLost++;
 
+    addStats();
+
     showStats(showingStats, totalTime, ppsStr, true);
 
     const int optionsHeight = 11;
@@ -622,8 +624,8 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps, boo
 
     aprints("Times Paused: " + std::to_string(timesPaused), 0, 7*counter++, 2);
 
-    if(game->secretGrade > 0){
-        std::string str = "Secret Grade: " + (std::string) GameInfo::secretGrades[game->secretGrade - 1];
+    if(game->statTracker.secretGrade > 0){
+        std::string str = "Secret Grade: " + (std::string) GameInfo::secretGrades[game->statTracker.secretGrade - 1];
 
         aprints(str, 0, 7*counter++, 2);
     }
@@ -773,12 +775,11 @@ int GameScene::pauseMenu(){
                 if (n == 0) {
                     sfx(SFX_MENUCONFIRM);
                     clearText();
-                    // updateText();
                     paused = false;
                     resumeSong();
                     break;
                 } else if (n == 1) {
-                    // restart = true;
+                    addStats();
                     startGame();
                     changeScene(new GameScene());
                     paused = false;
@@ -788,7 +789,6 @@ int GameScene::pauseMenu(){
                 } else if (n == 2) {
                     onStates = true;
                     selection = 0;
-                    // update();
                     clearText();
                 } else if (n == 3) {
                     sleepMenu();
@@ -802,7 +802,7 @@ int GameScene::pauseMenu(){
                     enableBlend(prevBld);
                     sfx(SFX_MENUCANCEL);
                     buildBG(3, 0, 27, 0, 1, true);
-
+                    addStats();
                     changeScene(new MainMenuScene(), Transitions::FADE);
                     return 1;
                 }
@@ -1385,4 +1385,11 @@ void sleepMenu(){
     toggleBG(0, true);
     toggleBG(1, true);
     toggleBG(3, true);
+}
+
+void addStats(){
+    savefile->stats.gameStats.add(game->statTracker);
+
+    if(game->gameMode == MARATHON && game->level > savefile->stats.maxLevel)
+        savefile->stats.maxLevel = game->level;
 }

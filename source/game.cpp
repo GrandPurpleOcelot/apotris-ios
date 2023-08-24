@@ -2949,6 +2949,7 @@ void GameScene::update(){
 
     if (playAgain) {
         playAgain = false;
+        addStats();
         paused = true;
         startGame();
         changeScene(new GameScene());
