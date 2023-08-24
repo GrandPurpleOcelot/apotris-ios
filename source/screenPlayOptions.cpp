@@ -79,15 +79,20 @@ bool PlayOptionScene::control(){
     if (key_hit(KEY_UP)) {
         movingDirection = -1;
 
+        bool sound = true;
+
         if(onScore && !elementList.empty()) {
             onScore = false;
             onStart = false;
             refreshText = true;
-        }else if(onStart){
+        }else if(onStart && !elementList.empty()){
             onStart = false;
         }else{
             if (selection > 0)
                 selection--;
+
+            if(elementList.empty())
+                sound = false;
         }
 
         if(selection == options -1)
@@ -98,7 +103,9 @@ bool PlayOptionScene::control(){
                 listStart = 0;
         }
 
-        sfx(SFX_MENUMOVE);
+        if(sound)
+            sfx(SFX_MENUMOVE);
+
         refreshText = true;
     }
 
@@ -414,8 +421,7 @@ void PlayOptionScene::draw(){
                 }
 
                 if(!getIfTime()){
-                    posprintf(buff, "%d",board->entries[i].value);
-                    str += buff;
+                    str += std::to_string(board->entries[i].value);
                 } else
                     str += timeToString(board->entries[i].value,false);
 
