@@ -17,7 +17,6 @@ using namespace BlockEngine;
 
 void endAnimation();
 void showScore();
-void showStats(bool, std::string, std::string);
 int onRecord();
 std::string nameInput(int);
 void showModeText();
@@ -537,7 +536,7 @@ void showScore(){
     }
 }
 
-void showStats(bool moreStats, std::string time, std::string pps) {
+void GameScene::showStats(bool moreStats, std::string time, std::string pps) {
     if(!moreStats){
         aprints("Press L", 0, 0, 2);
         aprints("for Stats", 0, 7, 2);
@@ -598,6 +597,8 @@ void showStats(bool moreStats, std::string time, std::string pps) {
     if(game->statTracker.maxZonedLines > 0){
         aprints("Max MultiClear: " + std::to_string(game->statTracker.maxZonedLines), 0, 7*counter++, 2);
     }
+
+    aprints("Times Paused: " + std::to_string(timesPaused), 0, 7*counter++, 2);
 }
 
 int GameScene::pauseMenu(){
@@ -606,6 +607,8 @@ int GameScene::pauseMenu(){
 
     int optionsHeight = 10;
     int optionsCounter = 0;
+
+    timesPaused++;
 
     clearText();
     setSmallTextArea(110, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);

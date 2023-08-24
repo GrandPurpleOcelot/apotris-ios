@@ -148,6 +148,7 @@ void initialize(){
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
 
+    clearTiles(2, 0, 1);
     loadTiles(2,1,font1tiles_bin,font1tiles_bin_size/32);
 
     setSkin();

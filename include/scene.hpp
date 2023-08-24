@@ -53,8 +53,11 @@ class GameScene : public Scene{
     int pauseMenu();
     int endScreen();
     void showModeText();
+    void showStats(bool, std::string, std::string);
 
     bool counted = false;
+
+    int timesPaused = 0;
 
     Scene* previousScene(){return NULL;};
 
