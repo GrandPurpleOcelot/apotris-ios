@@ -53,7 +53,7 @@ class GameScene : public Scene{
     int pauseMenu();
     int endScreen();
     void showModeText();
-    void showStats(bool, std::string, std::string);
+    void showStats(bool, std::string, std::string, bool);
 
     bool counted = false;
 

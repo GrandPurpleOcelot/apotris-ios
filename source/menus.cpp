@@ -270,7 +270,7 @@ int GameScene::endScreen(){
     if(game->lost)
         savefile->stats.gamesLost++;
 
-    showStats(showingStats, totalTime, ppsStr);
+    showStats(showingStats, totalTime, ppsStr, true);
 
     const int optionsHeight = 11;
 
@@ -412,7 +412,17 @@ int GameScene::endScreen(){
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
-            showStats(showingStats, totalTime, ppsStr);
+            showStats(showingStats, totalTime, ppsStr, true);
+        }
+
+        if(key_hit(KEY_R)){
+            if(game->replayElligible){
+                sfx(SFX_MENUCONFIRM);
+                loadReplay();
+                break;
+            }else{
+                sfx(SFX_MENUCANCEL);
+            }
         }
 
         showSprites(128);
@@ -536,10 +546,21 @@ void showScore(){
     }
 }
 
-void GameScene::showStats(bool moreStats, std::string time, std::string pps) {
+void GameScene::showStats(bool moreStats, std::string time, std::string pps, bool end) {
     if(!moreStats){
         aprints("Press L", 0, 0, 2);
         aprints("for Stats", 0, 7, 2);
+
+        if(end){
+            if(game->replayElligible){
+                aprints("Press R", 0, 21, 2);
+                aprints("for Replay", 0, 28, 2);
+            }else{
+                aprints("Replay", 0, 21, 1);
+                aprints("not available", 0, 28, 1);
+            }
+        }
+
         return;
     }
 
@@ -764,7 +785,7 @@ int GameScene::pauseMenu(){
                     clearText();
                 } else if (n == 3) {
                     sleepMenu();
-                    showStats(showingStats, totalTime, ppsStr);
+                    showStats(showingStats, totalTime, ppsStr, false);
                     showModeText();
                     showQueue();
                     showHold();
@@ -830,7 +851,7 @@ int GameScene::pauseMenu(){
                     sfx(SFX_MENUCONFIRM);
                 } else if (selection == 2) {
                     sfx(SFX_MENUCONFIRM);
-                    showStats(showingStats, totalTime, ppsStr);
+                    showStats(showingStats, totalTime, ppsStr, false);
                     onStates = false;
                     selection = 0;
                 }
@@ -873,7 +894,7 @@ int GameScene::pauseMenu(){
             if(onStates){
                 onStates = false;
                 selection = 0;
-                showStats(showingStats, totalTime, ppsStr);
+                showStats(showingStats, totalTime, ppsStr, false);
             }else{
                 clearText();
                 paused = false;
@@ -901,12 +922,12 @@ int GameScene::pauseMenu(){
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
-            showStats(showingStats, totalTime, ppsStr);
+            showStats(showingStats, totalTime, ppsStr, false);
         }
 
         if(!shown && !onStates){
             shown = true;
-            showStats(showingStats, totalTime, ppsStr);
+            showStats(showingStats, totalTime, ppsStr, false);
         }
 
         showSprites(128);
