@@ -519,9 +519,10 @@ void showScore(){
     } else if (game->gameMode == MARATHON || game->lost || game->gameMode >= ULTRA || (game->gameMode == DIG && game->subMode == 1)) {
         std::string score;
 
-        if(game->gameMode == DIG)
-            score = std::to_string(game->pieceCounter);
-        else if (game->gameMode != 7)
+        if(game->gameMode == DIG){
+            if(game->subMode == 1)
+                score = std::to_string(game->pieceCounter);
+        }else if (game->gameMode != 7)
             score = std::to_string(game->score);
         else
             score = std::to_string(game->linesCleared);

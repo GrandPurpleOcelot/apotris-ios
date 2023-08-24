@@ -2349,8 +2349,6 @@ Game::Game(int gm, int sd, bool big){
     gameMode = gm;
     seed = initSeed = sd;
 
-    log("seed: " + std::to_string(seed));
-
     for (int i = 0; i < 40; i++) {
         bitboard[i] = 0;
         lineClearArray[i] = false;
