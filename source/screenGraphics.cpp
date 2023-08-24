@@ -261,6 +261,19 @@ bool GradientEditorScene::control(){
         return true;
     }
 
+    if(key_hit(KEY_SELECT)){
+        sfx(SFX_MENUCONFIRM);
+
+        for(int i = 0; i < 3; i++){
+            color[i] = qran() % 31;
+            color2[i] = qran() % 31;
+        }
+
+        savefile->settings.backgroundType = ((qran() % 10) > 3);
+        drawText();
+        setMaxSelection();
+    }
+
     if(!onValues){
         if(key_hit(KEY_UP)){
             if(selection > 0)
