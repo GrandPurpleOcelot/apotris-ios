@@ -153,6 +153,9 @@ void loadSave() {
         sum += dump[i];
     sqran(sum);
 
+
+    strncpy(savefile->endTag, "SAVE_END", 9);
+
     savefile->seed = qran();
     saveSavefile();
 }
