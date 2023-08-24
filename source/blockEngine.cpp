@@ -802,6 +802,8 @@ void Game::place() {
     if((maxClearDelay == 1 || gameMode == SURVIVAL) && clearLock){
         removeClearLock();
     }
+
+    checkSecretGrade();
 }
 
 int Game::clear(Drop drop) {
@@ -2307,6 +2309,8 @@ void Game::loadFumen(){
 
         blockCount += count;
     }
+
+    checkSecretGrade();
 }
 
 INLINE std::string fumenData(int block, int count){
@@ -2500,6 +2504,7 @@ Game::Game(Game * oldGame) {
     speed = oldGame->speed;
     activePiece = oldGame->activePiece;
     linesToClear = oldGame->linesToClear;
+    secretGrade = oldGame->secretGrade;
 }
 
 void Game::demoGarbage(){
@@ -2567,4 +2572,25 @@ void Game::setupRNG(){
         sqran(seed);
         seed+= qran();
     }
+}
+
+void Game::checkSecretGrade(){
+    int result = 0;
+    for(int i = lengthY - 1; i > lengthY/2; i--){
+        int n = lengthY - 1 - i;
+
+        int x = n;
+
+        if(n > lengthX - 1)
+            x = 2 * (lengthX - 1) - x;
+
+        // log("checking " + std::to_string(n) + " " + std::to_string(x));
+        if(bitboard[i] != (fullLine & ~(1 << x)) || board[i-1][x] == 0){
+            break;
+        }
+
+        result++;
+    }
+
+    secretGrade = max(result - (lengthX-1),0);
 }

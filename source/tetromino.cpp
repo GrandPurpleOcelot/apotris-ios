@@ -1085,6 +1085,19 @@ namespace GameInfo{
         "GM",
     };
 
+    const char* secretGrades[10] = {
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "GM",
+    };
+
     const uint8_t gradeTable[32][6] = {
         {0,125,10,20,40,50},
         { 1,80,10,20,30,40},

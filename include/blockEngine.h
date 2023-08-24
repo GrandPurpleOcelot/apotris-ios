@@ -454,6 +454,7 @@ namespace BlockEngine
         void updateColumns(int height);
         void setupPawnSpawn();
         void setupRNG();
+        void checkSecretGrade();
 
         int getNbr(int x, int y, int ex, int sy, int ey);
 
@@ -632,6 +633,8 @@ namespace BlockEngine
         bool replayElligible = true;
 
         int fullLine = 0x3ff;
+
+        int secretGrade = 0;
 
         List queue;
         List moveHistory;//max 10

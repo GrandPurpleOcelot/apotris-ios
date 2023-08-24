@@ -44,6 +44,8 @@ namespace GameInfo{
 
     extern const char* masterGrades[33];
 
+    extern const char* secretGrades[10];
+
     extern const uint8_t gradeTable[32][6];
 
     extern const float masterComboMultiplayer[10][4];

@@ -621,6 +621,12 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps, boo
     }
 
     aprints("Times Paused: " + std::to_string(timesPaused), 0, 7*counter++, 2);
+
+    if(game->secretGrade > 0){
+        std::string str = "Secret Grade: " + (std::string) GameInfo::secretGrades[game->secretGrade - 1];
+
+        aprints(str, 0, 7*counter++, 2);
+    }
 }
 
 int GameScene::pauseMenu(){
