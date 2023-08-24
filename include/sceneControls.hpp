@@ -245,7 +245,29 @@ class RebindElement : public Element{
             int *keys = (int *) &savefile->settings.keys;
 
             #ifdef GBA
-            return keyMap[keys[index]];
+            int key = keys[index];
+            if((key & (key - 1)) == 0){
+                return keyMap[keys[index]];
+            }else{
+                std::string result;
+
+                int k = key;
+
+                int counter = 0;
+                do{
+                    if(k & (1 << counter)){
+                        result+= keyMap[1<<counter] + " ";
+                        k-= 1 << counter;
+                    }
+
+                    counter++;
+                }while(k != 0);
+
+                //remove trailing space
+                result.pop_back();
+
+                return result;
+            }
             #endif
             #ifdef PC
             return keyToString[keys[index]];
