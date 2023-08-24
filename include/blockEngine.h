@@ -453,6 +453,7 @@ namespace BlockEngine
         void connectBoard(int startY, int endY);
         void updateColumns(int height);
         void setupPawnSpawn();
+        void setupRNG();
 
         int getNbr(int x, int y, int ex, int sy, int ey);
 

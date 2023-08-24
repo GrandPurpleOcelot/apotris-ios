@@ -1268,10 +1268,7 @@ void Game::next() {//~21-29k cycles
 }
 
 void Game::fillQueue(int count) {
-    if(seed != 0){
-        sqran(seed);
-        seed+= qran();
-    }
+    setupRNG();
 
     for (int i = 0; i < count; i++) {
         if(rotationSystem == SRS){
@@ -1636,7 +1633,10 @@ void Game::setGoal(int newGoal){
 }
 
 void Game::generateGarbage(int height,int mode){
+    setupRNG();
+
     int hole = qran() % lengthX;
+
     // shift up
     for(int i = 0; i < lengthY; i++){
         if(i < lengthY-height){
@@ -1909,8 +1909,9 @@ void Game::demoFill(){
 }
 
 void Game::bType(int height){
-    int n = 0;
+    setupRNG();
 
+    int n = 0;
     if(height)
         n = height * 2 + (height + 1)/2 - (height == 5);
 
@@ -1927,17 +1928,7 @@ void Game::bType(int height){
         }
     }
 
-    // for(int i = 0; i < 10; i++){
-    //     log(std::to_string(columnHeights[i]));
-    // }
-
-    // log(std::to_string(stackHeight));
-
     stackHeight -= n;
-
-    // log(std::to_string(stackHeight));
-
-    // updateColumns(height);
 }
 
 void Game::setSubMode(int sm){
@@ -2358,6 +2349,8 @@ Game::Game(int gm, int sd, bool big){
     gameMode = gm;
     seed = initSeed = sd;
 
+    log("seed: " + std::to_string(seed));
+
     for (int i = 0; i < 40; i++) {
         bitboard[i] = 0;
         lineClearArray[i] = false;
@@ -2568,5 +2561,12 @@ void Game::setupPawnSpawn(){
                 lost = 1;
             }
         }
+    }
+}
+
+void Game::setupRNG(){
+    if(seed != 0){
+        sqran(seed);
+        seed+= qran();
     }
 }
