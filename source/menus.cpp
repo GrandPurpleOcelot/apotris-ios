@@ -296,24 +296,24 @@ int GameScene::endScreen(){
     cursorSprite = &obj_buffer[1];
     sprite_hide(cursorSprite);
 
+    if (record != -1 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= ULTRA)){
+        std::string str;
+        switch(record){
+            case 0: str = "1st"; break;
+            case 1: str = "2nd"; break;
+            case 2: str = "3rd"; break;
+            case 3: str = "4th"; break;
+            case 4: str = "5th"; break;
+        }
+        aprint(str+" Place", 11, 5);
+    }
+
     while (closed()) {
         handleMultiplayer(1);
         vsync();
         key_poll();
 
         showScore();
-
-        if (record != -1 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= ULTRA)){
-            std::string str;
-            switch(record){
-                case 0: str = "1st"; break;
-                case 1: str = "2nd"; break;
-                case 2: str = "3rd"; break;
-                case 3: str = "4th"; break;
-                case 4: str = "5th"; break;
-            }
-            aprint(str+" Place", 11, 5);
-        }
 
         showModeText();
 
