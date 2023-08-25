@@ -11,8 +11,7 @@ Join the [discord server](https://discord.com/invite/jQnxmXS7tr) for updates, be
 Run 
 
 ```
-./set_platform.sh <platform>
-./make
+make <platform>
 ```
 
 Available Platforms:
@@ -23,4 +22,6 @@ Available Platforms:
 | Linux           | linux    |
 | Windows 32-bit  | w32      |
 
-PC builds are placed inside the `bin` folder.
+Omitting `<platform>` builds for all platforms
+
+Builds are placed inside the `bin` folder.

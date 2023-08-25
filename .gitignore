@@ -9,6 +9,5 @@ bin/
 *.pnproj
 *.el
 .clangd
-Makefile
 compile_commands.json
 apotris*.png
