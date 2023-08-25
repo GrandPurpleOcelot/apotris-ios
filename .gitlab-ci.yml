@@ -17,6 +17,10 @@ build:
   stage: build
   # instead of calling g++ directly you can also use some build toolkit like make
   # install the necessary build tools when needed
+
+
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
   before_script:
     - ./set_platform.sh w32
   script:
@@ -35,7 +39,7 @@ build:
 #   script:
 #     - ./runmytests.sh
 
-deploy:
-  stage: deploy
-  script: echo "Define your deployment script!"
-  environment: production
+# deploy:
+#   stage: deploy
+#   script: echo "Define your deployment script!"
+#   environment: production
