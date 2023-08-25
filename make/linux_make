@@ -1,5 +1,8 @@
 #!/usr/bin/env make
 
+export CC = gcc
+export AR = ar
+
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -Wno-array-bounds
 PRE_FLAGS := -MMD -MP -DPC
@@ -20,7 +23,7 @@ BINLIBS_PATH := $(BIN)/lib
 BUILD := build
 
 # Library search directories and flags
-EXT_LIB :=
+EXT_LIB := external/Tilengine/lib/linux_x86_64
 LDFLAGS := -lTilengine -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lmodplug
 LDPATHS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB))
 
@@ -31,11 +34,6 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 # Construct build output and dependency filenames
 SRCS := $(shell find $(SRC) -name *.cpp)
 BINFILES := $(shell find $(DATA) -name '*.bin')
-
-# ifneq ($(strip $(MUSIC)),)
-# 	export AUDIOFILES := $(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
-# 	BINFILES += $(BUILD)/soundbank.bin
-# endif
 
 OBJS_BIN := $(subst $(DATA)/,$(BUILD)/,$(addsuffix .o,$(BINFILES)))
 
@@ -55,14 +53,17 @@ ICON := $(addprefix $(ASSETS_PATH)/, $(notdir $(ICON_FILE)))
 
 ASSETS := $(addprefix $(ASSETS_PATH)/, $(notdir $(AUDIO_FILES)))
 
-LIBFILES := $(addprefix $(BINLIBS_PATH)/, $(notdir $(shell find $(LIB) -name '*.*')))
+LIBFILES := $(addprefix $(BINLIBS_PATH)/, $(notdir $(shell find $(LIB) -name '*.so')))
 
 # Build task
 build: all
 
 # Main task
 
-all: $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
+all: libTilengine.a $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
+
+libTilengine.a:
+	@cd external/Tilengine/src && make
 
 $(ICON) : $(ICON_FILE)
 
@@ -82,7 +83,7 @@ $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
 	@mkdir -p $(dir $@)
 	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
 
-$(ASSETS_PATH)/% : $(MUSIC)/%
+$(ASSETS_PATH)/% : $(MUSIC)/% external/bloom.glsl
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
@@ -102,6 +103,7 @@ $(OBJS_SOURCES) : $(HFILES)
 clean:
 	@echo "Cleaning..."
 	rm -rf build
+	cd external/Tilengine/src && make clean
 
 help:
 	@echo "bin: $(LIBFILES)"

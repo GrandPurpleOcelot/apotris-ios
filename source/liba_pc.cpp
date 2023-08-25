@@ -209,7 +209,7 @@ void platformInit(){
     if(!sf::Shader::isAvailable()){
         log("Shaders not available on system.");
     }else if(ENABLE_SHADERS){
-        if(!shader.loadFromFile("lib/bloom.glsl", sf::Shader::Fragment)){
+        if(!shader.loadFromFile("assets/bloom.glsl", sf::Shader::Fragment)){
             log("Couldn't load Bloom shader.");
         }else{
             log("Loaded Bloom Shader.");

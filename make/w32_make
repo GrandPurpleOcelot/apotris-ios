@@ -2,6 +2,9 @@
 
 CXX := i686-w64-mingw32-g++
 
+export CC = i686-w64-mingw32-gcc
+export AR = i686-w64-mingw32-ar
+
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -Wno-array-bounds
 PRE_FLAGS := -MMD -MP -DPC
@@ -22,7 +25,9 @@ BINLIBS_PATH := $(BIN)
 BUILD := build
 
 # Library search directories and flags
-EXT_LIB := /usr/i686-w64-mingw32/lib
+EXT_LIB := /usr/i686-w64-mingw32/lib \
+			external/Tilengine/lib/linux_x86_64
+
 LDFLAGS := -D SFML_STATIC -lTilengine -lsfml-graphics-s -lsfml-audio-s -lsfml-window-s -lsfml-system-s -lsfml-main -lmodplug -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbisfile -lvorbis -logg -lws2_32 -mwindows
 LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB))
 
@@ -33,11 +38,6 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 # Construct build output and dependency filenames
 SRCS := $(shell find $(SRC) -name *.cpp)
 BINFILES := $(shell find $(DATA) -name '*.bin')
-
-# ifneq ($(strip $(MUSIC)),)
-# 	export AUDIOFILES := $(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
-# 	BINFILES += $(BUILD)/soundbank.bin
-# endif
 
 OBJS_BIN := $(subst $(DATA)/,$(BUILD)/,$(addsuffix .o,$(BINFILES)))
 
@@ -64,7 +64,10 @@ build: all
 
 # Main task
 
-all: $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
+all: libTilengine.a $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
+
+libTilengine.a:
+	cd external/Tilengine/src && make
 
 $(ICON) : $(ICON_FILE)
 
@@ -88,7 +91,7 @@ $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
 	@xxd -i $< | sed 's/data_//g' | sed 's/unsigned char/const uint8_t/g' | sed '$d' >> $(BUILD)/$(<F).cpp
 	@$(CXX) -c $(BUILD)/$(<F).cpp -o $(BUILD)/$(<F).o
 
-$(ASSETS_PATH)/% : $(MUSIC)/%
+$(ASSETS_PATH)/% : $(MUSIC)/% external/bloom.glsl
 	@mkdir -p $(dir $@)
 	@cp -f $< $@
 
@@ -108,6 +111,7 @@ $(OBJS_SOURCES) : $(HFILES)
 clean:
 	@echo "Cleaning..."
 	rm -rf build
+	cd external/Tilengine/src && make clean
 
 help:
 	@echo "bin: $(LIBFILES)"

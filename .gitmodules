@@ -1,0 +1,4 @@
+[submodule "tilengine"]
+	path = external/Tilengine
+	url = https://github.com/akouzoukos/tilengine/
+	branch = static
