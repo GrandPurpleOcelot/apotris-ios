@@ -3,6 +3,8 @@
 export CC = gcc
 export AR = ar
 
+export PLATFORM = linux
+
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -Wno-array-bounds
 PRE_FLAGS := -MMD -MP -DPC
@@ -23,7 +25,7 @@ BINLIBS_PATH := $(BIN)/lib
 BUILD := build/linux
 
 # Library search directories and flags
-EXT_LIB := external/Tilengine/lib/linux_x86_64
+EXT_LIB := external/Tilengine/src/build/$(PLATFORM)
 LDFLAGS := -lTilengine -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lmodplug
 LDPATHS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB))
 

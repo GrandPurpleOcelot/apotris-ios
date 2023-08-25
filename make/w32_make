@@ -5,6 +5,8 @@ CXX := i686-w64-mingw32-g++
 export CC = i686-w64-mingw32-gcc
 export AR = i686-w64-mingw32-ar
 
+export PLATFORM = w32
+
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -Wno-array-bounds
 PRE_FLAGS := -MMD -MP -DPC
@@ -26,7 +28,7 @@ BUILD := build/windows
 
 # Library search directories and flags
 EXT_LIB := /usr/i686-w64-mingw32/lib \
-			external/Tilengine/lib/linux_x86_64
+			external/Tilengine/src/build/$(PLATFORM)
 
 LDFLAGS := -D SFML_STATIC -lTilengine -lsfml-graphics-s -lsfml-audio-s -lsfml-window-s -lsfml-system-s -lsfml-main -lmodplug -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbisfile -lvorbis -logg -lws2_32 -mwindows
 LDPATHS := $(addprefix -L,$(LIB) $(EXT_LIB))
