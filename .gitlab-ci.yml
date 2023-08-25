@@ -21,8 +21,6 @@ build:
 
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
-  before_script:
-    - ./set_platform.sh w32
   script:
     - make
   artifacts:
