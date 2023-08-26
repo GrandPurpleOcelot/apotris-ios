@@ -2810,6 +2810,8 @@ void replayControl(){
 void GameScene::init(){
     reset();
 
+    previousSettings = savefile->settings;
+
     //hold frame tiles
     loadSpriteTiles(512, sprite6tiles_bin,4,4);
 
@@ -3083,6 +3085,8 @@ void GameScene::update(){
 
 void GameScene::deinit(){
     gradient(0);
+
+    savefile->settings = previousSettings;
 
     setPalette();
 }

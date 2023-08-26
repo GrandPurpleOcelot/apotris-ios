@@ -785,7 +785,7 @@ int GameScene::pauseMenu(){
                     paused = false;
                     count = false;
                     sfx(SFX_MENUCONFIRM);
-                    break;
+                    return 0;
                 } else if (n == 2) {
                     onStates = true;
                     selection = 0;
