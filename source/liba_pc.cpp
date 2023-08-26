@@ -1,7 +1,7 @@
 #include "platform.hpp"
 #include <string>
 
-#ifdef PC
+#ifdef TE
 #include "Tilengine.h"
 #include "stddef.h"
 #include "def.h"

@@ -11,6 +11,10 @@
 #include <cstring>
 #include "posprintf.h"
 
+#ifdef PC
+#include <fstream>
+#endif
+
 #include "qrcodegen.h"
 
 using namespace BlockEngine;

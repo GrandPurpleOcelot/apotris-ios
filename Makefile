@@ -11,5 +11,8 @@ linux:
 w32:
 	@make --no-print-directory -f make/w32_make
 
+mm:
+	@make --no-print-directory -f make/mm_make
+
 clean:
 	@rm -rf build bin

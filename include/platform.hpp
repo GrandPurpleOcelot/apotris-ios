@@ -14,6 +14,11 @@
 
 #endif
 
+#ifdef MM
+#include "liba_pc.h"
+#include "liba_mm.h"
+#endif
+
 #define MAX_REPLAY_SIZE 4000
 
 extern void onVBlank();

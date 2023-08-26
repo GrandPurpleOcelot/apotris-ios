@@ -8,6 +8,8 @@
 #include "sfMod.h"
 
 #include "def.h"
+#include <fstream>
+#include <cstdio>
 
 #define ENABLE_SHADERS 0
 

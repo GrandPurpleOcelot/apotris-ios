@@ -2021,7 +2021,7 @@ bool checkDiagonal(int key){
 }
 
 void showPlaceEffect(){
-    #ifdef PC
+    #ifdef TE
     return;
     #endif
 

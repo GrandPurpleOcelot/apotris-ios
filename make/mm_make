@@ -1,0 +1,121 @@
+#!/usr/bin/env make
+
+CROSS_COMPILE = arm-linux-gnueabihf-
+
+export CXX = $(CROSS_COMPILE)g++
+
+export CC = $(CROSS_COMPILE)gcc
+export AR = $(CROSS_COMPILE)ar
+export AS = $(CROSS_COMPILE)as
+
+export PLATFORM = mm
+
+# Pre-compiler and Compiler flags
+CXX_FLAGS := -Wall -O2 -Wno-array-bounds
+PRE_FLAGS := -MMD -MP -DMM -DTE
+
+# Project directory structure
+BIN := bin/$(PLATFORM)
+SRC := source
+LIB := lib
+INC := include
+DATA := data
+MUSIC := audio
+MAINFILE := $(SRC)/main.cpp
+
+# Build directories and output
+TARGET := $(BIN)/Apotris
+ASSETS_PATH := $(BIN)/assets
+BINLIBS_PATH := $(BIN)/lib
+BUILD := build/$(PLATFORM)
+
+# Library search directories and flags
+EXT_LIB := external/Tilengine/src/build/$(PLATFORM)
+LDFLAGS := -lTilengine -lSDL \
+-Wl,-rpath-link=/opt/miyoomini-toolchain/arm-linux-gnueabihf/libc/usr/lib
+LDPATHS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB))
+
+# Include directories
+INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA)
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+
+# Construct build output and dependency filenames
+SRCS := $(shell find $(SRC) -name *.cpp)
+BINFILES := $(shell find $(DATA) -name '*.bin')
+
+OBJS_BIN := $(subst $(DATA)/,$(BUILD)/,$(addsuffix .o,$(BINFILES)))
+
+OBJS_SOURCES := $(subst $(SRC)/,$(BUILD)/,$(addsuffix .o,$(basename $(SRCS))))
+
+HFILES := $(subst $(DATA)/,$(BUILD)/,$(addsuffix .h,$(subst .,_,$(BINFILES))))
+
+OBJS := $(OBJS_SOURCES) $(OBJS_BIN)
+
+DEPS := $(OBJS:.o=.d)
+
+AUDIO_FILES := $(shell find $(MUSIC) -name '*.*')
+
+ICON_FILE := sprites/favicon32.bmp
+
+ICON := $(addprefix $(ASSETS_PATH)/, $(notdir $(ICON_FILE)))
+
+ASSETS := $(addprefix $(ASSETS_PATH)/, $(notdir $(AUDIO_FILES)))
+
+LIBFILES := $(addprefix $(BINLIBS_PATH)/, $(notdir $(shell find $(LIB) -name '*.so')))
+
+# Build task
+build: all
+
+# Main task
+
+all: libTilengine.a $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
+
+libTilengine.a:
+	@cd external/Tilengine/src && make
+
+$(ICON) : $(ICON_FILE)
+
+# Task producing target from built files
+$(TARGET): $(OBJS)
+	@echo "Building..."
+	@mkdir -p $(dir $@)
+	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS) -Wl,-rpath lib
+
+# Compile all cpp files
+$(BUILD)/%.o: $(SRC)/%.cpp
+	@mkdir -p $(dir $@)
+	@echo $(notdir $<)
+	@$(CXX) $(CXX_FLAGS) $(PRE_FLAGS) $(INC_FLAGS) -c -o $@ $< $(LDPATHS) $(LDFLAGS)
+
+$(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
+	@mkdir -p $(dir $@)
+	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
+
+$(ASSETS_PATH)/% : $(MUSIC)/% external/bloom.glsl
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
+
+$(ICON) :
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
+
+$(BINLIBS_PATH)/% : $(LIB)/%
+	@mkdir -p $(dir $@)
+	@cp -f $< $@
+
+$(OBJS_SOURCES) : $(HFILES)
+# @echo "$<"
+
+# Clean task
+.PHONY: clean
+clean:
+	@echo "Cleaning..."
+	rm -rf build
+	cd external/Tilengine/src && make clean
+
+help:
+	@echo "bin: $(LIBFILES)"
+
+# Include all dependencies
+-include $(DEPS)
+

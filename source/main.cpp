@@ -23,8 +23,6 @@
 
 #include "defaultGradient_bin.h"
 
-#include <bit>
-
 #include "menu.h"
 #include "scene.hpp"
 
@@ -838,7 +836,7 @@ void setGradient(int color){
 
     COLOR src = 0;
 
-    #ifdef PC
+    #ifdef TE
 
     start = rowStart;
     end = rowEnd;

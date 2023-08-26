@@ -33,7 +33,7 @@ OBJ_ATTR* titleSprites[2];
 #ifdef GBA
 const int bgGridHeight = 30;
 #endif
-#ifdef PC
+#ifndef GBA
 const int bgGridHeight = 42;
 #endif
 u16 backgroundArray[bgGridHeight][30];

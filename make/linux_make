@@ -7,7 +7,7 @@ export PLATFORM = linux
 
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -Wno-array-bounds
-PRE_FLAGS := -MMD -MP -DPC
+PRE_FLAGS := -MMD -MP -DPC -DTE
 
 # Project directory structure
 BIN := bin/$(PLATFORM)
