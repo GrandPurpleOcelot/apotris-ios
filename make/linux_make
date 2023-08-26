@@ -10,7 +10,7 @@ CXX_FLAGS := -Wall -O2 -Wno-array-bounds
 PRE_FLAGS := -MMD -MP -DPC
 
 # Project directory structure
-BIN := bin/linux
+BIN := bin/$(PLATFORM)
 SRC := source
 LIB := lib
 INC := include
@@ -22,7 +22,7 @@ MAINFILE := $(SRC)/main.cpp
 TARGET := $(BIN)/Apotris
 ASSETS_PATH := $(BIN)/assets
 BINLIBS_PATH := $(BIN)/lib
-BUILD := build/linux
+BUILD := build/$(PLATFORM)
 
 # Library search directories and flags
 EXT_LIB := external/Tilengine/src/build/$(PLATFORM)
