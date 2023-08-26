@@ -10,6 +10,7 @@
 #ifdef PC
 
 #include "liba_pc.h"
+#include "liba_window.h"
 
 #endif
 

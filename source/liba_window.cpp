@@ -1,0 +1,413 @@
+#ifdef PC
+
+#include "liba_window.h"
+#include "liba_pc.h"
+
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+#include "sfMod.h"
+
+#include "def.h"
+
+#define ENABLE_SHADERS 0
+
+float windowScale = 3;
+int windowWidth = 256;
+int windowHeight = 192;
+
+int rowStart = (512 - windowHeight)/2;
+int rowEnd = (512 + windowHeight)/2;
+
+bool render = true;
+
+void resize(int width, int height);
+std::list<sf::Keyboard::Key> currentKeys;
+std::list<sf::Keyboard::Key> previousKeys;
+
+std::list<sf::Sound*> soundList;
+
+sf::SoundBuffer sfxBuffers[SFX_COUNT];
+sfmod::Mod musicArray[MUSIC_COUNT];
+
+sf::Shader shader;
+
+int currentSong = -1;
+int sfxVolume = 1024;
+int musicVolume = 0;
+
+const int sfxVolumeMultiplier = 4;
+
+void loadAudio(){
+
+    for(int i = 0; i < SFX_COUNT; i++){
+        if(!sfxBuffers[i].loadFromFile(SoundEffectPaths[i])){
+            std::string str = "Failed to load ";
+            str += SoundEffectPaths[i];
+            log(str);
+        }
+    }
+
+    for(int i = 0; i < MUSIC_COUNT; i++){
+        if(!musicArray[i].loadFromFile(SongPaths[i])){
+            std::string str = "Failed to load ";
+            str += SongPaths[i];
+            log(str);
+        }
+    }
+}
+
+void freeAudio(){
+    // for(int i = 0; i < SFX_COUNT; i++){
+    //     Mix_FreeChunk(soundEffectChunks[i]);
+    // }
+
+    // for(int i = 0; i < MUSIC_COUNT; i++){
+    //     Mix_FreeMusic(musicChunks[i]);
+    // }
+}
+
+sf::RenderWindow window(sf::VideoMode(windowWidth * windowScale, windowHeight * windowScale), "Apotris PC");
+sf::Texture frameTexture;
+
+bool isFullscreen = false;
+
+void windowInit(){
+    window.setFramerateLimit(60);
+    frameTexture.create(SCREEN_WIDTH, SCREEN_HEIGHT);
+    sf::Image icon;
+    icon.loadFromFile("assets/favicon32.bmp");
+
+    window.setIcon(32, 32, icon.getPixelsPtr());
+
+    loadAudio();
+
+    // if(!sf::Shader::isAvailable()){
+    //     log("Shaders not available on system.");
+    // }else if(ENABLE_SHADERS){
+    //     if(!shader.loadFromFile("assets/bloom.glsl", sf::Shader::Fragment)){
+    //         log("Couldn't load Bloom shader.");
+    //     }else{
+    //         log("Loaded Bloom Shader.");
+    //         shader.setUniform("pixelWidth",1.f / window.getSize().x);
+    //         shader.setUniform("pixelHeight",1.f / window.getSize().y);
+    //     }
+
+    // }
+
+    if(sf::Joystick::isConnected(0)){
+        log("controller connected");
+
+        int buttonCount = sf::Joystick::getButtonCount(0);
+
+        log("button count: " + std::to_string(buttonCount));
+
+        int axii = 0;
+
+        for(int i = 0; i < 8; i++)
+            axii += sf::Joystick::hasAxis(0, sf::Joystick::Axis(i));
+
+        log("axis count: " + std::to_string(axii));
+
+        log(sf::Joystick::getIdentification(0).name);
+
+        return;
+    }else{
+        log("no controller connected");
+    }
+
+    resize(windowWidth * windowScale, windowHeight * windowScale);
+
+}
+
+void updateWindow(u8 *framebuffer){
+    frameTexture.update((sf::Uint8*)framebuffer);
+    sf::Sprite sprite;
+    sprite.setTexture(frameTexture);
+    sprite.setScale(windowScale,windowScale);
+    sprite.setPosition(0,0);
+
+    if(ENABLE_SHADERS && render){
+        window.draw(sprite, &shader);
+
+        sf::Color c = sf::Color::Black;
+
+        c.a = 60;
+
+        for(int i = 0; i < SCREEN_HEIGHT; i++){
+            sf::RectangleShape rectangle(sf::Vector2f(SCREEN_WIDTH * windowScale,windowScale/2.0));
+
+            rectangle.setPosition(sf::Vector2f(0,i * windowScale + windowScale / 2.0));
+
+            rectangle.setFillColor(c);
+
+            window.draw(rectangle);
+
+            // sf::Vertex line[2];
+
+            // line[0].position = sf::Vector2f(0,i * windowScale + (windowScale - 1));
+            // line[1].position = sf::Vector2f(SCREEN_WIDTH * windowScale,i * windowScale + (windowScale - 1));
+
+            // line[0].color = c;
+            // line[1].color = c;
+
+            // window.draw(line,2,sf::Lines);
+        }
+
+        // for(int i = 0; i < SCREEN_WIDTH; i++){
+        //     sf::Vertex line[2];
+
+        //     line[0].position = sf::Vector2f(i * windowScale + (windowScale),0);
+        //     line[1].position = sf::Vector2f(i * windowScale + (windowScale),SCREEN_HEIGHT * windowScale);
+
+        //     line[0].color = c;
+        //     line[1].color = c;
+
+        //     window.draw(line,2,sf::Lines);
+        // }
+
+    }else{
+        if(render)
+            window.draw(sprite);
+    }
+
+    window.display();
+
+    // TLN_DrawFrame(0);
+    sf::Event event;
+    while (window.pollEvent(event))
+    {
+        // "close requested" event: we close the window
+        if (event.type == sf::Event::Closed){
+            window.close();
+            deinitialize();
+
+            exit(0);
+        }else if(event.type == sf::Event::Resized){
+            resize(event.size.width, event.size.height);
+
+        }else if(event.type == sf::Event::KeyPressed){
+            if(event.key.code == sf::Keyboard::F11){
+                isFullscreen = !isFullscreen;
+
+                if(isFullscreen){
+                    sf::VideoMode mode = sf::VideoMode::getDesktopMode();
+
+                    window.create(mode, "Apotris PC",sf::Style::Fullscreen);
+                }else{
+                    window.create(sf::VideoMode(windowWidth * windowScale, windowHeight * windowScale), "Apotris PC");
+                }
+
+            }
+        }
+    }
+
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Tab)){
+        window.setFramerateLimit(2000);
+
+        if(currentSong >= 0)
+            musicArray[currentSong].setPitch(3);
+    }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num4)){
+        window.setFramerateLimit(5);
+    }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num5)){
+        window.setFramerateLimit(1);
+    }else{
+        window.setFramerateLimit(60);
+
+        if(currentSong >= 0)
+            musicArray[currentSong].setPitch(1);
+    }
+
+    auto it = soundList.begin();
+
+    while(it != soundList.end()){
+        if((*it)->getStatus() == sf::Sound::Stopped){
+            delete *it;
+            soundList.erase(it++);
+        }else{
+            it++;
+        }
+    }
+
+    if(currentSong >= 0 && musicArray[currentSong].getStatus() == sfmod::Mod::Stopped && musicVolume / 2 != 0){
+        if(savefile->settings.cycleSongs){
+            log("next");
+            playNextSong();
+        }else{
+            log("loop");
+            musicArray[currentSong].stop();
+            musicArray[currentSong].play();
+        }
+    }
+
+    // window.draw();
+
+    // Uint64 end = SDL_GetPerformanceCounter();
+
+    // float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
+
+    // // Cap to 60 FPS
+    // SDL_Delay(floor(16.666f - elapsedMS));
+
+}
+
+void setMusicTempo(int tempo){
+
+}
+
+void setMusicVolume(int volume){
+    musicVolume = volume;
+
+    if(currentSong != -1){
+        int f = volume / 4;
+
+        if(f){
+            musicArray[currentSong].setMasterVolume(f);
+            if(musicArray[currentSong].getStatus() != sfmod::Mod::Playing)
+                musicArray[currentSong].play();
+        }else{
+            musicArray[currentSong].pause();
+        }
+    }
+}
+
+void setSFXVolume(int volume){
+    sfxVolume = volume;
+}
+
+void startSong(int song, bool loop){
+    if(song == currentSong && musicArray[currentSong].getStatus() == sfmod::Mod::Playing)
+        return;
+
+    if(currentSong != -1)
+        musicArray[currentSong].stop();
+
+    musicArray[song].play();
+    currentSong = song;
+}
+
+void sfx(int n){
+    sf::Sound * sound = new sf::Sound();
+    sound->setBuffer(sfxBuffers[n]);
+    sound->play();
+    sound->setVolume(savefile->settings.sfxVolume * sfxVolumeMultiplier);
+
+    soundList.push_back(sound);
+}
+
+void sfxRate(int n, float rate){
+    sf::Sound * sound = new sf::Sound();
+    sound->setBuffer(sfxBuffers[n]);
+    sound->play();
+    sound->setVolume(savefile->settings.sfxVolume * sfxVolumeMultiplier);
+
+    sound->setPitch(rate);
+
+    soundList.push_back(sound);
+
+    // sfx(sound);
+}
+
+void key_poll(){
+    previousKeys = currentKeys;
+    currentKeys.clear();
+
+    if(!window.hasFocus()){
+        return;
+    }
+
+    // if(sf::Joystick::isConnected(0)){
+
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 1)) * KEY_A;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 0)) * KEY_B;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 5)) * KEY_R;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 4)) * KEY_L;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 7)) * KEY_START;
+    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 6)) * KEY_SELECT;
+
+    //     float pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(7));
+    //     if(pos < 0)
+    //         __key_curr |= (1) * KEY_UP;
+    //     else if (pos > 0)
+    //         __key_curr |= (1) * KEY_DOWN;
+
+    //     pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(6));
+    //     if(pos < 0)
+    //         __key_curr |= (1) * KEY_LEFT;
+    //     else if (pos > 0)
+    //         __key_curr |= (1) * KEY_RIGHT;
+
+    // }
+
+    for(int i = 0; i < sf::Keyboard::KeyCount; i++){
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i)) && sf::Keyboard::Key(i) != sf::Keyboard::Tab)
+            currentKeys.push_back(sf::Keyboard::Key(i));
+    }
+}
+
+bool closed(){
+    bool result = window.isOpen();
+
+    return result;
+}
+
+void toggleRendering(bool state){
+    render = state;
+}
+
+void resize(int width, int height){
+    if(savefile != nullptr && savefile->settings.integerScale != 1){
+
+        float zoom = ((float) max(savefile->settings.zoom,10) / 20);
+
+        windowScale = ((float) height / 160) * zoom;
+    }else{
+        windowScale = (int) windowScale;
+
+        while(height / windowScale > 160 * 2){
+            windowScale++;
+        }
+        while(windowScale > 1 && height / windowScale < 160){
+            windowScale--;
+        }
+    }
+
+    sf::FloatRect visibleArea(sf::Vector2f(0,0), sf::Vector2f(width, height));
+    sf::View view(visibleArea);
+    view.setCenter(256 * windowScale,256 * windowScale);
+    window.setView(view);
+
+    rowStart = (512 - (height/windowScale))/2;
+    rowEnd = (512 + (height/windowScale))/2;
+
+    if(savefile != nullptr)
+        setGradient(savefile->settings.backgroundGradient);
+}
+
+void refreshWindowSize(){
+    resize(window.getSize().x, window.getSize().y);
+}
+
+void stopSong(){
+    if(currentSong == -1)
+        return;
+
+    musicArray[currentSong].stop();
+
+    currentSong = -1;
+};
+
+void pauseSong(){
+    if(currentSong == -1)
+        return;
+
+    musicArray[currentSong].pause();
+};
+
+void resumeSong(){
+    if(currentSong == -1 || savefile->settings.volume == 0)
+        return;
+
+    musicArray[currentSong].play();
+};
+
+#endif

@@ -83,7 +83,7 @@ Options *previousGameOptions = nullptr;
 u16 gradientTable[192 + 1];
 #endif
 
-#ifdef PC
+#ifndef GBA
 u16 gradientTable[SCREEN_HEIGHT + 1];
 #endif
 

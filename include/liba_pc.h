@@ -11,7 +11,6 @@
 #include "Tilengine.h"
 #include <cstring>
 #include "audio_files.h"
-#include <SFML/Window.hpp>
 
 #define SCREEN_WIDTH 512
 #define SCREEN_HEIGHT 512
@@ -27,30 +26,6 @@ typedef signed int   s32;
 typedef signed long long s64;
 
 #define IWRAM_CODE
-
-// #define KEY_A			0x0001	//!< Button A
-// #define KEY_B			0x0002	//!< Button B
-// #define KEY_SELECT		0x0004	//!< Select button
-// #define KEY_START		0x0008	//!< Start button
-// #define KEY_RIGHT		0x0010	//!< Right D-pad
-// #define KEY_LEFT		0x0020	//!< Left D-pad
-// #define KEY_UP			0x0040	//!< Up D-pad
-// #define KEY_DOWN		0x0080	//!< Down D-pad
-// #define KEY_R			0x0100	//!< Shoulder R
-// #define KEY_L			0x0200	//!< Shoulder L
-// #define KEY_FULL	0xFFFFFFFF		//!< Define for checking all keys.
-
-#define KEY_A sf::Keyboard::X
-#define KEY_B sf::Keyboard::Z
-#define KEY_SELECT sf::Keyboard::Backspace
-#define KEY_START sf::Keyboard::Enter
-#define KEY_RIGHT sf::Keyboard::Right
-#define KEY_LEFT sf::Keyboard::Left
-#define KEY_UP sf::Keyboard::Up
-#define KEY_DOWN sf::Keyboard::Down
-#define KEY_R sf::Keyboard::A
-#define KEY_L sf::Keyboard::S
-#define KEY_FULL	0xFFFFFFFF
 
 #define ATTR0_AFF 0
 #define ATTR0_AFF_DBL 0
@@ -133,14 +108,7 @@ extern TLN_Spriteset spriteset;
 
 extern TLN_Bitmap spriteBitmap;
 
-extern void key_poll();
-
 extern u32 Sqrt(u32 n);
-
-extern int rowStart;
-extern int rowEnd;
-
-// extern bool canDraw;
 
 INLINE void setTile(int sbb, int x, int y, u32 value){
 
@@ -216,122 +184,6 @@ INLINE void sqran(int seed){
 
 extern std::vector<std::string> keyToString;
 
-extern std::list<sf::Keyboard::Key> currentKeys;
-extern std::list<sf::Keyboard::Key> previousKeys;
-
-void key_poll();
-
-//! Gives the keys of \a key that are currently down
-INLINE u32 key_is_down(u32 key){
-    if(key == KEY_FULL)
-        return (!currentKeys.empty());
-
-    auto it = currentKeys.begin();
-
-    it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
-
-    return (it != currentKeys.end());
-}
-
-//! Gives the keys of \a key that are currently up
-INLINE u32 key_is_up(u32 key){
-    if(key == KEY_FULL)
-        return (currentKeys.empty());
-
-    auto it = currentKeys.begin();
-
-    it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
-
-    return (it == currentKeys.end());
-}
-
-//! Gives the keys of \a key that were previously down
-INLINE u32 key_was_down(u32 key){
-    if(key == KEY_FULL)
-        return (!previousKeys.empty());
-
-    auto it = previousKeys.begin();
-
-    it = std::find(previousKeys.begin(),previousKeys.end(),sf::Keyboard::Key(key));
-
-    return (it != previousKeys.end());
-}
-
-//! Gives the keys of \a key that were previously down
-INLINE u32 key_was_up(u32 key){
-    if(key == KEY_FULL)
-        return (previousKeys.empty());
-
-    auto it = previousKeys.begin();
-
-    it = std::find(previousKeys.begin(),previousKeys.end(),sf::Keyboard::Key(key));
-
-    return (it == previousKeys.end());
-}
-
-//! Gives the keys of \a key that are different from before
-INLINE u32 key_transit(u32 key){
-    if(key == KEY_FULL)
-        return (!previousKeys.empty() ^ !currentKeys.empty());
-
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(),previousKeys.end(),sf::Keyboard::Key(key));
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
-    bool curr = (it != currentKeys.end());
-
-    return (prev ^ curr);
-}
-
-//! Gives the keys of \a key that are being held down
-INLINE u32 key_held(u32 key){
-    if(key == KEY_FULL)
-        return (!previousKeys.empty() && !currentKeys.empty());
-
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(),previousKeys.end(),sf::Keyboard::Key(key));
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
-    bool curr = (it != currentKeys.end());
-
-    return (prev && curr);
-}
-
-//! Gives the keys of \a key that are pressed (down now but not before)
-INLINE u32 key_hit(u32 key){
-    if(key == KEY_FULL)
-        return (previousKeys.empty() && !currentKeys.empty());
-
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(),previousKeys.end(),sf::Keyboard::Key(key));
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
-    bool curr = (it != currentKeys.end());
-
-    return (!prev && curr);
-}
-
-//! Gives the keys of \a key that are being released
-INLINE u32 key_released(u32 key){
-    if(key == KEY_FULL)
-        return (!previousKeys.empty() && currentKeys.empty());
-
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(),previousKeys.end(),sf::Keyboard::Key(key));
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
-    bool curr = (it != currentKeys.end());
-
-    return (prev && !curr);
-}
 
 INLINE COLOR RGB15(int red, int green, int blue){
     return red + (green<<5) + (blue<<10);
@@ -340,7 +192,6 @@ INLINE COLOR RGB15(int red, int green, int blue){
 INLINE COLOR RGB15_SAFE(int red, int green, int blue){
     return (red&31) + ((green&31)<<5) + ((blue&31)<<10);
 }
-
 
 INLINE int min(int a, int b){
     return (a < b)? a : b;
@@ -435,13 +286,13 @@ extern void clr_rgbscale(COLOR *dst, const COLOR *src, uint nclrs, COLOR clr);
 
 extern void rumble_set_state(int);
 
-extern void refreshWindowSize();
-
 extern "C"{
     extern void posprintf(char * buff, const char * str, ...);
 }
 
 extern u16 gradientTable[SCREEN_HEIGHT + 1];
+
+extern void deinitialize();
 
 // extern void sfx(int n);
 // extern void sfx
