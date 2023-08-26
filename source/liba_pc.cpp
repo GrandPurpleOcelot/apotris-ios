@@ -160,16 +160,8 @@ bool isFullscreen = false;
 void platformInit(){
 
     TLN_Init(SCREEN_WIDTH,SCREEN_HEIGHT,4,128,0);
-
     framebuffer = (sf::Uint8*) malloc(4 * SCREEN_WIDTH * SCREEN_HEIGHT);
-
     TLN_SetRenderTarget(framebuffer, 4 * SCREEN_WIDTH);
-
-    window.setFramerateLimit(60);
-
-    frameTexture.create(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    // window.setActive(false);
 
     for(int i = 0; i < 32; i++){
         palettes[i] = TLN_CreatePalette(16);
@@ -197,14 +189,16 @@ void platformInit(){
 
     TLN_SetRasterCallback(onHBlank);
 
+    TLN_SetCustomBlendFunction(customBlend);
+
+    window.setFramerateLimit(60);
+    frameTexture.create(SCREEN_WIDTH, SCREEN_HEIGHT);
     sf::Image icon;
     icon.loadFromFile("assets/favicon32.bmp");
 
     window.setIcon(32, 32, icon.getPixelsPtr());
 
     loadAudio();
-
-    TLN_SetCustomBlendFunction(customBlend);
 
     if(!sf::Shader::isAvailable()){
         log("Shaders not available on system.");
@@ -242,7 +236,6 @@ void platformInit(){
 
     resize(windowWidth * windowScale, windowHeight * windowScale);
 }
-
 
 void deinitialize(){
     TLN_Deinit();
