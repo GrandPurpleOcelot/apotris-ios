@@ -572,7 +572,7 @@ void Game::update() {
         dropping = false;
         return;
     }else{
-        if (pawn.lowest <= pawn.y && !zoneTimer)
+        if (pawn.lowest <= pawn.y && !zoneTimer && speed)
             lockTimer--;
 
         if (lockTimer == 0 && rotationSystem != NRS){
