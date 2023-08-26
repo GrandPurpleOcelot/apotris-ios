@@ -182,9 +182,6 @@ INLINE void sqran(int seed){
     srand(seed);
 }
 
-extern std::vector<std::string> keyToString;
-
-
 INLINE COLOR RGB15(int red, int green, int blue){
     return red + (green<<5) + (blue<<10);
 }

@@ -309,13 +309,11 @@ void clearTilemap(int tilemap){
 void sprite_hide(OBJ_ATTR * sprite){
     if(sprite->enabled){
         sprite->enabled = false;
-        // TLN_DisableSprite(sprite->id);
     }
 };
 
 void sprite_unhide(OBJ_ATTR * sprite, int mode){
     sprite->enabled = true;
-    // TLN_SetSpriteSet(sprite->id, spriteset);
 };
 
 void sprite_set_pos(OBJ_ATTR * sprite, int x, int y){
@@ -439,8 +437,6 @@ void setTiles(int tilemap, int index, int count, u32 value){
 
     TLN_Tile t = new Tile();
     t->value = value;
-    // t->index = 1;
-    // t->flags = 0;
 
     for(int i = index; i < count+index; i++){
         TLN_SetTilemapTile(tilemaps[tilemap], (i / TILEMAP_SIZE), (i % TILEMAP_SIZE), t);
@@ -483,9 +479,6 @@ void clearSpriteTiles(int index, int lengthX, int lengthY){
             TLN_SetSpritesetData(spriteset, 127, &d, &tmp, 8);
         }
     }
-
-    // TLN_SetSpritesetData(spriteset, 0, &d, &tmp, 8);
-
 }
 
 void sprite_enable_mosaic(OBJ_ATTR *sprite){
@@ -716,37 +709,15 @@ void clearSpriteTile(int index, int tx, int ty, int width){
     uint8_t tmp[8 * 8];
     memset(tmp,0,64);
 
-    // TLN_SpriteData temp;
-
-    // memcpy(temp.name,spriteData->name,64);
-
-    // temp.w = spriteData->w;
-    // temp.h = spriteData->h;
-    // temp.x = spriteData->x;
-    // temp.y = spriteData->h;
-
     TLN_SpriteData d;
     memcpy(d.name,"tile",4);
     d.w = 8;
     d.h = 8;
-    // d.w = lengthX * 8;
-    // d.h = lengthY * 8;
-    // d.x = index * 8;
-    // d.y = 0;
 
     d.x = 8 * (tx + index);
     d.y = 8 * ty;
 
     TLN_SetSpritesetData(spriteset, 127, &d, tmp, 8);
-
-    // memcpy(spriteData->name,temp.name,64);
-
-    // spriteData->w = temp.w;
-    // spriteData->h = temp.h;
-    // spriteData->x = temp.x;
-    // spriteData->h = temp.x;
-    // memcpy32(&tile_mem[4][index + ty * 4 + tx], src, 8);
-
 };
 
 void clearTiles(int tileset, int index, int count){
@@ -754,12 +725,6 @@ void clearTiles(int tileset, int index, int count){
 
     memset(tmp,0,64);
     for(int ii = 0; ii < count; ii++){
-        // for(int i = 0; i < 8; i++){
-        //     for(int j = 0; j < 4; j++){
-        //         tmp[i * 8 + j * 2] = source[ii * 32 + i * 4 + j] & 0xf;
-        //         tmp[i * 8 + j * 2 + 1] = (source[ii * 32 + i * 4 + j] >> 4) & 0xf;
-        //     }
-        // }
 
         TLN_SetTilesetPixels(tilesets[tileset], index+ii, tmp, 8);
     }
@@ -780,18 +745,11 @@ void setMosaic(int sx, int sy){
             TLN_DisableLayerMosaic(i);
         else
             TLN_SetLayerMosaic(i, sx, sy);
-
-        // TLN_SetLayerMosaic(i, 1, 2);
-        // TLN_SetLayerClip(i, 0, 0, 0, 0);
-
     }
 };
 
 void sleep(){};
 void rumble_set_state(int n){};
-
-// static uint64_t frame_start = 0;
-// static uint64_t frame_end = 0;
 
 void onVBlank(){
     if (canDraw) {
@@ -801,31 +759,6 @@ void onVBlank(){
     }
 
     frameCounter++;
-
-    // frame_end = SDL_GetPerformanceCounter();
-
-    // float elapsedMS = (frame_end - frame_start) / (float) SDL_GetPerformanceFrequency() * 1000.0f;
-
-    // int delay = (std::floor(16.666f - elapsedMS));
-
-    // if(frame_start > 0 && delay > 0)
-    //     SDL_Delay(delay);
-
-    // frame_start = SDL_GetPerformanceCounter();
-
-
-    // int count = 0;
-    // while(SDL_PollEvent(&test_event)){
-    //     switch(test_event.type){
-    //         case SDL_MOUSEBUTTONDOWN:
-    //         log("test");
-    //         break;
-    //     }
-    //     if(++count > 100){
-    //         log("broke");
-    //         break;
-    //     }
-    // }
 };
 
 void onHBlank(int line){
@@ -835,50 +768,6 @@ void onHBlank(int line){
 
     ColorSplit c = ColorSplit(gradientTable[line]);
     TLN_SetBGColor(c.r, c.g, c.b);
-}
-
-void loadSavefile(){
-    // memset32(savefile, 0 , sizeof(Save)/4);
-
-    std::ifstream input("Apotris.sav",std::ios::binary | std::ios::in);
-
-    if(savefile == nullptr)
-        savefile = new Save();
-
-    char * src = (char * ) savefile;
-
-    input.read(src,sizeof(Save));
-
-    if(!input){
-        log("Error when trying to load save.");
-        return;
-    }
-
-    input.close();
-}
-
-void saveSavefile(){
-    addStats();
-
-    std::ofstream output("Apotris.sav",std::ios::binary | std::ios::out);
-
-    char * dst = (char * ) savefile;
-
-    const int saveSize = 1 << 15;
-
-    char temp[saveSize];
-
-    memset32(temp, 0, saveSize / 4);
-    memcpy32(temp, dst, sizeof(Save) / 4);
-
-    output.write(temp, saveSize);
-
-    if(!output){
-        log("Error when trying to write save.");
-        return;
-    }
-
-    output.close();
 }
 
 void toggleHBlank(bool state){
@@ -954,111 +843,5 @@ void addColorToPalette(int palette, int index, COLOR color, int count){
 uint8_t customBlend(uint8_t a, uint8_t b){
     return (a + b + b + b + b) /5;
 }
-
-std::vector<std::string> keyToString = {
-    "A",        //!< The A key
-    "B",            //!< The B key
-    "C",            //!< The C key
-    "D",            //!< The D key
-    "E",            //!< The E key
-    "F",            //!< The F key
-    "G",            //!< The G key
-    "H",            //!< The H key
-    "I",            //!< The I key
-    "J",            //!< The J key
-    "K",            //!< The K key
-    "L",            //!< The L key
-    "M",            //!< The M key
-    "N",            //!< The N key
-    "O",            //!< The O key
-    "P",            //!< The P key
-    "Q",            //!< The Q key
-    "R",            //!< The R key
-    "S",            //!< The S key
-    "T",            //!< The T key
-    "U",            //!< The U key
-    "V",            //!< The V key
-    "W",            //!< The W key
-    "X",            //!< The X key
-    "Y",            //!< The Y key
-    "Z",            //!< The Z key
-    "0",         //!< The 0 key
-    "1",         //!< The 1 key
-    "2",         //!< The 2 key
-    "3",         //!< The 3 key
-    "4",         //!< The 4 key
-    "5",         //!< The 5 key
-    "6",         //!< The 6 key
-    "7",         //!< The 7 key
-    "8",         //!< The 8 key
-    "9",         //!< The 9 key
-    "Esc",       //!< The Escape key
-    "LCtrl",     //!< The left Control key
-    "LShift",       //!< The left Shift key
-    "LAlt",         //!< The left Alt key
-    "LWin",      //!< The left OS specific key: window (Windows and Linux), apple (macOS), ...
-    "RCtrl",     //!< The right Control key
-    "RShift",       //!< The right Shift key
-    "RAlt",         //!< The right Alt key
-    "RWin",      //!< The right OS specific key: window (Windows and Linux), apple (macOS), ...
-    "Menu",         //!< The Menu key
-    "[",     //!< The [ key
-    "]",     //!< The ] key
-    ";",    //!< The ; key
-    ",",        //!< The , key
-    ".",       //!< The . key
-    "'",   //!< The ' key
-    "/",        //!< The / key
-    "\\",    //!< The \ key
-    "`",        //!< The ` key
-    "=",        //!< The = key
-    "-",       //!< The - key (hyphen)
-    "Space",        //!< The Space key
-    "Enter",        //!< The Enter/Return keys
-    "Bckspc",    //!< The Backspace key
-    "Tab",          //!< The Tabulation key
-    "PgUp",       //!< The Page up key
-    "PgDn",     //!< The Page down key
-    "End",          //!< The End key
-    "Home",         //!< The Home key
-    "Insert",       //!< The Insert key
-    "Del",       //!< The Delete key
-    "+",          //!< The + key
-    "-",     //!< The - key (minus, usually from numpad)
-    "*",     //!< The * key
-    "/",       //!< The / key
-    "Left",         //!< Left arrow
-    "Right",        //!< Right arrow
-    "Up",           //!< Up arrow
-    "Down",         //!< Down arrow
-    "Num0",      //!< The numpad 0 key
-    "Num1",      //!< The numpad 1 key
-    "Num2",      //!< The numpad 2 key
-    "Num3",      //!< The numpad 3 key
-    "Num4",      //!< The numpad 4 key
-    "Num5",      //!< The numpad 5 key
-    "Num6",      //!< The numpad 6 key
-    "Num7",      //!< The numpad 7 key
-    "Num8",      //!< The numpad 8 key
-    "Num9",      //!< The numpad 9 key
-    "F1",           //!< The F1 key
-    "F2",           //!< The F2 key
-    "F3",           //!< The F3 key
-    "F4",           //!< The F4 key
-    "F5",           //!< The F5 key
-    "F6",           //!< The F6 key
-    "F7",           //!< The F7 key
-    "F8",           //!< The F8 key
-    "F9",           //!< The F9 key
-    "F10",          //!< The F10 key
-    "F11",          //!< The F11 key
-    "F12",          //!< The F12 key
-    "F13",          //!< The F13 key
-    "F14",          //!< The F14 key
-    "F15",          //!< The F15 key
-    "Pause",        //!< The Pause key
-};
-
-void initRumble(){}
 
 #endif

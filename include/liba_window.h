@@ -9,6 +9,8 @@ extern void key_poll();
 extern std::list<sf::Keyboard::Key> currentKeys;
 extern std::list<sf::Keyboard::Key> previousKeys;
 
+extern std::vector<std::string> keyToString;
+
 #define KEY_A sf::Keyboard::X
 #define KEY_B sf::Keyboard::Z
 #define KEY_SELECT sf::Keyboard::Backspace
