@@ -2,6 +2,46 @@
 
 #include "scene.hpp"
 
+class PreviewsElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Previews";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+            if(savefile->settings.maxQueue > 1)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.maxQueue < 5)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if(savefile->settings.maxQueue < 5){
+                    savefile->settings.maxQueue++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.maxQueue > 1){
+                    savefile->settings.maxQueue--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+        }
+
+        std::string getCurrentOption() override {
+            return std::to_string(savefile->settings.maxQueue);
+        }
+};
+
 class BigModeElement : public Element{
     public:
         std::string getLabel() override {
@@ -146,6 +186,7 @@ class GameplayOptionScene : public OptionListScene{
     std::string name(){return "Gameplay";};
         std::list<Element*> getElementList(){
             return {
+                new PreviewsElement(),
                 new ProModeElement(),
                 new GoalLineElement(),
                 new RotationSystemElement(),

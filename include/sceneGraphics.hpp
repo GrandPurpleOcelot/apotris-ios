@@ -588,47 +588,6 @@ class ClearTextElement : public Element{
         }
 };
 
-class PreviewsElement : public Element{
-    public:
-        std::string getLabel() override {
-            return "Previews";
-        }
-
-        std::string getCursor(std::string text) override {
-            std::string result;
-            if(savefile->settings.maxQueue > 1)
-                result += "<";
-            else
-                result += " ";
-
-            result += text;
-
-            if(savefile->settings.maxQueue < 5)
-                result += ">";
-
-            return result;
-        }
-
-        void action(int dir) override{
-            if(dir > 0){
-                if(savefile->settings.maxQueue < 5){
-                    savefile->settings.maxQueue++;
-                    sfx(SFX_MENUMOVE);
-                }
-            }else{
-                if(savefile->settings.maxQueue > 1){
-                    savefile->settings.maxQueue--;
-                    sfx(SFX_MENUMOVE);
-                }
-            }
-            drawFrameBackgrounds();
-        }
-
-        std::string getCurrentOption() override {
-            return std::to_string(savefile->settings.maxQueue);
-        }
-};
-
 class AspectRatioElement : public Element{
     public:
         std::string getLabel() override {
@@ -737,7 +696,6 @@ class GraphicsScene : public Scene{
         l.push_back(new ScreenShakeElement());
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
-        l.push_back(new PreviewsElement());
         l.push_back(new AspectRatioElement());
         l.push_back(new RandomGraphicsElement());
         l.push_back(new ResetGraphicsElement());

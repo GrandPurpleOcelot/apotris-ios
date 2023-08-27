@@ -98,6 +98,9 @@ std::string getDescription(std::string element){
     }else if(element == "Initial System"){
         return "TYPE A always buffers actions, TYPE B only buffers if you started holding the button during the delay.";
 // GAMEPLAY ------------------------------------------------------------------------------
+    }else if(element == "Previews"){
+        return "Number of upcoming pieces to show.";
+
     }else if(element == "Pro Mode"){
         return "Removes clear delays and enables features for advanced players.";
 
