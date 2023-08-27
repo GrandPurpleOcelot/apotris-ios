@@ -285,6 +285,13 @@ void Game::rotatePlace(int dir, int dx, int dy, int r){
     lastMoveDy = dy;
 }
 
+void Game::setShiftSoundFlag(){
+    if(das != maxDas)
+        sounds.shift = 1;
+    else
+        sounds.shiftDas = 1;
+}
+
 bool Game::moveLeft() {
     if(das != maxDas)
         moveHistory.push_back(0);
@@ -297,7 +304,7 @@ bool Game::moveLeft() {
 
     if (checkRotation(-1, 0, pawn.rotation)) {
         pawn.x--;
-        sounds.shift = 1;
+        setShiftSoundFlag();
         lastMoveRotation = 0;
         lockCheck();
         return true;
@@ -321,7 +328,7 @@ bool Game::moveRight() {
 
     if (checkRotation(1, 0, pawn.rotation)) {
         pawn.x++;
-        sounds.shift = 1;
+        setShiftSoundFlag();
         lastMoveRotation = 0;
         lockCheck();
         return true;
@@ -341,7 +348,7 @@ void Game::moveDown() {
             lockTimer = maxLockTimer;
 
         if(gameMode != CLASSIC)
-            sounds.shift = 1 ;
+            setShiftSoundFlag();
         lastMoveRotation = 0;
     }else if(rotationSystem == NRS || rotationSystem == ARS){
         place();

@@ -323,6 +323,7 @@ namespace BlockEngine
     class SoundFlags {
     public:
         int shift = 0;
+        int shiftDas = 0;
         int rotate = 0;
         int place = 0;
         int invalid = 0;
@@ -478,8 +479,8 @@ namespace BlockEngine
         void setupPawnSpawn();
         void setupRNG();
         void checkSecretGrade();
-
         int getNbr(int x, int y, int ex, int sy, int ey);
+        void setShiftSoundFlag();
 
         int bigBag[35];
 

@@ -197,8 +197,13 @@ void GameScene::updateText() {
 void checkSounds() {
     if (game->sounds.hold)
         sfx(SFX_HOLD);
+
     if (game->sounds.shift)
         sfx(SFX_SHIFT2);
+
+    if (game->sounds.shiftDas)
+        sfx(SFX_SHIFT2);
+
     if (game->sounds.place) {
         sfx(SFX_PLACE);
 
