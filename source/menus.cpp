@@ -444,11 +444,16 @@ int GameScene::endScreen(){
 }
 
 void endAnimation() {
+    shake = 0;
+    push = 0;
+
     clearText();
     clearSprites(128);
     showHold();
 
     showQueue();
+    drawFrame(-1);
+
     showSprites(128);
 
     setLayerScroll(0, 0, 0);
