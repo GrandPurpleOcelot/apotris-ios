@@ -149,7 +149,6 @@ void GameScene::draw(){
     showHold();
     showQueue();
 
-    drawGrid();//10k idle, 20k when clearing
     drawFrame(-1);
 
     showGoalLine();
