@@ -481,6 +481,7 @@ namespace BlockEngine
         void checkSecretGrade();
         int getNbr(int x, int y, int ex, int sy, int ey);
         void setShiftSoundFlag();
+        void calculatePeek();
 
         int bigBag[35];
 
@@ -657,6 +658,8 @@ namespace BlockEngine
         bool replayElligible = true;
 
         int fullLine = 0x3ff;
+
+        int peek = 0;
 
         List queue;
         List moveHistory;//max 10

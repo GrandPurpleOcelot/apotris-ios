@@ -181,6 +181,30 @@ class RotationSystemElement : public Element{
         }
 };
 
+class PeekElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Peek Above";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.peek = !savefile->settings.peek;
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.peek)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
 class GameplayOptionScene : public OptionListScene{
     public:
     std::string name(){return "Gameplay";};
@@ -191,6 +215,7 @@ class GameplayOptionScene : public OptionListScene{
                 new GoalLineElement(),
                 new RotationSystemElement(),
                 new BigModeElement(),
+                new PeekElement(),
             };
         };
 

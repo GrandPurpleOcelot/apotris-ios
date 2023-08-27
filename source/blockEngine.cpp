@@ -12,12 +12,12 @@
 using namespace BlockEngine;
 using namespace GameInfo;
 
-bool BlockEngine::enableFumen = false;
+bool BlockEngine::enableFumen = true;
 bool BlockEngine::enableFumenQueue = false;
 
 u8 BlockEngine::fumenQueue[5] = {PIECE_T,0,0,0,0};
 
-std::string BlockEngine::fumenString = "v115@ZgAtGeCtFeCtglFeAtilEei0FewhRpg0Cei0whRpgl?BeR4wwg0whilAeR4ywwhJelnm";
+std::string BlockEngine::fumenString = "v115@neC8GeA8AeC8EeA8CeE8AeI8AeI8AeI8AeI8AeI8Ae?I8AeI8AeI8AeI8AeI8AeI8AeI8AeI8AeI8AeI8AeI8KeAgH";
 
 int Game::checkRotation(int dx, int dy, int r) {
     const int x = dx + pawn.x;
@@ -625,6 +625,12 @@ void Game::update() {
 
         replayElligible = false;
     }
+
+    calculatePeek();
+}
+
+void Game::calculatePeek(){
+    peek = max(22 - (pawn.lowest + pawn.heighest[pawn.rotation]),0);
 }
 
 int Game::lowest() {

@@ -43,6 +43,7 @@ Function getActionFromKey(int key);
 void liftKeys();
 void setJourneyGraphics(Save * save, int level);
 void replayControl();
+void checkPeek();
 
 INLINE int prep(int n);
 
@@ -132,6 +133,12 @@ int damp = 2;
 int dampTimer = 0;
 int dampTimerMax = 60;
 
+int previousHeight = 0;
+
+int peek = 0;
+FIXED peekValue = 0;
+bool refresh = false;
+
 void GameScene::draw(){
     // std::string prof;
     // profile_start();
@@ -165,11 +172,12 @@ void GameScene::draw(){
 
     showSprites(128);
 
-    if (game->refresh) {
-        showBackground(0);
+    if (game->refresh || refresh) {
+        showBackground(peek);
         game->resetRefresh();
+        refresh = false;
     }else if (game->clearLock && !eventPauseTimer){
-        showBackground(0);
+        showBackground(peek);
         showTimer();
     }else{
         showTimer();
@@ -466,13 +474,23 @@ int edges[16] = {
     0x0019,//all
 };
 
+void clearBackground(int offset){
+    // if(previousHeight < offset){
+    //     for(int i = previousHeight; i < offset; i++)
+    //         for(int j = 0; j < 10; j++)
+    //             setTile(25, 10 + j, i - 1, 0);
+    // }
+
+    // previousHeight = offset;
+}
+
 void showBackground(int offset) {
     bool showEdges = savefile->settings.edges;
 
     bool up, down, left, right;
     bool before = false, after = false;
 
-    int startY = 20;
+    int startY = 20-offset;
 
     const int clearTile = tileBuild(3, false, false, savefile->settings.lightMode);
 
@@ -537,8 +555,7 @@ void showBackground(int offset) {
         }
 
         if(savefile->settings.clearEffect == 3){
-            for (int i = 0; i < 10; i++)
-                setTile(25, 10 + i, offset - 1, 0);
+            clearBackground(offset);
 
             return;
         }
@@ -628,8 +645,7 @@ void showBackground(int offset) {
         }
 
         if(savefile->settings.clearEffect == 3){
-            for (int i = 0; i < 10; i++)
-                setTile(25, 10 + i, offset - 1, 0);
+            clearBackground(offset);
 
             return;
         }
@@ -661,8 +677,7 @@ void showBackground(int offset) {
         }
     }
 
-    for(int i = 0; i < 10; i++)
-        setTile(25, 10 + i, offset-1, 0);
+    clearBackground(offset);
 }
 
 void showPawn() {
@@ -724,7 +739,7 @@ void showPawn() {
 
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16*7, 11, 2);
         sprite_enable_mosaic(pawnSprite);
-        sprite_set_pos(pawnSprite, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->pawn.y - game->boardOffset) * 8 + shake * savefile->settings.shake);
+        sprite_set_pos(pawnSprite, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->pawn.y - game->boardOffset + peek) * 8 + shake * savefile->settings.shake);
     }else{
         if(game->pawn.y * 2 < 14){
             sprite_hide(pawnSprite);
@@ -734,7 +749,7 @@ void showPawn() {
         sprite_enable_mosaic(pawnSprite);
         sprite_enable_affine(pawnSprite, 31, true);
         sprite_set_size(pawnSprite, 1<<7, 31);
-        sprite_set_pos(pawnSprite, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->pawn.y - game->boardOffset) * 8 * 2 + shake * savefile->settings.shake);
+        sprite_set_pos(pawnSprite, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->pawn.y - game->boardOffset + peek) * 8 * 2 + shake * savefile->settings.shake);
     }
 }
 
@@ -803,7 +818,7 @@ void showShadow() {
         }
 
         sprite_set_attr(pawnShadow, ShapeSquare, 2, 16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
-        sprite_set_pos(pawnShadow, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->lowest() - game->boardOffset) * 8 + shake * savefile->settings.shake);
+        sprite_set_pos(pawnShadow, (10 + game->pawn.x) * 8 + push * savefile->settings.shake, (game->lowest() - game->boardOffset + peek) * 8 + shake * savefile->settings.shake);
     }else{
         if(game->pawn.y * 2 < 14){
             sprite_hide(pawnShadow);
@@ -814,7 +829,7 @@ void showShadow() {
         sprite_enable_affine(pawnShadow,30,true);
         sprite_set_size(pawnShadow, 1<<7, 30);
 
-        sprite_set_pos(pawnShadow, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->lowest() - game->boardOffset) * 2 * 8 + shake * savefile->settings.shake);
+        sprite_set_pos(pawnShadow, (10 + game->pawn.x*2) * 8 + push * savefile->settings.shake, (game->lowest() - game->boardOffset + peek) * 2 * 8 + shake * savefile->settings.shake);
     }
 }
 
@@ -1684,7 +1699,7 @@ void drawFrameBackgrounds(){
 }
 
 INLINE int prep(int n){
-    return clamp((n + 500) / 8, 0, 255) / 16;
+    return min(clamp((n + 500) / 8, 0, 255) / 16,15);
 }
 
 IWRAM_CODE void updateGrid(){
@@ -1770,7 +1785,11 @@ void drawGrid() {
 
         for (int i = 0; i < 20; i++) {
             for (int j = 0; j < 10; j++) {
-                if (glow[i][j] == 0 || !savefile->settings.effects) {
+                if(i < peek) {
+                    setTile(26, 10 + j, i, tileBuild(gridTile, false, false, 15));
+                    if(glow[i][j] > 0)
+                        glow[i][j]--;
+                } else if (glow[i][j] == 0 || !savefile->settings.effects) {
                     setTile(26, 10 + j, i, t);
                 } else if (glow[i][j] > glowDuration) {
                     glow[i][j]--;
@@ -1789,9 +1808,14 @@ void drawGrid() {
             }
         }
     }else if(savefile->settings.effects == 2){
-        for(int i = 0; i < 20; i++)
-            for(int j = 0; j < 10; j++)
-                setTile(26, j + 10, i, tileBuild(gridTile,false,false,prep(current[i+1][j+1])));
+        for(int i = 0; i < 20; i++){
+            for(int j = 0; j < 10; j++){
+                if(i < peek)
+                    setTile(26, j + 10, i, tileBuild(gridTile,false,false,15));
+                else
+                    setTile(26, j + 10, i, tileBuild(gridTile,false,false,prep(current[i+1][j+1])));
+            }
+        }
     }
 }
 
@@ -2169,7 +2193,7 @@ void showPlaceEffect(){
         }
 
         x += xoffset + push * savefile->settings.shake;
-        y += yoffset - shake * savefile->settings.shake;
+        y += yoffset - shake * savefile->settings.shake + peek * 8;
 
         it->sprite = &obj_buffer[19+i];
         sprite_unhide(it->sprite,ATTR0_AFF_DBL);
@@ -2817,6 +2841,8 @@ void GameScene::init(){
     //     loadSpriteTiles(i, &d, 1, 1);
 
     reset();
+    peek = 0;
+    peekValue = 0;
 
     previousSettings = savefile->settings;
 
@@ -2898,6 +2924,8 @@ void GameScene::init(){
     enableBlend((0b101010 << 8) + (1 << 6) + (0b1010));
 
     setPalette();
+
+    setPaletteColor(15, 5, RGB15(25, 5, 5), 1);
 
     if(game->gameMode == MASTER)
         showSpeedMeter((int)game->speed);
@@ -3086,9 +3114,11 @@ void GameScene::update(){
     if(flashTimer)
         zoneFlash();
 
-    sqran(qran() % frameCounter);
-
     updateFluid();
+
+    checkPeek();
+
+    sqran(qran() % frameCounter);
 }
 
 void GameScene::deinit(){
@@ -3167,4 +3197,21 @@ void showGoalLine(){
         sprite_set_attr(sprite, ShapeWide, 2, 280, 8, 1);
         sprite_set_pos(sprite, (10 + 3 * i) * 8 + push * savefile->settings.shake, height * 8 - 1 + shake * savefile->settings.shake);
     }
+}
+
+void checkPeek(){
+    if(!savefile->settings.peek)
+        return;
+
+    int prev = peek;
+    FIXED goal = int2fx(game->peek * 8);
+
+    if((goal > peekValue && peekValue + 50 >= goal) || (goal < peekValue && peekValue - 50 <= goal))
+        peekValue = goal;
+    else
+        peekValue = lerp(peekValue,lerp(peekValue, goal, 50),50);
+
+    peek = fx2int(peekValue / 8);
+
+    refresh = (prev != peek);
 }

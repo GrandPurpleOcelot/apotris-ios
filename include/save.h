@@ -99,8 +99,9 @@ typedef struct Settings{
     int rotationSystem;
     int zoom;
     int integerScale;
+    int peek;
 
-    int placeHolder[82];
+    int placeHolder[81];
 }ALIGN(4) Settings;
 
 typedef struct Test{
