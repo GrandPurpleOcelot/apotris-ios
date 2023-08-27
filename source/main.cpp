@@ -330,13 +330,11 @@ std::string nameInput(int place) {
 
     int timer = 0;
 
-    #ifdef GBA
     int das = 0;
     int maxDas = 12;
 
     int arr = 0;
     int maxArr = 5;
-    #endif
 
     bool onDone = false;
 
@@ -437,24 +435,41 @@ std::string nameInput(int place) {
 
             #ifdef PC
             for(int i = 0; i < 26; i++){
-                if(key_hit(i) && result.size() < 9){
-                    result += keyToString[i];
+                if(key_hit(i)){
+                    result[cursor] = keyToString[i][0];
+                    if(cursor < 7)
+                        cursor++;
                     sfx(SFX_MENUMOVE);
                     break;
                 }
             }
 
-            if(key_hit(sf::Keyboard::Backspace) && !result.empty()){
-                result.pop_back();
-                sfx(SFX_MENUMOVE);
+            if(key_hit(sf::Keyboard::Backspace) || (das == maxDas && arr == 0)){
+                result[cursor] = ' ';
+                if(cursor > 0){
+                    cursor--;
+
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+
+            if(key_is_down(sf::Keyboard::Backspace)){
+                if(das < maxDas)
+                    das++;
+
+                if(++arr >= maxArr){
+                    arr = 0;
+                }
+            }else{
+                das = 0;
             }
 
             if(key_hit(sf::Keyboard::Space) && result.size() < 9){
-                result += " ";
+                result[cursor] = ' ';
+                if(cursor < 7)
+                    cursor++;
                 sfx(SFX_MENUMOVE);
             }
-
-            cursor = result.size();
 
             if (timer++ > 19)
                 timer = 0;
