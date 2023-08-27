@@ -11,8 +11,19 @@
 #include <cstring>
 #include "audio_files.h"
 
+#ifdef PC
+
 #define SCREEN_WIDTH 512
 #define SCREEN_HEIGHT 512
+
+#endif
+
+#ifndef PC
+
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
+
+#endif
 
 typedef unsigned char  u8;
 typedef unsigned short u16, COLOR;

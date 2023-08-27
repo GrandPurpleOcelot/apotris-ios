@@ -218,6 +218,16 @@ void genWidths(){
 
 }
 
+#ifdef WEB
+#include "emscripten.h"
+#endif
+
+void iter(){
+    // closed();
+    vsync();
+    scene->update();
+}
+
 int main(void) {
     platformInit();
 
@@ -227,11 +237,17 @@ int main(void) {
 
     changeScene(new newTitleScene());
 
+    #ifndef WEB
     //start screen animation
     while(closed()){
         vsync();
         scene->update();
     }
+    #endif
+
+    #ifdef WEB
+    emscripten_set_main_loop(iter,60,false);
+    #endif
 }
 
 #ifdef PC

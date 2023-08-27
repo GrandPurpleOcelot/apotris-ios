@@ -14,5 +14,9 @@ w32:
 mm:
 	@make --no-print-directory -f make/mm_make
 
+wasm:
+	@make --no-print-directory -f make/wasm_make
+
 clean:
+	@rm -rf external/Tilengine/src/build
 	@rm -rf build bin

@@ -30,23 +30,23 @@ static std::list<std::string> options = {
 };
 
 void audioSettings(){
-    selection = 0;
-    refreshText = true;
+    // selection = 0;
+    // refreshText = true;
 
-    while (closed()) {
-        vsync();
+    // while (closed()) {
+    //     vsync();
 
-        key_poll();
+    //     key_poll();
 
-        if(refreshText){
-            audioText();
+    //     if(refreshText){
+    //         audioText();
 
-            refreshText = false;
-        }
+    //         refreshText = false;
+    //     }
 
-        if(audioControl())
-            break;
-    }
+    //     if(audioControl())
+    //         break;
+    // }
 }
 
 bool audioControl(){

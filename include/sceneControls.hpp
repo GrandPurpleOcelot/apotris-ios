@@ -224,16 +224,24 @@ class RebindElement : public Element{
                 for(int i = 0; i < sf::Keyboard::KeyCount; i++){
                     if(key_hit(i)){
                         keys[index] = i;
+                        sfx(SFX_MENUCONFIRM);
                         found = true;
                         break;
                     }
                 }
 
-                if(found){
+                if(found)
+                    break;
+                #endif
+
+                #if !defined(PC) && !defined(GBA)
+                u32 key = key_hit(KEY_FULL);
+
+                if(key != 0){
+                    keys[index] = key;
                     sfx(SFX_MENUCONFIRM);
                     break;
                 }
-
                 #endif
             }
 
@@ -276,6 +284,8 @@ class RebindElement : public Element{
             #ifdef PC
             return keyToString[keys[index]];
             #endif
+
+            return "?";
         }
 
         RebindElement(int _index, std::string _label){

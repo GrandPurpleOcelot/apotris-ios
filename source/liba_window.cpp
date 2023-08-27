@@ -17,8 +17,8 @@ float windowScale = 3;
 int windowWidth = 256;
 int windowHeight = 192;
 
-int rowStart = (512 - windowHeight)/2;
-int rowEnd = (512 + windowHeight)/2;
+int rowStart = (SCREEN_HEIGHT - windowHeight)/2;
+int rowEnd = (SCREEN_HEIGHT + windowHeight)/2;
 
 bool render = true;
 
