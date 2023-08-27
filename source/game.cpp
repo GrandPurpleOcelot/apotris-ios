@@ -114,7 +114,6 @@ static u16 fullMeterTimer = 0;
 
 bool enableBot = false;
 static bool refreshSkin = false;
-// Bot *testBot;
 
 FIXED shakeBuff;
 FIXED shakeVelocity;
@@ -2808,6 +2807,11 @@ void replayControl(){
 }
 
 void GameScene::init(){
+    // TILE d;
+    // memset32(&d, 0x11111111, 8);
+    // for(int i = 0; i < 1024; i++)
+    //     loadSpriteTiles(i, &d, 1, 1);
+
     reset();
 
     previousSettings = savefile->settings;
@@ -3150,13 +3154,13 @@ void showGoalLine(){
         d.data[0] = 0x33333333;
 
     for(int i = 0; i < 4; i++)
-        loadSpriteTiles(240+i, &d, 1, 1);
+        loadSpriteTiles(280+i, &d, 1, 1);
 
     for(int i = 0; i < 3; i++){
         OBJ_ATTR * sprite = &obj_buffer[100+i];
 
         sprite_unhide(sprite, 0);
-        sprite_set_attr(sprite, ShapeWide, 2, 240, 8, 1);
+        sprite_set_attr(sprite, ShapeWide, 2, 280, 8, 1);
         sprite_set_pos(sprite, (10 + 3 * i) * 8 + push * savefile->settings.shake, height * 8 - 1 + shake * savefile->settings.shake);
     }
 }
