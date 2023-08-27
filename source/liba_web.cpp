@@ -43,8 +43,6 @@ void key_poll(){
     previousKeys = currentKeys;
     currentKeys.clear();
 
-    currentKeys = currentlyPressed;
-
     SDL_Event event;
 
     while( SDL_PollEvent( &event ) ){
@@ -77,6 +75,8 @@ void key_poll(){
             break;
         }
     }
+
+    currentKeys = currentlyPressed;
 }
 
 uint32_t key_is_down(uint32_t key){
@@ -178,15 +178,15 @@ void updateWindow(uint8_t* framebuffer){
         0xff000000
     );
 
+    delete [] newBuffer;
+
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
+
+    SDL_FreeSurface(img);
 
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer,texture,NULL,NULL);
     SDL_RenderPresent(renderer);
-
-    // Free surfaces
-    SDL_FreeSurface(img);
-    delete [] newBuffer;
 
     SDL_DestroyTexture(texture);
 }
@@ -203,21 +203,21 @@ uint32_t frame_time = 0;
 float fps = 0;
 
 bool closed(){
-
+    emscripten_sleep(0);
     // // Cap to 60 FPS
-    // Uint64 end = SDL_GetPerformanceCounter();
+    Uint64 end = SDL_GetPerformanceCounter();
 
-    // float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
+    float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
 
-    // SDL_Delay(floor(16.666f - elapsedMS));
-    // frame_start = SDL_GetPerformanceCounter();
+    SDL_Delay(floor(16.666f - elapsedMS));
+    frame_start = SDL_GetPerformanceCounter();
 
     // //show fps
-    frame_time = SDL_GetTicks()-start_time;
-    fps = (frame_time > 0)? 1000.0 / frame_time : 0.0;
-    start_time = SDL_GetTicks();
+    // frame_time = SDL_GetTicks()-start_time;
+    // fps = (frame_time > 0)? 1000.0 / frame_time : 0.0;
+    // start_time = SDL_GetTicks();
 
-    std::cout << "fps: " << fps << "\n";
+    // std::cout << "fps: " << fps << "\n";
 
 
     return true;
