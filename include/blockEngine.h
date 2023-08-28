@@ -559,6 +559,51 @@ namespace BlockEngine
         List historyList;
 
     public:
+        int checkRotation(int, int, int);
+        void next();
+        void rotateCW(int dir);
+        void rotateCCW(int dir);
+        void rotateTwice(int dir);
+        void hardDrop();
+        void update();
+        int lowest();
+        Color color(int);
+        void hold(int dir);
+        void keyLeft(int);
+        void keyRight(int);
+        void keyDown(int);
+        void keyDrop(int);
+        void removeClearLock();
+        void resetSounds();
+        void resetRefresh();
+        void setLevel(int);
+        void setGoal(int);
+        Drop getDrop();
+        void setTuning(Tuning);
+        void clearAttack(int);
+        void setWin();
+        void addToGarbageQueue(int,int);
+        std::list<int> getBestFinesse(int,int,int);
+        int getIncomingGarbage();
+        Move findBestDrop();
+        void setTrainingMode(bool);
+        void demoClear();
+        void demoFill();
+        void bType(int);
+        void setSubMode(int);
+        void setSpeed();
+        void setRotationSystem(int);
+        void removeEventLock();
+        void activateZone(int);
+        void liftKeys();
+        void setOptions(Options newOptions);
+        void updateDas();
+        void chargeDas();
+        void loadFumen();
+        std::string getFumen();
+        void demoGarbage();
+        std::tuple<int,int> getSpawnPosition();
+
         int lengthX = 10;
         int lengthY = 40;
         int board[40][10];
@@ -590,13 +635,11 @@ namespace BlockEngine
         int b2bCounter = 0;
         int bagCounter = 0;
         int linesSent = 0;
-        int moveCounter = 0;
         int pieceCounter = 0;
         int previousKey = 0;
         bool softDrop = false;
         bool canHold = true;
         bool holding = false;
-        int holdCounter = 0;
         bool trainingMode = false;
         int seed = 0;
         int initSeed = 0;
@@ -669,51 +712,6 @@ namespace BlockEngine
         std::list<Garbage> garbageQueue;//no max but should be small
         std::list<std::tuple<uint8_t,uint8_t>> toDisappear;//no max, depends on pps but gets cleared every frame
         std::list<Timestamp> replay;//max is MAX_REPLAY_SIZE
-
-        int checkRotation(int, int, int);
-        void next();
-        void rotateCW(int dir);
-        void rotateCCW(int dir);
-        void rotateTwice(int dir);
-        void hardDrop();
-        void update();
-        int lowest();
-        Color color(int);
-        void hold(int dir);
-        void keyLeft(int);
-        void keyRight(int);
-        void keyDown(int);
-        void keyDrop(int);
-        void removeClearLock();
-        void resetSounds();
-        void resetRefresh();
-        void setLevel(int);
-        void setGoal(int);
-        Drop getDrop();
-        void setTuning(Tuning);
-        void clearAttack(int);
-        void setWin();
-        void addToGarbageQueue(int,int);
-        std::list<int> getBestFinesse(int,int,int);
-        int getIncomingGarbage();
-        Move findBestDrop();
-        void setTrainingMode(bool);
-        void demoClear();
-        void demoFill();
-        void bType(int);
-        void setSubMode(int);
-        void setSpeed();
-        void setRotationSystem(int);
-        void removeEventLock();
-        void activateZone(int);
-        void liftKeys();
-        void setOptions(Options newOptions);
-        void updateDas();
-        void chargeDas();
-
-        void loadFumen();
-        std::string getFumen();
-        void demoGarbage();
 
         Game() : Game(0,0,0){}
 

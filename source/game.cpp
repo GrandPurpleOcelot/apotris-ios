@@ -45,6 +45,8 @@ void setJourneyGraphics(Save * save, int level);
 void replayControl();
 void checkPeek();
 
+void showSpawn();
+
 INLINE int prep(int n);
 
 IWRAM_CODE void updateGrid();
@@ -152,6 +154,7 @@ void GameScene::draw(){
 
     showPawn();
     showShadow();
+    showSpawn();
 
     showHold();
     showQueue();
@@ -681,8 +684,7 @@ void showBackground(int offset) {
 }
 
 void showPawn() {
-    pawnSprite = &obj_buffer[112];
-    // if (game->clearLock || game->pawn.current == -1 || (enableBot && game->gameMode != BATTLE)) {
+    pawnSprite = &obj_buffer[111];
     if (game->clearLock || game->activePiece == -1) {
         sprite_hide(pawnSprite);
         return;
@@ -755,7 +757,6 @@ void showPawn() {
 
 void showShadow() {
     pawnShadow = &obj_buffer[113];
-    // if (game->clearLock || game->activePiece == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100) || (enableBot && game->gameMode != BATTLE)) {
     if (game->clearLock || game->activePiece == -1 || game->gameMode == CLASSIC || (game->gameMode == MASTER && game->level >= 100)) {
         sprite_hide(pawnShadow);
         return;
@@ -3204,14 +3205,77 @@ void checkPeek(){
         return;
 
     int prev = peek;
-    FIXED goal = int2fx(game->peek * 8);
+    FIXED goal = int2fx(game->peek * 8 + 4);
 
-    if((goal > peekValue && peekValue + 50 >= goal) || (goal < peekValue && peekValue - 50 <= goal))
+    if((goal > peekValue && peekValue + 50 >= goal) || (goal < peekValue && peekValue - 50 <= goal)){
         peekValue = goal;
-    else
-        peekValue = lerp(peekValue,lerp(peekValue, goal, 50),50);
+    } else
+        peekValue = lerp(peekValue, goal, 50);
 
     peek = fx2int(peekValue / 8);
 
-    refresh = (prev != peek);
+    if(prev != peek)
+        refresh = true;
+}
+
+void showSpawn(){
+    OBJ_ATTR* sprite = &obj_buffer[110];
+
+    if (peek == 0) {
+        sprite_hide(sprite);
+        return;
+    }
+
+    #ifdef PC
+    if(flashTimer){
+        sprite_hide(sprite);
+        return;
+    }
+    #endif
+
+    sprite_unhide(sprite, 0);
+
+    int * b = BlockEngine::getShape(game->queue.front(), 0, game->rotationSystem);
+
+    bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS);
+
+    std::tuple<int,int> pos = game->getSpawnPosition();
+
+    int x = std::get<0>(pos);
+    int y = std::get<1>(pos) + add;
+
+    const int tile = 284;
+
+    clearSpriteTiles(tile, 4, 2);
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 4; j++) {
+            int n = b[(i+add) * 4 + j];
+            if (n > 0){
+                setSpriteTile(tile, j, i, 4, sprite52tiles_bin);
+            }
+        }
+    }
+
+    delete[] b;
+
+    if(!game->pawn.big){
+        if(game->pawn.y < 16){
+            sprite_hide(sprite);
+            return;
+        }
+
+        sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
+        sprite_enable_mosaic(sprite);
+        sprite_set_pos(sprite, (10 + x) * 8 + push * savefile->settings.shake, (y - game->boardOffset + peek) * 8 + shake * savefile->settings.shake);
+    }else{
+        if(game->pawn.y * 2 < 14){
+            sprite_hide(sprite);
+            return;
+        }
+        sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
+        sprite_enable_mosaic(sprite);
+        sprite_enable_affine(sprite, 29, true);
+        sprite_set_size(sprite, 1<<7, 29);
+        sprite_set_pos(sprite, (10 + x*2) * 8 + push * savefile->settings.shake, (y - game->boardOffset + peek) * 8 * 2 + shake * savefile->settings.shake);
+    }
 }

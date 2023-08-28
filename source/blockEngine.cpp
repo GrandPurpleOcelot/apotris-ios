@@ -12,7 +12,7 @@
 using namespace BlockEngine;
 using namespace GameInfo;
 
-bool BlockEngine::enableFumen = true;
+bool BlockEngine::enableFumen = false;
 bool BlockEngine::enableFumenQueue = false;
 
 u8 BlockEngine::fumenQueue[5] = {PIECE_T,0,0,0,0};
@@ -168,8 +168,6 @@ void Game::rotate(int dir, int on){
         r -= 4;
     else if(r < 0)
         r += 4;
-
-    moveCounter++;
 
     if(rotationSystem == SRS){
         for (int i = 0; i < 5 + (dir > 1); i++) {
@@ -426,10 +424,8 @@ void Game::hardDrop() {
 
     pawn.y = pawn.lowest;
 
-    // profile_start();
-    if(rotationSystem != ARS)
+    if(!(gameMode == MASTER && subMode))
         place();
-    // log(std::to_string(profile_stop()));
 
     score += diff * 2;
 
@@ -1238,13 +1234,6 @@ void Game::fillBag() {
 }
 
 void Game::next() {//~21-29k cycles
-    pawn.y = (int)lengthY / 2;
-    pawn.x = (int)lengthX / 2 - 2;
-
-    if(game->pawn.big){
-        pawn.x++;
-    }
-
     pawn.current = queue.front();
     activePiece = pawn.current;
     queue.pop_front();
@@ -1254,14 +1243,6 @@ void Game::next() {//~21-29k cycles
     pieceHistory = pawn.current;
 
     pawn.setBlock(rotationSystem); //~15k cycles
-
-    if(gameMode == CLASSIC){
-        down = 0;
-        if(pawn.current != 0 && pawn.current != 3)
-            pawn.x++;
-        if(pawn.current == 0)
-            pawn.y--;
-    }
 
     setupPawnSpawn();
 
@@ -1387,7 +1368,6 @@ void Game::hold(int dir) {
     if (!canHold || gameMode == CLASSIC || pawn.current == -1)
         return;
 
-    moveCounter++;
     canHold = false;
 
     if (held == -1) {
@@ -1401,18 +1381,11 @@ void Game::hold(int dir) {
         pawn.current = temp;
         activePiece = temp;
         pawn.setBlock(rotationSystem);
-        pawn.y = (int)lengthY / 2;
-        pawn.x = (int)lengthX / 2 - 2;
 
-        if(pawn.big){
-            pawn.x++;
-        }
+        setupPawnSpawn();
     }
 
-    setupPawnSpawn();
-
     sounds.hold = 1;
-    holdCounter++;
 
     lockTimer = maxLockTimer;
     lockMoveCounter = 15;
@@ -1459,8 +1432,6 @@ void Game::lockCheck() {
 }
 
 void Game::keyLeft(int dir) {
-    moveCounter++;
-
     replay.push_back(Timestamp(timer,0,dir));
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
@@ -1491,8 +1462,6 @@ void Game::keyLeft(int dir) {
 }
 
 void Game::keyRight(int dir) {
-    moveCounter++;
-
     replay.push_back(Timestamp(timer,1,dir));
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
@@ -1522,7 +1491,6 @@ void Game::keyRight(int dir) {
 }
 
 void Game::keyDown(int dir) {
-    moveCounter++;
     replay.push_back(Timestamp(timer,6,dir));
     if (clearLock || eventLock || entryDelay) {
         if(!(entryDelay && rotationSystem == NRS))
@@ -1708,8 +1676,6 @@ void Game::keyDrop(int dir){
         return;
 
     dropping = true;
-
-    moveCounter++;
 }
 
 Drop Game::getDrop(){
@@ -2527,6 +2493,21 @@ void Game::demoGarbage(){
 }
 
 void Game::setupPawnSpawn(){
+    pawn.y = (int)lengthY / 2;
+    pawn.x = (int)lengthX / 2 - 2;
+
+    if(game->pawn.big){
+        pawn.x++;
+    }
+
+    if(gameMode == CLASSIC){
+        down = 0;
+        if(pawn.current != 0 && pawn.current != 3)
+            pawn.x++;
+        if(pawn.current == 0)
+            pawn.y--;
+    }
+
     pawn.rotation = 0;
     if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
         if(rotationSystem == ARS){
@@ -2577,6 +2558,32 @@ void Game::setupPawnSpawn(){
             }
         }
     }
+}
+
+std::tuple<int,int> Game::getSpawnPosition(){
+    int y = (int)lengthY / 2;
+    int x = (int)lengthX / 2 - 2;
+
+    if(game->pawn.big){
+        x++;
+    }
+
+    int curr = queue.front();
+
+    if(gameMode == CLASSIC){
+        if(curr != 0 && curr != 3)
+            x++;
+        if(curr == 0)
+            y--;
+    }
+
+    const int line = 24 / (1 + pawn.big);
+    bool check = bitboard[line] != 0;
+
+    if(check)
+        y--;
+
+    return std::make_tuple(x,y);
 }
 
 void Game::setupRNG(){

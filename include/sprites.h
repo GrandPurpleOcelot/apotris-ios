@@ -44,7 +44,7 @@
 #include "sprite49tiles_bin.h"
 #include "sprite50tiles_bin.h"
 #include "sprite51tiles_bin.h"
-
+#include "sprite52tiles_bin.h"
 
 #include "title1tiles_bin.h"
 #include "title2tiles_bin.h"
