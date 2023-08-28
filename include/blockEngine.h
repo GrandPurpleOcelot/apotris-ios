@@ -130,6 +130,7 @@ namespace BlockEngine
         MASTER,
         TRAINING,
         ZEN,
+        DEATH,
     };
 
     enum RotationSystems{
@@ -466,6 +467,7 @@ namespace BlockEngine
         void generateGarbage(int,int);
         Drop calculateDrop();
         void setMasterTuning();
+        void setDeathTuning();
         void rotate(int,int);
         int checkSpecialRotation(int,int);
         int checkITouching(int,int);
@@ -554,6 +556,8 @@ namespace BlockEngine
         bool rotates[3] = {false,false,false};
 
         bool zoneExit = false;
+
+        bool sonicDrop = false;
 
         List bag;
         List historyList;

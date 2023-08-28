@@ -12,7 +12,7 @@
 using namespace BlockEngine;
 using namespace GameInfo;
 
-bool BlockEngine::enableFumen = true;
+bool BlockEngine::enableFumen = false;
 bool BlockEngine::enableFumenQueue = false;
 
 u8 BlockEngine::fumenQueue[5] = {PIECE_T,0,0,0,0};
@@ -28,7 +28,7 @@ int Game::checkRotation(int dx, int dy, int r) {
         for (int i = pawn.boardLowest[r][j]; i >= 0; i--) {
             if (pawn.board[r][i][j] == 0)
                 continue;
-            
+
             if (x + j < 0 || x + j > lengthX - 1 || y + i < 0 || y + i > lengthY - 1 || board[i+y][j+x] != 0)
                 return 0;
 
@@ -424,7 +424,7 @@ void Game::hardDrop() {
 
     pawn.y = pawn.lowest;
 
-    if(!(gameMode == MASTER && subMode))
+    if(!sonicDrop)
         place();
 
     score += diff * 2;
@@ -520,9 +520,6 @@ void Game::update() {
             }
         }
     }else if(gameMode == MASTER && !disappearing){
-        if(level < 500 && timer >= 25200)
-            won = 1;
-
         if(decayTimer && comboCounter < 2){
             decayTimer--;
         }else{
@@ -530,6 +527,7 @@ void Game::update() {
             if(gradePoints)
                 gradePoints--;
         }
+    }else if(gameMode == DEATH){
     }
 
     if((linesCleared >= goal && gameMode == SPRINT && goal && subMode == 0) ||
@@ -585,7 +583,7 @@ void Game::update() {
     }
 
     if (down) {
-        if(rotationSystem == NRS || gameMode == MASTER)
+        if(rotationSystem == NRS || gameMode == MASTER || gameMode == DEATH)
             softDropCounter = maxDas;
         else if (softDropCounter < maxDas)
             softDropCounter++;
@@ -708,7 +706,7 @@ void Game::place() {
         else
             comboCounter = 1;
 
-        if(gameMode == MASTER)
+        if(gameMode == MASTER || gameMode == DEATH)
             entryDelay = lineAre;
 
     } else {
@@ -741,7 +739,7 @@ void Game::place() {
             generateGarbage(sum,1);
         }
 
-        if(gameMode == MASTER)
+        if(gameMode == MASTER || gameMode == DEATH)
             entryDelay = areMax;
     }
 
@@ -756,8 +754,9 @@ void Game::place() {
         entryDelay = 10 + add;
 
         down = 0;
-    }else if (gameMode == MASTER){
+    }
 
+    if (gameMode == MASTER){
         if(level % 100 < 99 && level < 998)
             level++;
 
@@ -771,6 +770,13 @@ void Game::place() {
         }else if(cool && level % 100 >= 82 && prevLevel % 100 < 82){
             sounds.section = 1;
         }else if((level % 100 == 99 && prevLevel % 100 < 99 && level != 999) || (level == 998 && prevLevel != 998)){
+            sounds.section = 2;
+        }
+    }else if (gameMode == DEATH){
+        if(level % 100 < 99 && level < 1300)
+            level++;
+
+        if((level % 100 == 99 && prevLevel % 100 < 99 && level != 999) || (level == 998 && prevLevel != 998)){
             sounds.section = 2;
         }
     }
@@ -973,6 +979,7 @@ int Game::clear(Drop drop) {
 
     //check for level up
     int prevLevel = level;
+    int currentSectionLevel = 0;
     switch(gameMode){
     case MARATHON:
         level = ((int)linesCleared / 10) + 1;
@@ -1035,9 +1042,14 @@ int Game::clear(Drop drop) {
             }
         }
 
-        int currentSectionLevel = level / 100;
+        currentSectionLevel = level / 100;
 
         if(currentSectionLevel > prevLevel / 100){
+            if(currentSectionLevel == 5 && timer >= 25200){
+                won = 1;
+                break;
+            }
+
             int currentSession = timer-sectionStart;
 
             if(cool){
@@ -1054,14 +1066,71 @@ int Game::clear(Drop drop) {
                     internalGrade = newInternal;
                     grade--;
                     gradePoints = 0;
-                    regretCount++;
                 }
+
+                regretCount++;
                 sounds.section = -1;
             }
 
             sounds.levelUp = 1;
             sectionStart = timer;
             setMasterTuning();
+
+        }
+
+        break;
+    case DEATH:
+        // if(level == 999){
+        //     if(clearCount && disappearing)
+        //         creditGrade += creditPoints[clearCount-1][disappearing-1];
+
+        //     break;
+        // }
+
+        level += clearCount + (clearCount > 2) + (clearCount > 3);
+
+        // if(level > 999)
+        //     level = 999;
+
+        // if(level == 999 && !disappearing){
+
+        //     disappearing = 1 + (coolCount == 9);
+
+        //     sectionStart = timer;
+
+        //     eventLock = true;
+
+        //     for(int i = 0; i < lengthY; i++){
+        //         for(int j = 0; j < lengthX; j++)
+        //             board[i][j] = 0;
+        //         bitboard[i] = 0;
+        //     }
+        // }
+
+        currentSectionLevel = level / 100;
+
+        if(currentSectionLevel > prevLevel / 100){
+            if(!subMode){
+                if((currentSectionLevel == 5 && timer >= 10980) || (currentSectionLevel == 10 && timer >= 10980 * 2)){
+                    won = 1;
+                    break;
+                }
+            }else{
+                if((currentSectionLevel == 5 && timer >= 8880) || (currentSectionLevel == 10 && timer >= 8880 * 2)){
+                    won = 1;
+                    break;
+                }
+            }
+
+            if(timer-sectionStart > 3600){//regret
+                regretCount++;
+
+                sounds.section = -1;
+            }
+
+            sounds.levelUp = 1;
+            sectionStart = timer;
+            setDeathTuning();
         }
 
         break;
@@ -1104,10 +1173,6 @@ int Game::clear(Drop drop) {
             statTracker.tspins++;
         }
     }
-
-    // if(!zoneTimer){
-    //     stackHeight += clearCount;
-    // }
 
     if(gameMode == MASTER && !disappearing){
         gradePoints += (int) ((float) gradeTable[internalGrade][clearCount+1] * masterComboMultiplayer[(comboCounter < 10)?comboCounter:9][clearCount-1] + 1) * ((int)(level/250)+1);
@@ -1662,7 +1727,7 @@ void Game::generateGarbage(int height,int mode){
 void Game::keyDrop(int dir){
     replay.push_back(Timestamp(timer, 7,dir));
 
-    if(dir == 0 && gameMode == MASTER)
+    if(dir == 0 && (gameMode == MASTER || gameMode == DEATH))
         dropping = false;
 
     if(!dir)
@@ -1752,7 +1817,7 @@ void Game::setTuning(Tuning newTune){
         initialType = newTune.initialType;
     }
 
-    if(gameMode == MASTER)
+    if(gameMode == MASTER || gameMode == DEATH)
         return;
 
     maxDas = newTune.das;
@@ -1782,6 +1847,22 @@ void Game::setMasterTuning(){
     maxDas = masterDelays[n][2];
     maxLockTimer = masterDelays[n][3];
     maxClearDelay = masterDelays[n][4];
+    softDropSpeed = 1;
+}
+
+void Game::setDeathTuning(){
+
+    int n = level / 100;
+
+    if(n > 12)
+        n = 12;
+
+    arr = 1;
+    areMax = deathDelays[n][0];
+    lineAre = deathDelays[n][1];
+    maxDas = deathDelays[n][2];
+    maxLockTimer = deathDelays[n][3];
+    maxClearDelay = deathDelays[n][4];
     softDropSpeed = 1;
 }
 
@@ -1910,8 +1991,10 @@ void Game::bType(int height){
 
 void Game::setSubMode(int sm){
 
-    if(gameMode == MASTER && sm){
+    if((gameMode == MASTER || gameMode == DEATH) && sm){
         setRotationSystem(ARS);
+
+        sonicDrop = true;
 
         return;
     }
@@ -1947,6 +2030,8 @@ void Game::setSpeed(){
             }
         }
         setMasterTuning();
+    }else if(gameMode == DEATH){
+        // speed = 20;
     } else
         speed = gravity[0];
 
@@ -2420,6 +2505,10 @@ Game::Game(int gm, int sd, bool big){
         level = 0;
         speed = GameInfo::masterGravity[0][1];
         setMasterTuning();
+    }else if(gameMode == DEATH){
+        level = 0;
+        // speed = 20;
+        setDeathTuning();
     }
 
     for (int i = 0; i < 40; i++) {

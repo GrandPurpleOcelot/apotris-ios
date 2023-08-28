@@ -151,6 +151,8 @@ void sceneSwitcher(std::string str){
         changeScene(new ClassicScene(),Transitions::FADE);
     }else if(str == "Master"){
         changeScene(new MasterScene(),Transitions::FADE);
+    }else if(str == "Death"){
+        changeScene(new DeathScene(),Transitions::FADE);
     }else if(str == "Zen"){
         changeScene(new ZenScene(),Transitions::FADE);
     }else if(str == "2P Battle"){
@@ -185,6 +187,8 @@ std::string modeToString(BlockEngine::Modes mode){
         case BlockEngine::SURVIVAL: return "Survival";
         case BlockEngine::CLASSIC: return "Classic";
         case BlockEngine::MASTER: return "Master";
+        case BlockEngine::ZEN: return "Zen";
+        case BlockEngine::DEATH: return "Death";
         case BlockEngine::TRAINING: return "Training";
         default: return "";
     }

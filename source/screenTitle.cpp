@@ -55,7 +55,7 @@ Skin previousSkins[MAX_CUSTOM_SKINS];
 bool bigMode = false;
 
 const std::list<std::string> menuOptions = {"Play","Settings","Stats","Links","Skin Editor","Credits"};
-const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","Zen","2P Battle","CPU Battle","Training"};
+const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","Death","Zen","2P Battle","CPU Battle","Training"};
 const std::list<std::string> settingsOptions = {"Graphics","Audio","Controls","Handling","Gameplay"};
 
 // const int secretCombo[11] = {KEY_UP,KEY_UP,KEY_DOWN,KEY_DOWN,KEY_LEFT,KEY_RIGHT,KEY_LEFT,KEY_RIGHT,KEY_B,KEY_A,KEY_START};

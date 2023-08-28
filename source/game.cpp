@@ -358,7 +358,7 @@ void checkSounds() {
             }
         }
 
-        if(game->gameMode == MASTER){
+        if(game->gameMode == MASTER || game->gameMode == DEATH){
             maxClearTimer = game->maxClearDelay;
         }
     }
@@ -897,7 +897,7 @@ void showQueue() {
 
     if(game->gameMode == CLASSIC)
         maxQueue = 1;
-    else if(game->gameMode == MASTER)
+    else if(game->gameMode == MASTER || game->gameMode == DEATH)
         maxQueue = (maxQueue < 3)? maxQueue : 3;
 
     for (int i = 0; i < 5; i++)
@@ -1092,7 +1092,7 @@ bool GameScene::control() {
         game->keyRight(0);
     }
 
-    if (key_is_down(KEY_L) && key_is_down(KEY_R) && !(game->gameMode == BATTLE || game->gameMode == MASTER) && !eventPauseTimer) {
+    if (key_is_down(KEY_L) && key_is_down(KEY_R) && !(game->gameMode == BATTLE || game->gameMode == MASTER || game->gameMode == DEATH) && !eventPauseTimer) {
         if(!savefile->settings.resetHoldToggle && (restartTimer++ > maxRestartTimer || !savefile->settings.resetHoldType)){
             playAgain = true;
         }
@@ -1176,7 +1176,7 @@ void GameScene::showText() {
 
         wordSprites[1].setTextNum(game->pieceCounter);
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 15 * 8,15);
-    } else if (gm == MASTER){
+    } else if (gm == MASTER || gm == DEATH){
         wordSprites[0].setText("Grade");
         wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
 
@@ -1204,7 +1204,7 @@ void GameScene::showText() {
         wordSprites[4].show(4 * 8, 18 * 8,15);
     }
 
-    if (gm != BATTLE && gm != BLITZ && !(gm == SPRINT && game->subMode == 1) && gm != MASTER){
+    if (gm != BATTLE && gm != BLITZ && !(gm == SPRINT && game->subMode == 1) && !(gm == MASTER || gm == DEATH)){
         wordSprites[6].setText("Lines");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8,15);
 
@@ -1621,7 +1621,7 @@ const u8 queueBGLengths[5] = {32,42,60,78,96};
 void drawFrameBackgrounds(){
     int maxQueue = savefile->settings.maxQueue;
 
-    if(game->gameMode == MASTER)
+    if(game->gameMode == MASTER || game->gameMode == DEATH)
         maxQueue = (maxQueue < 3)? maxQueue : 3;
 
     const int l = queueBGLengths[maxQueue-1];
@@ -2917,7 +2917,7 @@ void GameScene::init(){
 
     showSprites(128);
 
-    if(game->gameMode == MASTER){
+    if(game->gameMode == MASTER || game->gameMode == DEATH){
         maxClearTimer = game->maxClearDelay;
     }else if(proMode && game->rotationSystem == SRS){
         maxClearTimer = 1;
@@ -2931,7 +2931,7 @@ void GameScene::init(){
 
     setPalette();
 
-    if(game->gameMode == MASTER)
+    if(game->gameMode == MASTER || game->gameMode == DEATH)
         showSpeedMeter((int)game->speed);
 
     showZoneMeter();

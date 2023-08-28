@@ -505,6 +505,28 @@ class MasterScene : public PlayOptionScene{
     std::string name(){return "Master";};
 };
 
+class DeathScene : public PlayOptionScene{
+    public:
+
+    BlockEngine::Modes getMode(){return BlockEngine::DEATH;};
+
+    bool getIfTime(){return true;};
+    bool getIfGrade(){return true;};
+
+    std::list<Element*> getElementList(){
+        return {
+            new StringSelectorElement("Rules",{"Normal","Classic"}),
+        };
+    };
+
+    EntryBoard* getBoard(int submode, int goal){
+        return nullptr;
+        // return &savefile->boards.master[submode];
+    }
+
+    std::string name(){return "Death";};
+};
+
 class ZenScene : public PlayOptionScene{
     public:
 

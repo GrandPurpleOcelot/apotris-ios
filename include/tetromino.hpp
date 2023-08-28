@@ -40,6 +40,10 @@ namespace GameInfo{
 
     extern const float masterGravity[30][2];
 
+    extern const uint16_t deathDelays[14][5];
+
+    extern const uint8_t deathQuota[5];
+
     extern const int sectionTimeGoal[10][2];
 
     extern const char* masterGrades[33];
