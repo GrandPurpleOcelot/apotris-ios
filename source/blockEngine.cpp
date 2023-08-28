@@ -12,7 +12,7 @@
 using namespace BlockEngine;
 using namespace GameInfo;
 
-bool BlockEngine::enableFumen = false;
+bool BlockEngine::enableFumen = true;
 bool BlockEngine::enableFumenQueue = false;
 
 u8 BlockEngine::fumenQueue[5] = {PIECE_T,0,0,0,0};
@@ -623,10 +623,6 @@ void Game::update() {
     }
 
     calculatePeek();
-}
-
-void Game::calculatePeek(){
-    peek = max(22 - (pawn.lowest + pawn.heighest[pawn.rotation]),0);
 }
 
 int Game::lowest() {
@@ -2065,6 +2061,8 @@ void Game::clearBoard(){
     memset32(columnHeights,0,10);
 
     garbageHeight = 0;
+
+    stackHeight = lengthY;
 }
 
 void Game::fixConnected(std::list<int> sourceList){
@@ -2612,4 +2610,8 @@ void Game::checkSecretGrade(){
     }
 
     statTracker.secretGrade = max(result - (lengthX-1),0);
+}
+
+void Game::calculatePeek(){
+    peek = max(lengthY - (stackHeight+1) - (pawn.lowest + pawn.heighest[pawn.rotation]),0);
 }

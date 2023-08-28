@@ -1424,12 +1424,16 @@ void clearGlow() {
 void GameScene::countdown() {
     int timer = 0;
     int timerMax = 120;
+
     showTimer();
     showQueue();
     showHold();
     showPawn();
     showShadow();
+    showSpawn();
+
     showSprites(128);
+
     gradient(1);
     showBackground(0);
 
@@ -2219,6 +2223,7 @@ void hideMinos(){
     sprite_hide(pawnSprite);
     sprite_hide(pawnShadow);
     sprite_hide(holdSprite);
+    sprite_hide(&obj_buffer[110]);//spawn sprite
 
     for(int i = 0; i < 5; i++)
         sprite_hide(queueSprites[i]);
@@ -2926,8 +2931,6 @@ void GameScene::init(){
 
     setPalette();
 
-    setPaletteColor(15, 5, RGB15(25, 5, 5), 1);
-
     if(game->gameMode == MASTER)
         showSpeedMeter((int)game->speed);
 
@@ -3205,12 +3208,16 @@ void checkPeek(){
         return;
 
     int prev = peek;
-    FIXED goal = int2fx(game->peek * 8 + 4);
+    FIXED goal = int2fx(game->peek * 8);
 
-    if((goal > peekValue && peekValue + 50 >= goal) || (goal < peekValue && peekValue - 50 <= goal)){
-        peekValue = goal;
-    } else
-        peekValue = lerp(peekValue, goal, 50);
+    const int speed = 200;
+
+    if(peekValue != goal){
+        if(abs(peekValue - goal) < speed)
+            peekValue = goal;
+        else
+            peekValue += speed * ((peekValue < goal)? 1 : -1);
+    }
 
     peek = fx2int(peekValue / 8);
 
@@ -3221,7 +3228,7 @@ void checkPeek(){
 void showSpawn(){
     OBJ_ATTR* sprite = &obj_buffer[110];
 
-    if (peek == 0) {
+    if (game->lengthY - game->stackHeight < 17) {
         sprite_hide(sprite);
         return;
     }
@@ -3259,19 +3266,10 @@ void showSpawn(){
     delete[] b;
 
     if(!game->pawn.big){
-        if(game->pawn.y < 16){
-            sprite_hide(sprite);
-            return;
-        }
-
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
         sprite_enable_mosaic(sprite);
         sprite_set_pos(sprite, (10 + x) * 8 + push * savefile->settings.shake, (y - game->boardOffset + peek) * 8 + shake * savefile->settings.shake);
     }else{
-        if(game->pawn.y * 2 < 14){
-            sprite_hide(sprite);
-            return;
-        }
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
         sprite_enable_mosaic(sprite);
         sprite_enable_affine(sprite, 29, true);

@@ -774,6 +774,8 @@ void setPalette(){
     if(savefile->settings.effects == 2)
         for(int i = 0; i < 16; i++)
             setPaletteColor(i, 5, RGB15(i, i, i), 1);
+
+    setPaletteColor(15, 5, RGB15(25, 5, 5), 1);
 }
 
 int getClassicPalette(){
