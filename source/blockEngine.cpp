@@ -2241,6 +2241,9 @@ int poll(int max, std::string buffer){
 }
 
 void Game::loadFumen(){
+    if(pawn.big)
+        return;
+
     if((int) fumenString.size() < 5 || fumenString.substr(0,5) != "v115@"){
         log("invalid fumen");
         return;

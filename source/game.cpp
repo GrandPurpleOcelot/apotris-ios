@@ -159,7 +159,7 @@ void GameScene::draw(){
     showHold();
     showQueue();
 
-    drawFrame(-1);
+    drawGrid();
 
     showGoalLine();
 
@@ -2906,7 +2906,7 @@ void GameScene::init(){
     clearSprites(128);
     updateText();
 
-    drawFrame(-1);
+    drawFrame(0);
     drawFrameBackgrounds();
 
     stopSong();
@@ -3228,7 +3228,7 @@ void checkPeek(){
 void showSpawn(){
     OBJ_ATTR* sprite = &obj_buffer[110];
 
-    if (game->lengthY - game->stackHeight < 17) {
+    if (game->lengthY - game->stackHeight < 17 / (1 + game->pawn.big)) {
         sprite_hide(sprite);
         return;
     }
