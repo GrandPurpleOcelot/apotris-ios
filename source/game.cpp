@@ -690,7 +690,7 @@ void showPawn() {
         return;
     }
 
-    #ifdef PC
+    #ifdef TE
     if(flashTimer){
         sprite_hide(pawnSprite);
         return;
@@ -762,7 +762,7 @@ void showShadow() {
         return;
     }
 
-    #ifdef PC
+    #ifdef TE
     if(flashTimer){
         sprite_hide(pawnShadow);
         return;
@@ -858,7 +858,7 @@ void showHold() {
         return;
     }
 
-    #ifdef PC
+    #ifdef TE
     if(flashTimer){
         sprite_hide(holdSprite);
         return;
@@ -943,7 +943,7 @@ void showQueue() {
         }
     }
 
-    #ifdef PC
+    #ifdef TE
     if(flashTimer){
         for(int i = 0; i < 5; i++)
             sprite_hide(queueSprites[i]);
@@ -1571,7 +1571,7 @@ void drawFrame(int layer) {
             }
         }
 
-        #ifdef PC
+        #ifdef TE
 
         if(!game->zoneTimer){
             setTile(l,20,20,tileBuild(29,true,true,p));// right bottom frame corner
@@ -2306,7 +2306,7 @@ void showZoneMeter(){
 
     OBJ_ATTR * sprite = &obj_buffer[23];
 
-    #ifdef PC
+    #ifdef TE
     if(flashTimer){
         sprite_hide(sprite);
         return;
@@ -2401,7 +2401,7 @@ void resetZonePalette(){
         // dest[i * 32 + 20] = 4 + 0x8400;
     }
 
-    #ifdef PC
+    #ifdef TE
 
     setTile(25,20,20,tileBuild(29,true,true,8));// right bottom frame corner
     setTile(25,9,20,tileBuild(29,false,true,8));// left bottom frame corner
@@ -2481,7 +2481,7 @@ void frameSnow(int layer){
     // dest2[i * 32 + 9] = 46;
     // dest2[i * 32 + 20] = 46 + 0x400;
 
-    #ifdef PC
+    #ifdef TE
 
     setTile(l,20,20,tileBuild(29,true,true,0));// right bottom frame corner
     setTile(l,9,20,tileBuild(29,false,true,0));// left bottom frame corner
@@ -3233,7 +3233,7 @@ void showSpawn(){
         return;
     }
 
-    #ifdef PC
+    #ifdef TE
     if(flashTimer){
         sprite_hide(sprite);
         return;

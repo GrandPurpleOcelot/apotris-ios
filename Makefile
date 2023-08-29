@@ -17,6 +17,9 @@ mm:
 wasm:
 	@make --no-print-directory -f make/wasm_make
 
+switch:
+	@make --no-print-directory -C . -f make/switch_make
+
 clean:
 	@rm -rf external/Tilengine/src/build
 	@rm -rf build bin

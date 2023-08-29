@@ -11,14 +11,17 @@
 #include <cstring>
 #include "audio_files.h"
 
-#ifdef PC
+#if defined(PC)
 
 #define SCREEN_WIDTH 512
 #define SCREEN_HEIGHT 512
 
-#endif
+#elif defined(SWITCH)
 
-#ifndef PC
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 180
+
+#else
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240

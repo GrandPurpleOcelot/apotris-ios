@@ -22,6 +22,12 @@
 #include "liba_web.h"
 #endif
 
+#ifdef SWITCH
+
+#include "liba_switch.h"
+
+#endif
+
 #define MAX_REPLAY_SIZE 4000
 
 extern void onVBlank();

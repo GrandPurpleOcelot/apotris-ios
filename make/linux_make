@@ -16,7 +16,6 @@ LIB := lib
 INC := include
 DATA := data
 MUSIC := audio
-MAINFILE := $(SRC)/main.cpp
 
 # Build directories and output
 TARGET := $(BIN)/Apotris

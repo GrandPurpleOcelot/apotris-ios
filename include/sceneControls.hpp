@@ -172,7 +172,7 @@ class RebindElement : public Element{
                     break;
                 }
 
-                #ifdef GBA
+                #if defined(GBA)
 
                 u16 key = key_hit(KEY_FULL);
 
@@ -216,9 +216,7 @@ class RebindElement : public Element{
                     break;
                 }
 
-                #endif
-
-                #ifdef PC
+                #elif defined(PC)
 
                 bool found = false;
                 for(int i = 0; i < sf::Keyboard::KeyCount; i++){
@@ -232,12 +230,11 @@ class RebindElement : public Element{
 
                 if(found)
                     break;
-                #endif
 
-                #if !defined(PC) && !defined(GBA)
-                u32 key = key_hit(KEY_FULL);
+                #else
+                u32 key = key_first();
 
-                if(key != 0){
+                if(key != KEY_FULL - 1){
                     keys[index] = key;
                     sfx(SFX_MENUCONFIRM);
                     break;
@@ -255,7 +252,8 @@ class RebindElement : public Element{
 
             int *keys = (int *) &savefile->settings.keys;
 
-            #ifdef GBA
+            #if defined(GBA)
+
             int key = keys[index];
             if((key & (key - 1)) == 0){
                 return keyMap[keys[index]];
@@ -279,10 +277,15 @@ class RebindElement : public Element{
 
                 return result;
             }
-            #endif
 
-            #ifdef PC
+            #elif defined(PC)
+
             return keyToString[keys[index]];
+
+            #elif defined(SWITCH)
+
+            return keyToString[keys[index]];
+
             #endif
 
             return "?";
