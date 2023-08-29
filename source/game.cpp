@@ -1704,7 +1704,7 @@ void drawFrameBackgrounds(){
 }
 
 INLINE int prep(int n){
-    return min(clamp((n + 500) / 8, 0, 255) / 16,15);
+    return min(clamp((n + 500) / 8, 0, 255) / 16,14);
 }
 
 IWRAM_CODE void updateGrid(){
