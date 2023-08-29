@@ -94,7 +94,7 @@ public:
 
 #define SHOW_FINESSE 1
 #define DIAGNOSE 1
-#define SAVE_TAG 0x50
+#define SAVE_TAG 0x51
 
 #define ENABLE_FLASH_SAVE 1
 

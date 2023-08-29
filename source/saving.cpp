@@ -26,6 +26,7 @@ void resetSkins(Save * save);
 void setDefaults(Save * save, int depth);
 void setDefaultGraphics(Save * save, int depth);
 void applySaveChanges(u8* newSave, u8* oldSave,  int newSize);
+void convertScores(Save *save);
 
 const std::list<SaveChange> saveChanges = {
     SaveChange(0x50,132,20 * 4),//add zone + buffer to keys
@@ -42,7 +43,9 @@ void loadSave() {
     const int pmSettings = 540;
     const int pmSave = 3876;
 
-    if (savefile->newGame == 0x4f) {
+    if (savefile->newGame == 0x50) {
+        setDefaults(savefile,7);
+    }else if (savefile->newGame == 0x4f) {
     }else if (savefile->newGame == 0x4e) {
         setDefaults(savefile,4);
     }else if (savefile->newGame == 0x4d) {
@@ -153,9 +156,6 @@ void loadSave() {
         sum += dump[i];
     sqran(sum);
 
-
-    strncpy(savefile->endTag, "SAVE_END", 9);
-
     savefile->seed = qran();
     saveSavefile();
 }
@@ -221,6 +221,7 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 3){
+        save->settings.maxQueue = 5;
         save->settings.sfxVolume = 10;
         save->settings.directionalDas = false;
         save->settings.noDiagonals = false;
@@ -293,6 +294,19 @@ void setDefaults(Save *save, int depth){
             save->settings.keys.zone = KEY_SELECT;
         else
             save->settings.keys.zone = 0;
+    }
+
+    if(depth < 7){
+        save->settings.big = false;
+        save->settings.pro = false;
+        save->settings.goalLine = 2;
+        save->settings.rotationSystem = BlockEngine::SRS;
+        save->settings.zoom = 16;
+        save->settings.integerScale = true;
+        save->settings.peek = true;
+
+        strncpy(savefile->endTag, "SAVE_END", 9);
+        convertScores(savefile);
     }
 
     setDefaultGraphics(save, depth);
@@ -373,18 +387,17 @@ void setDefaultGraphics(Save *save, int depth){
 
     if(depth < 2){
         save->settings.edges = true;
-        save->settings.backgroundGrid = 5;
-        save->settings.skin = 11;
-        save->settings.palette = 5;
-        save->settings.shadow = 3;
+        save->settings.backgroundGrid = 6;
+        save->settings.skin = 12;
+        save->settings.palette = 1;
+        save->settings.shadow = 5;
         save->settings.lightMode = false;
 
     }
 
     if(depth < 3){
-        save->settings.maxQueue = 5;
         save->settings.colors = 1;
-        save->settings.clearEffect = 1;
+        save->settings.clearEffect = 2;
 
         if(save->settings.shake)
             save->settings.shakeAmount = 2;
@@ -396,12 +409,27 @@ void setDefaultGraphics(Save *save, int depth){
 
     if(depth < 4){
         save->settings.placeEffect = true;
-        save->settings.backgroundGradient = 0x7dc8;
+        // save->settings.backgroundGradient = 0x6c525141;
+        save->settings.backgroundGradient = 0x2dd827bf;
+    }
+
+    if(depth < 7){
+        save->settings.frameBackground = 1;
+        save->settings.backgroundType = 1;
+        save->settings.aspectRatio = 0;
+
+        #if defined(GBA)
+        save->settings.screenShakeType = 0;
+        #else
+        save->settings.screenShakeType = 1;
+        #endif
+
+        save->settings.clearDirection = 0;
     }
 }
 
-void convertScores(){
-    OldScoreboards *oldBoards = (OldScoreboards *) &savefile->boards;
+void convertScores(Save *save){
+    OldScoreboards *oldBoards = (OldScoreboards *) &save->boards;
 
     ModeBoards newBoards;
 
@@ -426,5 +454,5 @@ void convertScores(){
 
     memcpy32(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);
 
-    memcpy32(&savefile->boards, &newBoards, sizeof(ModeBoards) / 4);
+    memcpy32(&save->boards, &newBoards, sizeof(ModeBoards) / 4);
 }

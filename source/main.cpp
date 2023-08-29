@@ -356,7 +356,7 @@ std::string nameInput(int place) {
         aprint(result, 13, nameHeight);
 
         if (!onDone) {
-            #ifdef GBA
+            #if defined(GBA) || defined(SWITCH)
             if (key_hit(KEY_A) || key_hit(KEY_RIGHT)) {
                 cursor++;
                 if (cursor > 7) {
@@ -431,9 +431,8 @@ std::string nameInput(int place) {
                 if (timer < 10)
                     aprint("_", 13 + cursor, nameHeight);
             }
-            #endif
 
-            #ifdef PC
+            #elif defined(PC)
             for(int i = 0; i < 26; i++){
                 if(key_hit(i)){
                     result[cursor] = keyToString[i][0];

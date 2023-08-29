@@ -256,6 +256,7 @@ void GradientEditorScene::update(){
 
 bool GradientEditorScene::control(){
     if(key_hit(KEY_START)){
+        log(savefile->settings.backgroundGradient);
         sfx(SFX_MENUCANCEL);
         changeScene(previousScene(),Transitions::FADE);
         return true;
