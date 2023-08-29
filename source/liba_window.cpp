@@ -60,12 +60,15 @@ void loadAudio(){
 
 void freeAudio(){
     // for(int i = 0; i < SFX_COUNT; i++){
-    //     Mix_FreeChunk(soundEffectChunks[i]);
+    //     // delete sfxBuffers[i];
     // }
+    for(auto sound : soundList){
+        delete sound;
+    }
 
-    // for(int i = 0; i < MUSIC_COUNT; i++){
-    //     Mix_FreeMusic(musicChunks[i]);
-    // }
+    for(int i = 0; i < MUSIC_COUNT; i++){
+        musicArray[i].unload();
+    }
 }
 
 sf::RenderWindow window(sf::VideoMode(windowWidth * windowScale, windowHeight * windowScale), "Apotris PC");
@@ -180,8 +183,10 @@ void updateWindow(u8 *framebuffer){
     {
         // "close requested" event: we close the window
         if (event.type == sf::Event::Closed){
+            log("here!");
             window.close();
             deinitialize();
+            freeAudio();
 
             exit(0);
         }else if(event.type == sf::Event::Resized){

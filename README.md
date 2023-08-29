@@ -6,6 +6,10 @@ Apotris is a block stacking game for the Gameboy Advance! It features satisfying
 
 Join the [discord server](https://discord.com/invite/jQnxmXS7tr) for updates, beta releases, or to give me feedback!
 
+# Dependencies
+
+The linux version requires SFML.
+
 # Build
 
 Run 

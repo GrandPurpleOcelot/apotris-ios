@@ -214,6 +214,7 @@ INLINE int max(int a, int b){
 INLINE void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src){
     u8* source = (u8*) src;
     uint8_t tmp[8 * 8];
+    memset(tmp,0,64);
     for(int i = 0; i < 8; i++){
         for(int j = 0; j < 4; j++){
             tmp[i * 8 + j * 2] = source[i * 4 + j] & 0xf;
@@ -221,36 +222,14 @@ INLINE void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void *src){
         }
     }
 
-    // TLN_SpriteData temp;
-
-    // memcpy(temp.name,spriteData->name,64);
-
-    // temp.w = spriteData->w;
-    // temp.h = spriteData->h;
-    // temp.x = spriteData->x;
-    // temp.y = spriteData->h;
-
     TLN_SpriteData d;
-    memcpy(d.name,"tile",4);
+    memset(d.name, 0, 64);
     d.w = 8;
     d.h = 8;
-    // d.w = lengthX * 8;
-    // d.h = lengthY * 8;
-    // d.x = index * 8;
-    // d.y = 0;
-
     d.x = 8 * (tx + index);
     d.y = 8 * ty;
 
     TLN_SetSpritesetData(spriteset, 0, &d, tmp, 8);
-
-    // memcpy(spriteData->name,temp.name,64);
-
-    // spriteData->w = temp.w;
-    // spriteData->h = temp.h;
-    // spriteData->x = temp.x;
-    // spriteData->h = temp.x;
-    // memcpy32(&tile_mem[4][index + ty * 4 + tx], src, 8);
 }
 
 INLINE void setSpritePixel(int index, u8 tx, u8 ty, u8 width, u8 x, u8 y, u8 color){

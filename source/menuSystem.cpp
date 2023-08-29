@@ -69,7 +69,7 @@ void changeScene(Scene *newScene){
 void fadeToBlack(){
 
     if(previousPalette != nullptr)
-        delete previousPalette;
+        delete []previousPalette;
     previousPalette = new COLOR [512];
     savePalette(previousPalette);
 
@@ -84,7 +84,7 @@ void fadeFromBlack(){
     int timer=FADE_LENGTH;
 
     if(previousPalette != nullptr)
-        delete previousPalette;
+        delete []previousPalette;
     previousPalette = new COLOR [512];
     savePalette(previousPalette);
 

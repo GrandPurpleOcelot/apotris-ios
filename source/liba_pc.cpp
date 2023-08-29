@@ -127,6 +127,18 @@ void platformInit(){
 
 void deinitialize(){
     TLN_Deinit();
+
+    for(int i = 1; i < 4; i++)
+        TLN_DeleteTileset(tilesets[i]);
+
+    for(int i = 0; i < 32; i++)
+        TLN_DeleteTilemap(tilemaps[i]);
+
+    TLN_DeleteSpriteset(spriteset);
+
+    for(int i = 0; i < 32; i++)
+        TLN_DeletePalette(palettes[i]);
+
     free(framebuffer);
 }
 
@@ -361,7 +373,7 @@ void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY){
     }
 
     TLN_SpriteData d;
-    memcpy(d.name,"tile",4);
+    memcpy(d.name,"tile",5);
     d.w = 8;
     d.h = 8;
 
@@ -392,7 +404,7 @@ void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int leng
     }
 
     TLN_SpriteData d;
-    memcpy(d.name,"tile",4);
+    memcpy(d.name,"tile",5);
     d.w = 8;
     d.h = 8;
 
@@ -465,9 +477,8 @@ void clearSpriteTiles(int index, int lengthX, int lengthY){
     uint8_t tmp[8 * 8];
     memset(tmp,0,8 * 8);
 
-
     TLN_SpriteData d;
-    memcpy(d.name,"clear",4);
+    memcpy(d.name,"clear",6);
     d.w = 8;
     d.h = 8;
 
@@ -476,7 +487,7 @@ void clearSpriteTiles(int index, int lengthX, int lengthY){
         for(int j = 0; j < lengthX; j++){
             d.x = 8 * (j + index);
 
-            TLN_SetSpritesetData(spriteset, 127, &d, &tmp, 8);
+            TLN_SetSpritesetData(spriteset, 127, &d, tmp, 8);
         }
     }
 }
@@ -710,7 +721,7 @@ void clearSpriteTile(int index, int tx, int ty, int width){
     memset(tmp,0,64);
 
     TLN_SpriteData d;
-    memcpy(d.name,"tile",4);
+    memcpy(d.name,"tile",5);
     d.w = 8;
     d.h = 8;
 
