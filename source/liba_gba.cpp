@@ -489,4 +489,6 @@ void sprite_enable_flip(OBJ_ATTR *sprite, bool flipX, bool flipY){
     sprite->attr1 |= flipY << 0xd;
 }
 
+void quit(){};
+
 #endif

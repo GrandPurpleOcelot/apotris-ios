@@ -172,7 +172,17 @@ class MainMenuScene: public SimpleListScene{
     void init();
     Scene* previousScene();
 
-    std::list<std::string> getOptionList(){return menuOptions;};
+    std::list<std::string> getOptionList(){
+        std::list<std::string> result = menuOptions;
+
+        #if !defined(GBA)
+
+        result.push_back("Quit");
+
+        #endif
+
+        return result;
+    };
     std::string name(){return "";};
 };
 

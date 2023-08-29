@@ -3,6 +3,7 @@
 #include <cinttypes>
 
 #include "liba_pc.h"
+#include "audio_files.h"
 
 #include "SDL2/SDL.h"
 
@@ -42,6 +43,7 @@ extern void key_poll();
 extern uint32_t key_is_down(uint32_t);
 extern uint32_t key_hit(uint32_t);
 extern uint32_t key_released(uint32_t);
+extern uint32_t key_first();
 
 extern int rowStart;
 extern int rowEnd;

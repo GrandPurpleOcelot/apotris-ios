@@ -14,7 +14,7 @@ w32:
 mm:
 	@make --no-print-directory -f make/mm_make
 
-wasm:
+web:
 	@make --no-print-directory -f make/wasm_make
 
 switch:

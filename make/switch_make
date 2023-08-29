@@ -45,7 +45,7 @@ BUILD		:=	build/switch
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
-#ROMFS	:=	romfs
+ROMFS	:=	$(BUILD)/romfs
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -56,14 +56,14 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES) \
 			-DSWITCH -DTE
 
-CFLAGS	+=	-D__SWITCH__ $(INCLUDE) `sdl2-config --cflags`
+CFLAGS	+=	-D__SWITCH__ $(INCLUDE) `$(PREFIX)pkg-config --cflags sdl2 SDL2_mixer`
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= `sdl2-config --libs` -lTilengine
+LIBS	:= `$(PREFIX)pkg-config --libs sdl2 SDL2_mixer` -lTilengine
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -162,10 +162,14 @@ endif
 .PHONY: $(BUILD) clean all
 
 #---------------------------------------------------------------------------------
-all: libTilengine.a $(BUILD)
+all: libTilengine.a assets $(BUILD)
 
 libTilengine.a:
 	@cd external/Tilengine/src && make
+
+assets:
+	@mkdir -p $(ROMFS)/assets/
+	@cp -rf audio/. $(ROMFS)/assets/
 
 $(BUILD):
 	@mkdir -p bin/switch

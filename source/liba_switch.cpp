@@ -5,6 +5,10 @@
 #include <fstream>
 
 #include "def.h"
+#include "switch.h"
+
+void loadAudio();
+void freeAudio();
 
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
@@ -30,8 +34,12 @@ SDL_Renderer * renderer;
 
 bool render = true;
 
+std::list<uint32_t> currentlyPressed;
+
 void windowInit(){
     // Initialize SDL
+    romfsInit();
+    // chdir("romfs:/");
 
     window = NULL;
     window = SDL_CreateWindow(
@@ -46,9 +54,28 @@ void windowInit(){
     SDL_InitSubSystem(SDL_INIT_JOYSTICK);
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_JoystickOpen(0);
+
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    Mix_OpenAudio(48000, AUDIO_S16, 2, 4096);
+
+    loadAudio();
 }
 
-std::list<uint32_t> currentlyPressed;
+Mix_Chunk * soundEffects[SFX_COUNT];
+
+void loadAudio(){
+    for(int i = 0; i < SFX_COUNT; i++){
+        std::string str = "romfs:/" + (std::string) SoundEffectPaths[i];
+
+        soundEffects[i] = Mix_LoadWAV(str.c_str());
+    }
+}
+
+void freeAudio(){
+    for(int i = 0; i < SFX_COUNT; i++){
+        Mix_FreeChunk(soundEffects[i]);
+    }
+}
 
 void key_poll(){
     previousKeys = currentKeys;
@@ -77,9 +104,7 @@ void key_poll(){
                 currentlyPressed.remove(key);
             break;
         case SDL_QUIT:
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
+            quit();
             break;
         default:
             break;
@@ -242,8 +267,8 @@ bool closed(){
     return true;
 }
 
-void sfx(int){
-
+void sfx(int n){
+    Mix_PlayChannel(-1,soundEffects[n],0);
 }
 
 void startSong(int,bool){
@@ -320,12 +345,22 @@ std::map<int,std::string> keyToString = {
 {3,"Y"},
 {6,"L"},
 {7,"R"},
-{10,"-"},
-{11,"+"},
-{12,"Up"},
-{13,"Down"},
-{14,"Left"},
-{15,"Right"},
+{8,"SL"},
+{9,"SR"},
+{10,"+"},
+{11,"-"},
+{12,"Left"},
+{13,"Up"},
+{14,"Right"},
+{15,"Down"},
 };
+
+void quit(){
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    freeAudio();
+    exit(0);
+}
 
 #endif

@@ -183,12 +183,7 @@ void updateWindow(u8 *framebuffer){
     {
         // "close requested" event: we close the window
         if (event.type == sf::Event::Closed){
-            log("here!");
-            window.close();
-            deinitialize();
-            freeAudio();
-
-            exit(0);
+            quit();
         }else if(event.type == sf::Event::Resized){
             resize(event.size.width, event.size.height);
 
@@ -566,5 +561,13 @@ std::vector<std::string> keyToString = {
 };
 
 void initRumble(){}
+
+void quit(){
+    window.close();
+    deinitialize();
+    freeAudio();
+
+    exit(0);
+}
 
 #endif

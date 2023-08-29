@@ -3,6 +3,7 @@
 #include "liba_pc.h"
 
 #include <SFML/Window.hpp>
+#include "audio_files.h"
 
 extern void key_poll();
 

@@ -134,5 +134,7 @@ extern void mirrorPalettes(int index, int count);
 extern void toggleRendering(bool state);
 extern void initRumble();
 
+extern void quit();
+
 // //TEMPORARY
 // extern COLOR rgb8to5(u32 *c);

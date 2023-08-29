@@ -169,6 +169,8 @@ void sceneSwitcher(std::string str){
         changeScene(new DonateLinkScene(),Transitions::FADE);
     }else if(str == "Discord"){
         changeScene(new DiscordLinkScene(),Transitions::FADE);
+    }else if(str == "Quit"){
+        quit();
     }else{
         log("invalid option: " + str);
     }

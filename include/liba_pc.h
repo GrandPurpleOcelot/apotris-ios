@@ -9,7 +9,6 @@
 
 #include "Tilengine.h"
 #include <cstring>
-#include "audio_files.h"
 
 #if defined(PC)
 
@@ -31,12 +30,10 @@
 typedef unsigned char  u8;
 typedef unsigned short u16, COLOR;
 typedef unsigned int   u32, uint;
-typedef unsigned long long u64;
 
 typedef signed char  s8;
 typedef signed short s16;
 typedef signed int   s32;
-typedef signed long long s64;
 
 #define IWRAM_CODE
 

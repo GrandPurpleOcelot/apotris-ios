@@ -66,10 +66,7 @@ void key_poll(){
                 currentlyPressed.remove(key);
             break;
         case SDL_QUIT:
-            std::cout << "quitting!\n";
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
+            quit();
             break;
         default:
             break;
@@ -124,6 +121,23 @@ uint32_t key_released(uint32_t key){
     return (prev && !curr);
 
     return 0;
+}
+
+uint32_t key_first(){
+    if(currentKeys.empty())
+        return KEY_FULL - 1;
+
+    for(auto key : currentKeys){
+        auto it = previousKeys.begin();
+        it = std::find(previousKeys.begin(),previousKeys.end(),key);
+        bool prev = (it != previousKeys.end());
+
+        if(!prev){
+            return key;
+        }
+    }
+
+    return KEY_FULL - 1;
 }
 
 void updateWindow(uint8_t* framebuffer){
@@ -290,6 +304,12 @@ void saveSavefile(){
     }
 
     output.close();
+}
+
+void quit() {
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }
 
 #endif
