@@ -9,6 +9,7 @@
 
 void loadAudio();
 void freeAudio();
+void resizeWindow(int width, int height);
 
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
@@ -41,6 +42,23 @@ Mix_Chunk * soundEffects[SFX_COUNT];
 int sfxVolume = 1024;
 int musicVolume = 1024;
 
+int windowWidth = 640;
+int windowHeight = 480;
+
+float zoom = 0;
+
+EM_JS(int, getWindowWidth, (), {
+  return window.innerWidth;
+});
+
+EM_JS(int, getWindowHeight, (), {
+  return window.innerHeight;
+});
+
+extern "C" {
+    void set_window_resize_handler(void *userData, void (*handlerFunc)(int newWidth, int newHeight, void *userData));
+}
+
 void windowInit(){
     // Initialize SDL
 
@@ -61,11 +79,14 @@ void windowInit(){
     window = SDL_CreateWindow(
         "Apotris Web",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        640, 480,
-        SDL_WINDOW_SHOWN
+        windowWidth, windowHeight,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
         );
 
+    resizeWindow(getWindowWidth(),getWindowHeight());
+
     renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
     SDL_InitSubSystem(SDL_INIT_AUDIO);
     Mix_OpenAudio(48000, AUDIO_S16, 2, 4096);
@@ -96,6 +117,14 @@ void freeAudio(){
 void key_poll(){
     previousKeys = currentKeys;
     currentKeys.clear();
+
+    if(windowWidth != getWindowWidth() || windowHeight != getWindowHeight()){
+
+        windowWidth = getWindowWidth();
+        windowHeight = getWindowHeight();
+
+        resizeWindow(windowWidth, windowHeight);
+    }
 
     SDL_Event event;
 
@@ -198,64 +227,66 @@ void updateWindow(uint8_t* framebuffer){
     // // // Update the screen
     // // SDL_UpdateRect(screen, 0, 0, 0, 0);
 
-    uint8_t * newBuffer = new uint8_t[640 * 480 * 4];
+    // uint8_t * newBuffer = new uint8_t[640 * 480 * 4];
 
-    const int in_width = 320;
-    const int in_height = 240;
+    const int in_width = 512;
+    const int in_height = 512;
 
-    uint32_t* out_ptr = (uint32_t *) newBuffer;
-    uint32_t* in_ptr = (uint32_t *) framebuffer;
-    int in_pitch = in_width;
-    int out_pitch = 640;
+    // uint32_t* out_ptr = (uint32_t *) newBuffer;
+    // uint32_t* in_ptr = (uint32_t *) framebuffer;
+    // int in_pitch = in_width;
+    // int out_pitch = 640;
 
-    in_ptr += (((in_height - 240) / 2)) * in_pitch;
-    in_ptr += (in_width - 320) / 2;
+    // in_ptr += (((in_height - 240) / 2)) * in_pitch;
+    // in_ptr += (in_width - 320) / 2;
 
-    for(int y = 0; y < 240; y++){
-        uint32_t * line_ptr = in_ptr;
+    // for(int y = 0; y < 240; y++){
+    //     uint32_t * line_ptr = in_ptr;
 
-        for(int x = 0; x < 320; x++){
-            uint32_t * out_line_ptr = out_ptr;
-            uint32_t color = *line_ptr;
+    //     for(int x = 0; x < 320; x++){
+    //         uint32_t * out_line_ptr = out_ptr;
+    //         uint32_t color = *line_ptr;
 
-            *out_line_ptr = color;
-            *(out_line_ptr + 1) = color;
+    //         *out_line_ptr = color;
+    //         *(out_line_ptr + 1) = color;
 
-            out_line_ptr += out_pitch;
-            *out_line_ptr = color;
-            *(out_line_ptr + 1) = color;
+    //         out_line_ptr += out_pitch;
+    //         *out_line_ptr = color;
+    //         *(out_line_ptr + 1) = color;
 
-            out_ptr += 2;
+    //         out_ptr += 2;
 
-            line_ptr++;
-        }
+    //         line_ptr++;
+    //     }
 
-        in_ptr += in_pitch;
-        out_ptr += out_pitch;
-    }
+    //     in_ptr += in_pitch;
+    //     out_ptr += out_pitch;
+    // }
 
     SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
-        newBuffer,
-        640,
-        480,
+        framebuffer,
+        in_width,
+        in_height,
         32,
-        640 * 4,
+        in_width * 4,
         0x0000ff,
         0x00ff00,
         0xff0000,
-        0xff000000
+        0
     );
 
-    delete [] newBuffer;
+    // delete [] newBuffer;
 
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
+
+    SDL_Rect rect = {(in_width - windowWidth) / 2, (in_height - windowHeight) / 2, windowWidth, windowHeight};
 
     SDL_FreeSurface(img);
 
     SDL_RenderClear(renderer);
 
     if(render)
-        SDL_RenderCopy(renderer,texture,NULL,NULL);
+        SDL_RenderCopy(renderer,texture,&rect,NULL);
 
     SDL_RenderPresent(renderer);
 
@@ -377,6 +408,23 @@ void quit() {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+}
+
+void resizeWindow(int width, int height){
+    if(savefile != nullptr){
+        zoom = ((float) max(savefile->settings.zoom,10) / 20);
+    }else{
+        zoom = 1;
+    }
+
+    emscripten_set_canvas_size(width, height);
+    SDL_SetWindowSize(window, width, height);
+
+    windowHeight = (int) 160 / zoom;
+    windowWidth = ((float)width / height) * windowHeight;
+
+    rowStart = (512 - (windowHeight))/2;
+    rowEnd = (512 + (windowHeight))/2;
 }
 
 #endif

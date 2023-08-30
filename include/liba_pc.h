@@ -22,8 +22,8 @@
 
 #else
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 240
+#define SCREEN_WIDTH 512
+#define SCREEN_HEIGHT 512
 
 #endif
 

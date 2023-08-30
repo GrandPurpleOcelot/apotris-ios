@@ -74,7 +74,7 @@ void fadeToBlack(){
     savePalette(previousPalette);
 
     int timer=0;
-    while(timer++ < FADE_LENGTH){
+    while(closed() && timer++ < FADE_LENGTH){
         vsync();
         color_fade_palette(0, 1, &previousPalette[1], 0, 511, timer * 8);
     }
@@ -90,7 +90,7 @@ void fadeFromBlack(){
 
     color_fade_palette(0, 1, &previousPalette[1], 0, 511, timer * 8);
 
-    while(timer >= 0){
+    while(closed() && timer >= 0){
         canDraw=1;
         vsync();
         color_fade_palette(0, 1, &previousPalette[1], 0, 511, timer * 8);

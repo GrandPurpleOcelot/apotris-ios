@@ -566,6 +566,9 @@ void color_fade_palette(int palette, int index, const COLOR * src, COLOR color, 
             loadPalette(palette, index, temp, m);
 
             remaining -= m;
+        }else if(counter == 0 && index){
+            loadPalette(palette, index, &temp[0], 16 - index);
+            remaining -= 16;
         }else{
             loadPalette(palette + counter, 0, &temp[count-remaining], 16);
             remaining -= 16;
