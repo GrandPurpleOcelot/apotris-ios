@@ -116,7 +116,6 @@ extern void setMosaic(int sx ,int sy);
 
 extern void setMusicTempo(int tempo);
 extern void setMusicVolume(int volume);
-extern void setSFXVolume(int volume);
 extern void startSong(int song, bool loop);
 extern void stopSong();
 extern void pauseSong();

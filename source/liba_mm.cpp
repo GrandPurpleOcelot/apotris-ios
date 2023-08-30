@@ -243,13 +243,9 @@ void stopSong(){};
 
 void resumeSong(){};
 
-void stopMusicVolume(){};
-
 void setMusicVolume(int){};
 
 void setMusicTempo(int){};
-
-void setSFXVolume(int){};
 
 void toggleRendering(bool){};
 

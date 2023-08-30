@@ -272,10 +272,6 @@ void setMusicVolume(int volume){
     }
 }
 
-void setSFXVolume(int volume){
-    sfxVolume = volume;
-}
-
 void startSong(int song, bool loop){
     if(song == currentSong && musicArray[currentSong].getStatus() == sfmod::Mod::Playing)
         return;

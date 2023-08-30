@@ -7,9 +7,6 @@
 #include "def.h"
 #include "switch.h"
 
-void loadAudio();
-void freeAudio();
-
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
 
@@ -269,6 +266,7 @@ bool closed(){
 
 void sfx(int n){
     Mix_PlayChannel(-1,soundEffects[n],0);
+    Mix_VolumeChunk(soundEffects[n], 128 * savefile->settings.sfxVolume / 10);
 }
 
 void startSong(int,bool){
@@ -279,19 +277,17 @@ void stopSong(){};
 
 void resumeSong(){};
 
-void stopMusicVolume(){};
-
 void setMusicVolume(int){};
 
 void setMusicTempo(int){};
-
-void setSFXVolume(int){};
 
 void toggleRendering(bool r){
     render = r;
 }
 
-void sfxRate(int,float){};
+void sfxRate(int n,float){
+    sfx(n);
+}
 
 void pauseSong(){};
 void initRumble(){};

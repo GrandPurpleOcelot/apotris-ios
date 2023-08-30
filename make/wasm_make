@@ -10,7 +10,8 @@ export AS = emcc
 
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O3 -Wno-array-bounds
-PRE_FLAGS := -MMD -MP -DWEB -DTE
+PRE_FLAGS := -MMD -MP -DWEB -DTE \
+			-s USE_SDL=2 -s USE_SDL_MIXER=2
 
 # Project directory structure
 BIN := bin/$(PLATFORM)
@@ -29,7 +30,11 @@ BUILD := build/$(PLATFORM)
 
 # Library search directories and flags
 EXT_LIB :=
-LDFLAGS := --profiling
+LDFLAGS := 	external/Tilengine/src/build/$(PLATFORM)/libTilengine.a \
+		   	--profiling -s USE_SDL=2 -s USE_SDL_MIXER=2 -s ASYNCIFY -lidbfs.js \
+			-s ALLOW_MEMORY_GROWTH \
+		   	--preload-file $(ASSETS_PATH)
+
 LDPATHS := $(EXT_LIB)
 
 # Include directories
@@ -65,7 +70,7 @@ build: all
 
 # Main task
 
-all: libTilengine.a $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
+all: libTilengine.a $(ASSETS) $(TARGET) $(ICON) $(LIBFILES)
 
 libTilengine.a:
 	@cd external/Tilengine/src && make
@@ -76,13 +81,13 @@ $(ICON) : $(ICON_FILE)
 $(TARGET): $(OBJS)
 	@echo "Building..."
 	@mkdir -p $(dir $@)
-	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS) external/Tilengine/src/build/$(PLATFORM)/libTilengine.a -sUSE_SDL=2 -sASYNCIFY
+	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS)
 
 # Compile all cpp files
 $(BUILD)/%.o: $(SRC)/%.cpp
 	@mkdir -p $(dir $@)
 	@echo $(notdir $<)
-	@$(CXX) $(CXX_FLAGS) $(PRE_FLAGS) $(INC_FLAGS) -c -o $@ $< $(LDPATHS) $(LDFLAGS)
+	@$(CXX) $(CXX_FLAGS) $(PRE_FLAGS) $(INC_FLAGS) -c -o $@ $< $(LDPATHS)
 
 $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
 	@mkdir -p $(dir $@)

@@ -4,12 +4,16 @@
 #include <list>
 #include <fstream>
 
-#include "SDL2/SDL.h"
-#include "def.h"
 #include <emscripten.h>
+#include "def.h"
+
+void loadAudio();
+void freeAudio();
 
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
+
+std::list<uint32_t> currentlyPressed;
 
 int rowStart = (240 - 240) / 2;
 int rowEnd = rowStart + 240;
@@ -23,10 +27,37 @@ double clock_timer = 0;
 SDL_Window* window;
 SDL_Renderer * renderer;
 
+bool render = true;
+
+static uint64_t frame_start = SDL_GetPerformanceCounter();
+
+uint32_t start_time = 0;
+uint32_t frame_time = 0;
+
+float fps = 0;
+
+Mix_Chunk * soundEffects[SFX_COUNT];
+
+int sfxVolume = 1024;
+int musicVolume = 1024;
+
 void windowInit(){
     // Initialize SDL
 
-    window = NULL;
+    EM_ASM(
+        // Make a directory other than '/'
+        FS.mkdir('/offline');
+        // Then mount with IDBFS type
+        FS.mount(IDBFS, {}, '/offline');
+
+        // Then sync
+        FS.syncfs(true, function (err) {
+            // Error
+        });
+    );
+
+    emscripten_sleep(100);
+
     window = SDL_CreateWindow(
         "Apotris Web",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -35,9 +66,32 @@ void windowInit(){
         );
 
     renderer = SDL_CreateRenderer(window, -1, 0);
+
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    Mix_OpenAudio(48000, AUDIO_S16, 2, 4096);
+
+    loadAudio();
 }
 
-std::list<uint32_t> currentlyPressed;
+void loadAudio(){
+    for(int i = 0; i < SFX_COUNT; i++){
+        std::string str = "bin/wasm/" + (std::string) SoundEffectPaths[i];
+
+        soundEffects[i] = Mix_LoadWAV(str.c_str());
+
+        if(soundEffects[i] == NULL){
+            log("couldn't load " + (std::string)SoundEffectPaths[i]);
+        }
+
+    }
+}
+
+void freeAudio(){
+    for(int i = 0; i < SFX_COUNT; i++){
+        Mix_FreeChunk(soundEffects[i]);
+    }
+}
+
 
 void key_poll(){
     previousKeys = currentKeys;
@@ -199,32 +253,29 @@ void updateWindow(uint8_t* framebuffer){
     SDL_FreeSurface(img);
 
     SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer,texture,NULL,NULL);
+
+    if(render)
+        SDL_RenderCopy(renderer,texture,NULL,NULL);
+
     SDL_RenderPresent(renderer);
 
     SDL_DestroyTexture(texture);
-}
 
-void refreshWindowSize(){
-
-}
-
-static uint64_t frame_start = SDL_GetPerformanceCounter();
-
-uint32_t start_time = 0;
-uint32_t frame_time = 0;
-
-float fps = 0;
-
-bool closed(){
-    emscripten_sleep(0);
-    // // Cap to 60 FPS
     Uint64 end = SDL_GetPerformanceCounter();
 
     float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
 
     SDL_Delay(floor(16.666f - elapsedMS));
     frame_start = SDL_GetPerformanceCounter();
+}
+
+void refreshWindowSize(){
+
+}
+
+bool closed(){
+    emscripten_sleep(0);
+    // // Cap to 60 FPS
 
     // //show fps
     // frame_time = SDL_GetTicks()-start_time;
@@ -237,8 +288,9 @@ bool closed(){
     return true;
 }
 
-void sfx(int){
-
+void sfx(int n){
+    Mix_PlayChannel(-1,soundEffects[n],0);
+    Mix_VolumeChunk(soundEffects[n], 128 * savefile->settings.sfxVolume / 10);
 }
 
 void startSong(int,bool){
@@ -249,23 +301,35 @@ void stopSong(){};
 
 void resumeSong(){};
 
-void stopMusicVolume(){};
-
-void setMusicVolume(int){};
+void setMusicVolume(int vol){
+    musicVolume = vol;
+}
 
 void setMusicTempo(int){};
 
-void setSFXVolume(int){};
+void toggleRendering(bool r){
+    render = r;
+}
 
-void toggleRendering(bool){};
-
-void sfxRate(int,float){};
+void sfxRate(int n,float){
+    sfx(n);
+}
 
 void pauseSong(){};
 void initRumble(){};
 
 void loadSavefile(){
-    std::ifstream input("Apotris.sav",std::ios::binary | std::ios::in);
+    EM_ASM(
+        var s = FS.open("/offline/Apotris.sav","a");
+        FS.close(s);
+    );
+
+    std::ifstream input("/offline/Apotris.sav",std::ios::binary | std::ios::in);
+
+    if(!input){
+        log("Error when trying to load save.");
+        return;
+    }
 
     if(savefile == nullptr)
         savefile = new Save();
@@ -274,18 +338,18 @@ void loadSavefile(){
 
     input.read(src,sizeof(Save));
 
-    if(!input){
-        log("Error when trying to load save.");
-        return;
-    }
-
     input.close();
 }
 
 void saveSavefile(){
     addStats();
 
-    std::ofstream output("Apotris.sav",std::ios::binary | std::ios::out);
+    std::ofstream output("/offline/Apotris.sav",std::ios::binary | std::ios::out);
+
+    if(!output){
+        log("Error when trying to write save.");
+        return;
+    }
 
     char * dst = (char * ) savefile;
 
@@ -298,15 +362,18 @@ void saveSavefile(){
 
     output.write(temp, saveSize);
 
-    if(!output){
-        log("Error when trying to write save.");
-        return;
-    }
-
     output.close();
+
+    EM_ASM(
+        FS.syncfs(function (err) {
+            // Error
+        });
+    );
+    emscripten_sleep(100);
 }
 
 void quit() {
+    freeAudio();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

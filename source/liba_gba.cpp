@@ -390,10 +390,6 @@ void setMusicVolume(int volume){
     mmSetModuleVolume(volume);
 }
 
-void setSFXVolume(int volume){
-    // mmSetModuleVolume(volume);
-}
-
 void startSong(int song, bool loop){
     mmStart(song, (!loop)? MM_PLAY_ONCE:MM_PLAY_LOOP);
 }

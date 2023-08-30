@@ -6,6 +6,7 @@
 #include "audio_files.h"
 
 #include "SDL2/SDL.h"
+#include <SDL2/SDL_mixer.h>
 
 #define KEY_A SDLK_x
 #define KEY_B SDLK_z
@@ -27,10 +28,8 @@ extern void sfx(int);
 extern void startSong(int,bool);
 extern void stopSong();
 extern void resumeSong();
-extern void stopMusicVolume();
 extern void setMusicVolume(int);
 extern void setMusicTempo(int);
-extern void setSFXVolume(int);
 extern void toggleRendering(bool);
 extern void sfxRate(int,float);
 
