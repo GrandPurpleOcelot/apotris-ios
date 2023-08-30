@@ -23,8 +23,8 @@ int rowEnd = (SCREEN_HEIGHT + windowHeight)/2;
 bool render = true;
 
 void resize(int width, int height);
-std::list<sf::Keyboard::Key> currentKeys;
-std::list<sf::Keyboard::Key> previousKeys;
+std::list<int> currentKeys;
+std::list<int> previousKeys;
 
 std::list<sf::Sound*> soundList;
 
@@ -338,7 +338,7 @@ void key_poll(){
 
     for(int i = 0; i < sf::Keyboard::KeyCount; i++){
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i)) && sf::Keyboard::Key(i) != sf::Keyboard::Tab)
-            currentKeys.push_back(sf::Keyboard::Key(i));
+            currentKeys.push_back(i + 1);
     }
 }
 

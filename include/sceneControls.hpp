@@ -280,7 +280,7 @@ class RebindElement : public Element{
 
             #elif defined(PC)
 
-            return keyToString[keys[index]];
+            return keyToString[keys[index] & 0xff];
 
             #elif defined(SWITCH)
 
