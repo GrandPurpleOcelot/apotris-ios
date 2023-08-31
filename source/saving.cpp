@@ -44,7 +44,7 @@ void loadSave() {
     const int pmSave = 3876;
 
     if (savefile->newGame == 0x50) {
-        setDefaults(savefile,7);
+        setDefaults(savefile,6);
     }else if (savefile->newGame == 0x4f) {
     }else if (savefile->newGame == 0x4e) {
         setDefaults(savefile,4);
@@ -141,8 +141,6 @@ void loadSave() {
         u8* sf = (u8*)savefile;
 
         applySaveChanges(tmp, sf, sizeof(Save));
-
-        setDefaults(temp,5);
 
         memcpy32(savefile, temp, sizeof(Save) / 4);
 
@@ -340,11 +338,14 @@ void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
     int applyingVersion = 0;
     int extraSize = 0;
 
+    bool changed = false;
     int sum = 0;
     SaveChange previous = SaveChange(0,0,0);
     for(auto const & change : sorted){
         if(change.saveId <= version)
             continue;
+
+        changed = true;
 
         if(change.saveId != applyingVersion){
             applyingVersion = change.saveId;
@@ -375,6 +376,10 @@ void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
 
     if(previous.saveId != 0){
         memcpy16(newSave,oldSave,previous.location / 2);
+    }
+
+    if(!changed){
+        memcpy32(newSave, oldSave, sizeof(Save) / 4);
     }
 }
 
@@ -433,7 +438,7 @@ void convertScores(Save *save){
 
     ModeBoards newBoards;
 
-    memcpy32(&newBoards.marathon, &oldBoards->marathon, sizeof(EntryBoard) * 4 / 4);
+    memcpy32(&newBoards.marathon, oldBoards->marathon, sizeof(EntryBoard) * 4 / 4);
     memcpy32(&newBoards.sprint, &oldBoards->sprint, sizeof(EntryBoard) * 3 / 4);
     memcpy32(&newBoards.dig, &oldBoards->dig, sizeof(EntryBoard) * 3 / 4);
     memcpy32(&newBoards.ultra, &oldBoards->ultra, sizeof(EntryBoard) * 3 / 4);

@@ -75,7 +75,9 @@ typedef struct Settings{
     bool cycleSongs;
     int dropProtectionFrames;
     bool abHold;
+
     Keys keys;
+
     int clearEffect;
     bool resetHoldType;
     bool placeEffect;
@@ -187,7 +189,7 @@ public:
 
     ModeBoards boards;
 
-    int placeHolder[1000];
+    int placeHolder[1004];
 
     TotalStats stats;
 

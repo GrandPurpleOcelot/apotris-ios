@@ -227,6 +227,9 @@ int main(void) {
 
     changeScene(new newTitleScene());
 
+    log(sizeof(Timeboard));
+    log(sizeof(EntryBoard));
+
     //start screen animation
     while(closed()){
         vsync();
