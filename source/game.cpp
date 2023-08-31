@@ -115,7 +115,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
 
-bool enableBot = true;
+bool enableBot = false;
 static bool refreshSkin = false;
 
 FIXED shakeBuff;
@@ -3251,7 +3251,7 @@ void showSpawn(){
     int x = std::get<0>(pos);
     int y = std::get<1>(pos) + add;
 
-    const int tile = 284;
+    const int tile = 288;
 
     clearSpriteTiles(tile, 4, 2);
     for (int i = 0; i < 2; i++) {

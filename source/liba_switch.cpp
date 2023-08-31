@@ -7,6 +7,9 @@
 #include "def.h"
 #include "switch.h"
 
+void loadAudio();
+void freeAudio();
+
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
 
