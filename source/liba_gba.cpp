@@ -4,20 +4,24 @@
 #include "logging.h"
 #include "LinkConnection.h"
 #include "maxmod.h"
-#include "soundbank.h"
+// #include "soundbank.h"
 #include "rumble.h"
 #include "gbp_logo.hpp"
 #include "text.h"
-#include "soundbank_bin.h"
+// #include "soundbank_bin.h"
 #include "flashSaves.h"
 #include "scene.hpp"
+#include "gbfs.h"
 
 // #include <string>
 // #include "scene.hpp"
 // #include "main.hpp"
 bool unlock_gbp();
+void loadAudio();
 
 int spriteVOffset = 0;
+
+u8 * soundbank = nullptr;
 
 void onHBlank() {
     if(REG_VCOUNT < 160)
@@ -85,7 +89,9 @@ void platformInit(){
     // irq_add(II_HBLANK, onHBlank);
     irq_disable(II_HBLANK);
 
-    mmInitDefault((mm_addr)soundbank_bin, 12);
+    loadAudio();
+
+    mmInitDefault((mm_addr)soundbank, 12);
     mmSetEventHandler((mm_callback)myEventHandler);
 
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
@@ -303,7 +309,8 @@ void sleep() {
 }
 
 void sfx(int s){
-    mm_sfxhand h = mmEffect(s);
+
+    mm_sfxhand h = mmEffect(SoundEffectIds[s]);
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
 
     if((s == SFX_PLACE) && game->zoneTimer){
@@ -313,7 +320,7 @@ void sfx(int s){
 
 void sfxRate(int sound, float rate){
     mm_sound_effect s = {
-        {(mm_word)sound},
+        {(mm_word)SoundEffectIds[sound]},
         (mm_hword)((rate) * (1 << (10 - (game->zoneTimer != 0)))),
         0,
         (u8)(255 * (float) savefile->settings.sfxVolume / 10),
@@ -486,5 +493,50 @@ void sprite_enable_flip(OBJ_ATTR *sprite, bool flipX, bool flipY){
 }
 
 void quit(){};
+
+void findSoundbank(){
+    const GBFS_FILE * gbfsFile = find_first_gbfs_file(0);
+    const void * myFile = gbfs_get_obj(gbfsFile, "soundbank.bin", NULL);
+
+    if(myFile == NULL){
+        log("couldn't find soundbank.bin");
+        return;
+    }
+
+    log("found soundbank.bin");
+
+    soundbank = (u8*) myFile;
+}
+
+void buildEffectLocations(){
+
+    const GBFS_FILE * gbfsFile = find_first_gbfs_file(0);
+    const void * myFile = gbfs_get_obj(gbfsFile, "effect_locations.bin", NULL);
+
+    u32 * file = (u32*) myFile;
+
+    if(file[0] != 0x51){
+        log("couldn't find effect location file");
+        return;
+    }
+
+    log("found location file");
+
+    file++;
+
+    int count = *file++;
+
+    for(int i = 0; i < count; i++){
+        SoundEffectIds[i] = *file++;
+    }
+
+}
+
+void loadAudio(){
+    log("trying to load from appended files...");
+
+    findSoundbank();
+    buildEffectLocations();
+}
 
 #endif

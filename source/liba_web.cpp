@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include <emscripten.h>
+#include <emscripten/html5.h>
 #include "def.h"
 
 void loadAudio();
@@ -55,8 +56,12 @@ EM_JS(int, getWindowHeight, (), {
   return window.innerHeight;
 });
 
-extern "C" {
-    void set_window_resize_handler(void *userData, void (*handlerFunc)(int newWidth, int newHeight, void *userData));
+int resizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData){
+    windowWidth = getWindowWidth();
+    windowHeight = getWindowHeight();
+
+    resizeWindow(windowWidth, windowHeight);
+    return 0;
 }
 
 void windowInit(){
@@ -92,6 +97,8 @@ void windowInit(){
     Mix_OpenAudio(48000, AUDIO_S16, 2, 4096);
 
     loadAudio();
+
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,nullptr,false,resizeCallback);
 }
 
 void loadAudio(){
@@ -118,13 +125,13 @@ void key_poll(){
     previousKeys = currentKeys;
     currentKeys.clear();
 
-    if(windowWidth != getWindowWidth() || windowHeight != getWindowHeight()){
+    // if(windowWidth != getWindowWidth() || windowHeight != getWindowHeight()){
 
-        windowWidth = getWindowWidth();
-        windowHeight = getWindowHeight();
+    //     windowWidth = getWindowWidth();
+    //     windowHeight = getWindowHeight();
 
-        resizeWindow(windowWidth, windowHeight);
-    }
+    //     resizeWindow(windowWidth, windowHeight);
+    // }
 
     SDL_Event event;
 
@@ -136,6 +143,14 @@ void key_poll(){
         switch( event.type ){
         case SDL_KEYDOWN:
             key = event.key.keysym.sym;
+
+            if(key == SDLK_F11){
+                // log("here!");
+                // emscripten_request_fullscreen(document.documentElement,1);
+                SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+                break;
+            }
+
             it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
             found = (it != currentlyPressed.end());
             if(!found)

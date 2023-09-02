@@ -103,7 +103,7 @@ $(OBJS_SOURCES) : $(HFILES)
 .PHONY: clean
 clean:
 	@echo "Cleaning..."
-	rm -rf build
+	rm -rf build/$(PLATFORM)
 	cd external/Tilengine/src && make clean
 
 help:

@@ -30,7 +30,7 @@ DATA		:= data
 MUSIC		:= audio
 
 export GAME_TITLE := APOTRIS
-export GAME_CODE := 2ATE -p
+export GAME_CODE := 2ATE
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -83,10 +83,10 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 
-ifneq ($(strip $(MUSIC)),)
-	export AUDIOFILES	:=	$(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
-	BINFILES += soundbank.bin
-endif
+# ifneq ($(strip $(MUSIC)),)
+# 	export AUDIOFILES	:=	$(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
+# 	BINFILES += soundbank.bin
+# endif
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -124,6 +124,10 @@ $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/make/gba_make
 	@rm -rf $(OUTPUT).elf
+	@tools/gbfs.exe $(BUILD)/audio.gbfs data/soundbank.bin data/effect_locations.bin
+	@tools/padbin.exe 256 $(OUTPUT).gba
+	@cat $(OUTPUT).gba $(BUILD)/audio.gbfs > $(dir $(OUTPUT))Apotris_Audio.gba
+	@rm $(BUILD)/audio.gbfs
 
 #---------------------------------------------------------------------------------
 clean:
