@@ -278,7 +278,5 @@ extern "C"{
 
 extern u16 gradientTable[SCREEN_HEIGHT + 1];
 
-extern void deinitialize();
-
 // extern void sfx(int n);
 // extern void sfx

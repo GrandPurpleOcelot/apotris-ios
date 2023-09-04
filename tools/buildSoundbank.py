@@ -17,7 +17,7 @@ for filename in os.listdir(directory):
 
         count+=1
 
-    if(filename.find('.mod') != -1) or (filename.find('.it') != -1):
+    if(filename.find('.mod') != -1) or (filename.find('.it') != -1) or (filename.find('.xm') != -1):
         files += f"{directory}/{filename} "
 
         music_count+=1
@@ -42,13 +42,8 @@ if(tries == 100):
     print("Timed out waiting for header.")
     sys.exit()
 
-# class Location:
-#     def __init__(self, n):
-#         self.name = n
-#         self.location = 0
-
 effect_list = {}
-# print(effect_list)
+song_list = {}
 
 with open(soundbank_header) as f:
 
@@ -60,35 +55,69 @@ with open(soundbank_header) as f:
 
         if(line[0].find('SFX') != -1):
             effect_list[line[0]] = int(line[1])
-            # effect_list.append((line[0],int(line[1])))
-            # id = 0
-            # try:
-            #     id = effect_list.index(line[0])
-            # except:
-            #     continue
 
-            # print(line[0],id)
-            continue
+        elif(line[0].find('MOD') != -1):
+            song_list[line[0]] = int(line[1])
 
-        # print(line)
+sfx = []
+songs = []
 
-# print(effect_list)
+song_count = 0
+
+preset_songs = []
 
 with open("./include/audio_files.h") as f:
-    with open("./data/effect_locations.bin","wb") as result:
-        def write(num):
-            result.write(struct.pack('<i',int(num)))
 
-        write(81)
-        write(len(effect_list))
-
-        for line in f:
-            if not (line.find("SFX") != -1 and line[0] == '\t'):
-                continue
+    for line in f:
+        if (line.find("SFX") != -1 and line[0] == '\t'):
             line = line.replace("\t","")
             line = line.replace(",","")
             line = line.replace("\n","")
 
-            # print(line, effect_list[line])
-            write(effect_list[line])
-        # effect_list.append(Location(line))
+            try:
+                sfx.append(effect_list[line])
+            except:
+                sfx.append(-1)
+
+        if (line.find("MOD") != -1 and line[0] == '\t'):
+            line = line.replace("\t","")
+            line = line.replace(",","")
+            line = line.replace("\n","")
+
+            preset_songs.append(line)
+
+
+            # print(line)
+
+for song in preset_songs:
+    try:
+        songs.append(song_list[song])
+        song_count+=1
+    except:
+        songs.append(-1)
+
+print(sfx)
+print(songs)
+print(song_list)
+print(preset_songs)
+
+with open("./data/effect_locations.bin","wb") as result:
+    def write(num):
+        result.write(struct.pack('<i',int(num)))
+
+    write(81)
+    write(len(sfx))
+
+    for s in sfx:
+        write(s)
+
+    write(len(songs))
+    write(len(song_list) - song_count)
+
+    for s in songs:
+        write(s)
+
+    for key in song_list:
+        if key in preset_songs:
+            continue
+        write(song_list[key])

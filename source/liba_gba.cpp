@@ -4,11 +4,9 @@
 #include "logging.h"
 #include "LinkConnection.h"
 #include "maxmod.h"
-// #include "soundbank.h"
 #include "rumble.h"
 #include "gbp_logo.hpp"
 #include "text.h"
-// #include "soundbank_bin.h"
 #include "flashSaves.h"
 #include "scene.hpp"
 #include "gbfs.h"
@@ -22,6 +20,8 @@ void loadAudio();
 int spriteVOffset = 0;
 
 u8 * soundbank = nullptr;
+
+s16 * songIds = nullptr;
 
 void onHBlank() {
     if(REG_VCOUNT < 160)
@@ -104,7 +104,8 @@ void platformInit(){
 }
 
 void deinitialize(){
-
+    if(songIds != nullptr)
+        delete songIds;
 }
 
 bool closed(){
@@ -310,7 +311,12 @@ void sleep() {
 
 void sfx(int s){
 
-    mm_sfxhand h = mmEffect(SoundEffectIds[s]);
+    int id = SoundEffectIds[s];
+
+    if(id == -1)
+        return;
+
+    mm_sfxhand h = mmEffect(id);
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
 
     if((s == SFX_PLACE) && game->zoneTimer){
@@ -319,8 +325,13 @@ void sfx(int s){
 }
 
 void sfxRate(int sound, float rate){
+    int id = SoundEffectIds[sound];
+
+    if(id == -1)
+        return;
+
     mm_sound_effect s = {
-        {(mm_word)SoundEffectIds[sound]},
+        {(mm_word) id},
         (mm_hword)((rate) * (1 << (10 - (game->zoneTimer != 0)))),
         0,
         (u8)(255 * (float) savefile->settings.sfxVolume / 10),
@@ -398,7 +409,14 @@ void setMusicVolume(int volume){
 }
 
 void startSong(int song, bool loop){
-    mmStart(song, (!loop)? MM_PLAY_ONCE:MM_PLAY_LOOP);
+    int n = songIds[song];
+
+    log(n);
+
+    if(n < 0)
+        return;
+
+    mmStart(n, (!loop)? MM_PLAY_ONCE:MM_PLAY_LOOP);
 }
 
 void stopSong(){
@@ -492,7 +510,7 @@ void sprite_enable_flip(OBJ_ATTR *sprite, bool flipX, bool flipY){
     sprite->attr1 |= flipY << 0xd;
 }
 
-void quit(){};
+void quit(){}
 
 void findSoundbank(){
     const GBFS_FILE * gbfsFile = find_first_gbfs_file(0);
@@ -530,10 +548,43 @@ void buildEffectLocations(){
         SoundEffectIds[i] = *file++;
     }
 
+    count = *file++;
+    customSongCount = *file++;
+
+    int totalCount = count + customSongCount;
+
+    if(songIds != nullptr)
+        delete songIds;
+
+    if(totalCount > 256){
+        log("Too many songs! (" + std::to_string(totalCount) + ")");
+        return;
+    }
+
+    log("Found " + std::to_string(totalCount) + " songs.");
+
+    songIds = new s16[totalCount];
+    bool missing = false;
+
+    for(int i = 0; i < totalCount; i++){
+        songIds[i] = (s16) *file++;
+
+        if(songIds[i] == -1)
+            missing = true;
+    }
+
+    if(missing){
+        log("Songs are missing!");
+    }
+
+    if(customSongCount > 0){
+        customSongs = true;
+        log("Found " + std::to_string(customSongCount) + " custom songs.");
+    }
 }
 
 void loadAudio(){
-    log("trying to load from appended files...");
+    log("Trying to load from appended files...");
 
     findSoundbank();
     buildEffectLocations();

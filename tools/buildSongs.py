@@ -83,5 +83,5 @@ with open("./source/audio_files.cpp","w") as source:
 
     source.write("int SoundEffectIds[SFX_COUNT] = {\n")
     for i in range(count):
-        source.write(f"\t0,\n")
+        source.write(f"\t-1,\n")
     source.write("};\n")

@@ -96,3 +96,4 @@ INLINE int ewramHeapUsage(){
 }
 
 extern u16 gradientTable[192 + 1];
+

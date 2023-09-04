@@ -85,6 +85,9 @@ u16 gradientTable[192 + 1];
 u16 gradientTable[SCREEN_HEIGHT + 1];
 #endif
 
+bool customSongs = false;
+int customSongCount = 0;
+
 const std::list<std::string> controlOptions = {
     "Move Left",
     "Move Right",
@@ -227,14 +230,13 @@ int main(void) {
 
     changeScene(new newTitleScene());
 
-    log(sizeof(Timeboard));
-    log(sizeof(EntryBoard));
-
     //start screen animation
     while(closed()){
         vsync();
         scene->update();
     }
+
+    deinitialize();
 }
 
 #ifdef PC

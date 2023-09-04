@@ -48,6 +48,9 @@ const int sizeTable[3][4][2] = {
 
 extern int spriteVOffset;
 
+extern bool customSongs;
+extern int customSongCount;
+
 extern void toggleBG(int layer, bool state);
 extern void toggleSprites(bool state);
 extern void clearSprites(int count);
@@ -134,6 +137,8 @@ extern void toggleRendering(bool state);
 extern void initRumble();
 
 extern void quit();
+
+extern void deinitialize();
 
 // //TEMPORARY
 // extern COLOR rgb8to5(u32 *c);

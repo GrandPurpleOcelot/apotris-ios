@@ -1,4 +1,5 @@
 #include "def.h"
+#include "logging.h"
 
 int currentMenu = 0;
 int currentlyPlayingSong = 0;
@@ -7,6 +8,7 @@ void playSong(int menuId, int songId) {
     int song = 0;
 
     if (menuId == 0) {
+        song = songId;
         switch (songId) {
         case 0:
             song = MOD_MENU;
@@ -41,7 +43,7 @@ void playSong(int menuId, int songId) {
             song = MOD__DETERSIVE_;
             break;
         default:
-            return;
+            song = songId + MAX_MENU_SONGS;
         }
     }
 
@@ -66,6 +68,9 @@ void playSongRandom(int menuId) {
     } else if (menuId == 1) {
         for (int i = 0; i < MAX_GAME_SONGS; i++)
             max += (savefile->settings.songList[i + MAX_MENU_SONGS]);
+
+        if(customSongs)
+            max += customSongCount;
     }
 
     if (max <= 0)
@@ -73,21 +78,25 @@ void playSongRandom(int menuId) {
 
     int index = qran() % max;
 
-    int start = 0;
-    if (menuId == 1)
-        start = MAX_MENU_SONGS;
+    // int start = 0;
+    // if (menuId == 1)
+    //     start = MAX_MENU_SONGS;
 
-    int counter = 0;
-    for (int i = start; i < 10;i++) {
-        if (counter == index && savefile->settings.songList[i]) {
-            songId = i;
-            if (menuId == 1)
-                songId -= MAX_MENU_SONGS;
-            break;
-        }
-        if (savefile->settings.songList[i])
-            counter++;
-    }
+    songId = index;
+    // if (menuId == 1)
+    //     songId -= MAX_MENU_SONGS;
+
+    // int counter = 0;
+    // for (int i = start; i < 10;i++) {
+    //     if (counter == index && savefile->settings.songList[i]) {
+    //         songId = i;
+    //         if (menuId == 1)
+    //             songId -= MAX_MENU_SONGS;
+    //         break;
+    //     }
+    //     if (savefile->settings.songList[i])
+    //         counter++;
+    // }
 
     if (songId == -1)
         return;
@@ -116,21 +125,22 @@ void playNextSong(){
     if(index >= max)
         index = 0;
 
-    int start = 0;
-    if (menuId == 1)
-        start = MAX_MENU_SONGS;
+    songId = index;
+    // int start = 0;
+    // if (menuId == 1)
+    //     start = MAX_MENU_SONGS;
 
-    int counter = 0;
-    for (int i = start; i < 10;i++) {
-        if (counter == index && savefile->settings.songList[i]) {
-            songId = i;
-            if (menuId == 1)
-                songId -= MAX_MENU_SONGS;
-            break;
-        }
-        if (savefile->settings.songList[i])
-            counter++;
-    }
+    // int counter = 0;
+    // for (int i = start; i < 10;i++) {
+    //     if (counter == index && savefile->settings.songList[i]) {
+    //         songId = i;
+    //         if (menuId == 1)
+    //             songId -= MAX_MENU_SONGS;
+    //         break;
+    //     }
+    //     if (savefile->settings.songList[i])
+    //         counter++;
+    // }
 
     if (songId == -1)
         return;
