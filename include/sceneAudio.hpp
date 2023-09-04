@@ -125,6 +125,52 @@ class PlaybackElement : public Element{
         }
 };
 
+class MoveSfxElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Piece Move SFX";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.moveSfx > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.moveSfx < 2)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if(savefile->settings.moveSfx < 2){
+                    savefile->settings.moveSfx++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.moveSfx > 0){
+                    savefile->settings.moveSfx--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+        }
+
+        std::string getCurrentOption() override {
+            switch(savefile->settings.moveSfx){
+                case 0: return "OFF";
+                case 1: return "INITIAL";
+                case 2: return "ALL";
+                default: return "";
+            }
+        }
+};
+
 class SongListElement : public Element{
     public:
         std::string getLabel() override {
@@ -153,6 +199,7 @@ class AudioOptionScene : public OptionListScene{
                 new SFXVolumeElement(),
                 new AnnouncerElement(),
                 new PlaybackElement(),
+                new MoveSfxElement(),
                 new SongListElement(),
             };
         };

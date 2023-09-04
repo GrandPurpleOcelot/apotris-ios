@@ -102,8 +102,10 @@ typedef struct Settings{
     int zoom;
     int integerScale;
     int peek;
+    int moveSfx;
 
-    int placeHolder[81];
+    int placeHolder[80];
+
 }ALIGN(4) Settings;
 
 typedef struct Test{

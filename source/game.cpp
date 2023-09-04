@@ -208,10 +208,10 @@ void checkSounds() {
     if (game->sounds.hold)
         sfx(SFX_HOLD);
 
-    if (game->sounds.shift)
+    if (savefile->settings.moveSfx >= 1 && game->sounds.shift)
         sfx(SFX_SHIFT2);
 
-    if (game->sounds.shiftDas)
+    if (savefile->settings.moveSfx == 2 && game->sounds.shiftDas)
         sfx(SFX_SHIFT2);
 
     if (game->sounds.place) {
