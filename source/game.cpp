@@ -3076,11 +3076,11 @@ void GameScene::update(){
     }
 
     if (paused){
+        liftKeys();
         if(pauseMenu()){
             paused = false;
             return;
         }
-        liftKeys();
     }
 
     if (playAgain) {
