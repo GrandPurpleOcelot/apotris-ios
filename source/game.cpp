@@ -325,7 +325,7 @@ void checkSounds() {
         if (savefile->settings.announcer && soundEffect != -1)
             sfx(soundEffect);
 
-        if(game->gameMode == ZEN && game->linesCleared / 10 > (game->linesCleared - game->previousClear.linesCleared) / 10){
+        if(demo && game->linesCleared / 10 > (game->linesCleared - game->previousClear.linesCleared) / 10){
             flashTimer = flashTimerMax;
             setJourneyGraphics(savefile, game->linesCleared / 10);
             setPalette();
