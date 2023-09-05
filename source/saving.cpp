@@ -303,6 +303,7 @@ void setDefaults(Save *save, int depth){
         save->settings.integerScale = true;
         save->settings.peek = true;
         save->settings.moveSfx = 2;
+        save->settings.pauseCountdown = 1;
 
         strncpy(savefile->endTag, "SAVE_END", 9);
         convertScores(savefile);

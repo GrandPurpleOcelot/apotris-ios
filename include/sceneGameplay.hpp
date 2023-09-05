@@ -205,6 +205,30 @@ class PeekElement : public Element{
         }
 };
 
+class PauseCountdownElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Unpause Countdown";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.pauseCountdown= !savefile->settings.pauseCountdown;
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.pauseCountdown)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
 class GameplayOptionScene : public OptionListScene{
     public:
     std::string name(){return "Gameplay";};
@@ -216,6 +240,7 @@ class GameplayOptionScene : public OptionListScene{
                 new RotationSystemElement(),
                 new BigModeElement(),
                 new PeekElement(),
+                new PauseCountdownElement(),
             };
         };
 

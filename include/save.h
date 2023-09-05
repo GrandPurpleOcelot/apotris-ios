@@ -103,8 +103,9 @@ typedef struct Settings{
     int integerScale;
     int peek;
     int moveSfx;
+    int pauseCountdown;
 
-    int placeHolder[80];
+    int placeHolder[79];
 
 }ALIGN(4) Settings;
 

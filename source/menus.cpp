@@ -971,7 +971,7 @@ int GameScene::pauseMenu(){
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 
-    if(count)
+    if(count && savefile->settings.pauseCountdown)
         countdown();
 
     resumeSong();
