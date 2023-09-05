@@ -124,8 +124,8 @@ $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/make/gba_make
 	@rm -rf $(OUTPUT).elf
-	@tools/gbfs.exe $(BUILD)/audio.gbfs data/soundbank.bin data/effect_locations.bin
-	@tools/padbin.exe 256 $(OUTPUT).gba
+	@tools/gbfs $(BUILD)/audio.gbfs data/soundbank.bin data/effect_locations.bin
+	@tools/padbin 256 $(OUTPUT).gba
 	@cat $(OUTPUT).gba $(BUILD)/audio.gbfs > $(dir $(OUTPUT))Apotris_Audio.gba
 	@rm $(BUILD)/audio.gbfs
 
