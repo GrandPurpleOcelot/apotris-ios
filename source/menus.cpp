@@ -592,7 +592,7 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps, boo
         aprints("Score: " + std::to_string(game->score),0,7*counter++,2);
     }else if (g == ULTRA){
         aprints("Score: " + std::to_string(game->score),0,7*counter++,2);
-    }else if (g == MASTER){
+    }else if (g == MASTER || g == DEATH){
         aprints("Level: " + std::to_string(game->level),0,7*counter++,2);
     }
 

@@ -2031,7 +2031,7 @@ void Game::setSpeed(){
         }
         setMasterTuning();
     }else if(gameMode == DEATH){
-        // speed = 20;
+        speed = 20;
     } else
         speed = gravity[0];
 
@@ -2508,7 +2508,7 @@ Game::Game(int gm, int sd, bool big){
         setMasterTuning();
     }else if(gameMode == DEATH){
         level = 0;
-        // speed = 20;
+        speed = 20;
         setDeathTuning();
     }
 
