@@ -47,6 +47,21 @@ class GamesCompletedElement : public Element{
         }
 };
 
+class TotalLinesElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Lines Cleared";
+        }
+
+        std::string getCursor(std::string text) override {
+            return " " + text + " ";
+        }
+
+        std::string getCurrentOption() override {
+            return std::to_string(savefile->stats.totalLines);
+        }
+};
+
 class SinglesElement : public Element{
     public:
         std::string getLabel() override {
@@ -236,6 +251,7 @@ class StatScene : public OptionListScene{
                 new PlayTimeElement(),
                 new GamesStartedElement(),
                 new GamesCompletedElement(),
+                new TotalLinesElement(),
                 new SinglesElement(),
                 new DoublesElement(),
                 new TriplesElement(),

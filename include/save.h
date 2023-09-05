@@ -130,6 +130,7 @@ typedef struct TotalStats{
     int gamesLost;
     BlockEngine::Stats gameStats;
     int maxLevel;
+    int totalLines;
 }ALIGN(4) TotalStats;
 
 typedef struct Skin{
@@ -195,7 +196,7 @@ public:
 
     TotalStats stats;
 
-    int placeHolder2[88];
+    int placeHolder2[87];
 
     Skin customSkins[MAX_CUSTOM_SKINS];
 

@@ -1398,7 +1398,9 @@ void sleepMenu(){
 
 void addGameStats(){
     savefile->stats.gameStats.add(game->statTracker);
+    savefile->stats.totalLines += game->linesCleared;
 
     if(game->gameMode == MARATHON && game->level > savefile->stats.maxLevel)
         savefile->stats.maxLevel = game->level;
+
 }
