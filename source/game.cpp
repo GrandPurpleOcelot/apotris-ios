@@ -1282,9 +1282,11 @@ void showPPS(){
 
     clearTiles(2, 113, 3);
 
-    aprints(str,25,0,2);
+    const int x = 8;
 
-    aprints("PPS:",0,0,2);
+    aprints(str,25 + x,0,2);
+
+    aprints("PPS:",x,0,2);
 }
 
 void GameScene::showComboStreak(){
