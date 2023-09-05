@@ -137,7 +137,7 @@ class ResetControlsElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return "";
+            return "_";
         }
 };
 
@@ -297,6 +297,17 @@ class RebindElement : public Element{
         }
 };
 
+class IngameLabelElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "In-Game:";
+        }
+
+        std::string getCurrentOption() override {
+            return "";
+        }
+};
+
 class ControlOptionScene : public OptionListScene{
     public:
     std::string name(){return "Controls";};
@@ -304,14 +315,11 @@ class ControlOptionScene : public OptionListScene{
     std::list<Element*> getElementList(){
         std::list<Element*> list;
 
-        auto it = controlOptions.begin();
+        list.push_back(new IngameLabelElement());
 
         int counter = 0;
-        while(it != controlOptions.end()){
+        for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
             list.push_back(new RebindElement(counter++,*it));
-
-            it++;
-        }
 
         #ifdef GBA
         list.push_back(new ABHoldElement());

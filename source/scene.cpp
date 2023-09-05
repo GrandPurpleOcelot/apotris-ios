@@ -415,6 +415,10 @@ void OptionListScene::init(){
 
     selection = 0;
 
+    if(elementList.front()->getCurrentOption() == ""){
+        selection++;
+    }
+
     //backgroundGrid
     setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
@@ -537,7 +541,7 @@ void OptionListScene::draw(){
         wordSprites[index]->setPriority(0);
         wordSprites[index]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
 
-        labels[index]->show(startX, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
+        labels[index]->show(startX - 8 * (opt == ""), y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
 
         if(counter == selection){ //draw sprite cursor
             currentOption = option->getLabel();
@@ -660,18 +664,29 @@ bool OptionListScene::control(){
     if (key_hit(KEY_UP)) {
         movingDirection = -1;
 
-        if (selection == 0)
-            selection = options - 1;
-        else
-            selection--;
+        auto it = elementList.begin();
+        std::advance(it,selection);
 
-        if(selection == options -1)
-            listStart = max(0,selection-elementMax);
-        else if(selection < listStart + 1){
-            listStart--;
-            if(listStart < 0)
-                listStart = 0;
-        }
+        do{
+            if (selection == 0)
+                selection = options - 1;
+            else
+                selection--;
+
+            if(selection == options -1)
+                listStart = max(0,selection-elementMax);
+            else if(selection < listStart + 1){
+                listStart--;
+                if(listStart < 0)
+                    listStart = 0;
+            }
+
+            if(it == elementList.begin()){
+                it = elementList.end();
+            }
+
+            --it;
+        }while((*it)->getCurrentOption() == "");
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
@@ -680,15 +695,23 @@ bool OptionListScene::control(){
     if (key_hit(KEY_DOWN)) {
         movingDirection = 1;
 
-        if (selection == options - 1)
-            selection = 0;
-        else
-            selection++;
+        auto it = elementList.begin();
+        std::advance(it,selection);
 
-        if(selection == 0)
-            listStart = 0;
-        else if(selection > listStart + elementMax)
-            listStart++;
+        do{
+            if (selection == options - 1)
+                selection = 0;
+            else
+                selection++;
+
+            if(selection == 0)
+                listStart = 0;
+            else if(selection > listStart + elementMax)
+                listStart++;
+
+            if(++it == elementList.end())
+                it = elementList.begin();
+        }while((*it)->getCurrentOption() == "");
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
@@ -705,7 +728,20 @@ bool OptionListScene::control(){
 
                 movingDirection = dir;
 
-                selection += dir;
+                int n = selection + dir;
+
+                auto it = elementList.begin();
+                std::advance(it,n);
+
+                if((*it)->getCurrentOption() == ""){
+                    if(n + dir >= 0 && n + dir <= options -1){
+                        n += dir;
+                    }else{
+                        return false;
+                    }
+                }
+
+                selection = n;
 
                 if(dir < 0){
                     if(selection == options -1)
@@ -720,7 +756,6 @@ bool OptionListScene::control(){
                         listStart = 0;
                     else if(selection > listStart + elementMax)
                         listStart++;
-
                 }
 
                 refreshText = true;
