@@ -415,7 +415,7 @@ void OptionListScene::init(){
 
     selection = 0;
 
-    if(elementList.front()->getCurrentOption() == ""){
+    if(!elementList.empty() && elementList.front()->getCurrentOption() == ""){
         selection++;
     }
 
