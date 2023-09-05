@@ -481,6 +481,11 @@ std::string nameInput(int place) {
             if (timer < 10)
                 aprint("_", 13 + cursor, nameHeight);
 
+            if (key_hit(sf::Keyboard::Enter) || key_hit(sf::Keyboard::Escape)) {
+                onDone = true;
+                sfx(SFX_MENUCONFIRM);
+            }
+
             #endif
 
             if (key_hit(KEY_START)) {
