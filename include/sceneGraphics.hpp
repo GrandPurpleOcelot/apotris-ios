@@ -556,13 +556,34 @@ class ClearTextElement : public Element{
         }
 
         std::string getCursor(std::string text) override {
-            return "[" + text + "]";
+            std::string result;
+            if(savefile->settings.clearText > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.clearText < 2)
+                result += ">";
+
+            return result;
         }
 
         void action(int dir) override{
-            savefile->settings.floatText = !savefile->settings.floatText;
+            if(dir > 0){
+                if (savefile->settings.clearText < 2){
+                    savefile->settings.clearText++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if (savefile->settings.clearText > 0){
+                    savefile->settings.clearText--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
 
-            if(savefile->settings.floatText){
+            if(savefile->settings.clearText == 2){
                 floatingList.push_back(FloatText("quad"));
             }else{
                 for(auto const & floating : floatingList){
@@ -581,10 +602,11 @@ class ClearTextElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            if(savefile->settings.floatText)
-                return "ON";
-            else
-                return "OFF";
+            switch(savefile->settings.clearText){
+                case 1: return "OFFBOARD";
+                case 2: return "ALL";
+                default: return "OFF";
+            }
         }
 };
 

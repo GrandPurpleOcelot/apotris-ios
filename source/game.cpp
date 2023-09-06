@@ -319,7 +319,7 @@ void checkSounds() {
             clearTypeText = "double";
         }
 
-        if (savefile->settings.floatText && clearTypeText != "")
+        if (savefile->settings.clearText == 2 && clearTypeText != "")
             floatingList.push_back(FloatText(clearTypeText));
 
         if (savefile->settings.announcer && soundEffect != -1)
@@ -342,7 +342,7 @@ void checkSounds() {
             sfx(SFX_TSPIN);
         }
 
-        if (savefile->settings.floatText)
+        if (savefile->settings.clearText == 2)
             floatingList.push_back(FloatText(clearTypeText));
     }
 
@@ -381,7 +381,7 @@ void checkSounds() {
         case 2: sfx(SFX_SECRET); break;
     }
 
-    if (sectionText.size() && savefile->settings.floatText)
+    if (sectionText.size() && savefile->settings.clearText == 2)
         floatingList.push_back(FloatText(sectionText));
 
     if(game->sounds.disappear){
@@ -1290,6 +1290,9 @@ void showPPS(){
 }
 
 void GameScene::showComboStreak(){
+    if(savefile->settings.clearText == 0)
+        return;
+
     if(game->gameMode != CLASSIC && !game->zoneTimer){
         if (game->comboCounter > 1) {
             // aprint("Combo x", 21, clearTextHeight - 1);
@@ -2051,7 +2054,7 @@ void showBestMove(){
 bool checkDiagonal(int key){
     if((!savefile->settings.diagonalType || game->rotationSystem == NRS) && game->rotationSystem != ARS)
         return false;
-    return ((key == KEY_DOWN || key == KEY_UP) && (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)));
+    return ((key == (KEY_DOWN) || key == (KEY_UP)) && (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)));
 }
 
 void showPlaceEffect(){

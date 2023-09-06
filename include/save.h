@@ -104,8 +104,9 @@ typedef struct Settings{
     int peek;
     int moveSfx;
     int pauseCountdown;
+    int clearText;
 
-    int placeHolder[79];
+    int placeHolder[78];
 
 }ALIGN(4) Settings;
 

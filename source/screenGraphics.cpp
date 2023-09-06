@@ -657,7 +657,7 @@ void GraphicsScene::draw(){
 
     showPlaceEffect();
 
-    if(savefile->settings.floatText){
+    if(savefile->settings.clearText == 2){
         showClearText();
     }
 
