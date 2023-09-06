@@ -704,16 +704,16 @@ void Game::place() {
         if(rotationSystem != NRS)
             comboCounter++;
         else
-            comboCounter = 1;
+            comboCounter = 0;
 
         if(gameMode == MASTER || gameMode == DEATH)
             entryDelay = lineAre;
 
     } else {
-        if(gameMode == COMBO && comboCounter)
+        if(gameMode == COMBO && comboCounter > -1)
             lost = 1;
 
-        comboCounter = 0;
+        comboCounter = -1;
 
         int targetHeight = 9;
         if(pawn.big)
@@ -1626,7 +1626,7 @@ void Game::removeClearLock() {
                 for(int j = 0; j < 10; j++){
                     if(j > 2 && j < 7)
                         continue;
-                    board[i][j] = (i+comboCounter) % 7 + 1;
+                    board[i][j] = (i+comboCounter+1) % 7 + 1;
                     bitboard[i] |= 1 << j;
                 }
                 connectBoard(i, i);
@@ -1636,7 +1636,7 @@ void Game::removeClearLock() {
                 if(bitboard[i] != 0){
                     break;
                 }
-                board[i][0] = (i+comboCounter) % 7 + 1;
+                board[i][0] = (i+comboCounter+1) % 7 + 1;
                 bitboard[i] |= 1;
                 connectBoard(i, i);
             }

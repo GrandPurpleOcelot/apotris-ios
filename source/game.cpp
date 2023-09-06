@@ -249,7 +249,7 @@ void checkSounds() {
     if (game->sounds.clear) {
 
         if(game->previousClear.linesCleared <= 4){
-            int speed = game->comboCounter - 1;
+            int speed = game->comboCounter;
             if (speed > 10)
                 speed = 10;
 

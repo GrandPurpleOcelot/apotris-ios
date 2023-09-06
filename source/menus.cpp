@@ -533,10 +533,10 @@ void showScore(){
         if(game->gameMode == DIG){
             if(game->subMode == 1)
                 score = std::to_string(game->pieceCounter);
-        }else if (game->gameMode != 7)
+        }else if (game->gameMode != COMBO)
             score = std::to_string(game->score);
         else
-            score = std::to_string(game->linesCleared);
+            score = std::to_string(game->statTracker.maxCombo);
 
         if (game->lost)
             aprint("GAME OVER", 11, 3);
@@ -1036,7 +1036,7 @@ int onRecord() {
         place = saveRecord(savefile->boards.blitz[mode], game->score, -1);
 
     } else if (game->gameMode == COMBO) {
-        place = saveRecord(savefile->boards.combo, game->linesCleared, -1);
+        place = saveRecord(savefile->boards.combo, game->statTracker.maxCombo, -1);
 
     } else if (game->gameMode == SURVIVAL) {
         place = saveRecord(savefile->boards.survival[mode], gameSeconds, -1);

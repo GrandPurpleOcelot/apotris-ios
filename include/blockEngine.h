@@ -631,7 +631,7 @@ namespace BlockEngine
         int linesCleared = 0;
         int level = 0;
         int score = 0;
-        int comboCounter = 0;
+        int comboCounter = -1;
         bool lineClearArray[40];
         bool clearLock = false;
         int lost = 0;
