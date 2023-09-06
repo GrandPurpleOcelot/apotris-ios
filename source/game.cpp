@@ -2811,7 +2811,7 @@ std::list<Timestamp*>::iterator replayIterator;
 void replayControl(){
     Timestamp* t = *replayIterator;
 
-    while(replayIterator != currentReplay.end() && t->timer == game->timer){
+    while(replayIterator != currentReplay.end() && t->timer <= game->timer){
         bool dir = t->dir;
         switch(t->move){
         case 0:
@@ -2983,7 +2983,7 @@ void GameScene::update(){
             botGame->update();
         }
         handleBotGame();
-    }else if(enableBot){
+    }else if(enableBot && !replaying){
         testBot->run();
     }
 
