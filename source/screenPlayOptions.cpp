@@ -256,13 +256,14 @@ void PlayOptionScene::start(){
     if(newOptions.mode == BlockEngine::BLITZ)
         goal = 2 * 3600;
 
-    if(newOptions.mode == BlockEngine::CLASSIC)
+    if(newOptions.mode == BlockEngine::CLASSIC){
         newOptions.rotationSystem = BlockEngine::NRS;
-    else{
-        if(savefile->settings.rotationSystem >= 0 && savefile->settings.rotationSystem <= 2){
-            newOptions.rotationSystem = savefile->settings.rotationSystem;
+        newOptions.randomizer = BlockEngine::RANDOM;
+    } else{
+        if(savefile->settings.randomizer >= 0 && savefile->settings.randomizer <= 2){
+            newOptions.randomizer = savefile->settings.randomizer;
         }else{
-            newOptions.rotationSystem = BlockEngine::SRS;
+            newOptions.randomizer = BlockEngine::BAG_7;
         }
     }
 

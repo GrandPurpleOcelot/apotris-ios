@@ -105,8 +105,9 @@ typedef struct Settings{
     int moveSfx;
     int pauseCountdown;
     int clearText;
+    int randomizer;
 
-    int placeHolder[78];
+    int placeHolder[77];
 
 }ALIGN(4) Settings;
 

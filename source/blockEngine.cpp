@@ -1271,13 +1271,12 @@ Color Game::color(int n) {
 }
 
 void Game::fillBag() {
-    if(rotationSystem == SRS){
+    bag.clear();
+    if(randomizer == BAG_7){
         for (int i = 0; i < 7; i++)
             bag.push_back(i);
         bagCounter++;
-    }else if(rotationSystem == ARS){
-        bag.clear();
-
+    }else if(randomizer == BAG_35){
         //fill bag
         for(int i = 0; i < 35; i++)
             bigBag[i] = i / 7;
@@ -1328,25 +1327,22 @@ void Game::fillQueue(int count) {
     setupRNG();
 
     for (int i = 0; i < count; i++) {
-        if(rotationSystem == SRS){
+        if(randomizer == BAG_7){
             int n = qran() % bag.size();
-
-            // std::list<int>::iterator index = bag.begin();
-            // std::advance(index, n);
 
             queue.push_back(bag.array[n]);
             bag.erase(n);
 
             if (bag.size() == 0)
                 fillBag();
-        }else if (rotationSystem == NRS){
+        }else if (randomizer == RANDOM){
             int n = qran() % 8;
 
             if(n == 7 || n == pieceHistory)
                 n = qran() % 7;
 
             queue.push_back(n);
-        }else if (rotationSystem == ARS){
+        }else if (randomizer == BAG_35){
             int n = -1;
             int record = 0;
             int droughted = 0;
@@ -1362,6 +1358,8 @@ void Game::fillQueue(int count) {
             int r = 0;
             for(int i = 0; i < 6; i++){
                 r = qran() % 35;
+
+                log(std::to_string(r) + " " + std::to_string(bigBag[r]));
 
                 n = bigBag[r];
 
@@ -1993,6 +1991,7 @@ void Game::setSubMode(int sm){
 
     if((gameMode == MASTER || gameMode == DEATH) && sm){
         setRotationSystem(ARS);
+        setRandomizer(BAG_35);
 
         sonicDrop = true;
 
@@ -2039,13 +2038,6 @@ void Game::setSpeed(){
 
 void Game::setRotationSystem(int rs){
     rotationSystem = rs;
-
-    if(rs == ARS){
-        queue.clear();
-
-        fillBag();
-        fillQueue(5);
-    }
 }
 
 int Game::checkITouching(int r, int oriantation){
@@ -2273,6 +2265,8 @@ void Game::setOptions(Options newOptions){
     bTypeHeight = newOptions.bTypeHeight;
     setRotationSystem(newOptions.rotationSystem);
     setSubMode(newOptions.subMode);
+
+    setRandomizer(newOptions.randomizer);
 }
 
 void Game::updateColumns(int height){
@@ -2440,8 +2434,6 @@ Game::Game(int gm, int sd, bool big){
         arr = 6;
         softDropSpeed = 2;
         gracePeriod = 90;
-
-        rotationSystem = NRS;
     }else if(enableFumen && enableFumenQueue){
         for(int i = 0; i < 5; i++)
             queue.push_back(fumenQueue[i]);
@@ -2574,6 +2566,7 @@ Game::Game(Game * oldGame) {
     speed = oldGame->speed;
     activePiece = oldGame->activePiece;
     linesToClear = oldGame->linesToClear;
+    randomizer = oldGame->randomizer;
 }
 
 void Game::demoGarbage(){
@@ -2707,4 +2700,21 @@ void Game::checkSecretGrade(){
 
 void Game::calculatePeek(){
     peek = max(lengthY - (stackHeight+1) - (pawn.lowest + pawn.heighest[pawn.rotation]),0);
+}
+
+void Game::setRandomizer(int rand){
+    randomizer = rand;
+
+    bagCounter = 0;
+
+    queue.clear();
+
+    fillBag();
+
+    if(enableFumen && enableFumenQueue){
+        for(int i = 0; i < 5; i++)
+            queue.push_back(fumenQueue[i]);
+    }else{
+        fillQueue(5);
+    }
 }

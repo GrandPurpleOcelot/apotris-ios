@@ -181,6 +181,51 @@ class RotationSystemElement : public Element{
         }
 };
 
+class RandomizerElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Randomizer";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.randomizer > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.randomizer < BlockEngine::BAG_35)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if(savefile->settings.randomizer < BlockEngine::BAG_35){
+                    savefile->settings.randomizer++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.randomizer > 0){
+                    savefile->settings.randomizer--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+        }
+
+        std::string getCurrentOption() override {
+            switch(savefile->settings.randomizer){
+                case BlockEngine::BAG_7: return "7-BAG";
+                case BlockEngine::BAG_35: return "35-BAG";
+                default : return "RANDOM";
+            }
+        }
+};
+
 class PeekElement : public Element{
     public:
         std::string getLabel() override {
@@ -238,6 +283,7 @@ class GameplayOptionScene : public OptionListScene{
                 new ProModeElement(),
                 new GoalLineElement(),
                 new RotationSystemElement(),
+                new RandomizerElement(),
                 new BigModeElement(),
                 new PeekElement(),
                 new PauseCountdownElement(),

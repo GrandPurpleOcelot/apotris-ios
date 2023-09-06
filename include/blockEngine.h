@@ -150,6 +150,12 @@ namespace BlockEngine
         PIECE_Z,
     };
 
+    enum Randomizers{
+        RANDOM,
+        BAG_7,
+        BAG_35,
+    };
+
     extern bool enableFumen;
     extern bool enableFumenQueue;
 
@@ -427,6 +433,7 @@ namespace BlockEngine
             int bTypeHeight = 0;
             int subMode = 0;
             int rotationSystem = SRS;
+            int randomizer = BAG_7;
     };
 
     class Timestamp{
@@ -562,6 +569,8 @@ namespace BlockEngine
         List bag;
         List historyList;
 
+        int randomizer;
+
     public:
         int checkRotation(int, int, int);
         void next();
@@ -597,6 +606,7 @@ namespace BlockEngine
         void setSubMode(int);
         void setSpeed();
         void setRotationSystem(int);
+        void setRandomizer(int);
         void removeEventLock();
         void activateZone(int);
         void liftKeys();

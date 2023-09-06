@@ -299,6 +299,7 @@ void setDefaults(Save *save, int depth){
         save->settings.pro = false;
         save->settings.goalLine = 2;
         save->settings.rotationSystem = BlockEngine::SRS;
+        save->settings.randomizer = BlockEngine::BAG_7;
         save->settings.zoom = 16;
         save->settings.integerScale = true;
         save->settings.peek = true;
