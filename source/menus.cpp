@@ -1006,7 +1006,7 @@ int saveRecord(EntryBoard &board, int value, int dir){
 int onRecord() {
     int place = -1;
 
-    if(replaying || game->pawn.big || (savefile->settings.rotationSystem != SRS && !((game->gameMode == MASTER && game->subMode) || game->gameMode == CLASSIC)))
+    if(replaying || game->pawn.big)
         return place;
 
     int subMode = game->subMode;
