@@ -239,7 +239,7 @@ int GameScene::endScreen(){
             else if (game->lost == 1)
                 sfx(SFX_GAMEOVER);
         }else if (game->gameMode != BATTLE) {
-            if (game->gameMode == MASTER && game->won == 1 && game->level < 500 && game->timer >= 25200)
+            if (game->gameMode == MASTER && game->won == 1 && game->level / 100 == 5)
                 sfx(SFX_TIME);
             else if (game->won == 1)
                 sfx(SFX_CLEAR);
@@ -517,7 +517,7 @@ void showScore(){
 
         gradeText = "Grade: " + gradeText;
 
-        if(game-> won && game->level < 500 && game->timer >= 25200) {
+        if(game-> won && game->level / 100 == 5) {
             aprint("TIME!", 13, 3);
         }else if(game->won && game->level == 999){
             aprint("CLEAR!", 12, 3);
@@ -526,7 +526,25 @@ void showScore(){
         }
 
         aprint(gradeText, 15 - ((int)gradeText.size()/2),7);
+    } else if (game->gameMode == DEATH){
 
+        int section = game->level / 100;
+
+        if(game-> won && (section == 5 || section == 10)) {
+            aprint("TIME!", 13, 3);
+        }else if(game->won && game->level == 1300){
+            aprint("CLEAR!", 12, 3);
+        }else{
+            aprint("GAME OVER", 11, 3);
+        }
+
+        int grade = max(section - game->regretCount,0);
+
+        if(grade > 0 && grade <= 13){
+            std::string gradeText = "Grade: S" + std::to_string(grade);
+
+            aprint(gradeText, 15 - ((int)gradeText.size()/2),7);
+        }
     } else if (game->gameMode == MARATHON || game->lost || game->gameMode >= ULTRA || (game->gameMode == DIG && game->subMode == 1)) {
         std::string score;
 
