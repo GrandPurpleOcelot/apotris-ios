@@ -9,8 +9,9 @@
 
 SDL_Surface * screen;
 
-std::list<SDL_keysym> currentKeys;
-std::list<SDL_keysym> previousKeys;
+std::list<SDLKey> currentKeys;
+std::list<SDLKey> previousKeys;
+std::list<SDLKey> currentlyPressed;
 
 // int rowStart = (512 - 240) / 2;
 // int rowEnd = rowStart + 240;
@@ -20,6 +21,8 @@ int rowEnd = 160;
 #define FPS_TARGET 60
 
 double clock_timer = 0;
+
+bool render = true;
 
 void windowInit(){
     SDL_Init(SDL_INIT_VIDEO);
@@ -44,66 +47,92 @@ void key_poll(){
 
     SDL_Event event;
 
-    while( SDL_PollEvent( &event ) ){
+    while(SDL_PollEvent(&event)){
+        SDLKey key;
+        auto it = currentlyPressed.begin();
+        bool found = false;
         switch( event.type ){
         case SDL_KEYDOWN:
-            currentKeys.push_back(event.key.keysym);
+            key = event.key.keysym.sym;
+            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+            found = (it != currentlyPressed.end());
+            if(!found)
+                currentlyPressed.push_back(key);
+            break;
+        case SDL_KEYUP:
+            key = event.key.keysym.sym;
+            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+            found = (it != currentlyPressed.end());
+            if(found)
+                currentlyPressed.remove(key);
             break;
         case SDL_QUIT:
-            std::cout << "quitting!\n";
-            SDL_Quit();
+            quit();
             break;
         default:
             break;
         }
     }
+
+    currentKeys = currentlyPressed;
 }
 
-uint32_t key_is_down(uint32_t){
-    // if(key == KEY_FULL)
-    //     return (!currentKeys.empty());
+uint32_t key_is_down(uint32_t key){
+    if(key == KEY_FULL)
+        return (!currentKeys.empty());
 
-    // auto it = currentKeys.begin();
+    auto it = currentKeys.begin();
 
-    // it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
+    it = std::find(currentKeys.begin(),currentKeys.end(),key);
 
-    // return (it != currentKeys.end());
-
-    return 0;
+    return (it != currentKeys.end());
 }
 
-uint32_t key_hit(uint32_t){
-    // if(key == KEY_FULL)
-    //     return (previousKeys.empty() && !currentKeys.empty());
+uint32_t key_hit(uint32_t key){
+    if(key == KEY_FULL)
+        return (previousKeys.empty() && !currentKeys.empty());
 
-    // auto it = previousKeys.begin();
-    // it = std::find(previousKeys.begin(),previousKeys.end(),sf::Keyboard::Key(key));
-    // bool prev = (it != previousKeys.end());
+    auto it = previousKeys.begin();
+    it = std::find(previousKeys.begin(),previousKeys.end(),key);
+    bool prev = (it != previousKeys.end());
 
-    // it = currentKeys.begin();
-    // it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
-    // bool curr = (it != currentKeys.end());
+    it = currentKeys.begin();
+    it = std::find(currentKeys.begin(),currentKeys.end(),key);
+    bool curr = (it != currentKeys.end());
 
-    // return (!prev && curr);
-
-    return 0;
+    return (!prev && curr);
 }
 
-uint32_t key_released(uint32_t){
-    // if(key == KEY_FULL)
-    //     return (!previousKeys.empty() && currentKeys.empty());
+uint32_t key_released(uint32_t key){
+    if(key == KEY_FULL)
+        return (!previousKeys.empty() && currentKeys.empty());
 
-    // auto it = previousKeys.begin();
-    // it = std::find(previousKeys.begin(),previousKeys.end(),sf::Keyboard::Key(key));
-    // bool prev = (it != previousKeys.end());
+    auto it = previousKeys.begin();
+    it = std::find(previousKeys.begin(),previousKeys.end(),key);
+    bool prev = (it != previousKeys.end());
 
-    // it = currentKeys.begin();
-    // it = std::find(currentKeys.begin(),currentKeys.end(),sf::Keyboard::Key(key));
-    // bool curr = (it != currentKeys.end());
+    it = currentKeys.begin();
+    it = std::find(currentKeys.begin(),currentKeys.end(),key);
+    bool curr = (it != currentKeys.end());
 
-    // return (prev && !curr);
+    return (prev && !curr);
+}
 
-    return 0;
+uint32_t key_first(){
+    if(currentKeys.empty())
+        return KEY_FULL - 1;
+
+    for(auto key : currentKeys){
+        auto it = previousKeys.begin();
+        it = std::find(previousKeys.begin(),previousKeys.end(),key);
+        bool prev = (it != previousKeys.end());
+
+        if(!prev){
+            return key;
+        }
+    }
+
+    return KEY_FULL - 1;
 }
 
 void updateWindow(uint8_t* framebuffer){
@@ -124,15 +153,16 @@ void updateWindow(uint8_t* framebuffer){
 
     uint8_t * newBuffer = new uint8_t[640 * 480 * 4];
 
-    // memset32(newBuffer,0x1234,640*480);
+    const int in_width = 240;
+    const int in_height = 160;
 
     uint32_t* out_ptr = (uint32_t *) newBuffer;
     uint32_t* in_ptr = (uint32_t *) framebuffer;
-    int in_pitch = 512;
+    int in_pitch = in_width;
     int out_pitch = 640;
 
-    in_ptr += (((512 - 160) / 2) + 160) * in_pitch;
-    in_ptr -= (512 - 214) / 2;
+    in_ptr += (((in_height - 160) / 2)) * in_pitch;
+    in_ptr += (in_width - 214) / 2;
 
     for(int y = 0; y < 160; y++){
         uint32_t * line_ptr = in_ptr;
@@ -168,10 +198,10 @@ void updateWindow(uint8_t* framebuffer){
                 out_ptr += 1;
             }
 
-            line_ptr--;
+            line_ptr++;
         }
 
-        in_ptr -= in_pitch;
+        in_ptr += in_pitch;
         out_ptr += out_pitch * 2;
     }
 
@@ -193,7 +223,9 @@ void updateWindow(uint8_t* framebuffer){
     dstrect.y = (screen->h - img->h) / 2;
 
     // Draw image on screen
-    SDL_BlitSurface(img, NULL, screen, &dstrect);
+    if(render)
+        SDL_BlitSurface(img, NULL, screen, &dstrect);
+
     SDL_Flip(screen);
 
     // Wait 5 seconds then quit
@@ -247,7 +279,9 @@ void setMusicVolume(int){};
 
 void setMusicTempo(int){};
 
-void toggleRendering(bool){};
+void toggleRendering(bool r){
+    render = r;
+}
 
 void sfxRate(int,float){};
 
@@ -297,5 +331,27 @@ void saveSavefile(){
 
     output.close();
 }
+
+void quit(){
+    SDL_Quit();
+    exit(0);
+}
+
+std::map<int,std::string> keyToString = {
+{SW_BTN_A,"A"},
+{SW_BTN_B,"B"},
+{SW_BTN_X,"X"},
+{SW_BTN_Y,"Y"},
+{SW_BTN_L1,"L1"},
+{SW_BTN_L2,"L2"},
+{SW_BTN_R1,"R1"},
+{SW_BTN_R2,"R2"},
+{SW_BTN_SELECT,"Select"},
+{SW_BTN_START,"Start"},
+{SW_BTN_LEFT,"Left"},
+{SW_BTN_UP,"Up"},
+{SW_BTN_RIGHT,"Right"},
+{SW_BTN_DOWN,"Down"},
+};
 
 #endif

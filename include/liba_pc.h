@@ -20,6 +20,12 @@
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 180
 
+
+#elif defined(MM)
+
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 160
+
 #else
 
 #define SCREEN_WIDTH 512

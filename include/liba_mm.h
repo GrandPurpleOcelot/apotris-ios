@@ -3,6 +3,10 @@
 #include <cinttypes>
 
 #include "liba_pc.h"
+#include "audio_files.h"
+#include <map>
+
+#include "SDL/SDL.h"
 
 #define SW_BTN_UP SDLK_UP
 #define SW_BTN_DOWN SDLK_DOWN
@@ -21,17 +25,17 @@
 #define SW_BTN_MENU SDLK_ESCAPE
 #define SW_BTN_POWER SDLK_FIRST
 
-#define KEY_A 0
-#define KEY_B 0
-#define KEY_L 0
-#define KEY_R 0
-#define KEY_UP 0
-#define KEY_DOWN 0
-#define KEY_LEFT 0
-#define KEY_RIGHT 0
-#define KEY_SELECT 0
-#define KEY_START 0
-#define KEY_FULL 1
+#define KEY_A SW_BTN_A
+#define KEY_B SW_BTN_B
+#define KEY_L SW_BTN_L2
+#define KEY_R SW_BTN_R2
+#define KEY_UP SW_BTN_UP
+#define KEY_DOWN SW_BTN_DOWN
+#define KEY_LEFT SW_BTN_LEFT
+#define KEY_RIGHT SW_BTN_RIGHT
+#define KEY_SELECT SW_BTN_SELECT
+#define KEY_START SW_BTN_START
+#define KEY_FULL 0xffffffff
 
 extern void updateWindow(uint8_t*);
 extern void refreshWindowSize();
@@ -55,6 +59,9 @@ extern void key_poll();
 extern uint32_t key_is_down(uint32_t);
 extern uint32_t key_hit(uint32_t);
 extern uint32_t key_released(uint32_t);
+extern uint32_t key_first();
 
 extern int rowStart;
 extern int rowEnd;
+
+extern std::map<int,std::string> keyToString;

@@ -282,7 +282,7 @@ class RebindElement : public Element{
 
             return keyToString[keys[index] & 0xff];
 
-            #elif defined(SWITCH)
+            #elif defined(SWITCH) || defined(MM)
 
             return keyToString[keys[index]];
 
