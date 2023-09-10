@@ -1068,10 +1068,10 @@ int onRecord() {
         if(grade > 32)
             grade = 32;
 
-        EntryBoard board = savefile->boards.master[subMode];
+        EntryBoard &board = savefile->boards.master[subMode];
 
         for(int i = 0; i < 5; i++){
-            if (grade < board.entries[i].grade || (grade == board.entries[i].grade && gameSeconds > board.entries[i].value))
+            if (grade < board.entries[i].grade || (grade == board.entries[i].grade && (gameSeconds > board.entries[i].value && board.entries[i].value != 0)))
                 continue;
 
             for (int j = 3; j >= i; j--)

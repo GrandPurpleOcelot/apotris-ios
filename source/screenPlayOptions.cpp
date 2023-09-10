@@ -585,6 +585,7 @@ void MultBattleScene::init(){
 
     #ifdef GBA
 
+
     linkConnection->activate();
 
     #endif
