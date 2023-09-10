@@ -2253,6 +2253,8 @@ void Game::liftKeys(){
     left = 0;
     right = 0;
     down = 0;
+
+    pushDir = 0;
 }
 
 void Game::setOptions(Options newOptions){

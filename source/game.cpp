@@ -75,7 +75,6 @@ std::string clearTypeText = "";
 s16 glow[20][10];
 
 int push = 0;
-int pushTimer = 0;
 
 int restartTimer = 0;
 #define maxRestartTimer 20
@@ -1429,6 +1428,13 @@ void clearGlow() {
 void GameScene::countdown() {
     int timer = 0;
     int timerMax = 120;
+
+    push = 0;
+    shake = 0;
+    shakeVelocity = 0;
+    shakeBuff = 0;
+
+    screenShake();
 
     showTimer();
     showQueue();
