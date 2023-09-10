@@ -1415,6 +1415,9 @@ void sleepMenu(){
 }
 
 void addGameStats(){
+    savefile->stats.timePlayed += frameCounter;
+    frameCounter = 1;
+
     savefile->stats.gameStats.add(game->statTracker);
     savefile->stats.totalLines += game->linesCleared;
 

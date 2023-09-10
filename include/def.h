@@ -164,7 +164,6 @@ extern void startGame(int seed);
 extern void startGame();
 
 extern void startBotGame(int seed);
-extern void addStats();
 
 extern void loadReplay();
 extern void frameSnow(int layer);

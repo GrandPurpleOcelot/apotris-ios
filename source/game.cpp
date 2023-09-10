@@ -1280,7 +1280,7 @@ void showPPS(){
         fractional &= 0xff;
     }
 
-    clearTiles(2, 113, 3);
+    clearTiles(2, 113, 5);
 
     const int x = 8;
 

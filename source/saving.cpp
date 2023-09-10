@@ -21,7 +21,6 @@ public:
 };
 
 void setDefaultKeys();
-void addStats();
 void resetSkins(Save * save);
 void setDefaults(Save * save, int depth);
 void setDefaultGraphics(Save * save, int depth);
@@ -177,11 +176,6 @@ void setDefaultKeys(){
     #endif
 
     savefile->settings.keys = k;
-}
-
-void addStats(){
-    savefile->stats.timePlayed += frameCounter;
-    frameCounter = 1;
 }
 
 void resetSkins(Save *save){

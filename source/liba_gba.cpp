@@ -457,8 +457,6 @@ void loadSavefile(){
 }
 
 void saveSavefile(){
-    addStats();
-
     volatile u8* sf = (volatile u8*)sram_mem;
 
     u8* arr = (u8*)savefile;

@@ -388,8 +388,6 @@ void loadSavefile(){
 }
 
 void saveSavefile(){
-    addStats();
-
     std::ofstream output("/offline/Apotris.sav",std::ios::binary | std::ios::out);
 
     if(!output){

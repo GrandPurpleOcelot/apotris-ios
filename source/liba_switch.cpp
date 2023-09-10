@@ -314,8 +314,6 @@ void loadSavefile(){
 }
 
 void saveSavefile(){
-    addStats();
-
     std::ofstream output("Apotris.sav",std::ios::binary | std::ios::out);
 
     char * dst = (char * ) savefile;

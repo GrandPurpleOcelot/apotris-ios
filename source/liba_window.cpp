@@ -409,8 +409,6 @@ void resumeSong(){
 };
 
 void loadSavefile(){
-    // memset32(savefile, 0 , sizeof(Save)/4);
-
     std::ifstream input("Apotris.sav",std::ios::binary | std::ios::in);
 
     if(savefile == nullptr)
@@ -429,8 +427,6 @@ void loadSavefile(){
 }
 
 void saveSavefile(){
-    addStats();
-
     std::ofstream output("Apotris.sav",std::ios::binary | std::ios::out);
 
     char * dst = (char * ) savefile;
