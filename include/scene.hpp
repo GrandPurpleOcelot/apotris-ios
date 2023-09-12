@@ -324,7 +324,7 @@ class SettingsScene : public SimpleListScene{
         std::list<std::string> getOptionList(){
             std::list<std::string> result = settingsOptions;
 
-            #ifdef PC
+            #ifndef GBA
             result.push_front("Video");
             #endif
 

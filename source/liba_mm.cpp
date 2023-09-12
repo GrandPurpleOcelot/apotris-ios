@@ -6,6 +6,7 @@
 
 #include "SDL/SDL.h"
 #include "def.h"
+// #include "save.h"
 
 SDL_Surface * screen;
 
@@ -16,7 +17,7 @@ std::list<SDLKey> currentlyPressed;
 // int rowStart = (512 - 240) / 2;
 // int rowEnd = rowStart + 240;
 int rowStart = 0;
-int rowEnd = 160;
+int rowEnd = 180;
 
 #define FPS_TARGET 60
 
@@ -137,108 +138,116 @@ uint32_t key_first(){
 
 void updateWindow(uint8_t* framebuffer){
 
-    // // Fill screen with specified background color
-    // SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 20, 0, 0));
-
-    // // Update the screen
-    // SDL_UpdateRect(screen, 0, 0, 0, 0);
-
-    // Load image
-    // SDL_Surface* img = IMG_Load(image_path);
-    // if (img == NULL) {
-    //     printf("Unable to load image %s! SDL_image Error: %s\n", image_path, IMG_GetError());
-    //     SDL_Quit();
-    //     return 1;
-    // }
-
-    uint8_t * newBuffer = new uint8_t[640 * 480 * 4];
-
     const int in_width = 240;
-    const int in_height = 160;
+    const int in_height = 180;
 
-    uint32_t* out_ptr = (uint32_t *) newBuffer;
-    uint32_t* in_ptr = (uint32_t *) framebuffer;
-    int in_pitch = in_width;
-    int out_pitch = 640;
+    if(savefile->settings.integerScale == 1){
+        uint8_t * newBuffer = new uint8_t[640 * 480 * 4];
 
-    in_ptr += (((in_height - 160) / 2)) * in_pitch;
-    in_ptr += (in_width - 214) / 2;
+        uint32_t* out_ptr = (uint32_t *) newBuffer;
+        uint32_t* in_ptr = (uint32_t *) framebuffer;
+        int in_pitch = in_width;
+        int out_pitch = 640;
 
-    for(int y = 0; y < 160; y++){
-        uint32_t * line_ptr = in_ptr;
+        in_ptr += (((in_height - 160) / 2)) * in_pitch;
+        in_ptr += (in_width - 214) / 2;
 
-        for(int x = 0; x < 214; x++){
-            uint32_t * out_line_ptr = out_ptr;
-            uint32_t color = *line_ptr;
+        for(int y = 0; y < 160; y++){
+            uint32_t * line_ptr = in_ptr;
 
-            *out_line_ptr = color;
+            for(int x = 0; x < 214; x++){
+                uint32_t * out_line_ptr = out_ptr;
+                uint32_t color = *line_ptr;
 
-            if(x != 213){
-                *(out_line_ptr + 1) = color;
-                *(out_line_ptr + 2) = color;
-
-                out_line_ptr += out_pitch;
-                *out_line_ptr = color;
-                *(out_line_ptr + 1) = color;
-                *(out_line_ptr + 2) = color;
-
-                out_line_ptr += out_pitch;
-                *out_line_ptr = color;
-                *(out_line_ptr + 1) = color;
-                *(out_line_ptr + 2) = color;
-
-                out_ptr += 3;
-            }else{
-                out_line_ptr += out_pitch;
                 *out_line_ptr = color;
 
-                out_line_ptr += out_pitch;
-                *out_line_ptr = color;
+                if(x != 213){
+                    *(out_line_ptr + 1) = color;
+                    *(out_line_ptr + 2) = color;
 
-                out_ptr += 1;
+                    out_line_ptr += out_pitch;
+                    *out_line_ptr = color;
+                    *(out_line_ptr + 1) = color;
+                    *(out_line_ptr + 2) = color;
+
+                    out_line_ptr += out_pitch;
+                    *out_line_ptr = color;
+                    *(out_line_ptr + 1) = color;
+                    *(out_line_ptr + 2) = color;
+
+                    out_ptr += 3;
+                }else{
+                    out_line_ptr += out_pitch;
+                    *out_line_ptr = color;
+
+                    out_line_ptr += out_pitch;
+                    *out_line_ptr = color;
+
+                    out_ptr += 1;
+                }
+
+                line_ptr++;
             }
 
-            line_ptr++;
+            in_ptr += in_pitch;
+            out_ptr += out_pitch * 2;
         }
 
-        in_ptr += in_pitch;
-        out_ptr += out_pitch * 2;
+        SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
+            newBuffer,
+            640,
+            480,
+            32,
+            640 * 4,
+            0x0000ff,
+            0x00ff00,
+            0xff0000,
+            0
+        );
+
+        // Center image on screen
+        SDL_Rect dstrect;
+        dstrect.x = (screen->w - img->w) / 2;
+        dstrect.y = (screen->h - img->h) / 2;
+
+        // Draw image on screen
+        if(render)
+            SDL_BlitSurface(img, NULL, screen, &dstrect);
+
+        SDL_FreeSurface(img);
+        delete [] newBuffer;
+
+    }else{
+        SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
+            framebuffer,
+            in_width,
+            in_height,
+            32,
+            in_width * 4,
+            0x0000ff,
+            0x00ff00,
+            0xff0000,
+            0
+        );
+
+        // Center image on screen
+        SDL_Rect dstrect;
+        dstrect.x = 0;
+        dstrect.y = 0;
+        dstrect.w = 640;
+        dstrect.h = 480;
+
+        SDL_Surface *converted = SDL_DisplayFormat(img);
+
+        // Draw image on screen
+        if(render)
+            SDL_SoftStretch(converted, NULL, screen, &dstrect);
+
+        SDL_FreeSurface(img);
+        SDL_FreeSurface(converted);
     }
 
-    SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
-        newBuffer,
-        640,
-        480,
-        32,
-        640 * 4,
-        0x0000ff,
-        0x00ff00,
-        0xff0000,
-        0
-    );
-
-    // Center image on screen
-    SDL_Rect dstrect;
-    dstrect.x = (screen->w - img->w) / 2;
-    dstrect.y = (screen->h - img->h) / 2;
-
-    // Draw image on screen
-    if(render)
-        SDL_BlitSurface(img, NULL, screen, &dstrect);
-
     SDL_Flip(screen);
-
-    // Wait 5 seconds then quit
-    // SDL_Delay(5000);
-
-
-    // Free surfaces
-    SDL_FreeSurface(img);
-    delete [] newBuffer;
-
-    // SDL_Quit();
-    //
-
 }
 
 void refreshWindowSize(){

@@ -24,7 +24,7 @@
 #elif defined(MM)
 
 #define SCREEN_WIDTH 240
-#define SCREEN_HEIGHT 160
+#define SCREEN_HEIGHT 180
 
 #else
 
