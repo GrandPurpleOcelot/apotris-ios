@@ -56,7 +56,7 @@ void windowInit(){
     SDL_JoystickOpen(0);
 
     SDL_InitSubSystem(SDL_INIT_AUDIO);
-    Mix_OpenAudio(48000, AUDIO_S16, 2, 4096);
+    Mix_OpenAudio(48000, AUDIO_S16, 2, 1024);
 
     loadAudio();
 }
