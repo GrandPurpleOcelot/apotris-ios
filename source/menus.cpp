@@ -834,6 +834,7 @@ int GameScene::pauseMenu(){
                     sfx(SFX_MENUCANCEL);
                     buildBG(3, 0, 27, 0, 1, true);
                     addGameStats();
+                    playSongRandom(0);
                     changeScene(new MainMenuScene(), Transitions::FADE);
                     return 1;
                 }
