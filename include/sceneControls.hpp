@@ -254,11 +254,12 @@ class RebindElement : public Element{
 
             #if defined(GBA)
 
+            std::string result;
+
             int key = keys[index];
             if((key & (key - 1)) == 0){
-                return keyMap[keys[index]];
+                result = keyMap[keys[index]];
             }else{
-                std::string result;
 
                 int k = key;
 
@@ -274,8 +275,12 @@ class RebindElement : public Element{
 
                 //remove trailing space
                 result.pop_back();
+            }
 
+            if(result != ""){
                 return result;
+            }else{
+                return "?";
             }
 
             #elif defined(PC)
