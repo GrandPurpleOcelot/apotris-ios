@@ -2980,7 +2980,7 @@ void GameScene::update(){
     }
     handleMultiplayer(0);
 
-    progressBar(-1);
+    progressBar(0);
 
     if(game->gameMode == BATTLE && !multiplayer){
 
