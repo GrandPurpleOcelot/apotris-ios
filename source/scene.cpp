@@ -223,7 +223,10 @@ void SimpleListScene::draw(){
 }
 
 bool SimpleListScene::control(){
-    if(key_hit(KEY_A) || key_hit(KEY_START)){
+
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.confirm)){
         sfx(SFX_MENUCONFIRM);
         auto it = optionList.begin();
         std::advance(it,selection);
@@ -234,7 +237,7 @@ bool SimpleListScene::control(){
         return true;
     }
 
-    if(key_hit(KEY_B)){
+    if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
         previousSelection = selection;
@@ -248,7 +251,7 @@ bool SimpleListScene::control(){
 
     int prev = listStart;
 
-    if (key_hit(KEY_UP)) {
+    if (key_hit(k.up)) {
         movingDirection = -1;
 
         if (selection == 0)
@@ -268,7 +271,7 @@ bool SimpleListScene::control(){
         refreshText = true;
     }
 
-    if (key_hit(KEY_DOWN)) {
+    if (key_hit(k.down)) {
         movingDirection = 1;
 
         if (selection == options - 1)
@@ -285,11 +288,11 @@ bool SimpleListScene::control(){
         refreshText = true;
     }
 
-    if (key_is_down(KEY_UP) || key_is_down(KEY_DOWN)) {
+    if (key_is_down(k.up) || key_is_down(k.down)) {
         if (dasVer < maxDas) {
             dasVer++;
         } else {
-            int dir = (key_is_down(KEY_UP)? -1 : 1);
+            int dir = (key_is_down(k.up)? -1 : 1);
 
             if (selection + dir >= 0 && selection + dir <= options-1 && arr++ > maxArr) {
                 arr = 0;
@@ -617,7 +620,10 @@ bool OptionListScene::control(){
     //     // previousElement = "";
     //     return true;
     // }
-    if(key_hit(KEY_B)){
+
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
         previousSelection = selection;
@@ -629,7 +635,7 @@ bool OptionListScene::control(){
         return true;
     }
 
-    if(key_hit(KEY_LEFT) && !elementList.empty()){
+    if(key_hit(k.left) && !elementList.empty()){
         auto it = elementList.begin();
         std::advance(it,selection);
 
@@ -638,7 +644,7 @@ bool OptionListScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(KEY_RIGHT) && !elementList.empty()){
+    if(key_hit(k.right) && !elementList.empty()){
 
         auto it = elementList.begin();
         std::advance(it,selection);
@@ -648,7 +654,7 @@ bool OptionListScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(KEY_A) && !elementList.empty()){
+    if(key_hit(k.confirm) && !elementList.empty()){
         auto it = elementList.begin();
         std::advance(it,selection);
 
@@ -661,7 +667,7 @@ bool OptionListScene::control(){
 
     int prev = listStart;
 
-    if (key_hit(KEY_UP)) {
+    if (key_hit(k.up)) {
         movingDirection = -1;
 
         auto it = elementList.begin();
@@ -692,7 +698,7 @@ bool OptionListScene::control(){
         refreshText = true;
     }
 
-    if (key_hit(KEY_DOWN)) {
+    if (key_hit(k.down)) {
         movingDirection = 1;
 
         auto it = elementList.begin();
@@ -717,11 +723,11 @@ bool OptionListScene::control(){
         refreshText = true;
     }
 
-    if (key_is_down(KEY_UP) || key_is_down(KEY_DOWN)) {
+    if (key_is_down(k.up) || key_is_down(k.down)) {
         if (dasVer < maxDas) {
             dasVer++;
         } else {
-            int dir = (key_is_down(KEY_UP)? -1 : 1);
+            int dir = (key_is_down(k.up)? -1 : 1);
 
             if (selection + dir >= 0 && selection + dir <= options-1 && arr++ > maxArr) {
                 arr = 0;
@@ -766,11 +772,11 @@ bool OptionListScene::control(){
         dasVer = 0;
     }
 
-    if (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)) {
+    if (key_is_down(k.left) || key_is_down(k.right)) {
         if (dasHor < maxDas) {
             dasHor++;
         } else{
-            int dir = (key_is_down(KEY_LEFT)? -1 : 1);
+            int dir = (key_is_down(k.left)? -1 : 1);
             if (arr++ > maxArr) {
                 arr = 0;
 

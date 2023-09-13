@@ -158,24 +158,39 @@ void loadSave() {
 }
 
 void setDefaultKeys(){
-    Keys k;
-
-    k.moveLeft = KEY_LEFT;
-    k.moveRight = KEY_RIGHT;
-    k.rotateCW = KEY_A;
-    k.rotateCCW = KEY_B;
-    k.rotate180 = 0;
-    k.softDrop = KEY_DOWN;
-    k.hardDrop = KEY_UP;
-    k.zone = KEY_SELECT;
-
-    k.hold = KEY_R;
+    Keys k {
+        .moveLeft = KEY_LEFT,
+        .moveRight = KEY_RIGHT,
+        .rotateCCW = KEY_B,
+        .rotateCW = KEY_A,
+        .rotate180 = 0,
+        .softDrop = KEY_DOWN,
+        .hardDrop = KEY_UP,
+        .hold = KEY_R,
+        .zone = KEY_SELECT,
+    };
 
     #ifdef GBA
     k.hold |= KEY_L;
     #endif
 
     savefile->settings.keys = k;
+
+    MenuKeys m{
+    .up = KEY_UP,
+    .down = KEY_DOWN,
+    .left = KEY_LEFT,
+    .right = KEY_RIGHT,
+    .confirm = KEY_A,
+    .cancel = KEY_B,
+    .pause = KEY_START,
+    .reset = 0,
+    .special1 = KEY_L,
+    .special2 = KEY_R,
+    .special3 = KEY_SELECT,
+    };
+
+    savefile->settings.menuKeys = m;
 }
 
 void resetSkins(Save *save){

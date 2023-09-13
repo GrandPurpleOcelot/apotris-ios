@@ -314,6 +314,8 @@ int GameScene::endScreen(){
         aprint(str+" Place", 11, 5);
     }
 
+    MenuKeys k = savefile->settings.menuKeys;
+
     while (closed()) {
         handleMultiplayer(1);
         vsync();
@@ -360,7 +362,7 @@ int GameScene::endScreen(){
             break;
         }
 
-        if (key_hit(KEY_A) || key_hit(KEY_START)) {
+        if (key_hit(k.confirm) || key_hit(k.pause)) {
             if (selection == 0) {
                 shake = 0;
 
@@ -398,7 +400,7 @@ int GameScene::endScreen(){
             }
         }
 
-        if (key_hit(KEY_UP)) {
+        if (key_hit(k.up)) {
             if (selection == 0)
                 selection = 2;
             else
@@ -406,7 +408,7 @@ int GameScene::endScreen(){
             sfx(SFX_MENUMOVE);
         }
 
-        if (key_hit(KEY_DOWN) || key_hit(KEY_SELECT)) {
+        if (key_hit(k.down)) {
             if (selection == 2)
                 selection = 0;
             else
@@ -414,14 +416,14 @@ int GameScene::endScreen(){
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_L)){
+        if(key_hit(k.special1)){
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
             showStats(showingStats, totalTime, ppsStr, true);
         }
 
-        if(key_hit(KEY_R)){
+        if(key_hit(k.special2)){
             if(game->replayElligible){
                 sfx(SFX_MENUCONFIRM);
                 loadReplay();
@@ -740,6 +742,8 @@ int GameScene::pauseMenu(){
         sprite_hide(cursorSprites[i]);
     }
 
+    MenuKeys k = savefile->settings.menuKeys;
+
     while (closed()) {
         if (!onStates){
             maxSelection = 5;
@@ -792,7 +796,7 @@ int GameScene::pauseMenu(){
             wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
             optionsCounter++;
 
-            if (key_hit(KEY_A)) {
+            if (key_hit(k.confirm)) {
                 int n = selection;
                 if(!showSleep && selection >= 2)
                     n++;
@@ -852,7 +856,7 @@ int GameScene::pauseMenu(){
             for (int i = optionsCounter + 1; i < 6; i++)
                 wordSprites[i].hide();
 
-            if (key_hit(KEY_A)) {
+            if (key_hit(k.confirm)) {
                 if (selection == 0) {
                     if (saveExists) {
                         delete game;
@@ -911,7 +915,7 @@ int GameScene::pauseMenu(){
             sprite_set_pos(cursorSprites[i], x, ((optionsHeight + selection * 2) * 8) - 5);
         }
 
-        if (key_hit(KEY_START)) {
+        if (key_hit(k.pause)) {
             sfx(SFX_MENUCONFIRM);
             clearText();
             // updateText();
@@ -919,11 +923,11 @@ int GameScene::pauseMenu(){
             break;
         }
 
-        if(key_hit(KEY_SELECT)){
+        if(key_hit(k.special3)){
             qrScene();
         }
 
-        if (key_hit(KEY_B)) {
+        if (key_hit(k.cancel)) {
             sfx(SFX_MENUCONFIRM);
             if(onStates){
                 onStates = false;
@@ -936,7 +940,7 @@ int GameScene::pauseMenu(){
             }
         }
 
-        if (key_hit(KEY_UP)) {
+        if (key_hit(k.up)) {
             if (selection == 0)
                 selection = maxSelection - 1;
             else
@@ -944,7 +948,7 @@ int GameScene::pauseMenu(){
             sfx(SFX_MENUMOVE);
         }
 
-        if (key_hit(KEY_DOWN)) {
+        if (key_hit(k.down)) {
             if (selection == maxSelection - 1)
                 selection = 0;
             else
@@ -952,7 +956,7 @@ int GameScene::pauseMenu(){
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_L) && !onStates){
+        if(key_hit(k.special1) && !onStates){
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
@@ -1380,6 +1384,8 @@ void sleepMenu(){
     clearSprites(128);
     showSprites(128);
 
+    MenuKeys k = savefile->settings.menuKeys;
+
     while (closed()) {
         aprint("Entering sleep...", 7, 4);
         aprint("Press", 13, 8);
@@ -1392,12 +1398,12 @@ void sleepMenu(){
 
         key_poll();
 
-        if (key_hit(KEY_A)) {
+        if (key_hit(k.confirm)) {
             clearText();
             break;
         }
 
-        if (key_hit(KEY_B)) {
+        if (key_hit(k.cancel)) {
             toggleBG(0, true);
             toggleBG(1, true);
             toggleBG(3, true);

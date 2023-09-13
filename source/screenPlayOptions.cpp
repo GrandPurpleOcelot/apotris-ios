@@ -23,14 +23,15 @@ void PlayOptionScene::init(){
 }
 
 bool PlayOptionScene::control(){
+    MenuKeys k = savefile->settings.menuKeys;
 
-    if(onScore && key_is_down(KEY_L) && key_is_down(KEY_R) && key_is_down(KEY_SELECT)){
+    if(onScore && key_is_down(k.special1) && key_is_down(k.special2) && key_is_down(k.special3)){
         resetScoreboard();
         refreshText = true;
         return false;
     }
 
-    if(key_hit(KEY_B)){
+    if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         if(!(onScore || onStart) || options == 0){
             previousElement = name();
@@ -55,7 +56,7 @@ bool PlayOptionScene::control(){
     }
 
     if(!(onScore || onStart)){
-        if(key_hit(KEY_LEFT) && !elementList.empty()){
+        if(key_hit(k.left) && !elementList.empty()){
             auto it = elementList.begin();
             std::advance(it,selection);
 
@@ -64,7 +65,7 @@ bool PlayOptionScene::control(){
             refreshOption = true;
         }
 
-        if(key_hit(KEY_RIGHT) && !elementList.empty()){
+        if(key_hit(k.right) && !elementList.empty()){
             auto it = elementList.begin();
             std::advance(it,selection);
 
@@ -76,7 +77,7 @@ bool PlayOptionScene::control(){
 
     int prev = listStart;
 
-    if (key_hit(KEY_UP)) {
+    if (key_hit(k.up)) {
         movingDirection = -1;
 
         bool sound = true;
@@ -109,7 +110,7 @@ bool PlayOptionScene::control(){
         refreshText = true;
     }
 
-    if (key_hit(KEY_DOWN)) {
+    if (key_hit(k.down)) {
         if(!onScore){
             movingDirection = 1;
 
@@ -130,11 +131,11 @@ bool PlayOptionScene::control(){
         }
     }
 
-    if (!onScore && (key_is_down(KEY_UP) || key_is_down(KEY_DOWN))) {
+    if (!onScore && (key_is_down(k.up) || key_is_down(k.down))) {
         if (dasVer < maxDas) {
             dasVer++;
         } else {
-            int dir = (key_is_down(KEY_UP)? -1 : 1);
+            int dir = (key_is_down(k.up)? -1 : 1);
 
             if (selection + dir >= 0 && selection + dir <= options-1 && arr++ > maxArr) {
                 arr = 0;
@@ -167,11 +168,11 @@ bool PlayOptionScene::control(){
         dasVer = 0;
     }
 
-    if (!(onScore || onStart) && (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT))) {
+    if (!(onScore || onStart) && (key_is_down(k.left) || key_is_down(k.right))) {
         if (dasHor < maxDas) {
             dasHor++;
         } else{
-            int dir = (key_is_down(KEY_LEFT)? -1 : 1);
+            int dir = (key_is_down(k.left)? -1 : 1);
             if (arr++ > maxArr) {
                 arr = 0;
 
@@ -191,7 +192,7 @@ bool PlayOptionScene::control(){
         moving = true;
     }
 
-    if(key_hit(KEY_START) || key_hit(KEY_A)){
+    if(key_hit(k.pause) || key_hit(k.confirm)){
         if(!onScore && getBoard(subMode, goal) != nullptr){
             movingScore = true;
             sfx(SFX_MENUCONFIRM);
@@ -203,7 +204,7 @@ bool PlayOptionScene::control(){
         }
     }
 
-    if(key_hit(KEY_SELECT)){
+    if(key_hit(k.special3)){
         savefile->quickStart = quick();
         saveSavefile();
         sfx(SFX_SECRET);
@@ -275,7 +276,9 @@ void PlayOptionScene::start(){
     newOptions.trainingMode = training;
     newOptions.bTypeHeight = bTypeHeight;
 
-    proMode = (key_is_down(KEY_L) || key_is_down(KEY_R)) ^ (savefile->settings.pro);
+    MenuKeys k = savefile->settings.menuKeys;
+
+    proMode = (key_is_down(k.special1) || key_is_down(k.special2)) ^ (savefile->settings.pro);
 
     if(newOptions.mode != BlockEngine::BATTLE){
         startGame(newOptions,qran());
@@ -608,7 +611,9 @@ void MultBattleScene::draw(){
 }
 
 bool MultBattleScene::control(){
-    if(key_hit(KEY_B)){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         if(!onScore || options == 0){
             previousElement = name();
@@ -652,6 +657,8 @@ void MultBattleScene::update(){
 
     auto linkState = linkConnection->linkState.get();
 
+    MenuKeys k = savefile->settings.menuKeys;
+
     if (linkState->isConnected()) {
         u16 data[LINK_MAX_PLAYERS];
         for (u32 i = 0; i < LINK_MAX_PLAYERS; i++)
@@ -694,7 +701,7 @@ void MultBattleScene::update(){
             connected = -1;
         }
 
-        if (key_hit(KEY_START) && linkState->currentPlayerId == 0) {
+        if (key_hit(k.pause) && linkState->currentPlayerId == 0) {
             nextSeed = (u16)qran() & 0x1fff;
             multiplayerStartTimer = 3;
         } else {
@@ -736,6 +743,8 @@ void PlayOptionScene::resetScoreboard(){
 
     bool reset = false;
 
+    MenuKeys k = savefile->settings.menuKeys;
+
     while (closed()) {
         vsync();
         key_poll();
@@ -771,7 +780,7 @@ void PlayOptionScene::resetScoreboard(){
                 sprite_set_pos(cursorSprites[i], x, 15 * 8 - 5);
             }
 
-            if (key_hit(KEY_A)) {
+            if (key_hit(k.confirm)) {
                 clearText();
                 clearSprites(128);
                 sfx(SFX_MENUCONFIRM);
@@ -783,20 +792,20 @@ void PlayOptionScene::resetScoreboard(){
                 }
             }
 
-            if (key_hit(KEY_B)) {
+            if (key_hit(k.cancel)) {
                 clearText();
                 sfx(SFX_MENUCANCEL);
                 break;
             }
 
-            if(key_hit(KEY_LEFT)){
+            if(key_hit(k.left)){
                 if(s > 0){
                     s--;
                     sfx(SFX_MENUMOVE);
                 }
             }
 
-            if(key_hit(KEY_RIGHT)){
+            if(key_hit(k.right)){
                 if(s < 1){
                     s++;
                     sfx(SFX_MENUMOVE);

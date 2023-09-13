@@ -102,7 +102,9 @@ void QRScene::draw(){
 
 bool QRScene::control(){
 
-    if(key_hit(KEY_B)){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
 

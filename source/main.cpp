@@ -345,6 +345,8 @@ std::string nameInput(int place) {
 
     showSprites(128);
 
+    MenuKeys k = savefile->settings.menuKeys;
+
     while (closed()) {
         vsync();
 
@@ -362,7 +364,7 @@ std::string nameInput(int place) {
 
         if (!onDone) {
             #if defined(GBA) || defined(SWITCH)
-            if (key_hit(KEY_A) || key_hit(KEY_RIGHT)) {
+            if (key_hit(k.confirm) || key_hit(k.right)) {
                 cursor++;
                 if (cursor > 7) {
                     onDone = true;
@@ -373,21 +375,21 @@ std::string nameInput(int place) {
                 }
             }
 
-            if (key_hit(KEY_B)) {
+            if (key_hit(k.cancel)) {
                 result[cursor] = ' ';
                 if (cursor > 0)
                     cursor--;
                 sfx(SFX_MENUCANCEL);
             }
 
-            if (key_hit(KEY_LEFT)) {
+            if (key_hit(k.left)) {
                 if (cursor > 0)
                     cursor--;
                 sfx(SFX_MENUMOVE);
             }
 
             char curr = result.at(cursor);
-            if (key_hit(KEY_UP)) {
+            if (key_hit(k.up)) {
                 if (curr == 'A')
                     result[cursor] = ' ';
                 else if (curr == ' ')
@@ -396,7 +398,7 @@ std::string nameInput(int place) {
                     result[cursor] = curr - 1;
 
                 sfx(SFX_MENUMOVE);
-            } else if (key_hit(KEY_DOWN)) {
+            } else if (key_hit(k.down)) {
                 if (curr == 'Z')
                     result[cursor] = ' ';
                 else if (curr == ' ')
@@ -404,13 +406,13 @@ std::string nameInput(int place) {
                 else if (curr < 'Z')
                     result[cursor] = curr + 1;
                 sfx(SFX_MENUMOVE);
-            } else if (key_is_down(KEY_UP) || key_is_down(KEY_DOWN)) {
+            } else if (key_is_down(k.up) || key_is_down(k.down)) {
                 if (das < maxDas)
                     das++;
                 else {
                     if (arr++ > maxArr) {
                         arr = 0;
-                        if (key_is_down(KEY_UP)) {
+                        if (key_is_down(k.up)) {
                             if (curr == 'A')
                                 result[cursor] = ' ';
                             else if (curr == ' ')
@@ -488,7 +490,7 @@ std::string nameInput(int place) {
 
             #endif
 
-            if (key_hit(KEY_START)) {
+            if (key_hit(k.pause)) {
                 onDone = true;
                 sfx(SFX_MENUCONFIRM);
             }
@@ -497,12 +499,12 @@ std::string nameInput(int place) {
         } else {
             aprint(">", 12, 16);
 
-            if (key_hit(KEY_A) || key_hit(KEY_START)) {
+            if (key_hit(k.confirm) || key_hit(k.pause)) {
                 sfx(SFX_MENUCONFIRM);
                 break;
             }
 
-            if (key_hit(KEY_B)) {
+            if (key_hit(k.cancel)) {
                 onDone = false;
                 sfx(SFX_MENUCANCEL);
             }

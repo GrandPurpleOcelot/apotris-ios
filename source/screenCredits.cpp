@@ -109,13 +109,14 @@ void CreditsScene::draw(){
 
 bool CreditsScene::control(){
 
+    MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(KEY_B)){
+    if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
 
         changeScene(previousScene(),Transitions::FADE);
-    }else if(key_is_down(KEY_A)){
+    }else if(key_is_down(k.confirm)){
         scrollTimerMax = 1;
     }else if(key_is_down(KEY_FULL)){
         scrollTimerMax = 0xffff;

@@ -255,14 +255,9 @@ void GradientEditorScene::update(){
 }
 
 bool GradientEditorScene::control(){
-    if(key_hit(KEY_START)){
-        log(savefile->settings.backgroundGradient);
-        sfx(SFX_MENUCANCEL);
-        changeScene(previousScene(),Transitions::FADE);
-        return true;
-    }
+    MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(KEY_SELECT)){
+    if(key_hit(k.special3)){
         sfx(SFX_MENUCONFIRM);
 
         for(int i = 0; i < 3; i++){
@@ -276,27 +271,27 @@ bool GradientEditorScene::control(){
     }
 
     if(!onValues){
-        if(key_hit(KEY_UP)){
+        if(key_hit(k.up)){
             if(selection > 0)
                 selection--;
 
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_DOWN)){
+        if(key_hit(k.down)){
             if(selection < maxSelection - 1)
                 selection++;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_B)){
+        if(key_hit(k.cancel)){
             sfx(SFX_MENUCANCEL);
             changeScene(previousScene(),Transitions::FADE);
             return true;
         }
 
         if(selection == 0){
-            if(key_hit(KEY_LEFT)){
+            if(key_hit(k.left)){
                 if(savefile->settings.backgroundType > 0){
                     savefile->settings.backgroundType--;
                     drawText();
@@ -306,7 +301,7 @@ bool GradientEditorScene::control(){
                 sfx(SFX_MENUMOVE);
             }
 
-            if(key_hit(KEY_RIGHT)){
+            if(key_hit(k.right)){
                 if(savefile->settings.backgroundType < 1){
                     savefile->settings.backgroundType++;
                     drawText();
@@ -316,14 +311,14 @@ bool GradientEditorScene::control(){
                 sfx(SFX_MENUMOVE);
             }
         }else{
-            if(key_hit(KEY_RIGHT) || key_hit(KEY_A)){
+            if(key_hit(k.right) || key_hit(k.confirm)){
                 onValues = true;
                 colorSelection = 0;
                 sfx(SFX_MENUCONFIRM);
             }
         }
     }else{
-        if(key_hit(KEY_LEFT)){
+        if(key_hit(k.left)){
             if(colorSelection > 0){
                 colorSelection--;
                 sfx(SFX_MENUMOVE);
@@ -333,12 +328,12 @@ bool GradientEditorScene::control(){
             }
         }
 
-        if(key_hit(KEY_B)){
+        if(key_hit(k.cancel)){
             onValues = false;
             sfx(SFX_MENUCANCEL);
         }
 
-        if(key_hit(KEY_RIGHT)){
+        if(key_hit(k.right)){
             if(colorSelection< 2)
                 colorSelection++;
             sfx(SFX_MENUMOVE);
@@ -350,30 +345,30 @@ bool GradientEditorScene::control(){
         else
             arr = (int *) color2;
 
-        if(key_hit(KEY_UP)){
+        if(key_hit(k.up)){
             if(arr[colorSelection] < 31)
                 arr[colorSelection]++;
             sfx(SFX_SHIFT2);
         }
 
-        if(key_hit(KEY_DOWN)){
+        if(key_hit(k.down)){
             if(arr[colorSelection] > 0)
                 arr[colorSelection]--;
             sfx(SFX_SHIFT2);
         }
 
-        if(key_is_down(KEY_UP) || key_is_down(KEY_DOWN)){
+        if(key_is_down(k.up) || key_is_down(k.down)){
             das++;
 
             if(das == dasMax){
                 das -= arrMax;
 
-                if(key_is_down(KEY_UP)){
+                if(key_is_down(k.up)){
                     if(arr[colorSelection] < 31){
                         arr[colorSelection]++;
                         sfx(SFX_SHIFT2);
                     }
-                }else if(key_is_down(KEY_DOWN)){
+                }else if(key_is_down(k.down)){
                     if(arr[colorSelection] > 0){
                         arr[colorSelection]--;
                         sfx(SFX_SHIFT2);
@@ -786,7 +781,9 @@ bool GraphicsScene::control(){
     //     return true;
     // }
 
-    if(key_hit(KEY_B)){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
         previousSelection = selection;
@@ -798,7 +795,7 @@ bool GraphicsScene::control(){
         return true;
     }
 
-    if(key_hit(KEY_LEFT)){
+    if(key_hit(k.left)){
         auto it = elementList.begin();
         std::advance(it,selection);
 
@@ -808,7 +805,7 @@ bool GraphicsScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(KEY_RIGHT)){
+    if(key_hit(k.right)){
         auto it = elementList.begin();
         std::advance(it,selection);
 
@@ -818,7 +815,7 @@ bool GraphicsScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(KEY_A)){
+    if(key_hit(k.confirm)){
         auto it = elementList.begin();
         std::advance(it,selection);
 
@@ -829,7 +826,7 @@ bool GraphicsScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(KEY_R)){
+    if(key_hit(k.special2)){
         showText = !showText;
 
         if(showText){
@@ -862,7 +859,7 @@ bool GraphicsScene::control(){
 
     int prev = listStart;
 
-    if (key_hit(KEY_UP)) {
+    if (key_hit(k.up)) {
         movingDirection = -1;
 
         if (selection == 0)
@@ -883,7 +880,7 @@ bool GraphicsScene::control(){
         // refreshGame = true;
     }
 
-    if (key_hit(KEY_DOWN)) {
+    if (key_hit(k.down)) {
         movingDirection = 1;
 
         if (selection == options - 1)
@@ -901,11 +898,11 @@ bool GraphicsScene::control(){
         // refreshGame = true;
     }
 
-    if (key_is_down(KEY_UP) || key_is_down(KEY_DOWN)) {
+    if (key_is_down(k.up) || key_is_down(k.down)) {
         if (dasVer < maxDas) {
             dasVer++;
         } else {
-            int dir = (key_is_down(KEY_UP)? -1 : 1);
+            int dir = (key_is_down(k.up)? -1 : 1);
 
             if (selection + dir >= 0 && selection + dir <= options-1 && arr++ > maxArr) {
                 arr = 0;
@@ -939,11 +936,11 @@ bool GraphicsScene::control(){
         dasVer = 0;
     }
 
-    if (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)) {
+    if (key_is_down(k.left) || key_is_down(k.right)) {
         if (dasHor < maxDas) {
             dasHor++;
         } else{
-            int dir = (key_is_down(KEY_LEFT)? -1 : 1);
+            int dir = (key_is_down(k.left)? -1 : 1);
             if (arr++ > maxArr) {
                 arr = 0;
 
@@ -964,7 +961,7 @@ bool GraphicsScene::control(){
         moving = true;
     }
 
-    if(key_hit(KEY_SELECT)){
+    if(key_hit(k.special3)){
         setDefaultGraphics(savefile, 0);
         setSkin();
         setPalette();

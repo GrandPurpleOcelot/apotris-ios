@@ -39,6 +39,22 @@ typedef struct Keys{
     int placeHolder[19];
 }ALIGN(4) Keys;
 
+typedef struct MenuKeys{
+    int up;
+    int down;
+    int left;
+    int right;
+    int confirm;
+    int cancel;
+    int pause;
+    int reset;
+    int special1;
+    int special2;
+    int special3;
+
+    int placeHolder[9];
+}ALIGN(4) MenuKeys;
+
 typedef struct QuickStart{
     int mode;
     int submode;
@@ -107,7 +123,9 @@ typedef struct Settings{
     int clearText;
     int randomizer;
 
-    int placeHolder[77];
+    MenuKeys menuKeys;
+
+    int placeHolder[57];
 
 }ALIGN(4) Settings;
 

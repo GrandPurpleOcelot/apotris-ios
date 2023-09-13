@@ -1016,8 +1016,9 @@ bool GameScene::control() {
     }
 
     Keys k = savefile->settings.keys;
+    MenuKeys m = savefile->settings.menuKeys;
 
-    if (key_hit(KEY_START) && !multiplayer && !eventPauseTimer && !flashTimer) {
+    if (key_hit(m.pause) && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
         paused = true;
         pauseSong();
@@ -1091,7 +1092,7 @@ bool GameScene::control() {
         game->keyRight(0);
     }
 
-    if (key_is_down(KEY_L) && key_is_down(KEY_R) && !(game->gameMode == BATTLE || game->gameMode == MASTER || game->gameMode == DEATH) && !eventPauseTimer) {
+    if (((key_is_down(KEY_L) && key_is_down(KEY_R)) || key_is_down(m.reset)) && !(game->gameMode == BATTLE || game->gameMode == MASTER || game->gameMode == DEATH) && !eventPauseTimer) {
         if(!savefile->settings.resetHoldToggle && (restartTimer++ > maxRestartTimer || !savefile->settings.resetHoldType)){
             playAgain = true;
         }

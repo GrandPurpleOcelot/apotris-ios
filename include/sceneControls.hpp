@@ -167,7 +167,7 @@ class RebindElement : public Element{
                 vsync();
                 key_poll();
 
-                if(key_hit(KEY_START)){
+                if(key_hit(savefile->settings.menuKeys.pause)){
                     sfx(SFX_MENUCANCEL);
                     break;
                 }

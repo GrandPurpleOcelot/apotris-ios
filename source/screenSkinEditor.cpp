@@ -162,53 +162,55 @@ bool EditorScene::control(){
     int dx = 0;
     int dy = 0;
 
-    if(key_is_down(KEY_R)){
-        if(key_hit(KEY_LEFT)){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_is_down(k.special2)){
+        if(key_hit(k.left)){
             currentColor--;
             if(currentColor < 0)
                 currentColor = 5;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_RIGHT)){
+        if(key_hit(k.right)){
             currentColor++;
             if(currentColor > 5)
                 currentColor = 0;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_UP)){
+        if(key_hit(k.up)){
             currentTool--;
             if(currentTool < 0)
                 currentTool = 2;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_DOWN)){
+        if(key_hit(k.down)){
             currentTool++;
             if(currentTool > 2)
                 currentTool = 0;
             sfx(SFX_MENUMOVE);
         }
-    }else if(key_is_down(KEY_L)){
-        if(key_hit(KEY_UP)){
+    }else if(key_is_down(k.special1)){
+        if(key_hit(k.up)){
             savefile->settings.colors--;
             if(savefile->settings.colors < 0)
                 savefile->settings.colors = MAX_COLORS-1;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_DOWN)){
+        if(key_hit(k.down)){
             savefile->settings.colors++;
             if(savefile->settings.colors > MAX_COLORS-1)
                 savefile->settings.colors = 0;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_UP) || key_hit(KEY_DOWN))
+        if(key_hit(k.up) || key_hit(k.down))
             setPalette();
 
-        if(key_hit(KEY_LEFT) || key_hit(KEY_RIGHT)){
+        if(key_hit(k.left) || key_hit(k.right)){
             refreshSkin();
             onMini = !onMini;
 
@@ -237,36 +239,36 @@ bool EditorScene::control(){
         }
 
     }else{
-        if(key_hit(KEY_LEFT) || key_hit(KEY_RIGHT)){
-            dx = ((key_hit(KEY_RIGHT) != 0) - (key_hit(KEY_LEFT) != 0));
+        if(key_hit(k.left) || key_hit(k.right)){
+            dx = ((key_hit(k.right) != 0) - (key_hit(k.left) != 0));
         }
 
-        if(key_hit(KEY_UP) || key_hit(KEY_DOWN)){
-            dy = ((key_hit(KEY_DOWN) != 0) - (key_hit(KEY_UP) != 0));
+        if(key_hit(k.up) || key_hit(k.down)){
+            dy = ((key_hit(k.down) != 0) - (key_hit(k.up) != 0));
         }
 
-        if(key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT) || key_is_down(KEY_UP) || key_is_down(KEY_DOWN))
+        if(key_is_down(k.left) || key_is_down(k.right) || key_is_down(k.up) || key_is_down(k.down))
             das++;
         else
             das = 0;
 
         if(das >= dasMax){
 
-            if(key_is_down(KEY_LEFT))
+            if(key_is_down(k.left))
                 dx = -1;
-            else if(key_is_down(KEY_RIGHT))
+            else if(key_is_down(k.right))
                 dx = 1;
 
-            if(key_is_down(KEY_UP))
+            if(key_is_down(k.up))
                 dy = -1;
-            else if(key_is_down(KEY_DOWN))
+            else if(key_is_down(k.down))
                 dy = 1;
 
             das -= arr;
         }
 
         bool moved = board.cursor.move(dx,dy,onMini);
-        if((dx || dy) && key_is_down(KEY_A)){
+        if((dx || dy) && key_is_down(k.confirm)){
             switch(currentTool){
                 case 0: board.set(0,true); break;
                 case 1: board.set(currentColor,true); break;
@@ -277,7 +279,7 @@ bool EditorScene::control(){
         }
     }
 
-    if(key_hit(KEY_A)){
+    if(key_hit(k.confirm)){
         switch(currentTool){
             case 0: board.set(0,true); break;
             case 1: board.set(currentColor,true); break;
@@ -288,7 +290,7 @@ bool EditorScene::control(){
         refreshSkin();
     }
 
-    if(key_hit(KEY_B)){
+    if(key_hit(k.cancel)){
         if(board.undo())
             sfx(SFX_ROTATE);
         else
@@ -297,16 +299,16 @@ bool EditorScene::control(){
         refreshSkin();
     }
 
-    if(key_hit(KEY_START)){
+    if(key_hit(k.pause)){
         sfx(SFX_MENUCONFIRM);
         return true;
     }
 
-    if(key_hit(KEY_SELECT)){
+    if(key_hit(k.special3)){
         helpScreen();
     }
 
-    if(key_is_down(KEY_L) && key_is_down(KEY_R)){
+    if(key_is_down(k.special1) && key_is_down(k.special2)){
         if(++timer > 50){
             board.clear();
             refreshSkin();
@@ -343,6 +345,8 @@ int selector(){
 
     showSprites(32);
 
+    MenuKeys k = savefile->settings.menuKeys;
+
     while(closed()){
         vsync();
         key_poll();
@@ -363,7 +367,7 @@ int selector(){
         }
 
 
-        if(key_hit(KEY_A) || key_hit(KEY_START)){
+        if(key_hit(k.confirm) || key_hit(k.pause)){
             if(selection == 0){
                 sfx(SFX_MENUCONFIRM);
                 break;
@@ -373,40 +377,40 @@ int selector(){
             }
         }
 
-        if(key_hit(KEY_UP)){
+        if(key_hit(k.up)){
             selection--;
             if(selection < 0)
                 selection = options-1;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_DOWN) || key_hit(KEY_SELECT)){
+        if(key_hit(k.down)){
             selection++;
             if(selection > options-1)
                 selection = 0;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_LEFT) && skinIndex > 0 && !selection){
+        if(key_hit(k.left) && skinIndex > 0 && !selection){
             skinIndex--;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_RIGHT) && skinIndex < 4 && !selection){
+        if(key_hit(k.right) && skinIndex < 4 && !selection){
             skinIndex++;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)){
+        if(key_is_down(k.left) || key_is_down(k.right)){
             das++;
 
             if(das == dasMax){
                 das-=arr;
 
-                if(key_is_down(KEY_LEFT) && skinIndex > 0 && !selection){
+                if(key_is_down(k.left) && skinIndex > 0 && !selection){
                     skinIndex--;
                     sfx(SFX_MENUMOVE);
-                }else if(key_is_down(KEY_RIGHT) && skinIndex < 4 && !selection){
+                }else if(key_is_down(k.right) && skinIndex < 4 && !selection){
                     skinIndex++;
                     sfx(SFX_MENUMOVE);
                 }
@@ -415,7 +419,7 @@ int selector(){
             das = 0;
         }
 
-        if(key_hit(KEY_B)){
+        if(key_hit(k.cancel)){
             sfx(SFX_MENUCANCEL);
             return 1;
         }

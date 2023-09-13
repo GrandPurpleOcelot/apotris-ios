@@ -278,7 +278,9 @@ void newTitleScene::draw(){
 }
 
 bool newTitleScene::control(){
-    if(key_hit(KEY_SELECT)){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.special3)){
         sfx(SFX_MENUCONFIRM);
 
         QuickStart q = savefile->quickStart;
@@ -304,7 +306,7 @@ bool newTitleScene::control(){
         gameLoop();
 
         return true;
-    }else if(key_hit(KEY_R)){
+    }else if(key_hit(k.special2)){
         loadReplay();
     }else if(key_hit(KEY_FULL)){
         sfx(SFX_MENUCONFIRM);
@@ -421,12 +423,14 @@ void ConfirmSaveScene::update(){
 }
 
 bool ConfirmSaveScene::control(){
-    if(key_hit(KEY_LEFT) || key_hit(KEY_RIGHT)){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.left) || key_hit(k.right)){
         cancel = !cancel;
         sfx(SFX_MENUMOVE);
     }
 
-    if(key_hit(KEY_A)){
+    if(key_hit(k.confirm)){
         sfx(SFX_MENUCONFIRM);
 
         if(cancel){
@@ -445,7 +449,7 @@ bool ConfirmSaveScene::control(){
         }
 
         changeScene(new MainMenuScene(),Transitions::FADE);
-    }else if(key_hit(KEY_B)){
+    }else if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         changeScene(new SettingsScene(),Transitions::FADE);
     }
