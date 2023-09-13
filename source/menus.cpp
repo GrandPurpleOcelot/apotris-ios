@@ -199,11 +199,6 @@ int GameScene::endScreen(){
 
     stopSong();
 
-    if(!replaying)
-        saveReplay();
-    else
-        replaying = false;
-
     int selection = 0;
 
     //calculate pps
@@ -277,6 +272,11 @@ int GameScene::endScreen(){
     addGameStats();
 
     showStats(showingStats, totalTime, ppsStr, true);
+
+    if(!replaying)
+        saveReplay();
+    else
+        replaying = false;
 
     const int optionsHeight = 11;
 
