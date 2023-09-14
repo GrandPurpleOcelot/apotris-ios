@@ -8,16 +8,16 @@
 #include "SDL2/SDL.h"
 #include <SDL2/SDL_mixer.h>
 
-#define KEY_A SDLK_x
-#define KEY_B SDLK_z
-#define KEY_L SDLK_a
-#define KEY_R SDLK_s
-#define KEY_UP SDLK_UP
-#define KEY_DOWN SDLK_DOWN
-#define KEY_LEFT SDLK_LEFT
-#define KEY_RIGHT SDLK_RIGHT
-#define KEY_SELECT SDLK_BACKSPACE
-#define KEY_START SDLK_RETURN
+#define KEY_A SDLK_RETURN
+#define KEY_B SDLK_BACKSPACE
+#define KEY_L SDLK_1
+#define KEY_R SDLK_2
+#define KEY_UP SDLK_w
+#define KEY_DOWN SDLK_s
+#define KEY_LEFT SDLK_a
+#define KEY_RIGHT SDLK_d
+#define KEY_SELECT SDLK_3
+#define KEY_START SDLK_ESCAPE
 #define KEY_FULL 0xffffffff
 
 extern void updateWindow(uint8_t*);
