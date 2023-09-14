@@ -15,6 +15,7 @@ extern const std::list<std::string> menuOptions;
 extern const std::list<std::string> gameOptions;
 extern const std::list<std::string> settingsOptions;
 extern const std::list<std::string> controlOptions;
+extern const std::list<std::string> menuControlOptions;
 extern std::map<int,std::string> keyMap;
 
 extern std::string getDescription(std::string element);

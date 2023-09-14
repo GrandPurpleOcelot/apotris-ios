@@ -100,6 +100,21 @@ const std::list<std::string> controlOptions = {
     "Activate Zone",
 };
 
+const std::list<std::string> menuControlOptions = {
+    "Up",
+    "Down",
+    "Left",
+    "Right",
+    "Confirm",
+    "Cancel",
+    "Pause",
+    "Reset",
+    "Special 1",
+    "Special 2",
+    "Special 3",
+};
+
+
 std::map<int,std::string> keyMap = {
     {KEY_LEFT,"Left"},
     {KEY_RIGHT,"Right"},

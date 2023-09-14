@@ -1463,7 +1463,7 @@ void GameScene::countdown() {
             }
         } else if (timer < 2 * timerMax / 3){
             aprint("READY?", 12, 10);
-            if(key_is_down(KEY_L) && key_is_down(KEY_R)){
+            if((key_is_down(KEY_L) && key_is_down(KEY_R)) || key_is_down(savefile->settings.menuKeys.reset)){
                 playAgain = true;
                 break;
             }

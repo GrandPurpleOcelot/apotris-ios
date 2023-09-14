@@ -145,6 +145,7 @@ class RebindElement : public Element{
     public:
         std::string label;
         int index = 0;
+        int * keys = nullptr;
 
         bool reading = false;
 
@@ -157,7 +158,6 @@ class RebindElement : public Element{
         }
 
         void action() override{
-            int* keys = (int*) &savefile->settings.keys;
             std::list<int> foundKeys;
 
             reading = true;
@@ -250,8 +250,6 @@ class RebindElement : public Element{
                 return "...";
             }
 
-            int *keys = (int *) &savefile->settings.keys;
-
             #if defined(GBA)
 
             std::string result;
@@ -296,20 +294,26 @@ class RebindElement : public Element{
             return "?";
         }
 
-        RebindElement(int _index, std::string _label){
+        RebindElement(int * _keys, int _index, std::string _label){
+            keys = _keys;
             index = _index;
             label = _label;
         }
 };
 
-class IngameLabelElement : public Element{
+class LabelElement : public Element{
+    std::string label;
     public:
         std::string getLabel() override {
-            return "In-Game:";
+            return label;
         }
 
         std::string getCurrentOption() override {
             return "";
+        }
+
+        LabelElement(std::string l){
+            label = l;
         }
 };
 
@@ -320,16 +324,25 @@ class ControlOptionScene : public OptionListScene{
     std::list<Element*> getElementList(){
         std::list<Element*> list;
 
-        list.push_back(new IngameLabelElement());
+        list.push_back(new LabelElement("In-Game:"));
 
         int counter = 0;
         for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
-            list.push_back(new RebindElement(counter++,*it));
+            list.push_back(new RebindElement((int *) &savefile->settings.keys,counter++,*it));
 
-        #ifdef GBA
+        #if defined(GBA)
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
         list.push_back(new RumbleElement());
+
+        #elif defined(PC) || defined(WEB)
+
+        list.push_back(new LabelElement("Menu:"));
+
+        counter = 0;
+        for(auto it = menuControlOptions.begin(); it != menuControlOptions.end(); ++it)
+            list.push_back(new RebindElement((int*) &savefile->settings.menuKeys,counter++,*it));
+
         #endif
 
         list.push_back(new ResetControlsElement());
