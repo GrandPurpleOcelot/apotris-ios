@@ -162,14 +162,20 @@ class RebindElement : public Element{
 
             reading = true;
 
+            bool exit = false;
+
             while(closed()){
                 canDraw = 1;
                 vsync();
                 key_poll();
 
+                if(exit)
+                    break;
+
                 if(key_hit(savefile->settings.menuKeys.pause)){
                     sfx(SFX_MENUCANCEL);
-                    break;
+                    exit = true;
+                    continue;
                 }
 
                 #if defined(GBA)
@@ -213,7 +219,8 @@ class RebindElement : public Element{
 
                     keys[index] = key;
                     sfx(SFX_MENUCONFIRM);
-                    break;
+                    exit = true;
+                    continue;
                 }
 
                 #elif defined(PC)
@@ -228,8 +235,10 @@ class RebindElement : public Element{
                     }
                 }
 
-                if(found)
-                    break;
+                if(found){
+                    exit = true;
+                    continue;
+                }
 
                 #else
                 u32 key = key_first();
@@ -237,7 +246,8 @@ class RebindElement : public Element{
                 if(key != KEY_FULL - 1){
                     keys[index] = key;
                     sfx(SFX_MENUCONFIRM);
-                    break;
+                    exit = true;
+                    continue;
                 }
                 #endif
             }
