@@ -64,7 +64,7 @@ build: all
 all: libTilengine.a $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
 
 libTilengine.a:
-	@cd external/Tilengine/src && make
+	@cd external/Tilengine/src && $(MAKE)
 
 $(ICON) : $(ICON_FILE)
 

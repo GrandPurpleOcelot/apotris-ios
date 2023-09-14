@@ -165,7 +165,7 @@ endif
 all: libTilengine.a assets $(BUILD)
 
 libTilengine.a:
-	@cd external/Tilengine/src && make
+	@cd external/Tilengine/src && $(MAKE)
 
 assets:
 	@mkdir -p $(ROMFS)/assets/
