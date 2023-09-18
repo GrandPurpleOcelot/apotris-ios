@@ -190,7 +190,7 @@ void setDefaultKeys(){
     .special3 = KEY_SELECT,
     };
 
-    savefile->settings.menuKeys = menuKeys = m;
+    savefile->settings.menuKeys = m;
 }
 
 void resetSkins(Save *save){

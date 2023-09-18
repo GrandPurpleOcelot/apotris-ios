@@ -1098,7 +1098,10 @@ std::string getStringFromKey(int key){
 
     #elif defined(PC)
 
-    return keyToString[key & 0xff];
+    u8 k = key & 0xff;
+
+    if(k >= 0 && k < sf::Keyboard::KeyCount)
+        return keyToString[k];
 
     #elif defined(SWITCH) || defined(MM)
 

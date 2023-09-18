@@ -131,7 +131,10 @@ class ResetControlsElement : public Element{
         }
 
         void action() override{
+            MenuKeys temp = menuKeys;
             setDefaultKeys();
+            menuKeys = savefile->settings.menuKeys;
+            savefile->settings.menuKeys = temp;
 
             sfx(SFX_MENUCONFIRM);
         }
@@ -148,6 +151,8 @@ class RebindElement : public Element{
         int * keys = nullptr;
 
         bool reading = false;
+
+        int max = 0;
 
         std::string getLabel() override {
             return label;
@@ -197,7 +202,7 @@ class RebindElement : public Element{
                         counter++;
                     }while(temp != 0);
 
-                    for(int i = 0; i < 9; i++){
+                    for(int i = 0; i < max; i++){
                         foundKeys.clear();
 
                         int k = keys[i];
@@ -231,6 +236,15 @@ class RebindElement : public Element{
                         keys[index] = i;
                         sfx(SFX_MENUCONFIRM);
                         found = true;
+
+                        for(int j = 0; j < max; j++){
+                            if(j == index)
+                                continue;
+
+                            if(keys[j] == i)
+                                keys[j] = KEY_FULL - 2;
+                        }
+
                         break;
                     }
                 }
@@ -263,10 +277,11 @@ class RebindElement : public Element{
             return getStringFromKey(keys[index]);
         }
 
-        RebindElement(int * _keys, int _index, std::string _label){
+        RebindElement(int * _keys, int _index, std::string _label, int _max){
             keys = _keys;
             index = _index;
             label = _label;
+            max = _max;
         }
 };
 
@@ -297,7 +312,7 @@ class ControlOptionScene : public OptionListScene{
 
         int counter = 0;
         for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
-            list.push_back(new RebindElement((int *) &savefile->settings.keys,counter++,*it));
+            list.push_back(new RebindElement((int *) &savefile->settings.keys,counter++,*it,9));
 
         #if defined(GBA)
         list.push_back(new ABHoldElement());
@@ -310,7 +325,7 @@ class ControlOptionScene : public OptionListScene{
 
         counter = 0;
         for(auto it = menuControlOptions.begin(); it != menuControlOptions.end(); ++it)
-            list.push_back(new RebindElement((int*) &menuKeys,counter++,*it));
+            list.push_back(new RebindElement((int*) &menuKeys,counter++,*it,11));
 
         #endif
 
