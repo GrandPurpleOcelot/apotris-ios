@@ -260,48 +260,7 @@ class RebindElement : public Element{
                 return "...";
             }
 
-            #if defined(GBA)
-
-            std::string result;
-
-            int key = keys[index];
-            if((key & (key - 1)) == 0){
-                result = keyMap[keys[index]];
-            }else{
-
-                int k = key;
-
-                int counter = 0;
-                do{
-                    if(k & (1 << counter)){
-                        result+= keyMap[1<<counter] + " ";
-                        k-= 1 << counter;
-                    }
-
-                    counter++;
-                }while(k != 0);
-
-                //remove trailing space
-                result.pop_back();
-            }
-
-            if(result != ""){
-                return result;
-            }else{
-                return "?";
-            }
-
-            #elif defined(PC)
-
-            return keyToString[keys[index] & 0xff];
-
-            #elif defined(SWITCH) || defined(MM)
-
-            return keyToString[keys[index]];
-
-            #endif
-
-            return "?";
+            return getStringFromKey(keys[index]);
         }
 
         RebindElement(int * _keys, int _index, std::string _label){

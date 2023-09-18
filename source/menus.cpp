@@ -580,12 +580,12 @@ void showScore(){
 
 void GameScene::showStats(bool moreStats, std::string time, std::string pps, bool end) {
     if(!moreStats){
-        aprints("Press L", 0, 0, 2);
+        aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special1), 0, 0, 2);
         aprints("for Stats", 0, 7, 2);
 
         if(end){
             if(game->replayElligible){
-                aprints("Press R", 0, 21, 2);
+                aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special2), 0, 21, 2);
                 aprints("for Replay", 0, 28, 2);
             }else{
                 aprints("Replay", 0, 21, 1);

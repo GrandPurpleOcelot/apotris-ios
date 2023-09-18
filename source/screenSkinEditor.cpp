@@ -31,6 +31,7 @@ void showMini();
 int selector();
 void helpScreen();
 int optionsMenu();
+void showHelpText();
 
 TILE * customSkin;
 
@@ -97,16 +98,7 @@ void EditorScene::update(){
     setSmallTextArea(110, 0, 10, 10, 20);
     clearText();
 
-    if(savefile->settings.aspectRatio == 0){
-        aprints("Press SELECT",2,64,2);
-        aprints("for help",2,72,2);
-
-    }else if(savefile->settings.aspectRatio == 1){
-        aprints("Press",15,48,2);
-        aprints("SELECT",15,56,2);
-        aprints("for",15,64,2);
-        aprints("help",15,72,2);
-    }
+    showHelpText();
 
     while(closed()){
         canDraw = true;
@@ -569,43 +561,45 @@ void showMini(){
 
 void helpScreen(){
     sfx(SFX_MENUCONFIRM);
-    setSmallTextArea(110, 8, 1, 24, 21);
+    setSmallTextArea(110, 8, 1, 25, 21);
     clearText();
 
     const int startX = 2;
     const int startY = 1;
     u8 count = 0;
 
-    aprints("-Move using the D-Pad",startX, (startY+count)*4,2);
+    MenuKeys m = savefile->settings.menuKeys;
+
+    // aprints("-Move using the D-Pad",startX, (startY+count)*4,2);
+    // count+= 3;
+
+    aprints("-Use tools by pressing " + getStringFromKey(m.confirm),startX, (startY+count)*4,2);
     count+= 3;
 
-    aprints("-Use tools by pressing A",startX, (startY+count)*4,2);
+    aprints("-Undo by pressing " + getStringFromKey(m.cancel),startX, (startY+count)*4,2);
     count+= 3;
 
-    aprints("-Undo by pressing B",startX, (startY+count)*4,2);
-    count+= 3;
-
-    aprints("-Change tools by holding R",startX, (startY+count)*4,2);
+    aprints("-Change tools by holding " + getStringFromKey(m.special2),startX, (startY+count)*4,2);
     aprints(" and pressing Up/Down",startX, (startY+count+2)*4,2);
     count+= 5;
 
-    aprints("-Change colors by holding R",startX, (startY+count)*4,2);
+    aprints("-Change colors by holding " + getStringFromKey(m.special2),startX, (startY+count)*4,2);
     aprints(" and pressing Left/Right",startX, (startY+count+2)*4,2);
     count+= 5;
 
-    aprints("-Cycle palettes by holding L",startX, (startY+count)*4,2);
+    aprints("-Cycle palettes by holding " + getStringFromKey(m.special1),startX, (startY+count)*4,2);
     aprints(" and pressing Up/Down",startX, (startY+count+2)*4,2);
     count+= 5;
 
-    aprints("-Edit preview/hold by holding L",startX, (startY+count)*4,2);
+    aprints("-Edit preview/hold by holding " + getStringFromKey(m.special1),startX, (startY+count)*4,2);
     aprints(" and pressing Left/Right",startX, (startY+count+2)*4,2);
     count+= 5;
 
     aprints("-Clear the canvas by",startX, (startY+count)*4,2);
-    aprints(" holding L and R",startX, (startY+count+2)*4,2);
+    aprints(" holding " + getStringFromKey(m.special1) + " and " + getStringFromKey(m.special2),startX, (startY+count+2)*4,2);
     count+= 5;
 
-    aprints("-Exit by pressing Start",startX, (startY+count)*4,2);
+    aprints("-Exit by pressing " + getStringFromKey(m.pause),startX, (startY+count)*4,2);
     count+= 3;
 
     clearSprites(128);
@@ -625,20 +619,11 @@ void helpScreen(){
     toggleBG(0, true);
     toggleBG(3, true);
 
+    clearSmallText();
     setSmallTextArea(110, 0, 10, 10, 20);
     clearText();
 
-    if(savefile->settings.aspectRatio == 0){
-        aprints("Press SELECT",2,64,2);
-        aprints("for help",2,72,2);
-
-    }else if(savefile->settings.aspectRatio == 1){
-        aprints("Press",15,48,2);
-        aprints("SELECT",15,56,2);
-        aprints("for",15,64,2);
-        aprints("help",15,72,2);
-    }
-
+    showHelpText();
 
     sfx(SFX_MENUCANCEL);
 }
@@ -647,5 +632,18 @@ void EditorScene::draw(){
     if(refresh){
         refresh = false;
         buildMini(customSkin);
+    }
+}
+
+void showHelpText(){
+    if(savefile->settings.aspectRatio == 0){
+        aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special3),2,64,2);
+        aprints("for help",2,72,2);
+
+    }else if(savefile->settings.aspectRatio == 1){
+        aprints("Press",15,48,2);
+        aprints(getStringFromKey(savefile->settings.menuKeys.special3),15,56,2);
+        aprints("for",15,64,2);
+        aprints("help",15,72,2);
     }
 }
