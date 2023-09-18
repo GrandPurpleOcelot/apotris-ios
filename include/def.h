@@ -302,6 +302,8 @@ extern int damp;
 extern int dampTimer;
 extern int dampTimerMax;
 
+extern MenuKeys menuKeys;
+
 class Function{
     private:
 

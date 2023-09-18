@@ -172,11 +172,11 @@ class RebindElement : public Element{
                 if(exit)
                     break;
 
-                if(key_hit(savefile->settings.menuKeys.pause)){
-                    sfx(SFX_MENUCANCEL);
-                    exit = true;
-                    continue;
-                }
+                // if(key_hit(savefile->settings.menuKeys.pause)){
+                //     sfx(SFX_MENUCANCEL);
+                //     exit = true;
+                //     continue;
+                // }
 
                 #if defined(GBA)
 
@@ -351,7 +351,7 @@ class ControlOptionScene : public OptionListScene{
 
         counter = 0;
         for(auto it = menuControlOptions.begin(); it != menuControlOptions.end(); ++it)
-            list.push_back(new RebindElement((int*) &savefile->settings.menuKeys,counter++,*it));
+            list.push_back(new RebindElement((int*) &menuKeys,counter++,*it));
 
         #endif
 

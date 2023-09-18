@@ -68,6 +68,8 @@ std::string previousElement;
 
 std::list<std::string> path;
 
+MenuKeys menuKeys;
+
 void showTitleSprites() {
     for (int i = 0; i < 2; i++)
         titleSprites[i] = &obj_buffer[14 + i];
@@ -207,7 +209,11 @@ std::string timeToStringHours(int frames) {
 }
 
 bool settingsChanged(){
-    u8 * v1 = (u8 *) &savefile->settings;
+    Settings temp = savefile->settings;
+
+    temp.menuKeys = menuKeys;
+
+    u8 * v1 = (u8 *) &temp;
     u8 * v2 = (u8 *) &previousSettings;
 
     for(int i = 0; i < (int) sizeof(Settings); i++){
@@ -445,6 +451,8 @@ bool ConfirmSaveScene::control(){
             setGradient(savefile->settings.backgroundGradient);
 
         }else{
+            savefile->settings.menuKeys = menuKeys;
+
             saveSavefile();
         }
 
