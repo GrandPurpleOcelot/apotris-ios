@@ -63,14 +63,13 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= `$(PREFIX)pkg-config --libs sdl2 SDL2_mixer` -lTilengine
+LIBS	:= `$(PREFIX)pkg-config --libs sdl2 SDL2_mixer` -lTilengine -lsoloud
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
 LIBDIRS	:= $(PORTLIBS) $(LIBNX)
-
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -113,9 +112,12 @@ export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
+			-I$(CURDIR)/$(BUILD) \
+			-I$(TOPDIR)/external/soloud/include
 
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) -L$(TOPDIR)/external/Tilengine/src/build/$(PLATFORM)
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
+		-L$(TOPDIR)/external/Tilengine/src/build/$(PLATFORM) \
+		-L$(TOPDIR)/external/soloud/lib/$(PLATFORM)
 
 ifeq ($(strip $(CONFIG_JSON)),)
 	jsons := $(wildcard *.json)
@@ -162,16 +164,19 @@ endif
 .PHONY: $(BUILD) clean all
 
 #---------------------------------------------------------------------------------
-all: libTilengine.a assets $(BUILD)
+all: libTilengine.a libsoloud.a assets $(BUILD)
 
 libTilengine.a:
 	@cd external/Tilengine/src && $(MAKE)
+
+libsoloud.a:
+	@cd external/soloud && $(MAKE)
 
 assets:
 	@mkdir -p $(ROMFS)/assets/
 	@cp -rf audio/. $(ROMFS)/assets/
 
-$(BUILD):
+$(BUILD): libTilengine.a libsoloud.a
 	@mkdir -p bin/switch
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/make/switch_make

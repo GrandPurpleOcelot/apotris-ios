@@ -163,7 +163,7 @@ void setDefaultKeys(){
         .moveRight = KEY_RIGHT,
         .rotateCCW = KEY_B,
         .rotateCW = KEY_A,
-        .rotate180 = 0,
+        .rotate180 = -2,
         .softDrop = KEY_DOWN,
         .hardDrop = KEY_UP,
         .hold = KEY_R,
@@ -177,17 +177,17 @@ void setDefaultKeys(){
     savefile->settings.keys = k;
 
     MenuKeys m{
-    .up = KEY_UP,
-    .down = KEY_DOWN,
-    .left = KEY_LEFT,
-    .right = KEY_RIGHT,
-    .confirm = KEY_A,
-    .cancel = KEY_B,
-    .pause = KEY_START,
-    .reset = 0,
-    .special1 = KEY_L,
-    .special2 = KEY_R,
-    .special3 = KEY_SELECT,
+        .up = KEY_UP,
+        .down = KEY_DOWN,
+        .left = KEY_LEFT,
+        .right = KEY_RIGHT,
+        .confirm = KEY_A,
+        .cancel = KEY_B,
+        .pause = KEY_START,
+        .reset = -2,
+        .special1 = KEY_L,
+        .special2 = KEY_R,
+        .special3 = KEY_SELECT,
     };
 
     savefile->settings.menuKeys = m;

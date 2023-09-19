@@ -6,6 +6,8 @@
 
 #include <emscripten.h>
 #include <emscripten/html5.h>
+#include "soloud.h"
+#include "soloud_wav.h"
 #include "def.h"
 
 void loadAudio();
@@ -38,7 +40,7 @@ uint32_t frame_time = 0;
 
 float fps = 0;
 
-Mix_Chunk * soundEffects[SFX_COUNT];
+SoLoud::Wav soundEffects[SFX_COUNT];
 
 int sfxVolume = 1024;
 int musicVolume = 1024;
@@ -47,6 +49,8 @@ int windowWidth = 640;
 int windowHeight = 480;
 
 float zoom = 0;
+
+SoLoud::Soloud gSoloud;
 
 EM_JS(int, getWindowWidth, (), {
   return window.innerWidth;
@@ -93,8 +97,7 @@ void windowInit(){
     renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
-    Mix_OpenAudio(48000, AUDIO_S16, 2, 512);
+    gSoloud.init();
 
     loadAudio();
 
@@ -105,19 +108,11 @@ void loadAudio(){
     for(int i = 0; i < SFX_COUNT; i++){
         std::string str = "bin/wasm/" + (std::string) SoundEffectPaths[i];
 
-        soundEffects[i] = Mix_LoadWAV(str.c_str());
-
-        if(soundEffects[i] == NULL){
-            log("couldn't load " + (std::string)SoundEffectPaths[i]);
-        }
-
+        soundEffects[i].load(str.c_str());
     }
 }
 
 void freeAudio(){
-    for(int i = 0; i < SFX_COUNT; i++){
-        Mix_FreeChunk(soundEffects[i]);
-    }
 }
 
 
@@ -335,8 +330,8 @@ bool closed(){
 }
 
 void sfx(int n){
-    Mix_PlayChannel(-1,soundEffects[n],0);
-    Mix_VolumeChunk(soundEffects[n], 128 * savefile->settings.sfxVolume / 10);
+    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
+    int s = gSoloud.play(soundEffects[n]);
 }
 
 void startSong(int,bool){
@@ -357,8 +352,10 @@ void toggleRendering(bool r){
     render = r;
 }
 
-void sfxRate(int n,float){
-    sfx(n);
+void sfxRate(int n, float rate){
+    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
+    int s = gSoloud.play(soundEffects[n]);
+    gSoloud.setRelativePlaySpeed(s,rate);
 }
 
 void pauseSong(){};
@@ -421,6 +418,8 @@ void quit() {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
+    gSoloud.deinit();
 }
 
 void resizeWindow(int width, int height){

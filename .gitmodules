@@ -2,3 +2,6 @@
 	path = external/Tilengine
 	url = https://github.com/akouzoukos/tilengine/
 	branch = static
+[submodule "soloud"]
+	path = external/soloud
+	url = https://github.com/akouzoukos/soloud

@@ -31,6 +31,7 @@ BUILD := build/$(PLATFORM)
 # Library search directories and flags
 EXT_LIB :=
 LDFLAGS := 	external/Tilengine/src/build/$(PLATFORM)/libTilengine.a \
+			external/soloud/lib/$(PLATFORM)/libsoloud.a \
 		   	--profiling -s USE_SDL=2 -s USE_SDL_MIXER=2 -s ASYNCIFY -lidbfs.js \
 			-s ALLOW_MEMORY_GROWTH \
 		   	--preload-file $(ASSETS_PATH)
@@ -38,7 +39,7 @@ LDFLAGS := 	external/Tilengine/src/build/$(PLATFORM)/libTilengine.a \
 LDPATHS := $(EXT_LIB)
 
 # Include directories
-INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA)
+INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA) external/soloud/include
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 # Construct build output and dependency filenames
@@ -70,15 +71,18 @@ build: all
 
 # Main task
 
-all: libTilengine.a $(ASSETS) $(TARGET) $(ICON) $(LIBFILES)
+all: libTilengine.a libsoloud.a $(ASSETS) $(TARGET) $(ICON) $(LIBFILES)
 
 libTilengine.a:
 	@cd external/Tilengine/src && $(MAKE)
 
+libsoloud.a:
+	@cd external/soloud && $(MAKE)
+
 $(ICON) : $(ICON_FILE)
 
 # Task producing target from built files
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) libsoloud.a libTilengine.a
 	@echo "Building..."
 	@mkdir -p $(dir $@)
 	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS)
@@ -117,6 +121,7 @@ clean:
 	@echo "Cleaning..."
 	rm -rf build/$(PLATFORM)
 	cd external/Tilengine/src && make clean
+	cd external/soloud && make clean
 
 help:
 	@echo "bin: $(LIBFILES)"

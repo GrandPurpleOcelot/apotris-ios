@@ -6,6 +6,8 @@
 
 #include "def.h"
 #include "switch.h"
+#include "soloud.h"
+#include "soloud_wav.h"
 
 void loadAudio();
 void freeAudio();
@@ -36,6 +38,10 @@ bool render = true;
 
 std::list<uint32_t> currentlyPressed;
 
+SoLoud::Soloud gSoloud;
+
+SoLoud::Wav soundEffects[SFX_COUNT];
+
 void windowInit(){
     // Initialize SDL
     romfsInit();
@@ -55,26 +61,20 @@ void windowInit(){
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_JoystickOpen(0);
 
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
-    Mix_OpenAudio(48000, AUDIO_S16, 2, 1024);
+    gSoloud.init();
 
     loadAudio();
 }
-
-Mix_Chunk * soundEffects[SFX_COUNT];
 
 void loadAudio(){
     for(int i = 0; i < SFX_COUNT; i++){
         std::string str = "romfs:/" + (std::string) SoundEffectPaths[i];
 
-        soundEffects[i] = Mix_LoadWAV(str.c_str());
+        soundEffects[i].load(str.c_str());
     }
 }
 
 void freeAudio(){
-    for(int i = 0; i < SFX_COUNT; i++){
-        Mix_FreeChunk(soundEffects[i]);
-    }
 }
 
 void key_poll(){
@@ -268,8 +268,8 @@ bool closed(){
 }
 
 void sfx(int n){
-    Mix_PlayChannel(-1,soundEffects[n],0);
-    Mix_VolumeChunk(soundEffects[n], 128 * savefile->settings.sfxVolume / 10);
+    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
+    gSoloud.play(soundEffects[n]);
 }
 
 void startSong(int,bool){
@@ -288,8 +288,10 @@ void toggleRendering(bool r){
     render = r;
 }
 
-void sfxRate(int n,float){
-    sfx(n);
+void sfxRate(int n, float rate){
+    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
+    int s = gSoloud.play(soundEffects[n]);
+    gSoloud.setRelativePlaySpeed(s,rate);
 }
 
 void pauseSong(){};
@@ -357,6 +359,7 @@ void quit(){
     SDL_DestroyWindow(window);
     SDL_Quit();
     freeAudio();
+    gSoloud.deinit();
     exit(0);
 }
 

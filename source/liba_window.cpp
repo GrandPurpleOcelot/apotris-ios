@@ -14,8 +14,8 @@
 #define ENABLE_SHADERS 0
 
 float windowScale = 3;
-int windowWidth = 256;
-int windowHeight = 192;
+int windowWidth = 400;
+int windowHeight = 240;
 
 int rowStart = (SCREEN_HEIGHT - windowHeight)/2;
 int rowEnd = (SCREEN_HEIGHT + windowHeight)/2;
