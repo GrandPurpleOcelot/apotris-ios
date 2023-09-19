@@ -227,7 +227,11 @@ void GradientEditorScene::draw(){
 void GradientEditorScene::drawText(){
     clearText();
 
-    std::string s = "Press START to Exit";
+    std::string keyString =  getStringFromKey(savefile->settings.menuKeys.cancel);
+
+    std::transform(keyString.begin(), keyString.end(), keyString.begin(), ::toupper);
+
+    std::string s = "Press " + keyString + " to Exit";
     naprintColor(s, 15 * 8 - (getVariableWidth(s) / 2), 18 * 8, 14);
 
     naprint("Type:", 3 * 8, 3 * 8);

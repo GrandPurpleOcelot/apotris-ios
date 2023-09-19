@@ -1064,3 +1064,51 @@ void setPawnPalette(int dest, int n, int blend){
             color_adj_brightness(dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16], 5, blend);
     }
 }
+
+std::string getStringFromKey(int key){
+    #if defined(GBA)
+
+    std::string result;
+
+    if((key & (key - 1)) == 0){
+        result = keyMap[key];
+    }else{
+
+        int k = key;
+
+        int counter = 0;
+        do{
+            if(k & (1 << counter)){
+                result+= keyMap[1<<counter] + " ";
+                k-= 1 << counter;
+            }
+
+            counter++;
+        }while(k != 0);
+
+        //remove trailing space
+        result.pop_back();
+    }
+
+    if(result != ""){
+        return result;
+    }else{
+        return "?";
+    }
+
+    #elif defined(PC)
+
+    u8 k = key & 0xff;
+
+    if(k >= 0 && k < sf::Keyboard::KeyCount)
+        return keyToString[k];
+
+    #elif defined(SWITCH) || defined(MM)
+
+    return keyToString[key];
+
+    #endif
+
+    return "?";
+
+}

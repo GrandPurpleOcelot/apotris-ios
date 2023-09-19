@@ -103,6 +103,8 @@ void sceneSwitcher(std::string str){
         changeScene(new ModeListScene(),Transitions::FADE);
     }else if(str == "Settings"){
         previousSettings = savefile->settings;
+        menuKeys = savefile->settings.menuKeys;
+
         for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
             previousSkins[i] = savefile->customSkins[i];
 

@@ -131,7 +131,10 @@ class ResetControlsElement : public Element{
         }
 
         void action() override{
+            MenuKeys temp = menuKeys;
             setDefaultKeys();
+            menuKeys = savefile->settings.menuKeys;
+            savefile->settings.menuKeys = temp;
 
             sfx(SFX_MENUCONFIRM);
         }
@@ -148,6 +151,8 @@ class RebindElement : public Element{
         int * keys = nullptr;
 
         bool reading = false;
+
+        int max = 0;
 
         std::string getLabel() override {
             return label;
@@ -172,11 +177,11 @@ class RebindElement : public Element{
                 if(exit)
                     break;
 
-                if(key_hit(savefile->settings.menuKeys.pause)){
-                    sfx(SFX_MENUCANCEL);
-                    exit = true;
-                    continue;
-                }
+                // if(key_hit(savefile->settings.menuKeys.pause)){
+                //     sfx(SFX_MENUCANCEL);
+                //     exit = true;
+                //     continue;
+                // }
 
                 #if defined(GBA)
 
@@ -197,7 +202,7 @@ class RebindElement : public Element{
                         counter++;
                     }while(temp != 0);
 
-                    for(int i = 0; i < 9; i++){
+                    for(int i = 0; i < max; i++){
                         foundKeys.clear();
 
                         int k = keys[i];
@@ -231,6 +236,15 @@ class RebindElement : public Element{
                         keys[index] = i;
                         sfx(SFX_MENUCONFIRM);
                         found = true;
+
+                        for(int j = 0; j < max; j++){
+                            if(j == index)
+                                continue;
+
+                            if(keys[j] == i)
+                                keys[j] = KEY_FULL - 2;
+                        }
+
                         break;
                     }
                 }
@@ -260,54 +274,14 @@ class RebindElement : public Element{
                 return "...";
             }
 
-            #if defined(GBA)
-
-            std::string result;
-
-            int key = keys[index];
-            if((key & (key - 1)) == 0){
-                result = keyMap[keys[index]];
-            }else{
-
-                int k = key;
-
-                int counter = 0;
-                do{
-                    if(k & (1 << counter)){
-                        result+= keyMap[1<<counter] + " ";
-                        k-= 1 << counter;
-                    }
-
-                    counter++;
-                }while(k != 0);
-
-                //remove trailing space
-                result.pop_back();
-            }
-
-            if(result != ""){
-                return result;
-            }else{
-                return "?";
-            }
-
-            #elif defined(PC)
-
-            return keyToString[keys[index] & 0xff];
-
-            #elif defined(SWITCH) || defined(MM)
-
-            return keyToString[keys[index]];
-
-            #endif
-
-            return "?";
+            return getStringFromKey(keys[index]);
         }
 
-        RebindElement(int * _keys, int _index, std::string _label){
+        RebindElement(int * _keys, int _index, std::string _label, int _max){
             keys = _keys;
             index = _index;
             label = _label;
+            max = _max;
         }
 };
 
@@ -338,7 +312,7 @@ class ControlOptionScene : public OptionListScene{
 
         int counter = 0;
         for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
-            list.push_back(new RebindElement((int *) &savefile->settings.keys,counter++,*it));
+            list.push_back(new RebindElement((int *) &savefile->settings.keys,counter++,*it,9));
 
         #if defined(GBA)
         list.push_back(new ABHoldElement());
@@ -351,7 +325,7 @@ class ControlOptionScene : public OptionListScene{
 
         counter = 0;
         for(auto it = menuControlOptions.begin(); it != menuControlOptions.end(); ++it)
-            list.push_back(new RebindElement((int*) &savefile->settings.menuKeys,counter++,*it));
+            list.push_back(new RebindElement((int*) &menuKeys,counter++,*it,11));
 
         #endif
 
