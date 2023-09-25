@@ -190,6 +190,11 @@ void setDefaultKeys(){
         .special3 = KEY_SELECT,
     };
 
+    #ifdef GBA
+    m.reset = 0;
+    #endif
+
+
     savefile->settings.menuKeys = m;
 }
 
