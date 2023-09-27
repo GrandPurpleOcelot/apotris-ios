@@ -68,6 +68,7 @@ extern void showSprites(int count);
 extern void loadPalette (int palette, int index, const void * src, int count);
 extern void loadTiles (int tileset, int index, const void * src, int count);
 extern void loadTiles8(int tileset, int index, const void * src, int count);
+extern void loadTilemap(int tilemap, int index, const void * src, int count);
 
 extern void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY);
 extern void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY, int rowLength);

@@ -711,6 +711,8 @@ void showPawn() {
                     setSpriteTile(16 * 7, j, i, 4, &sprite39tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
                 else if(savefile->settings.skin == 13)
                     setSpriteTile(16 * 7, j, i, 4, &sprite40tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
+                else if(savefile->settings.skin == 14)
+                    setSpriteTile(16 * 7, j, i, 4, &sprite53tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
                 else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
                     setSpriteTile(16 * 7, j, i, 4, blockSprite);
                 else
@@ -1523,7 +1525,7 @@ void screenShake() {
 
     setLayerScroll(0, -push, -(shake));
     setLayerScroll(1, -push, -(shake));
-    setLayerScroll(3, -push, -(shake));
+    // setLayerScroll(3, -push, -(shake));
 
     if(savefile->settings.screenShakeType == 0){
         if (shake) {

@@ -309,6 +309,14 @@ void loadTiles8(int tileset, int index, const void * src, int count){
     }
 }
 
+void loadTilemap(int tilemap, int index, const void *src, int count){
+    u16 *source = (u16*) src;
+
+    for(int i = 0; i < count; i++){
+        setTile(tilemap, (i+index) % TILEMAP_SIZE, (i+index) / TILEMAP_SIZE, source[i]);
+    }
+}
+
 void clearTilemap(int tilemap){
     for(int i = 0; i < TILEMAP_SIZE; i++){
         for(int j = 0; j < TILEMAP_SIZE; j++){

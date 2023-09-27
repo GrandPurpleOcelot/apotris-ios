@@ -120,6 +120,11 @@ void loadTiles(int tileset, int index, const void *src, int count){
     memcpy32(&tile_mem[tileset][index], src,count*8);
 }
 
+void loadTilemap(int tilemap, int index, const void *src, int count){
+    u16 * dst = (u16 * ) &se_mem[tilemap];
+    memcpy16(&dst[index], src, count);
+}
+
 void clearTilemap(int tilemap){
     memset16(&se_mem[tilemap], 0,32*32);
 }

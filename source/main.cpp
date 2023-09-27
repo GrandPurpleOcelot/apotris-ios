@@ -598,6 +598,11 @@ void setSkin() {
 
         loadTiles(0,128,sprite40tiles_bin,sprite40tiles_bin_size/32);
         break;
+    case 14:
+        blockSprite = (u8*)&sprite53tiles_bin[12*32];
+
+        loadTiles(0,128,sprite53tiles_bin,sprite53tiles_bin_size/32);
+        break;
     default:
         if(savefile->settings.skin < 0){
             int n = savefile->settings.skin;
@@ -649,6 +654,8 @@ void setSkin() {
                         loadSpriteTilesPartial(iy, &sprite39tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
                     else if(savefile->settings.skin == 13)
                         loadSpriteTilesPartial(iy, &sprite40tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
+                    else if(savefile->settings.skin == 14)
+                        loadSpriteTilesPartial(iy, &sprite53tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
                     else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
                         loadSpriteTilesPartial(iy, blockSprite,k,j,1,1,4);
                     else
