@@ -461,9 +461,18 @@ void Game::update() {
 
     updateDas();
 
-    if(entryDelay)
-        return;
+    if(entryDelay){
+        if(gameMode == DEATH){
+            int l = level / 100;
 
+            if(l >= 5 && deathGarbageCounter >= deathQuota[min(4,l-5)]){
+                deathGarbage();
+                deathGarbageCounter = 0;
+            }
+        }
+
+        return;
+    }
 
     if (das == maxDas && !(left && right)) {
         if (arr >= 0 && --arrCounter <= 0 && !(gameMode == CLASSIC && down)) {
@@ -1133,6 +1142,11 @@ int Game::clear(Drop drop) {
             setDeathTuning();
         }
 
+        deathGarbageCounter -= clearCount;
+
+        if(deathGarbageCounter < 0)
+            deathGarbageCounter = 0;
+
         break;
     }
 
@@ -1321,6 +1335,10 @@ void Game::next() {//~21-29k cycles
         sounds.initial = 1;
     }
     fromLockRotate = false;
+
+    if(gameMode == DEATH){
+        deathGarbageCounter++;
+    }
 }
 
 void Game::fillQueue(int count) {
@@ -1843,7 +1861,7 @@ void Game::setMasterTuning(){
     areMax = masterDelays[n][0];
     lineAre = masterDelays[n][1];
     maxDas = masterDelays[n][2];
-    maxLockTimer = masterDelays[n][3];
+    lockTimer = maxLockTimer = masterDelays[n][3];
     maxClearDelay = masterDelays[n][4];
     softDropSpeed = 1;
 }
@@ -2719,4 +2737,33 @@ void Game::setRandomizer(int rand){
     }else{
         fillQueue(5);
     }
+}
+
+void Game::deathGarbage(){
+
+    //shift up
+    for(int i = 0; i < lengthY; i++){
+        if(i < lengthY-1){
+            for(int j = 0; j < lengthX; j++)
+                board[i][j] = board[i+1][j];
+            bitboard[i] = bitboard[i+1];
+        } else{
+            memset32(board[i],0,10);
+            bitboard[i] = 0;
+        }
+    }
+
+    //duplicate bottom
+    for(int i = 0; i < lengthX; i++){
+        if(board[lengthY-2][i])
+            board[lengthY-1][i] = 8;
+    }
+
+    bitboard[lengthY-1] = bitboard[lengthY-2];
+
+    stackHeight -= 1;
+
+    updateColumns(1);
+
+    refresh = 1;
 }
