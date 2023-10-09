@@ -25,9 +25,30 @@ for filename in os.listdir(directory):
 # run mmutil
 # print(files)
 
-soundbank_header = "tools/soundbank.h"
+build_type = ""
 
-os.system(f"mmutil {files} -odata/soundbank.bin -h{soundbank_header} > /dev/null")
+try:
+    build_type = sys.argv[1]
+except:
+    build_type = "default"
+
+soundbank_header = ""
+soundbank_binary = ""
+audio_header = ""
+audio_binary = ""
+
+if(build_type == "default"):
+    soundbank_header = "tools/soundbank.h"
+    soundbank_binary = "data/soundbank.bin"
+    audio_header = "include/audio_files.h"
+    audio_binary = "data/effect_locations.bin"
+else:
+    soundbank_header = "tools/soundbank.h"
+    soundbank_binary = "tools/soundbank.bin"
+    audio_header = "tools/audio_files.h"
+    audio_binary = "tools/effect_locations.bin"
+
+os.system(f"mmutil {files} -o{soundbank_binary} -h{soundbank_header} > /dev/null")
 
 print("Waiting for header...")
 
@@ -66,7 +87,7 @@ song_count = 0
 
 preset_songs = []
 
-with open("./include/audio_files.h") as f:
+with open(audio_header) as f:
 
     for line in f:
         if (line.find("SFX") != -1 and line[0] == '\t'):
@@ -101,7 +122,7 @@ print(songs)
 print(song_list)
 print(preset_songs)
 
-with open("./data/effect_locations.bin","wb") as result:
+with open(audio_binary,"wb") as result:
     def write(num):
         result.write(struct.pack('<i',int(num)))
 
