@@ -988,7 +988,7 @@ void showQueue() {
 }
 
 bool GameScene::control() {
-    if (paused)
+    if (paused || !counted)
         return false;
 
     key_poll();

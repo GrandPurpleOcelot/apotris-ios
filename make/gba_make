@@ -130,6 +130,15 @@ $(BUILD):
 # @tools/padbin 0x400000 $(dir $(OUTPUT))Apotris_Audio.gba
 	@rm $(BUILD)/audio.gbfs
 
+	@mkdir -p bin/gba/tools
+	@cp tools/gbfs.exe bin/gba/tools/gbfs.exe
+	@cp tools/padbin.exe bin/gba/tools/padbin.exe
+	@cp tools/buildSoundbank.py bin/gba/tools/buildSoundbank.py
+	@cp tools/build.bat bin/gba/build.bat
+
+	@mkdir -p bin/gba/audio
+	@cp -r audio/ bin/gba/
+
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...

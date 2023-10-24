@@ -491,6 +491,7 @@ namespace BlockEngine
         int getNbr(int x, int y, int ex, int sy, int ey);
         void setShiftSoundFlag();
         void calculatePeek();
+        void deathGarbage();
 
         int bigBag[35];
 
@@ -717,6 +718,8 @@ namespace BlockEngine
         int fullLine = 0x3ff;
 
         int peek = 0;
+
+        int deathGarbageCounter = 0;
 
         List queue;
         List moveHistory;//max 10
