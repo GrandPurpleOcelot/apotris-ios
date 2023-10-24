@@ -272,6 +272,8 @@ class RebindElement : public Element{
         std::string getCurrentOption() override {
             if(reading){
                 return "...";
+            }else if(keys[index] < 0){
+                return "";
             }
 
             return getStringFromKey(keys[index]);
@@ -293,7 +295,7 @@ class LabelElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return "";
+            return "\n";
         }
 
         LabelElement(std::string l){

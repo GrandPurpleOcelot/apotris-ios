@@ -418,7 +418,7 @@ void OptionListScene::init(){
 
     selection = 0;
 
-    if(!elementList.empty() && elementList.front()->getCurrentOption() == ""){
+    if(!elementList.empty() && elementList.front()->getCurrentOption() == "\n"){
         selection++;
     }
 
@@ -544,7 +544,7 @@ void OptionListScene::draw(){
         wordSprites[index]->setPriority(0);
         wordSprites[index]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
 
-        labels[index]->show(startX - 8 * (opt == ""), y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
+        labels[index]->show(startX - 8 * (opt == "\n"), y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
 
         if(counter == selection){ //draw sprite cursor
             currentOption = option->getLabel();
@@ -692,7 +692,7 @@ bool OptionListScene::control(){
             }
 
             --it;
-        }while((*it)->getCurrentOption() == "");
+        }while((*it)->getCurrentOption() == "\n");
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
@@ -717,7 +717,7 @@ bool OptionListScene::control(){
 
             if(++it == elementList.end())
                 it = elementList.begin();
-        }while((*it)->getCurrentOption() == "");
+        }while((*it)->getCurrentOption() == "\n");
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
@@ -739,7 +739,7 @@ bool OptionListScene::control(){
                 auto it = elementList.begin();
                 std::advance(it,n);
 
-                if((*it)->getCurrentOption() == ""){
+                if((*it)->getCurrentOption() == "\n"){
                     if(n + dir >= 0 && n + dir <= options -1){
                         n += dir;
                     }else{
