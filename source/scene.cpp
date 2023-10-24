@@ -526,6 +526,13 @@ void OptionListScene::draw(){
 
         std::string opt = option->getCurrentOption();
 
+        bool offset = false;
+
+        if(opt == "\n"){
+            offset = true;
+            opt = "";
+        }
+
         const int index = (i + listStart) % (elementMax + 2);
 
         if(refreshOption || refreshText){
@@ -544,7 +551,7 @@ void OptionListScene::draw(){
         wordSprites[index]->setPriority(0);
         wordSprites[index]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
 
-        labels[index]->show(startX - 8 * (opt == "\n"), y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
+        labels[index]->show(startX - 8 * offset, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
 
         if(counter == selection){ //draw sprite cursor
             currentOption = option->getLabel();
