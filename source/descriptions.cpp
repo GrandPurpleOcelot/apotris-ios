@@ -30,6 +30,9 @@ std::string getDescription(std::string element){
     }else if(element == "Master"){
         return "Get the highest Grade while the game gets aggressively faster.";
 
+    }else if(element == "Death"){
+        return "Try to survive at brutal speeds.";
+
     }else if(element == "Zen"){
         return "The goal is to relax...";
 
@@ -108,10 +111,19 @@ std::string getDescription(std::string element){
         return "Shows the remaining lines to clear (Pro Mode Only)";
 
     }else if(element == "Rotation System"){
-        return "Changes how minos are rotated.";
+        return "Changes how minos rotate.";
+
+    }else if(element == "Randomizer"){
+        return "Changes the method of generating random minos.";
 
     }else if(element == "Big Mode"){
         return "Minos are twice as big! (Disables Highscores)";
+
+    }else if(element == "Peek Above"){
+        return "Moves the camera up when trying to place near the top of the field.";
+
+    }else if(element == "Unpause Countdown"){
+        return "Enables a grace period countdown when unpausing.";
 
     }
 
