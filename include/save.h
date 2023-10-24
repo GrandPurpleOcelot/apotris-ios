@@ -201,6 +201,7 @@ typedef struct ModeBoards{
     EntryBoard classic[2];
     EntryBoard master[2];
     EntryBoard zone[4];
+    u32 zen;
 }ALIGN(4) ModeBoards;
 
 class Save{

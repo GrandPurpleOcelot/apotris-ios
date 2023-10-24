@@ -527,6 +527,20 @@ class DeathScene : public PlayOptionScene{
     std::string name(){return "Death";};
 };
 
+class ZenScoreElement : public Element{
+    std::string getLabel() override {
+        return "Score";
+    }
+
+    std::string getCurrentOption() override {
+        return std::to_string(savefile->boards.zen);
+    }
+
+    std::string getCursor(std::string text) override {
+        return text;
+    }
+};
+
 class ZenScene : public PlayOptionScene{
     public:
 
@@ -534,6 +548,7 @@ class ZenScene : public PlayOptionScene{
 
     std::list<Element*> getElementList(){
         return {
+            new ZenScoreElement(),
         };
     };
 

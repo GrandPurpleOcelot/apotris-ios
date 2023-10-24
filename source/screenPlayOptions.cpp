@@ -377,7 +377,7 @@ void PlayOptionScene::draw(){
             labels[index]->show(startX, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
 
             if(counter == selection){ //draw sprite cursor
-                currentOption = option->getCurrentOption();
+                currentOption = opt;
                 currentElement = option->getLabel();
                 for(int i = 0; i < 2; i++){
                     sprite_unhide(cursorSprites[i],0);
@@ -821,9 +821,13 @@ void PlayOptionScene::resetScoreboard(){
     }
 
     if(reset){
-        EntryBoard * board = getBoard(subMode, goal);
+        if(getMode() != BlockEngine::ZEN){
+            EntryBoard * board = getBoard(subMode, goal);
 
-        memset32(board, 0, sizeof(EntryBoard) / 4);
+            memset32(board, 0, sizeof(EntryBoard) / 4);
+        }else{
+            savefile->boards.zen = 0;
+        }
 
         saveSavefile();
     }

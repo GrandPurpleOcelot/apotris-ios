@@ -1431,4 +1431,7 @@ void addGameStats(){
     if(game->gameMode == MARATHON && game->level > savefile->stats.maxLevel)
         savefile->stats.maxLevel = game->level;
 
+    if(game->gameMode == ZEN){
+        savefile->boards.zen = game->score;
+    }
 }

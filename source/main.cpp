@@ -981,6 +981,10 @@ void startGame(BlockEngine::Options options,int seed){
     }else if(options.mode == BATTLE && !multiplayer){
         startBotGame(seed);
     }
+
+    if(options.mode == BlockEngine::ZEN){
+        game->score = savefile->boards.zen;
+    }
 }
 
 void startGame(int seed){
