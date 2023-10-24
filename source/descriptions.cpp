@@ -108,7 +108,7 @@ std::string getDescription(std::string element){
         return "Removes clear delays and enables features for advanced players.";
 
     }else if(element == "Goal Line"){
-        return "Shows the remaining lines to clear (Pro Mode Only)";
+        return "Shows the remaining lines to clear.";
 
     }else if(element == "Rotation System"){
         return "Changes how minos rotate.";

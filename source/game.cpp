@@ -3167,7 +3167,7 @@ void updateFluid(){
 }
 
 void showGoalLine(){
-    if(!proMode || !savefile->settings.goalLine)
+    if(!savefile->settings.goalLine)
         return;
 
     int height = 0;
