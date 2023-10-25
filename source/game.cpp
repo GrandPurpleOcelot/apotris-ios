@@ -3167,7 +3167,7 @@ void updateFluid(){
 }
 
 void showGoalLine(){
-    if(!savefile->settings.goalLine)
+    if(!savefile->settings.goalLine || game->clearLock)
         return;
 
     int height = 0;

@@ -22,7 +22,7 @@ LIBTONC := $(DEVKITPRO)/libtonc
 # the makefile is found
 #
 #---------------------------------------------------------------------------------
-TARGET		:= Apotris
+TARGET		:= Apotris-base
 BUILD		:= build/gba
 SOURCES		:= source
 INCLUDES	:= include
@@ -126,7 +126,7 @@ $(BUILD):
 	@rm -rf $(OUTPUT).elf
 	@tools/gbfs $(BUILD)/audio.gbfs data/soundbank.bin data/effect_locations.bin
 	@tools/padbin 256 $(OUTPUT).gba
-	@cat $(OUTPUT).gba $(BUILD)/audio.gbfs > $(dir $(OUTPUT))Apotris_Audio.gba
+	@cat $(OUTPUT).gba $(BUILD)/audio.gbfs > $(dir $(OUTPUT))Apotris.gba
 # @tools/padbin 0x400000 $(dir $(OUTPUT))Apotris_Audio.gba
 	@rm $(BUILD)/audio.gbfs
 
