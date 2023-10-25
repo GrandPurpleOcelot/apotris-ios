@@ -2719,7 +2719,13 @@ void Game::checkSecretGrade(){
 }
 
 void Game::calculatePeek(){
-    peek = max(lengthY - (stackHeight+1) - (pawn.lowest + pawn.heighest[pawn.rotation]),0);
+    //height of the pawn's heighest block
+    const int heighestBlock = pawn.lowest + pawn.heighest[pawn.rotation];
+
+    //increase this to make peek kick in lower
+    const int height = 3;
+
+    peek = max((lengthY/2 + height) - (heighestBlock),0);
 }
 
 void Game::setRandomizer(int rand){
