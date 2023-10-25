@@ -1008,6 +1008,7 @@ void startBotGame(int seed){
     delete botGame;
     botGame = new Game(BATTLE,seed & 0x1fff,false);
     botGame->setGoal(100);
+    botGame->setRandomizer(previousGameOptions->randomizer);
     game->setTuning(getTuning());
     botGame->setLevel(1);
     botGame->maxClearDelay = 20;
