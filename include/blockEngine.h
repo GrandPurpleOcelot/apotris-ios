@@ -204,10 +204,10 @@ namespace BlockEngine
                 maxCombo = old.maxCombo;
 
             if(old.maxZonedLines > maxZonedLines)
-                maxZonedLines += old.maxZonedLines;
+                maxZonedLines = old.maxZonedLines;
 
             if(old.secretGrade > secretGrade)
-                secretGrade += old.secretGrade;
+                secretGrade = old.secretGrade;
         }
     };
 
