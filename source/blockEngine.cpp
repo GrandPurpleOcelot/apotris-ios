@@ -2109,11 +2109,12 @@ void Game::activateZone(int dir){
     if(!dir)
         return;
 
-    if(zoneCharge < 8 && !DIAGNOSE)
-        return;
+    #ifdef DIAGNOSE
+    zoneCharge = 32;
+    #endif
 
-    if(DIAGNOSE)
-        zoneCharge = 32;
+    if(zoneCharge < 8)
+        return;
 
     fullZone = (zoneCharge == 32);
 

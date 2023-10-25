@@ -713,9 +713,9 @@ void setLightMode() {
 }
 
 void diagnose() {
-    if (!DIAGNOSE)
-        return;
-
+    #ifndef DIAGNOSE
+    return;
+    #endif
 }
 
 void setPalette(){

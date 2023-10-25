@@ -73,8 +73,9 @@ void showSprites(int count){
 
 void platformInit(){
 
-    if(DIAGNOSE)
-        logInitMgba();
+    #ifdef DIAGNOSE
+    logInitMgba();
+    #endiff
 
     if(ENABLE_FLASH_SAVE)
         flash_init();

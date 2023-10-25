@@ -28,8 +28,9 @@ static void logOutputMgba(u8 level, const char *message)
 }
 
 static inline void log(int n){
-    if(!DIAGNOSE)
-        return;
+    #ifndef DIAGNOSE
+    return;
+    #endif
 
     std::string str = std::to_string(n);
 
@@ -37,8 +38,10 @@ static inline void log(int n){
 }
 
 static inline void log(std::string str){
-    if(!DIAGNOSE)
-        return;
+    #ifndef DIAGNOSE
+    return;
+    #endif
+
     logOutputMgba(4, str.c_str());
 }
 
