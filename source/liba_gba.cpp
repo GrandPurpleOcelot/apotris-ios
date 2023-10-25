@@ -75,7 +75,7 @@ void platformInit(){
 
     #ifdef DIAGNOSE
     logInitMgba();
-    #endiff
+    #endif
 
     if(ENABLE_FLASH_SAVE)
         flash_init();
