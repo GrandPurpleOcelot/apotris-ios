@@ -476,23 +476,13 @@ int edges[16] = {
     0x0019,//all
 };
 
-void clearBackground(int offset){
-    // if(previousHeight < offset){
-    //     for(int i = previousHeight; i < offset; i++)
-    //         for(int j = 0; j < 10; j++)
-    //             setTile(25, 10 + j, i - 1, 0);
-    // }
-
-    // previousHeight = offset;
-}
-
 void showBackground(int offset) {
     bool showEdges = savefile->settings.edges;
 
     bool up, down, left, right;
     bool before = false, after = false;
 
-    int startY = 20-offset;
+    int startY = 20 - (offset * (1 + game->pawn.big));
 
     const int clearTile = tileBuild(3, false, false, savefile->settings.lightMode);
 
@@ -557,8 +547,6 @@ void showBackground(int offset) {
         }
 
         if(savefile->settings.clearEffect == 3){
-            clearBackground(offset);
-
             return;
         }
 
@@ -587,8 +575,8 @@ void showBackground(int offset) {
         }
 
     }else{
-        for (int i = startY; i < 40 && (i - 20 + offset) < 20; i++) {
-            int y = i - 20 + offset;
+        for (int i = startY; i < 40 && (i - 20 + offset * 2) < 20; i++) {
+            int y = i - 20 + offset * 2;
 
             if(game->bitboard[i/2] == 0 && !(i/2 < game->lengthY - 1 && game->bitboard[i/2+1] != 0)){
                 for(int j = 0; j < 10; j++)
@@ -647,13 +635,11 @@ void showBackground(int offset) {
         }
 
         if(savefile->settings.clearEffect == 3){
-            clearBackground(offset);
-
             return;
         }
 
         for(auto const& line : game->linesToClear){
-            int l = line*2 - 20 + offset;
+            int l = line*2 - 20 + offset * 2;
 
             for(int y = l; y < l+2; y++){
                 if(savefile->settings.clearDirection == 0){
@@ -678,8 +664,6 @@ void showBackground(int offset) {
             }
         }
     }
-
-    clearBackground(offset);
 }
 
 void showPawn() {
@@ -1799,12 +1783,14 @@ void drawGrid() {
     setTiles(26,20*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     #endif
 
+    int peekAmount = peek * (1 + game->pawn.big);
+
     if(savefile->settings.effects < 2){
         u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer));
 
         for (int i = 0; i < 20; i++) {
             for (int j = 0; j < 10; j++) {
-                if(i < peek) {
+                if(i < peekAmount ) {
                     setTile(26, 10 + j, i, tileBuild(gridTile, false, false, 15));
                     if(glow[i][j] > 0)
                         glow[i][j]--;
@@ -1829,7 +1815,7 @@ void drawGrid() {
     }else if(savefile->settings.effects == 2){
         for(int i = 0; i < 20; i++){
             for(int j = 0; j < 10; j++){
-                if(i < peek)
+                if(i < peekAmount)
                     setTile(26, j + 10, i, tileBuild(gridTile,false,false,15));
                 else
                     setTile(26, j + 10, i, tileBuild(gridTile,false,false,prep(current[i+1][j+1])));
