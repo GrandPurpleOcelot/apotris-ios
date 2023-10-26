@@ -1303,7 +1303,7 @@ void GameScene::showComboStreak(){
 
             // aprint("x", 24, clearTextHeight + 2);
             // aprintf(game->b2bCounter + 1, 25, clearTextHeight + 2);
-            wordSprites[11].setText("x" + std::to_string(game->b2bCounter + 1));
+            wordSprites[11].setText("x" + std::to_string(game->b2bCounter));
             wordSprites[11].show(21 * 8 + 4, (clearTextHeight + 3) * 8,15);
         } else {
             // aprintClearArea(20, clearTextHeight + 1, 10, 2);
@@ -1377,7 +1377,7 @@ void addGlow(BlockEngine::Drop location) {
         }
     }
 
-    if (game->comboCounter >= 0 || game->zoneTimer) {
+    if (game->comboCounter > 0 || game->zoneTimer) {
         int xCenter = (location.endX - location.startX) / 2 + location.startX;
         if (game->previousClear.isTSpin) {
             for (int i = 0; i < 20; i++)
