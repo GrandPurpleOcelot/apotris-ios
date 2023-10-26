@@ -594,4 +594,8 @@ void loadAudio(){
     buildEffectLocations();
 }
 
+void enableLayerWindow(int layer, int x1, int y1, int x2, int y2, bool invert){}
+
+void disableLayerWindow(int layer){}
+
 #endif

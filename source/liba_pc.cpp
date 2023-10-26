@@ -865,4 +865,12 @@ uint8_t customBlend(uint8_t a, uint8_t b){
     return (a + b + b + b + b) /5;
 }
 
+void enableLayerWindow(int layer, int x1, int y1, int x2, int y2, bool invert){
+    TLN_SetLayerWindow(layerInfo[layer].id, x1 + offsetx, y1 + offsety, x2 + offsetx, y2 + offsety, invert);
+}
+
+void disableLayerWindow(int layer){
+    TLN_DisableLayerWindow(layerInfo[layer].id);
+}
+
 #endif

@@ -107,6 +107,10 @@ extern void color_adj_MEM(COLOR * dst, const COLOR * src, u32 count, u32 bright)
 
 extern void addColorToPalette(int palette, int index, COLOR color, int count);
 
+extern void enableLayerWindow(int layer, int x1, int y1, int x2, int y2, bool invert);
+
+extern void disableLayerWindow(int layer);
+
 extern void sleep();
 
 extern void sfx(int sound);
