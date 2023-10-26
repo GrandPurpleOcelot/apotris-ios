@@ -1117,10 +1117,10 @@ void GameScene::showTimer() {
 
     if(game->trainingMode){
         wordSprites[4].setText("Finesse");
-        wordSprites[4].show(2 * 8, 14 * 8,15);
+        wordSprites[4].show(9 * 8 - wordSprites[4].width, 14 * 8,15);
 
         wordSprites[5].setTextNum(game->finesseFaults);
-        wordSprites[5].show(5 * 8, 15 * 8,15);
+        wordSprites[5].show(9 * 8 - wordSprites[5].width, 15 * 8,15);
     }
 
     if(proMode){
