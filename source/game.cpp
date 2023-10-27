@@ -2843,6 +2843,9 @@ void replayControl(){
         case 7:
             game->keyDrop(dir);
             break;
+        case 8:
+            game->activateZone(dir);
+            break;
         }
 
         ++replayIterator;

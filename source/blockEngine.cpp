@@ -2109,6 +2109,8 @@ void Game::activateZone(int dir){
     if(!dir)
         return;
 
+    replay.push_back(Timestamp(timer, 8,dir));
+
     #ifdef DIAGNOSE
     zoneCharge = 32;
     #endif
