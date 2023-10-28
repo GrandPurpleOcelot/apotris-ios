@@ -159,7 +159,7 @@ void sceneSwitcher(std::string str){
         changeScene(new ZenScene(),Transitions::FADE);
     }else if(str == "2P Battle"){
         changeScene(new MultBattleScene(),Transitions::FADE);
-    }else if(str == "CPU Battle"){
+    }else if(str == "CPU Battle" || str == "Battle"){
         changeScene(new CPUBattleScene(),Transitions::FADE);
     }else if(str == "Training"){
         changeScene(new TrainingScene(),Transitions::FADE);
