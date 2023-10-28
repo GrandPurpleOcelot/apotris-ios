@@ -141,6 +141,7 @@ FIXED peekValue = 0;
 int peekShift = 0;
 bool refresh = false;
 
+int goalLineHeight = 0;
 
 void GameScene::draw(){
     // std::string prof;
@@ -3167,10 +3168,8 @@ void updateFluid(){
 }
 
 void showGoalLine(){
-    if(!savefile->settings.goalLine || game->clearLock)
+    if(!savefile->settings.goalLine)
         return;
-
-    int height = 0;
 
     const int gm = game->gameMode;
 
@@ -3192,7 +3191,8 @@ void showGoalLine(){
     }
 
     if(remaining < 20 && remaining > 0){
-        height = 20 - remaining;
+        if(!game->clearLock)
+            goalLineHeight = 20 - remaining;
     }else{
         return;
     }
@@ -3213,7 +3213,7 @@ void showGoalLine(){
 
         sprite_unhide(sprite, 0);
         sprite_set_attr(sprite, ShapeWide, 2, 280, 8, 1);
-        sprite_set_pos(sprite, (10 + 3 * i) * 8 + push * savefile->settings.shake, height * 8 - 1 + shake * savefile->settings.shake + peekShift + peek * 8);
+        sprite_set_pos(sprite, (10 + 3 * i) * 8 + push * savefile->settings.shake, goalLineHeight * 8 - 1 + shake * savefile->settings.shake + peekShift + peek * 8);
     }
 }
 
