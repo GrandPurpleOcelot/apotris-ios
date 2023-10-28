@@ -195,10 +195,13 @@ void updateWindow(u8 *framebuffer){
                     sf::VideoMode mode = sf::VideoMode::getDesktopMode();
 
                     window.create(mode, "Apotris PC",sf::Style::Fullscreen);
+
+                    resize(mode.width, mode.height);
                 }else{
                     window.create(sf::VideoMode(windowWidth * windowScale, windowHeight * windowScale), "Apotris PC");
-                }
 
+                    resize(windowWidth * windowScale, windowHeight * windowScale);
+                }
             }
         }
     }
