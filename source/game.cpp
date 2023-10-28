@@ -1859,6 +1859,16 @@ void progressBar(int layer) {
         if(layer >= 0){
             setTile(l,20,20,tileBuild(33,false,false,8));// right bottom frame corner
             setTile(l,9,20,tileBuild(29,false,true,8));// left bottom frame corner
+        }else{
+
+            u32 * src = (u32*)sprite42tiles_bin;
+
+            TILE tile;
+            for(int i = 0; i < 8; i++)
+                tile.data[i] = src[7-i];
+
+            //board frame corners
+            loadSpriteTilesPartial(248, &tile, 3, 0, 1, 1, 4);
         }
     }else{
         if (++attackFlashTimer > attackFlashMax)
@@ -1878,8 +1888,17 @@ void progressBar(int layer) {
         //attack bar
         showBar(game->getIncomingGarbage(), 20, 9, 8, layer);
 
-        if(layer >= 0)
+        if(layer >= 0){
             setTile(l,9,20,tileBuild(33,true,false,8)); // left bottom frame corner
+        }else{
+            u32 * src = (u32*)sprite54tiles_bin;
+
+            TILE tile;
+            for(int i = 0; i < 8; i++)
+                tile.data[i] = src[7-i];
+
+            loadSpriteTilesPartial(237, &tile, 3, 0, 1, 1, 4);
+        }
     }
 }
 
