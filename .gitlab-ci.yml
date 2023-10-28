@@ -21,6 +21,7 @@ build:
 
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
+    NO_DIAGNOSE: -DNO_DIAGNOSE
   script:
     - make
   artifacts:
