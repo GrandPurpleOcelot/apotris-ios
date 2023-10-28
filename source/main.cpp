@@ -296,6 +296,10 @@ void reset() {
     shakeVelocity = 0;
     push = 0;
 
+    peek = 0;
+    peekValue = 0;
+    peekShift = 0;
+
     floatingList.clear();
     placeEffectList.clear();
     rumbleTimer = 0;

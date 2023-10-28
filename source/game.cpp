@@ -2860,8 +2860,6 @@ void GameScene::init(){
     //     loadSpriteTiles(i, &d, 1, 1);
 
     reset();
-    peek = 0;
-    peekValue = 0;
 
     previousSettings = savefile->settings;
 

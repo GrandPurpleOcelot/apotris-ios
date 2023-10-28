@@ -303,6 +303,10 @@ extern int damp;
 extern int dampTimer;
 extern int dampTimerMax;
 
+extern int peek;
+extern FIXED peekValue;
+extern int peekShift;
+
 extern MenuKeys menuKeys;
 
 class Function{
