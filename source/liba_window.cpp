@@ -203,6 +203,7 @@ void updateWindow(u8 *framebuffer){
         }
     }
 
+    #ifndef NO_DIAGNOSE
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Tab)){
         window.setFramerateLimit(2000);
 
@@ -218,6 +219,8 @@ void updateWindow(u8 *framebuffer){
         if(currentSong >= 0)
             musicArray[currentSong].setPitch(1);
     }
+
+    #endif
 
     auto it = soundList.begin();
 
