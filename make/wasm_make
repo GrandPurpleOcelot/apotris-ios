@@ -10,7 +10,7 @@ export AS = emcc
 
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O3 -Wno-array-bounds
-PRE_FLAGS := -MMD -MP -DWEB -DTE \
+PRE_FLAGS := -MMD -MP -DWEB -DTE $(NO_DIAGNOSE)\
 			-s USE_SDL=2 -s USE_SDL_MIXER=2
 
 # Project directory structure
@@ -32,7 +32,7 @@ BUILD := build/$(PLATFORM)
 EXT_LIB :=
 LDFLAGS := 	external/Tilengine/src/build/$(PLATFORM)/libTilengine.a \
 			external/soloud/lib/$(PLATFORM)/libsoloud.a \
-		   	--profiling -s USE_SDL=2 -s USE_SDL_MIXER=2 -s ASYNCIFY -lidbfs.js \
+		   	-s USE_SDL=2 -s USE_SDL_MIXER=2 -s ASYNCIFY -lidbfs.js \
 			-s ALLOW_MEMORY_GROWTH \
 		   	--preload-file $(ASSETS_PATH)
 

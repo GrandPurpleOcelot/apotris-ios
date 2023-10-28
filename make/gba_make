@@ -40,7 +40,7 @@ ARCH	:=	-mthumb -mthumb-interwork
 CFLAGS	:=	-g -Wall -O2\
 		-mcpu=arm7tdmi -mtune=arm7tdmi\
 		$(ARCH)\
-		-DGBA
+		-DGBA $(NO_DIAGNOSE)
 
 CFLAGS	+=	$(INCLUDE)
 

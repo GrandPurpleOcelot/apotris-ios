@@ -28,7 +28,7 @@ static void logOutputMgba(u8 level, const char *message)
 }
 
 static inline void log(int n){
-    #ifndef DIAGNOSE
+    #ifdef NO_DIAGNOSE
     return;
     #endif
 
@@ -38,7 +38,7 @@ static inline void log(int n){
 }
 
 static inline void log(std::string str){
-    #ifndef DIAGNOSE
+    #ifdef NO_DIAGNOSE
     return;
     #endif
 

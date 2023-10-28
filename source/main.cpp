@@ -713,7 +713,7 @@ void setLightMode() {
 }
 
 void diagnose() {
-    #ifndef DIAGNOSE
+    #ifdef NO_DIAGNOSE
     return;
     #endif
 }

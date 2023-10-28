@@ -73,7 +73,7 @@ void showSprites(int count){
 
 void platformInit(){
 
-    #ifdef DIAGNOSE
+    #ifndef NO_DIAGNOSE
     logInitMgba();
     #endif
 

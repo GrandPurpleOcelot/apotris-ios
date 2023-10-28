@@ -54,7 +54,7 @@ ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
 CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES) \
-			-DSWITCH -DTE
+			-DSWITCH -DTE $(NO_DIAGNOSE)
 
 CFLAGS	+=	-D__SWITCH__ $(INCLUDE) `$(PREFIX)pkg-config --cflags sdl2 SDL2_mixer`
 

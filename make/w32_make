@@ -9,7 +9,7 @@ export PLATFORM = w32
 
 # Pre-compiler and Compiler flags
 CXX_FLAGS := -Wall -O2 -Wno-array-bounds
-PRE_FLAGS := -MMD -MP -DPC -DTE
+PRE_FLAGS := -MMD -MP -DPC -DTE $(NO_DIAGNOSE)
 
 # Project directory structure
 BIN := bin/windows
