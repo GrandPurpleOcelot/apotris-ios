@@ -356,7 +356,7 @@ void SimpleListScene::update(){
         if(!endDelay){
             scrollOffset = 0;
             scrollDelay = 0;
-            clearSpriteTiles(672, scrollTextLength / 8 , 1);
+            clearSpriteTiles(672, scrollTextLength / 8 + 1, 1);
             scrollingText[0]->setTextSlow(scrollText);
         }
     }else if(scrollDelay < scrollDelayMax){
@@ -833,7 +833,7 @@ void OptionListScene::update(){
         if(!endDelay){
             scrollOffset = 0;
             scrollDelay = 0;
-            clearSpriteTiles(672, scrollTextLength / 8 , 1);
+            clearSpriteTiles(672, scrollTextLength / 8 + 1, 1);
             scrollingText[0]->setTextSlow(scrollText);
         }
     }else if(scrollDelay < scrollDelayMax){

@@ -105,7 +105,7 @@ public:
             timer = 0;
 
             int counter = count;
-            while(counter--){
+            while((w <= 244+scroll) && counter--){
                 std::string c = text.substr(cursor,1);
 
                 naprintSpriteOffset(c, startTiles, w);
