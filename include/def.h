@@ -127,8 +127,6 @@ extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
 extern void progressBar(int layer);
 
-extern void screenShake();
-
 extern void saveToSram();
 extern void addToResults(int,int);
 

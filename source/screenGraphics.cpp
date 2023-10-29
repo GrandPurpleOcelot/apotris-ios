@@ -10,6 +10,8 @@
 
 using namespace BlockEngine;
 
+static void screenShake();
+
 void setClearEffect(){
     switch(savefile->settings.clearEffect){
     case 0:
@@ -521,6 +523,7 @@ void GraphicsScene::init(){
     game->setGoal(0);
     game->setLevel(1);
     game->rotationSystem = SRS;
+    game->setRandomizer(BlockEngine::Randomizers::BAG_7);
 
     game->update();
 
@@ -1013,4 +1016,64 @@ void GraphicsScene::deinit(){
 
     for (int i = 0; i < 3; i++)
         delete scrollingText[i];
+
+    disableLayerWindow(0);
+    disableLayerWindow(1);
+}
+
+void screenShake() {
+    // int scroll = 0;
+    // if(clearTimer){
+    //     int n = game->previousClear.linesCleared;
+
+    //     FIXED s = fxdiv(int2fx(8 * n * clearTimer),int2fx(maxClearTimer));
+
+    //     scroll = fx2int(s);
+    // }
+
+    setLayerScroll(0, -push, -(shake + peekShift));
+    setLayerScroll(1, -push, -(shake + peekShift));
+
+    if(savefile->settings.screenShakeType == 0){
+        if (shake) {
+            if (shake > 0)
+                shake--;
+            else
+                shake++;
+            shake *= -1;
+        }
+
+    }else if(savefile->settings.screenShakeType == 1){
+        shake = fx2int(shakeBuff);
+        const FIXED deccel = float2fx(0.768);
+        if(shakeBuff){
+
+            shakeBuff = fxmul(shakeBuff,deccel);
+
+            if(abs(shakeBuff) < int2fx(1))
+                shakeBuff = 0;
+        }
+
+        if(shakeVelocity){
+            shakeBuff += shakeVelocity;
+            shakeVelocity = fxmul(shakeVelocity, deccel);
+            if(shakeVelocity <= 0){
+                shakeVelocity = 0;
+            }
+
+            if(shake >= (shakeMax * (savefile->settings.shakeAmount) / 4)){
+                shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+            }
+        }
+    }
+
+    if (game->pushDir != 0) {
+        if (abs(push) < pushMax * (savefile->settings.shakeAmount)/4)
+            push += game->pushDir * (1 + (savefile->settings.shakeAmount > 2));
+    } else {
+        if (push > 0)
+            push--;
+        else if (push < 0)
+            push++;
+    }
 }

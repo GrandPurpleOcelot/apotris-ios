@@ -45,11 +45,10 @@ void liftKeys();
 void setJourneyGraphics(Save * save, int level);
 void replayControl();
 void checkPeek();
-
 void showSpawn();
+static void screenShake();
 
 INLINE int prep(int n);
-
 IWRAM_CODE void updateGrid();
 
 Game* game = nullptr;
@@ -885,7 +884,6 @@ void showHold() {
 void showQueue() {
     int maxQueue = savefile->settings.maxQueue;
 
-
     if(game->gameMode == CLASSIC)
         maxQueue = 1;
     else if(game->gameMode == MASTER || game->gameMode == DEATH)
@@ -1524,9 +1522,6 @@ void GameScene::countdown() {
 }
 
 void screenShake() {
-    if (!savefile->settings.shake)
-        return;
-
     // int scroll = 0;
     // if(clearTimer){
     //     int n = game->previousClear.linesCleared;
