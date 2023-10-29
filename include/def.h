@@ -285,6 +285,7 @@ extern bool replaying;
 
 extern bool enableBot;
 extern bool demo;
+extern bool handlingTest;
 
 extern int current[22][12];
 extern int previous[22][12];

@@ -114,19 +114,6 @@ const std::list<std::string> menuControlOptions = {
     "Special 3",
 };
 
-
-std::map<int,std::string> keyMap = {
-    {KEY_LEFT,"Left"},
-    {KEY_RIGHT,"Right"},
-    {KEY_UP,"Up"},
-    {KEY_DOWN,"Down"},
-    {KEY_A,"A"},
-    {KEY_B,"B"},
-    {KEY_L,"L"},
-    {KEY_R,"R"},
-    {KEY_SELECT,"Select"},
-};
-
 void initialize(){
     initRumble();
 
@@ -1087,7 +1074,7 @@ std::string getStringFromKey(int key){
     std::string result;
 
     if((key & (key - 1)) == 0){
-        result = keyMap[key];
+        result = keyToString[key];
     }else{
 
         int k = key;
@@ -1095,7 +1082,7 @@ std::string getStringFromKey(int key){
         int counter = 0;
         do{
             if(k & (1 << counter)){
-                result+= keyMap[1<<counter] + " ";
+                result+= keyToString[1<<counter] + " ";
                 k-= 1 << counter;
             }
 

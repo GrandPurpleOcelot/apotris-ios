@@ -15,6 +15,7 @@
 #include "logging.h"
 #include "posprintf.h"
 #include "scene.hpp"
+#include "sceneHandling.hpp"
 
 using namespace BlockEngine;
 
@@ -142,6 +143,8 @@ int peekShift = 0;
 bool refresh = false;
 
 int goalLineHeight = 0;
+
+bool handlingTest = false;
 
 void GameScene::draw(){
     // std::string prof;
@@ -1007,6 +1010,12 @@ bool GameScene::control() {
     Keys k = savefile->settings.keys;
     MenuKeys m = savefile->settings.menuKeys;
 
+    if(handlingTest && key_hit(m.pause)){
+        exitGame = true;
+
+        return true;
+    }
+
     if (key_hit(m.pause) && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
         paused = true;
@@ -1109,7 +1118,7 @@ bool GameScene::control() {
 }
 
 void GameScene::showTimer() {
-    if (!(game->gameMode == TRAINING || game->gameMode == ZEN || demo)) {
+    if (!(game->gameMode == TRAINING || game->gameMode == ZEN || demo || handlingTest)) {
 
         std::string timer = timeToString(gameSeconds, savefile->settings.aspectRatio);
         aprintClearArea(0, 1, 10, 1);
@@ -1134,6 +1143,20 @@ void GameScene::showTimer() {
             aprint("DEMO", x, 1);
         else
             aprint("    ", x, 1);
+    }
+
+    if(handlingTest){
+        const int x = (savefile->settings.aspectRatio == 0)? 1 : 3;
+        if(frameCounter % 60 < 30){
+            wordSprites[0].setText("Press");
+            wordSprites[0].show(x * 8, 1 * 8, 15);
+
+            wordSprites[1].setText(keyToString[savefile->settings.menuKeys.pause]);
+            wordSprites[1].show(x * 8, 2 * 8, 15);
+
+            wordSprites[2].setText("to exit");
+            wordSprites[2].show(x * 8, 3 * 8, 15);
+        }
     }
 }
 
@@ -1418,6 +1441,9 @@ void clearGlow() {
 void GameScene::countdown() {
     int timer = 0;
     int timerMax = 120;
+
+    if(handlingTest)
+        timer = timerMax;
 
     push = 0;
     shake = 0;
@@ -2986,9 +3012,16 @@ void GameScene::update(){
     diagnose();
 
     if(exitGame){
-        changeScene(new newTitleScene(),Transitions::FADE);
+
+        if(handlingTest){
+            handlingTest = false;
+            changeScene(new HandlingOptionScene(), Transitions::FADE);
+        }else{
+            enableBot = false;
+            changeScene(new newTitleScene(),Transitions::FADE);
+        }
+
         exitGame = false;
-        enableBot = false;
         return;
     }
 
@@ -3165,6 +3198,8 @@ void GameScene::deinit(){
 
     disableLayerWindow(0);
     disableLayerWindow(1);
+
+    clearText();
 }
 
 void updateFluid(){

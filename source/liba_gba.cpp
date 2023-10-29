@@ -598,4 +598,17 @@ void enableLayerWindow(int layer, int x1, int y1, int x2, int y2, bool invert){}
 
 void disableLayerWindow(int layer){}
 
+std::map<int,std::string> keyToString = {
+    {KEY_LEFT,"Left"},
+    {KEY_RIGHT,"Right"},
+    {KEY_UP,"Up"},
+    {KEY_DOWN,"Down"},
+    {KEY_A,"A"},
+    {KEY_B,"B"},
+    {KEY_L,"L"},
+    {KEY_R,"R"},
+    {KEY_START,"Start"},
+    {KEY_SELECT,"Select"},
+};
+
 #endif

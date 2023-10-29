@@ -387,4 +387,5 @@ class HandlingOptionScene : public OptionListScene{
         };
 
     Scene* previousScene(){return new SettingsScene();};
+    bool control();
 };

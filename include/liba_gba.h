@@ -6,6 +6,7 @@
 /* #include "soundbank.h" */
 #include "posprintf.h"
 #include "LinkConnection.h"
+#include <map>
 
 static inline void setTile(int sbb, int x, int y, uint32_t value){
     se_mem[sbb][y * 32 + x] = value & 0xffff;
@@ -96,5 +97,7 @@ INLINE int ewramHeapUsage(){
 }
 
 extern u16 gradientTable[192 + 1];
+
+extern std::map<int,std::string> keyToString;
 
 #define UNBOUND 0
