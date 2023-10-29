@@ -73,6 +73,8 @@ void QRScene::init(){
 
     const int qrTile = 300;
 
+    clearSpriteTiles(qrTile, 8, 8);
+
     sprite_unhide(qr,0);
     sprite_set_attr(qr, ShapeSquare, 3, qrTile, 0, 1);
     sprite_enable_affine(qr, 8, true);
