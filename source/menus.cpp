@@ -51,6 +51,7 @@ const std::string modeStrings[] = {
     "Master",
     "Training",
     "Zen",
+    "Death",
 };
 
 const std::string modeOptionStrings[][4] = {
@@ -66,6 +67,7 @@ const std::string modeOptionStrings[][4] = {
     {"Normal","Classic"},
     {""},
     {""},
+    {"Normal","Classic"},
 };
 
 void songListMenu() {
@@ -1101,7 +1103,7 @@ int onRecord() {
 }
 
 void GameScene::showModeText(){
-    if(game->gameMode > 0 && game->gameMode <= 12){
+    if(game->gameMode > 0 && game->gameMode <= 13){
         int counter = 0;
         std::string str;
         std::string str2;
