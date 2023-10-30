@@ -1810,9 +1810,13 @@ void drawGrid() {
         default: gridTile = 0x0002; break;
     }
 
+    bool wrap = false;
+
     #ifdef GBA
     setTiles(26,31*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
     setTiles(26,20*32+10, 10, tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer)));
+
+    wrap = true;
     #endif
 
     int peekAmount = peek * (1 + game->pawn.big);
@@ -1825,7 +1829,7 @@ void drawGrid() {
                 if(i < peekAmount ) {
                     if(i >= 0 && glow[i][j] > 0)
                         glow[i][j]--;
-                    setTile(26, 10 + j, i + ((i < 0)? 32 : 0), tileBuild(gridTile, false, false, 15));
+                    setTile(26, 10 + j, i + ((wrap && i < 0)? 32 : 0), tileBuild(gridTile, false, false, 15));
                 } else if (glow[i][j] == 0 || !savefile->settings.effects) {
                     setTile(26, 10 + j, i, t);
                 } else if (i >= 0 && glow[i][j] > glowDuration) {
@@ -1845,7 +1849,7 @@ void drawGrid() {
             }
         }
     }else if(savefile->settings.effects == 2){
-        for(int i = 0; i < 20; i++){
+        for(int i = -2; i < 20; i++){
             for(int j = 0; j < 10; j++){
                 if(i < peekAmount)
                     setTile(26, j + 10, i, tileBuild(gridTile,false,false,15));

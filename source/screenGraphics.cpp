@@ -1034,6 +1034,9 @@ void screenShake() {
     setLayerScroll(0, -push, -(shake + peekShift));
     setLayerScroll(1, -push, -(shake + peekShift));
 
+    enableLayerWindow(0, 0, shake, 240, 168 + shake, false);
+    enableLayerWindow(1, 0, shake, 240, 168 + shake, false);
+
     if(savefile->settings.screenShakeType == 0){
         if (shake) {
             if (shake > 0)
