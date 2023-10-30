@@ -1826,10 +1826,14 @@ void drawGrid() {
 
         for (int i = -2; i < 20; i++) {
             for (int j = 0; j < 10; j++) {
-                if(i < peekAmount ) {
+                if(i < peekAmount) {
                     if(i >= 0 && glow[i][j] > 0)
                         glow[i][j]--;
-                    setTile(26, 10 + j, i + ((wrap && i < 0)? 32 : 0), tileBuild(gridTile, false, false, 15));
+
+                    if(peekValue)
+                        setTile(26, 10 + j, i + ((wrap && i < 0)? 32 : 0), tileBuild(gridTile, false, false, 15));
+                    else
+                        setTile(26, 10 + j, (32+i)&31, t);
                 } else if (glow[i][j] == 0 || !savefile->settings.effects) {
                     setTile(26, 10 + j, i, t);
                 } else if (i >= 0 && glow[i][j] > glowDuration) {
