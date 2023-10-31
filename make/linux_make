@@ -1,12 +1,14 @@
 #!/usr/bin/env make
 
-export CC = gcc
-export AR = ar
+export CC ?= gcc
+export AR ?= ar
 
 export PLATFORM = linux
 
+export PATH := $(PATH):tools
+
 # Pre-compiler and Compiler flags
-CXX_FLAGS := -Wall -O2 -Wno-array-bounds
+CXXFLAGS  := -Wall -O2 -Wno-array-bounds $(CXXFLAGS)
 PRE_FLAGS := -MMD -MP -DPC -DTE $(NO_DIAGNOSE)
 
 # Project directory structure
@@ -25,8 +27,8 @@ BUILD := build/$(PLATFORM)
 
 # Library search directories and flags
 EXT_LIB := external/Tilengine/src/build/$(PLATFORM)
-LDFLAGS := -lTilengine -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lmodplug
-LDPATHS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB))
+LDLIBS  := -lTilengine -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lmodplug $(LDLIBS)
+LDFLAGS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB)) $(LDFLAGS)
 
 # Include directories
 INC_DIRS := $(INC) $(shell find $(SRC) -type d) $(BUILD) $(DATA)
@@ -64,7 +66,7 @@ build: all
 all: libTilengine.a $(TARGET) $(ASSETS) $(ICON) $(LIBFILES)
 
 libTilengine.a:
-	@cd external/Tilengine/src && $(MAKE)
+	@$(MAKE) -C external/Tilengine/src
 
 $(ICON) : $(ICON_FILE)
 
@@ -72,17 +74,17 @@ $(ICON) : $(ICON_FILE)
 $(TARGET): $(OBJS)
 	@echo "Building..."
 	@mkdir -p $(dir $@)
-	@$(CXX) $(OBJS) -o $@ $(LDPATHS) $(LDFLAGS) -Wl,-rpath lib
+	@$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Compile all cpp files
 $(BUILD)/%.o: $(SRC)/%.cpp
 	@mkdir -p $(dir $@)
 	@echo $(notdir $<)
-	@$(CXX) $(CXX_FLAGS) $(PRE_FLAGS) $(INC_FLAGS) -c -o $@ $< $(LDPATHS) $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS) $(PRE_FLAGS) $(INC_FLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(BUILD)/%.bin.o $(BUILD)/%_bin.h : $(DATA)/%.bin
 	@mkdir -p $(dir $@)
-	@tools/bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
+	@bin2s -a 4 -H `(echo $(BUILD)/$(<F) | tr . _)`.h $< | $(AS) -o $(BUILD)/$(<F).o
 
 $(ASSETS_PATH)/% : $(MUSIC)/% external/bloom.glsl
 	@mkdir -p $(dir $@)
