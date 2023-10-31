@@ -18,9 +18,6 @@ void QRScene::init(){
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i,64 + i * 5, 256 + i * 20, true);
 
-    //faded Text Palette
-    color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
-
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 
     if(name() != ""){

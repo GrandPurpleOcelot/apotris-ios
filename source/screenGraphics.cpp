@@ -452,10 +452,6 @@ void GraphicsScene::init(){
         sprite_hide(arrowSprites[i]);
     }
 
-    //faded Text Palette
-    color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
-    color_fade_palette(13, 0, &palette[1][14*16], 0, 8, 15);
-
     if(name() != ""){
         bool found = false;
         int count = 0;

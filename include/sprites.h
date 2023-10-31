@@ -66,3 +66,5 @@ extern const uint8_t * meterTiles[4];
 extern const uint16_t nesPalette[10][4];
 extern const uint16_t monoPalette[2][4];
 extern const uint16_t arsPalette[2][8][4];
+
+extern const uint16_t fontPalettes[2][2][5];

@@ -664,7 +664,7 @@ void color_adj_MEM(COLOR *dst, const COLOR *src, u32 count, u32 bright){
 
 }
 
-void color_adj_brightness(int palette, int index, const COLOR *src, u32 count, u32 bright){
+void color_adj_brightness(int palette, int index, const COLOR *src, u32 count, FIXED bright){
     COLOR dst[count];
 
     color_adj_MEM(dst, src, count, bright);

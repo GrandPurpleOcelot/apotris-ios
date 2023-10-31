@@ -203,7 +203,7 @@ void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alph
     clr_fade(src,color,dst,count,alpha);
 }
 
-void color_adj_brightness(int palette, int index, const COLOR * src, u32 count, u32 alpha){
+void color_adj_brightness(int palette, int index, const COLOR * src, u32 count, FIXED alpha){
     clr_adj_brightness(&pal_bg_mem[palette*16+index], src, count, alpha);
 }
 

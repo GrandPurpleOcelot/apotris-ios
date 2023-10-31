@@ -667,38 +667,31 @@ void setLightMode() {
         setPaletteColor(8,4,0x0421,1);//progressbar
         setPaletteColor(0,8,0x6739,1);
 
-        //activated font
-        // setPaletteColor(15,2,0x0000,1);//font main
-        // setPaletteColor(15,3,0x5ad6,1);//font shaddow
-        // setPaletteColor(31,2,0x0000,1);//obj font main
-        // setPaletteColor(31,3,0x5ad6,1);//obj font shaddow
-
-        //unactivated font
-        // setPaletteColor(14,2,0x7fff,1);//font main
-        // setPaletteColor(14,3,0x5ad6,1);//font shadow
-        // setPaletteColor(30,2,0x7fff,1);//obj font main
-        // setPaletteColor(30,3,0x5ad6,1);//obj font shadow
-
         setPaletteColor(16 + 8,6,0x6739,1);//frame background
+
+        //faded Text Palette
+        color_adj_brightness(13, 0, fontPalettes[1][0], 8, int2fx(1) >> 2);
+        color_adj_brightness(13 + 16, 0, fontPalettes[1][0], 8, int2fx(1) >> 2);
     } else {
         setPaletteColor(0,0,0x0000,1);//background gray
         setPaletteColor(8,4,0x7fff,1);//progressbar
         setPaletteColor(0,8,0x0c63,1);
 
-        //activated font
-        // setPaletteColor(15,2,0x7fff,1);//font main
-        // setPaletteColor(15,3,0x294a,1);//font shaddow
-        // setPaletteColor(31,2,0x7fff,1);//obj font main
-        // setPaletteColor(31,3,0x294a,1);//obj font shaddow
-
-        //unactivated font
-        // setPaletteColor(14,2,0x318c,1);//font main
-        // setPaletteColor(14,3,0x0421,1);//font shadow
-        // setPaletteColor(30,2,0x318c,1);//obj font main
-        // setPaletteColor(30,3,0x0421,1);//obj font shadow
-
         setPaletteColor(16 + 8,6,0x0c63,1);//frame background
+
+        //faded Text Palette
+        color_fade_palette(13, 0, fontPalettes[0][0], 0, 8, 15);
+        color_fade_palette(13 + 16, 0, fontPalettes[0][0], 0, 8, 15);
     }
+
+    //main text
+    loadPalette(15, 0, fontPalettes[savefile->settings.lightMode][1], 5);
+    loadPalette(15 + 16, 0, fontPalettes[savefile->settings.lightMode][1], 5);
+
+    //sub text
+    loadPalette(14, 0, fontPalettes[savefile->settings.lightMode][0], 5);
+    loadPalette(14 + 16, 0, fontPalettes[savefile->settings.lightMode][0], 5);
+
 
     setGradient(savefile->settings.backgroundGradient);
 }
@@ -790,10 +783,6 @@ void setPalette(){
     }
 
     setLightMode();
-
-    //faded Text Palette
-    color_fade_palette(13 + 16, 0, &palette[1][14*16], 0, 8, 15);
-    color_fade_palette(13, 0, &palette[1][14*16], 0, 8, 15);
 
     if(savefile->settings.effects == 2)
         for(int i = 0; i < 16; i++)
