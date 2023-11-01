@@ -320,12 +320,17 @@ void setDefaults(Save *save, int depth){
         save->settings.moveSfx = 2;
         save->settings.pauseCountdown = 1;
         save->settings.clearText = save->settings.floatText * 2;
+        save->settings.selectedProfile = 0;
 
         strncpy(savefile->endTag, "SAVE_END", 9);
         convertScores(savefile);
     }
 
     setDefaultGraphics(save, depth);
+
+    for(int i = 0; i < 5; i++){
+        saveToProfile(&save->settings.profiles[i],&save->settings);
+    }
 }
 
 bool compareVersion(const SaveChange & first,const SaveChange & second){
@@ -415,16 +420,15 @@ void setDefaultGraphics(Save *save, int depth){
         save->settings.palette = 1;
         save->settings.shadow = 5;
         save->settings.lightMode = false;
-
     }
 
     if(depth < 3){
         save->settings.colors = 1;
         save->settings.clearEffect = 2;
 
-        if(save->settings.shake)
+        if(save->settings.shake){
             save->settings.shakeAmount = 2;
-        else{
+        }else{
             save->settings.shake = true;
             save->settings.shakeAmount = 0;
         }
@@ -478,4 +482,48 @@ void convertScores(Save *save){
     memcpy32(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);
 
     memcpy32(&save->boards, &newBoards, sizeof(ModeBoards) / 4);
+}
+
+void profileToSave(GraphicsOptions *profile, Settings *settings){
+    settings->floatText = profile->floatText;
+    settings->shake = profile->shake;
+    settings->effects = profile->effects;
+    settings->edges = profile->edges;
+    settings->backgroundGrid = profile->backgroundGrid;
+    settings->skin = profile->skin;
+    settings->palette = profile->palette;
+    settings->shadow = profile->shadow;
+    settings->lightMode = profile->lightMode;
+    settings->colors = profile->colors;
+    settings->clearEffect = profile->clearEffect;
+    settings->shakeAmount = profile->shakeAmount;
+    settings->backgroundGradient = profile->backgroundGradient;
+    settings->placeEffect = profile->placeEffect;
+    settings->frameBackground = profile->frameBackground;
+    settings->backgroundType = profile->backgroundType;
+    settings->aspectRatio = profile->aspectRatio;
+    settings->screenShakeType = profile->screenShakeType;
+    settings->clearDirection = profile->clearDirection;
+}
+
+void saveToProfile(GraphicsOptions *profile, Settings *settings){
+    profile->floatText = settings->floatText;
+    profile->shake = settings->shake;
+    profile->effects = settings->effects;
+    profile->edges = settings->edges;
+    profile->backgroundGrid = settings->backgroundGrid;
+    profile->skin = settings->skin;
+    profile->palette = settings->palette;
+    profile->shadow = settings->shadow;
+    profile->lightMode = settings->lightMode;
+    profile->colors = settings->colors;
+    profile->clearEffect = settings->clearEffect;
+    profile->shakeAmount = settings->shakeAmount;
+    profile->backgroundGradient = settings->backgroundGradient;
+    profile->placeEffect = settings->placeEffect;
+    profile->frameBackground = settings->frameBackground;
+    profile->backgroundType = settings->backgroundType;
+    profile->aspectRatio = settings->aspectRatio;
+    profile->screenShakeType = settings->screenShakeType;
+    profile->clearDirection = settings->clearDirection;
 }

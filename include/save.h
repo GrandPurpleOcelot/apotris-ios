@@ -63,8 +63,31 @@ typedef struct QuickStart{
     int big;
 }ALIGN(4) QuickStart;
 
-typedef struct Settings{
+typedef struct GraphicsOptions{
+    bool floatText;
+    bool shake;
+    bool effects;
+    bool edges;
+    s8 backgroundGrid;
+    s8 skin;
+    s8 palette;
+    s8 shadow;
+    bool lightMode;
+    s8 colors;
+    s8 clearEffect;
+    s8 shakeAmount;
+    u32 backgroundGradient;
+    bool placeEffect;
+    s8 frameBackground;
+    s8 backgroundType;
+    s8 aspectRatio;
+    s8 screenShakeType;
+    s8 clearDirection;
 
+    int placeHolder[6];
+}ALIGN(4) GraphicsOptions;
+
+typedef struct Settings{
     bool announcer;
     bool finesse;
     bool floatText;
@@ -125,7 +148,10 @@ typedef struct Settings{
 
     MenuKeys menuKeys;
 
-    int placeHolder[57];
+    GraphicsOptions profiles[5];
+    int selectedProfile;
+
+    int placeHolder[44];
 
 }ALIGN(4) Settings;
 
@@ -244,3 +270,6 @@ typedef struct Replay{
 }ALIGN(4) Replay;
 
 extern Save *savefile;
+
+extern void saveToProfile(GraphicsOptions *profile, Settings *settings);
+extern void profileToSave(GraphicsOptions *profile, Settings *settings);

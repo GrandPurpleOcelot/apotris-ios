@@ -2,6 +2,59 @@
 
 #include "scene.hpp"
 
+class ProfileElement : public Element{
+    public:
+        std::string getLabel() override{
+            return "Profile";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.selectedProfile > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.selectedProfile < 4)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override {
+            int prev = savefile->settings.selectedProfile;
+            if(dir > 0){
+                if(savefile->settings.selectedProfile < 4){
+                    savefile->settings.selectedProfile++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.selectedProfile > 0){
+                    savefile->settings.selectedProfile--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+
+            if(prev != savefile->settings.selectedProfile){
+                saveToProfile(&savefile->settings.profiles[prev], &savefile->settings);
+
+                profileToSave(&savefile->settings.profiles[savefile->settings.selectedProfile], &savefile->settings);
+
+                setSkin();
+                setPalette();
+                drawFrameBackgrounds();
+                setClearEffect();
+            }
+        }
+
+        std::string getCurrentOption() override{
+            return std::to_string(savefile->settings.selectedProfile + 1);
+        }
+};
+
 class GradientElement : public Element{
     public:
         std::string getLabel() override {
@@ -649,6 +702,7 @@ class RandomGraphicsElement : public Element{
             setSkin();
             setPalette();
             drawFrameBackgrounds();
+            setClearEffect();
 
             sfx(SFX_MENUCONFIRM);
         }
@@ -673,6 +727,7 @@ class ResetGraphicsElement : public Element{
             setSkin();
             setPalette();
             drawFrameBackgrounds();
+            setClearEffect();
 
             sfx(SFX_MENUCONFIRM);
         }
@@ -698,6 +753,7 @@ class GraphicsScene : public Scene{
     std::list<Element*> getElementList(){
         std::list<Element*> l;
 
+        l.push_back(new ProfileElement());
         l.push_back(new GradientElement());
         l.push_back(new GridElement());
         l.push_back(new SkinElement());
