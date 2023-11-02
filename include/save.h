@@ -151,7 +151,9 @@ typedef struct Settings{
     GraphicsOptions profiles[5];
     int selectedProfile;
 
-    int placeHolder[44];
+    bool journey;
+
+    int placeHolder[43];
 
 }ALIGN(4) Settings;
 

@@ -321,6 +321,7 @@ void setDefaults(Save *save, int depth){
         save->settings.pauseCountdown = 1;
         save->settings.clearText = save->settings.floatText * 2;
         save->settings.selectedProfile = 0;
+        save->settings.journey = false;
 
         strncpy(savefile->endTag, "SAVE_END", 9);
         convertScores(savefile);

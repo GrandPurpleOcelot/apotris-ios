@@ -687,6 +687,29 @@ class AspectRatioElement : public Element{
         }
 };
 
+class ExploreElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Explore";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.journey = !savefile->settings.journey;
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.journey)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
+
 class RandomGraphicsElement : public Element{
     public:
         std::string getLabel() override {
@@ -775,6 +798,7 @@ class GraphicsScene : public Scene{
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
         l.push_back(new AspectRatioElement());
+        l.push_back(new ExploreElement());
         l.push_back(new RandomGraphicsElement());
         l.push_back(new ResetGraphicsElement());
 
