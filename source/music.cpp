@@ -52,9 +52,6 @@ void playSong(int menuId, int songId) {
 
     startSong(song,(!savefile->settings.cycleSongs));
     setMusicVolume(512 * ((float)savefile->settings.volume / 10));
-
-    // mmStart(song, (savefile->settings.cycleSongs)? MM_PLAY_ONCE:MM_PLAY_LOOP);
-    // mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
 }
 
 void playSongRandom(int menuId) {
@@ -78,25 +75,7 @@ void playSongRandom(int menuId) {
 
     int index = qran() % max;
 
-    // int start = 0;
-    // if (menuId == 1)
-    //     start = MAX_MENU_SONGS;
-
     songId = index;
-    // if (menuId == 1)
-    //     songId -= MAX_MENU_SONGS;
-
-    // int counter = 0;
-    // for (int i = start; i < 10;i++) {
-    //     if (counter == index && savefile->settings.songList[i]) {
-    //         songId = i;
-    //         if (menuId == 1)
-    //             songId -= MAX_MENU_SONGS;
-    //         break;
-    //     }
-    //     if (savefile->settings.songList[i])
-    //         counter++;
-    // }
 
     if (songId == -1)
         return;
@@ -126,21 +105,6 @@ void playNextSong(){
         index = 0;
 
     songId = index;
-    // int start = 0;
-    // if (menuId == 1)
-    //     start = MAX_MENU_SONGS;
-
-    // int counter = 0;
-    // for (int i = start; i < 10;i++) {
-    //     if (counter == index && savefile->settings.songList[i]) {
-    //         songId = i;
-    //         if (menuId == 1)
-    //             songId -= MAX_MENU_SONGS;
-    //         break;
-    //     }
-    //     if (savefile->settings.songList[i])
-    //         counter++;
-    // }
 
     if (songId == -1)
         return;

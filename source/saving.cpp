@@ -309,6 +309,8 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 7){
+        convertScores(savefile);
+
         save->settings.big = false;
         save->settings.pro = false;
         save->settings.goalLine = 2;
@@ -323,8 +325,11 @@ void setDefaults(Save *save, int depth){
         save->settings.selectedProfile = 0;
         save->settings.journey = false;
 
+        save->stats.maxLevel = 0;
+        save->stats.totalLines = 0;
+        save->stats.gameStats = BlockEngine::Stats();
+
         strncpy(savefile->endTag, "SAVE_END", 9);
-        convertScores(savefile);
     }
 
     setDefaultGraphics(save, depth);
