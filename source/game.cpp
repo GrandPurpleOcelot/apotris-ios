@@ -1494,26 +1494,27 @@ void GameScene::countdown() {
 
     game->update();
 
-    if(replaying)
+    if(replaying){
         replayControl();
+    }else{
+        Keys k = savefile->settings.keys;
 
-    Keys k = savefile->settings.keys;
+        if(key_is_down(k.hold))
+            game->hold(1);
+        if(key_is_down(k.rotateCW))
+            game->rotateCW(1);
+        if(key_is_down(k.rotateCCW))
+            game->rotateCCW(1);
+        if(key_is_down(k.rotate180))
+            game->rotateTwice(1);
+        if(key_is_down(k.hardDrop))
+            game->keyDrop(1);
 
-    if(key_is_down(k.hold))
-        game->hold(1);
-    if(key_is_down(k.rotateCW))
-        game->rotateCW(1);
-    if(key_is_down(k.rotateCCW))
-        game->rotateCCW(1);
-    if(key_is_down(k.rotate180))
-        game->rotateTwice(1);
-    if(key_is_down(k.hardDrop))
-        game->keyDrop(1);
-
-    if(key_is_down(k.moveLeft)){
-        game->keyLeft(1);
-    }else if(key_is_down(k.moveRight)){
-        game->keyRight(1);
+        if(key_is_down(k.moveLeft)){
+            game->keyLeft(1);
+        }else if(key_is_down(k.moveRight)){
+            game->keyRight(1);
+        }
     }
 
     game->chargeDas();
