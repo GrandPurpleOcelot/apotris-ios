@@ -465,7 +465,7 @@ void Game::update() {
         if(gameMode == DEATH){
             int l = level / 100;
 
-            if(l >= 5 && deathGarbageCounter >= deathQuota[min(4,l-5)]){
+            if(l >= 5 && l < 10 && deathGarbageCounter >= deathQuota[min(4,l-5)]){
                 deathGarbage();
                 deathGarbageCounter = 0;
             }
