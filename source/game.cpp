@@ -338,13 +338,17 @@ void checkSounds() {
             sfx(SFX_LEVELUPSOUND);
         }
     }else if(game->sounds.tspin){
+        int sound = 0;
         if(game->previousClear.isTSpin == 1){
             clearTypeText = "t-spin mini";
-            sfx(SFX_TSPINMINI);
+            sound = SFX_TSPINMINI;
         }else{
             clearTypeText = "t-spin";
-            sfx(SFX_TSPIN);
+            sound = SFX_TSPIN;
         }
+
+        if(savefile->settings.announcer)
+            sfx(sound);
 
         if (savefile->settings.clearText == 2)
             floatingList.push_back(FloatText(clearTypeText));
