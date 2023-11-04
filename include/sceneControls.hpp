@@ -259,10 +259,21 @@ class RebindElement : public Element{
 
                 if(key != KEY_FULL - 1){
                     keys[index] = key;
+
+
+                    for(int j = 0; j < max; j++){
+                        if(j == index)
+                            continue;
+
+                        if(keys[j] == key)
+                            keys[j] = KEY_FULL - 2;
+                    }
+
                     sfx(SFX_MENUCONFIRM);
                     exit = true;
                     continue;
                 }
+
                 #endif
             }
 

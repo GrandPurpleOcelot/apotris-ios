@@ -7,6 +7,7 @@
 
 #include "SDL2/SDL.h"
 #include <SDL2/SDL_mixer.h>
+#include <string>
 
 #define KEY_A SDLK_RETURN
 #define KEY_B SDLK_BACKSPACE
@@ -46,3 +47,5 @@ extern uint32_t key_first();
 
 extern int rowStart;
 extern int rowEnd;
+
+std::string stringFromKey(uint32_t key);

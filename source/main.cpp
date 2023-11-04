@@ -1099,6 +1099,10 @@ std::string getStringFromKey(int key){
 
     return keyToString[key];
 
+    #elif defined(WEB)
+
+    return stringFromKey(key);
+
     #endif
 
     return "?";

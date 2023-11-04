@@ -441,4 +441,8 @@ void resizeWindow(int width, int height){
     rowEnd = (512 + (windowHeight))/2;
 }
 
+std::string stringFromKey(uint32_t key){
+    return SDL_GetKeyName(key);
+}
+
 #endif
