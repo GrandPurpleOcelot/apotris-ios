@@ -261,6 +261,8 @@ void PlayOptionScene::start(){
         newOptions.rotationSystem = BlockEngine::NRS;
         newOptions.randomizer = BlockEngine::RANDOM;
     } else{
+        newOptions.rotationSystem = savefile->settings.rotationSystem;
+
         if(savefile->settings.randomizer >= 0 && savefile->settings.randomizer <= 2){
             newOptions.randomizer = savefile->settings.randomizer;
         }else{

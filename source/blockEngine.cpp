@@ -755,17 +755,17 @@ void Game::place() {
     if(comboCounter > statTracker.maxCombo)
         statTracker.maxCombo = comboCounter;
 
-    if(rotationSystem == NRS){
+    if(gameMode == CLASSIC){
         int add = 0;
         while(pawn.y + add < lengthY-3)
             add+=4;
 
         entryDelay = 10 + add;
-
-        down = 0;
     }
 
-    if (gameMode == MASTER){
+    if(rotationSystem == NRS){
+        down = 0;
+    }else if (gameMode == MASTER){
         if(level % 100 < 99 && level < 998)
             level++;
 
