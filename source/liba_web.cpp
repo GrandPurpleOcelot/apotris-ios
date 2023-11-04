@@ -71,6 +71,8 @@ int resizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData
 void windowInit(){
     // Initialize SDL
 
+    SDL_SetHint(SDL_HINT_EMSCRIPTEN_ASYNCIFY, "0");
+
     EM_ASM(
         // Make a directory other than '/'
         FS.mkdir('/offline');
