@@ -127,7 +127,7 @@ $(BUILD):
 	@tools/gbfs $(BUILD)/audio.gbfs data/soundbank.bin data/effect_locations.bin
 	@tools/padbin 256 $(OUTPUT).gba
 	@cat $(OUTPUT).gba $(BUILD)/audio.gbfs > $(dir $(OUTPUT))Apotris.gba
-# @tools/padbin 0x400000 $(dir $(OUTPUT))Apotris_Audio.gba
+	@tools/padbin 0x400000 $(dir $(OUTPUT))Apotris.gba
 	@rm $(BUILD)/audio.gbfs
 
 	@mkdir -p bin/gba/tools
