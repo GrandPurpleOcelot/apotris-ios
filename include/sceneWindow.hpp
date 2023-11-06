@@ -20,7 +20,7 @@ class IntegerScaleElement : public Element{
             savefile->settings.integerScale = !savefile->settings.integerScale;
             sfx(SFX_MENUCONFIRM);
 
-            #ifdef PC
+            #if defined(PC) || defined(WEB)
             refreshWindowSize();
             #endif
         }
@@ -67,7 +67,7 @@ class ZoomElement : public Element{
                     sfx(SFX_MENUMOVE);
                 }
             }
-            #ifdef PC
+            #if defined(PC) || defined(WEB)
             refreshWindowSize();
             #endif
         }

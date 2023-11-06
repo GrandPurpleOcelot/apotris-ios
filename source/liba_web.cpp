@@ -140,7 +140,6 @@ void key_poll(){
         switch( event.type ){
         case SDL_KEYDOWN:
             key = event.key.keysym.sym;
-
             if(key == SDLK_F11){
                 // log("here!");
                 // emscripten_request_fullscreen(document.documentElement,1);
@@ -313,7 +312,7 @@ void updateWindow(uint8_t* framebuffer){
 }
 
 void refreshWindowSize(){
-
+    resizeWindow(getWindowWidth(),getWindowHeight());
 }
 
 bool closed(){
@@ -430,6 +429,9 @@ void resizeWindow(int width, int height){
     }else{
         zoom = 1;
     }
+
+    log("test:");
+    log((int)(zoom * 100));
 
     emscripten_set_canvas_size(width, height);
     SDL_SetWindowSize(window, width, height);

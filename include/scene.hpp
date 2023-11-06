@@ -175,7 +175,7 @@ class MainMenuScene: public SimpleListScene{
     std::list<std::string> getOptionList(){
         std::list<std::string> result = menuOptions;
 
-        #if !defined(GBA)
+        #if !(defined(GBA) || defined(WEB))
 
         result.push_back("Quit");
 

@@ -349,6 +349,7 @@ void endAnimation() {
     sfx(SFX_END);
 
     for (int i = 0; i < 40; i++) {
+        closed();
         vsync();
         drawGrid();
         showClearText();
@@ -362,7 +363,7 @@ void endAnimation() {
     }
 
     int counter = 0;
-    while (!floatingList.empty()) {
+    while (!floatingList.empty() && closed()) {
         vsync();
         showClearText();
 

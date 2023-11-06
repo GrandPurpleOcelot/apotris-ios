@@ -160,6 +160,8 @@ void initialize(){
 
     initFallingBlocks();
 
+    refreshWindowSize();
+
     setGradient(GRADIENT_COLOR);
 }
 
