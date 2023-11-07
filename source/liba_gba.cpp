@@ -611,4 +611,6 @@ std::map<int,std::string> keyToString = {
     {KEY_SELECT,"Select"},
 };
 
+void refreshWindowSize(){}
+
 #endif

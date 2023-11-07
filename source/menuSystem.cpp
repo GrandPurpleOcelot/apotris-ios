@@ -119,6 +119,7 @@ void sceneSwitcher(std::string str){
         previousSettings = savefile->settings;
         for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
             previousSkins[i] = savefile->customSkins[i];
+        menuKeys = savefile->settings.menuKeys;
 
         changeScene(new EditorScene(),Transitions::FADE);
     }else if(str == "Credits"){

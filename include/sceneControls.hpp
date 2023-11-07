@@ -321,7 +321,9 @@ class ControlOptionScene : public OptionListScene{
     std::list<Element*> getElementList(){
         std::list<Element*> list;
 
+        #if defined(PC) || defined(WEB)
         list.push_back(new LabelElement("In-Game:"));
+        #endif
 
         int counter = 0;
         for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
