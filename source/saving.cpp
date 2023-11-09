@@ -321,7 +321,7 @@ void setDefaults(Save *save, int depth){
         save->settings.peek = true;
         save->settings.moveSfx = 2;
         save->settings.pauseCountdown = 1;
-        save->settings.clearText = save->settings.floatText * 2;
+        save->settings.clearText = 2;
         save->settings.selectedProfile = 0;
         save->settings.journey = false;
 
@@ -450,6 +450,7 @@ void setDefaultGraphics(Save *save, int depth){
         save->settings.frameBackground = 1;
         save->settings.backgroundType = 1;
         save->settings.aspectRatio = 0;
+        save->settings.clearText = 2;
 
         #if defined(GBA)
         save->settings.screenShakeType = 0;
