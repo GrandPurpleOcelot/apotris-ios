@@ -64,7 +64,7 @@ typedef struct QuickStart{
 }ALIGN(4) QuickStart;
 
 typedef struct GraphicsOptions{
-    bool floatText;
+    s8 clearText;
     bool shake;
     bool effects;
     bool edges;

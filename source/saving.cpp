@@ -492,7 +492,7 @@ void convertScores(Save *save){
 }
 
 void profileToSave(GraphicsOptions *profile, Settings *settings){
-    settings->floatText = profile->floatText;
+    settings->clearText = profile->clearText;
     settings->shake = profile->shake;
     settings->effects = profile->effects;
     settings->edges = profile->edges;
@@ -514,7 +514,7 @@ void profileToSave(GraphicsOptions *profile, Settings *settings){
 }
 
 void saveToProfile(GraphicsOptions *profile, Settings *settings){
-    profile->floatText = settings->floatText;
+    profile->clearText = settings->clearText;
     profile->shake = settings->shake;
     profile->effects = settings->effects;
     profile->edges = settings->edges;
