@@ -1405,7 +1405,7 @@ void addGlow(BlockEngine::Drop location) {
         }
     }
 
-    if (game->comboCounter > 0 || game->zoneTimer) {
+    if (game->comboCounter >= 0 || game->zoneTimer) {
         int xCenter = (location.endX - location.startX) / 2 + location.startX;
         if (game->previousClear.isTSpin) {
             for (int i = 0; i < 20; i++)
