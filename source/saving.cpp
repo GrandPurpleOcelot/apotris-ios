@@ -328,6 +328,26 @@ void setDefaults(Save *save, int depth){
         save->stats.totalLines = 0;
         save->stats.gameStats = BlockEngine::Stats();
 
+        MenuKeys m{
+            .up = KEY_UP,
+            .down = KEY_DOWN,
+            .left = KEY_LEFT,
+            .right = KEY_RIGHT,
+            .confirm = KEY_A,
+            .cancel = KEY_B,
+            .pause = KEY_START,
+            .reset = UNBOUND,
+            .special1 = KEY_L,
+            .special2 = KEY_R,
+            .special3 = KEY_SELECT,
+        };
+
+        #ifdef GBA
+        m.reset = 0;
+        #endif
+
+        save->settings.menuKeys = m;
+
         strncpy(savefile->endTag, "SAVE_END", 9);
     }
 

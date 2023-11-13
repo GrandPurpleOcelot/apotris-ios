@@ -213,10 +213,10 @@ bool settingsChanged(){
 
     temp.menuKeys = menuKeys;
 
-    u8 * v1 = (u8 *) &temp;
-    u8 * v2 = (u8 *) &previousSettings;
+    int * v1 = (int *) &temp;
+    int * v2 = (int *) &previousSettings;
 
-    for(int i = 0; i < (int) sizeof(Settings); i++){
+    for(int i = 0; i < (int) sizeof(Settings) / 4; i++){
         if(v1[i] != v2[i])
             return true;
     }
