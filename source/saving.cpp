@@ -126,14 +126,13 @@ void loadSave() {
         savefile->settings.rumble = 0;
 
     if(savefile->settings.irs < 0 || savefile->settings.irs > 1)
-        savefile->settings.irs = 0;
+        savefile->settings.irs = 1;
     if(savefile->settings.ihs < 0 || savefile->settings.ihs > 1)
-        savefile->settings.ihs = 0;
+        savefile->settings.ihs = 1;
     if(savefile->settings.initialType < 0 || savefile->settings.initialType > 1)
         savefile->settings.initialType = 1;
 
     if(savefile->newGame != SAVE_TAG){
-
         Save* temp = new Save();
         u8* tmp = (u8*)temp;
 
@@ -235,7 +234,7 @@ void setDefaults(Save *save, int depth){
     if(depth < 3){
         save->settings.maxQueue = 5;
         save->settings.sfxVolume = 10;
-        save->settings.directionalDas = false;
+        save->settings.directionalDas = true;
         save->settings.noDiagonals = false;
         save->settings.cycleSongs = true;
         save->settings.dropProtectionFrames = 8;
@@ -271,8 +270,8 @@ void setDefaults(Save *save, int depth){
         save->settings.diagonalType = save->settings.noDiagonals;
         save->settings.delaySoftDrop = false;
         save->settings.customDas = false;
-        save->settings.irs = 0;
-        save->settings.ihs = 0;
+        save->settings.irs = true;
+        save->settings.ihs = true;
         save->settings.initialType = 1;
         save->settings.resetHoldToggle = 0;
 
