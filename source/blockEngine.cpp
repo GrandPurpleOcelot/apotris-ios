@@ -2618,14 +2618,12 @@ void Game::setupPawnSpawn(){
     pawn.rotation = 0;
     if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
         if(rotationSystem == ARS){
-            if(rotates[0])
-                rotate(1,1);
-            else if(rotates[1]){
+            if(rotates[1])
                 rotate(-1,1);
-                if(rotates[2] && rotationSystem == ARS)
-                    rotate(-1,1);
-            } else if(rotates[2] && rotationSystem != ARS)
-                rotate(2,1);
+            else if(rotates[0])
+                rotate(1,1);
+            else if(rotates[2])
+                rotate(-1,1);
         }else{
             int sum = rotates[0] + (rotates[1] * -1) + (rotates[2] * ((rotationSystem == ARS)? -1 : 2));
 

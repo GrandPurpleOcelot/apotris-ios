@@ -1444,7 +1444,7 @@ void clearGlow() {
 
 void GameScene::countdown() {
     int timer = 0;
-    int timerMax = 120;
+    const int timerMax = 120;
 
     if(handlingTest)
         timer = timerMax;
@@ -2966,9 +2966,8 @@ void GameScene::init(){
     for(int i = 0; i < 3; i++)
         moveSprites[i] = &obj_buffer[16+i];
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++){
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].setup(i, 40 + i * 3, 672 + i * 12,false);
-    }
 
     clearSprites(128);
     updateText();
@@ -3005,7 +3004,6 @@ void GameScene::init(){
 }
 
 void GameScene::update(){
-
     if(refreshSkin){
         refreshSkin = false;
         setSkin();
@@ -3017,12 +3015,12 @@ void GameScene::update(){
 
         if (!(game->gameMode == TRAINING))
             playSongRandom(1);
+        return;
     }
 
     diagnose();
 
     if(exitGame){
-
         if(handlingTest){
             handlingTest = false;
             changeScene(new HandlingOptionScene(), Transitions::FADE);
@@ -3035,18 +3033,14 @@ void GameScene::update(){
         return;
     }
 
-    if (!game->lost && !paused && !game->eventLock) {
-        // profile_start();
+    if(!game->lost && !paused && !game->eventLock){
         game->update();
-        // log(std::to_string(profile_stop()));
     }
     handleMultiplayer(0);
 
     // progressBar(-1);
 
     if(game->gameMode == BATTLE && !multiplayer){
-
-        std::string test;
         if(!botGame->clearLock){
             testBot->run();
             botGame->update();
@@ -3061,22 +3055,8 @@ void GameScene::update(){
 
     gameSeconds = game->timer;
 
-    if (game->clearLock && !(game->eventLock && game->gameMode != MASTER)) {
+    if(game->clearLock && !(game->eventLock && game->gameMode != MASTER)){
         clearTimer++;
-
-        // if(clearTimer >= 100){
-        //     game->removeClearLock();
-        //     #ifdef GBA
-        //     shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
-        //     #endif
-
-        //     #ifdef PC
-        //     shakeVelocity = int2fx(((shakeMax * (savefile->settings.shakeAmount) / 4))) * 2;
-        //     #endif
-        //     rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
-        //     clearTimer = 0;
-        //     updateText();
-        // }
     }
 
     if(game->eventLock){
@@ -3103,14 +3083,14 @@ void GameScene::update(){
 
     latestDrop = game->getDrop();
 
-    if (latestDrop.on){
+    if(latestDrop.on){
         addGlow(latestDrop);
         addPlaceEffect(latestDrop);
     }
 
     canDraw = true;
 
-    if (clearTimer >= maxClearTimer || maxClearTimer <= 0) {
+    if(clearTimer >= maxClearTimer || maxClearTimer <= 0){
         game->removeClearLock();
 
         if(savefile->settings.screenShakeType == 0){
@@ -3137,7 +3117,7 @@ void GameScene::update(){
     }
     #endif
 
-    if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
+    if((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
         paused = true;
         endScreen();
         paused = false;
@@ -3147,7 +3127,7 @@ void GameScene::update(){
             playAgain = false;
     }
 
-    if (paused){
+    if(paused){
         liftKeys();
         if(pauseMenu()){
             paused = false;
@@ -3155,7 +3135,7 @@ void GameScene::update(){
         }
     }
 
-    if (playAgain) {
+    if(playAgain){
         playAgain = false;
         addGameStats();
         paused = true;
@@ -3189,8 +3169,9 @@ void GameScene::update(){
         showCredits();
     }
 
-    if(flashTimer)
+    if(flashTimer){
         zoneFlash();
+    }
 
     updateFluid();
 
@@ -3213,6 +3194,9 @@ void GameScene::deinit(){
 }
 
 void updateFluid(){
+    if(savefile->settings.effects != 2)
+        return;
+
     if(++gridUpdateTimer >= gridUpdateTimerMax){
         gridUpdateTimer = 0;
         updateGrid();
@@ -3238,13 +3222,13 @@ void showGoalLine(){
     const int gm = game->gameMode;
 
     int goal = 0;
-    if (gm == DIG)
+    if(gm == DIG){
         goal = game->garbageCleared;
-    else if (gm == SPRINT && game->subMode)
+    }else if(gm == SPRINT && game->subMode){
         goal = game->linesSent;
-    else if (gm != SURVIVAL)
+    }else if(gm != SURVIVAL){
         goal = game->linesCleared;
-    else{
+    }else{
         return;
     }
 
@@ -3307,7 +3291,7 @@ void checkPeek(){
 void showSpawn(){
     OBJ_ATTR* sprite = &obj_buffer[110];
 
-    if (game->lengthY - game->stackHeight < 17 / (1 + game->pawn.big)) {
+    if(game->lengthY - game->stackHeight < 17 / (1 + game->pawn.big)){
         sprite_hide(sprite);
         return;
     }
@@ -3342,7 +3326,7 @@ void showSpawn(){
         }
     }
 
-    delete[] b;
+    delete b;
 
     if(!game->pawn.big){
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
