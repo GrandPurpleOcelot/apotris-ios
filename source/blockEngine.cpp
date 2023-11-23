@@ -1157,7 +1157,7 @@ int Game::clear(Drop drop) {
         sounds.levelUp = 1;
     }
 
-    if(gameMode == ZEN)
+    if(gameMode == ZEN || gameMode == ULTRA)
         prevLevel = 1;
 
     //calculate score
