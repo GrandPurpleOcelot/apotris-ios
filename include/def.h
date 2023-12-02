@@ -308,6 +308,8 @@ extern int peekShift;
 
 extern MenuKeys menuKeys;
 
+extern int framesSinceLastSave;
+
 class Function{
     private:
 

@@ -145,6 +145,8 @@ int goalLineHeight = 0;
 
 bool handlingTest = false;
 
+int framesSinceLastSave = 0;
+
 void GameScene::draw(){
     // std::string prof;
     // profile_start();
@@ -3004,6 +3006,8 @@ void GameScene::init(){
 }
 
 void GameScene::update(){
+    framesSinceLastSave++;
+
     if(refreshSkin){
         refreshSkin = false;
         setSkin();
@@ -3191,6 +3195,8 @@ void GameScene::deinit(){
     disableLayerWindow(1);
 
     clearText();
+
+    autosave();
 }
 
 void updateFluid(){

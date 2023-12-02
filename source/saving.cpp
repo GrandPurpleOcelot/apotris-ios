@@ -323,6 +323,7 @@ void setDefaults(Save *save, int depth){
         save->settings.clearText = 2;
         save->settings.selectedProfile = 0;
         save->settings.journey = false;
+        save->settings.autosave = 1;
 
         save->stats.maxLevel = 0;
         save->stats.totalLines = 0;
@@ -552,4 +553,15 @@ void saveToProfile(GraphicsOptions *profile, Settings *settings){
     profile->aspectRatio = settings->aspectRatio;
     profile->screenShakeType = settings->screenShakeType;
     profile->clearDirection = settings->clearDirection;
+}
+
+void autosave(){
+    if(!savefile->settings.autosave || multiplayer)
+        return;
+
+    if(framesSinceLastSave < savefile->settings.autosave * 5 * 3600)
+        return;
+
+    saveSavefile();
+    framesSinceLastSave = 0;
 }

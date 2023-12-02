@@ -975,8 +975,10 @@ int onRecord() {
         }
     }
 
-    if(place >= 0)
+    if(place >= 0){
         saveSavefile();
+        framesSinceLastSave = 0;
+    }
 
     return place;
 }

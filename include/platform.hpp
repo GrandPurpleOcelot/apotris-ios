@@ -145,6 +145,3 @@ extern void quit();
 
 extern void deinitialize();
 extern void refreshWindowSize();
-
-// //TEMPORARY
-// extern COLOR rgb8to5(u32 *c);

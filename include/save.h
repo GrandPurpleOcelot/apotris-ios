@@ -152,8 +152,9 @@ typedef struct Settings{
     int selectedProfile;
 
     bool journey;
+    int autosave;
 
-    int placeHolder[43];
+    int placeHolder[42];
 
 }ALIGN(4) Settings;
 
@@ -275,3 +276,4 @@ extern Save *savefile;
 
 extern void saveToProfile(GraphicsOptions *profile, Settings *settings);
 extern void profileToSave(GraphicsOptions *profile, Settings *settings);
+extern void autosave();
