@@ -1293,11 +1293,11 @@ void Game::fillBag() {
     }else if(randomizer == BAG_35){
         //fill bag
         for(int i = 0; i < 35; i++)
-            bigBag[i] = i / 7;
+            bigBag[i] = i / 5;
 
         //fill drought history
         for(int i = 0; i < 7; i++)
-            pieceDrought[i] = 5;
+            pieceDrought[i] = 4;
 
         //fill piece history
         historyList.push_back(PIECE_Z);
@@ -1312,9 +1312,6 @@ void Game::next() {//~21-29k cycles
     activePiece = pawn.current;
     queue.pop_front();
     fillQueue(1);
-
-    //for CLASSIC 2 in a row protection
-    pieceHistory = pawn.current;
 
     pawn.setBlock(rotationSystem); //~15k cycles
 
@@ -1360,14 +1357,18 @@ void Game::fillQueue(int count) {
                 n = qran() % 7;
 
             queue.push_back(n);
+            pieceHistory = n;
         }else if (randomizer == BAG_35){
             int n = -1;
             int record = 0;
             int droughted = 0;
             if(queue.empty()){
-                while(n == -1 || n == PIECE_O || n == PIECE_Z || n == PIECE_S){
+                do{
                     n = qran() % 7;
-                }
+                }while(n == PIECE_O || n == PIECE_Z || n == PIECE_S);
+
+                historyList.push_front(n);
+                historyList.pop_back();
 
                 queue.push_back(n);
                 continue;
@@ -1376,8 +1377,6 @@ void Game::fillQueue(int count) {
             int r = 0;
             for(int i = 0; i < 6; i++){
                 r = qran() % 35;
-
-                log(std::to_string(r) + " " + std::to_string(bigBag[r]));
 
                 n = bigBag[r];
 
@@ -2447,21 +2446,19 @@ Game::Game(int gm, int sd, bool big){
     for(int j = 0; j < lengthX; j++)
         columnHeights[j] = 0;
 
-    fillBag();
-
     if(gameMode == CLASSIC){
         maxLockTimer = 1;
-        fillQueue(1);
 
         maxDas = 16;
         arr = 6;
         softDropSpeed = 2;
         gracePeriod = 90;
-    }else if(enableFumen && enableFumenQueue){
+    }
+
+    if(enableFumen && enableFumenQueue){
         for(int i = 0; i < 5; i++)
             queue.push_back(fumenQueue[i]);
-    } else
-        fillQueue(5);
+    }
 
     pawn = Pawn(0,0);
     pawn.big = big;
