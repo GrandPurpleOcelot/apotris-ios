@@ -541,10 +541,12 @@ void OptionListScene::draw(){
         const int x = (endX) * 8 - getVariableWidth(opt);
         const int y = startY + 8 * (space + 1) * i + verticalOffset;
 
-        wordSprites[index]->setPriority(0);
-        wordSprites[index]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
+        const int color = 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0)));
 
-        labels[index]->show(startX - 8 * offset, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
+        wordSprites[index]->setPriority(0);
+        wordSprites[index]->show(x, y, color);
+
+        labels[index]->show(startX - 8 * offset, y, color);
 
         if(counter == selection){ //draw sprite cursor
             currentOption = option->getLabel();
