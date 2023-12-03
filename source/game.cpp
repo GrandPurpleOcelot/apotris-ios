@@ -1467,7 +1467,9 @@ void GameScene::countdown() {
 
     showSprites(128);
 
-    gradient(1);
+    if(!game->zoneTimer)
+        gradient(1);
+
     showBackground(0);
 
     paused = true;
