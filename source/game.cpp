@@ -2818,7 +2818,13 @@ void setRandomGraphics(Save *save){
     save->settings.backgroundGrid = qran() % (MAX_BACKGROUNDS - 1);
     save->settings.skin = qran() % (MAX_SKINS - 1);
     save->settings.palette = qran() % 8;
-    save->settings.shadow = qran() % (MAX_SHADOWS - 1);
+
+    if(save->settings.shadow != 4){
+        do{
+            save->settings.shadow = qran() % (MAX_SHADOWS - 1);
+        }while(save->settings.shadow == 4);
+    }
+
     save->settings.colors = qran() % (MAX_COLORS - 1);
     save->settings.backgroundGradient = (RGB15(qran() % 31, qran() % 31, qran() % 31) << 16) + RGB15(qran() % 31, qran() % 31, qran() % 31);
     save->settings.frameBackground = qran() % (MAX_FRAME_BACKGROUNDS - 1);
