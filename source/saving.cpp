@@ -308,7 +308,8 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 7){
-        convertScores(savefile);
+        if(depth)
+            convertScores(savefile);
 
         save->settings.big = false;
         save->settings.pro = false;

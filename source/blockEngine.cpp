@@ -2006,18 +2006,17 @@ void Game::bType(int height){
 
 void Game::setSubMode(int sm){
 
-    if((gameMode == MASTER || gameMode == DEATH) && sm){
+    subMode = sm;
+
+    if(!sm)
+        return;
+
+    if(gameMode == MASTER || gameMode == DEATH){
         setRotationSystem(ARS);
         setRandomizer(BAG_35);
 
         sonicDrop = true;
-
-        return;
-    }
-
-    subMode = sm;
-
-    if(sm && gameMode == CLASSIC){
+    }else if(gameMode == CLASSIC){
         bType(bTypeHeight);
         goal = 25;
     }
