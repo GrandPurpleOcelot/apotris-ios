@@ -282,13 +282,7 @@ void PlayOptionScene::start(){
 
     proMode = (key_is_down(k.special1) || key_is_down(k.special2)) ^ (savefile->settings.pro);
 
-    if(newOptions.mode != BlockEngine::BATTLE){
-        startGame(newOptions,qran());
-    }else{
-        int seed = qran();
-
-        startGame(newOptions,seed);
-    }
+    startGame(newOptions,qran());
 
     gameLoop();
 }

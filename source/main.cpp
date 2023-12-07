@@ -987,11 +987,11 @@ void startBotGame(int seed){
     startMultiplayerGame(seed);
     multiplayer = false;
 
-    delete botGame;
+    if(botGame != nullptr)
+        delete botGame;
     botGame = new Game(BATTLE,seed & 0x1fff,false);
+    botGame->setOptions(*previousGameOptions);
     botGame->setGoal(100);
-    botGame->setRandomizer(previousGameOptions->randomizer);
-    game->setTuning(getTuning());
     botGame->setLevel(1);
     botGame->maxClearDelay = 20;
 
