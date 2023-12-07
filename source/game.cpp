@@ -114,7 +114,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
 
-bool enableBot = false;
+bool enableBot = true;
 static bool refreshSkin = false;
 
 FIXED shakeBuff;
@@ -3205,6 +3205,10 @@ void GameScene::deinit(){
     clearText();
 
     autosave();
+
+    if(savefile->settings.journey){
+        setSkin();
+    }
 }
 
 void updateFluid(){
