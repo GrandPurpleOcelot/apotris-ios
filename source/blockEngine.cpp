@@ -1189,7 +1189,10 @@ int Game::clear(Drop drop) {
     }
 
     if(gameMode == MASTER && !disappearing){
-        gradePoints += (int) ((float) gradeTable[internalGrade][clearCount+1] * masterComboMultiplayer[(comboCounter < 10)?comboCounter:9][clearCount-1] + 1) * ((int)(level/250)+1);
+
+        int combo = comboCounter + 1;
+
+        gradePoints += (int) ((float) gradeTable[internalGrade][clearCount+1] * masterComboMultiplayer[(combo < 10)?combo:9][clearCount-1] + 1) * ((int)(level/250)+1);
 
         if(gradePoints >= 100){
             gradePoints = 0;

@@ -114,7 +114,7 @@ static u16 fullMeterTimer = 0;
 #define fullMeterTimerMax 5 * 60;
 #define fullMeterAnimationLength 15
 
-bool enableBot = true;
+bool enableBot = false;
 static bool refreshSkin = false;
 
 FIXED shakeBuff;
