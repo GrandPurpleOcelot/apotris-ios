@@ -14,6 +14,8 @@ void loadAudio();
 void freeAudio();
 void resizeWindow(int width, int height);
 
+Songs songs;
+
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
 

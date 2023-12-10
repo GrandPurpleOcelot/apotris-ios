@@ -21,7 +21,7 @@ int spriteVOffset = 0;
 
 u8 * soundbank = nullptr;
 
-s16 * songIds = nullptr;
+Songs songs;
 
 void onHBlank() {
     if(REG_VCOUNT < 160)
@@ -105,8 +105,6 @@ void platformInit(){
 }
 
 void deinitialize(){
-    if(songIds != nullptr)
-        delete songIds;
 }
 
 bool closed(){
@@ -415,7 +413,7 @@ void setMusicVolume(int volume){
 }
 
 void startSong(int song, bool loop){
-    int n = songIds[song];
+    int n = song;
 
     log(n);
 
@@ -547,43 +545,20 @@ void buildEffectLocations(){
     file++;
 
     int count = *file++;
-
     for(int i = 0; i < count; i++){
         SoundEffectIds[i] = *file++;
     }
 
     count = *file++;
-    customSongCount = *file++;
-
-    int totalCount = count + customSongCount;
-
-    if(songIds != nullptr)
-        delete songIds;
-
-    if(totalCount > 256){
-        log("Too many songs! (" + std::to_string(totalCount) + ")");
-        return;
+    log("found " + std::to_string(count) + " menu songs");
+    for(int i = 0; i < count; i++){
+        songs.menu.push_back(*file++);
     }
 
-    log("Found " + std::to_string(totalCount) + " songs.");
-
-    songIds = new s16[totalCount];
-    bool missing = false;
-
-    for(int i = 0; i < totalCount; i++){
-        songIds[i] = (s16) *file++;
-
-        if(songIds[i] == -1)
-            missing = true;
-    }
-
-    if(missing){
-        log("Songs are missing!");
-    }
-
-    if(customSongCount > 0){
-        customSongs = true;
-        log("Found " + std::to_string(customSongCount) + " custom songs.");
+    count = *file++;
+    log("found " + std::to_string(count) + " game songs");
+    for(int i = 0; i < count; i++){
+        songs.game.push_back(*file++);
     }
 }
 

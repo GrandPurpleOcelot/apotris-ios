@@ -8,6 +8,8 @@
 #include "def.h"
 // #include "save.h"
 
+Songs songs;
+
 SDL_Surface * screen;
 
 std::list<SDLKey> currentKeys;

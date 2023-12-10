@@ -7,45 +7,21 @@ int currentlyPlayingSong = 0;
 void playSong(int menuId, int songId) {
     int song = 0;
 
+    std::list<int> *songList;
+
     if (menuId == 0) {
-        song = songId;
-        switch (songId) {
-        case 0:
-            song = MOD_MENU;
-            break;
-        case 1:
-            song = MOD_OPTIKAL_INNOVATION;
-            break;
-        case 2:
-            song = MOD_SCHMID_SPACE_TAXI;
-            break;
-        default:
-            return;
-        }
+        songList = &songs.menu;
     } else if (menuId == 1) {
-        switch (songId) {
-        case 0:
-            song = MOD_THIRNO;
-            break;
-        case 1:
-            song = MOD_OH_MY_GOD;
-            break;
-        case 2:
-            song = MOD_UNSUSPECTED_H;
-            break;
-        case 3:
-            song = MOD_WARNING_INFECTED;
-            break;
-        case 4:
-            song = MOD_SCHIZOFRENIUM_LONG;
-            break;
-        case 5:
-            song = MOD__DETERSIVE_;
-            break;
-        default:
-            song = songId + MAX_MENU_SONGS;
-        }
+        songList = &songs.game;
     }
+
+    if(songId > (int) songList->size())
+        return;
+
+    auto it = songList->begin();
+    std::advance(it,songId);
+
+    song = *it;
 
     currentMenu = menuId;
     currentlyPlayingSong = songId;
@@ -60,14 +36,9 @@ void playSongRandom(int menuId) {
     int max = 0;
 
     if (menuId == 0) {
-        for (int i = 0; i < MAX_MENU_SONGS; i++)
-            max += (savefile->settings.songList[i]);
+        max = songs.menu.size();
     } else if (menuId == 1) {
-        for (int i = 0; i < MAX_GAME_SONGS; i++)
-            max += (savefile->settings.songList[i + MAX_MENU_SONGS]);
-
-        if(customSongs)
-            max += customSongCount;
+        max = songs.game.size();
     }
 
     if (max <= 0)
@@ -90,11 +61,9 @@ void playNextSong(){
     int menuId = currentMenu;
 
     if (menuId == 0) {
-        for (int i = 0; i < MAX_MENU_SONGS; i++)
-            max += (savefile->settings.songList[i]);
+        max = songs.menu.size();
     } else if (menuId == 1) {
-        for (int i = 0; i < MAX_GAME_SONGS; i++)
-            max += (savefile->settings.songList[i + MAX_MENU_SONGS]);
+        max = songs.game.size();
     }
 
     if (max <= 0)

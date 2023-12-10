@@ -10,6 +10,7 @@
 #include "def.h"
 #include <fstream>
 #include <cstdio>
+#include <vector>
 
 #define ENABLE_SHADERS 0
 
@@ -39,7 +40,22 @@ int musicVolume = 0;
 
 const int sfxVolumeMultiplier = 4;
 
+Songs songs;
+
+std::vector<std::string> songList;
+
 void loadAudio(){
+    int counter = 0;
+
+    for(int i = 0; i < MENU_MUSIC_COUNT; i++){
+        songList.push_back(MenuSongPaths[i]);
+        songs.menu.push_back(counter++);
+    }
+
+    for(int i = 0; i < GAME_MUSIC_COUNT; i++){
+        songList.push_back(GameSongPaths[i]);
+        songs.game.push_back(counter++);
+    }
 
     for(int i = 0; i < SFX_COUNT; i++){
         if(!sfxBuffers[i].loadFromFile(SoundEffectPaths[i])){
@@ -50,9 +66,9 @@ void loadAudio(){
     }
 
     for(int i = 0; i < MUSIC_COUNT; i++){
-        if(!musicArray[i].loadFromFile(SongPaths[i])){
+        if(!musicArray[i].loadFromFile(songList.at(i))){
             std::string str = "Failed to load ";
-            str += SongPaths[i];
+            str += songList.at(i);
             log(str);
         }
     }
@@ -279,11 +295,15 @@ void setMusicVolume(int volume){
 }
 
 void startSong(int song, bool loop){
+    log("song:");
+    log(song);
     if(song == currentSong && musicArray[currentSong].getStatus() == sfmod::Mod::Playing)
         return;
 
     if(currentSong != -1)
         musicArray[currentSong].stop();
+
+    log(songList.at(song));
 
     musicArray[song].play();
     currentSong = song;

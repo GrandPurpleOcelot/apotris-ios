@@ -1,5 +1,7 @@
 #pragma once
 
+#include <list>
+
 #ifdef GBA
 
 #include "liba_gba.h"
@@ -46,10 +48,15 @@ const int sizeTable[3][4][2] = {
     {{8,16},{8,32},{16,32},{32,64}}, //Tall
 };
 
-extern int spriteVOffset;
+class Songs{
+public:
+    std::list<int> menu;
+    std::list<int> game;
+};
 
-extern bool customSongs;
-extern int customSongCount;
+extern Songs songs;
+
+extern int spriteVOffset;
 
 extern void toggleBG(int layer, bool state);
 extern void toggleSprites(bool state);

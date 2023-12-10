@@ -12,6 +12,8 @@
 void loadAudio();
 void freeAudio();
 
+Songs songs;
+
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
 

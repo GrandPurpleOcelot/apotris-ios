@@ -6,8 +6,9 @@ directory = 'audio'
 count = 0
 music_count = 0
 
-effectlist = []
-musiclist = []
+effect_list = []
+game_music_list = []
+menu_music_list = []
 
 sep = '.'
 
@@ -18,16 +19,21 @@ for filename in os.listdir(directory):
         path = "assets/" + filename
         name = "SFX_" + n;
         name = name.replace("-","_");
-        effectlist.append((name,path))
+        effect_list.append((name,path))
 
         count+=1
 
-    if(filename.find('.mod') != -1) or (filename.find('.it') != -1):
+    if(filename.find('.mod') != -1) or (filename.find('.it') != -1) or (filename.find('.xm') != -1):
         path = "assets/" + filename
         name = "MOD_" + n
         name = name.replace("-","_");
+        name = name.replace("GAME_","");
+        name = name.replace("MENU_","");
 
-        musiclist.append((name,path))
+        if(filename.find('GAME_') != -1):
+            game_music_list.append((name,path))
+        else:
+            menu_music_list.append((name,path))
 
         music_count+=1
 
@@ -37,23 +43,34 @@ with open("./include/audio_files.h","w") as header:
     header.write("#pragma once\n\n");
 
     header.write(f"#define SFX_COUNT {count}\n")
-    header.write(f"#define MUSIC_COUNT {music_count}\n\n")
+    header.write(f"#define MUSIC_COUNT {len(menu_music_list) + len(game_music_list)}\n\n")
+    header.write(f"#define MENU_MUSIC_COUNT {len(menu_music_list)}\n\n")
+    header.write(f"#define GAME_MUSIC_COUNT {len(game_music_list)}\n\n")
 
     header.write(f"extern const char * SoundEffectPaths[];\n")
-    header.write(f"extern const char * SongPaths[];\n\n")
+    header.write(f"extern const char * MenuSongPaths[];\n\n")
+    header.write(f"extern const char * GameSongPaths[];\n\n")
     header.write(f"extern int SoundEffectIds[SFX_COUNT];\n")
 
-    header.write("enum SoundEffects{\n")
+    header.write("\nenum SoundEffects{\n")
 
-    for item in effectlist:
+    for item in effect_list:
         name = item[0]
         header.write(f"\t{name},\n")
 
     header.write("};\n\n")
 
-    header.write("enum Songs{\n")
+    header.write("enum MenuSongs{\n")
 
-    for item in musiclist:
+    for item in menu_music_list:
+        name = item[0]
+        header.write(f"\t{name},\n")
+
+    header.write("};\n\n")
+
+    header.write("enum GameSongs{\n")
+
+    for item in game_music_list:
         name = item[0]
         header.write(f"\t{name},\n")
 
@@ -67,15 +84,23 @@ with open("./source/audio_files.cpp","w") as source:
 
     source.write("const char * SoundEffectPaths[] = {\n")
 
-    for item in effectlist:
+    for item in effect_list:
         path = item[1]
         source.write(f"\t\"{path}\",\n")
 
     source.write("};\n\n")
 
-    source.write("const char * SongPaths[] = {\n")
+    source.write("const char * MenuSongPaths[] = {\n")
 
-    for item in musiclist:
+    for item in menu_music_list:
+        path = item[1]
+        source.write(f"\t\"{path}\",\n")
+
+    source.write("};\n\n")
+
+    source.write("const char * GameSongPaths[] = {\n")
+
+    for item in game_music_list:
         path = item[1]
         source.write(f"\t\"{path}\",\n")
 
