@@ -121,6 +121,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@mkdir -p bin/gba
+	@mkdir -p bin/gba/tools
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/make/gba_make
 	@rm -rf $(OUTPUT).elf
@@ -132,7 +133,6 @@ $(BUILD):
 	@mv $(OUTPUT).gba $(dir $(OUTPUT))tools/$(TARGET).gba
 
 # move appending tools
-	@mkdir -p bin/gba/tools
 	@cp tools/gbfs.exe bin/gba/tools/gbfs.exe
 	@cp tools/padbin.exe bin/gba/tools/padbin.exe
 	@cp tools/mmutil.exe bin/gba/tools/mmutil.exe
