@@ -136,7 +136,7 @@ $(BUILD):
 	@cp tools/gbfs.exe bin/gba/tools/gbfs.exe
 	@cp tools/padbin.exe bin/gba/tools/padbin.exe
 	@cp tools/mmutil.exe bin/gba/tools/mmutil.exe
-	@cp tools/buildSoundbank.py bin/gba/tools/buildSoundbank.py
+	@cp tools/buildSoundbank.exe bin/gba/tools/buildSoundbank.exe
 	@cp include/audio_files.h bin/gba/tools/audio_files.h
 	@cp tools/build.bat bin/gba/build.bat
 	@cp tools/README.txt bin/gba/README.txt

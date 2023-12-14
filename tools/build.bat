@@ -1,8 +1,8 @@
-python .\tools\buildSoundbank.py append
+.\tools\buildSoundbank.exe append
 
 .\tools\gbfs .\tools\audio.gbfs .\tools\soundbank.bin .\tools\effect_locations.bin
 .\tools\padbin 256 .\tools\Apotris-base.gba
-cat .\tools\Apotris-base.gba .\tools\audio.gbfs > Apotris.gba
+type .\tools\Apotris-base.gba .\tools\audio.gbfs > Apotris.gba
 
 @echo off
 set "file=Apotris.gba"
@@ -22,8 +22,7 @@ if %power% GTR 33554432 (
   echo:
   echo:
   pause
-)
-else
-(
+) else (
+  echo %power%
   .\tools\padbin %power% Apotris.gba
 )
