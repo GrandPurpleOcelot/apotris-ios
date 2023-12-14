@@ -6,6 +6,7 @@
 # into a binary file that the game can read during runtime.
 
 import os, sys, struct, time, json
+from pathlib import Path
 
 directory = 'audio'
 
@@ -43,8 +44,9 @@ for filename in os.listdir(directory):
 
         music_count+=1
 
+mmutil = Path("./tools/mmutil")
 # run mmutil
-os.system(f"mmutil {files} -o{soundbank_binary} -h{mmutil_header} > /dev/null")
+os.system(f"{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}")
 
 # wait for mmutil to finish
 print("Waiting for header...")

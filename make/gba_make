@@ -129,12 +129,17 @@ $(BUILD):
 	@cat $(OUTPUT).gba $(BUILD)/audio.gbfs > $(dir $(OUTPUT))Apotris.gba
 	@tools/padbin 0x400000 $(dir $(OUTPUT))Apotris.gba
 	@rm $(BUILD)/audio.gbfs
+	@mv $(OUTPUT).gba $(dir $(OUTPUT))tools/$(TARGET).gba
 
+# move appending tools
 	@mkdir -p bin/gba/tools
 	@cp tools/gbfs.exe bin/gba/tools/gbfs.exe
 	@cp tools/padbin.exe bin/gba/tools/padbin.exe
+	@cp tools/mmutil.exe bin/gba/tools/mmutil.exe
 	@cp tools/buildSoundbank.py bin/gba/tools/buildSoundbank.py
+	@cp include/audio_files.h bin/gba/tools/audio_files.h
 	@cp tools/build.bat bin/gba/build.bat
+	@cp tools/README.txt bin/gba/README.txt
 
 	@mkdir -p bin/gba/audio
 	@cp -r audio/ bin/gba/
@@ -143,7 +148,6 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).gba
-
 
 #---------------------------------------------------------------------------------
 else

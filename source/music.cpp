@@ -13,6 +13,8 @@ void playSong(int menuId, int songId) {
         songList = &songs.menu;
     } else if (menuId == 1) {
         songList = &songs.game;
+    } else{
+        return;
     }
 
     if(songId > (int) songList->size())
