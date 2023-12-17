@@ -169,7 +169,7 @@ void drawEnemyBoard(int height) {
     sprite_set_attr(enemyBoardSprite, ShapeTall, 2, boardTile, 15, 1);
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
     sprite_enable_affine(enemyBoardSprite, 6, true);
-    sprite_set_pos(enemyBoardSprite, 43, 24);
+    sprite_set_pos(enemyBoardSprite, 43, 20);
     sprite_set_size(enemyBoardSprite, float2fx(0.5), 6);
 
     if (height > 19)

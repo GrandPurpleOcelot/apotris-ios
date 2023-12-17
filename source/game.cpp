@@ -1298,13 +1298,13 @@ void showPPS(){
         fractional &= 0xff;
     }
 
-    clearTiles(2, 113, 5);
+    clearTiles(2, 110, 15);
 
-    const int x = 8;
+    const int x = 7;
 
-    aprints(str,25 + x,0,2);
+    aprints(str,25 + x,7,2);
 
-    aprints("PPS:",x,0,2);
+    aprints("PPS:",x,7,2);
 }
 
 void GameScene::showComboStreak(){
@@ -2110,9 +2110,8 @@ void showBestMove(){
         sprite_unhide(moveSprites[i],0);
 
         sprite_set_attr(moveSprites[i], ShapeSquare, 0, 512 + 128 + moveList.array[i], 15, 2);
-        // obj_set_attr(moveSprites[i], 0, 0, ATTR2_BUILD(512 + 128 + *move, 15, 2));
 
-        sprite_set_pos(moveSprites[i], 38 + 12 * i, 54);
+        sprite_set_pos(moveSprites[i], 38 + 12 * i, 50);
     }
 }
 
@@ -2493,16 +2492,14 @@ void showFinesseCombo(){
         return;
     }
 
-    sprite_set_attr(sprite, ShapeWide, 0, 275, 15, 0);
-    // obj_set_attr(sprite, ATTR0_WIDE, ATTR1_SIZE(0),ATTR2_BUILD(275, 15, 0));
-    sprite_set_pos(sprite, 52, 104);
-    sprite_unhide(sprite,0);
-
     clearSpriteTiles(275, 2, 1);
-    // memset32(&tile_mem[4][275],0x0000, 8 * 2);
 
     std::string text = "x" + std::to_string(game->finesseStreak);
     aprintsSprite(text,0,0,275);
+
+    sprite_set_attr(sprite, ShapeWide, 0, 275, 15, 0);
+    sprite_set_pos(sprite, 72 - 4 * text.size(), 104);
+    sprite_unhide(sprite,0);
 }
 
 void frameSnow(int layer){
@@ -2957,6 +2954,10 @@ void GameScene::init(){
     loadSpriteTilesPartial(248, &sprite20tiles_bin[32 * 3], 3, 0, 1, 1, 4);
 
     setGradient(savefile->settings.backgroundGradient);
+
+    //finesse move sprites
+    for(int i = 0; i < 8; i++)
+        loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
 
     setSkin();
 
