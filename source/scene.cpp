@@ -745,7 +745,7 @@ bool OptionListScene::control(){
                     if(n + dir >= 0 && n + dir <= options -1){
                         n += dir;
                     }else{
-                        return false;
+                        n -= dir;
                     }
                 }
 
