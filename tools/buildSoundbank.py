@@ -44,6 +44,7 @@ for filename in os.listdir(directory):
 
         music_count+=1
 
+print(files)
 mmutil = Path("./tools/mmutil")
 # run mmutil
 os.system(f"{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}")
@@ -72,6 +73,9 @@ songs = {
     "game" : [],
 }
 
+def sortFunc(a):
+    return a["name"];
+
 with open(mmutil_header) as f:
     for line in f:
         line = line.split()[1:]#split into words and ditch #define
@@ -96,6 +100,9 @@ with open(mmutil_header) as f:
                     "location" : int(line[1])
                 }
             )
+
+    songs["menu"].sort(key=sortFunc)
+    songs["game"].sort(key=sortFunc)
 
 print("\nsfx locations: ")
 print(json.dumps(effect_list,indent=2))

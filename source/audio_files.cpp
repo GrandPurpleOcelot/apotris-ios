@@ -46,18 +46,18 @@ const char * SoundEffectPaths[] = {
 };
 
 const char * MenuSongPaths[] = {
-	"assets/MENU_schmid-space_taxi.mod",
-	"assets/MENU_optikal-innovation.mod",
-	"assets/MENU_menu.it",
+	"assets/MENU_a_menu.it",
+	"assets/MENU_b_optikal-innovation.mod",
+	"assets/MENU_c_schmid-space_taxi.mod",
 };
 
 const char * GameSongPaths[] = {
-	"assets/GAME__detersive_.mod",
-	"assets/GAME_schizofrenium_long.mod",
-	"assets/GAME_oh_my_god.mod",
-	"assets/GAME_warning_infected.mod",
-	"assets/GAME_thirno.it",
-	"assets/GAME_unsuspected_h.mod",
+	"assets/GAME_a_thirno.it",
+	"assets/GAME_b_oh_my_god.mod",
+	"assets/GAME_c_unsuspected_h.mod",
+	"assets/GAME_d_warning_infected.mod",
+	"assets/GAME_e_schizofrenium_long.mod",
+	"assets/GAME_f__detersive_.mod",
 };
 
 int SoundEffectIds[SFX_COUNT] = {
