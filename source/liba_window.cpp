@@ -218,6 +218,7 @@ void updateWindow(u8 *framebuffer){
 
                     resize(windowWidth * windowScale, windowHeight * windowScale);
                 }
+                window.setFramerateLimit(60);
             }
         }
     }
