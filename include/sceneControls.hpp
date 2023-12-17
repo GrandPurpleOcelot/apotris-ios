@@ -298,22 +298,6 @@ class RebindElement : public Element{
         }
 };
 
-class LabelElement : public Element{
-    std::string label;
-    public:
-        std::string getLabel() override {
-            return label;
-        }
-
-        std::string getCurrentOption() override {
-            return "\n";
-        }
-
-        LabelElement(std::string l){
-            label = l;
-        }
-};
-
 class ControlOptionScene : public OptionListScene{
     public:
     std::string name(){return "Controls";};

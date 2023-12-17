@@ -171,6 +171,31 @@ class MoveSfxElement : public Element{
         }
 };
 
+class SongElement : public Element{
+    public:
+        int count = 0;
+
+        std::string getLabel() override {
+            return "Song " + std::to_string(count+1);
+        }
+
+        std::string getCursor(std::string text) override {
+            return " " + text + " ";
+        }
+
+        // void action() override{
+        //     sfx(SFX_MENUCONFIRM);
+        // }
+
+        std::string getCurrentOption() override {
+            return ".";
+        }
+
+        SongElement(int c){
+            count = c;
+        }
+};
+
 class SongListElement : public Element{
     public:
         std::string getLabel() override {
@@ -181,19 +206,19 @@ class SongListElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override{
-            sfx(SFX_MENUCONFIRM);
-        }
+        void action() override;
 
         std::string getCurrentOption() override {
             return "...";
         }
 };
 
+
 class AudioOptionScene : public OptionListScene{
     public:
-    std::string name(){return "Audio";};
-        std::list<Element*> getElementList(){
+        std::string name() { return "Audio"; };
+
+        std::list<Element *> getElementList() {
             return {
                 new MusicVolumeElement(),
                 new SFXVolumeElement(),
@@ -204,5 +229,31 @@ class AudioOptionScene : public OptionListScene{
             };
         };
 
-    Scene* previousScene(){return new SettingsScene();};
+        Scene *previousScene() { return new SettingsScene(); };
 };
+
+class SongListScene : public OptionListScene{
+    public:
+        std::string name(){return "Song List";};
+
+        std::list<Element*> getElementList() {
+            std::list<Element*> list;
+
+            list.push_back(new LabelElement("Menu:"));
+
+            for(int i = 0; i < (int) songs.menu.size(); i++){
+                list.push_back(new SongElement(i));
+            }
+
+            list.push_back(new LabelElement("In-Game:"));
+
+            for(int i = 0; i < (int) songs.game.size(); i++){
+                list.push_back(new SongElement(i));
+            }
+
+            return list;
+        };
+
+        Scene *previousScene() { return new AudioOptionScene();};
+};
+

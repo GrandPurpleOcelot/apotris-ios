@@ -502,6 +502,22 @@ public:
     }
 };
 
+class LabelElement : public Element{
+    std::string label;
+    public:
+        std::string getLabel() override {
+            return label;
+        }
+
+        std::string getCurrentOption() override {
+            return "\n";
+        }
+
+        LabelElement(std::string l){
+            label = l;
+        }
+};
+
 enum class Transitions{
     INSTANT,
     FADE,
