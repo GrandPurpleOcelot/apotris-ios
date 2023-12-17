@@ -173,10 +173,11 @@ class MoveSfxElement : public Element{
 
 class SongElement : public Element{
     public:
-        int count = 0;
+        int menu = 0;
+        int index = 0;
 
         std::string getLabel() override {
-            return "Song " + std::to_string(count+1);
+            return "Song " + std::to_string(index+1);
         }
 
         std::string getCursor(std::string text) override {
@@ -188,11 +189,14 @@ class SongElement : public Element{
         // }
 
         std::string getCurrentOption() override {
-            return ".";
+            return "x";
         }
 
-        SongElement(int c){
-            count = c;
+        void select();
+
+        SongElement(int m, int i){
+            menu = m;
+            index = i;
         }
 };
 
@@ -212,7 +216,6 @@ class SongListElement : public Element{
             return "...";
         }
 };
-
 
 class AudioOptionScene : public OptionListScene{
     public:
@@ -242,17 +245,20 @@ class SongListScene : public OptionListScene{
             list.push_back(new LabelElement("Menu:"));
 
             for(int i = 0; i < (int) songs.menu.size(); i++){
-                list.push_back(new SongElement(i));
+                list.push_back(new SongElement(0,i));
             }
 
             list.push_back(new LabelElement("In-Game:"));
 
-            for(int i = 0; i < (int) songs.game.size(); i++){
-                list.push_back(new SongElement(i));
+                for(int i = 0; i < (int) songs.game.size(); i++){
+                list.push_back(new SongElement(1,i));
             }
 
             return list;
         };
+
+        void init();
+        bool control();
 
         Scene *previousScene() { return new AudioOptionScene();};
 };
