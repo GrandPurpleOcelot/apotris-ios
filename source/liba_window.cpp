@@ -32,7 +32,7 @@ std::list<int> previousKeys;
 std::list<sf::Sound*> soundList;
 
 sf::SoundBuffer sfxBuffers[SFX_COUNT];
-sfmod::Mod musicArray[MUSIC_COUNT];
+sfmod::Mod *musicArray;
 
 sf::Shader shader;
 
@@ -90,6 +90,8 @@ void loadAudio(){
             log(str);
         }
     }
+
+    musicArray = new sfmod::Mod [counter];
 
     for(int i = 0; i < counter; i++){
         if(!musicArray[i].loadFromFile(songList.at(i))){
