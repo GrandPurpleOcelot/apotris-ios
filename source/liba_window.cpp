@@ -46,7 +46,7 @@ Songs songs;
 
 std::vector<std::string> songList;
 
-bool has_suffix(const std::string& s, const std::string& suffix){
+bool hasSuffix(const std::string& s, const std::string& suffix){
     return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
 }
 
@@ -56,8 +56,7 @@ void loadAudio(){
     std::string path = "assets";
 
     DIR *dir = opendir(path.c_str());
-    if(!dir)
-    {
+    if(!dir){
         log("couldn't open dir");
         return;
     }
@@ -65,7 +64,7 @@ void loadAudio(){
     dirent *entry;
     std::vector<std::string> songPaths;
     while((entry = readdir(dir)) != nullptr){
-        if(has_suffix(entry->d_name, ".it") || has_suffix(entry->d_name, ".mod") || has_suffix(entry->d_name, ".xm")){
+        if(hasSuffix(entry->d_name, ".it") || hasSuffix(entry->d_name, ".mod") || hasSuffix(entry->d_name, ".xm")){
             songPaths.push_back(entry->d_name);
         }
     }

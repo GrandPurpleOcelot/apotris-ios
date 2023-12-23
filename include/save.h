@@ -87,6 +87,14 @@ typedef struct GraphicsOptions{
     int placeHolder[6];
 }ALIGN(4) GraphicsOptions;
 
+typedef struct SongDisabling{
+    u8 menu;
+    u8 game;
+
+    int menuBits[4];
+    int gameBits[4];
+}ALIGN(4) SongDisabling;
+
 typedef struct Settings{
     bool announcer;
     bool finesse;
@@ -104,7 +112,7 @@ typedef struct Settings{
     int palette;
     int shadow;
     bool lightMode;
-    bool songList[10];
+    bool songList[10];//deprecated
     int sfxVolume;
     bool directionalDas;
     int shakeAmount;
@@ -154,7 +162,9 @@ typedef struct Settings{
     bool journey;
     int autosave;
 
-    int placeHolder[42];
+    SongDisabling songDisabling;
+
+    int placeHolder[33];
 
 }ALIGN(4) Settings;
 

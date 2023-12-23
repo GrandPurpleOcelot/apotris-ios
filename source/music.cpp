@@ -1,6 +1,9 @@
 #include "def.h"
 #include "logging.h"
 
+bool getSongState(int group, int index);
+void toggleSong(int group, int index, bool state);
+
 int currentMenu = 0;
 int currentlyPlayingSong = 0;
 
@@ -46,7 +49,15 @@ void playSongRandom(int menuId) {
     if (max <= 0)
         return;
 
-    int index = qran() % max;
+    int index = 0;
+    int count = 0;
+
+    do{
+        index = qran() % max;
+    }while(getSongState(menuId, index) && count++ < 1000);
+
+    if(count == 1000)
+        return;
 
     songId = index;
 
@@ -71,9 +82,17 @@ void playNextSong(){
     if (max <= 0)
         return;
 
-    int index = currentlyPlayingSong+1;
-    if(index >= max)
-        index = 0;
+    int index = 0;
+    int count = 0;
+
+    do{
+        int index = currentlyPlayingSong+1;
+        if(index >= max)
+            index = 0;
+    }while(getSongState(menuId, index) && count++ < 1000);
+
+    if(count == 1000)
+        return;
 
     songId = index;
 
@@ -81,4 +100,37 @@ void playNextSong(){
         return;
 
     playSong(menuId, songId);
+}
+
+void toggleSong(int group, int index, bool state){
+    int *list = nullptr;
+
+    if(group == 0){//MENU
+        list = savefile->settings.songDisabling.menuBits;
+    }else if(group == 1){//IN-GAME
+        list = savefile->settings.songDisabling.gameBits;
+    }
+
+    if(!list)
+        return;
+
+    if(state)
+        list[index/32] |= 1 << (index % 32);
+    else
+        list[index/32] &= ~(1 << (index % 32));
+}
+
+bool getSongState(int group, int index){
+    int *list = nullptr;
+
+    if(group == 0){//MENU
+        list = savefile->settings.songDisabling.menuBits;
+    }else if(group == 1){//IN-GAME
+        list = savefile->settings.songDisabling.gameBits;
+    }
+
+    if(!list)
+        return true;
+
+    return (list[index/32] >> (index % 32)) & 1;
 }
