@@ -1,4 +1,5 @@
 #include "sceneAudio.hpp"
+#include "logging.h"
 
 void SongListElement::action(){
     sfx(SFX_MENUCONFIRM);
@@ -6,13 +7,20 @@ void SongListElement::action(){
 }
 
 void SongElement::select(){
+    log(std::to_string(menu) + " " +  std::to_string(index));
     playSong(menu, index);
 }
 
 void SongListScene::init(){
     OptionListScene::init();
 
-    SongElement * song = (SongElement *) elementList.front();
+    auto it = elementList.begin();
+
+    do{
+        std::advance(it,1);
+    }while((*it)->getCurrentOption() == "\n");
+
+    SongElement * song = (SongElement *) *it;
 
     song->select();
 }

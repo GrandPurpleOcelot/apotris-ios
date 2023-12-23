@@ -181,15 +181,19 @@ class SongElement : public Element{
         }
 
         std::string getCursor(std::string text) override {
-            return " " + text + " ";
+            return "[" + text + "]";
         }
 
-        // void action() override{
-        //     sfx(SFX_MENUCONFIRM);
-        // }
-
         std::string getCurrentOption() override {
-            return "x";
+            if(!getSongState(menu, index))
+                return "ON";
+            else
+                return "OFF";
+        }
+
+        void action(int dir) override {
+            toggleSong(menu, index, !getSongState(menu, index));
+            sfx(SFX_MENUMOVE);
         }
 
         void select();
@@ -237,6 +241,7 @@ class AudioOptionScene : public OptionListScene{
 
 class SongListScene : public OptionListScene{
     public:
+        bool previous = false;
         std::string name(){return "Song List";};
 
         std::list<Element*> getElementList() {
@@ -257,9 +262,24 @@ class SongListScene : public OptionListScene{
             return list;
         };
 
+        void deinit(){
+            savefile->settings.cycleSongs = previous;
+            stopSong();
+            playSongRandom(0);
+        }
+
         void init();
         bool control();
 
         Scene *previousScene() { return new AudioOptionScene();};
-};
 
+        SongListScene(){
+            previous = savefile->settings.cycleSongs;
+
+            savefile->settings.cycleSongs = false;
+        }
+
+        ~SongListScene(){
+            deinit();
+        }
+};

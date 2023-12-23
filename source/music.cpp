@@ -1,9 +1,6 @@
 #include "def.h"
 #include "logging.h"
 
-bool getSongState(int group, int index);
-void toggleSong(int group, int index, bool state);
-
 int currentMenu = 0;
 int currentlyPlayingSong = 0;
 
@@ -56,7 +53,7 @@ void playSongRandom(int menuId) {
         index = qran() % max;
     }while(getSongState(menuId, index) && count++ < 1000);
 
-    if(count == 1000)
+    if(count >= 1000)
         return;
 
     songId = index;
@@ -91,7 +88,7 @@ void playNextSong(){
             index = 0;
     }while(getSongState(menuId, index) && count++ < 1000);
 
-    if(count == 1000)
+    if(count >= 1000)
         return;
 
     songId = index;
@@ -133,4 +130,17 @@ bool getSongState(int group, int index){
         return true;
 
     return (list[index/32] >> (index % 32)) & 1;
+}
+
+void checkSongs(){
+    SongDisabling * set = &savefile->settings.songDisabling;
+
+    if((u8) songs.menu.size() != set->menu ||
+       (u8) songs.game.size() != set->game){
+        memset32(set->gameBits, 0, 4);
+        memset32(set->menuBits, 0, 4);
+
+        set->menu = (u8) songs.menu.size();
+        set->game = (u8) songs.game.size();
+    }
 }

@@ -183,6 +183,10 @@ extern std::string modeToString(BlockEngine::Modes mode);
 
 extern std::string getStringFromKey(int key);
 
+extern bool getSongState(int group, int index);
+extern void toggleSong(int group, int index, bool state);
+extern void checkSongs();
+
 extern int countClears(u16 *board, int lengthX, int lengthY, int startY);
 extern IWRAM_CODE BlockEngine::Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int startY);
 extern int findBestDrop(int ii,int jj, BlockEngine::Game * game, std::list<BlockEngine::Move> &moves, BlockEngine::Weights weights);

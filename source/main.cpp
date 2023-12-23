@@ -160,6 +160,8 @@ void initialize(){
     refreshWindowSize();
 
     setGradient(GRADIENT_COLOR);
+
+    checkSongs();
 }
 
 void genWidths(){

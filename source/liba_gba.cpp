@@ -567,17 +567,6 @@ void loadAudio(){
 
     findSoundbank();
     buildEffectLocations();
-
-    SongDisabling * set = &savefile->settings.songDisabling;
-
-    if((u8) songs.menu.size() != set->menu ||
-       (u8) songs.game.size() != set->game){
-        memset32(set->gameBits, 0, 4);
-        memset32(set->menuBits, 0, 4);
-
-        set->menu = (u8) songs.menu.size();
-        set->game = (u8) songs.game.size();
-    }
 }
 
 void enableLayerWindow(int layer, int x1, int y1, int x2, int y2, bool invert){}

@@ -415,8 +415,10 @@ void OptionListScene::init(){
 
     selection = 0;
 
-    if(!elementList.empty() && elementList.front()->getCurrentOption() == "\n"){
+    auto it = elementList.begin();
+    while(!elementList.empty() && (*it)->getCurrentOption() == "\n"){
         selection++;
+        it++;
     }
 
     //backgroundGrid
@@ -610,19 +612,6 @@ void OptionListScene::draw(){
 }
 
 bool OptionListScene::control(){
-    // if(key_hit(KEY_A)){
-    //     sfx(SFX_MENUCONFIRM);
-    //     if(selection < options - 1)
-    //         selection++;
-    //     // auto it = optionList.begin();
-    //     // std::advance(it,selection);
-
-    //     // sceneSwitcher(*it);
-
-    //     // previousElement = "";
-    //     return true;
-    // }
-
     MenuKeys k = savefile->settings.menuKeys;
 
     if(key_hit(k.cancel)){
