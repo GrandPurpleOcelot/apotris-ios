@@ -11,6 +11,8 @@
 #include <fstream>
 #include <cstdio>
 #include <vector>
+#include <dirent.h>
+#include <algorithm>
 
 #define ENABLE_SHADERS 0
 
@@ -44,17 +46,42 @@ Songs songs;
 
 std::vector<std::string> songList;
 
+bool has_suffix(const std::string& s, const std::string& suffix){
+    return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
+}
+
 void loadAudio(){
     int counter = 0;
 
-    for(int i = 0; i < MENU_MUSIC_COUNT; i++){
-        songList.push_back(MenuSongPaths[i]);
-        songs.menu.push_back(counter++);
+    std::string path = "assets";
+
+    DIR *dir = opendir(path.c_str());
+    if(!dir)
+    {
+        log("couldn't open dir");
+        return;
     }
 
-    for(int i = 0; i < GAME_MUSIC_COUNT; i++){
-        songList.push_back(GameSongPaths[i]);
-        songs.game.push_back(counter++);
+    dirent *entry;
+    std::vector<std::string> songPaths;
+    while((entry = readdir(dir)) != nullptr){
+        if(has_suffix(entry->d_name, ".it") || has_suffix(entry->d_name, ".mod") || has_suffix(entry->d_name, ".xm")){
+            songPaths.push_back(entry->d_name);
+        }
+    }
+
+    closedir(dir);
+
+    sort(songPaths.begin(),songPaths.end());
+
+    for(auto str : songPaths){
+        if (str.find("GAME_") != std::string::npos) {
+            songList.push_back(path + "/" + str);
+            songs.game.push_back(counter++);
+        } else {
+            songList.push_back(path + "/" + str);
+            songs.menu.push_back(counter++);
+        }
     }
 
     for(int i = 0; i < SFX_COUNT; i++){
@@ -65,7 +92,7 @@ void loadAudio(){
         }
     }
 
-    for(int i = 0; i < MUSIC_COUNT; i++){
+    for(int i = 0; i < counter; i++){
         if(!musicArray[i].loadFromFile(songList.at(i))){
             std::string str = "Failed to load ";
             str += songList.at(i);
