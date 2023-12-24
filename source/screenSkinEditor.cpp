@@ -323,7 +323,10 @@ int selector(){
 
     const int slotHeight = 9;
 
-    aprint("Select a slot to edit:",4,6);
+    resetSmallText();
+    clearText();
+
+    naprint("Select a slot to edit:", 5 * 8, 6 * 8);
 
     for(int i = 0; i < 5; i++){
         OBJ_ATTR * sprite = &obj_buffer[i+1];
@@ -357,7 +360,6 @@ int selector(){
             aprint("[",12,16);
             aprint("]",17,16);
         }
-
 
         if(key_hit(k.confirm) || key_hit(k.pause)){
             if(selection == 0){

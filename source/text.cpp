@@ -356,9 +356,6 @@ void naprintColor(std::string str, int x, int y, int palette){
 		const int start = fontWidths[character][0];
 		const int end = fontWidths[character][1];
 
-		// log(start);
-		// log(end);
-
 		for(int py = 0; py < fontHeight; py++){
 			const int row = src->data[py];
 			if(!row)
