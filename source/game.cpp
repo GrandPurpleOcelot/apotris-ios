@@ -1166,6 +1166,8 @@ void GameScene::showTimer() {
     }
 }
 
+const char units[] = {'k','m','b'};
+
 void GameScene::showText() {
     int gm = game->gameMode;
 
@@ -1174,7 +1176,19 @@ void GameScene::showText() {
         wordSprites[0].setText("Score");
         wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
 
-        wordSprites[1].setText(std::to_string(game->score));
+        int score = game->score;
+        std::string unit = "";
+
+        if(savefile->settings.aspectRatio == 1){
+            int unitCount = 0;
+
+            while(score >= 1000000 && unitCount < 3){
+                score /= 1000;
+                unit = units[unitCount++];
+            }
+        }
+
+        wordSprites[1].setText(std::to_string(score)+unit);
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
 
         if (gm != ULTRA && gm != ZEN) {
