@@ -492,6 +492,7 @@ namespace BlockEngine
         void setShiftSoundFlag();
         void calculatePeek();
         void deathGarbage();
+        void toggleBigMode();
 
         int bigBag[35];
 

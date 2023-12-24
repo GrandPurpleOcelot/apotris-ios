@@ -433,6 +433,7 @@ void Game::hardDrop() {
 }
 
 void Game::update() {
+
     if(!disappearing)
         timer++;
     else
@@ -536,7 +537,6 @@ void Game::update() {
             if(gradePoints)
                 gradePoints--;
         }
-    }else if(gameMode == DEATH){
     }
 
     if((linesCleared >= goal && gameMode == SPRINT && goal && subMode == 0) ||
@@ -549,7 +549,7 @@ void Game::update() {
        if(gameMode == CLASSIC && goal){
            score+= (level + bTypeHeight) * 1000;
        }
-    }else if(gameMode == MASTER && disappearing && (eventTimer) >= CREDITS_LENGTH){
+    }else if((gameMode == MASTER || gameMode == DEATH) && disappearing && (eventTimer) >= CREDITS_LENGTH){
         won = 1;
 
         creditGrade += creditPoints[4][disappearing-1];
@@ -1089,32 +1089,24 @@ int Game::clear(Drop drop) {
 
         break;
     case DEATH:
-        // if(level == 999){
-        //     if(clearCount && disappearing)
-        //         creditGrade += creditPoints[clearCount-1][disappearing-1];
-
-        //     break;
-        // }
-
         level += clearCount + (clearCount > 2) + (clearCount > 3);
 
-        // if(level > 999)
-        //     level = 999;
+        if(level > 1300)
+            level = 1300;
 
-        // if(level == 999 && !disappearing){
+        if(level == 1300 && !disappearing){
+            toggleBigMode();
 
-        //     disappearing = 1 + (coolCount == 9);
+            sectionStart = timer;
 
-        //     sectionStart = timer;
+            eventLock = true;
 
-        //     eventLock = true;
-
-        //     for(int i = 0; i < lengthY; i++){
-        //         for(int j = 0; j < lengthX; j++)
-        //             board[i][j] = 0;
-        //         bitboard[i] = 0;
-        //     }
-        // }
+            for(int i = 0; i < lengthY; i++){
+                for(int j = 0; j < lengthX; j++)
+                    board[i][j] = 0;
+                bitboard[i] = 0;
+            }
+        }
 
         currentSectionLevel = level / 100;
 
@@ -1874,6 +1866,8 @@ void Game::setDeathTuning(){
 
     if(n > 12)
         n = 12;
+
+    n = 0;
 
     arr = 1;
     areMax = deathDelays[n][0];
@@ -2770,6 +2764,24 @@ void Game::deathGarbage(){
     stackHeight -= 1;
 
     updateColumns(1);
+
+    refresh = 1;
+}
+
+void Game::toggleBigMode(){
+    if(pawn.big){
+        pawn.big = false;
+        lengthY = 40;
+        lengthX = 10;
+        boardOffset = 20;
+        fullLine = 0x3ff;
+    }else{
+        pawn.big = true;
+        lengthY = 20;
+        lengthX = 5;
+        boardOffset = 10;
+        fullLine = 0x1f;
+    }
 
     refresh = 1;
 }

@@ -522,7 +522,7 @@ void showBackground(int offset) {
                         continue;
                     }
 
-                    if(!game->disappearing){
+                    if(game->disappearing == 0){
                         up = (game->board[i - 1][j] > 0 && !before);
                         left = (j - 1 >= 0 && game->board[i][j - 1] > 0 && !(game->lineClearArray[i]));
                         right = (j + 1 <= 9 && game->board[i][j + 1] > 0 && !(game->lineClearArray[i]));
@@ -610,7 +610,7 @@ void showBackground(int offset) {
                         continue;
                     }
 
-                    if(!game->disappearing){
+                    if(game->disappearing == 0){
                         up = (game->board[(i-1)/2][j/2] > 0 && !before);
                         left = ((j-1)/2 >= 0 && game->board[i/2][(j-1)/2] > 0 && !(game->lineClearArray[i/2]));
                         right = ((j+1)/2 < game->lengthX && game->board[i/2][(j+1)/2] > 0 && !(game->lineClearArray[i/2]));
@@ -1218,22 +1218,22 @@ void GameScene::showText() {
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
 
         wordSprites[2].setText("Level");
-        wordSprites[2].show(4 * 8, 14 * 8,15);
+        wordSprites[2].show(9 * 8 - wordSprites[2].width, 14 * 8,15);
 
         str = std::to_string(game->level);
 
         wordSprites[3].setTextNum(game->level);
-        wordSprites[3].show((7-str.size()) * 8, 16 * 8,15);
+        wordSprites[3].show(9 * 8 - wordSprites[3].width, 16 * 8,15);
 
         showSpeedMeter((int)game->speed);
 
         int n = ((game->level / 100)+1) * 100;
 
-        if(n == 1000)
-            n--;
+        if(n == 1000 && game->gameMode == MASTER)
+            n = 999;
 
         wordSprites[4].setTextNum(n);
-        wordSprites[4].show(4 * 8, 18 * 8,15);
+        wordSprites[4].show(9 * 8 - wordSprites[4].width, 18 * 8,15);
     }
 
     if (gm != BATTLE && gm != BLITZ && !(gm == SPRINT && game->subMode == 1) && !(gm == MASTER || gm == DEATH)){
@@ -2348,7 +2348,7 @@ void showSpeedMeter(int fill){
 
     sprite_unhide(sprite, 0);
     sprite_set_attr(sprite, ShapeWide, 1, 256, 13, 0);
-    sprite_set_pos(sprite,35, 139);
+    sprite_set_pos(sprite,9 * 8 - 22, 139);
 }
 
 void disappear(){
@@ -2448,7 +2448,7 @@ void zoneFlash(){
 
     mirrorPalettes(cond,8);
 
-    if(flashTimer < flashTimerMax/2 && game->gameMode == MASTER){
+    if(flashTimer < flashTimerMax/2 && (game->gameMode == MASTER || game->gameMode == DEATH)){
         if(!savefile->settings.lightMode)
             setPaletteColor(0, 0, 0x0000, 1);
         else
@@ -3082,21 +3082,18 @@ void GameScene::update(){
 
     gameSeconds = game->timer;
 
-    if(game->clearLock && !(game->eventLock && game->gameMode != MASTER)){
+    if(game->clearLock && !(game->eventLock && !(game->gameMode == MASTER || game->gameMode == DEATH))){
         clearTimer++;
     }
 
     if(game->eventLock){
         if(eventPauseTimer == 0){
-            if(game->gameMode == MASTER){
+            if(game->gameMode == MASTER || game->gameMode == DEATH){
                 showBackground(0);
                 eventPauseTimer = eventPauseTimerMax;
                 setupCredits();
                 flashTimer = flashTimerMax;
                 gradient(false);
-            // } else if(game->gameMode == MARATHON){
-            //     flashTimer = flashTimerMax;
-            //     eventPauseTimer = flashTimerMax + 2;
             }
         }
 
@@ -3192,7 +3189,7 @@ void GameScene::update(){
         showZoneMeter();
     }
 
-    if(game->gameMode == MASTER && game->eventTimer){
+    if((game->gameMode == MASTER || game->gameMode == DEATH) && game->eventTimer){
         showCredits();
     }
 
