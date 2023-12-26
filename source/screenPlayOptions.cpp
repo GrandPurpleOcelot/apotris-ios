@@ -271,7 +271,8 @@ void PlayOptionScene::start(){
     }
 
     newOptions.goal = goal;
-    newOptions.level = level;
+    // newOptions.level = level;
+    newOptions.level = 998;
     newOptions.tuning = getTuning();
     newOptions.bigMode = savefile->settings.big;
     newOptions.subMode = subMode;

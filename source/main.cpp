@@ -595,6 +595,12 @@ void setSkin() {
 
         loadTiles(0,128,sprite53tiles_bin,sprite53tiles_bin_size/32);
         break;
+    case 1001:
+        blockSprite = (u8*)sprite55tiles_bin;
+        break;
+    case 1002:
+        blockSprite = (u8*)sprite56tiles_bin;
+        break;
     default:
         if(savefile->settings.skin < 0){
             int n = savefile->settings.skin;
@@ -606,15 +612,18 @@ void setSkin() {
         break;
     }
 
-    if(savefile->settings.skin < 7 || savefile->settings.skin == 9 || savefile->settings.skin == 10){
+    if(savefile->settings.skin < 7 || savefile->settings.skin == 9 || savefile->settings.skin == 10 || savefile->settings.skin > 1000){
         //TODO:
         //vsync might not be necessary here
         vsync();
         int n = savefile->settings.skin;
-        if(savefile->settings.skin < 0){
+
+        if(n < 0){
             n *= -1;
             n--;
             buildMini(&savefile->customSkins[n].smallBoard);
+        }else if(n == 1001 || n == 1002){
+            buildMini((TILE*)boneMini[n-1001]);
         }else{
             if (n >= 9)
                 n-=2;
@@ -790,6 +799,11 @@ void setPalette(){
             setPaletteColor(i, 5, RGB15(i, i, i), 1);
 
     setPaletteColor(15, 5, RGB15(25, 5, 5), 1);
+
+    for(int i = 0; i < 16; i++){
+        setPaletteColor(i,15,RGB15(0,31,0),1);
+        setPaletteColor(16+i,15,RGB15(0,31,0),1);
+    }
 }
 
 int getClassicPalette(){

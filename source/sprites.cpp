@@ -9,13 +9,8 @@
 #include "small7tiles_bin.h"
 #include "small8tiles_bin.h"
 #include "small9tiles_bin.h"
-/* #include "small8tiles_bin.h" */
-/* #include "small9tiles_bin.h" */
-/* #include "small10tiles_bin.h" */
-/* #include "small11tiles_bin.h" */
-/* #include "small12tiles_bin.h" */
-/* #include "small13tiles_bin.h" */
-/* #include "small14tiles_bin.h" */
+#include "small10tiles_bin.h"
+#include "small11tiles_bin.h"
 
 #include "move1tiles_bin.h"
 #include "move2tiles_bin.h"
@@ -117,6 +112,11 @@ const uint8_t * mini[9] = {
         small7tiles_bin,
         small8tiles_bin,
         small9tiles_bin,
+};
+
+const uint8_t *boneMini[] = {
+        small10tiles_bin,
+        small11tiles_bin,
 };
 
 const uint8_t * moveSpriteTiles[8] = {

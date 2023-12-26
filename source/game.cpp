@@ -465,6 +465,16 @@ void GameScene::checkSounds() {
         showFullMeter();
     }
 
+    if(game->sounds.bone > 0){
+        savefile->settings.skin = 1000 + game->sounds.bone;
+        savefile->settings.edges = false;
+        refreshSkin = true;
+    }else if(game->sounds.bone == -1){
+        savefile->settings.skin = previousSettings.skin;
+        savefile->settings.edges = previousSettings.edges;
+        refreshSkin = true;
+    }
+
     game->resetSounds();
 }
 
@@ -546,7 +556,7 @@ void showBackground(int offset) {
 
                 if(savefile->settings.skin == 7 || savefile->settings.skin == 8)
                     offset = 48 + (n);
-                else if(savefile->settings.skin >= 11)
+                else if(savefile->settings.skin >= 11 && savefile->settings.skin < 1000)
                     offset = 128 + GameInfo::connectedConversion[b >> 4];
 
                 if(n != 8)
@@ -867,7 +877,7 @@ void showHold() {
     const int skin = savefile->settings.skin;
     int yoffset = - (6 * (game->rotationSystem != SRS && (skin >= 7 && !(skin == 9 || skin == 10))));
 
-    if (skin < 7 || skin == 9 || skin == 10) {
+    if (skin < 7 || skin == 9 || skin == 10 || skin > 1000) {
         sprite_unhide(holdSprite, 0);
         sprite_set_attr(holdSprite, ShapeWide, 2, 9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
         sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS));
@@ -959,7 +969,7 @@ void showQueue() {
         int n = game->queue.array[k];
 
         int add = !(n == 0 || n == 3);
-        if (skin < 7 || skin == 9 || skin == 10) {
+        if (skin < 7 || skin == 9 || skin == 10 || skin > 1000) {
             sprite_unhide(queueSprites[k], 0);
             sprite_set_attr(queueSprites[k], ShapeWide, 2, 16 * 9 + 8 * n, n * (game->zoneTimer == 0), 3);
             sprite_enable_mosaic(queueSprites[k]);
@@ -3200,9 +3210,7 @@ void GameScene::deinit(){
 
     autosave();
 
-    if(savefile->settings.journey){
-        setSkin();
-    }
+    setSkin();
 }
 
 void updateFluid(){

@@ -1112,6 +1112,12 @@ int Game::clear(Drop drop) {
                 }
             }
 
+            if(currentSectionLevel == 10){
+                sounds.bone = 1 + !subMode;
+            }else if(currentSectionLevel == 13){
+                sounds.bone = -1;
+            }
+
             if(timer-sectionStart > 3600){//regret
                 regretCount++;
 

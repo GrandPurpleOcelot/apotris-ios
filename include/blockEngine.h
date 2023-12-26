@@ -344,6 +344,7 @@ namespace BlockEngine
         int meter = 0;
         int initial = 0;
         int tspin = 0;
+        int bone = 0;
 
         SoundFlags() {}
         SoundFlags(const SoundFlags& oldFlags){
@@ -361,6 +362,7 @@ namespace BlockEngine
             meter = oldFlags.meter;
             initial = oldFlags.initial;
             tspin = oldFlags.tspin;
+            bone = oldFlags.bone;
         }
     };
 

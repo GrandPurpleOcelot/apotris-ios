@@ -47,6 +47,8 @@
 #include "sprite52tiles_bin.h"
 #include "sprite53tiles_bin.h"
 #include "sprite54tiles_bin.h"
+#include "sprite55tiles_bin.h"
+#include "sprite56tiles_bin.h"
 
 #include "title1tiles_bin.h"
 #include "title2tiles_bin.h"
@@ -56,6 +58,7 @@
 extern const uint16_t palette[2][256];
 
 extern const uint8_t * mini[9];
+extern const uint8_t * boneMini[];
 
 extern const uint8_t * moveSpriteTiles[8];
 
