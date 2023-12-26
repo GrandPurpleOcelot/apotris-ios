@@ -44,6 +44,7 @@ class GameScene : public Scene{
     void deinit();
 
     WordSprite wordSprites[MAX_WORD_SPRITES];
+    WordSprite creditSprites[3];
 
     void countdown();
     void showText();
@@ -54,6 +55,10 @@ class GameScene : public Scene{
     int endScreen();
     void showModeText();
     void showStats(bool, std::string, std::string, bool);
+    void setupCredits();
+    void showCredits();
+    void refreshCredits();
+    void checkSounds();
 
     bool counted = false;
 

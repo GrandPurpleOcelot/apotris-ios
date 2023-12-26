@@ -210,7 +210,7 @@ void GameScene::updateText() {
     }
 }
 
-void checkSounds() {
+void GameScene::checkSounds() {
     if (game->sounds.hold)
         sfx(SFX_HOLD);
 
@@ -1231,6 +1231,8 @@ void GameScene::showText() {
 
         if(n == 1000 && game->gameMode == MASTER)
             n = 999;
+        else if(n == 1400 && game->gameMode == DEATH)
+            n = 1300;
 
         wordSprites[4].setTextNum(n);
         wordSprites[4].show(9 * 8 - wordSprites[4].width, 18 * 8,15);
@@ -2658,84 +2660,64 @@ void showZoneText(){
 }
 
 static FIXED creditCurrentHeight = int2fx(SCREEN_HEIGHT);
-static s8 creditIndex = 0;
 static u8 creditLastRead = 0;
 
 const FIXED creditSpeed = float2fx(0.6);
 const int creditSpace = 200;
 
-void setupCredits(){
+void GameScene::setupCredits(){
     creditCurrentHeight = int2fx(SCREEN_HEIGHT);
-    creditIndex = 0;
     creditLastRead = 0;
 
-    clearSpriteTiles(256, MAX_WORD_SPRITES * 12 * 8, 1);
-    // memset32(&tile_mem[4][256], 0x0000 , MAX_WORD_SPRITES * 12 * 8);
-    for (int i = 0; i < MAX_WORD_SPRITES; i++){
-        delete wordSprites[i];
-        wordSprites[i] = new WordSprite(i,64 + i * 3, 300 + i * 12);
+    // clearSpriteTiles(256, MAX_WORD_SPRITES * 12, 1);
+
+    auto index = GameInfo::credits.begin();
+    std::advance(index,creditLastRead++);
+
+    std::string text = *index;
+    std::size_t pos = text.find(" ");
+
+    if(pos != std::string::npos){
+        std::string part1 = text.substr(0, pos);
+        std::string part2 = text.substr(pos + 1);
+
+        creditSprites[0].setText(part1);
+        creditSprites[1].setText(part2);
+    }else{
+        creditSprites[1].setText(text);
     }
 
-    for(int i = 0; i < 2; i++){
-        auto index = GameInfo::credits.begin();
-        std::advance(index,creditLastRead++);
+    creditSprites[2].setText("akouzoukos");
 
-        std::string text = *index;
-        std::size_t pos = text.find(" ");
-
-        if(pos != std::string::npos){
-            // aprint("            ", 9, 15 - height);
-            std::string part1 = text.substr(0, pos);
-            std::string part2 = text.substr(pos + 1);
-
-            wordSprites[i*3+0]->setText(part1);
-            wordSprites[i*3+1]->setText(part2);
-        }else{
-            wordSprites[i*3+1]->setText(text);
-        }
-
-        wordSprites[i*3+2]->setText("akouzoukos");
-    }
-
-    for(int i = 0; i < 9; i++){
-        wordSprites[i]->priority = 3;
-    }
+    // for(int i = 0; i < 9; i++){
+    //     wordSprites[i]->priority = 3;
+    // }
 }
 
-void showCredits(){
+void GameScene::showCredits(){
 
     creditCurrentHeight -= creditSpeed;
 
     int height = fx2int(creditCurrentHeight);
 
-    // profile_start();
-    for(int i = 0; i < 3; i++){
-        int yconst = height + creditSpace * i;
-        int id = ((i+creditIndex)%3)*3;
-        for(int j = 0; j < 3; j++){
-            int y = 8 * (j + (j == 2)) + yconst;
-            if(y > SCREEN_HEIGHT || y < -8){
-                wordSprites[id + j]->hide();
-            }else{
-                wordSprites[id + j]->show(10 * 8, y, 15);
-            }
+    for (int j = 0; j < 3; j++) {
+        int y = 8 * (j + (j == 2)) + height;
+
+        if (y > SCREEN_HEIGHT || y < -8) {
+            creditSprites[j].hide();
+        }else{
+            creditSprites[j].show(10 * 8, y, 15);
         }
     }
-    // log(std::to_string(profile_stop()));
 
     if(fx2int(creditCurrentHeight) <= -32)
         creditRefresh = true;
 }
 
-void refreshCredits(){
+void GameScene::refreshCredits(){
     creditRefresh = false;
 
-    creditIndex++;
-
     creditCurrentHeight += int2fx(creditSpace);
-
-    if(creditIndex >= 3)
-        creditIndex = 0;
 
     auto index = GameInfo::credits.begin();
     std::advance(index,creditLastRead);
@@ -2754,18 +2736,17 @@ void refreshCredits(){
         std::string part1 = text.substr(0, pos);
         std::string part2 = text.substr(pos + 1);
 
-        wordSprites[creditIndex*3+0]->setText(part1);
-        wordSprites[creditIndex*3+1]->setText(part2);
+        creditSprites[0].setText(part1);
+        creditSprites[1].setText(part2);
     }else{
-        wordSprites[creditIndex*3+0]->setText("");
-        wordSprites[creditIndex*3+1]->setText(text);
+        creditSprites[0].setText("");
+        creditSprites[1].setText(text);
     }
 
     if(creditLastRead < 11)
-        wordSprites[creditIndex*3+2]->setText("akouzoukos");
+        creditSprites[2].setText("akouzoukos");
     else
-        wordSprites[creditIndex*3+2]->setText("");
-
+        creditSprites[2].setText("");
 }
 
 void showFullMeter(){
@@ -2994,6 +2975,9 @@ void GameScene::init(){
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].setup(i, 40 + i * 3, 672 + i * 12,false);
 
+    for(int i = 0; i < 3; i++)
+        creditSprites[i].setup(i, 90 + i * 3, 672 + (MAX_WORD_SPRITES + i) * 12,false);
+
     clearSprites(128);
     updateText();
 
@@ -3088,16 +3072,14 @@ void GameScene::update(){
 
     if(game->eventLock){
         if(eventPauseTimer == 0){
+            eventPauseTimer = eventPauseTimerMax;
             if(game->gameMode == MASTER || game->gameMode == DEATH){
-                showBackground(0);
-                eventPauseTimer = eventPauseTimerMax;
+                showBackground(peek);
                 setupCredits();
                 flashTimer = flashTimerMax;
                 gradient(false);
             }
-        }
-
-        if(eventPauseTimer){
+        }else{
             eventPauseTimer--;
 
             if(eventPauseTimer == 0)

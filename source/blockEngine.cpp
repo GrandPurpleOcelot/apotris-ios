@@ -688,10 +688,10 @@ void Game::place() {
             if((lengthY-y) > columnHeights[x])
                 columnHeights[x] = lengthY-y;
 
-            if(disappearing == 1)
-                disappearTimers[y][x] = MAX_DISAPPEAR;
-            else if(disappearing == 2)
-                disappearTimers[y][x] = 1;
+            // if(disappearing == 1)
+            //     disappearTimers[y][x] = MAX_DISAPPEAR;
+            // else if(disappearing == 2)
+            //     disappearTimers[y][x] = 1;
         }
     }
 
@@ -1037,18 +1037,11 @@ int Game::clear(Drop drop) {
             level = 999;
 
         if(level == 999 && !disappearing){
-
             disappearing = 1 + (coolCount == 9);
-
             sectionStart = timer;
-
             eventLock = true;
 
-            for(int i = 0; i < lengthY; i++){
-                for(int j = 0; j < lengthX; j++)
-                    board[i][j] = 0;
-                bitboard[i] = 0;
-            }
+            clearBoard();
         }
 
         currentSectionLevel = level / 100;
@@ -1095,17 +1088,13 @@ int Game::clear(Drop drop) {
             level = 1300;
 
         if(level == 1300 && !disappearing){
+            clearBoard();
+
             toggleBigMode();
 
             sectionStart = timer;
-
             eventLock = true;
-
-            for(int i = 0; i < lengthY; i++){
-                for(int j = 0; j < lengthX; j++)
-                    board[i][j] = 0;
-                bitboard[i] = 0;
-            }
+            disappearing = -1;
         }
 
         currentSectionLevel = level / 100;
@@ -1867,8 +1856,6 @@ void Game::setDeathTuning(){
     if(n > 12)
         n = 12;
 
-    n = 0;
-
     arr = 1;
     areMax = deathDelays[n][0];
     lineAre = deathDelays[n][1];
@@ -2046,7 +2033,6 @@ void Game::setSpeed(){
         speed = 20;
     } else
         speed = gravity[0];
-
 }
 
 void Game::setRotationSystem(int rs){
@@ -2156,6 +2142,11 @@ void Game::clearBoard(){
     garbageHeight = 0;
 
     stackHeight = lengthY;
+
+    linesToClear.clear();
+    memset32(lineClearArray, 0, 40 / 4);
+
+    clearLock = false;
 }
 
 void Game::fixConnected(std::list<int> sourceList){

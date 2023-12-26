@@ -136,7 +136,6 @@ extern void showGoalLine();
 extern void setPalette();
 extern void loadSave();
 extern void showPlaceEffect();
-extern void checkSounds();
 extern int getClassicPalette();
 extern void buildMini(TILE *);
 extern void showZoneMeter();
@@ -151,9 +150,6 @@ extern std::string timeToString(int frames, bool small);
 extern std::string timeToStringHours(int frames);
 extern void setDefaultGraphics(Save * save, int depth);
 extern void setRandomGraphics(Save *save);
-extern void showCredits();
-extern void setupCredits();
-extern void refreshCredits();
 extern void setPawnPalette(int dest, int n, int blend);
 
 extern void startGame(BlockEngine::Options options, int seed);

@@ -209,7 +209,7 @@ void WordSprite::setText(std::string _text){
     text = _text;
 
     if(text == ""){
-        clearSpriteTiles(startTiles, (big)?20:12 , 0);
+        clearSpriteTiles(startTiles, (big)?20:12 , 1);
         return;
     }
 
