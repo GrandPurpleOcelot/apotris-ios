@@ -3290,7 +3290,11 @@ void checkPeek(){
         return;
 
     int prev = peek;
+
     FIXED goal = int2fx(game->peek * 8);
+
+    if(game->lost || game->won)
+        goal = 0;
 
     const int speed = 200;
 

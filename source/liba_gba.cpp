@@ -415,8 +415,6 @@ void setMusicVolume(int volume){
 void startSong(int song, bool loop){
     int n = song;
 
-    log(n);
-
     if(n < 0)
         return;
 

@@ -341,6 +341,9 @@ void endAnimation() {
     setLayerScroll(0, 0, 0);
     setLayerScroll(1, 0, 0);
 
+    enableLayerWindow(0, 0, 0, 240, 160, false);
+    enableLayerWindow(1, 0, 0, 240, 160, false);
+
     //TODO::
     #ifdef GBA
     rumble_set_state(RumbleState(rumble_stop));
@@ -355,6 +358,7 @@ void endAnimation() {
         showClearText();
 
         updateFluid();
+        checkPeek();
 
         if (i % 2 != 0)
             continue;
@@ -371,6 +375,7 @@ void endAnimation() {
             break;
         updateFluid();
         drawGrid();
+        checkPeek();
     }
     clearText();
 

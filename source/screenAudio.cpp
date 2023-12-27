@@ -7,7 +7,6 @@ void SongListElement::action(){
 }
 
 void SongElement::select(){
-    log(std::to_string(menu) + " " +  std::to_string(index));
     playSong(menu, index);
 }
 

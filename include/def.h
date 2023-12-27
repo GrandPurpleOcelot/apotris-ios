@@ -179,6 +179,8 @@ extern std::string modeToString(BlockEngine::Modes mode);
 
 extern std::string getStringFromKey(int key);
 
+extern void checkPeek();
+
 extern bool getSongState(int group, int index);
 extern void toggleSong(int group, int index, bool state);
 extern void checkSongs();
