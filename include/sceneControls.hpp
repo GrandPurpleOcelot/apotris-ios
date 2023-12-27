@@ -148,6 +148,8 @@ class RebindElement : public Element{
     public:
         std::string label;
         int index = 0;
+        int menu = 0;
+
         int * keys = nullptr;
 
         bool reading = false;
@@ -290,8 +292,33 @@ class RebindElement : public Element{
             return getStringFromKey(keys[index]);
         }
 
-        RebindElement(int * _keys, int _index, std::string _label, int _max){
+        void reset(){
+            if(menu == 0){
+                MenuKeys k = getDefaultMenuKeys();
+
+                int * src = (int*) &k;
+                keys[index] = src[index];
+            }else if(menu == 1){
+                Keys k = getDefaultGameKeys();
+
+                int * src = (int*) &k;
+                keys[index] = src[index];
+            }
+
+            for (int i = 0; i < max; i++) {
+                if (i == index)
+                    continue;
+
+                if (keys[i] == keys[index])
+                    keys[i] = KEY_FULL - 2;
+            }
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        RebindElement(int * _keys, int _menu, int _index, std::string _label, int _max){
             keys = _keys;
+            menu = _menu;
             index = _index;
             label = _label;
             max = _max;
@@ -311,7 +338,7 @@ class ControlOptionScene : public OptionListScene{
 
         int counter = 0;
         for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
-            list.push_back(new RebindElement((int *) &savefile->settings.keys,counter++,*it,9));
+            list.push_back(new RebindElement((int *) &savefile->settings.keys,1,counter++,*it,9));
 
         #if defined(GBA)
         list.push_back(new ABHoldElement());
@@ -324,7 +351,7 @@ class ControlOptionScene : public OptionListScene{
 
         counter = 0;
         for(auto it = menuControlOptions.begin(); it != menuControlOptions.end(); ++it)
-            list.push_back(new RebindElement((int*) &menuKeys,counter++,*it,11));
+            list.push_back(new RebindElement((int*) &menuKeys,0,counter++,*it,11));
 
         #endif
 
@@ -332,6 +359,8 @@ class ControlOptionScene : public OptionListScene{
 
         return list;
     };
+
+    bool control();
 
     Scene* previousScene(){return new SettingsScene();};
 };

@@ -371,20 +371,21 @@ class InitialSystemElement : public Element{
 class HandlingOptionScene : public OptionListScene{
     public:
     std::string name(){return "Handling";};
-        std::list<Element*> getElementList(){
-            return {
-                new DASElement(),
-                new ARRElement(),
-                new SDFElement(),
-                new DelaySoftDropElement(),
-                new DropProtectionElement(),
-                new DirectionalDelayElement(),
-                new DisableDiagonalsElement(),
-                new IHSElement(),
-                new IRSElement(),
-                new InitialSystemElement(),
-            };
+
+    std::list<Element*> getElementList(){
+        return {
+            new DASElement(),
+            new ARRElement(),
+            new SDFElement(),
+            new DelaySoftDropElement(),
+            new DropProtectionElement(),
+            new DirectionalDelayElement(),
+            new DisableDiagonalsElement(),
+            new IHSElement(),
+            new IRSElement(),
+            new InitialSystemElement(),
         };
+    };
 
     Scene* previousScene(){return new SettingsScene();};
     bool control();

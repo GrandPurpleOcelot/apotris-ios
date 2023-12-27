@@ -180,6 +180,8 @@ extern std::string modeToString(BlockEngine::Modes mode);
 extern std::string getStringFromKey(int key);
 
 extern void checkPeek();
+extern MenuKeys getDefaultMenuKeys();
+extern Keys getDefaultGameKeys();
 
 extern bool getSongState(int group, int index);
 extern void toggleSong(int group, int index, bool state);

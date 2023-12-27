@@ -156,7 +156,7 @@ void loadSave() {
     saveSavefile();
 }
 
-void setDefaultKeys(){
+Keys getDefaultGameKeys(){
     Keys k {
         .moveLeft = KEY_LEFT,
         .moveRight = KEY_RIGHT,
@@ -173,8 +173,10 @@ void setDefaultKeys(){
     k.hold |= KEY_L;
     #endif
 
-    savefile->settings.keys = k;
+    return k;
+}
 
+MenuKeys getDefaultMenuKeys(){
     MenuKeys m{
         .up = KEY_UP,
         .down = KEY_DOWN,
@@ -193,8 +195,13 @@ void setDefaultKeys(){
     m.reset = 0;
     #endif
 
+    return m;
+}
 
-    savefile->settings.menuKeys = m;
+void setDefaultKeys(){
+    savefile->settings.keys = getDefaultGameKeys();
+
+    savefile->settings.menuKeys = getDefaultMenuKeys();
 }
 
 void resetSkins(Save *save){
