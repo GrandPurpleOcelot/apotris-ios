@@ -2818,7 +2818,6 @@ void liftKeys(){
 void setRandomGraphics(Save *save){
     save->settings.edges = qran () % 2;
     save->settings.backgroundGrid = qran() % (MAX_BACKGROUNDS - 1);
-    save->settings.skin = qran() % (MAX_SKINS - 1);
     save->settings.palette = qran() % 8;
 
     if(save->settings.shadow != 4){
@@ -2839,6 +2838,18 @@ void setRandomGraphics(Save *save){
 
     if(qran() % 10 == 0)
         save->settings.backgroundGradient = 0;
+
+
+    int skin = 0;
+    int count = 0;
+    do{
+        skin = qran() % (MAX_SKINS - 1 + MAX_CUSTOM_SKINS) - MAX_CUSTOM_SKINS;
+    }while(skin < 0 && !save->customSkins[(skin + 1 ) * -1].changed && count++ < 20);
+
+    if(count >= 20)
+        skin = 0;
+
+    save->settings.skin = skin;
 }
 
 void setJourneyGraphics(Save *save, int level){

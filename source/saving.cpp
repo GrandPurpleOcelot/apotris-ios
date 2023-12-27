@@ -201,6 +201,7 @@ void resetSkins(Save *save){
     for(int i = 0; i < MAX_CUSTOM_SKINS; i++){
         memcpy16(&save->customSkins[i].board,sprite1tiles_bin,sprite1tiles_bin_size/2);
         memcpy16(&save->customSkins[i].smallBoard,mini[0],sprite1tiles_bin_size/2);
+        save->customSkins[i].changed = false;
     }
 }
 

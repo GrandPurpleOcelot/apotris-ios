@@ -24,6 +24,7 @@
 
 std::string timeToStringHours(int frames);
 void initFallingBlocks();
+void checkCustomSkins();
 
 WordSprite* wordSprites[MAX_WORD_SPRITES];
 
@@ -453,6 +454,8 @@ bool ConfirmSaveScene::control(){
         }else{
             savefile->settings.menuKeys = menuKeys;
 
+            checkCustomSkins();
+
             saveSavefile();
         }
 
@@ -472,4 +475,41 @@ void MainMenuScene::init(){
 
 void initFallingBlocks(){
     memset16(backgroundArray, 0, 30 * (bgGridHeight));
+}
+
+void checkCustomSkins(){
+    for(int i = 0; i < MAX_CUSTOM_SKINS; i++){
+        bool changed = false;
+
+        int *skin = (int *) &savefile->customSkins[i].board;
+        int *defaultSkin = (int *) sprite1tiles_bin;
+
+        int sum = 0;
+
+        for(int count = (sizeof(TILE)) / 4; count; count--){
+            sum += *skin;
+            if(*skin != *defaultSkin){
+                changed = true;
+            }
+
+            skin++;
+            defaultSkin++;
+        }
+
+        skin = (int *) &savefile->customSkins[i].smallBoard;
+        defaultSkin = (int *) mini[0];
+
+        for(int count = (sizeof(TILE)) / 4; count; count--){
+            sum += *skin;
+            if(*skin != *defaultSkin){
+                changed = true;
+            }
+
+            skin++;
+            defaultSkin++;
+        }
+
+        //only set to changed if the skin is non-empty
+        savefile->customSkins[i].changed = changed && sum;
+    }
 }

@@ -553,8 +553,6 @@ void showMini(){
     for(int i = 0; i < 7; i++){
         OBJ_ATTR * sprite = &obj_buffer[12+i];
 
-        // int n = savefile->customSkins[skinIndex].previewStyle;
-
         sprite_unhide(sprite, 0);
         sprite_set_attr(sprite, ShapeWide, 2, 9*16 + 8*i, i, 3);
         sprite_set_pos(sprite, 192, i * 24 + 4);

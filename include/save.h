@@ -196,7 +196,7 @@ typedef struct TotalStats{
 typedef struct Skin{
     TILE board;
     TILE smallBoard;
-    int previewStyle;
+    bool changed;
 }ALIGN(4) Skin;
 
 #define MAX_CUSTOM_SKINS 5
