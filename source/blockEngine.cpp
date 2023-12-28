@@ -688,10 +688,10 @@ void Game::place() {
             if((lengthY-y) > columnHeights[x])
                 columnHeights[x] = lengthY-y;
 
-            // if(disappearing == 1)
-            //     disappearTimers[y][x] = MAX_DISAPPEAR;
-            // else if(disappearing == 2)
-            //     disappearTimers[y][x] = 1;
+            if(disappearing == 1)
+                disappearTimers[y][x] = MAX_DISAPPEAR;
+            else if(disappearing == 2)
+                disappearTimers[y][x] = 1;
         }
     }
 
@@ -1114,8 +1114,6 @@ int Game::clear(Drop drop) {
 
             if(currentSectionLevel == 10){
                 sounds.bone = 1 + !subMode;
-            }else if(currentSectionLevel == 13){
-                sounds.bone = -1;
             }
 
             if(timer-sectionStart > 3600){//regret
