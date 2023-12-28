@@ -1449,8 +1449,7 @@ void addGlow(BlockEngine::Drop location) {
             effectList.push_back(Effect(1 + (game->previousClear.isTSpin != 0), xCenter, location.endY));
 
         for (int i = location.startY; i < location.endY && i < 20; i++)
-            for (int j = 0; j < 10; j++)
-                current[i+1][j+1] = 2048;
+            memset32(&current[i+1][1],2048,10);
 
         damp = 4;
 
@@ -2817,7 +2816,6 @@ void liftKeys(){
 
 void setRandomGraphics(Save *save){
     save->settings.edges = qran () % 2;
-    save->settings.backgroundGrid = qran() % (MAX_BACKGROUNDS - 1);
     save->settings.palette = qran() % 8;
 
     if(save->settings.shadow != 4){
@@ -2850,6 +2848,18 @@ void setRandomGraphics(Save *save){
         skin = 0;
 
     save->settings.skin = skin;
+
+    int grid = 0;
+    do{
+        grid = qran() % (MAX_BACKGROUNDS - 1);
+    }while((skin == 9 || skin == 10) && (grid == 0 || grid == 2));
+
+    save->settings.backgroundGrid = grid;
+
+    save->settings.effects = qran() % 3;
+
+    save->settings.clearEffect = qran() % MAX_CLEAR_EFFECTS;
+    save->settings.clearDirection = qran() % 2;
 }
 
 void setJourneyGraphics(Save *save, int level){
