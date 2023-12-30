@@ -177,7 +177,7 @@ class SongElement : public Element{
         int index = 0;
 
         std::string getLabel() override {
-            return "Song " + std::to_string(index+1);
+            return "Track " + std::to_string(index+1);
         }
 
         std::string getCursor(std::string text) override {
