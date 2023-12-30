@@ -1147,7 +1147,7 @@ int Game::clear(Drop drop) {
 
     //calculate score
     int add = 0;
-    if(clearCount <= 4){
+    if(clearCount <= 4 && !isPerfectClear){
         if(isTSpin == 0){
             //if no t-spin
             if(gameMode != CLASSIC){
@@ -1173,9 +1173,9 @@ int Game::clear(Drop drop) {
         }
     }
 
-    if(gameMode == MASTER && !disappearing){
+    int combo = comboCounter + 1;
 
-        int combo = comboCounter + 1;
+    if(gameMode == MASTER && !disappearing){
 
         gradePoints += (int) ((float) gradeTable[internalGrade][clearCount+1] * masterComboMultiplayer[(combo < 10)?combo:9][clearCount-1] + 1) * ((int)(level/250)+1);
 
@@ -1204,8 +1204,8 @@ int Game::clear(Drop drop) {
         statTracker.maxStreak = b2bCounter;
 
     //add combo bonus
-    add += scoring[16][0] * level * comboCounter;
-    attack += comboTable[comboCounter];
+    add += scoring[16][0] * level * combo;
+    attack += comboTable[combo];
 
     if (isPerfectClear && gameMode != CLASSIC && clearCount <= 4){
         if(gameMode != BLITZ)
