@@ -90,5 +90,5 @@ class SavingOptionScene : public OptionListScene{
             return list;
         };
 
-    Scene* previousScene(){return new MainMenuScene();};
+    Scene* previousScene(){return new SettingsScene();};
 };
