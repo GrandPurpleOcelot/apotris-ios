@@ -16,7 +16,7 @@ std::list<uint32_t> previousKeys;
 // int rowStart = (288 - 288) / 2;
 // int rowEnd = rowStart + 288;
 int rowStart = 0;
-int rowEnd = 180;
+int rowEnd = 512;
 
 #define FPS_TARGET 60
 
@@ -169,64 +169,27 @@ uint32_t key_first(){
 }
 
 void updateWindow(uint8_t* framebuffer){
-    // // // Update the screen
-    // // SDL_UpdateRect(screen, 0, 0, 0, 0);
-
-    // uint8_t * newBuffer = new uint8_t[640 * 480 * 4];
-
-    // const int in_width = 320;
-    // const int in_height = 240;
-
-    // uint32_t* out_ptr = (uint32_t *) newBuffer;
-    // uint32_t* in_ptr = (uint32_t *) framebuffer;
-    // int in_pitch = in_width;
-    // int out_pitch = 640;
-
-    // in_ptr += (((in_height - 240) / 2)) * in_pitch;
-    // in_ptr += (in_width - 320) / 2;
-
-    // for(int y = 0; y < 240; y++){
-    //     uint32_t * line_ptr = in_ptr;
-
-    //     for(int x = 0; x < 320; x++){
-    //         uint32_t * out_line_ptr = out_ptr;
-    //         uint32_t color = *line_ptr;
-
-    //         *out_line_ptr = color;
-    //         *(out_line_ptr + 1) = color;
-
-    //         out_line_ptr += out_pitch;
-    //         *out_line_ptr = color;
-    //         *(out_line_ptr + 1) = color;
-
-    //         out_ptr += 2;
-
-    //         line_ptr++;
-    //     }
-
-    //     in_ptr += in_pitch;
-    //     out_ptr += out_pitch;
-    // }
+    const int in_width = 512;
+    const int in_height = 512;
 
     SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
         framebuffer,
-        320,
-        180,
+        in_width,
+        in_height,
         32,
-        320 * 4,
+        in_width * 4,
         0x0000ff,
         0x00ff00,
         0xff0000,
         0xff000000
     );
-
     // delete [] newBuffer;
 
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
 
     SDL_FreeSurface(img);
 
-    SDL_Rect rect = {(320 - 320) / 2, (180 - 180) / 2, 320, 180};
+    SDL_Rect rect = {(in_width - 720) / 2, (in_height - 720) / 2, 720, 720};
 
     SDL_RenderClear(renderer);
 
@@ -242,9 +205,9 @@ void updateWindow(uint8_t* framebuffer){
 
     float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
 
-    SDL_Delay(floor(16.666f - elapsedMS));
+    float delay = max(floor(16.666f - elapsedMS),0);
+    SDL_Delay(delay);
     frame_start = SDL_GetPerformanceCounter();
-
 }
 
 void refreshWindowSize(){
