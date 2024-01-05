@@ -4,6 +4,8 @@
 #include <list>
 #include <fstream>
 
+#include "soloud.h"
+#include "soloud_wav.h"
 #include "def.h"
 void loadAudio();
 void freeAudio();
@@ -16,7 +18,7 @@ std::list<uint32_t> previousKeys;
 // int rowStart = (288 - 288) / 2;
 // int rowEnd = rowStart + 288;
 int rowStart = 0;
-int rowEnd = 512;
+int rowEnd = 360;
 
 #define FPS_TARGET 60
 
@@ -36,9 +38,9 @@ bool render = true;
 
 std::list<uint32_t> currentlyPressed;
 
-//SoLoud::Soloud gSoloud;
+SoLoud::Soloud gSoloud;
 
-//SoLoud::Wav soundEffects[SFX_COUNT];
+SoLoud::Wav soundEffects[SFX_COUNT];
 
 void windowInit(){
     // Initialize SDL
@@ -57,17 +59,17 @@ void windowInit(){
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_JoystickOpen(0);
 
-//    gSoloud.init();
+    gSoloud.init();
 
-  //  loadAudio();
+    loadAudio();
 }
 
 void loadAudio(){
-    //for(int i = 0; i < SFX_COUNT; i++){
-        //std::string str = "romfs:/" + (std::string) SoundEffectPaths[i];
+    for(int i = 0; i < SFX_COUNT; i++){
+        std::string str = (std::string) SoundEffectPaths[i];
 
-        //soundEffects[i].load(str.c_str());
-    //}
+        soundEffects[i].load(str.c_str());
+    }
 }
 
 void freeAudio(){
@@ -169,8 +171,8 @@ uint32_t key_first(){
 }
 
 void updateWindow(uint8_t* framebuffer){
-    const int in_width = 512;
-    const int in_height = 512;
+    const int in_width = 360;
+    const int in_height = 360;
 
     SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
         framebuffer,
@@ -189,7 +191,9 @@ void updateWindow(uint8_t* framebuffer){
 
     SDL_FreeSurface(img);
 
-    SDL_Rect rect = {(in_width - 720) / 2, (in_height - 720) / 2, 720, 720};
+    const float factor = 0.5 - (savefile->settings.zoom / 20.0) * 0.25;
+
+    SDL_Rect rect = {(in_width - 720 * factor) / 2, (in_height - 720 * factor) / 2, 720 * factor,  720 * factor};
 
     SDL_RenderClear(renderer);
 
@@ -227,8 +231,8 @@ bool closed(){
 }
 
 void sfx(int n){
-    //soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
-    //gSoloud.play(soundEffects[n]);
+    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
+    gSoloud.play(soundEffects[n]);
 }
 
 void startSong(int,bool){
@@ -248,16 +252,16 @@ void toggleRendering(bool r){
 }
 
 void sfxRate(int n, float rate){
-    /*soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
+    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
     int s = gSoloud.play(soundEffects[n]);
-    gSoloud.setRelativePlaySpeed(s,rate);*/
+    gSoloud.setRelativePlaySpeed(s,rate);
 }
 
 void pauseSong(){};
 void initRumble(){};
 
 void loadSavefile(){
-	/*
+
     std::ifstream input("Apotris.sav",std::ios::binary | std::ios::in);
 
     if(savefile == nullptr)
@@ -272,11 +276,11 @@ void loadSavefile(){
         return;
     }
 
-    input.close();*/
+    input.close();
 }
 
 void saveSavefile(){
-	/*
+
     std::ofstream output("Apotris.sav",std::ios::binary | std::ios::out);
 
     char * dst = (char * ) savefile;
@@ -295,7 +299,7 @@ void saveSavefile(){
         return;
     }
 
-    output.close();*/
+    output.close();
 }
 
 std::map<int,std::string> keyToString = {
@@ -320,7 +324,7 @@ void quit(){
     SDL_DestroyWindow(window);
     SDL_Quit();
     freeAudio();
-//    gSoloud.deinit();
+    gSoloud.deinit();
     exit(0);
 }
 

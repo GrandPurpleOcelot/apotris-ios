@@ -16,9 +16,9 @@
 #define JOY_Y     3
 #define JOY_PLUS  10
 #define JOY_MINUS 11
-#define JOY_LEFT  12
+#define JOY_LEFT  14
 #define JOY_UP    13
-#define JOY_RIGHT 14
+#define JOY_RIGHT 12
 #define JOY_DOWN  15
 
 #define KEY_A JOY_A
