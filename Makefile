@@ -20,6 +20,9 @@ web:
 switch:
 	@$(MAKE) --no-print-directory -C . -f make/switch_make
 
+rgb30:
+	@$(MAKE) --no-print-directory -C . -f make/rgb30_make
+
 clean:
 	@rm -rf external/Tilengine/src/build
 	@rm -rf build bin

@@ -30,6 +30,12 @@
 
 #endif
 
+#ifdef RGB
+
+#include "liba_rgb30.h"
+
+#endif
+
 #define MAX_REPLAY_SIZE 4000
 
 extern void onVBlank();
