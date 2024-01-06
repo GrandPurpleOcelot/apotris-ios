@@ -275,6 +275,7 @@ int GameScene::endScreen(){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
                 buildBG(3, 0, 27, 0, 1, true);
+                multiplayer = false;
                 changeScene(new MainMenuScene, Transitions::FADE);
                 return 1;
             }

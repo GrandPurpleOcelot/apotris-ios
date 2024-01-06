@@ -152,6 +152,13 @@ void startMultiplayerGame(int seed) {
 
     delete game;
     game = new Game(BATTLE, seed & 0x1fff,false);
+
+    if(previousGameOptions != nullptr)
+        delete previousGameOptions;
+    previousGameOptions = new Options();
+
+    previousGameOptions->tuning = getTuning();
+
     game->setOptions(*previousGameOptions);
     game->setLevel(1);
     game->setGoal(100);

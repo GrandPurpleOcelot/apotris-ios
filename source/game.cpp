@@ -3148,10 +3148,12 @@ void GameScene::update(){
         paused = true;
         endScreen();
         paused = false;
-        if(!(playAgain && multiplayer))
+        if(!(playAgain && multiplayer)){
             return;
-        else
+        }else{
             playAgain = false;
+            counted = false;
+        }
     }
 
     if(paused){
