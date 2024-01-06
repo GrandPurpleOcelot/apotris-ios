@@ -1858,7 +1858,7 @@ void drawGrid() {
     int peekAmount = peek * (1 + game->pawn.big);
 
     if(savefile->settings.effects < 2){
-        u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer));
+        u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode));
 
         for (int i = -2; i < 20; i++) {
             for (int j = 0; j < 10; j++) {
@@ -2602,37 +2602,27 @@ void rainbowPalette(){
     if(savefile->settings.lightMode){
         loadPalette(16, 1, rainbow, 1);
         loadPalette(16, 2, rainbow, 4);
-        // memcpy16(&pal_obj_mem[1],rainbow,1);
-        // memcpy16(&pal_obj_mem[2],rainbow,4);
     }
 
     if(!savefile->settings.lightMode)
         color_fade((COLOR *) rainbow, (COLOR *) rainbow, 0, 4, 10);
-        // clr_fade((COLOR *) rainbow,0,(COLOR*) rainbow,4,10);
     else
         color_adj_MEM((COLOR *) rainbow, (COLOR *) rainbow, 4, float2fx(0.25));
-        // clr_adj_brightness((COLOR *) rainbow,(COLOR*) rainbow,4,float2fx(0.25));
 
     loadPalette(0, 1, rainbow, 4);
-    // memcpy16(&pal_bg_mem[1],rainbow,4);
 
     if(!savefile->settings.lightMode)
         loadPalette(16, 1, rainbow, 4);
-        // memcpy16(&pal_obj_mem[1],rainbow,4);
 
     if(savefile->settings.shadow != 3){
         loadPalette(16 + 10, 1, rainbow, 4);
-        // memcpy16(&pal_obj_mem[10*16+1],rainbow,4);
     }else{
-        if(!savefile->settings.lightMode)
+        if(savefile->settings.lightMode)
             color_fade_palette(16 + 10, 1, (COLOR *) rainbow, 0, 4, 14);
-        //     clr_fade((COLOR*)rainbow, 0x0000, &pal_obj_mem[10 * 16+1], 4, 14);
         else
             color_adj_brightness(16 + 10, 1, (COLOR *) rainbow, 4, (float2fx(0.25)));
-        //     clr_adj_brightness(&pal_obj_mem[10 * 16+1], (COLOR*)rainbow, 4, float2fx(0.25));
     }
     loadPalette(16 + 11, 1, rainbow, 4);
-    // memcpy16(&pal_obj_mem[11*16+1],rainbow,4);
 }
 
 void showZoneText(){
