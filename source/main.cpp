@@ -675,7 +675,7 @@ void setLightMode() {
     if (savefile->settings.lightMode) {
         setPaletteColor(0,0,0x5ad6,1);//background gray
         setPaletteColor(8,4,0x0421,1);//progressbar
-        setPaletteColor(0,8,0x6739,1);
+        setPaletteColor(0,8,0x5ad6,1);
 
         setPaletteColor(16 + 8,6,0x6739,1);//frame background
 
@@ -1017,7 +1017,7 @@ void startBotGame(int seed){
 void setPawnPalette(int dest, int n, int blend){
     dest += 16;
 
-    if (!savefile->settings.lightMode){
+    if (savefile->settings.lightMode){
         if(savefile->settings.colors == 2)
             color_fade_palette(dest,0,(COLOR*)classic_pal_bin,0x0000,5,blend);
         else if(savefile->settings.colors == 3){

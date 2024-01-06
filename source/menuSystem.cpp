@@ -74,10 +74,15 @@ void fadeToBlack(){
     previousPalette = new COLOR [512];
     savePalette(previousPalette);
 
+    int color = 0;
+
+    if(savefile->settings.lightMode)
+        color = 0x5ad6;
+
     int timer=0;
     while(closed() && timer++ < FADE_LENGTH){
         vsync();
-        color_fade_palette(0, 1, &previousPalette[1], 0, 511, timer * 8);
+        color_fade_palette(0, 1, &previousPalette[1], color, 511, timer * 8);
     }
 }
 
@@ -89,12 +94,17 @@ void fadeFromBlack(){
     previousPalette = new COLOR [512];
     savePalette(previousPalette);
 
-    color_fade_palette(0, 1, &previousPalette[1], 0, 511, timer * 8);
+    int color = 0;
+
+    if(savefile->settings.lightMode)
+        color = 0x5ad6;
+
+    color_fade_palette(0, 1, &previousPalette[1], color, 511, timer * 8);
 
     while(closed() && timer >= 0){
         canDraw=1;
         vsync();
-        color_fade_palette(0, 1, &previousPalette[1], 0, 511, timer * 8);
+        color_fade_palette(0, 1, &previousPalette[1], color, 511, timer * 8);
         timer--;
     }
 }
