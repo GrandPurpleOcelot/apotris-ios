@@ -34,6 +34,7 @@ using namespace BlockEngine;
 const std::string save_type = "SRAM_Vnnn";
 int getClassicPalette();
 void setPawnPalette(int dest, int n, int blend);
+void genWidths();
 
 OBJ_ATTR obj_buffer[128];
 
@@ -162,66 +163,6 @@ void initialize(){
     setGradient(GRADIENT_COLOR);
 
     checkSongs();
-}
-
-void genWidths(){
-    const int len = 96;
-
-    int output[len][2];
-
-    output[0][0] = 0;
-    output[0][1] = 0;
-
-    for(int i = 0; i < len; i++){
-        TILE * t = (TILE *) &font1tiles_bin[i * 32];
-
-        int found = 0;
-        for(int x = 7; x >= 0; x--){
-            for(int y = 0; y < 8; y++){
-                if((t->data[y] >> (4 * x)) & 0xf){
-                    output[i][1] = x;
-                    found = 1;
-                }
-
-                if(found)
-                    break;
-            }
-            if(found)
-                break;
-        }
-    }
-
-    for(int i = 0; i < len; i++){
-        TILE * t = (TILE *) &font1tiles_bin[i * 32];
-
-        int found = 0;
-        for(int x = 0; x < 8; x++){
-            for(int y = 0; y < 8; y++){
-                if((t->data[y] >> (4 * x)) & 0xf){
-                    output[i][0] = x;
-                    found = 1;
-                }
-
-                if(found)
-                    break;
-            }
-            if(found)
-                break;
-        }
-    }
-
-    std::string str;
-    for(int i = 0; i < len; i++){
-        output[i][1] -= output[i][0] - 1;
-
-        str += "{" + std::to_string(output[i][0]) + ", " + std::to_string(output[i][1]) + "}, ";
-
-        if(((i+1) % 8) == 0){
-            log(str);
-            str = "";
-        }
-    }
-
 }
 
 int main(void) {
@@ -1124,5 +1065,65 @@ std::string getStringFromKey(int key){
     #endif
 
     return "?";
+
+}
+
+void genWidths(){
+    const int len = 96;
+
+    int output[len][2];
+
+    output[0][0] = 0;
+    output[0][1] = 0;
+
+    for(int i = 0; i < len; i++){
+        TILE * t = (TILE *) &font1tiles_bin[i * 32];
+
+        int found = 0;
+        for(int x = 7; x >= 0; x--){
+            for(int y = 0; y < 8; y++){
+                if((t->data[y] >> (4 * x)) & 0xf){
+                    output[i][1] = x;
+                    found = 1;
+                }
+
+                if(found)
+                    break;
+            }
+            if(found)
+                break;
+        }
+    }
+
+    for(int i = 0; i < len; i++){
+        TILE * t = (TILE *) &font1tiles_bin[i * 32];
+
+        int found = 0;
+        for(int x = 0; x < 8; x++){
+            for(int y = 0; y < 8; y++){
+                if((t->data[y] >> (4 * x)) & 0xf){
+                    output[i][0] = x;
+                    found = 1;
+                }
+
+                if(found)
+                    break;
+            }
+            if(found)
+                break;
+        }
+    }
+
+    std::string str;
+    for(int i = 0; i < len; i++){
+        output[i][1] -= output[i][0] - 1;
+
+        str += "{" + std::to_string(output[i][0]) + ", " + std::to_string(output[i][1]) + "}, ";
+
+        if(((i+1) % 8) == 0){
+            log(str);
+            str = "";
+        }
+    }
 
 }
