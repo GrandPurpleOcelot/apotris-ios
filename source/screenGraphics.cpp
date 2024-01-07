@@ -33,9 +33,9 @@ void setClearEffect(){
 }
 
 void GradientEditorScene::init(){
-    toggleBG(0, false);
+    toggleBG(0, true);
     toggleBG(1, false);
-    toggleBG(2, true);
+    toggleBG(2, false);
     toggleBG(3, false);
 
     for(int i = 0; i < 3; i++){
