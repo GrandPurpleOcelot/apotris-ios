@@ -36,8 +36,6 @@ class PlayOptionScene : public OptionListScene{
     void draw();
     void update();
 
-    QuickStart quick();
-
     Scene* previousScene(){return new ModeListScene();};
 };
 

@@ -204,12 +204,6 @@ bool PlayOptionScene::control(){
         }
     }
 
-    if(key_hit(k.special3)){
-        savefile->quickStart = quick();
-        saveSavefile();
-        sfx(SFX_SECRET);
-    }
-
     return false;
 }
 
@@ -285,35 +279,6 @@ void PlayOptionScene::start(){
     startGame(newOptions,qran());
 
     gameLoop();
-}
-
-QuickStart PlayOptionScene::quick(){
-    for(auto const& element : elementList){
-        std::string s = element->getLabel();
-        int value = element->getValue();
-
-        log(s);
-        log(value);
-        if(s == "Level"){
-            level = value;
-        }else if(s == "Type" || s == "Rules"){
-            subMode = value;
-        }else if(s == "Lines"){
-            goal = value;
-        }else if(s == "Minutes"){
-            goal = value;
-        }
-    }
-
-    QuickStart q;
-
-    q.mode = getMode();
-    q.submode = subMode;
-    q.goal = goal;
-    q.level = level;
-    q.big = bigMode;
-
-    return q;
 }
 
 void PlayOptionScene::draw(){

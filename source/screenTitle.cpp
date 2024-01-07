@@ -285,37 +285,7 @@ void TitleScene::draw(){
 }
 
 bool TitleScene::control(){
-    MenuKeys k = savefile->settings.menuKeys;
-
-    if(key_hit(k.special3)){
-        sfx(SFX_MENUCONFIRM);
-
-        QuickStart q = savefile->quickStart;
-
-        BlockEngine::Options newOptions;
-
-        newOptions.mode = BlockEngine::Modes(q.mode);
-        newOptions.goal = q.goal;
-        newOptions.level = q.level;
-        newOptions.tuning = getTuning();
-        newOptions.bigMode = q.big;
-        newOptions.subMode = q.submode;
-
-        if(newOptions.mode != BlockEngine::BATTLE){
-            startGame(newOptions,qran());
-        }else{
-            int seed = qran();
-
-            startGame(newOptions,seed);
-            startBotGame(seed);
-        }
-
-        gameLoop();
-
-        return true;
-    }else if(key_hit(k.special2)){
-        loadReplay();
-    }else if(key_hit(KEY_FULL)){
+    if(key_hit(KEY_FULL)){
         sfx(SFX_MENUCONFIRM);
         changeScene(new MainMenuScene(),Transitions::FADE);
         return true;

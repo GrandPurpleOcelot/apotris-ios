@@ -261,8 +261,6 @@ public:
 
     Skin customSkins[MAX_CUSTOM_SKINS];
 
-    QuickStart quickStart;
-
     char endTag[9] = "SAVE_END";
 }ALIGN(4);
 
