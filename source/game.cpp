@@ -3062,7 +3062,7 @@ void GameScene::update(){
             changeScene(new HandlingOptionScene(), Transitions::FADE);
         }else{
             enableBot = false;
-            changeScene(new newTitleScene(),Transitions::FADE);
+            changeScene(new TitleScene(),Transitions::FADE);
         }
 
         exitGame = false;

@@ -231,7 +231,7 @@ int main(void) {
 
     initialize();
 
-    changeScene(new newTitleScene());
+    changeScene(new TitleScene());
 
     //start screen animation
     while(closed()){

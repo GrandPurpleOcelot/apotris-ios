@@ -72,15 +72,6 @@ class GameScene : public Scene{
 };
 
 class TitleScene : public Scene{
-    void draw();
-    void update(){};
-    bool control(){return false;};
-    void init(){};
-    void deinit(){};
-    Scene* previousScene(){return NULL;};
-};
-
-class newTitleScene : public Scene{
     WordSprite wordSprites[MAX_WORD_SPRITES];
 
     WordSprite versionText = WordSprite(0,20,2);
@@ -103,7 +94,7 @@ class newTitleScene : public Scene{
     void deinit();
     Scene* previousScene(){return NULL;};
 
-    ~newTitleScene(){
+    ~TitleScene(){
         deinit();
     };
 };

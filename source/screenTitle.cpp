@@ -225,7 +225,7 @@ bool settingsChanged(){
     return false;
 }
 
-void newTitleScene::init(){
+void TitleScene::init(){
     reset();
     toggleBG(3,false);
 
@@ -260,7 +260,7 @@ void newTitleScene::init(){
     enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
 }
 
-void newTitleScene::draw(){
+void TitleScene::draw(){
     fallingBlocks();
     showTitleSprites();
     showSprites(128);
@@ -284,7 +284,7 @@ void newTitleScene::draw(){
     }
 }
 
-bool newTitleScene::control(){
+bool TitleScene::control(){
     MenuKeys k = savefile->settings.menuKeys;
 
     if(key_hit(k.special3)){
@@ -324,7 +324,7 @@ bool newTitleScene::control(){
     return false;
 }
 
-void newTitleScene::update(){
+void TitleScene::update(){
     canDraw = 1;
     key_poll();
 
@@ -348,7 +348,7 @@ void newTitleScene::update(){
     }
 }
 
-void newTitleScene::deinit(){
+void TitleScene::deinit(){
     clearSprites(128);
     showSprites(128);
 
@@ -362,7 +362,7 @@ void newTitleScene::deinit(){
 }
 
 Scene* MainMenuScene::previousScene(){
-    return new newTitleScene();
+    return new TitleScene();
 }
 
 void ConfirmSaveScene::init(){
