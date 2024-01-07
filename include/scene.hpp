@@ -150,6 +150,8 @@ class SimpleListScene : public Scene{
 
     OBJ_ATTR * arrowSprites[2];
 
+    OBJ_ATTR * scrollSideSprites[2];
+
     int cursorFloat = 0;
 
     int listStart = 0;
@@ -269,6 +271,8 @@ class OptionListScene : public Scene{
     OBJ_ATTR * cursorSprites[2];
 
     OBJ_ATTR * arrowSprites[2];
+
+    OBJ_ATTR * scrollSideSprites[2];
 
     int cursorFloat = 0;
 

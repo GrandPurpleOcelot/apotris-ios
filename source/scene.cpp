@@ -65,6 +65,15 @@ void SimpleListScene::init(){
         sprite_hide(cursorSprites[i]);
     }
 
+    for(int i = 0; i < 2; i++){
+        scrollSideSprites[i] = &obj_buffer[10 + i];
+        sprite_set_attr(scrollSideSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
+        sprite_enable_affine(scrollSideSprites[i], i+2, true);
+        sprite_set_pos(scrollSideSprites[i],-16 + i * (240 + 16), 152 - 4);
+        sprite_set_size(scrollSideSprites[i], float2fx(0.8), i+2);
+        sprite_hide(scrollSideSprites[i]);
+    }
+
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 
     if(name() != ""){
@@ -211,6 +220,16 @@ void SimpleListScene::draw(){
             scrollDelay = 0;
             scrollingText[0]->setTextSlow(scrollText);
 
+            #ifdef TE
+            for(int i = 0; i < 2; i++){
+                sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
+                sprite_set_pos(scrollSideSprites[i], i * (min(scrollTextLength,240) + 16) - 16 - scrollOffset, 152 - 4);
+            }
+            #endif
+        }else{
+            for(int i = 0; i < 2; i++){
+                sprite_hide(scrollSideSprites[i]);
+            }
         }
     }
 
@@ -453,6 +472,15 @@ void OptionListScene::init(){
         sprite_hide(cursorSprites[i]);
     }
 
+    for(int i = 0; i < 2; i++){
+        scrollSideSprites[i] = &obj_buffer[8 + i];
+        sprite_set_attr(scrollSideSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
+        sprite_enable_affine(scrollSideSprites[i], i+2, true);
+        sprite_set_pos(scrollSideSprites[i],-16 + i * (240 + 16), 152 - 4);
+        sprite_set_size(scrollSideSprites[i], float2fx(0.8), i+2);
+        sprite_hide(scrollSideSprites[i]);
+    }
+
     enableBlend((0b101011 << 8) + (1 << 6) + (1 << 3));
 
     if(name() != ""){
@@ -600,8 +628,19 @@ void OptionListScene::draw(){
             scrollOffset = - max((width - scrollTextLength),0) / 2;
             scrollDelay = 0;
             scrollingText[0]->setTextSlow(scrollText);
+
+            #ifdef TE
+            for(int i = 0; i < 2; i++){
+                sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
+                sprite_set_pos(scrollSideSprites[i], i * (min(scrollTextLength,240) + 16) - 16 - scrollOffset, 152 - 4);
+            }
+            #endif
         }else{
             scrollingText[0]->setTextSlow(scrollText);
+
+            for(int i = 0; i < 2; i++){
+                sprite_hide(scrollSideSprites[i]);
+            }
         }
     }
 

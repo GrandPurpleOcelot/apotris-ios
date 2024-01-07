@@ -473,6 +473,10 @@ void PlayOptionScene::draw(){
                 sprite_set_pos(cursorSprites[i], x, 132 - 5);
             }
         }
+
+        for(int i = 0; i < 2; i++){
+            sprite_hide(scrollSideSprites[i]);
+        }
     }else{
         startSprite.hide();
     }
@@ -510,8 +514,19 @@ void PlayOptionScene::draw(){
                 scrollOffset = - max((width - scrollTextLength),0) / 2;
                 scrollDelay = 0;
                 scrollingText[0]->setTextSlow(scrollText);
+
+                #ifdef TE
+                for(int i = 0; i < 2; i++){
+                    sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
+                    sprite_set_pos(scrollSideSprites[i], i * (min(scrollTextLength,240) + 16) - 16 - scrollOffset, 152 - 4);
+                }
+                #endif
             }else{
                 scrollingText[0]->setTextSlow(scrollText);
+
+                for(int i = 0; i < 2; i++){
+                    sprite_hide(scrollSideSprites[i]);
+                }
             }
         }
     }
