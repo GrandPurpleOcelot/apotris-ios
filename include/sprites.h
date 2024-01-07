@@ -49,6 +49,8 @@
 #include "sprite54tiles_bin.h"
 #include "sprite55tiles_bin.h"
 #include "sprite56tiles_bin.h"
+#include "sprite57tiles_bin.h"
+#include "sprite58tiles_bin.h"
 
 #include "title1tiles_bin.h"
 #include "title2tiles_bin.h"
