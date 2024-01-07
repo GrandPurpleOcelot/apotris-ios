@@ -117,9 +117,9 @@ void initialize(){
 
     toggleSprites(true);
 
-    buildBG(2, 0, 25, 0, 2, true);
-    buildBG(1, 0, 26, 0, 3, true);
     buildBG(0, 2, 29, 0, 0, true);
+    buildBG(1, 0, 26, 0, 3, true);
+    buildBG(2, 0, 25, 0, 2, true);
     buildBG(3, 0, 27, 0, 1, true);
 
     for(int i = 0; i < 4; i++){
@@ -217,8 +217,8 @@ void addToResults(int input, int index) {
 void reset() {
     clearSprites(128);
     clearText();
-    setLayerScroll(0, 0, 0);
     setLayerScroll(1, 0, 0);
+    setLayerScroll(2, 0, 0);
 
     shake = 0;
     shakeBuff = 0;

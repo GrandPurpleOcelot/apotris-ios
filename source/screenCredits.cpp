@@ -26,7 +26,7 @@ std::list<std::string> creditsText = {
     "  - oh my god!",
     "        by kb-zip",
     "",
-    "  - unsespected <h>",
+    "  - unsuspected <h>",
     "        by curt cool",
     "",
     "  - Warning Infected!",
@@ -47,8 +47,20 @@ void CreditsScene::init(){
 
     setTiles(27,0,32*32,tileBuild(34, false, false, 0));
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+    #ifdef TE
+    //letterbox on pc
+    buildBG(0, 0, 29, 0, 0, true);
+    TILE tile;
+    memset32(&tile,0xeeeeeeee,8);
+    loadTiles(0, 50, &tile, 1);
+
+    setTiles(29, 20 * 64, 44 * 64,50);
+    #endif
+
+    for (int i = 0; i < MAX_WORD_SPRITES; i++){
         wordSprites[i] = new WordSprite(i,64 + i * 5, 256 + i * 20, true);
+        wordSprites[i]->setPriority(1);
+    }
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 }
@@ -160,4 +172,6 @@ void CreditsScene::deinit(){
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         delete wordSprites[i];
+
+    buildBG(0, 2, 29, 0, 0, true);
 }

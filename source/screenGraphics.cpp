@@ -1013,8 +1013,8 @@ void GraphicsScene::deinit(){
     for (int i = 0; i < 3; i++)
         delete scrollingText[i];
 
-    disableLayerWindow(0);
     disableLayerWindow(1);
+    disableLayerWindow(2);
 }
 
 void screenShake() {

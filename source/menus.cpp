@@ -339,11 +339,11 @@ void endAnimation() {
 
     showSprites(128);
 
-    setLayerScroll(0, 0, 0);
     setLayerScroll(1, 0, 0);
+    setLayerScroll(2, 0, 0);
 
-    enableLayerWindow(0, 0, 0, 240, 160, false);
     enableLayerWindow(1, 0, 0, 240, 160, false);
+    enableLayerWindow(2, 0, 0, 240, 160, false);
 
     //TODO::
     #ifdef GBA
@@ -380,8 +380,8 @@ void endAnimation() {
     }
     clearText();
 
-    setLayerScroll(0, 0, 0);
     setLayerScroll(1, 0, 0);
+    setLayerScroll(2, 0, 0);
 }
 
 void showScore(){
@@ -572,7 +572,7 @@ int GameScene::pauseMenu(){
     if(game->zoneTimer)
         frameSnow(1);
 
-    setLayerScroll(0, 0, 0);
+    setLayerScroll(2, 0, 0);
 
     //hide Sprites
     hideMinos();

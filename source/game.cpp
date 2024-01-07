@@ -3220,8 +3220,8 @@ void GameScene::deinit(){
 
     setPalette();
 
-    disableLayerWindow(0);
     disableLayerWindow(1);
+    disableLayerWindow(2);
 
     clearText();
 
@@ -3230,8 +3230,11 @@ void GameScene::deinit(){
     setSkin();
 
     #if defined(TE)
-    buildBG(2, 0, 25, 0, 0, true);
+    buildBG(2, 0, 25, 0, 2, true);
     #endif
+
+    resetSmallText();
+    clearText();
 }
 
 void updateFluid(){
