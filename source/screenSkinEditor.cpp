@@ -605,7 +605,7 @@ void helpScreen(){
     clearSprites(128);
     showSprites(128);
 
-    toggleBG(0, false);
+    toggleBG(2, false);
     toggleBG(3, false);
 
     while(true){
@@ -616,7 +616,7 @@ void helpScreen(){
             break;
     }
 
-    toggleBG(0, true);
+    toggleBG(2, true);
     toggleBG(3, true);
 
     clearSmallText();

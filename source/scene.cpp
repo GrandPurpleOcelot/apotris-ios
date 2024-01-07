@@ -481,7 +481,7 @@ void OptionListScene::init(){
         sprite_hide(scrollSideSprites[i]);
     }
 
-    enableBlend((0b101011 << 8) + (1 << 6) + (1 << 3));
+    enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
 
     if(name() != ""){
         bool found = false;

@@ -1567,11 +1567,11 @@ void screenShake() {
     //     scroll = fx2int(s);
     // }
 
-    setLayerScroll(0, -push, -(shake + peekShift));
     setLayerScroll(1, -push, -(shake + peekShift));
+    setLayerScroll(2, -push, -(shake + peekShift));
 
-    enableLayerWindow(0, 0, shake, 240, 160 + shake, false);
     enableLayerWindow(1, 0, shake, 240, 160 + shake, false);
+    enableLayerWindow(2, 0, shake, 240, 160 + shake, false);
 
     if(savefile->settings.screenShakeType == 0){
         if (shake) {
@@ -2688,9 +2688,9 @@ void GameScene::setupCredits(){
 
     creditSprites[2].setText("akouzoukos");
 
-    // for(int i = 0; i < 9; i++){
-    //     wordSprites[i]->priority = 3;
-    // }
+    for(int i = 0; i < 3; i++){
+        creditSprites[i].setPriority(3);
+    }
 }
 
 void GameScene::showCredits(){
@@ -2937,6 +2937,10 @@ void GameScene::init(){
     // memset32(&d, 0x11111111, 8);
     // for(int i = 0; i < 1024; i++)
     //     loadSpriteTiles(i, &d, 1, 1);
+
+    #if defined(TE)
+    buildBG(2, 0, 25, 0, 0, true);
+    #endif
 
     reset();
 
@@ -3224,6 +3228,10 @@ void GameScene::deinit(){
     autosave();
 
     setSkin();
+
+    #if defined(TE)
+    buildBG(2, 0, 25, 0, 0, true);
+    #endif
 }
 
 void updateFluid(){

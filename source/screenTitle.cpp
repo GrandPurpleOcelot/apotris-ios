@@ -394,7 +394,7 @@ void ConfirmSaveScene::init(){
         sprite_hide(cursorSprites[i]);
     }
 
-    enableBlend((0b101011 << 8) + (1 << 6) + (1 << 3));
+    enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
 }
 
 void ConfirmSaveScene::draw(){

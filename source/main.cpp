@@ -116,9 +116,9 @@ void initialize(){
 
     toggleSprites(true);
 
-    buildBG(0, 0, 25, 0, 2, true);
+    buildBG(2, 0, 25, 0, 2, true);
     buildBG(1, 0, 26, 0, 3, true);
-    buildBG(2, 2, 29, 0, 0, true);
+    buildBG(0, 2, 29, 0, 0, true);
     buildBG(3, 0, 27, 0, 1, true);
 
     for(int i = 0; i < 4; i++){

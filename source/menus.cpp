@@ -1265,8 +1265,8 @@ void qrScene(){
 }
 
 void sleepMenu(){
-    toggleBG(0, false);
     toggleBG(1, false);
+    toggleBG(2, false);
     toggleBG(3, false);
 
     clearText();
@@ -1294,7 +1294,7 @@ void sleepMenu(){
         }
 
         if (key_hit(k.cancel)) {
-            toggleBG(0, true);
+            toggleBG(2, true);
             toggleBG(1, true);
             toggleBG(3, true);
             clearText();
@@ -1305,8 +1305,8 @@ void sleepMenu(){
 
     sleep();
 
-    toggleBG(0, true);
     toggleBG(1, true);
+    toggleBG(2, true);
     toggleBG(3, true);
 }
 

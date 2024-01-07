@@ -527,7 +527,7 @@ void GraphicsScene::init(){
 
     enableFumen = false;
 
-    enableBlend((1 << 6) + (0b111011 << 8) + (0b1010));
+    enableBlend((1 << 6) + (0b111110 << 8) + (0b1010));
 
     buildBG(3, 0, 27, 0, 0, 0);
 
@@ -1027,11 +1027,11 @@ void screenShake() {
     //     scroll = fx2int(s);
     // }
 
-    setLayerScroll(0, -push, -(shake + peekShift));
     setLayerScroll(1, -push, -(shake + peekShift));
+    setLayerScroll(2, -push, -(shake + peekShift));
 
-    enableLayerWindow(0, 0, shake, 240, 168 + shake, false);
     enableLayerWindow(1, 0, shake, 240, 168 + shake, false);
+    enableLayerWindow(2, 0, shake, 240, 168 + shake, false);
 
     if(savefile->settings.screenShakeType == 0){
         if (shake) {
