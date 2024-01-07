@@ -7,6 +7,14 @@ ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
 
+GBFS := gbfs
+PADBIN := padbin
+
+ifeq ($(OS),Windows_NT)
+	GBFS := gbfs.exe
+	PADBIN := padbin.exe
+endif
+
 include $(DEVKITARM)/gba_rules
 
 LIBTONC := $(DEVKITPRO)/libtonc
@@ -125,10 +133,10 @@ $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/make/gba_make
 	@rm -rf $(OUTPUT).elf
-	@tools/gbfs $(BUILD)/audio.gbfs data/soundbank.bin data/effect_locations.bin
-	@tools/padbin 256 $(OUTPUT).gba
+	@tools/$(GBFS) $(BUILD)/audio.gbfs data/soundbank.bin data/effect_locations.bin
+	@tools/$(PADBIN) 256 $(OUTPUT).gba
 	@cat $(OUTPUT).gba $(BUILD)/audio.gbfs > $(dir $(OUTPUT))Apotris.gba
-	@tools/padbin 0x400000 $(dir $(OUTPUT))Apotris.gba
+	@tools/$(PADBIN) 0x400000 $(dir $(OUTPUT))Apotris.gba
 	@rm $(BUILD)/audio.gbfs
 	@mv $(OUTPUT).gba $(dir $(OUTPUT))tools/$(TARGET).gba
 
