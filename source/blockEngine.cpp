@@ -174,15 +174,15 @@ void Game::rotate(int dir, int on){
             int dx;
             int dy;
             if(dir <= 1){
-                dx = kicks[(pawn.current == 0)][(dir < 0)][pawn.rotation][i][0];
-                dy = kicks[(pawn.current == 0)][(dir < 0)][pawn.rotation][i][1];
+                dx = kicks[(pawn.current == PIECE_I)][(dir < 0)][pawn.rotation][i][0];
+                dy = kicks[(pawn.current == PIECE_I)][(dir < 0)][pawn.rotation][i][1];
             }else{
                 dx = kickTwice[pawn.rotation][i][0];
                 dy = kickTwice[pawn.rotation][i][1];
             }
 
             if (checkRotation(dx, dy, r)) {
-                specialTspin = (pawn.current == 5 && (abs(dx) + abs(dy) >= 2));
+                specialTspin = (pawn.current == PIECE_T && (abs(dx) + abs(dy) >= 2));
                 lastMoveRotation = dir;
 
                 if(dy < 0)
@@ -208,11 +208,11 @@ void Game::rotate(int dir, int on){
 
     }else if(rotationSystem == ARS){
 
-        if((pawn.current == 1 || pawn.current == 2 || pawn.current == 5) && (pawn.rotation % 2 == 0)){
+        if((pawn.current == PIECE_J || pawn.current == PIECE_L || pawn.current == PIECE_T) && (pawn.rotation % 2 == 0)){
             int n = checkSpecialRotation(0, r);
             if((n-1) % 4 == 1)
                 return;
-        }else if(pawn.current == 0){
+        }else if(pawn.current == PIECE_I){
             if(checkRotation(0, 0, r)){
                 rotatePlace(dir,dx,dy,r);
                 return;
@@ -241,7 +241,7 @@ void Game::rotate(int dir, int on){
             dx = 0;
             dy = 0;
 
-            if(i == 1 && pawn.current == 5 && r == 2){
+            if(i == 1 && pawn.current == PIECE_T && r == 2){
                 dy = -1;
             }else if(i == 1)
                 dx = 1;
@@ -251,7 +251,7 @@ void Game::rotate(int dir, int on){
             if(checkRotation(dx, dy, r)){
                 rotatePlace(dir,dx,dy,r);
 
-                if((pawn.current == 0 || pawn.current == 5) && dy)
+                if((pawn.current == PIECE_I || pawn.current == PIECE_T) && dy)
                     stopLockReset = true;
 
                 return;
@@ -835,7 +835,7 @@ int Game::clear(Drop drop) {
     int isDifficult = 0;
 
     //check for t-spin
-    if (pawn.current == 5 && lastMoveRotation && gameMode != CLASSIC) {
+    if (pawn.current == PIECE_T && lastMoveRotation && gameMode != CLASSIC) {
         int frontCount = 0;
         int backCount = 0;
         int x = pawn.x;
@@ -1785,10 +1785,10 @@ Drop Game::calculateDrop(){
     result.rawEndY = result.endY = pawn.y + add;
 
     if(rotationSystem != NRS){
-        if(((pawn.current == 2 && pawn.rotation == 3) || (pawn.current == 1 && pawn.rotation == 1)))
+        if(((pawn.current == PIECE_L && pawn.rotation == 3) || (pawn.current == PIECE_J && pawn.rotation == 1)))
             result.endY--;
     }else{
-        if(((pawn.current == 2 && pawn.rotation == 1) || (pawn.current == 1 && pawn.rotation == 3)))
+        if(((pawn.current == PIECE_L && pawn.rotation == 1) || (pawn.current == PIECE_J && pawn.rotation == 3)))
             result.endY--;
     }
 
@@ -2599,7 +2599,7 @@ void Game::setupPawnSpawn(){
         down = 0;
         if(pawn.current != 0 && pawn.current != 3)
             pawn.x++;
-        if(pawn.current == 0)
+        if(pawn.current == PIECE_I)
             pawn.y--;
     }
 
