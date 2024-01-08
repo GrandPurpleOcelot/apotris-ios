@@ -3344,7 +3344,7 @@ void showSpawn(){
 
     int * b = BlockEngine::getShape(game->queue.front(), 0, game->rotationSystem);
 
-    bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS);
+    bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS || game->rotationSystem == BARS);
 
     std::tuple<int,int> pos = game->getSpawnPosition();
 
