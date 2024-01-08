@@ -773,6 +773,11 @@ class GraphicsScene : public Scene{
     int movingTimer = 0;
     int movingDirection = 0;
 
+    int clearAnimationTimer = 0;
+    int maxClearAnimationTimer = 20;
+
+    bool showClearAnimation = false;
+
     std::list<Element*> getElementList(){
         std::list<Element*> l;
 
@@ -858,6 +863,8 @@ class GraphicsScene : public Scene{
     bool control();
     void init();
     void deinit();
+    void showClear();
+
     virtual Scene* previousScene(){return new SettingsScene();};
 
     ~GraphicsScene(){

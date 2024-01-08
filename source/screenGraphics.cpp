@@ -11,26 +11,7 @@
 using namespace BlockEngine;
 
 static void screenShake();
-
-void setClearEffect(){
-    switch(savefile->settings.clearEffect){
-    case 0:
-        loadTiles(0, 3, sprite4tiles_bin, sprite4tiles_bin_size/32);
-        break;
-    case 1:
-        loadTiles(0, 3, sprite25tiles_bin, sprite25tiles_bin_size/32);
-        break;
-    case 2:
-        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
-        break;
-    case 3:
-        clearTiles(0, 3, 1);
-        break;
-    default:
-        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
-        break;
-    }
-}
+void setClearEffect();
 
 void GradientEditorScene::init(){
     toggleBG(0, true);
@@ -641,17 +622,13 @@ void GraphicsScene::draw(){
         showQueue();
         showHold();
         showBackground(0);
-
-        for(int i = 0; i < game->lengthX; i++){
-            setTile(25, 10 + i, 18, tileBuild(3, false, false, savefile->settings.lightMode));
-            setTile(25, 10 + i, 19, tileBuild(3, false, false, savefile->settings.lightMode));
-        }
     }
 
     showPawn();
     showShadow();
     screenShake();
     drawGrid();
+    showClear();
 
     showPlaceEffect();
 
@@ -1074,5 +1051,71 @@ void screenShake() {
             push--;
         else if (push < 0)
             push++;
+    }
+}
+
+void GraphicsScene::showClear(){
+    if(currentOption != "Clear Direction"){
+        for (int i = 0; i < game->lengthX; i++) {
+            setTile(25, 10 + i, 18, tileBuild(3, false, false, savefile->settings.lightMode));
+            setTile(25, 10 + i, 19, tileBuild(3, false, false, savefile->settings.lightMode));
+        }
+
+        return;
+    }
+
+    if(++clearAnimationTimer >= maxClearAnimationTimer * 2){
+        clearAnimationTimer = -maxClearAnimationTimer;
+    }
+
+    clearTilemapEntries(25, 18 * 32 + 10, 10);
+    clearTilemapEntries(25, 19 * 32 + 10, 10);
+
+    if(clearAnimationTimer >= maxClearAnimationTimer){
+        return;
+    }
+
+    int timer = max(clearAnimationTimer,0);
+
+    for(int i = 0; i < 2; i++){
+        if(savefile->settings.clearDirection == 0){
+            for(int j = 0; j < 5; j++){
+                if (timer < maxClearAnimationTimer - 10 + j * 2)
+                    setTile(25, 10+j, 18+i, 3);
+            }
+            for(int j = 5; j < 10; j++){
+                if (timer < maxClearAnimationTimer - 10 + (9 - j) * 2)
+                    setTile(25, 10+j, 18+i, 3);
+            }
+        }else if(savefile->settings.clearDirection == 1){
+            for(int j = 0; j < 5; j++){
+                if (timer < maxClearAnimationTimer - 10 + (4 - j) * 2)
+                    setTile(25, 10+j, 18+i, 3);
+            }
+            for(int j = 5; j < 10; j++){
+                if (timer < maxClearAnimationTimer - 10 + (j-5) * 2)
+                    setTile(25, 10+j, 18+i, 3);
+            }
+        }
+    }
+}
+
+void setClearEffect(){
+    switch(savefile->settings.clearEffect){
+    case 0:
+        loadTiles(0, 3, sprite4tiles_bin, sprite4tiles_bin_size/32);
+        break;
+    case 1:
+        loadTiles(0, 3, sprite25tiles_bin, sprite25tiles_bin_size/32);
+        break;
+    case 2:
+        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
+        break;
+    case 3:
+        clearTiles(0, 3, 1);
+        break;
+    default:
+        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
+        break;
     }
 }
