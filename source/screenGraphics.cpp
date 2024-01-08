@@ -32,6 +32,9 @@ void GradientEditorScene::init(){
         wordSprites[i] = new WordSprite(i, 32 + i * 3, 256 + i * 12);
 
     resetSmallText();
+
+    setSmallTextArea(220, 0, 18, 30, 20);
+
     drawText();
 
     setMaxSelection();
@@ -59,7 +62,7 @@ void GradientEditorScene::init(){
 void GradientEditorScene::draw(){
 
     const int space = 4;
-    const int height = 11;
+    const int height = 12;
 
     c = 0;
 
@@ -210,12 +213,17 @@ void GradientEditorScene::draw(){
 void GradientEditorScene::drawText(){
     clearText();
 
-    std::string keyString =  getStringFromKey(savefile->settings.menuKeys.cancel);
+    int offset = 0;
+    if(savefile->settings.aspectRatio == 1){
+        offset = (240 - 214) / 2;
+    }
+
+    std::string keyString = getStringFromKey(savefile->settings.menuKeys.cancel);
 
     std::transform(keyString.begin(), keyString.end(), keyString.begin(), ::toupper);
 
     std::string s = "Press " + keyString + " to Exit";
-    naprintColor(s, 15 * 8 - (getVariableWidth(s) / 2), 18 * 8, 14);
+    aprints(s, 30 * 8 - 4 * s.size() - offset,10,2);
 
     naprint("Type:", 3 * 8, 3 * 8);
 
@@ -225,6 +233,8 @@ void GradientEditorScene::drawText(){
         naprint("Top:", 3 * 8, 8 * 8);
         naprint("Bottom:", 3 * 8, 13 * 8);
     }
+
+    aprints("Randomize: " + getStringFromKey(savefile->settings.menuKeys.special3),1 + offset,10,2);
 }
 
 void GradientEditorScene::update(){
@@ -376,6 +386,8 @@ void GradientEditorScene::deinit(){
     toggleBG(0, true);
     toggleBG(1, true);
     toggleBG(2, true);
+
+    resetSmallText();
     clearText();
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)

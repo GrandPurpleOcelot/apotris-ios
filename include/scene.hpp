@@ -183,10 +183,6 @@ class MainMenuScene: public SimpleListScene{
         return result;
     };
     std::string name(){return "";};
-
-    // ~MainMenuScene(){
-    //     deinit();
-    // }
 };
 
 class ModeListScene: public SimpleListScene{

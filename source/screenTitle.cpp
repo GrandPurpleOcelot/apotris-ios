@@ -443,6 +443,11 @@ void MainMenuScene::init(){
     SimpleListScene::init();
 
     #ifdef PC
+    int offset = 0;
+    if(savefile->settings.aspectRatio == 1){
+        offset = (240 - 214) / 2;
+    }
+
     setSmallTextArea(110, 0, 17, 30, 20);
     clearText();
 
@@ -460,9 +465,9 @@ void MainMenuScene::init(){
     std::string cancel = "Cancel: "
         + getStringFromKey(m.cancel);
 
-    aprints(move,1,16,2);
-    aprints(confirm,30 * 8 - confirm.size() * 4,9,2);
-    aprints(cancel,30 * 8 - cancel.size() * 4,16,2);
+    aprints(move,1 + offset,18,2);
+    aprints(confirm,30 * 8 - confirm.size() * 4 - offset,11,2);
+    aprints(cancel,30 * 8 - cancel.size() * 4 - offset,18,2);
     #endif
 }
 
