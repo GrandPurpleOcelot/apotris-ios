@@ -168,8 +168,9 @@ class SimpleListScene : public Scene{
 class MainMenuScene: public SimpleListScene{
     public:
     void init();
-    Scene* previousScene();
+    void deinit();
 
+    Scene* previousScene();
     std::list<std::string> getOptionList(){
         std::list<std::string> result = menuOptions;
 
@@ -182,6 +183,10 @@ class MainMenuScene: public SimpleListScene{
         return result;
     };
     std::string name(){return "";};
+
+    // ~MainMenuScene(){
+    //     deinit();
+    // }
 };
 
 class ModeListScene: public SimpleListScene{

@@ -441,6 +441,36 @@ bool ConfirmSaveScene::control(){
 void MainMenuScene::init(){
     path.clear();
     SimpleListScene::init();
+
+    #ifdef PC
+    setSmallTextArea(110, 0, 17, 30, 20);
+    clearText();
+
+    MenuKeys m = savefile->settings.menuKeys;
+
+    std::string move = "Move: "
+        + getStringFromKey(m.up) + " "
+        + getStringFromKey(m.left) + " "
+        + getStringFromKey(m.down) + " "
+        + getStringFromKey(m.right) + " ";
+
+    std::string confirm = "Confirm: "
+        + getStringFromKey(m.confirm);
+
+    std::string cancel = "Cancel: "
+        + getStringFromKey(m.cancel);
+
+    aprints(move,1,16,2);
+    aprints(confirm,30 * 8 - confirm.size() * 4,9,2);
+    aprints(cancel,30 * 8 - cancel.size() * 4,16,2);
+    #endif
+}
+
+void MainMenuScene::deinit(){
+    SimpleListScene::deinit();
+
+    resetSmallText();
+    clearText();
 }
 
 void initFallingBlocks(){
