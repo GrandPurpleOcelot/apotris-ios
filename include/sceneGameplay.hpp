@@ -152,7 +152,7 @@ class RotationSystemElement : public Element{
 
             result += text;
 
-            if(savefile->settings.rotationSystem < BlockEngine::ARS)
+            if(savefile->settings.rotationSystem < BlockEngine::BARS)
                 result += ">";
 
             return result;
@@ -160,7 +160,7 @@ class RotationSystemElement : public Element{
 
         void action(int dir) override{
             if(dir > 0){
-                if(savefile->settings.rotationSystem < BlockEngine::ARS){
+                if(savefile->settings.rotationSystem < BlockEngine::BARS){
                     savefile->settings.rotationSystem++;
                     sfx(SFX_MENUMOVE);
                 }
@@ -176,6 +176,7 @@ class RotationSystemElement : public Element{
             switch(savefile->settings.rotationSystem){
                 case BlockEngine::NRS: return "NRS";
                 case BlockEngine::ARS: return "ARS";
+                case BlockEngine::BARS: return "BARS";
                 default : return "SRS";
             }
         }
