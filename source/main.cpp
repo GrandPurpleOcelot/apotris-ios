@@ -675,7 +675,7 @@ void setLightMode() {
     if (savefile->settings.lightMode) {
         setPaletteColor(0,0,0x5ad6,1);//background gray
         setPaletteColor(8,4,0x0421,1);//progressbar
-        setPaletteColor(0,8,0x6739,1);
+        setPaletteColor(0,8,0x5ad6,1);
 
         setPaletteColor(16 + 8,6,0x6739,1);//frame background
 
@@ -794,9 +794,12 @@ void setPalette(){
 
     setLightMode();
 
-    if(savefile->settings.effects == 2)
-        for(int i = 0; i < 16; i++)
-            setPaletteColor(i, 5, RGB15(i, i, i), 1);
+    if(savefile->settings.effects == 2){
+        for(int i = 0; i < 16; i++){
+            int color = (savefile->settings.lightMode)?29-i:i;
+            setPaletteColor(i, 5, RGB15(color, color, color), 1);
+        }
+    }
 
     setPaletteColor(15, 5, RGB15(25, 5, 5), 1);
 
@@ -830,7 +833,7 @@ void buildMini(TILE * customSkin){
     int add = 0;
     int rs = SRS;
     if(game != nullptr){
-        add = (game->rotationSystem == NRS || game->rotationSystem == ARS);
+        add = (game->rotationSystem == NRS || game->rotationSystem == ARS || game->rotationSystem == BARS);
         rs = game->rotationSystem;
     }
 
@@ -1017,7 +1020,7 @@ void startBotGame(int seed){
 void setPawnPalette(int dest, int n, int blend){
     dest += 16;
 
-    if (!savefile->settings.lightMode){
+    if (savefile->settings.lightMode){
         if(savefile->settings.colors == 2)
             color_fade_palette(dest,0,(COLOR*)classic_pal_bin,0x0000,5,blend);
         else if(savefile->settings.colors == 3){

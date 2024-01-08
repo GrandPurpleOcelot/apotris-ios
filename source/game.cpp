@@ -880,7 +880,7 @@ void showHold() {
     if (skin < 7 || skin == 9 || skin == 10 || skin > 1000) {
         sprite_unhide(holdSprite, 0);
         sprite_set_attr(holdSprite, ShapeWide, 2, 9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
-        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS));
+        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) + yoffset + 8 * (game->rotationSystem == BARS && game->held == PIECE_I));
     } else {
         sprite_unhide(holdSprite, ATTR0_AFF);
         sprite_set_attr(holdSprite, ShapeSquare, 2, 16 * game->held, palette * (game->zoneTimer == 0), 3);
@@ -893,7 +893,7 @@ void showHold() {
             size = 349;//~1.4
 
         sprite_set_size(holdSprite, size,5);
-        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) - 3 + yoffset);
+        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) + yoffset + 8 * (game->rotationSystem == BARS && game->held == PIECE_I) - 3 + yoffset);
     }
 }
 
@@ -973,7 +973,7 @@ void showQueue() {
             sprite_unhide(queueSprites[k], 0);
             sprite_set_attr(queueSprites[k], ShapeWide, 2, 16 * 9 + 8 * n, n * (game->zoneTimer == 0), 3);
             sprite_enable_mosaic(queueSprites[k]);
-            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push, (3 + (k * 3)) * 6 - 3 * (n == 0) + yoffset + 8 * (game->rotationSystem == ARS && n == 0));
+            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push, (3 + (k * 3)) * 6 - 3 * (n == PIECE_I) + yoffset + 8 * (game->rotationSystem == ARS && n == PIECE_I) + yoffset + 8 * (game->rotationSystem == BARS && n == PIECE_I));
         } else {
             sprite_unhide(queueSprites[k], ATTR0_AFF);
             sprite_set_attr(queueSprites[k], ShapeSquare, 2, 16 * n, n * (game->zoneTimer == 0), 3);
@@ -986,7 +986,7 @@ void showQueue() {
 
             sprite_set_size(queueSprites[k], size, k);
 
-            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == 0) - 4 + yoffset);
+            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == PIECE_I) + yoffset + 8 * (game->rotationSystem == BARS && n == PIECE_I) - 4 + yoffset);
         }
     }
 }
@@ -1858,7 +1858,7 @@ void drawGrid() {
     int peekAmount = peek * (1 + game->pawn.big);
 
     if(savefile->settings.effects < 2){
-        u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode && !game->zoneTimer));
+        u32 t = tileBuild(gridTile, false, false, palOffset * (savefile->settings.lightMode));
 
         for (int i = -2; i < 20; i++) {
             for (int j = 0; j < 10; j++) {
@@ -2602,37 +2602,27 @@ void rainbowPalette(){
     if(savefile->settings.lightMode){
         loadPalette(16, 1, rainbow, 1);
         loadPalette(16, 2, rainbow, 4);
-        // memcpy16(&pal_obj_mem[1],rainbow,1);
-        // memcpy16(&pal_obj_mem[2],rainbow,4);
     }
 
     if(!savefile->settings.lightMode)
         color_fade((COLOR *) rainbow, (COLOR *) rainbow, 0, 4, 10);
-        // clr_fade((COLOR *) rainbow,0,(COLOR*) rainbow,4,10);
     else
         color_adj_MEM((COLOR *) rainbow, (COLOR *) rainbow, 4, float2fx(0.25));
-        // clr_adj_brightness((COLOR *) rainbow,(COLOR*) rainbow,4,float2fx(0.25));
 
     loadPalette(0, 1, rainbow, 4);
-    // memcpy16(&pal_bg_mem[1],rainbow,4);
 
     if(!savefile->settings.lightMode)
         loadPalette(16, 1, rainbow, 4);
-        // memcpy16(&pal_obj_mem[1],rainbow,4);
 
     if(savefile->settings.shadow != 3){
         loadPalette(16 + 10, 1, rainbow, 4);
-        // memcpy16(&pal_obj_mem[10*16+1],rainbow,4);
     }else{
-        if(!savefile->settings.lightMode)
+        if(savefile->settings.lightMode)
             color_fade_palette(16 + 10, 1, (COLOR *) rainbow, 0, 4, 14);
-        //     clr_fade((COLOR*)rainbow, 0x0000, &pal_obj_mem[10 * 16+1], 4, 14);
         else
             color_adj_brightness(16 + 10, 1, (COLOR *) rainbow, 4, (float2fx(0.25)));
-        //     clr_adj_brightness(&pal_obj_mem[10 * 16+1], (COLOR*)rainbow, 4, float2fx(0.25));
     }
     loadPalette(16 + 11, 1, rainbow, 4);
-    // memcpy16(&pal_obj_mem[11*16+1],rainbow,4);
 }
 
 void showZoneText(){
@@ -3158,10 +3148,12 @@ void GameScene::update(){
         paused = true;
         endScreen();
         paused = false;
-        if(!(playAgain && multiplayer))
+        if(!(playAgain && multiplayer)){
             return;
-        else
+        }else{
             playAgain = false;
+            counted = false;
+        }
     }
 
     if(paused){

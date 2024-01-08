@@ -199,6 +199,36 @@ void Game::rotate(int dir, int on){
             }
         }
 
+    }else if(rotationSystem == BARS){
+        for (int i = 0; i < 7 + (dir > 1); i++) {
+            int dx;
+            int dy;
+            if(dir <= 1){
+                dx = barsKicks[(pawn.current == 0)][(dir < 0)][pawn.rotation][i][0];
+                dy = barsKicks[(pawn.current == 0)][(dir < 0)][pawn.rotation][i][1];
+            }else{
+                dx = barsKickTwice[pawn.rotation][i][0];
+                dy = barsKickTwice[pawn.rotation][i][1];
+            }
+
+            if (checkRotation(dx, dy, r)) {
+                specialTspin = (pawn.current == 5 && (abs(dx) + abs(dy) >= 2));
+                lastMoveRotation = dir;
+
+                if(dy < 0)
+                    verticalKick++;
+
+                if(verticalKick >= verticalKickMax)
+                    hardDrop();
+
+                rotatePlace(dir,dx,dy,r);
+                return;
+
+            }else{
+                sounds.invalid = 1;
+            }
+        }
+
     }else if(rotationSystem == NRS){
         if(checkRotation(0, 0, r)){
             rotatePlace(dir,dx,dy,r);
@@ -1147,7 +1177,7 @@ int Game::clear(Drop drop) {
 
     //calculate score
     int add = 0;
-    if(clearCount <= 4){
+    if(clearCount <= 4 && !isPerfectClear){
         if(isTSpin == 0){
             //if no t-spin
             if(gameMode != CLASSIC){
@@ -1173,9 +1203,9 @@ int Game::clear(Drop drop) {
         }
     }
 
-    if(gameMode == MASTER && !disappearing){
+    int combo = comboCounter + 1;
 
-        int combo = comboCounter + 1;
+    if(gameMode == MASTER && !disappearing){
 
         gradePoints += (int) ((float) gradeTable[internalGrade][clearCount+1] * masterComboMultiplayer[(combo < 10)?combo:9][clearCount-1] + 1) * ((int)(level/250)+1);
 
@@ -1204,8 +1234,8 @@ int Game::clear(Drop drop) {
         statTracker.maxStreak = b2bCounter;
 
     //add combo bonus
-    add += scoring[16][0] * level * comboCounter;
-    attack += comboTable[comboCounter];
+    add += scoring[16][0] * level * combo;
+    attack += comboTable[combo];
 
     if (isPerfectClear && gameMode != CLASSIC && clearCount <= 4){
         if(gameMode != BLITZ)
@@ -1479,6 +1509,9 @@ int* BlockEngine::getShape(int n,int r, int rotationSystem) {
     case ARS:
         source = (int * )ars[n][r];
         break;
+    case BARS:
+        source = (int * )bars[n][r];
+        break;
     default:
         source = (int * )tetrominos[n][r];
         break;
@@ -1489,7 +1522,7 @@ int* BlockEngine::getShape(int n,int r, int rotationSystem) {
 }
 
 void Game::lockCheck() {
-    if (pawn.lowest == pawn.y && lockMoveCounter > 0 && rotationSystem == SRS) {
+    if (pawn.lowest == pawn.y && lockMoveCounter > 0 && (rotationSystem == SRS || rotationSystem == BARS)) {
         lockTimer = maxLockTimer;
         lockMoveCounter--;
     }
@@ -2602,6 +2635,12 @@ void Game::setupPawnSpawn(){
         if(pawn.current == 0)
             pawn.y--;
     }
+
+    if(rotationSystem == BARS){
+        if(pawn.current != PIECE_I)
+            pawn.y--;
+    }
+
 
     pawn.rotation = 0;
     if((irs && (((fromLockRotate) && maxClearDelay > 1) || !initialType)) || rotationSystem == ARS){
