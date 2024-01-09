@@ -858,6 +858,8 @@ class GraphicsScene : public Scene{
     int endDelayMax = 80;
     WordSprite* scrollingText[3];
 
+    int previousAspectRatio = 0;
+
     void draw();
     void update();
     bool control();

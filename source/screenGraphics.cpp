@@ -33,7 +33,7 @@ void GradientEditorScene::init(){
 
     resetSmallText();
 
-    setSmallTextArea(220, 0, 18, 30, 20);
+    setSmallTextArea(256, 0, 18, 30, 20);
 
     drawText();
 
@@ -543,6 +543,20 @@ void GraphicsScene::init(){
         scrollingText[i]->show(12 * 8 * i,160-8,15);
 
     scrollingText[0]->setTextSlow(scrollText);
+
+    int offset = 0;
+    if(savefile->settings.aspectRatio == 1){
+        offset = (240 - 214) / 2;
+    }
+
+    resetSmallText();
+    setSmallTextArea(110, 0, 17, 15, 20);
+    clearText();
+
+    std::string hide = "Hide Options: " + getStringFromKey(savefile->settings.menuKeys.special2);
+    aprints(hide,1 + offset, 24 - 7, 2);
+
+    previousAspectRatio = savefile->settings.aspectRatio;
 }
 
 void GraphicsScene::draw(){
@@ -754,6 +768,19 @@ void GraphicsScene::update(){
     for(int i = 0; i < 3; i++){
         scrollingText[i]->setScroll(scrollOffset);
         scrollingText[i]->show(12 * 8 * i + 13 * savefile->settings.aspectRatio,160-8,14);
+    }
+
+    if(previousAspectRatio != savefile->settings.aspectRatio){
+        clearSmallText();
+        int offset = 0;
+        if(savefile->settings.aspectRatio == 1){
+            offset = (240 - 214) / 2;
+        }
+
+        std::string hide = "Hide Options: " + getStringFromKey(savefile->settings.menuKeys.special2);
+        aprints(hide, 1 + offset, 24 - 7, 2);
+
+        previousAspectRatio = savefile->settings.aspectRatio;
     }
 
     control();
@@ -981,6 +1008,7 @@ void GraphicsScene::deinit(){
     for(int i = 0; i < 7; i++)
         clearSpriteTiles(512 + 64 + i * 20, 20, 1);
 
+    resetSmallText();
     clearText();
 
     auto it = elementList.begin();
