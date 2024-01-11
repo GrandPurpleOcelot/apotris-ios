@@ -2578,6 +2578,7 @@ Game::Game(Game * oldGame) {
     activePiece = oldGame->activePiece;
     linesToClear = oldGame->linesToClear;
     randomizer = oldGame->randomizer;
+    rotationSystem = oldGame->rotationSystem;
 }
 
 void Game::demoGarbage(){

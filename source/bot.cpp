@@ -184,7 +184,7 @@ void Bot::run(){
                         else
                             testGame->pawn.current = testGame->queue.front();
 
-                        testGame->pawn.setBlock(SRS);
+                        testGame->pawn.setBlock(testGame->rotationSystem);
 
                     }else{
                         stopThinking();

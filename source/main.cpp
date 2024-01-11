@@ -946,6 +946,7 @@ void startBotGame(int seed){
 
     if(botGame != nullptr)
         delete botGame;
+
     botGame = new Game(BATTLE,seed & 0x1fff,false);
     botGame->setOptions(*previousGameOptions);
     botGame->setGoal(100);
