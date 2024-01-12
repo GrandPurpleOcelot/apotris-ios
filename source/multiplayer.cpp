@@ -166,6 +166,9 @@ void startMultiplayerGame(int seed) {
 }
 
 void drawEnemyBoard(int height) {
+    if(game->won || game->lost){
+        return;
+    }
 
     enemyBoardSprite = &obj_buffer[25];
     sprite_set_attr(enemyBoardSprite, ShapeTall, 2, boardTile, 15, 1);
