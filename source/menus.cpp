@@ -72,7 +72,7 @@ const std::string modeOptionStrings[][4] = {
 
 int GameScene::endScreen(){
     clearSmallText();
-    setSmallTextArea(110, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
@@ -197,14 +197,14 @@ int GameScene::endScreen(){
 
     MenuKeys k = savefile->settings.menuKeys;
 
+    showModeText();
+
     while (closed()) {
         handleMultiplayer(1);
         vsync();
         key_poll();
 
         showScore();
-
-        showModeText();
 
         cursorFloat += 6;
         if(cursorFloat >= 512)
@@ -558,7 +558,7 @@ int GameScene::pauseMenu(){
     timesPaused++;
 
     clearText();
-    setSmallTextArea(110, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
@@ -992,7 +992,7 @@ int onRecord() {
 
 void GameScene::showModeText(){
     if(game->gameMode > 0 && game->gameMode <= 13){
-        int counter = 0;
+        int counter = 1;
         std::string str;
         std::string str2;
 
@@ -1001,9 +1001,7 @@ void GameScene::showModeText(){
         if(game->gameMode == TRAINING)
             str = "Training";
 
-        // aprintColor(str,30-str.size(),counter++,0);
-        wordSprites[7 + counter].setText(str);
-        wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+        naprintColor(str,30 * 8 - 4 - getVariableWidth(str), counter * 8, 14);
         counter++;
 
         str = "";
@@ -1020,9 +1018,7 @@ void GameScene::showModeText(){
         }
 
         if(str != ""){
-            // aprintColor(str,30-str.size(),counter++,0);
-            wordSprites[7 + counter].setText(str);
-            wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+            naprintColor(str,30 * 8 - 4 - getVariableWidth(str), counter * 8, 14);
             counter++;
         }
 
@@ -1044,23 +1040,49 @@ void GameScene::showModeText(){
         }
 
         if(str != ""){
-            // aprintColor(str,30-str.size(),counter++,0);
-            wordSprites[7 + counter].setText(str);
-            wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+            naprintColor(str,30 * 8 - 4 - getVariableWidth(str), counter * 8, 14);
             counter++;
         }
         if(str2 != ""){
-            // aprintColor(str2,30-str2.size(),counter++,0);
-            wordSprites[7 + counter].setText(str);
-            wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+            naprintColor(str2,30 * 8 - 4 - getVariableWidth(str2), counter * 8, 14);
             counter++;
         }
 
         if(bigMode){
-            // aprintColor("BIG MODE",22,counter++,0);
-            wordSprites[7 + counter].setText("BIG MODE");
-            wordSprites[7 + counter].show(30 * 8 - 4 - wordSprites[7 + counter].width, counter * 8 + 4, 14);
+            naprintColor("BIG",30 * 8 - 4 - getVariableWidth("BIG"), counter * 8, 14);
             counter++;
+        }
+
+        int mode = game->gameMode;
+
+        if(game->rotationSystem != SRS){
+            if(mode != CLASSIC && !((mode == MASTER || mode == DEATH) && game->subMode)) {
+                std::string text;
+
+                switch(game->rotationSystem){
+                case BlockEngine::NRS: text = "NRS"; break;
+                case BlockEngine::ARS: text = "ARS"; break;
+                default: text = "SRS"; break;
+                }
+
+                naprintColor(text,30 * 8 - 4 - getVariableWidth(text), counter * 8, 14);
+                counter++;
+            }
+        }
+
+        if(game->randomizer != BAG_7){
+            if(mode != CLASSIC && !((mode == MASTER || mode == DEATH) && game->subMode)) {
+                std::string text;
+
+                switch(game->randomizer){
+                case BlockEngine::BAG_7: text = "7-BAG"; break;
+                case BlockEngine::BAG_35: text = "35-BAG"; break;
+                default : text = "RANDOM"; break;
+                }
+
+                naprintColor(text,30 * 8 - 4 - getVariableWidth(text), counter * 8, 14);
+                counter++;
+            }
         }
     }
 }

@@ -573,8 +573,6 @@ namespace BlockEngine
         List bag;
         List historyList;
 
-        int randomizer;
-
     public:
         int checkRotation(int, int, int);
         void next();
@@ -688,6 +686,8 @@ namespace BlockEngine
         int regretCount = 0;
 
         int rotationSystem = SRS;
+
+        int randomizer = BAG_7;
 
         int maxLockTimer = 30;
         int lockTimer = maxLockTimer;
