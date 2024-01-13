@@ -34,6 +34,8 @@ void SimpleListScene::init(){
         selection = 0;
     }
 
+    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
     startY = 40;
 
     //backgroundGrid
@@ -69,7 +71,7 @@ void SimpleListScene::init(){
         scrollSideSprites[i] = &obj_buffer[10 + i];
         sprite_set_attr(scrollSideSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
         sprite_enable_affine(scrollSideSprites[i], i+2, true);
-        sprite_set_pos(scrollSideSprites[i],-16 + i * (240 + 16), 152 - 4);
+        sprite_set_pos(scrollSideSprites[i],240/2 + ((i*2)-1)*(width/2 + 16), 152 - 4);
         sprite_set_size(scrollSideSprites[i], float2fx(0.8), i+2);
         sprite_hide(scrollSideSprites[i]);
     }
@@ -111,8 +113,7 @@ void SimpleListScene::init(){
         i++;
     }
 
-    int width = getVariableWidth(p) >> 3;
-    int count = (width) / 12 + 1;
+    int count = (getVariableWidth(p) >> 3) / 12 + 1;
 
     int wordIndex = MAX_WORD_SPRITES - count - 1;
 
@@ -223,7 +224,7 @@ void SimpleListScene::draw(){
             #ifdef TE
             for(int i = 0; i < 2; i++){
                 sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
-                sprite_set_pos(scrollSideSprites[i], i * (min(scrollTextLength,240) + 16) - 16 - scrollOffset, 152 - 4);
+                sprite_set_pos(scrollSideSprites[i],240/2 + ((i*2)-1)*(min(scrollTextLength,width)/2) - 16 * (i == 0), 152 - 4);
             }
             #endif
         }else{
@@ -427,6 +428,8 @@ void OptionListScene::init(){
     elementList = getElementList();
     options = (int) elementList.size();
 
+    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
     startY = 24;
     if(options < 7){
        startY += ((7 - options) * 8) & ~0xf;
@@ -476,7 +479,7 @@ void OptionListScene::init(){
         scrollSideSprites[i] = &obj_buffer[8 + i];
         sprite_set_attr(scrollSideSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
         sprite_enable_affine(scrollSideSprites[i], i+2, true);
-        sprite_set_pos(scrollSideSprites[i],-16 + i * (240 + 16), 152 - 4);
+        sprite_set_pos(scrollSideSprites[i],-16 + i * (width + 16), 152 - 4);
         sprite_set_size(scrollSideSprites[i], float2fx(0.8), i+2);
         sprite_hide(scrollSideSprites[i]);
     }
@@ -632,7 +635,7 @@ void OptionListScene::draw(){
             #ifdef TE
             for(int i = 0; i < 2; i++){
                 sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
-                sprite_set_pos(scrollSideSprites[i], i * (min(scrollTextLength,240) + 16) - 16 - scrollOffset, 152 - 4);
+                sprite_set_pos(scrollSideSprites[i],240/2 + ((i*2)-1)*(min(scrollTextLength,width)/2) - 16 * (i == 0), 152 - 4);
             }
             #endif
         }else{
