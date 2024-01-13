@@ -146,6 +146,13 @@ void loadSave() {
         savefile->newGame = SAVE_TAG;
     }
 
+    if(savefile->platform != PLATFORM){
+        savefile->platform = PLATFORM;
+
+        savefile->settings.menuKeys = getDefaultMenuKeys();
+        savefile->settings.keys = getDefaultGameKeys();
+    }
+
     u8* dump = (u8*)savefile;
     int sum = 0;
     for (int i = 0; i < (int)sizeof(Save); i++)
@@ -357,6 +364,8 @@ void setDefaults(Save *save, int depth){
         #endif
 
         save->settings.menuKeys = m;
+
+        save->platform = PLATFORM;
 
         strncpy(savefile->endTag, "SAVE_END", 9);
     }

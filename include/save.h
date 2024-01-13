@@ -261,6 +261,7 @@ public:
 
     Skin customSkins[MAX_CUSTOM_SKINS];
 
+    u8 platform;
     char endTag[9] = "SAVE_END";
 }ALIGN(4);
 
