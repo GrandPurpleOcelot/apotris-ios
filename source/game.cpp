@@ -1018,7 +1018,6 @@ bool GameScene::control() {
 
     if(replaying && key_hit(KEY_FULL)){
         exitGame = true;
-        replaying = false;
         return true;
     }
 
@@ -3061,6 +3060,13 @@ void GameScene::update(){
         if(handlingTest){
             handlingTest = false;
             changeScene(new HandlingOptionScene(), Transitions::FADE);
+        }else if(replaying){
+            replaying = false;
+            path.clear();
+            path.push_back("Play");
+            clearText();
+            buildBG(3, 0, 27, 0, 1, true);
+            sceneSwitcher(modeToString(previousGameOptions->mode));
         }else{
             enableBot = false;
             changeScene(new TitleScene(),Transitions::FADE);

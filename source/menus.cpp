@@ -153,10 +153,11 @@ int GameScene::endScreen(){
 
     showStats(showingStats, totalTime, ppsStr, true);
 
-    if(!replaying)
+    if (!replaying) {
         saveReplay();
-    else
+    } else {
         replaying = false;
+    }
 
     const int optionsHeight = 11;
 
