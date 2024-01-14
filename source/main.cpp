@@ -778,7 +778,7 @@ void buildMini(TILE * customSkin){
     int add = 0;
     int rs = SRS;
     if(game != nullptr){
-        add = (game->rotationSystem == NRS || game->rotationSystem == ARS);
+        add = (game->rotationSystem == NRS || game->rotationSystem == ARS || game->rotationSystem == BARS);
         rs = game->rotationSystem;
     }
 

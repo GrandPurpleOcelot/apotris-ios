@@ -137,6 +137,7 @@ namespace BlockEngine
         SRS,
         NRS,
         ARS,
+        BARS,
         A_SRS,
     };
 
