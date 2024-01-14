@@ -5,7 +5,7 @@
 #include "audio_files.h"
 /* #include "soundbank.h" */
 #include "posprintf.h"
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
 #include <map>
 
 static inline void setTile(int sbb, int x, int y, uint32_t value){

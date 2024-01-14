@@ -2,7 +2,7 @@
 
 #ifdef GBA
 #include "logging.h"
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
 #include "maxmod.h"
 #include "rumble.h"
 #include "gbp_logo.hpp"
@@ -30,7 +30,23 @@ void onHBlank() {
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
-LinkConnection* linkConnection = new LinkConnection();
+LinkUniversal* linkUniversal =
+        new LinkUniversal(LinkUniversal::Protocol::AUTODETECT,
+                          "LinkUniversal",
+                          (LinkUniversal::CableOptions){
+                                  .baudRate = LinkCable::BAUD_RATE_1,
+                                  .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
+                                  .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
+                                  .interval = LINK_CABLE_DEFAULT_INTERVAL,
+                                  .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
+                          (LinkUniversal::WirelessOptions){
+                                  .retransmission = true,
+                                  .maxPlayers = 2,
+                                  .timeout = LINK_WIRELESS_DEFAULT_TIMEOUT,
+                                  .remoteTimeout = LINK_WIRELESS_DEFAULT_REMOTE_TIMEOUT,
+                                  .interval = 250, // just under 1 update per frame
+                                  .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
+                                  .asyncACKTimerId = 2});
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
@@ -112,10 +128,14 @@ void platformInit(){
 
     irq_init(0);
     irq_enable(II_VBLANK);
+    irq_enable(II_SERIAL);
+    irq_enable(II_TIMER3);
+    irq_enable(II_TIMER2);
     irq_add(II_VBLANK, onVBlank);
 
-    irq_add(II_SERIAL, LINK_ISR_SERIAL);
-    irq_add(II_TIMER3, LINK_ISR_TIMER);
+    irq_add(II_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    irq_add(II_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
+    irq_add(II_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
 
     // irq_add(II_HBLANK, onHBlank);
     irq_disable(II_HBLANK);
@@ -311,12 +331,13 @@ void sleep() {
     REG_SNDDSCNT = 0;
     REG_SNDDMGCNT = 0;
 
-    bool isLinked = linkConnection->isActive();
+    bool isLinked = linkUniversal->isActive();
 
     if(isLinked)
-        linkConnection->deactivate();
+        linkUniversal->deactivate();
 
     irq_disable(II_TIMER3);
+    irq_disable(II_TIMER2);
     irq_disable(II_SERIAL);
 
     REG_P1CNT = 0b1100001100000100;
@@ -330,9 +351,10 @@ void sleep() {
     REG_SNDDMGCNT = dmg_value;
 
     if(isLinked)
-        linkConnection->activate();
+        linkUniversal->activate();
 
     irq_enable(II_TIMER3);
+    irq_enable(II_TIMER2);
     irq_enable(II_SERIAL);
     irq_delete(II_KEYPAD);
     irq_enable(II_VBLANK);
@@ -395,7 +417,7 @@ void onVBlank(void) {
     if(gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
 
-    LINK_ISR_VBLANK();
+    LINK_UNIVERSAL_ISR_VBLANK();
 
     REG_IME = 1;
     if (canDraw) {

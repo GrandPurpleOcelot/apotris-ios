@@ -564,8 +564,7 @@ void MultBattleScene::init(){
 
     #ifdef GBA
 
-
-    linkConnection->activate();
+    linkUniversal->activate();
 
     #endif
 
@@ -577,7 +576,7 @@ void MultBattleScene::draw(){
 
     if (connected < 1) {
         aprint("Waiting for", 7, 7);
-        aprint("Link Cable", 9, 9);
+        aprint("Link Adapter", 9, 9);
         aprint("connection...", 11, 11);
     } else {
         aprint("Connected!", 10, 6);
@@ -601,7 +600,7 @@ bool MultBattleScene::control(){
             changeScene(previousScene(),Transitions::FADE);
 
             #ifdef GBA
-            linkConnection->deactivate();
+            linkUniversal->deactivate();
             #endif
 
             return true;
@@ -621,67 +620,56 @@ void MultBattleScene::update(){
     PlayOptionScene::update();
 
     #ifdef GBA
+    linkUniversal->sync();
+    u8 currentPlayerId = linkUniversal->currentPlayerId();
+    u8 remotePlayerId = !currentPlayerId;
+
     if(multiplayerStartTimer){
         if(--multiplayerStartTimer == 0){
             startMultiplayerGame(nextSeed);
             gameLoop();
         }else{
-            linkConnection->send((u16)nextSeed + 100);
+            linkUniversal->send((u16)nextSeed + 100);
         }
         return;
     }
 
-    auto linkState = linkConnection->linkState.get();
-
     MenuKeys k = savefile->settings.menuKeys;
 
-    if (linkState->isConnected()) {
-        u16 data[LINK_MAX_PLAYERS];
-        for (u32 i = 0; i < LINK_MAX_PLAYERS; i++)
-            data[i] = 0;
-        for (u32 i = 0; i < linkState->playerCount; i++) {
-            while (linkState->hasMessage(i))
-                data[i] = linkState->readMessage(i);
-        }
+    u8 playerCount = linkUniversal->playerCount();
 
-        for (u32 i = 0; i < LINK_MAX_PLAYERS; i++) {
-            if (data[i] == 2) {
-                if (connected < 1) {
-                    refreshText = true;
-                    clearText();
-                }
-                connected = 1;
-            } else if (data[i] > 100){
-                nextSeed = data[i] - 100;
-            }
-        }
-
-        if (linkState->playerCount == 2) {
-            if (linkState->currentPlayerId != 0) {
-                if (nextSeed > 100) {
-                    startMultiplayerGame(nextSeed);
-                    gameLoop();
-                    return;
-                }
-                aprint("Waiting", 12, 13);
-                aprint("for host...", 12, 14);
-            } else {
-                aprint("Press Start", 10, 13);
-
-            }
-        } else if (linkState->playerCount == 1) {
-            if (connected > -1) {
+    if (linkUniversal->isConnected() && playerCount == 2) {
+        u16 data = 0;
+        if (linkUniversal->canRead(remotePlayerId))
+            data = linkUniversal->read(remotePlayerId);
+        u16 msg = data;
+        if (msg == 2) {
+            if (connected < 1) {
                 refreshText = true;
                 clearText();
             }
-            connected = -1;
+            connected = 1;
+        } else if (msg > 100){
+            nextSeed = msg - 100;
         }
 
-        if (key_hit(k.pause) && linkState->currentPlayerId == 0) {
+        if (currentPlayerId != 0) {
+            if (nextSeed > 100) {
+                startMultiplayerGame(nextSeed);
+                gameLoop();
+                return;
+            }
+            aprint("Waiting", 12, 13);
+            aprint("for host...", 12, 14);
+        } else {
+            aprint("Press Start", 10, 13);
+        }
+
+        if (key_hit(k.pause) && currentPlayerId == 0) {
             nextSeed = (u16)qran() & 0x1fff;
             multiplayerStartTimer = 3;
         } else {
-            linkConnection->send(2);
+            linkUniversal->send(2);
         }
 
         aprint("             ", 0, 19);

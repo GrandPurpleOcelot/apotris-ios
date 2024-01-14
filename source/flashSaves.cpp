@@ -2,7 +2,7 @@
 
 #ifdef GBA
 #include "flashSaves.h"
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
 #include "logging.h"
 
 #include "text.h"
@@ -323,12 +323,13 @@ void save_sram_flash()
     REG_SNDDSCNT = 0;
     REG_SNDDMGCNT = 0;
 
-    bool isLinked = linkConnection->isActive();
+    bool isLinked = linkUniversal->isActive();
 
     if(isLinked)
-		linkConnection->deactivate();
+		linkUniversal->deactivate();
 
     irq_disable(II_TIMER3);
+    irq_disable(II_TIMER2);
     irq_disable(II_SERIAL);
 
 	flash_write(flash_type, flash_sram_area);
@@ -338,9 +339,10 @@ void save_sram_flash()
     REG_SNDDMGCNT = dmg_value;
 
     if(isLinked)
-		linkConnection->activate();
+		linkUniversal->activate();
 
     irq_enable(II_TIMER3);
+    irq_enable(II_TIMER2);
     irq_enable(II_SERIAL);
     irq_delete(II_KEYPAD);
     irq_enable(II_VBLANK);

@@ -1,5 +1,5 @@
 #include "def.h"
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
 #include "blockEngine.hpp"
 #include "text.h"
 #include <string>
@@ -36,81 +36,78 @@ void handleMultiplayer(int state) {
     #ifdef GBA
     if (!multiplayer)
         return;
+
+    linkUniversal->sync();
+    u8 currentPlayerId = linkUniversal->currentPlayerId();
+    u8 remotePlayerId = !currentPlayerId;
+
     if (multiplayerStartTimer) {
         if (--multiplayerStartTimer == 0) {
             playAgain = true;
         } else {
-            linkConnection->send((u16)((1 << 13) + (nextSeed & 0x1fff)));
+            linkUniversal->send((u16)((1 << 13) + (nextSeed & 0x1fff)));
+            linkUniversal->waitFor(remotePlayerId);
         }
         return;
     }
 
-    auto linkState = linkConnection->linkState.get();
-
     int receivedAttack = false;
-
-    u16 data[LINK_MAX_PLAYERS];
-    for (int i = 0; i < LINK_MAX_PLAYERS; i++)
-        data[i] = 0;
-
     int incomingHeight = 0;
+    u8 playerCount = linkUniversal->playerCount();
 
-    if (linkState->isConnected()) {
+    if (linkUniversal->isConnected() && playerCount == 2) {
         timeoutTimer = 0;
-        for (u32 i = 0; i < linkState->playerCount; i++)
-            while (linkState->hasMessage(i))
-                data[i] = linkState->readMessage(i);
+        u16 data = 0;
+        if (linkUniversal->canRead(remotePlayerId))
+            data = linkUniversal->read(remotePlayerId);
+        int command = data >> 13;
+        int value = data & 0x1fff;
 
-        for (u32 i = 0; i < linkState->playerCount; i++) {
+        switch (command) {
+        case 0:
+            break;
+        case 1:
+            playAgain = true;
+            nextSeed = value;
+            break;
+        case 2:
+            if (value == 0x123)
+                game->setWin();
+            break;
+        case 3://receive attack
+            game->addToGarbageQueue((value >> 4) & 0xff, value & 0xf);
+            receivedAttack = (value >> 4) & 0xff;
+            break;
+        case 4://acknowledge attack
+            game->clearAttack(value & 0xff);
+            break;
+        case 5:
+            for (int j = 0; j < 10; j++)
+                enemyBoard[value >> 10][j] = (value >> j) & 0b1;
+            incomingHeight = value >> 10;
+            break;
+        case 6:
+            for (int j = 0; j < 10; j++)
+                enemyBoard[(value >> 10) + 8][j] = (value >> j) & 0b1;
+            incomingHeight = (value >> 10) + 8;
+            break;
+        case 7:
+            if ((value >> 10) + 16 > 19)
+                break;
+            for (int j = 0; j < 10; j++)
+                enemyBoard[(value >> 10) + 16][j] = (value >> j) & 0b1;
+            incomingHeight = (value >> 10) + 16;
 
-            int command = data[i] >> 13;
-            int value = data[i] & 0x1fff;
-
-            switch (command) {
-            case 0:
-                continue;
-            case 1:
-                playAgain = true;
-                nextSeed = value;
-                break;
-            case 2:
-                if (value == 0x123)
-                    game->setWin();
-                break;
-            case 3://receive attack
-                game->addToGarbageQueue((value >> 4) & 0xff, value & 0xf);
-                receivedAttack = (value >> 4) & 0xff;
-                break;
-            case 4://acknowledge attack
-                game->clearAttack(value & 0xff);
-                break;
-            case 5:
-                for (int i = 0; i < 10; i++)
-                    enemyBoard[value >> 10][i] = (value >> i) & 0b1;
-                incomingHeight = value >> 10;
-                break;
-            case 6:
-                for (int i = 0; i < 10; i++)
-                    enemyBoard[(value >> 10) + 8][i] = (value >> i) & 0b1;
-                incomingHeight = (value >> 10) + 8;
-                break;
-            case 7:
-                if ((value >> 10) + 16 > 19)
-                    break;
-                for (int i = 0; i < 10; i++)
-                    enemyBoard[(value >> 10) + 16][i] = (value >> i) & 0b1;
-                incomingHeight = (value >> 10) + 16;
-
-                break;
-            }
+            break;
         }
         if (game->lost) {
-            if(!state)
-                linkConnection->send((u16)(2 << 13) + 0x123);
+            if(!state) {
+                linkUniversal->send((u16) (2 << 13) + 0x123);
+            }
         } else {
             if (receivedAttack) {
-                linkConnection->send((u16)((4 << 13) + receivedAttack));
-            } else if (game->attackQueue.size() == 0) {
+                linkUniversal->send((u16)((4 << 13) + receivedAttack));
+            } else if (game->attackQueue.empty()) {
                 if (currentScanHeight < 19)
                     currentScanHeight++;
                 else
@@ -122,11 +119,11 @@ void handleMultiplayer(int state) {
                         row += 1 << i;
 
                 if(!state)
-                    linkConnection->send((u16)(((5) << 13) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
+                    linkUniversal->send((u16) (((5) << 13) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
             } else {
                 BlockEngine::Garbage atck = game->attackQueue.front();
 
-                linkConnection->send((u16)((3 << 13) + (atck.id << 4) + atck.amount));
+                linkUniversal->send((u16)((3 << 13) + (atck.id << 4) + atck.amount));
             }
 
             drawEnemyBoard(incomingHeight);
@@ -162,7 +159,7 @@ void startMultiplayerGame(int seed) {
     multiplayer = true;
 
     #ifdef GBA
-    linkConnection->send(50);
+    linkUniversal->send(50);
     #endif
 
     nextSeed = 0;

@@ -6,7 +6,7 @@
 #include "sprites.h"
 
 #ifdef GBA
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
 #endif
 
 #include "logging.h"
