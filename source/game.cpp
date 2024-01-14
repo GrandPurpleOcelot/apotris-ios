@@ -875,12 +875,19 @@ void showHold() {
     int palette = (game->canHold)? game->held : 7;
 
     const int skin = savefile->settings.skin;
-    int yoffset = - (6 * (game->rotationSystem != SRS && (skin >= 7 && !(skin == 9 || skin == 10))));
+    const int rs = game->rotationSystem;
+
+    int yoffset = - (7 * (rs != SRS && (skin >= 7 && !(skin == 9 || skin == 10))));
 
     if (skin < 7 || skin == 9 || skin == 10 || skin > 1000) {
         sprite_unhide(holdSprite, 0);
         sprite_set_attr(holdSprite, ShapeWide, 2, 9 * 16 + 8 * game->held, palette * (game->zoneTimer == 0), 3);
-        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) + yoffset + 8 * (game->rotationSystem == BARS && game->held == PIECE_I));
+
+        sprite_set_pos(
+            holdSprite,
+            (5) * 8 + add * 3 + 3 + (push < 0) * push,
+            (10) * 8 - 3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS)) + yoffset + 3 * ((rs == ARS || rs == BARS) && game->held == PIECE_I)
+        );
     } else {
         sprite_unhide(holdSprite, ATTR0_AFF);
         sprite_set_attr(holdSprite, ShapeSquare, 2, 16 * game->held, palette * (game->zoneTimer == 0), 3);
@@ -893,7 +900,12 @@ void showHold() {
             size = 349;//~1.4
 
         sprite_set_size(holdSprite, size,5);
-        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) + yoffset + 8 * (game->rotationSystem == BARS && game->held == PIECE_I) + 3 * (game->rotationSystem == BARS) - 3 + yoffset);
+
+        sprite_set_pos(
+            holdSprite,
+            (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push,
+            (10) * 8 - 3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS)) + yoffset + 3 * ((rs == ARS || rs == BARS) && game->held == PIECE_I) - 4
+        );
     }
 }
 
@@ -958,7 +970,9 @@ void showQueue() {
 
     int startX = 22 * 8 + 1;
     const int skin = savefile->settings.skin;
-    int yoffset = 4 * (maxQueue == 1) - (5 * (game->rotationSystem != SRS && (skin >= 7 && !(skin == 9 || skin == 10))));
+    const int rs = game->rotationSystem;
+
+    int yoffset = 4 * (maxQueue == 1) - (6 * (rs != SRS && (skin >= 7 && !(skin == 9 || skin == 10))));
 
     for (int k = 0; k < 5; k++){
         if(k >= maxQueue || k >= game->queue.size()){
@@ -973,7 +987,12 @@ void showQueue() {
             sprite_unhide(queueSprites[k], 0);
             sprite_set_attr(queueSprites[k], ShapeWide, 2, 16 * 9 + 8 * n, n * (game->zoneTimer == 0), 3);
             sprite_enable_mosaic(queueSprites[k]);
-            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push, (3 + (k * 3)) * 6 - 3 * (n == PIECE_I) + yoffset + 8 * (game->rotationSystem == ARS && n == PIECE_I) + yoffset + 8 * (game->rotationSystem == BARS && n == PIECE_I));
+
+            sprite_set_pos(
+                queueSprites[k],
+                startX + add * 3 + (push > 0) * push,
+                (3 + (k * 3)) * 6 - 3 * (n == PIECE_I) + yoffset + 8 * ((rs == ARS || rs == BARS) && n == PIECE_I)
+            );
         } else {
             sprite_unhide(queueSprites[k], ATTR0_AFF);
             sprite_set_attr(queueSprites[k], ShapeSquare, 2, 16 * n, n * (game->zoneTimer == 0), 3);
@@ -986,7 +1005,11 @@ void showQueue() {
 
             sprite_set_size(queueSprites[k], size, k);
 
-            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == PIECE_I) + yoffset + 8 * (game->rotationSystem == BARS && n == PIECE_I) + 3 * (game->rotationSystem == BARS) - 4 + yoffset);
+            sprite_set_pos(
+                queueSprites[k],
+                startX + add * 3 + (push > 0) * push - 4,
+                (3 + (k * 3)) * 6 - 3 * (rs != ARS && n == PIECE_I) - 4 + yoffset + 8 * (rs == BARS && n == PIECE_I)
+            );
         }
     }
 }
