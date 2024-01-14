@@ -893,7 +893,7 @@ void showHold() {
             size = 349;//~1.4
 
         sprite_set_size(holdSprite, size,5);
-        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) + yoffset + 8 * (game->rotationSystem == BARS && game->held == PIECE_I) - 3 + yoffset);
+        sprite_set_pos(holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push, (10) * 8 - 3 * (game->held == 0 && game->rotationSystem != ARS) + yoffset + 8 * (game->rotationSystem == BARS && game->held == PIECE_I) + 3 * (game->rotationSystem == BARS) - 3 + yoffset);
     }
 }
 
