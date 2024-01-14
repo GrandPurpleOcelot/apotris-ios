@@ -253,7 +253,7 @@ public:
 
     ModeBoards boards;
 
-    int placeHolder[1004];
+    int placeHolder[1003];
 
     TotalStats stats;
 

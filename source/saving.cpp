@@ -27,10 +27,12 @@ void setDefaultGraphics(Save * save, int depth);
 void applySaveChanges(u8* newSave, u8* oldSave,  int newSize);
 void convertScores(Save *save);
 
-const std::list<SaveChange> saveChanges = {
+const SaveChange saveChanges[] = {
     SaveChange(0x50,132,20 * 4),//add zone + buffer to keys
     SaveChange(0x50,3120,4096),// add zone + buffer to scoreboards
+    SaveChange(0x51,624,192),// add zone + buffer to scoreboards
 };
+int changeLength = 3;
 
 void loadSave() {
     if(savefile != nullptr)
@@ -42,70 +44,30 @@ void loadSave() {
     const int pmSettings = 540;
     const int pmSave = 3876;
 
-    if (savefile->newGame == 0x50) {
-        setDefaults(savefile,6);
-    }else if (savefile->newGame == 0x4f) {
-    }else if (savefile->newGame == 0x4e) {
-        setDefaults(savefile,4);
-    }else if (savefile->newGame == 0x4d) {
+    if (savefile->newGame >= 0x4e && savefile->newGame <= 0x50) {
+        //purposefully empty
+    }else if (savefile->newGame >= 0x4b && savefile->newGame <= 0x4d) {
+        int size = 0;
+        switch(savefile->newGame){
+        case 0x4b: size = sizeof(Test) + 1; break;
+        case 0x4c: size = sizeof(Test2) + 1; break;
+        case 0x4d: size = sizeof(Test3); break;
+        }
+
         Save* temp = new Save();
-        const int oldSize = sizeof(Test3);
 
         u8* tmp = (u8*)temp;
 
         u8* sf = (u8*)savefile;
 
-        for (int i = 0; i < oldSize; i++)
+        for (int i = 0; i < size; i++)
             tmp[i] = sf[i];
 
-        memcpy16(&tmp[pmSettings+ sizeof(u8)], &sf[oldSize], (pmSave - oldSize) / 2);
-
-        setDefaults(temp,3);
+        memcpy32(&tmp[pmSettings+ sizeof(u8)], &sf[size], (pmSave - size) / 4);
 
         memcpy32(savefile, temp, pmSave / 4);
 
         delete temp;
-    }else if (savefile->newGame == 0x4c) {
-        Save* temp = new Save();
-        const int oldSize = sizeof(Test2) + sizeof(u8);
-
-        u8* tmp = (u8*)temp;
-
-        u8* sf = (u8*)savefile;
-
-        for (int i = 0; i < oldSize; i++)
-            tmp[i] = sf[i];
-
-        memcpy16(&tmp[pmSettings + sizeof(u8)], &sf[oldSize], (pmSave - oldSize) / 2);
-
-        setDefaults(temp,2);
-
-        memcpy32(savefile, temp, pmSave / 4);
-
-        setDefaultKeys();
-
-        delete temp;
-    }else if (savefile->newGame == 0x4b) {
-        Save* temp = new Save();
-        const int oldSize = sizeof(Test) + sizeof(u8);
-
-        u8* tmp = (u8*)temp;
-
-        u8* sf = (u8*)savefile;
-
-        for (int i = 0; i < oldSize; i++)
-            tmp[i] = sf[i];
-
-        memcpy16(&tmp[pmSettings + sizeof(u8)], &sf[oldSize], (pmSave - oldSize) / 2);
-
-        setDefaults(temp,1);
-
-        setDefaultKeys();
-
-        memcpy32(savefile, temp, pmSave / 4);
-
-        delete temp;
-
     } else if (savefile->newGame != SAVE_TAG) {
         savefile = new Save();
 
@@ -143,6 +105,30 @@ void loadSave() {
         memcpy32(savefile, temp, sizeof(Save) / 4);
 
         delete temp;
+
+        switch(savefile->newGame){
+        case 0x50:
+            setDefaults(savefile,6);
+            break;
+        case 0x4f:
+            setDefaults(savefile,6);
+            break;
+        case 0x4e:
+            setDefaults(savefile,4);
+            break;
+        case 0x4d:
+            setDefaults(savefile,3);
+            break;
+        case 0x4c:
+            setDefaults(savefile,2);
+            setDefaultKeys();
+            break;
+        case 0x4b:
+            setDefaults(savefile,1);
+            setDefaultKeys();
+            break;
+        }
+
         savefile->newGame = SAVE_TAG;
     }
 
@@ -362,6 +348,11 @@ void setDefaults(Save *save, int depth){
         save->stats.totalLines = 0;
         save->stats.gameStats = BlockEngine::Stats();
 
+        //swapped CW/CCW rotates in settings
+        int temp = save->settings.keys.rotateCW;
+        save->settings.keys.rotateCW = save->settings.keys.rotateCCW;
+        save->settings.keys.rotateCCW = temp;
+
         MenuKeys m{
             .up = KEY_UP,
             .down = KEY_DOWN,
@@ -403,63 +394,40 @@ bool compareLocation(const SaveChange & first,const SaveChange & second){
 }
 
 void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
-
-    const int migSize = 3876;
-    const int version = savefile->newGame;
-
-    int diff = newSize - migSize;
-    int oldSize = migSize;
-
-    std::list<SaveChange> sorted = saveChanges;
-
-    //sort by descending location addresses
-    sorted.sort(compareLocation);
-    sorted.reverse();
-
-    //sort by ascending save id
-    sorted.sort(compareVersion);
-
-    int applyingVersion = 0;
-    int extraSize = 0;
-
+    int migSize = 3876;
     bool changed = false;
-    int sum = 0;
-    SaveChange previous = SaveChange(0,0,0);
-    for(auto const & change : sorted){
-        if(change.saveId <= version)
+
+    int oldPos = 0;
+    int newPos = 0;
+
+    int i = 0;
+    while(i < changeLength){
+        if(saveChanges[i].saveId <= savefile->newGame){
+            migSize+=saveChanges[i].size;
+            i++;
             continue;
+        }
 
         changed = true;
 
-        if(change.saveId != applyingVersion){
-            applyingVersion = change.saveId;
-            oldSize += extraSize;
-            extraSize = 0;
+        int count = saveChanges[i].location - oldPos;
+
+        memcpy32(&newSave[newPos],&oldSave[oldPos],count / 4);
+
+        oldPos = saveChanges[i].location;
+        newPos += count + saveChanges[i].size;
+
+        i++;
+
+        if(i >= changeLength || saveChanges[i-1].saveId != saveChanges[i].saveId){
+            memcpy32(&newSave[newPos], &oldSave[oldPos], (migSize - oldPos) / 4);
+
+            memcpy32(oldSave, newSave, (newPos + migSize - oldPos) / 4);
+
+            migSize += newPos - oldPos;
+
+            oldPos = newPos = 0;
         }
-
-        if(previous.saveId != 0 && previous.saveId != change.saveId){
-            memcpy16(newSave,oldSave,previous.location / 2);
-
-            memcpy16(oldSave,newSave,newSize/2);
-
-            previous.location = 0;
-        }
-
-        int count = 0;
-        if(previous.location == 0)
-            count = oldSize-change.location;
-        else
-            count = previous.location - (change.location);
-
-        memcpy16(&newSave[change.location + diff - sum],&oldSave[change.location], (count)/2);
-
-        previous = change;
-        sum += previous.size;
-        extraSize += change.size;
-    }
-
-    if(previous.saveId != 0){
-        memcpy16(newSave,oldSave,previous.location / 2);
     }
 
     if(!changed){
@@ -522,7 +490,7 @@ void convertScores(Save *save){
 
     ModeBoards newBoards;
 
-    memcpy32(&newBoards.marathon, oldBoards->marathon, sizeof(EntryBoard) * 4 / 4);
+    memcpy32(&newBoards.marathon, &oldBoards->marathon, sizeof(EntryBoard) * 4 / 4);
     memcpy32(&newBoards.sprint, &oldBoards->sprint, sizeof(EntryBoard) * 3 / 4);
     memcpy32(&newBoards.dig, &oldBoards->dig, sizeof(EntryBoard) * 3 / 4);
     memcpy32(&newBoards.ultra, &oldBoards->ultra, sizeof(EntryBoard) * 3 / 4);
@@ -537,8 +505,22 @@ void convertScores(Save *save){
         for(int j = 0; j < 5; j++){
             newBoards.master[i].entries[j].grade = oldBoards->master[i].grade[j];
             newBoards.master[i].entries[j].value = oldBoards->master[i].times[j].frames;
-            strncpy(newBoards.master[i].entries[j].name, oldBoards->master[i].times[j].name, 9);
+
+            if(oldBoards->master[i].times[j].frames > 0){
+                strncpy(newBoards.master[i].entries[j].name, oldBoards->master[i].times[j].name, 9);
+            }else{
+                newBoards.master[i].entries[j].name[0] = '\0';
+            }
         }
+    }
+
+    EntryBoard *b = (EntryBoard *) &newBoards;
+
+    for(int i = 0; i < 33; i++){
+        for(int j = 0; j < 5; j++){
+            b->entries[j].pro = false;
+        }
+        b++;
     }
 
     memcpy32(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);

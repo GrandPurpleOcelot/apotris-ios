@@ -380,7 +380,7 @@ void PlayOptionScene::draw(){
                 labels[i]->show(startX,y,15);
 
                 std::string str = "";
-                if(getIfGrade()){
+                if(getIfGrade() && board->entries[i].value > 0){
                     str += GameInfo::masterGrades[board->entries[i].grade];
                     str += " ";
                 }
