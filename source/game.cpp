@@ -986,7 +986,7 @@ void showQueue() {
 
             sprite_set_size(queueSprites[k], size, k);
 
-            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == PIECE_I) + yoffset + 8 * (game->rotationSystem == BARS && n == PIECE_I) - 4 + yoffset);
+            sprite_set_pos(queueSprites[k], startX + add * 3 + (push > 0) * push - 4, (3 + (k * 3)) * 6 - 3 * (game->rotationSystem != ARS && n == PIECE_I) + yoffset + 8 * (game->rotationSystem == BARS && n == PIECE_I) + 3 * (game->rotationSystem == BARS) - 4 + yoffset);
         }
     }
 }
