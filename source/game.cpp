@@ -2648,12 +2648,11 @@ void showZoneText(){
 
     const u16 pal[2][2] = {{0x5294,0x0421},{0x5294,0x318c}};
 
-    if(!savefile->settings.lightMode)
+    if(!savefile->settings.lightMode){
         loadPalette(13, 2, pal[0], 2);
-        // memcpy16(&pal_bg_mem[13 * 16 + 2],pal[0],2);
-    else
+    }else{
         loadPalette(13, 2, pal[1], 2);
-        // memcpy16(&pal_bg_mem[13 * 16 + 2 ],pal[1],2);
+    }
 
     aprintColor(text, 15 - text.size()/2, height , 2);
 }
@@ -2691,6 +2690,10 @@ void GameScene::setupCredits(){
     for(int i = 0; i < 3; i++){
         creditSprites[i].setPriority(3);
     }
+
+    #ifdef GBA
+    toggleSpriteSorting(true);
+    #endif
 }
 
 void GameScene::showCredits(){
@@ -2826,7 +2829,6 @@ void setRandomGraphics(Save *save){
 
     if(qran() % 10 == 0)
         save->settings.backgroundGradient = 0;
-
 
     int skin = 0;
     int count = 0;

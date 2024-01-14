@@ -265,6 +265,10 @@ void reset() {
 
     memset32(current, 0, 22 * 12);
     memset32(previous, 0, 22 * 12);
+
+    #ifdef GBA
+    toggleSpriteSorting(false);
+    #endif
 }
 
 std::string nameInput(int place) {

@@ -21,6 +21,8 @@ int spriteVOffset = 0;
 
 u8 * soundbank = nullptr;
 
+bool sortSprites = false;
+
 Songs songs;
 
 void onHBlank() {
@@ -67,29 +69,33 @@ void vsync(){
 }
 
 void showSprites(int count){
-    int counters[4] = {0,0,0,0};
+    if(sortSprites){
+        int counters[4] = {0,0,0,0};
 
-    int positions[count];
+        int positions[count];
 
-    for(int i = 0; i < count; i++){
-        const int priority = (obj_buffer[i].attr2 >> 0xa) & 0b11;
-        positions[i] = counters[priority]++ + (priority << 8);
-    }
-
-    int offsets[4] = {0,0,0,0};
-
-    for(int i = 0; i < 4; i++){
-        for(int j = 0; j < i; j++){
-            offsets[i] += counters[j];
+        for(int i = 0; i < count; i++){
+            const int priority = (obj_buffer[i].attr2 >> 0xa) & 0b11;
+            positions[i] = counters[priority]++ + (priority << 8);
         }
-    }
 
-    for(int i = 0; i < count; i++){
-        const int priority = positions[i] >> 8;
-        const int position = positions[i] & 0xff;
-        const int offset = offsets[priority];
+        int offsets[4] = {0,0,0,0};
 
-        oam_mem[offset + position] = obj_buffer[i];
+        for(int i = 0; i < 4; i++){
+            for(int j = 0; j < i; j++){
+                offsets[i] += counters[j];
+            }
+        }
+
+        for(int i = 0; i < count; i++){
+            const int priority = positions[i] >> 8;
+            const int position = positions[i] & 0xff;
+            const int offset = offsets[priority];
+
+            oam_mem[offset + position] = obj_buffer[i];
+        }
+    }else{
+        oam_copy(oam_mem,obj_buffer,count);
     }
 
     obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
@@ -610,4 +616,7 @@ std::map<int,std::string> keyToString = {
 
 void refreshWindowSize(){}
 
+void toggleSpriteSorting(bool state){
+    sortSprites = state;
+}
 #endif

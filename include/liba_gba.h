@@ -101,3 +101,5 @@ extern u16 gradientTable[192 + 1];
 extern std::map<int,std::string> keyToString;
 
 #define UNBOUND 0
+
+extern void toggleSpriteSorting(bool state);
