@@ -1,3 +1,4 @@
+#ifdef GBA
 #ifndef LINK_UNIVERSAL_H
 #define LINK_UNIVERSAL_H
 
@@ -515,3 +516,4 @@ inline void LINK_UNIVERSAL_ISR_ACK_TIMER() {
 }
 
 #endif  // LINK_UNIVERSAL_H
+#endif

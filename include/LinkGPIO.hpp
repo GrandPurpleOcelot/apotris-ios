@@ -1,3 +1,4 @@
+#ifdef GBA
 #ifndef LINK_GPIO_H
 #define LINK_GPIO_H
 
@@ -75,3 +76,4 @@ public:
 extern LinkGPIO* linkGPIO;
 
 #endif  // LINK_GPIO_H
+#endif

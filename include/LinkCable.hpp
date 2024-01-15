@@ -1,3 +1,4 @@
+#ifdef GBA
 #ifndef LINK_CABLE_H
 #define LINK_CABLE_H
 
@@ -469,3 +470,4 @@ inline void LINK_CABLE_ISR_TIMER() {
 }
 
 #endif  // LINK_CABLE_H
+#endif

@@ -1,3 +1,4 @@
+#ifdef GBA
 #ifndef LINK_WIRELESS_H
 #define LINK_WIRELESS_H
 
@@ -1702,3 +1703,4 @@ inline void LINK_WIRELESS_ISR_ACK_TIMER() {
 }
 
 #endif  // LINK_WIRELESS_H
+#endif

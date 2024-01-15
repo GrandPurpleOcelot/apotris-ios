@@ -1,3 +1,4 @@
+#ifdef GBA
 #ifndef LINK_SPI_H
 #define LINK_SPI_H
 
@@ -227,3 +228,4 @@ inline void LINK_SPI_ISR_SERIAL() {
 }
 
 #endif  // LINK_SPI_H
+#endif
