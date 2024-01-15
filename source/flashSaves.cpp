@@ -328,9 +328,9 @@ void save_sram_flash()
     if(isLinked)
 		linkUniversal->deactivate();
 
-    irq_disable(II_TIMER3);
-    irq_disable(II_TIMER2);
-    irq_disable(II_SERIAL);
+    interrupt_disable(INTR_TIMER3);
+    interrupt_disable(INTR_TIMER2);
+    interrupt_disable(INTR_SERIAL);
 
 	flash_write(flash_type, flash_sram_area);
 
@@ -341,11 +341,11 @@ void save_sram_flash()
     if(isLinked)
 		linkUniversal->activate();
 
-    irq_enable(II_TIMER3);
-    irq_enable(II_TIMER2);
-    irq_enable(II_SERIAL);
-    irq_delete(II_KEYPAD);
-    irq_enable(II_VBLANK);
+    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER2);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_set_handler(INTR_KEYPAD, nullptr);
+    interrupt_enable(INTR_VBLANK);
 
 	if(prev)
 		gradient(1);

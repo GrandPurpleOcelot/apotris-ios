@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <tonc.h>
+#include "interrupt.h"
 #include "mm_types.h"
 #include "audio_files.h"
 /* #include "soundbank.h" */

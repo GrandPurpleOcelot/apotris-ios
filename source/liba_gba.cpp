@@ -126,19 +126,19 @@ void platformInit(){
     if(ENABLE_FLASH_SAVE)
         flash_init();
 
-    irq_init(0);
-    irq_enable(II_VBLANK);
-    irq_enable(II_SERIAL);
-    irq_enable(II_TIMER3);
-    irq_enable(II_TIMER2);
-    irq_add(II_VBLANK, onVBlank);
+    interrupt_init();
+    interrupt_enable(INTR_VBLANK);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER2);
+    interrupt_set_handler(INTR_VBLANK, onVBlank);
 
-    irq_add(II_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
-    irq_add(II_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
-    irq_add(II_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
+    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
+    interrupt_set_handler(INTR_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
 
-    // irq_add(II_HBLANK, onHBlank);
-    irq_disable(II_HBLANK);
+    // interrupt_add(INTR_HBLANK, onHBlank);
+    interrupt_disable(INTR_HBLANK);
 
     loadAudio();
 
@@ -279,8 +279,8 @@ void initRumble(){
     if (unlock_gbp()) {
 
         RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
-            irq_enable(II_SERIAL);
-            irq_add(II_SERIAL, rumble_isr);
+            interrupt_enable(INTR_SERIAL);
+            interrupt_set_handler(INTR_SERIAL, rumble_isr);
         }};
 
         rumble_init(&conf);
@@ -319,7 +319,7 @@ void sleep() {
     int display_value = REG_DISPCNT;
 
     bool prevGradient = gradientEnabled;
-    irq_disable(II_VBLANK);
+    interrupt_disable(INTR_VBLANK);
     gradient(false);
 
     int stat_value = REG_SNDSTAT;
@@ -336,12 +336,12 @@ void sleep() {
     if(isLinked)
         linkUniversal->deactivate();
 
-    irq_disable(II_TIMER3);
-    irq_disable(II_TIMER2);
-    irq_disable(II_SERIAL);
+    interrupt_disable(INTR_TIMER3);
+    interrupt_disable(INTR_TIMER2);
+    interrupt_disable(INTR_SERIAL);
 
     REG_P1CNT = 0b1100001100000100;
-    irq_add(II_KEYPAD, nullptr);
+    interrupt_set_handler(INTR_KEYPAD, nullptr);
 
     Stop();
 
@@ -353,11 +353,11 @@ void sleep() {
     if(isLinked)
         linkUniversal->activate();
 
-    irq_enable(II_TIMER3);
-    irq_enable(II_TIMER2);
-    irq_enable(II_SERIAL);
-    irq_delete(II_KEYPAD);
-    irq_enable(II_VBLANK);
+    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER2);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_set_handler(INTR_KEYPAD, nullptr);
+    interrupt_enable(INTR_VBLANK);
 
     if(prevGradient)
         gradient(true);
