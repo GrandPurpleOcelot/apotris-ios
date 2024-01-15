@@ -32,7 +32,7 @@ void onHBlank() {
 
 LinkUniversal* linkUniversal =
         new LinkUniversal(LinkUniversal::Protocol::AUTODETECT,
-                          "LinkUniversal",
+                          "Apotris",
                           (LinkUniversal::CableOptions){
                                   .baudRate = LinkCable::BAUD_RATE_1,
                                   .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
