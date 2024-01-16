@@ -36,41 +36,41 @@
   else                                \
     REG &= ~(1 << BIT);
 
-static volatile char LINK_GPIO_VERSION[] = "LinkGPIO/v6.0.3";
+static volatile char LINK_GPIO_VERSION[] = "LinkGPIO/v6.1.1";
 
 const u8 LINK_GPIO_DATA_BITS[] = {2, 3, 1, 0};
 const u8 LINK_GPIO_DIRECTION_BITS[] = {6, 7, 5, 4};
 
 class LinkGPIO {
-public:
-    enum Pin { SI, SO, SD, SC };
-    enum Direction { INPUT, OUTPUT };
+ public:
+  enum Pin { SI, SO, SD, SC };
+  enum Direction { INPUT, OUTPUT };
 
-    void reset() {
-        REG_RCNT = LINK_GPIO_RCNT_GENERAL_PURPOSE;
-        REG_SIOCNT = LINK_GPIO_SIOCNT_GENERAL_PURPOSE;
-    }
+  void reset() {
+    REG_RCNT = LINK_GPIO_RCNT_GENERAL_PURPOSE;
+    REG_SIOCNT = LINK_GPIO_SIOCNT_GENERAL_PURPOSE;
+  }
 
-    void setMode(Pin pin, Direction direction) {
-        LINK_GPIO_SET(REG_RCNT, LINK_GPIO_DIRECTION_BITS[pin],
-                      direction == Direction::OUTPUT);
-    }
+  void setMode(Pin pin, Direction direction) {
+    LINK_GPIO_SET(REG_RCNT, LINK_GPIO_DIRECTION_BITS[pin],
+                  direction == Direction::OUTPUT);
+  }
 
-    Direction getMode(Pin pin) {
-        return Direction(LINK_GPIO_GET(REG_RCNT, LINK_GPIO_DIRECTION_BITS[pin]));
-    }
+  Direction getMode(Pin pin) {
+    return Direction(LINK_GPIO_GET(REG_RCNT, LINK_GPIO_DIRECTION_BITS[pin]));
+  }
 
-    bool readPin(Pin pin) {
-        return (REG_RCNT & (1 << LINK_GPIO_DATA_BITS[pin])) != 0;
-    }
+  bool readPin(Pin pin) {
+    return (REG_RCNT & (1 << LINK_GPIO_DATA_BITS[pin])) != 0;
+  }
 
-    void writePin(Pin pin, bool isHigh) {
-        LINK_GPIO_SET(REG_RCNT, LINK_GPIO_DATA_BITS[pin], isHigh);
-    }
+  void writePin(Pin pin, bool isHigh) {
+    LINK_GPIO_SET(REG_RCNT, LINK_GPIO_DATA_BITS[pin], isHigh);
+  }
 
-    void setSIInterrupts(bool isEnabled) {
-        LINK_GPIO_SET(REG_RCNT, LINK_GPIO_BIT_SI_INTERRUPT, isEnabled);
-    }
+  void setSIInterrupts(bool isEnabled) {
+    LINK_GPIO_SET(REG_RCNT, LINK_GPIO_BIT_SI_INTERRUPT, isEnabled);
+  }
 };
 
 extern LinkGPIO* linkGPIO;

@@ -57,23 +57,24 @@
 
 #include <tonc_core.h>
 #include <tonc_math.h>
-#include <string>
+#include <cstring>
 #include "LinkGPIO.hpp"
 #include "LinkSPI.hpp"
 
+// #include <string>
 // #include <functional>
 
 // Buffer size
 #define LINK_WIRELESS_QUEUE_SIZE 30
 
 // Max server transfer length
-#define LINK_WIRELESS_MAX_SERVER_TRANSFER_LENGTH 16
+#define LINK_WIRELESS_MAX_SERVER_TRANSFER_LENGTH 20
 
 // Max client transfer length
-#define LINK_WIRELESS_MAX_CLIENT_TRANSFER_LENGTH 3
+#define LINK_WIRELESS_MAX_CLIENT_TRANSFER_LENGTH 4
 
 // Put Interrupt Service Routines (ISR) in IWRAM (uncomment to enable)
-#define LINK_WIRELESS_PUT_ISR_IN_IWRAM
+// #define LINK_WIRELESS_PUT_ISR_IN_IWRAM
 
 // Use send/receive latch (uncomment to enable)
 // #define LINK_WIRELESS_USE_SEND_RECEIVE_LATCH
@@ -109,7 +110,6 @@
 #define LINK_WIRELESS_BROADCAST_LENGTH 6
 #define LINK_WIRELESS_BROADCAST_RESPONSE_LENGTH \
   (1 + LINK_WIRELESS_BROADCAST_LENGTH)
-#define LINK_WIRELESS_MAX_TRANSFER_LENGTH 20
 #define LINK_WIRELESS_MAX_COMMAND_TRANSFER_LENGTH 22
 #define LINK_WIRELESS_MAX_SERVERS              \
   (LINK_WIRELESS_MAX_COMMAND_RESPONSE_LENGTH / \
@@ -140,7 +140,7 @@
     if (!reset())                     \
       return false;
 
-static volatile char LINK_WIRELESS_VERSION[] = "LinkWireless/v6.0.3";
+static volatile char LINK_WIRELESS_VERSION[] = "LinkWireless/v6.1.1";
 
 void LINK_WIRELESS_ISR_VBLANK();
 void LINK_WIRELESS_ISR_SERIAL();
@@ -185,7 +185,7 @@ public:
         BUFFER_IS_FULL = 4,
         // Communication errors
         COMMAND_FAILED = 5,
-        WEIRD_PLAYER_ID = 6,
+        CONNECTION_FAILED = 6,
         SEND_DATA_FAILED = 7,
         RECEIVE_DATA_FAILED = 8,
         ACKNOWLEDGE_FAILED = 9,
@@ -203,8 +203,8 @@ public:
     struct Server {
         u16 id = 0;
         u16 gameId;
-        std::string gameName;
-        std::string userName;
+        char gameName[LINK_WIRELESS_MAX_GAME_NAME_LENGTH + 1];
+        char userName[LINK_WIRELESS_MAX_USER_NAME_LENGTH + 1];
         u8 currentPlayerCount;
 
         bool isFull() { return currentPlayerCount == 0; }
@@ -244,6 +244,7 @@ public:
     }
 
     bool deactivate() {
+        activate();
         bool success = sendCommand(LINK_WIRELESS_COMMAND_BYE).success;
 
         lastError = NONE;
@@ -254,41 +255,44 @@ public:
         return success;
     }
 
-    bool serve(std::string gameName = "",
-               std::string userName = "",
+    bool serve(const char* gameName = "",
+               const char* userName = "",
                u16 gameId = LINK_WIRELESS_MAX_GAME_ID) {
         LINK_WIRELESS_RESET_IF_NEEDED
         if (state != AUTHENTICATED && state != SERVING) {
             lastError = WRONG_STATE;
             return false;
         }
-        if (gameName.length() > LINK_WIRELESS_MAX_GAME_NAME_LENGTH) {
+        if (std::strlen(gameName) > LINK_WIRELESS_MAX_GAME_NAME_LENGTH) {
             lastError = GAME_NAME_TOO_LONG;
             return false;
         }
-        if (userName.length() > LINK_WIRELESS_MAX_GAME_NAME_LENGTH) {
+        if (std::strlen(userName) > LINK_WIRELESS_MAX_GAME_NAME_LENGTH) {
             lastError = USER_NAME_TOO_LONG;
             return false;
         }
-        gameName.append(LINK_WIRELESS_MAX_GAME_NAME_LENGTH - gameName.length(), 0);
-        userName.append(LINK_WIRELESS_MAX_USER_NAME_LENGTH - userName.length(), 0);
+
+        char finalGameName[LINK_WIRELESS_MAX_GAME_NAME_LENGTH + 1];
+        char finalUserName[LINK_WIRELESS_MAX_USER_NAME_LENGTH + 1];
+        copyName(finalGameName, gameName, LINK_WIRELESS_MAX_GAME_NAME_LENGTH);
+        copyName(finalUserName, userName, LINK_WIRELESS_MAX_USER_NAME_LENGTH);
 
         if (state != SERVING)
             setup(config.maxPlayers);
 
-        addData(buildU32(buildU16(gameName[1], gameName[0]),
+        addData(buildU32(buildU16(finalGameName[1], finalGameName[0]),
                          gameId & LINK_WIRELESS_MAX_GAME_ID),
                 true);
-        addData(buildU32(buildU16(gameName[5], gameName[4]),
-                         buildU16(gameName[3], gameName[2])));
-        addData(buildU32(buildU16(gameName[9], gameName[8]),
-                         buildU16(gameName[7], gameName[6])));
-        addData(buildU32(buildU16(gameName[13], gameName[12]),
-                         buildU16(gameName[11], gameName[10])));
-        addData(buildU32(buildU16(userName[3], userName[2]),
-                         buildU16(userName[1], userName[0])));
-        addData(buildU32(buildU16(userName[7], userName[6]),
-                         buildU16(userName[5], userName[4])));
+        addData(buildU32(buildU16(finalGameName[5], finalGameName[4]),
+                         buildU16(finalGameName[3], finalGameName[2])));
+        addData(buildU32(buildU16(finalGameName[9], finalGameName[8]),
+                         buildU16(finalGameName[7], finalGameName[6])));
+        addData(buildU32(buildU16(finalGameName[13], finalGameName[12]),
+                         buildU16(finalGameName[11], finalGameName[10])));
+        addData(buildU32(buildU16(finalUserName[3], finalUserName[2]),
+                         buildU16(finalUserName[1], finalUserName[0])));
+        addData(buildU32(buildU16(finalUserName[7], finalUserName[6]),
+                         buildU16(finalUserName[5], finalUserName[4])));
 
         bool success = sendCommand(LINK_WIRELESS_COMMAND_BROADCAST, true).success;
 
@@ -383,12 +387,15 @@ public:
             Server server;
             server.id = (u16)result.responses[start];
             server.gameId = result.responses[start + 1] & LINK_WIRELESS_MAX_GAME_ID;
-            recoverName(server.gameName, result.responses[start + 1], false);
-            recoverName(server.gameName, result.responses[start + 2]);
-            recoverName(server.gameName, result.responses[start + 3]);
-            recoverName(server.gameName, result.responses[start + 4]);
-            recoverName(server.userName, result.responses[start + 5]);
-            recoverName(server.userName, result.responses[start + 6]);
+            u32 gameI = 0, userI = 0;
+            recoverName(server.gameName, gameI, result.responses[start + 1], false);
+            recoverName(server.gameName, gameI, result.responses[start + 2]);
+            recoverName(server.gameName, gameI, result.responses[start + 3]);
+            recoverName(server.gameName, gameI, result.responses[start + 4]);
+            recoverName(server.userName, userI, result.responses[start + 5]);
+            recoverName(server.userName, userI, result.responses[start + 6]);
+            server.gameName[gameI] = '\0';
+            server.userName[userI] = '\0';
             u8 connectedClients = (result.responses[start] >> 16) & 0xff;
             server.currentPlayerCount =
                     connectedClients == 0xff ? 0 : (1 + connectedClients);
@@ -442,7 +449,7 @@ public:
         u8 assignedPlayerId = 1 + (u8)msB32(result1.responses[0]);
         if (assignedPlayerId >= LINK_WIRELESS_MAX_PLAYERS) {
             reset();
-            lastError = WEIRD_PLAYER_ID;
+            lastError = CONNECTION_FAILED;
             return false;
         }
 
@@ -596,7 +603,7 @@ public:
     }
 
 #ifdef LINK_WIRELESS_PUT_ISR_IN_IWRAM
-  void _onSerial();
+    void _onSerial();
   void _onTimer();
   void _onACKTimer();
 #endif
@@ -1286,24 +1293,35 @@ private:
                 REG_TM[config.asyncACKTimerId].cnt & (~TM_ENABLE);
     }
 
-    void recoverName(std::string& name,
+    void copyName(char* target, const char* source, u32 length) {
+        u32 len = std::strlen(source);
+
+        for (u32 i = 0; i < length + 1; i++)
+            if (i < len)
+                target[i] = source[i];
+            else
+                target[i] = '\0';
+    }
+
+    void recoverName(char* name,
+                     u32& nameCursor,
                      u32 word,
                      bool includeFirstTwoBytes = true) {
         u32 character = 0;
         if (includeFirstTwoBytes) {
             character = lsB16(lsB32(word));
             if (character > 0)
-                name.push_back(character);
+                name[nameCursor++] = character;
             character = msB16(lsB32(word));
             if (character > 0)
-                name.push_back(character);
+                name[nameCursor++] = character;
         }
         character = lsB16(msB32(word));
         if (character > 0)
-            name.push_back(character);
+            name[nameCursor++] = character;
         character = msB16(msB32(word));
         if (character > 0)
-            name.push_back(character);
+            name[nameCursor++] = character;
     }
 
     bool reset() {
