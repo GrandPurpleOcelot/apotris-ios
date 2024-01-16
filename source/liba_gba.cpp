@@ -44,7 +44,7 @@ LinkUniversal* linkUniversal =
                                   .maxPlayers = 2,
                                   .timeout = LINK_WIRELESS_DEFAULT_TIMEOUT,
                                   .remoteTimeout = LINK_WIRELESS_DEFAULT_REMOTE_TIMEOUT,
-                                  .interval = 250, // just under 1 update per frame
+                                  .interval = 50,
                                   .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
                                   .asyncACKTimerId = 2});
 

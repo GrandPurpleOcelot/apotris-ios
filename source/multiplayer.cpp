@@ -40,22 +40,22 @@ void handleMultiplayer(int state) {
     linkUniversal->sync();
     u8 currentPlayerId = linkUniversal->currentPlayerId();
     u8 remotePlayerId = !currentPlayerId;
-
-    if (multiplayerStartTimer) {
-        if (--multiplayerStartTimer == 0) {
-            playAgain = true;
-        } else {
-            linkUniversal->send((u16)((1 << 13) + (nextSeed & 0x1fff)));
-            linkUniversal->waitFor(remotePlayerId);
-        }
-        return;
-    }
-
-    int receivedAttack = false;
-    int incomingHeight = 0;
     u8 playerCount = linkUniversal->playerCount();
 
     if (linkUniversal->isConnected() && playerCount == 2) {
+        if (multiplayerStartTimer) {
+            if (--multiplayerStartTimer == 0) {
+                playAgain = true;
+            } else {
+                linkUniversal->send((u16)((1 << 13) + (nextSeed & 0x1fff)));
+                linkUniversal->waitFor(remotePlayerId);
+            }
+            return;
+        }
+
+        int receivedAttack = false;
+        int incomingHeight = 0;
+
         timeoutTimer = 0;
         u16 data = 0;
         if (linkUniversal->canRead(remotePlayerId))
@@ -135,6 +135,7 @@ void handleMultiplayer(int state) {
             connected = -1;
             aprint("Connection Lost.", 0, 0);
             multiplayer = false;
+            linkUniversal->deactivate();
         }
     }
     #endif

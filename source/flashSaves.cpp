@@ -312,6 +312,11 @@ void save_sram_flash()
 	if (flash_type == 0) return;
 
 	aprint("Saving...",21,19);
+
+    bool isLinked = linkUniversal->isActive();
+    if(isLinked)
+		linkUniversal->deactivate();
+
     irq_disable(II_VBLANK);
 	int prev = gradientEnabled;
 	gradient(false);
@@ -323,11 +328,6 @@ void save_sram_flash()
     REG_SNDDSCNT = 0;
     REG_SNDDMGCNT = 0;
 
-    bool isLinked = linkUniversal->isActive();
-
-    if(isLinked)
-		linkUniversal->deactivate();
-
     interrupt_disable(INTR_TIMER3);
     interrupt_disable(INTR_TIMER2);
     interrupt_disable(INTR_SERIAL);
@@ -338,14 +338,15 @@ void save_sram_flash()
     REG_SNDDSCNT = dsc_value;
     REG_SNDDMGCNT = dmg_value;
 
-    if(isLinked)
-		linkUniversal->activate();
 
     interrupt_enable(INTR_TIMER3);
     interrupt_enable(INTR_TIMER2);
     interrupt_enable(INTR_SERIAL);
     interrupt_set_handler(INTR_KEYPAD, nullptr);
     interrupt_enable(INTR_VBLANK);
+
+    if(isLinked)
+		linkUniversal->activate();
 
 	if(prev)
 		gradient(1);
