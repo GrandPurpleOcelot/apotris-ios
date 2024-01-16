@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <stdint.h>
 #include <tonc.h>
 #include "interrupt.h"
