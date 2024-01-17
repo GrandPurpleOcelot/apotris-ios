@@ -317,7 +317,7 @@ void save_sram_flash()
     if(isLinked)
 		linkUniversal->deactivate();
 
-    irq_disable(II_VBLANK);
+    interrupt_disable(INTR_VBLANK);
 	int prev = gradientEnabled;
 	gradient(false);
     int stat_value = REG_SNDSTAT;

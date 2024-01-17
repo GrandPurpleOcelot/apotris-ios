@@ -342,6 +342,7 @@ void sleep() {
 
     REG_P1CNT = 0b1100001100000100;
     interrupt_set_handler(INTR_KEYPAD, nullptr);
+    // TODO: Also interrupt_enable(INTR_KEYPAD)?
 
     Stop();
 
@@ -419,14 +420,14 @@ void onVBlank(void) {
 
     LINK_UNIVERSAL_ISR_VBLANK();
 
-    REG_IME = 1;
+    // REG_IME = 1; // << This is what actually fixes the crash
     if (canDraw) {
         canDraw = 0;
 
         scene->draw();
     }
+    // REG_IME = 0; // <<
 
-    REG_IME = 0;
     frameCounter++;
     mmFrame();
 }
@@ -526,9 +527,10 @@ void mirrorPalettes(int index, int count){
 
 void toggleHBlank(bool state){
     if(state){
-        irq_add(II_HBLANK, onHBlank);
+        interrupt_set_handler(INTR_HBLANK, onHBlank);
+        interrupt_enable(INTR_HBLANK);
     }else{
-        irq_disable(II_HBLANK);
+        interrupt_disable(INTR_HBLANK);
     }
 }
 
