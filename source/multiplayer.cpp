@@ -4,6 +4,8 @@
 #include "text.h"
 #include <string>
 #include "logging.h"
+#include "rumble.h"
+#include "scene.hpp"
 
 using namespace BlockEngine;
 
@@ -32,10 +34,10 @@ int botIncomingHeight = 0;
 
 const int boardTile = 512 - 32 * 3 - 8;
 
-void handleMultiplayer(int state) {
+bool GameScene::handleMultiplayer(int state) {
     #ifdef GBA
     if (!multiplayer)
-        return;
+        return false;
 
     linkUniversal->sync();
     u8 currentPlayerId = linkUniversal->currentPlayerId();
@@ -50,7 +52,7 @@ void handleMultiplayer(int state) {
                 linkUniversal->send((u16)((1 << 13) + (nextSeed & 0x1fff)));
                 linkUniversal->waitFor(remotePlayerId);
             }
-            return;
+            return false;
         }
 
         int receivedAttack = false;
@@ -129,16 +131,13 @@ void handleMultiplayer(int state) {
             drawEnemyBoard(incomingHeight);
         }
     } else {
-        if (timeoutTimer++ == maxTimeout) {
-            timeoutTimer = 0;
-            game->setWin(); // aprint("no connection.",0,5);
-            connected = -1;
-            aprint("Connection Lost.", 0, 0);
-            multiplayer = false;
-            linkUniversal->deactivate();
+        if(reconnect()){
+            return true;
         }
     }
     #endif
+
+    return false;
 }
 
 void startMultiplayerGame(int seed) {
@@ -227,4 +226,140 @@ void handleBotGame(){
     if(botGame->lost){
         game->won = true;
     }
+}
+
+bool GameScene::reconnect(){
+    #ifdef GBA
+    pauseSong();
+
+    resetSmallText();
+    clearText();
+
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
+
+    int prevBld = blendInfo;
+    enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
+    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    buildBG(3, 0, 27, 0, 0, 0);
+    clearTilemap(25);
+
+    drawFrame(1);
+    if(game->zoneTimer)
+        frameSnow(1);
+
+    setLayerScroll(2, 0, 0);
+
+    //hide Sprites
+    hideMinos();
+    sprite_hide(&obj_buffer[23]); //hide meter
+    sprite_hide(&obj_buffer[24]); //hide finesse combo counter
+    sprite_hide(&obj_buffer[25]); //hide enemyBoard
+    for(int i = 0; i < 3; i++)
+        sprite_hide(&obj_buffer[16+i]);
+
+    showSprites(128);
+
+    #ifdef GBA
+    rumble_set_state(rumble_stop);
+    #endif
+
+    int cursorFloat = 0;
+    OBJ_ATTR * cursorSprites[2];
+
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+    for(int i = 0; i < 2; i++){
+        cursorSprites[i] = &obj_buffer[1 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_hide(cursorSprites[i]);
+    }
+
+    MenuKeys k = savefile->settings.menuKeys;
+
+    naprint("Connection Lost",8,8);
+
+    std::string str = "Attempting to Reconnect...";
+    naprint(str, 120 - getVariableWidth(str) / 2, 80);
+
+    int timer = 0;
+
+    std::string exit = "Exit";
+
+    u8 playerCount = linkUniversal->playerCount();
+    while(!(linkUniversal->isConnected() && playerCount == 2) && closed()){
+        vsync();
+        key_poll();
+
+        if(timer == 120){
+            naprint(exit, 120 - getVariableWidth(exit) / 2, 144);
+        }
+
+        if(timer >= 120){
+            if(key_hit(k.confirm)){
+                multiplayer = false;
+                linkUniversal->deactivate();
+                connected = -1;
+
+                sfx(SFX_MENUCANCEL);
+                enableBlend(prevBld);
+                playSongRandom(0);
+                buildBG(3, 0, 27, 0, 1, true);
+                changeScene(new MainMenuScene(), Transitions::FADE);
+                return true;
+            }
+
+            cursorFloat += 6;
+            if(cursorFloat >= 512)
+                cursorFloat = 0;
+            int offset = (sinLut(cursorFloat) * 2) >> 12;
+            FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+            for (int i = 0; i < 2; i++) {
+                sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
+                sprite_enable_affine(cursorSprites[i], i, true);
+                sprite_set_size(cursorSprites[i], scale, i);
+
+                int x = 240 / 2 - ((getVariableWidth(exit) + 8) / 2 + offset + 4) * ((i) ? -1 : 1) - 8;
+
+                sprite_set_pos(cursorSprites[i], x, 144 - 5);
+            }
+        }
+
+        linkUniversal->sync();
+        playerCount = linkUniversal->playerCount();
+        timer++;
+
+        showSprites(128);
+    }
+
+    clearTilemap(27);
+    clearTilemap(26);
+    buildBG(3, 0, 27, 0, 1, true);
+
+    enableBlend(prevBld);
+
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
+
+    for(int i = 0; i < 2; i++)
+        sprite_hide(cursorSprites[i]);
+
+    drawFrame(0);
+    if(game->zoneTimer)
+        frameSnow(0);
+
+    showBackground(0);
+    resetSmallText();
+    clearText();
+    setSmallTextArea(110, 3, 7, 9, 10);
+    showText();
+
+    countdown();
+
+    resumeSong();
+
+    #endif
+
+    return false;
 }

@@ -3111,7 +3111,9 @@ void GameScene::update(){
     if(!game->lost && !paused && !game->eventLock){
         game->update();
     }
-    handleMultiplayer(0);
+    if(handleMultiplayer(0)){
+        return;
+    }
 
     // progressBar(-1);
 

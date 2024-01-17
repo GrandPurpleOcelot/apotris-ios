@@ -62,6 +62,8 @@ class GameScene : public Scene{
     void showCredits();
     void refreshCredits();
     void checkSounds();
+    bool reconnect();
+    bool handleMultiplayer(int state);
 
     bool counted = false;
 
