@@ -10,21 +10,21 @@
 
 #include <map>
 
-#define JOY_A     0
-#define JOY_B     1
+#define JOY_A     1
+#define JOY_B     0
 #define JOY_X     2
 #define JOY_Y     3
-#define JOY_PLUS  10
-#define JOY_MINUS 11
-#define JOY_LEFT  14
+#define JOY_PLUS  9
+#define JOY_MINUS 8
+#define JOY_LEFT  15
 #define JOY_UP    13
-#define JOY_RIGHT 12
-#define JOY_DOWN  15
+#define JOY_RIGHT 16
+#define JOY_DOWN  14
 
 #define KEY_A JOY_A
 #define KEY_B JOY_B
-#define KEY_L 6
-#define KEY_R 7
+#define KEY_L 4
+#define KEY_R 5
 #define KEY_UP JOY_UP
 #define KEY_DOWN JOY_DOWN
 #define KEY_LEFT JOY_LEFT
