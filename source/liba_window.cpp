@@ -64,7 +64,11 @@ void loadAudio(){
     dirent *entry;
     std::vector<std::string> songPaths;
     while((entry = readdir(dir)) != nullptr){
-        if(hasSuffix(entry->d_name, ".it") || hasSuffix(entry->d_name, ".mod") || hasSuffix(entry->d_name, ".xm")){
+        if(hasSuffix(entry->d_name, ".it") ||
+           hasSuffix(entry->d_name, ".mod") ||
+           hasSuffix(entry->d_name, ".s3m") ||
+           hasSuffix(entry->d_name, ".S3M") ||
+           hasSuffix(entry->d_name, ".xm")){
             songPaths.push_back(entry->d_name);
         }
     }

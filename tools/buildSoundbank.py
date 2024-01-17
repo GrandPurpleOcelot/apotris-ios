@@ -39,7 +39,10 @@ for filename in os.listdir(directory):
 
         count+=1
 
-    if(filename.find('.mod') != -1) or (filename.find('.it') != -1) or (filename.find('.xm') != -1):
+    if(filename.find('.mod') != -1) or\
+      (filename.find('.it') != -1) or\
+      (filename.find('.xm') != -1) or\
+      (filename.find('.s3m') != -1):
         files += f"{directory}/{filename} "
 
         music_count+=1
