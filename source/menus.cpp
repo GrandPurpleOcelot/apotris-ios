@@ -318,7 +318,7 @@ int GameScene::endScreen(){
             showStats(showingStats, totalTime, ppsStr, true);
         }
 
-        if(key_hit(k.special2)){
+        if(!multiplayer && key_hit(k.special2)){
             if(game->replayElligible){
                 sfx(SFX_MENUCONFIRM);
                 loadReplay();
@@ -484,7 +484,7 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps, boo
         aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special1), 0, 0, 2);
         aprints("for Stats", 0, 7, 2);
 
-        if(end){
+        if(end && !multiplayer){
             if(game->replayElligible){
                 aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special2), 0, 21, 2);
                 aprints("for Replay", 0, 28, 2);
