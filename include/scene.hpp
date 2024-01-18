@@ -74,6 +74,12 @@ class GameScene : public Scene{
     ~GameScene(){
         deinit();
     };
+
+    static void ProcessMultiplayerPacket(u16 data, int &receivedAttack, int &incomingHeight) ;
+
+    static void ProcessGameUpdate(int command, int value, int &receivedAttack, int &incomingHeight) ;
+
+    static void UpdateEnemyBoard(int command, int value, int &incomingHeight) ;
 };
 
 class TitleScene : public Scene{

@@ -62,46 +62,8 @@ bool GameScene::handleMultiplayer(int state) {
         u16 data = 0;
         if (linkUniversal->canRead(remotePlayerId))
             data = linkUniversal->read(remotePlayerId);
-        int command = data >> 13;
-        int value = data & 0x1fff;
+        ProcessMultiplayerPacket(data, receivedAttack, incomingHeight);
 
-        switch (command) {
-        case 0:
-            break;
-        case 1:
-            playAgain = true;
-            nextSeed = value;
-            break;
-        case 2:
-            if (value == 0x123)
-                game->setWin();
-            break;
-        case 3://receive attack
-            game->addToGarbageQueue((value >> 4) & 0xff, value & 0xf);
-            receivedAttack = (value >> 4) & 0xff;
-            break;
-        case 4://acknowledge attack
-            game->clearAttack(value & 0xff);
-            break;
-        case 5:
-            for (int j = 0; j < 10; j++)
-                enemyBoard[value >> 10][j] = (value >> j) & 0b1;
-            incomingHeight = value >> 10;
-            break;
-        case 6:
-            for (int j = 0; j < 10; j++)
-                enemyBoard[(value >> 10) + 8][j] = (value >> j) & 0b1;
-            incomingHeight = (value >> 10) + 8;
-            break;
-        case 7:
-            if ((value >> 10) + 16 > 19)
-                break;
-            for (int j = 0; j < 10; j++)
-                enemyBoard[(value >> 10) + 16][j] = (value >> j) & 0b1;
-            incomingHeight = (value >> 10) + 16;
-
-            break;
-        }
         if (game->lost) {
             if(!state) {
                 linkUniversal->send((u16) (2 << 13) + 0x123);
@@ -138,6 +100,61 @@ bool GameScene::handleMultiplayer(int state) {
     #endif
 
     return false;
+}
+
+// Function to process multiplayer packets
+void GameScene::ProcessMultiplayerPacket(u16 data, int &receivedAttack, int &incomingHeight) {
+    // Extract the command from the upper 3 bits of the data
+    int command = data >> 13;
+    // Extract the value from the lower 13 bits of the data
+    int value = data & 0x1FFF;
+
+    // If the command is 1, restart the game with a new seed
+    if (command == 1) {
+        playAgain = true;
+        nextSeed = value;
+    }
+    // If the command is 2 and the value is 0x123, the opponent has lost
+    else if (command == 2 && value == 0x123)
+        game->setWin();
+    // If the command is between 3 and 7, process the game update
+    else if (command >= 3 && command <= 7)
+        ProcessGameUpdate(command, value, receivedAttack, incomingHeight);
+}
+
+// Function to process game updates
+void GameScene::ProcessGameUpdate(int command, int value, int &receivedAttack, int &incomingHeight) {
+    // If the command is 3, receive an attack
+    if (command == 3) {
+        int attackValue = (value >> 4) & 0xFF;
+        // Add the attack to the garbage queue
+        game->addToGarbageQueue(attackValue, value & 0xF);
+        // Set the received attack value
+        receivedAttack = attackValue;
+    }
+    // If the command is 4, acknowledge the attack
+    else if (command == 4)
+        game->clearAttack(value & 0xFF);
+    // If the command is between 5 and 7, update the enemy board
+    else
+        UpdateEnemyBoard(command, value, incomingHeight);
+}
+
+// Function to update the enemy board
+void GameScene::UpdateEnemyBoard(int command, int value, int &incomingHeight) {
+    // Calculate the base height based on the command
+    int baseHeight = (command - 5) * 8;
+    // Calculate the row to be updated
+    int row = (value >> 10) + baseHeight;
+    // If the row is within the board's height
+    if (row < 20) {
+        // Loop through each column in the row
+        for (int j = 0; j < 10; j++)
+            // Update the cell in the enemy board based on the value
+            enemyBoard[row][j] = (value >> j) & 0x1;
+        // Set the incoming height to the updated row
+        incomingHeight = row;
+    }
 }
 
 void startMultiplayerGame(int seed) {
