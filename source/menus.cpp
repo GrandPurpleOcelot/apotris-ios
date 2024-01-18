@@ -264,7 +264,7 @@ int GameScene::endScreen(){
                 } else {
                     if (connected == 1) {
                         sfx(SFX_MENUCONFIRM);
-                        multiplayerStartTimer = 5;
+                        multiplayerStart = true;
                         nextSeed = (u16)qran();
                     } else {
                         sfx(SFX_MENUCANCEL);

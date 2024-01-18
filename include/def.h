@@ -230,7 +230,7 @@ extern bool playAgain;
 // extern BlockEngine::Game* journeySave;
 
 extern int connected;
-extern int multiplayerStartTimer;
+extern bool multiplayerStart;
 
 extern int initialLevel;
 extern int frameCounter;

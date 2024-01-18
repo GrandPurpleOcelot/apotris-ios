@@ -17,7 +17,7 @@ OBJ_ATTR* enemyBoardSprite;
 int timeoutTimer = 0;
 int maxTimeout = 10;
 
-int multiplayerStartTimer = 0;
+bool multiplayerStart = false;
 
 int attackCheckCooldown = 10;
 int attackCheckTimer = 0;
@@ -34,6 +34,13 @@ int botIncomingHeight = 0;
 
 const int boardTile = 512 - 32 * 3 - 8;
 
+#define PLAY_AGAIN 1
+#define GAME_OVER 2
+#define SEND_ATTACK 3
+#define ACK_ATTACK 4
+#define SEND_BLOCK 5
+#define ENCODE(x) ((x) << 13)
+
 bool GameScene::handleMultiplayer(int state) {
     #ifdef GBA
     if (!multiplayer)
@@ -45,13 +52,11 @@ bool GameScene::handleMultiplayer(int state) {
     u8 playerCount = linkUniversal->playerCount();
 
     if (linkUniversal->isConnected() && playerCount == 2) {
-        if (multiplayerStartTimer) {
-            if (--multiplayerStartTimer == 0) {
-                playAgain = true;
-            } else {
-                linkUniversal->send((u16)((1 << 13) + (nextSeed & 0x1fff)));
-                linkUniversal->waitFor(remotePlayerId);
-            }
+        if (multiplayerStart > 0) {
+            multiplayerStart = 0;
+            playAgain = true;
+            linkUniversal->send((u16)(ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
+            linkUniversal->waitFor(remotePlayerId);
             return false;
         }
 
@@ -65,13 +70,12 @@ bool GameScene::handleMultiplayer(int state) {
         ProcessMultiplayerPacket(data, receivedAttack, incomingHeight);
 
         if (game->lost) {
-            if(!state) {
-                linkUniversal->send((u16) (2 << 13) + 0x123);
-            }
+            if(!state)
+                linkUniversal->send((u16)ENCODE(GAME_OVER) + 0x123);
         } else {
-            if (receivedAttack) {
-                linkUniversal->send((u16)((4 << 13) + receivedAttack));
-            } else if (game->attackQueue.empty()) {
+            if (receivedAttack)
+                linkUniversal->send((u16)(ENCODE(ACK_ATTACK) + receivedAttack));
+            else if (game->attackQueue.empty()) {
                 if (currentScanHeight < 19)
                     currentScanHeight++;
                 else
@@ -83,11 +87,11 @@ bool GameScene::handleMultiplayer(int state) {
                         row += 1 << i;
 
                 if(!state)
-                    linkUniversal->send((u16) (((5) << 13) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
+                    linkUniversal->send((u16) (ENCODE(SEND_BLOCK) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
             } else {
                 BlockEngine::Garbage atck = game->attackQueue.front();
 
-                linkUniversal->send((u16)((3 << 13) + (atck.id << 4) + atck.amount));
+                linkUniversal->send((u16)((ENCODE(SEND_ATTACK)) + (atck.id << 4) + atck.amount));
             }
 
             drawEnemyBoard(incomingHeight);

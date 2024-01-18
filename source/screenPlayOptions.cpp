@@ -626,14 +626,12 @@ void MultBattleScene::update(){
     u8 playerCount = linkUniversal->playerCount();
 
     if (linkUniversal->isConnected() && playerCount == 2) {
-        if(multiplayerStartTimer){
-            if(--multiplayerStartTimer == 0){
-                startMultiplayerGame(nextSeed);
-                gameLoop();
-            }else{
-                linkUniversal->send((u16)nextSeed + 100);
-                linkUniversal->waitFor(remotePlayerId);
-            }
+        if(multiplayerStart){
+            multiplayerStart = false;
+            linkUniversal->send((u16)nextSeed + 100);
+            linkUniversal->waitFor(remotePlayerId);
+            startMultiplayerGame(nextSeed);
+            gameLoop();
             return;
         }
 
@@ -666,7 +664,7 @@ void MultBattleScene::update(){
 
         if (key_hit(k.pause) && currentPlayerId == 0) {
             nextSeed = (u16)qran() & 0x1fff;
-            multiplayerStartTimer = 3;
+            multiplayerStart = 3;
         } else {
             linkUniversal->send(2);
         }
