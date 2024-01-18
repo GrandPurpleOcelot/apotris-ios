@@ -75,11 +75,12 @@ class GameScene : public Scene{
         deinit();
     };
 
-    static void ProcessMultiplayerPacket(u16 data, int &receivedAttack, int &incomingHeight) ;
+    void ProcessGameUpdate(int command, int value);
 
-    static void ProcessGameUpdate(int command, int value, int &receivedAttack, int &incomingHeight) ;
+    void ProcessMultiplayerPacket(u16 data);
 
-    static void UpdateEnemyBoard(int command, int value, int &incomingHeight) ;
+    void UpdateEnemyBoard(int command, int value) ;
+
 };
 
 class TitleScene : public Scene{

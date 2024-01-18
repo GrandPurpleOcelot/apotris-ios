@@ -37,7 +37,6 @@ const int boardTile = 512 - 32 * 3 - 8;
 #define PLAY_AGAIN 1
 #define GAME_OVER 2
 #define SEND_ATTACK 3
-#define ACK_ATTACK 4
 #define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
 
@@ -60,41 +59,39 @@ bool GameScene::handleMultiplayer(int state) {
             return false;
         }
 
-        int receivedAttack = false;
-        int incomingHeight = 0;
-
         timeoutTimer = 0;
-        u16 data = 0;
-        if (linkUniversal->canRead(remotePlayerId))
-            data = linkUniversal->read(remotePlayerId);
-        ProcessMultiplayerPacket(data, receivedAttack, incomingHeight);
+        while (linkUniversal->canRead(remotePlayerId))
+            ProcessMultiplayerPacket(linkUniversal->read(remotePlayerId));
 
         if (game->lost) {
             if(!state)
                 linkUniversal->send((u16)ENCODE(GAME_OVER) + 0x123);
         } else {
-            if (receivedAttack)
-                linkUniversal->send((u16)(ENCODE(ACK_ATTACK) + receivedAttack));
-            else if (game->attackQueue.empty()) {
+            // Attacks take priority over block state
+            if (!game->attackQueue.empty()) {
+                // Grab next attack
+                BlockEngine::Garbage atck = game->attackQueue.front();
+                // Pop it out of pending attack queue
+                game->attackQueue.pop_front();
+                // Encode and send out attack
+                linkUniversal->send((u16)(ENCODE(SEND_ATTACK) + (atck.id << 4) + atck.amount));
+            } else {
+                // Rotate over the 20 rows
                 if (currentScanHeight < 19)
                     currentScanHeight++;
                 else
                     currentScanHeight = 0;
 
-                u16 row = 0;
+                // Store row as each bit on or off for the presence of each block
+                u16 row_bitfield = 0;
                 for (int i = 0; i < 10; i++)
                     if (game->board[currentScanHeight + 20][i])
-                        row += 1 << i;
+                        row_bitfield += 1 << i;
 
                 if(!state)
-                    linkUniversal->send((u16) (ENCODE(SEND_ROW) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
-            } else {
-                BlockEngine::Garbage atck = game->attackQueue.front();
-
-                linkUniversal->send((u16)((ENCODE(SEND_ATTACK)) + (atck.id << 4) + atck.amount));
+                    linkUniversal->send(
+                            (u16) (ENCODE(SEND_ROW) + ((currentScanHeight & 0x1f) << 10) + (row_bitfield & 0x3ff)));
             }
-
-            drawEnemyBoard(incomingHeight);
         }
     } else {
         if(reconnect()){
@@ -107,7 +104,7 @@ bool GameScene::handleMultiplayer(int state) {
 }
 
 // Function to process multiplayer packets
-void GameScene::ProcessMultiplayerPacket(u16 data, int &receivedAttack, int &incomingHeight) {
+void GameScene::ProcessMultiplayerPacket(u16 data) {
     // Extract the command from the upper 3 bits of the data
     int command = data >> 13;
     // Extract the value from the lower 13 bits of the data
@@ -123,29 +120,24 @@ void GameScene::ProcessMultiplayerPacket(u16 data, int &receivedAttack, int &inc
         game->setWin();
     // If the command is between 3 and 7, process the game update
     else if (command >= 3 && command <= 7)
-        ProcessGameUpdate(command, value, receivedAttack, incomingHeight);
+        ProcessGameUpdate(command, value);
 }
 
 // Function to process game updates
-void GameScene::ProcessGameUpdate(int command, int value, int &receivedAttack, int &incomingHeight) {
+void GameScene::ProcessGameUpdate(int command, int value) {
     // If the command is 3, receive an attack
-    if (command == 3) {
+    if (command == SEND_ATTACK) {
         int attackValue = (value >> 4) & 0xFF;
         // Add the attack to the garbage queue
         game->addToGarbageQueue(attackValue, value & 0xF);
-        // Set the received attack value
-        receivedAttack = attackValue;
     }
-    // If the command is 4, acknowledge the attack
-    else if (command == 4)
-        game->clearAttack(value & 0xFF);
     // If the command is between 5 and 7, update the enemy board
     else
-        UpdateEnemyBoard(command, value, incomingHeight);
+        UpdateEnemyBoard(command, value);
 }
 
 // Function to update the enemy board
-void GameScene::UpdateEnemyBoard(int command, int value, int &incomingHeight) {
+void GameScene::UpdateEnemyBoard(int command, int value) {
     // Calculate the base height based on the command
     int baseHeight = (command - 5) * 8;
     // Calculate the row to be updated
@@ -157,7 +149,8 @@ void GameScene::UpdateEnemyBoard(int command, int value, int &incomingHeight) {
             // Update the cell in the enemy board based on the value
             enemyBoard[row][j] = (value >> j) & 0x1;
         // Set the incoming height to the updated row
-        incomingHeight = row;
+        if(!game->lost)
+            drawEnemyBoard(row);
     }
 }
 
@@ -307,8 +300,7 @@ bool GameScene::reconnect(){
 
     std::string exit = "Exit";
 
-    u8 playerCount = linkUniversal->playerCount();
-    while(!(linkUniversal->isConnected() && playerCount == 2) && closed()){
+    while(!(linkUniversal->isConnected() && linkUniversal->playerCount() == 2) && closed()){
         vsync();
         key_poll();
 
@@ -348,7 +340,6 @@ bool GameScene::reconnect(){
         }
 
         linkUniversal->sync();
-        playerCount = linkUniversal->playerCount();
         timer++;
 
         showSprites(128);
