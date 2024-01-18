@@ -10,27 +10,18 @@
 
 #include <map>
 
-#define JOY_A     1
-#define JOY_B     0
-#define JOY_X     2
-#define JOY_Y     3
-#define JOY_PLUS  9
-#define JOY_MINUS 8
-#define JOY_LEFT  15
-#define JOY_UP    13
-#define JOY_RIGHT 16
-#define JOY_DOWN  14
-
-#define KEY_A JOY_A
-#define KEY_B JOY_B
-#define KEY_L 4
-#define KEY_R 5
-#define KEY_UP JOY_UP
-#define KEY_DOWN JOY_DOWN
-#define KEY_LEFT JOY_LEFT
-#define KEY_RIGHT JOY_RIGHT
-#define KEY_SELECT JOY_MINUS
-#define KEY_START JOY_PLUS
+#define KEY_A SDL_CONTROLLER_BUTTON_A
+#define KEY_B SDL_CONTROLLER_BUTTON_B
+#define KEY_X SDL_CONTROLLER_BUTTON_X
+#define KEY_Y SDL_CONTROLLER_BUTTON_Y
+#define KEY_START SDL_CONTROLLER_BUTTON_START  // Assuming PLUS is the START button
+#define KEY_SELECT SDL_CONTROLLER_BUTTON_BACK  // Assuming MINUS is the BACK button
+#define KEY_LEFT SDL_CONTROLLER_BUTTON_DPAD_LEFT
+#define KEY_UP SDL_CONTROLLER_BUTTON_DPAD_UP
+#define KEY_RIGHT SDL_CONTROLLER_BUTTON_DPAD_RIGHT
+#define KEY_DOWN SDL_CONTROLLER_BUTTON_DPAD_DOWN
+#define KEY_L SDL_CONTROLLER_BUTTON_LEFTSHOULDER
+#define KEY_R SDL_CONTROLLER_BUTTON_RIGHTSHOULDER
 #define KEY_FULL 0xffffffff
 
 extern void updateWindow(uint8_t*);

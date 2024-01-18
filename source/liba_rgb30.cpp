@@ -33,6 +33,7 @@ float fps = 0;
 
 SDL_Window* window;
 SDL_Renderer * renderer;
+SDL_GameController* controller;
 
 bool render = true;
 
@@ -47,7 +48,7 @@ void windowInit(){
 
     window = NULL;
     window = SDL_CreateWindow(
-        "Apotris Switch",
+        "Apotris Portmaster",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         720, 720,
         SDL_WINDOW_SHOWN
@@ -55,12 +56,12 @@ void windowInit(){
 
     renderer = SDL_CreateRenderer(window, -1, 0);
 
-    SDL_InitSubSystem(SDL_INIT_JOYSTICK);
-    SDL_JoystickEventState(SDL_ENABLE);
-    SDL_JoystickOpen(0);
+    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    if(SDL_NumJoysticks() > 0){
+        controller = SDL_GameControllerOpen(0);
+    }
 
     gSoloud.init();
-
     loadAudio();
 }
 
@@ -82,25 +83,7 @@ void key_poll(){
     SDL_Event event;
 
     while( SDL_PollEvent( &event ) ){
-        uint32_t key = 0;
-        auto it = currentlyPressed.begin();
-        bool found = false;
-
         switch( event.type ){
-        case SDL_JOYBUTTONDOWN:
-            key = event.jbutton.button;
-            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
-            found = (it != currentlyPressed.end());
-            if(!found)
-                currentlyPressed.push_back(key);
-            break;
-        case SDL_JOYBUTTONUP:
-            key = event.jbutton.button;
-            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
-            found = (it != currentlyPressed.end());
-            if(found)
-                currentlyPressed.remove(key);
-            break;
         case SDL_QUIT:
             quit();
             break;
@@ -109,7 +92,15 @@ void key_poll(){
         }
     }
 
-    currentKeys = currentlyPressed;
+    if(controller && SDL_GameControllerGetAttached(controller)){
+        for(int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++){
+            if(SDL_GameControllerGetButton(controller,static_cast<SDL_GameControllerButton>(i))){
+                currentKeys.push_back(i);
+            }
+        }
+    }
+
+    // currentKeys = currentlyPressed;
 }
 
 uint32_t key_is_down(uint32_t key){
