@@ -2,6 +2,7 @@
 
 #include <list>
 #include "platform.hpp"
+#include <mutex>
 #include <string>
 #include "font1tiles_bin.h"
 #include "save.h"
@@ -10,6 +11,7 @@
 #define MAX_WORD_SPRITES 12
 
 class WordSprite {
+    mutable std::mutex text_mutex;
 public:
     std::string text = "";
     int startIndex = 0;
@@ -123,6 +125,7 @@ public:
     void setTextNum(int n);
 
     void setTextSlow(std::string _text) {
+        const std::lock_guard<std::mutex> lock(text_mutex);
         text = _text;
 
         slow = true;
