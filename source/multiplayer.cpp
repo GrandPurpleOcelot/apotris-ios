@@ -38,7 +38,7 @@ const int boardTile = 512 - 32 * 3 - 8;
 #define GAME_OVER 2
 #define SEND_ATTACK 3
 #define ACK_ATTACK 4
-#define SEND_BLOCK 5
+#define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
 
 bool GameScene::handleMultiplayer(int state) {
@@ -87,7 +87,7 @@ bool GameScene::handleMultiplayer(int state) {
                         row += 1 << i;
 
                 if(!state)
-                    linkUniversal->send((u16) (ENCODE(SEND_BLOCK) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
+                    linkUniversal->send((u16) (ENCODE(SEND_ROW) + ((currentScanHeight & 0x1f) << 10) + (row & 0x3ff)));
             } else {
                 BlockEngine::Garbage atck = game->attackQueue.front();
 
