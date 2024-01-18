@@ -40,10 +40,10 @@ const int boardTile = 512 - 32 * 3 - 8;
 #define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
 
-bool GameScene::handleMultiplayer(int state) {
+int GameScene::handleMultiplayer(int state) {
     #ifdef GBA
     if (!multiplayer)
-        return false;
+        return 0;
 
     linkUniversal->sync();
     u8 currentPlayerId = linkUniversal->currentPlayerId();
@@ -56,7 +56,7 @@ bool GameScene::handleMultiplayer(int state) {
             playAgain = true;
             linkUniversal->send((u16)(ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
             linkUniversal->waitFor(remotePlayerId);
-            return false;
+            return 0;
         }
 
         timeoutTimer = 0;
@@ -95,12 +95,14 @@ bool GameScene::handleMultiplayer(int state) {
         }
     } else {
         if(reconnect()){
-            return true;
+            return 1;
+        }else{
+            return 2;
         }
     }
     #endif
 
-    return false;
+    return 0;
 }
 
 // Function to process multiplayer packets
@@ -367,7 +369,8 @@ bool GameScene::reconnect(){
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 
-    countdown();
+    if(!(game->won || game->lost))
+        countdown();
 
     resumeSong();
 

@@ -63,7 +63,7 @@ class GameScene : public Scene{
     void refreshCredits();
     void checkSounds();
     bool reconnect();
-    bool handleMultiplayer(int state);
+    int handleMultiplayer(int state);
 
     bool counted = false;
 

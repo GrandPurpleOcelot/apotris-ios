@@ -43,6 +43,8 @@ BlockEngine::Bot *testBot = nullptr;
 
 int igt = 0;
 
+bool ended = false;
+
 const std::string modeStrings[] = {
     "Marathon",
     "Sprint",
@@ -101,7 +103,8 @@ int GameScene::endScreen(){
 
     std::string totalTime = timeToString(gameSeconds,false);
 
-    endAnimation();
+    if(!ended)
+        endAnimation();
 
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
@@ -222,7 +225,10 @@ int GameScene::endScreen(){
     showModeText();
 
     while (closed()) {
-        handleMultiplayer(1);
+        if(handleMultiplayer(1) == 2){
+            return 1;
+        }
+
         vsync();
         key_poll();
 
@@ -351,6 +357,7 @@ int GameScene::endScreen(){
 }
 
 void endAnimation() {
+    ended = true;
     shake = 0;
     push = 0;
 

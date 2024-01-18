@@ -3067,6 +3067,8 @@ void GameScene::init(){
         showSpeedMeter((int)game->speed);
 
     showZoneMeter();
+
+    ended = false;
 }
 
 void GameScene::update(){
@@ -3111,11 +3113,9 @@ void GameScene::update(){
     if(!game->lost && !paused && !game->eventLock){
         game->update();
     }
-    if(handleMultiplayer(0)){
+    if(handleMultiplayer(0) == 1){
         return;
     }
-
-    // progressBar(-1);
 
     if(game->gameMode == BATTLE && !multiplayer){
         if(!botGame->clearLock){
@@ -3191,7 +3191,9 @@ void GameScene::update(){
 
     if((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
         paused = true;
-        endScreen();
+
+        while(endScreen() == 1);
+
         paused = false;
         if(!(playAgain && multiplayer)){
             return;
