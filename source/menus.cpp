@@ -172,20 +172,31 @@ int GameScene::endScreen(){
 
     const int optionsHeight = 11;
 
-    wordSprites[1].setText("Play");
-    wordSprites[1].show(12 * 8, (optionsHeight + 0) * 8, 15);
-    wordSprites[2].setText("Again");
-    wordSprites[2].show(14 * 8, (optionsHeight + 1) * 8, 15);
+    int max = 3;
+    int counter = 0;
 
-    wordSprites[3].setText("Change");
-    wordSprites[3].show(12 * 8, (optionsHeight + 3) * 8, 15);
-    wordSprites[4].setText("Options");
-    wordSprites[4].show(14 * 8, (optionsHeight + 4) * 8, 15);
+    wordSprites[1].setText("Play");
+    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[2].setText("Again");
+    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+
+    counter += 3;
+
+    if(!multiplayer){
+        wordSprites[3].setText("Change");
+        wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 15);
+        wordSprites[4].setText("Options");
+        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+
+        counter += 3;
+    }else{
+        max = 2;
+    }
 
     wordSprites[5].setText("Main");
-    wordSprites[5].show(12 * 8, (optionsHeight + 6) * 8, 15);
+    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 15);
     wordSprites[6].setText("Menu");
-    wordSprites[6].show(14 * 8, (optionsHeight + 7) * 8, 15);
+    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
 
     int cursorFloat = 0;
     OBJ_ATTR * cursorSprite;
@@ -270,18 +281,7 @@ int GameScene::endScreen(){
                         sfx(SFX_MENUCANCEL);
                     }
                 }
-
-            } else if (selection == 1){
-                sfx(SFX_MENUCANCEL);
-                enableBlend(prevBld);
-                path.clear();
-                path.push_back("Play");
-                clearText();
-                buildBG(3, 0, 27, 0, 1, true);
-                sceneSwitcher(modeToString(previousGameOptions->mode));
-                nextSeed = 0;
-                return 1;
-            } else if (selection == 2){
+            } else if (selection == max - 1){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
                 buildBG(3, 0, 27, 0, 1, true);
@@ -292,19 +292,29 @@ int GameScene::endScreen(){
                 multiplayer = false;
                 changeScene(new MainMenuScene, Transitions::FADE);
                 return 1;
+            } else if (selection == 1){
+                sfx(SFX_MENUCANCEL);
+                enableBlend(prevBld);
+                path.clear();
+                path.push_back("Play");
+                clearText();
+                buildBG(3, 0, 27, 0, 1, true);
+                sceneSwitcher(modeToString(previousGameOptions->mode));
+                nextSeed = 0;
+                return 1;
             }
         }
 
         if (key_hit(k.up)) {
             if (selection == 0)
-                selection = 2;
+                selection = max-1;
             else
                 selection--;
             sfx(SFX_MENUMOVE);
         }
 
         if (key_hit(k.down)) {
-            if (selection == 2)
+            if (selection == 1)
                 selection = 0;
             else
                 selection++;
