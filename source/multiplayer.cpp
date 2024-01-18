@@ -52,8 +52,8 @@ bool GameScene::handleMultiplayer(int state) {
     u8 playerCount = linkUniversal->playerCount();
 
     if (linkUniversal->isConnected() && playerCount == 2) {
-        if (multiplayerStart > 0) {
-            multiplayerStart = 0;
+        if (multiplayerStart) {
+            multiplayerStart = false;
             playAgain = true;
             linkUniversal->send((u16)(ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
             linkUniversal->waitFor(remotePlayerId);

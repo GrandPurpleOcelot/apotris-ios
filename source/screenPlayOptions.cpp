@@ -664,7 +664,7 @@ void MultBattleScene::update(){
 
         if (key_hit(k.pause) && currentPlayerId == 0) {
             nextSeed = (u16)qran() & 0x1fff;
-            multiplayerStart = 3;
+            multiplayerStart = true;
         } else {
             linkUniversal->send(2);
         }
