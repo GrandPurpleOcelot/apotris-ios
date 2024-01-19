@@ -47,6 +47,7 @@ LinkUniversal* linkUniversal =
                                   .interval = 50,
                                   .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
                                   .asyncACKTimerId = 2});
+LinkUniversal* linkConnection = linkUniversal;
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
@@ -331,10 +332,10 @@ void sleep() {
     REG_SNDDSCNT = 0;
     REG_SNDDMGCNT = 0;
 
-    bool isLinked = linkUniversal->isActive();
+    bool isLinked = linkConnection->isActive();
 
     if(isLinked)
-        linkUniversal->deactivate();
+        linkConnection->deactivate();
 
     interrupt_disable(INTR_TIMER3);
     interrupt_disable(INTR_TIMER2);
@@ -352,7 +353,7 @@ void sleep() {
     REG_SNDDMGCNT = dmg_value;
 
     if(isLinked)
-        linkUniversal->activate();
+        linkConnection->activate();
 
     interrupt_enable(INTR_TIMER3);
     interrupt_enable(INTR_TIMER2);
@@ -414,19 +415,19 @@ void clearTiles(int tileset, int index, int count){
 
 void onVBlank(void) {
 
+    REG_IME = 1;
+
     mmVBlank();
     if(gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
 
     LINK_UNIVERSAL_ISR_VBLANK();
 
-    // REG_IME = 1; // << This is what actually fixes the crash
     if (canDraw) {
         canDraw = 0;
 
         scene->draw();
     }
-    // REG_IME = 0; // <<
 
     frameCounter++;
     mmFrame();

@@ -7,6 +7,10 @@
 #include "save.h"
 
 #define glowDuration 12
+#ifdef GBA
+#include "LinkUniversal.hpp"
+extern LinkUniversal* linkConnection;
+#endif
 
 INLINE FIXED lerp(FIXED a, FIXED b, FIXED mix){
     return a + (((b-a)*mix)>>8);

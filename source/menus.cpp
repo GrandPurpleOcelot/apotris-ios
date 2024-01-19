@@ -14,9 +14,6 @@
 #ifdef PC
 #include <fstream>
 #endif
-#ifdef GBA
-#include "LinkUniversal.hpp"
-#endif
 
 #include "qrcodegen.h"
 
@@ -292,8 +289,8 @@ int GameScene::endScreen(){
                 enableBlend(prevBld);
                 buildBG(3, 0, 27, 0, 1, true);
 #ifdef GBA
-                if (linkUniversal->isActive())
-                    linkUniversal->deactivate();
+                if (linkConnection->isActive())
+                    linkConnection->deactivate();
 #endif
                 multiplayer = false;
                 changeScene(new MainMenuScene, Transitions::FADE);

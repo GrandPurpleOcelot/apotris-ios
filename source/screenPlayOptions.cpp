@@ -569,7 +569,7 @@ void MultBattleScene::init(){
 
     #ifdef GBA
 
-    linkUniversal->activate();
+    linkConnection->activate();
 
     #endif
 
@@ -605,7 +605,7 @@ bool MultBattleScene::control(){
             changeScene(previousScene(),Transitions::FADE);
 
             #ifdef GBA
-            linkUniversal->deactivate();
+            linkConnection->deactivate();
             #endif
 
             return true;
@@ -625,18 +625,18 @@ void MultBattleScene::update(){
     PlayOptionScene::update();
 
     #ifdef GBA
-    linkUniversal->sync();
+    linkConnection->sync();
     // Store state of all player IDs
-    u8 currentPlayerId = linkUniversal->currentPlayerId();
-    u8 currentPlayerCount = linkUniversal->playerCount();
+    u8 currentPlayerId = linkConnection->currentPlayerId();
+    u8 currentPlayerCount = linkConnection->playerCount();
     if (lastPlayerCount < 0 || currentPlayerCount == 0)
         lastPlayerCount = currentPlayerCount;
 
-    if (linkUniversal->isConnected()) {
+    if (linkConnection->isConnected()) {
         // For player 1 to inform other players to start game
         if(multiplayerStart){
             multiplayerStart = false;
-            linkUniversal->send(GAME_START);
+            linkConnection->send(GAME_START);
             startMultiplayerGame(nextSeed);
             gameLoop();
             return;
@@ -646,8 +646,8 @@ void MultBattleScene::update(){
 
         // Poll all remotes for data
         for (int remotePlayerId = 0; remotePlayerId < currentPlayerCount; remotePlayerId++)
-            while(remotePlayerId != currentPlayerId && linkUniversal->canRead(remotePlayerId)) {
-                u16 msg = linkUniversal->read(remotePlayerId);
+            while(remotePlayerId != currentPlayerId && linkConnection->canRead(remotePlayerId)) {
+                u16 msg = linkConnection->read(remotePlayerId);
                 // Any ready event means we're ready too
                 if (msg == PLAYER_READY) {
                     if (connected < 1) {
@@ -676,7 +676,7 @@ void MultBattleScene::update(){
             // Inform new players we're all ready and what the seed is
             if (lastPlayerCount != currentPlayerCount) {
                 lastPlayerCount = currentPlayerCount;
-                linkUniversal->send(PLAYER_READY);
+                linkConnection->send(PLAYER_READY);
             }
             aprint("Press Start", 10, 13);
         }
@@ -685,9 +685,9 @@ void MultBattleScene::update(){
         if (key_hit(k.pause) && currentPlayerId == 0) {
             nextSeed = (u16)qran() & 0x1fff;
             multiplayerStart = true;
-            linkUniversal->send(nextSeed + 100);
+            linkConnection->send(nextSeed + 100);
         } else if (!sentReady) {
-            linkUniversal->send(PLAYER_READY);
+            linkConnection->send(PLAYER_READY);
             sentReady = true;
         }
 

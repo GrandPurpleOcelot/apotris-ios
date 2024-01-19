@@ -57,9 +57,9 @@ int GameScene::handleMultiplayer(int state) {
         return 0;
 
     // Update remote state and fetch incoming data
-    linkUniversal->sync();
-    u8 currentPlayerCount = linkUniversal->playerCount();
-    currentPlayerId = linkUniversal->currentPlayerId();
+    linkConnection->sync();
+    u8 currentPlayerCount = linkConnection->playerCount();
+    currentPlayerId = linkConnection->currentPlayerId();
 
     // Capture initial player count
     if (initialPlayerCount < 0)
@@ -70,11 +70,11 @@ int GameScene::handleMultiplayer(int state) {
         // If reconnect returns false, we got a connection back with all players
         if (!reconnect()) {
             // Get potential new playerId
-            linkUniversal->sync();
-            u8 newPlayerId = linkUniversal->currentPlayerId();
+            linkConnection->sync();
+            u8 newPlayerId = linkConnection->currentPlayerId();
             // Send out new ID if changed
             if (currentPlayerId != newPlayerId) {
-                linkUniversal->send(ENCODE(CHANGE_STATE) + newPlayerId);
+                linkConnection->send(ENCODE(CHANGE_STATE) + newPlayerId);
                 playerIdLookup[newPlayerId] = currentPlayerId;
                 currentPlayerId = newPlayerId;
             }
@@ -88,7 +88,7 @@ int GameScene::handleMultiplayer(int state) {
     if (multiplayerStart) {
         multiplayerStart = false;
         playAgain = true;
-        linkUniversal->send((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
+        linkConnection->send((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
         return 0;
     }
 
@@ -100,12 +100,12 @@ int GameScene::handleMultiplayer(int state) {
 
         timeoutTimer = 0;
         // Process remote player's packets
-        while (linkUniversal->canRead(remotePlayerId))
-            ProcessMultiplayerPacket(linkUniversal->read(remotePlayerId), remotePlayerId);
+        while (linkConnection->canRead(remotePlayerId))
+            ProcessMultiplayerPacket(linkConnection->read(remotePlayerId), remotePlayerId);
 
         if (game->lost) {
             if (!state)
-                linkUniversal->send((u16) ENCODE(CHANGE_STATE) + 0x123);
+                linkConnection->send((u16) ENCODE(CHANGE_STATE) + 0x123);
         } else {
             // Attacks take priority over block state
             if (!game->attackQueue.empty()) {
@@ -114,7 +114,7 @@ int GameScene::handleMultiplayer(int state) {
                 // Pop it out of pending attack queue
                 game->attackQueue.pop_front();
                 // Encode and send out attack
-                linkUniversal->send((u16) (ENCODE(SEND_ATTACK) + (atck.id << 4) + atck.amount));
+                linkConnection->send((u16) (ENCODE(SEND_ATTACK) + (atck.id << 4) + atck.amount));
             } else {
                 // Rotate over the 20 rows
                 if (currentScanHeight < 19)
@@ -129,7 +129,7 @@ int GameScene::handleMultiplayer(int state) {
                         row_bitfield += 1 << i;
 
                 if (!state)
-                    linkUniversal->send(
+                    linkConnection->send(
                             (u16) (ENCODE(SEND_ROW) + ((currentScanHeight & 0x1f) << 10) + (row_bitfield & 0x3ff)));
             }
         }
@@ -215,7 +215,7 @@ void startMultiplayerGame(int seed) {
     multiplayer = true;
 
     #ifdef GBA
-    linkUniversal->send(50);
+    linkConnection->send(50);
     #endif
 
     nextSeed = 0;
@@ -343,7 +343,7 @@ bool GameScene::reconnect(){
 
     std::string exit = "Exit";
 
-    while(!(linkUniversal->isConnected() && linkUniversal->playerCount() == 2) && closed()){
+    while(!(linkConnection->isConnected() && linkConnection->playerCount() == initialPlayerCount) && closed()){
         vsync();
         key_poll();
 
@@ -354,7 +354,7 @@ bool GameScene::reconnect(){
         if(timer >= 120){
             if(key_hit(k.confirm)){
                 multiplayer = false;
-                linkUniversal->deactivate();
+                linkConnection->deactivate();
                 connected = -1;
 
                 sfx(SFX_MENUCANCEL);
@@ -382,10 +382,10 @@ bool GameScene::reconnect(){
             }
         }
 
-        linkUniversal->sync();
         timer++;
 
         showSprites(128);
+        linkConnection->sync();
     }
 
     clearTilemap(27);

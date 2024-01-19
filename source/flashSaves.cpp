@@ -2,7 +2,6 @@
 
 #ifdef GBA
 #include "flashSaves.h"
-#include "LinkUniversal.hpp"
 #include "logging.h"
 
 #include "text.h"
@@ -313,9 +312,9 @@ void save_sram_flash()
 
 	aprint("Saving...",21,19);
 
-    bool isLinked = linkUniversal->isActive();
+    bool isLinked = linkConnection->isActive();
     if(isLinked)
-		linkUniversal->deactivate();
+		linkConnection->deactivate();
 
     interrupt_disable(INTR_VBLANK);
 	int prev = gradientEnabled;
@@ -346,7 +345,7 @@ void save_sram_flash()
     interrupt_enable(INTR_VBLANK);
 
     if(isLinked)
-		linkUniversal->activate();
+		linkConnection->activate();
 
 	if(prev)
 		gradient(1);
