@@ -254,13 +254,13 @@ void handleBotGame(){
         botIncomingHeight = 0;
     }
 
-    if(botGame->attackQueue.size()){
+    if(!botGame->attackQueue.empty()){
         BlockEngine::Garbage atck = botGame->attackQueue.front();
         game->addToGarbageQueue(atck.id,atck.amount);
         botGame->clearAttack(atck.id);
     }
 
-    if(game->attackQueue.size()){
+    if(!game->attackQueue.empty()){
         BlockEngine::Garbage atck = game->attackQueue.front();
         botGame->addToGarbageQueue(atck.id,atck.amount);
         game->clearAttack(atck.id);
@@ -293,8 +293,8 @@ bool GameScene::reconnect(){
     resetSmallText();
     clearText();
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
+    for(auto & wordSprite : wordSprites)
+        wordSprite.hide();
 
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
@@ -395,11 +395,11 @@ bool GameScene::reconnect(){
 
     enableBlend(prevBld);
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
+    for(auto & wordSprite : wordSprites)
+        wordSprite.hide();
 
-    for(int i = 0; i < 2; i++)
-        sprite_hide(cursorSprites[i]);
+    for(auto & cursorSprite : cursorSprites)
+        sprite_hide(cursorSprite);
 
     drawFrame(0);
     if(game->zoneTimer)
