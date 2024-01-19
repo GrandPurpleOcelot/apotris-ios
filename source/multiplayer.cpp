@@ -9,7 +9,7 @@
 
 using namespace BlockEngine;
 
-void drawEnemyBoard(int, u8);
+void drawEnemyBoard();
 
 u8 enemyBoard[4][20][10];
 u8 currentPlayerId = -1;
@@ -22,7 +22,21 @@ std::map<u8, u8> currentIdToInitialIdLookup = {
     { 3, 3 },
     { 4, 4 }
 };
+
+class BoardUpdate{
+public:
+    int row = 0;
+    int playerId = 0;
+
+    BoardUpdate(int r, int id){
+        row = r;
+        playerId = id;
+    }
+};
+
 std::map<u8, u8> playerToBoardIndex;
+std::vector<BoardUpdate> enemyBoardUpdates;
+
 OBJ_ATTR* enemyBoardSprite;
 
 int timeoutTimer = 0;
@@ -147,6 +161,8 @@ int GameScene::handleMultiplayer(int state) {
             }
         }
     }
+
+    drawEnemyBoard();
     #endif
 
     return 0;
@@ -202,13 +218,13 @@ void GameScene::UpdateEnemyBoard(int command, int value, u8 remotePlayerId) {
     int row = (value >> 10) + baseHeight;
     // If the row is within the board's height
     if (row < 20) {
+        int id = getBoardIndex(remotePlayerId);
         // Loop through each column in the row
         for (int j = 0; j < 10; j++)
             // Update the cell in the enemy board based on the value
-            enemyBoard[getBoardIndex(remotePlayerId)][row][j] = (value >> j) & 0x1;
-        // Set the incoming height to the updated row
-        if(!game->lost)
-            drawEnemyBoard(row, remotePlayerId);
+            enemyBoard[remotePlayerId][row][j] = (value >> j) & 0x1;
+
+        enemyBoardUpdates.push_back(BoardUpdate(row,remotePlayerId));
     }
 }
 
@@ -238,38 +254,38 @@ void startMultiplayerGame(int seed) {
     nextSeed = 0;
 }
 
-void drawEnemyBoard(int height, u8 remotePlayerId) {
+void drawEnemyBoard() {
     if(game->won || game->lost){
         return;
     }
-
-    auto remotePlayerIndex = getBoardIndex(remotePlayerId);
 
     enemyBoardSprite = &obj_buffer[25];
     sprite_set_attr(enemyBoardSprite, ShapeSquare, 3, boardTile, 15, 1);
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
     sprite_enable_affine(enemyBoardSprite, 6, true);
-    sprite_set_pos(enemyBoardSprite, 43, 20);
-    sprite_set_size(enemyBoardSprite, float2fx(0.5), 6);
-
-    if (height > 19)
-        return;
+    sprite_set_pos(enemyBoardSprite, 43 - 32, 20 - 32);
+    sprite_set_size(enemyBoardSprite, int2fx(1), 6);
 
     const int margin = 2;
-    const int offsetX = (remotePlayerIndex % 2) * (10 + margin);
-    const int offsetY = (remotePlayerIndex / 2) * (20 + margin);
 
-    const int y = height + offsetY;
+    for(auto const& update : enemyBoardUpdates){
+        const int offsetX = (update.playerId % 2) * (10 + margin);
+        const int offsetY = (update.playerId / 2) * (20 + margin);
 
-    for (int j = 0; j < 10; j++) {
-        const int x = j + offsetX;
+        const int y = update.row + offsetY;
 
-        if (enemyBoard[remotePlayerIndex][height][j])
-            setSpritePixel(boardTile, x / 8, y/8, 8, x % 8, y % 8,
-                           ((enemyBoard[remotePlayerIndex][height][j]) + 1 + savefile->settings.lightMode));
-        else
-            setSpritePixel(boardTile, x / 8, y/8, 8, x % 8, y % 8, 0);
+        for (int j = 0; j < 10; j++) {
+            const int x = j + offsetX;
+
+            if (enemyBoard[update.playerId][update.row][j])
+                setSpritePixel(boardTile, x / 8, y/8, 8, x % 8, y % 8,
+                            ((enemyBoard[update.playerId][update.row][j]) + 1 + savefile->settings.lightMode));
+            else
+                setSpritePixel(boardTile, x / 8, y/8, 8, x % 8, y % 8, 0);
+        }
     }
+
+    enemyBoardUpdates.clear();
 }
 
 int botClearTimer = 0;
@@ -298,7 +314,7 @@ void handleBotGame(){
         }
     }
 
-    drawEnemyBoard(botIncomingHeight, 0);
+    drawEnemyBoard();
 
     if(botGame->clearLock){
         if(++botClearTimer > botGame->maxClearDelay){
