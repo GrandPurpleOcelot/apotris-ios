@@ -20,6 +20,10 @@ extern const std::list<std::string> settingsOptions;
 extern const std::list<std::string> controlOptions;
 extern const std::list<std::string> menuControlOptions;
 
+static const int READY = 0xC0DE;
+
+static const int START = 0xBEEF;
+
 extern std::string getDescription(std::string element);
 extern std::string getDescription(std::string mode, std::string element, std::string option);
 

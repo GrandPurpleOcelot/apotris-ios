@@ -413,28 +413,25 @@ bool GameScene::reconnect(){
 
     if(linkConnection->currentPlayerId() != 0) {
         // Inform we're ready
-        linkConnection->send(0xC0DE);
+        linkConnection->send(READY);
         // Await signal
-        client_sync:
-        linkConnection->sync();
-        while (linkConnection->canRead(0))
-            if (linkConnection->read(0) == 0xBEEF)
-                goto resume_game;
-        goto client_sync;
+        bool ready = false;
+        while (!ready || linkConnection->canRead(0))
+            if (linkConnection->read(0) == START)
+                ready = true;
     }
     else {
         int playersReady = 1;
         // Listen to all remotes
         while (playersReady != initialPlayerCount){
             linkConnection->sync();
-            for (int remotePlayerId = 1; remotePlayerId < initialPlayerCount; remotePlayerId++) {
+            for (int remotePlayerId = 1; remotePlayerId < initialPlayerCount; remotePlayerId++)
                 while (linkConnection->canRead(remotePlayerId))
-                    if (linkConnection->read(remotePlayerId) == 0xC0DE)
+                    if (linkConnection->read(remotePlayerId) == READY)
                         playersReady++;
-            }
         }
         // We're ready
-        linkConnection->send(0xBEEF);
+        linkConnection->send(START);
     }
 
     resume_game:
