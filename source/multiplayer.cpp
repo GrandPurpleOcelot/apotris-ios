@@ -1,5 +1,7 @@
 #include "def.h"
+#ifdef GBA
 #include "LinkUniversal.hpp"
+#endif
 #include "blockEngine.hpp"
 #include "text.h"
 #include <string>
@@ -35,6 +37,13 @@ public:
 };
 
 std::map<u8, u8> playerToBoardIndex;
+std::map<u8, bool> loseIndex = {
+    { 0, false },
+    { 1, false },
+    { 2, false },
+    { 3, false },
+    { 4, false }
+};
 std::vector<BoardUpdate> enemyBoardUpdates;
 
 OBJ_ATTR* enemyBoardSprite;
@@ -43,6 +52,7 @@ int timeoutTimer = 0;
 int maxTimeout = 10;
 
 bool multiplayerStart = false;
+int rank = 0;
 
 int attackCheckCooldown = 10;
 int attackCheckTimer = 0;
@@ -112,7 +122,9 @@ int GameScene::handleMultiplayer(int state) {
     // Game start
     if (multiplayerStart) {
         multiplayerStart = false;
+        loseIndex = { {0, false}, {1, false}, {2, false}, {3, false}, {4, false} };
         playAgain = true;
+        rank = 0;
         linkConnection->send((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
         return 0;
     }
@@ -131,8 +143,10 @@ int GameScene::handleMultiplayer(int state) {
             ProcessMultiplayerPacket(linkConnection->read(remotePlayerId), remotePlayerId);
 
         if (game->lost) {
-            if (!state)
+            if (!state) {
                 linkConnection->send((u16) ENCODE(CHANGE_STATE) + 0x123);
+                updateRank();
+            }
         } else {
             // Attacks take priority over block state
             if (!game->attackQueue.empty()) {
@@ -168,6 +182,13 @@ int GameScene::handleMultiplayer(int state) {
     return 0;
 }
 
+void GameScene::updateRank() {
+    rank = 0;
+    for (int playerId = 0; playerId < initialPlayerCount; playerId++)
+        if (!loseIndex[playerId])
+            rank++;
+}
+
 int getBoardIndex(int remotePlayerId) {
     return playerToBoardIndex[currentIdToInitialIdLookup[remotePlayerId]];
 }
@@ -186,9 +207,15 @@ void GameScene::ProcessMultiplayerPacket(u16 data, u8 remotePlayerId) {
     }
     // Command 2 means special updates
     else if (command == CHANGE_STATE)
-        // If the value is 0x123, the opponent has lost
-        if (value == 0x123)
-            game->setWin();
+        // If the value is 0x123, an opponent has lost
+        if (value == 0x123) {
+            loseIndex[currentIdToInitialIdLookup[remotePlayerId]] = true;
+            if (game->lost)
+                return;
+            updateRank();
+            if(rank == 1)
+                game->setWin();
+        }
         // Otherwise the value is an old playerId, and we were in a reconnect state, so update
         else
             currentIdToInitialIdLookup[remotePlayerId] = value;

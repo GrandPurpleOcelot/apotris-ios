@@ -414,8 +414,28 @@ void endAnimation() {
 
 void showScore(){
     if (game->gameMode == BATTLE) {
-        if (game->lost)
+        if (game->lost) {
             aprint("YOU LOSE", 11, 3);
+            if (rank) {
+                aprint("Placed ", 11, 4);
+                aprint(std::to_string(rank), 18, 4);
+                std::string suffix;
+                switch (rank) {
+                    case 1:
+                        suffix = "st";
+                        break;
+                    case 2:
+                        suffix = "nd";
+                        break;
+                    case 3:
+                        suffix = "rd";
+                        break;
+                    default:
+                        suffix = "th";
+                }
+                aprint(suffix, 19, 4);
+            }
+        }
         else
             aprint("YOU WIN!", 11, 3);
 

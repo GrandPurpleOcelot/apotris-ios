@@ -85,6 +85,7 @@ class GameScene : public Scene{
 
     static void UpdateEnemyBoard(int command, int value, u8 remotePlayerId);
 
+    static void updateRank() ;
 };
 
 class TitleScene : public Scene{
@@ -544,3 +545,4 @@ enum class Transitions{
 extern void changeScene(Scene * newScene);
 extern void changeScene(Scene * newScene,Transitions transition);
 
+extern int rank;
