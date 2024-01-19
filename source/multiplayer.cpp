@@ -48,23 +48,12 @@ std::vector<BoardUpdate> enemyBoardUpdates;
 
 OBJ_ATTR* enemyBoardSprite;
 
-int timeoutTimer = 0;
-int maxTimeout = 10;
-
 bool multiplayerStart = false;
 int rank = 0;
-
-int attackCheckCooldown = 10;
-int attackCheckTimer = 0;
-
 int connected = 0;
-
 int currentScanHeight = 0;
 
-int enemyHeight = 0;
-
 Game *botGame;
-
 int botIncomingHeight = 0;
 
 const int boardTile = 512 - 32 * 3 - 64;
@@ -137,7 +126,6 @@ int GameScene::handleMultiplayer(int state) {
         // Assign board index if not assigned
         assignBoardIndex(remotePlayerId);
 
-        timeoutTimer = 0;
         // Process remote player's packets
         while (linkConnection->canRead(remotePlayerId))
             ProcessMultiplayerPacket(linkConnection->read(remotePlayerId), remotePlayerId);

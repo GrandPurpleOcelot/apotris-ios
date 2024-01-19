@@ -146,7 +146,6 @@ int GameScene::endScreen(){
     int record = onRecord();
 
     if (multiplayer) {
-        enemyHeight = 0;
         progressBar(1);
     }
 

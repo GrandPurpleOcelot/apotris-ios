@@ -242,8 +242,6 @@ extern int frameCounter;
 extern OBJ_ATTR * titleSprites[2];
 extern OBJ_ATTR * queueFrameSprites[3];
 
-extern int enemyHeight;
-
 extern BlockEngine::Bot *testBot;
 extern u8 enemyBoard[4][20][10];
 
