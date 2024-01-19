@@ -11,7 +11,7 @@ using namespace BlockEngine;
 
 void drawEnemyBoard(int, u8);
 
-u8 enemyBoard[5][20][10];
+u8 enemyBoard[4][20][10];
 u8 currentPlayerId = -1;
 int initialPlayerCount = -1;
 // Current to initial
@@ -20,8 +20,9 @@ std::map<u8, u8> currentIdToInitialIdLookup = {
     { 1, 1 },
     { 2, 2 },
     { 3, 3 },
-    { 4, 4 },
+    { 4, 4 }
 };
+std::map<u8, u8> playerToBoardIndex;
 OBJ_ATTR* enemyBoardSprite;
 
 int timeoutTimer = 0;
@@ -49,6 +50,16 @@ const int boardTile = 512 - 32 * 3 - 64;
 #define SEND_ATTACK 3
 #define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
+
+// When a player joins, assign them a board index
+void assignBoardIndex(int remotePlayerId) {
+    for (int i = 0; i < 4; i++) {
+        if (playerToBoardIndex.count(i) == 0) { // If this index is not already assigned
+            playerToBoardIndex[remotePlayerId] = i;
+            break;
+        }
+    }
+}
 
 // returns true if we should terminate the game
 int GameScene::handleMultiplayer(int state) {
@@ -97,6 +108,8 @@ int GameScene::handleMultiplayer(int state) {
         // Skip self
         if (remotePlayerId == currentPlayerId)
             continue;
+        // Assign board index if not assigned
+        assignBoardIndex(remotePlayerId);
 
         timeoutTimer = 0;
         // Process remote player's packets
@@ -137,6 +150,10 @@ int GameScene::handleMultiplayer(int state) {
     #endif
 
     return 0;
+}
+
+int getBoardIndex(int remotePlayerId) {
+    return playerToBoardIndex[currentIdToInitialIdLookup[remotePlayerId]];
 }
 
 // Function to process multiplayer packets
@@ -188,7 +205,7 @@ void GameScene::UpdateEnemyBoard(int command, int value, u8 remotePlayerId) {
         // Loop through each column in the row
         for (int j = 0; j < 10; j++)
             // Update the cell in the enemy board based on the value
-            enemyBoard[currentIdToInitialIdLookup[remotePlayerId]][row][j] = (value >> j) & 0x1;
+            enemyBoard[getBoardIndex(remotePlayerId)][row][j] = (value >> j) & 0x1;
         // Set the incoming height to the updated row
         if(!game->lost)
             drawEnemyBoard(row, remotePlayerId);
@@ -226,6 +243,8 @@ void drawEnemyBoard(int height, u8 remotePlayerId) {
         return;
     }
 
+    auto remotePlayerIndex = getBoardIndex(remotePlayerId);
+
     enemyBoardSprite = &obj_buffer[25];
     sprite_set_attr(enemyBoardSprite, ShapeSquare, 3, boardTile, 15, 1);
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
@@ -236,13 +255,20 @@ void drawEnemyBoard(int height, u8 remotePlayerId) {
     if (height > 19)
         return;
 
+    const int margin = 2;
+    const int offsetX = (remotePlayerIndex % 2) * (10 + margin);
+    const int offsetY = (remotePlayerIndex / 2) * (20 + margin);
+
+    const int y = height + offsetY;
+
     for (int j = 0; j < 10; j++) {
-        if (enemyBoard[currentIdToInitialIdLookup[remotePlayerId]][height][j])
-            setSpritePixel(boardTile, j / 8, height/8, 8, j % 8, height % 8,
-                           ((enemyBoard[currentIdToInitialIdLookup[remotePlayerId]][height][j]) + 1 +
-                           savefile->settings.lightMode));
+        const int x = j + offsetX;
+
+        if (enemyBoard[remotePlayerIndex][height][j])
+            setSpritePixel(boardTile, x / 8, y/8, 8, x % 8, y % 8,
+                           ((enemyBoard[remotePlayerIndex][height][j]) + 1 + savefile->settings.lightMode));
         else
-            setSpritePixel(boardTile, j / 8, height/8, 8, j % 8, height % 8, 0);
+            setSpritePixel(boardTile, x / 8, y/8, 8, x % 8, y % 8, 0);
     }
 }
 
@@ -434,7 +460,6 @@ bool GameScene::reconnect(){
         linkConnection->send(START);
     }
 
-    resume_game:
     if(!(game->won || game->lost))
         countdown();
 
