@@ -42,7 +42,7 @@ Game *botGame;
 
 int botIncomingHeight = 0;
 
-const int boardTile = 512 - 32 * 3 - 8;
+const int boardTile = 512 - 32 * 3 - 64;
 
 #define PLAY_AGAIN 1
 #define CHANGE_STATE 2
@@ -227,7 +227,7 @@ void drawEnemyBoard(int height, u8 remotePlayerId) {
     }
 
     enemyBoardSprite = &obj_buffer[25];
-    sprite_set_attr(enemyBoardSprite, ShapeTall, 2, boardTile, 15, 1);
+    sprite_set_attr(enemyBoardSprite, ShapeSquare, 3, boardTile, 15, 1);
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
     sprite_enable_affine(enemyBoardSprite, 6, true);
     sprite_set_pos(enemyBoardSprite, 43, 20);
@@ -238,11 +238,11 @@ void drawEnemyBoard(int height, u8 remotePlayerId) {
 
     for (int j = 0; j < 10; j++) {
         if (enemyBoard[currentIdToInitialIdLookup[remotePlayerId]][height][j])
-            setSpritePixel(boardTile, j / 8, height/8, 2, j % 8, height % 8,
+            setSpritePixel(boardTile, j / 8, height/8, 8, j % 8, height % 8,
                            ((enemyBoard[currentIdToInitialIdLookup[remotePlayerId]][height][j]) + 1 +
                            savefile->settings.lightMode));
         else
-            setSpritePixel(boardTile, j / 8, height/8, 2, j % 8, height % 8, 0);
+            setSpritePixel(boardTile, j / 8, height/8, 8, j % 8, height % 8, 0);
     }
 }
 
