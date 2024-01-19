@@ -14,8 +14,8 @@ void drawEnemyBoard(int, u8);
 u8 enemyBoard[5][20][10];
 u8 currentPlayerId = -1;
 int initialPlayerCount = -1;
-// Current to real
-std::map<u8, u8> playerIdLookup = {
+// Current to initial
+std::map<u8, u8> currentIdToInitialIdLookup = {
     { 0, 0 },
     { 1, 1 },
     { 2, 2 },
@@ -72,10 +72,10 @@ int GameScene::handleMultiplayer(int state) {
             // Get potential new playerId
             linkConnection->sync();
             u8 newPlayerId = linkConnection->currentPlayerId();
-            // Send out new ID if changed
+            // Send out initial ID to map to new if changed
             if (currentPlayerId != newPlayerId) {
-                linkConnection->send(ENCODE(CHANGE_STATE) + newPlayerId);
-                playerIdLookup[newPlayerId] = currentPlayerId;
+                linkConnection->send(ENCODE(CHANGE_STATE) + currentPlayerId);
+                currentIdToInitialIdLookup[newPlayerId] = currentPlayerId;
                 currentPlayerId = newPlayerId;
             }
             return 2;
@@ -158,7 +158,7 @@ void GameScene::ProcessMultiplayerPacket(u16 data, u8 remotePlayerId) {
             game->setWin();
         // Otherwise the value is an old playerId, and we were in a reconnect state, so update
         else
-            playerIdLookup[remotePlayerId] = value;
+            currentIdToInitialIdLookup[remotePlayerId] = value;
     // If the command is between 3 and 7, process the game update
     else if (command >= SEND_ATTACK && command <= 7)
         ProcessGameUpdate(command, value, remotePlayerId);
@@ -188,7 +188,7 @@ void GameScene::UpdateEnemyBoard(int command, int value, u8 remotePlayerId) {
         // Loop through each column in the row
         for (int j = 0; j < 10; j++)
             // Update the cell in the enemy board based on the value
-            enemyBoard[playerIdLookup[remotePlayerId]][row][j] = (value >> j) & 0x1;
+            enemyBoard[currentIdToInitialIdLookup[remotePlayerId]][row][j] = (value >> j) & 0x1;
         // Set the incoming height to the updated row
         if(!game->lost)
             drawEnemyBoard(row, remotePlayerId);
@@ -237,9 +237,10 @@ void drawEnemyBoard(int height, u8 remotePlayerId) {
         return;
 
     for (int j = 0; j < 10; j++) {
-        if (enemyBoard[playerIdLookup[remotePlayerId]][height][j])
+        if (enemyBoard[currentIdToInitialIdLookup[remotePlayerId]][height][j])
             setSpritePixel(boardTile, j / 8, height/8, 2, j % 8, height % 8,
-                           ((enemyBoard[playerIdLookup[remotePlayerId]][height][j]) + 1 + savefile->settings.lightMode));
+                           ((enemyBoard[currentIdToInitialIdLookup[remotePlayerId]][height][j]) + 1 +
+                           savefile->settings.lightMode));
         else
             setSpritePixel(boardTile, j / 8, height/8, 2, j % 8, height % 8, 0);
     }
@@ -410,6 +411,33 @@ bool GameScene::reconnect(){
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 
+    if(linkConnection->currentPlayerId() != 0) {
+        // Inform we're ready
+        linkConnection->send(0xC0DE);
+        // Await signal
+        client_sync:
+        linkConnection->sync();
+        while (linkConnection->canRead(0))
+            if (linkConnection->read(0) == 0xBEEF)
+                goto resume_game;
+        goto client_sync;
+    }
+    else {
+        int playersReady = 1;
+        // Listen to all remotes
+        while (playersReady != initialPlayerCount){
+            linkConnection->sync();
+            for (int remotePlayerId = 1; remotePlayerId < initialPlayerCount; remotePlayerId++) {
+                while (linkConnection->canRead(remotePlayerId))
+                    if (linkConnection->read(remotePlayerId) == 0xC0DE)
+                        playersReady++;
+            }
+        }
+        // We're ready
+        linkConnection->send(0xBEEF);
+    }
+
+    resume_game:
     if(!(game->won || game->lost))
         countdown();
 
