@@ -4,6 +4,11 @@
 #include "sceneModes.hpp"
 #include <cstring>
 
+static int lastPlayerCount = -1;
+static bool sentReady = false;
+#define PLAYER_READY 2
+#define GAME_START 3
+
 void PlayOptionScene::init(){
     loadSpriteTiles(620,&sprite49tiles_bin,1,1);
     for(int i = 0; i < 5; i++){
@@ -621,15 +626,17 @@ void MultBattleScene::update(){
 
     #ifdef GBA
     linkUniversal->sync();
+    // Store state of all player IDs
     u8 currentPlayerId = linkUniversal->currentPlayerId();
-    u8 remotePlayerId = !currentPlayerId;
-    u8 playerCount = linkUniversal->playerCount();
+    u8 currentPlayerCount = linkUniversal->playerCount();
+    if (lastPlayerCount < 0 || currentPlayerCount == 0)
+        lastPlayerCount = currentPlayerCount;
 
-    if (linkUniversal->isConnected() && playerCount == 2) {
+    if (linkUniversal->isConnected()) {
+        // For player 1 to inform other players to start game
         if(multiplayerStart){
             multiplayerStart = false;
-            linkUniversal->send((u16)nextSeed + 100);
-            linkUniversal->waitFor(remotePlayerId);
+            linkUniversal->send(GAME_START);
             startMultiplayerGame(nextSeed);
             gameLoop();
             return;
@@ -637,36 +644,51 @@ void MultBattleScene::update(){
 
         MenuKeys k = savefile->settings.menuKeys;
 
-        u16 msg = 0;
-        if (linkUniversal->canRead(remotePlayerId))
-            msg = linkUniversal->read(remotePlayerId);
-        if (msg == 2) {
-            if (connected < 1) {
-                refreshText = true;
-                clearText();
+        // Poll all remotes for data
+        for (int remotePlayerId = 0; remotePlayerId < currentPlayerCount; remotePlayerId++)
+            while(remotePlayerId != currentPlayerId && linkUniversal->canRead(remotePlayerId)) {
+                u16 msg = linkUniversal->read(remotePlayerId);
+                // Any ready event means we're ready too
+                if (msg == PLAYER_READY) {
+                    if (connected < 1) {
+                        refreshText = true;
+                        clearText();
+                    }
+                    connected = 1;
+                // Messages from player 0 (1st) can start game and set seed
+                } else if (remotePlayerId == 0) {
+                    if (msg > 100)
+                        nextSeed = msg - 100;
+                    else if (msg == GAME_START) {
+                        // For clients (e.g. not player 1) to start games
+                        startMultiplayerGame(nextSeed);
+                        gameLoop();
+                        return;
+                    }
+                }
             }
-            connected = 1;
-        } else if (msg > 100){
-            nextSeed = msg - 100;
-        }
 
+        // At this point we're set up and processed incoming messages, so we wait for the players to be ready
         if (currentPlayerId != 0) {
-            if (nextSeed > 100) {
-                startMultiplayerGame(nextSeed);
-                gameLoop();
-                return;
-            }
             aprint("Waiting", 12, 13);
             aprint("for host...", 12, 14);
         } else {
+            // Inform new players we're all ready and what the seed is
+            if (lastPlayerCount != currentPlayerCount) {
+                lastPlayerCount = currentPlayerCount;
+                linkUniversal->send(PLAYER_READY);
+            }
             aprint("Press Start", 10, 13);
         }
 
+        // Await start signal and otherwise re-transmit ready signal
         if (key_hit(k.pause) && currentPlayerId == 0) {
             nextSeed = (u16)qran() & 0x1fff;
             multiplayerStart = true;
-        } else {
-            linkUniversal->send(2);
+            linkUniversal->send(nextSeed + 100);
+        } else if (!sentReady) {
+            linkUniversal->send(PLAYER_READY);
+            sentReady = true;
         }
 
         aprint("             ", 0, 19);
@@ -674,9 +696,9 @@ void MultBattleScene::update(){
         if (connected > -1) {
             refreshText = true;
             clearText();
-            linkUniversal->activate(); // reset connection
         }
         connected = -1;
+        sentReady = false;
     }
 
     #endif

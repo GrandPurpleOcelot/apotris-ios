@@ -3,7 +3,7 @@
 #include "def.h"
 #include "blockEngine.hpp"
 #ifdef GBA
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
 #endif
 #include <list>
 #include <string>
@@ -75,11 +75,11 @@ class GameScene : public Scene{
         deinit();
     };
 
-    void ProcessGameUpdate(int command, int value);
+    static void ProcessMultiplayerPacket(u16 data, u8 remotePlayerId);
 
-    void ProcessMultiplayerPacket(u16 data);
+    static void ProcessGameUpdate(int command, int value, u8 remotePlayerId);
 
-    void UpdateEnemyBoard(int command, int value) ;
+    static void UpdateEnemyBoard(int command, int value, u8 remotePlayerId);
 
 };
 

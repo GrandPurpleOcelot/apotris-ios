@@ -46,7 +46,7 @@
 #include "LinkCable.hpp"
 #include "LinkWireless.hpp"
 
-#define LINK_UNIVERSAL_MAX_PLAYERS LINK_CABLE_MAX_PLAYERS
+#define LINK_UNIVERSAL_MAX_PLAYERS LINK_WIRELESS_MAX_PLAYERS
 #define LINK_UNIVERSAL_DISCONNECTED LINK_CABLE_DISCONNECTED
 #define LINK_UNIVERSAL_NO_DATA LINK_CABLE_NO_DATA
 #define LINK_UNIVERSAL_MAX_ROOM_NUMBER 32000
@@ -312,7 +312,7 @@ class LinkUniversal {
   volatile bool isEnabled = false;
 
   void receiveCableMessages() {
-    for (u32 i = 0; i < LINK_UNIVERSAL_MAX_PLAYERS; i++) {
+    for (u32 i = 0; i < LINK_CABLE_MAX_PLAYERS; i++) {
       while (linkCable->canRead(i))
         incomingMessages[i].push(linkCable->read(i));
     }
