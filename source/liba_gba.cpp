@@ -414,7 +414,7 @@ void clearTiles(int tileset, int index, int count){
     memset32(&tile_mem[tileset][index],0,8 * count);
 }
 
-IWRAM_CODE void onVBlank() {
+void onVBlank() {
 
     REG_IME = 1;
 
