@@ -12,8 +12,11 @@
 using namespace BlockEngine;
 
 void drawEnemyBoard();
+u8 weightedRandomPlayerSelection();
+u8 getInitialId(u8 realId);
 
 u8 enemyBoard[4][20][10];
+u32 enemyPower[4];
 u8 currentPlayerId = -1;
 int initialPlayerCount = -1;
 // Current to initial
@@ -132,7 +135,8 @@ int GameScene::handleMultiplayer(int state) {
                 // Pop it out of pending attack queue
                 game->attackQueue.pop_front();
                 // Encode and send out attack
-                linkConnection->send((u16) (ENCODE(SEND_ATTACK) + (atck.id << 4) + atck.amount));
+                u8 targetId = getInitialId(weightedRandomPlayerSelection());
+                linkConnection->send((u16) (ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
             } else {
                 // Rotate over the 20 rows
                 if (currentScanHeight < 19)
@@ -159,6 +163,36 @@ int GameScene::handleMultiplayer(int state) {
     return 0;
 }
 
+u8 weightedRandomPlayerSelection() {
+    // Skip 2P mode
+    if (linkConnection->playerCount() == 2)
+        return 0;
+
+    // Calculate the total attack power
+    u32 totalAttackPower = 0;
+    for (int i = 0; i < initialPlayerCount; ++i) {
+        totalAttackPower += enemyPower[i];
+    }
+
+    // Pick randomly if no power
+    if (!totalAttackPower)
+        return qran() % initialPlayerCount;
+
+    // Generate a random number between 0 and totalAttackPower
+    u32 r = qran() % totalAttackPower;
+
+    // Determine which player is selected
+    u32 accumulatedPower = 0;
+    for (int i = 0; i < initialPlayerCount; ++i) {
+        accumulatedPower += enemyPower[i];
+        if (r < accumulatedPower)
+            return i; // Return the player ID
+    }
+
+    // This point should never be reached if the enemyBoard is not empty
+    return -1; // Return an invalid player ID
+}
+
 void GameScene::updateRank() {
     rank = 0;
     for (int playerId = 0; playerId < initialPlayerCount; playerId++)
@@ -166,11 +200,29 @@ void GameScene::updateRank() {
             rank++;
 }
 
-int getBoardIndex(u8 id) {
+int getEnemyIndex(u8 id) {
     auto realId = currentIdToInitialIdLookup[id];
     if(realId > currentPlayerId)
         realId -= 1;
     return realId;
+}
+
+// Never returns own ID
+u8 getInitialId(u8 realId) {
+    std::map<u8, u8> initialIdToCurrentIdLookup;
+    for (const auto& kv : currentIdToInitialIdLookup) {
+        initialIdToCurrentIdLookup[kv.second] = kv.first;
+    }
+    if (realId >= currentPlayerId) {
+        realId += 1;
+    }
+    auto it = initialIdToCurrentIdLookup.find(realId);
+    if (it != initialIdToCurrentIdLookup.end()) {
+        return it->second;
+    } else {
+        // This should never happen
+        return 255;
+    }
 }
 
 // Function to process multiplayer packets
@@ -208,9 +260,13 @@ void GameScene::ProcessMultiplayerPacket(u16 data, u8 remotePlayerId) {
 void GameScene::ProcessGameUpdate(int command, int value, u8 remotePlayerId) {
     // If the command is 3, receive an attack
     if (command == SEND_ATTACK) {
-        int attackValue = (value >> 4) & 0xFF;
-        // Add the attack to the garbage queue
-        game->addToGarbageQueue(attackValue, value & 0xF);
+        int targetId = (value >> 4) & 0xFF;
+        int attackValue = value & 0xF;
+        // Record this attack to judge relative multiplayer rank
+        enemyPower[getEnemyIndex(remotePlayerId)] += attackValue;
+        // Add the attack to the garbage queue if it's for us
+        if (targetId == currentPlayerId)
+            game->addToGarbageQueue(targetId, value & 0xF);
     }
     // If the command is between 5 and 7, update the enemy board
     else
@@ -225,7 +281,7 @@ void GameScene::UpdateEnemyBoard(int command, int value, u8 remotePlayerId) {
     int row = (value >> 10) + baseHeight;
     // If the row is within the board's height
     if (row < 20) {
-        int id = getBoardIndex(remotePlayerId);
+        int id = getEnemyIndex(remotePlayerId);
         // Loop through each column in the row
         for (int j = 0; j < 10; j++)
             // Update the cell in the enemy board based on the value
