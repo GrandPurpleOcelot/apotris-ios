@@ -991,6 +991,8 @@ int onRecord() {
 }
 
 void GameScene::showModeText(){
+    const int width = (savefile->settings.aspectRatio == 0)? 240 : 227;
+
     if(game->gameMode > 0 && game->gameMode <= 13){
         int counter = 1;
         std::string str;
@@ -1001,7 +1003,7 @@ void GameScene::showModeText(){
         if(game->gameMode == TRAINING)
             str = "Training";
 
-        naprintColor(str,30 * 8 - 4 - getVariableWidth(str), counter * 8, 14);
+        naprintColor(str,width - 4 - getVariableWidth(str), counter * 8, 14);
         counter++;
 
         str = "";
@@ -1018,7 +1020,7 @@ void GameScene::showModeText(){
         }
 
         if(str != ""){
-            naprintColor(str,30 * 8 - 4 - getVariableWidth(str), counter * 8, 14);
+            naprintColor(str,width - 4 - getVariableWidth(str), counter * 8, 14);
             counter++;
         }
 
@@ -1040,16 +1042,16 @@ void GameScene::showModeText(){
         }
 
         if(str != ""){
-            naprintColor(str,30 * 8 - 4 - getVariableWidth(str), counter * 8, 14);
+            naprintColor(str,width - 4 - getVariableWidth(str), counter * 8, 14);
             counter++;
         }
         if(str2 != ""){
-            naprintColor(str2,30 * 8 - 4 - getVariableWidth(str2), counter * 8, 14);
+            naprintColor(str2,width - 4 - getVariableWidth(str2), counter * 8, 14);
             counter++;
         }
 
         if(bigMode){
-            naprintColor("BIG",30 * 8 - 4 - getVariableWidth("BIG"), counter * 8, 14);
+            naprintColor("BIG",width - 4 - getVariableWidth("BIG"), counter * 8, 14);
             counter++;
         }
 
@@ -1065,7 +1067,7 @@ void GameScene::showModeText(){
                 default: text = "SRS"; break;
                 }
 
-                naprintColor(text,30 * 8 - 4 - getVariableWidth(text), counter * 8, 14);
+                naprintColor(text,width - 4 - getVariableWidth(text), counter * 8, 14);
                 counter++;
             }
         }
@@ -1080,7 +1082,7 @@ void GameScene::showModeText(){
                 default : text = "RANDOM"; break;
                 }
 
-                naprintColor(text,30 * 8 - 4 - getVariableWidth(text), counter * 8, 14);
+                naprintColor(text,width - 4 - getVariableWidth(text), counter * 8, 14);
                 counter++;
             }
         }
