@@ -78,12 +78,12 @@ void loadAudio(){
     sort(songPaths.begin(),songPaths.end());
 
     for(auto str : songPaths){
-        if (str.find("GAME_") != std::string::npos) {
-            songList.push_back(path + "/" + str);
-            songs.game.push_back(counter++);
-        } else {
+        if (str.find("MENU_") != std::string::npos) {
             songList.push_back(path + "/" + str);
             songs.menu.push_back(counter++);
+        } else {
+            songList.push_back(path + "/" + str);
+            songs.game.push_back(counter++);
         }
     }
 

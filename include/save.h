@@ -253,7 +253,7 @@ public:
 
     ModeBoards boards;
 
-    int placeHolder[1004];
+    int placeHolder[1003];
 
     TotalStats stats;
 
@@ -261,6 +261,7 @@ public:
 
     Skin customSkins[MAX_CUSTOM_SKINS];
 
+    u8 platform;
     char endTag[9] = "SAVE_END";
 }ALIGN(4);
 

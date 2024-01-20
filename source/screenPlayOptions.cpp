@@ -380,7 +380,7 @@ void PlayOptionScene::draw(){
                 labels[i]->show(startX,y,15);
 
                 std::string str = "";
-                if(getIfGrade()){
+                if(getIfGrade() && board->entries[i].value > 0){
                     str += GameInfo::masterGrades[board->entries[i].grade];
                     str += " ";
                 }
@@ -483,7 +483,7 @@ void PlayOptionScene::draw(){
                 #ifdef TE
                 for(int i = 0; i < 2; i++){
                     sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
-                    sprite_set_pos(scrollSideSprites[i], i * (min(scrollTextLength,240) + 16) - 16 - scrollOffset, 152 - 4);
+                    sprite_set_pos(scrollSideSprites[i],240/2 + ((i*2)-1)*(min(scrollTextLength,width)/2) - 16 * (i == 0), 152 - 4);
                 }
                 #endif
             }else{

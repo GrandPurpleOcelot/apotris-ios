@@ -7,6 +7,8 @@
 #include "liba_gba.h"
 #include "tonc.h"
 #include "maxmod.h"
+
+#define PLATFORM 0
 #endif
 
 #ifdef PC
@@ -14,20 +16,23 @@
 #include "liba_pc.h"
 #include "liba_window.h"
 
+#define PLATFORM 1
 #endif
 
 #ifdef MM
 #include "liba_mm.h"
+#define PLATFORM 2
 #endif
 
 #ifdef WEB
 #include "liba_web.h"
+#define PLATFORM 3
 #endif
 
 #ifdef SWITCH
 
 #include "liba_switch.h"
-
+#define PLATFORM 4
 #endif
 
 #define MAX_REPLAY_SIZE 4000

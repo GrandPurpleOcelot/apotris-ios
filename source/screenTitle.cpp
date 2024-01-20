@@ -253,7 +253,7 @@ void TitleScene::init(){
     wordSprites[0].setText("Press Any");
     wordSprites[1].setText("Button");
 
-    versionText.setText("v4.0.0a");
+    versionText.setText("v4.0.0b");
 
     nameText.setText("akouzoukos");
 
@@ -468,6 +468,12 @@ void MainMenuScene::init(){
     aprints(move,1 + offset,18,2);
     aprints(confirm,30 * 8 - confirm.size() * 4 - offset,11,2);
     aprints(cancel,30 * 8 - cancel.size() * 4 - offset,18,2);
+    #endif
+
+    #ifdef GBA
+    if(!rumbleInitialized && savefile->settings.rumble){
+        naprint("Reboot to enable rumble.",4,4);
+    }
     #endif
 }
 

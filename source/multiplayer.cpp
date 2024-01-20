@@ -153,6 +153,9 @@ void startMultiplayerGame(int seed) {
     delete game;
     game = new Game(BATTLE, seed & 0x1fff,false);
 
+    if(previousGameOptions == nullptr)
+        previousGameOptions = new BlockEngine::Options();
+
     game->setOptions(*previousGameOptions);
     game->setLevel(1);
     game->setGoal(100);

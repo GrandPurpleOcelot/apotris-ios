@@ -265,6 +265,10 @@ void reset() {
 
     memset32(current, 0, 22 * 12);
     memset32(previous, 0, 22 * 12);
+
+    #ifdef GBA
+    toggleSpriteSorting(false);
+    #endif
 }
 
 std::string nameInput(int place) {
@@ -774,7 +778,7 @@ void buildMini(TILE * customSkin){
     int add = 0;
     int rs = SRS;
     if(game != nullptr){
-        add = (game->rotationSystem == NRS || game->rotationSystem == ARS);
+        add = (game->rotationSystem == NRS || game->rotationSystem == ARS || game->rotationSystem == BARS);
         rs = game->rotationSystem;
     }
 

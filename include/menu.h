@@ -104,8 +104,10 @@ public:
         if(++timer >= timerMax){
             timer = 0;
 
+            const int maxWidth = ((savefile->settings.aspectRatio)? 214 : 240) + 4;
+
             int counter = count;
-            while((w <= 244+scroll) && counter--){
+            while((w <= (maxWidth)+scroll) && counter--){
                 std::string c = text.substr(cursor,1);
 
                 naprintSpriteOffset(c, startTiles, w);
