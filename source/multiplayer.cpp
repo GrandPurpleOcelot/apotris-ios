@@ -393,7 +393,7 @@ bool GameScene::reconnect(){
 
     std::string exit = "Exit";
 
-    while(!(linkConnection->isConnected() && linkConnection->playerCount() == initialPlayerCount) && closed()){
+    while(linkConnection->playerCount() != initialPlayerCount && closed()){
         vsync();
         key_poll();
 
@@ -459,30 +459,6 @@ bool GameScene::reconnect(){
     clearText();
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
-
-    if(linkConnection->currentPlayerId() != 0) {
-        // Inform we're ready
-        linkConnection->send(READY);
-        // Await signal
-        bool ready = false;
-        while (!ready)
-            while(linkConnection->canRead(0))
-                if (linkConnection->read(0) == START)
-                    ready = true;
-    }
-    else {
-        int playersReady = 1;
-        // Listen to all remotes
-        while (playersReady != initialPlayerCount){
-            linkConnection->sync();
-            for (int remotePlayerId = 1; remotePlayerId < initialPlayerCount; remotePlayerId++)
-                if (linkConnection->canRead(remotePlayerId))
-                    if (linkConnection->read(remotePlayerId) == READY)
-                        playersReady++;
-        }
-        // We're ready
-        linkConnection->send(START);
-    }
 
     if(!(game->won || game->lost))
         countdown();
