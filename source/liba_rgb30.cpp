@@ -43,8 +43,8 @@ SoLoud::Soloud gSoloud;
 
 SoLoud::Wav soundEffects[SFX_COUNT];
 
-int screenWidth = 480;
-int screenHeight = 320;
+int screenWidth = 720;
+int screenHeight = 720;
 float windowScale = 3;
 
 void windowInit(){
@@ -72,6 +72,8 @@ void windowInit(){
     if(SDL_NumJoysticks() > 0){
         controller = SDL_GameControllerOpen(0);
     }
+
+    refreshWindowSize();
 
     gSoloud.init();
     loadAudio();
@@ -239,14 +241,14 @@ void refreshWindowSize(){
         }
     }
 
-    rowStart = (512 - (screenHeight/windowScale))/2;
-    rowEnd = (512 + (screenHeight/windowScale))/2;
+    rowStart = (360 - (screenHeight/windowScale))/2;
+    rowEnd = (360 + (screenHeight/windowScale))/2;
 
     if(rowStart < 0)
         rowStart = 0;
 
-    if(rowEnd > 512)
-        rowEnd = 512;
+    if(rowEnd > 360)
+        rowEnd = 360;
 
     if(savefile != nullptr)
         setGradient(savefile->settings.backgroundGradient);
