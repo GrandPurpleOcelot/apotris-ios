@@ -37,6 +37,8 @@ public:
 };
 
 std::map<u8, u8> playerToBoardIndex;
+std::vector<BoardUpdate> enemyBoardUpdates;
+
 std::map<u8, bool> loseIndex = {
     { 0, false },
     { 1, false },
@@ -44,7 +46,6 @@ std::map<u8, bool> loseIndex = {
     { 3, false },
     { 4, false }
 };
-std::vector<BoardUpdate> enemyBoardUpdates;
 
 OBJ_ATTR* enemyBoardSprite;
 
@@ -63,16 +64,6 @@ const int boardTile = 512 - 32 * 3 - 64;
 #define SEND_ATTACK 3
 #define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
-
-// When a player joins, assign them a board index
-void assignBoardIndex(int remotePlayerId) {
-    for (int i = 0; i < 4; i++) {
-        if (playerToBoardIndex.count(i) == 0) { // If this index is not already assigned
-            playerToBoardIndex[remotePlayerId] = i;
-            break;
-        }
-    }
-}
 
 // returns true if we should terminate the game
 int GameScene::handleMultiplayer(int state) {
@@ -123,8 +114,6 @@ int GameScene::handleMultiplayer(int state) {
         // Skip self
         if (remotePlayerId == currentPlayerId)
             continue;
-        // Assign board index if not assigned
-        assignBoardIndex(remotePlayerId);
 
         // Process remote player's packets
         while (linkConnection->canRead(remotePlayerId))
@@ -177,8 +166,11 @@ void GameScene::updateRank() {
             rank++;
 }
 
-int getBoardIndex(int remotePlayerId) {
-    return playerToBoardIndex[currentIdToInitialIdLookup[remotePlayerId]];
+int getBoardIndex(u8 id) {
+    auto realId = currentIdToInitialIdLookup[id];
+    if(realId > currentPlayerId)
+        realId -= 1;
+    return realId;
 }
 
 // Function to process multiplayer packets
@@ -237,9 +229,9 @@ void GameScene::UpdateEnemyBoard(int command, int value, u8 remotePlayerId) {
         // Loop through each column in the row
         for (int j = 0; j < 10; j++)
             // Update the cell in the enemy board based on the value
-            enemyBoard[remotePlayerId][row][j] = (value >> j) & 0x1;
+            enemyBoard[id][row][j] = (value >> j) & 0x1;
 
-        enemyBoardUpdates.push_back(BoardUpdate(row,remotePlayerId));
+        enemyBoardUpdates.emplace_back(row,id);
     }
 }
 
@@ -473,9 +465,10 @@ bool GameScene::reconnect(){
         linkConnection->send(READY);
         // Await signal
         bool ready = false;
-        while (!ready || linkConnection->canRead(0))
-            if (linkConnection->read(0) == START)
-                ready = true;
+        while (!ready)
+            while(linkConnection->canRead(0))
+                if (linkConnection->read(0) == START)
+                    ready = true;
     }
     else {
         int playersReady = 1;
@@ -483,7 +476,7 @@ bool GameScene::reconnect(){
         while (playersReady != initialPlayerCount){
             linkConnection->sync();
             for (int remotePlayerId = 1; remotePlayerId < initialPlayerCount; remotePlayerId++)
-                while (linkConnection->canRead(remotePlayerId))
+                if (linkConnection->canRead(remotePlayerId))
                     if (linkConnection->read(remotePlayerId) == READY)
                         playersReady++;
         }
