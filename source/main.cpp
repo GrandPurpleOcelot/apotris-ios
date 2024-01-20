@@ -370,7 +370,7 @@ std::string nameInput(int place) {
         aprint(result, 13, nameHeight);
 
         if (!onDone) {
-            #if defined(GBA) || defined(SWITCH)
+            #if defined(GBA) || defined(SWITCH) || defined(RGB)
             if (key_hit(k.confirm) || key_hit(k.right)) {
                 cursor++;
                 if (cursor > 7) {

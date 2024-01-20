@@ -20,11 +20,11 @@ class IntegerScaleElement : public Element{
             savefile->settings.integerScale = !savefile->settings.integerScale;
             sfx(SFX_MENUCONFIRM);
 
-            if(savefile->settings.integerScale){
+            if(savefile->settings.integerScale && savefile->settings.zoom > -1){
                 savefile->settings.zoom = (savefile->settings.zoom / 10) * 10; //round to 10s
             }
 
-            #if defined(PC) || defined(WEB)
+            #if defined(PC) || defined(WEB) || defined(RGB)
             refreshWindowSize();
             #endif
         }
@@ -84,7 +84,7 @@ class ScaleElement : public Element{
                 }
             }
 
-            #if defined(PC) || defined(WEB)
+            #if defined(PC) || defined(WEB) || defined(RGB)
             refreshWindowSize();
             #endif
         }
