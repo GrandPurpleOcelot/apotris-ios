@@ -43,23 +43,40 @@ SoLoud::Soloud gSoloud;
 
 SoLoud::Wav soundEffects[SFX_COUNT];
 
+int screenWidth = 480;
+int screenHeight = 320;
+float windowScale = 3;
+
 void windowInit(){
     // Initialize SDL
 
     window = NULL;
+    // window = SDL_CreateWindow(
+    //     "Apotris PortMaster",
+    //     SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+    //     screenWidth, screenHeight,
+    //     SDL_WINDOW_SHOWN
+    //     );
+
+    // SDL_Init(SDL_INIT_VIDEO);
+    // SDL_DisplayMode DM;
+    // SDL_GetCurrentDisplayMode(0, &DM);
+    // screenWidth = DM.w;
+    // screenHeight = DM.h;
+
     window = SDL_CreateWindow(
-        "Apotris Portmaster",
+        "Apotris PortMaster",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        720, 720,
+        screenWidth, screenHeight,
         SDL_WINDOW_SHOWN
         );
 
     renderer = SDL_CreateRenderer(window, -1, 0);
 
-    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-    if(SDL_NumJoysticks() > 0){
-        controller = SDL_GameControllerOpen(0);
-    }
+    // SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    // if(SDL_NumJoysticks() > 0){
+    //     controller = SDL_GameControllerOpen(0);
+    // }
 
     gSoloud.init();
     loadAudio();
@@ -176,15 +193,17 @@ void updateWindow(uint8_t* framebuffer){
         0xff0000,
         0xff000000
     );
-    // delete [] newBuffer;
 
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
 
     SDL_FreeSurface(img);
 
-    const float factor = 0.5 - (savefile->settings.zoom / 20.0) * 0.25;
+    const int x = (in_width - screenWidth / windowScale) / 2;
+    const int y = (in_height - screenHeight / windowScale) / 2;
+    const int w = screenWidth / windowScale;
+    const int h = screenHeight / windowScale;
 
-    SDL_Rect rect = {(in_width - 720 * factor) / 2, (in_height - 720 * factor) / 2, 720 * factor,  720 * factor};
+    SDL_Rect rect = {x,y,w,h};
 
     SDL_RenderClear(renderer);
 
@@ -206,7 +225,36 @@ void updateWindow(uint8_t* framebuffer){
 }
 
 void refreshWindowSize(){
+    if(savefile != nullptr){
+        if(savefile->settings.zoom > -1){
+            windowScale = 1 + (float) savefile->settings.zoom / 10;
+        }else{
+            if(savefile->settings.integerScale){
+                windowScale = (int)windowScale;
 
+                while (screenHeight / windowScale > 160 * 2) {
+                    windowScale++;
+                }
+                while (windowScale > 1 && screenHeight / windowScale < 160) {
+                    windowScale--;
+                }
+            }else{
+                windowScale = screenHeight / 200.0;
+            }
+        }
+    }
+
+    rowStart = (512 - (screenHeight/windowScale))/2;
+    rowEnd = (512 + (screenHeight/windowScale))/2;
+
+    if(rowStart < 0)
+        rowStart = 0;
+
+    if(rowEnd > 512)
+        rowEnd = 512;
+
+    if(savefile != nullptr)
+        setGradient(savefile->settings.backgroundGradient);
 }
 
 bool closed(){
