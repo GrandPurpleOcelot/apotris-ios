@@ -16,7 +16,7 @@ u8 weightedRandomPlayerSelection();
 u8 getInitialId(u8 realId);
 
 u8 enemyBoard[4][20][10];
-u32 enemyPower[4];
+u32 enemyPower[4] = { 1, 1, 1, 1 };
 u8 currentPlayerId = -1;
 int initialPlayerCount = -1;
 // Current to initial
@@ -106,6 +106,8 @@ int GameScene::handleMultiplayer(int state) {
     if (multiplayerStart) {
         multiplayerStart = false;
         loseIndex = { {0, false}, {1, false}, {2, false}, {3, false}, {4, false} };
+        for (unsigned int & i : enemyPower)
+            i = 1;
         playAgain = true;
         rank = 0;
         linkConnection->send((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
