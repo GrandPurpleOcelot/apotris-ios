@@ -341,7 +341,6 @@ void save_sram_flash()
     interrupt_enable(INTR_TIMER3);
     interrupt_enable(INTR_TIMER2);
     interrupt_enable(INTR_SERIAL);
-    interrupt_set_handler(INTR_KEYPAD, nullptr);
     interrupt_enable(INTR_VBLANK);
 
     if(isLinked)

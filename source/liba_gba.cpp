@@ -16,6 +16,7 @@
 // #include "main.hpp"
 bool unlock_gbp();
 void loadAudio();
+void onKeyInterrupt();
 
 int spriteVOffset = 0;
 
@@ -132,6 +133,9 @@ void platformInit(){
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER3);
     interrupt_enable(INTR_TIMER2);
+    REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
+    interrupt_set_handler(INTR_KEYPAD, onKeyInterrupt);
+    interrupt_enable(INTR_KEYPAD);
     interrupt_set_handler(INTR_VBLANK, onVBlank);
 
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
@@ -342,8 +346,6 @@ void sleep() {
     interrupt_disable(INTR_SERIAL);
 
     REG_P1CNT = 0b1100001100000100;
-    interrupt_set_handler(INTR_KEYPAD, nullptr);
-    // TODO: Also interrupt_enable(INTR_KEYPAD)?
 
     Stop();
 
@@ -358,7 +360,6 @@ void sleep() {
     interrupt_enable(INTR_TIMER3);
     interrupt_enable(INTR_TIMER2);
     interrupt_enable(INTR_SERIAL);
-    interrupt_set_handler(INTR_KEYPAD, nullptr);
     interrupt_enable(INTR_VBLANK);
 
     if(prevGradient)
@@ -413,7 +414,7 @@ void clearTiles(int tileset, int index, int count){
     memset32(&tile_mem[tileset][index],0,8 * count);
 }
 
-void onVBlank(void) {
+IWRAM_CODE void onVBlank() {
 
     REG_IME = 1;
 
@@ -424,7 +425,7 @@ void onVBlank(void) {
     LINK_UNIVERSAL_ISR_VBLANK();
 
     if (canDraw) {
-        canDraw = 0;
+        canDraw = false;
 
         scene->draw();
     }
@@ -641,5 +642,10 @@ void refreshWindowSize(){}
 
 void toggleSpriteSorting(bool state){
     sortSprites = state;
+}
+
+IWRAM_CODE void onKeyInterrupt(){
+    REG_IME = 0;
+    SoftReset();
 }
 #endif
