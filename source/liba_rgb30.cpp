@@ -51,18 +51,13 @@ void windowInit(){
     // Initialize SDL
 
     window = NULL;
-    // window = SDL_CreateWindow(
-    //     "Apotris PortMaster",
-    //     SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-    //     screenWidth, screenHeight,
-    //     SDL_WINDOW_SHOWN
-    //     );
 
-    // SDL_Init(SDL_INIT_VIDEO);
-    // SDL_DisplayMode DM;
-    // SDL_GetCurrentDisplayMode(0, &DM);
-    // screenWidth = DM.w;
-    // screenHeight = DM.h;
+    SDL_Init(SDL_INIT_VIDEO);
+
+    SDL_DisplayMode DM;
+    SDL_GetCurrentDisplayMode(0, &DM);
+    screenWidth = DM.w;
+    screenHeight = DM.h;
 
     window = SDL_CreateWindow(
         "Apotris PortMaster",
@@ -73,10 +68,10 @@ void windowInit(){
 
     renderer = SDL_CreateRenderer(window, -1, 0);
 
-    // SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-    // if(SDL_NumJoysticks() > 0){
-    //     controller = SDL_GameControllerOpen(0);
-    // }
+    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    if(SDL_NumJoysticks() > 0){
+        controller = SDL_GameControllerOpen(0);
+    }
 
     gSoloud.init();
     loadAudio();
