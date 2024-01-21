@@ -213,7 +213,7 @@ int GameScene::endScreen(){
             case 3: str = "4th"; break;
             case 4: str = "5th"; break;
         }
-        aprint(str+" Place", 11, 5);
+        aprint(str+" Place", 10, 5);
     }
 
     MenuKeys k = savefile->settings.menuKeys;
@@ -293,7 +293,7 @@ int GameScene::endScreen(){
 #endif
                 multiplayer = false;
                 changeScene(new MainMenuScene, Transitions::FADE);
-                return 1;
+                return 0;
             } else if (selection == 1){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
@@ -303,7 +303,7 @@ int GameScene::endScreen(){
                 buildBG(3, 0, 27, 0, 1, true);
                 sceneSwitcher(modeToString(previousGameOptions->mode));
                 nextSeed = 0;
-                return 1;
+                return 0;
             }
         }
 
@@ -316,7 +316,7 @@ int GameScene::endScreen(){
         }
 
         if (key_hit(k.down)) {
-            if (selection == 1)
+            if (selection == max-1)
                 selection = 0;
             else
                 selection++;
