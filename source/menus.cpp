@@ -693,7 +693,6 @@ int GameScene::pauseMenu(){
                     sfx(SFX_MENUCONFIRM);
                     clearText();
                     paused = false;
-                    resumeSong();
                     break;
                 } else if (n == 1) {
                     addGameStats();
