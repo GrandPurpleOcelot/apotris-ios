@@ -55,6 +55,7 @@ std::vector<std::string> songList;
 
 int screenWidth = 720;
 int screenHeight = 720;
+
 float windowScale = 3;
 int currentSong = -1;
 int sfxVolume = 1024;
