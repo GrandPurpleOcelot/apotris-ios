@@ -27,7 +27,7 @@ BUILD := build/$(PLATFORM)
 
 # Library search directories and flags
 EXT_LIB := external/Tilengine/src/build/$(PLATFORM) external/soloud/lib/$(PLATFORM)
-LDLIBS  := -lTilengine -lsoloud -lSDL2 -lSDL2_mixer -pthread
+LDLIBS  := -lTilengine -lsoloud -lSDL2 -lSDL2_mixer -pthread -ldl
 LDFLAGS := $(addprefix -L,$(BIN)/$(LIB) $(EXT_LIB)) $(LDFLAGS)
 
 # Include directories
