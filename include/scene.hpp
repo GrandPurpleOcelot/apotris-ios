@@ -1,7 +1,10 @@
 #pragma once
 
 #include "def.h"
-#include "blockEngine.h"
+#include "blockEngine.hpp"
+#ifdef GBA
+#include "LinkConnection.h"
+#endif
 #include <list>
 #include <string>
 #include <tuple>

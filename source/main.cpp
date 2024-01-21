@@ -2,10 +2,12 @@
 
 #include "def.h"
 #include "platform.hpp"
-#include "blockEngine.h"
+#include "blockEngine.hpp"
 #include "sprites.h"
 
+#ifdef GBA
 #include "LinkConnection.h"
+#endif
 
 #include "logging.h"
 

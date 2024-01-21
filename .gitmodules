@@ -1,7 +1,10 @@
 [submodule "tilengine"]
-	path = external/Tilengine
+	path = subprojects/Tilengine
 	url = https://github.com/akouzoukos/tilengine/
 	branch = static
 [submodule "soloud"]
 	path = external/soloud
 	url = https://github.com/akouzoukos/soloud
+[submodule "subprojects/libmodplug"]
+	path = subprojects/libmodplug
+	url = https://github.com/Konstanty/libmodplug.git

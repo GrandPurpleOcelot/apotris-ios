@@ -5,7 +5,7 @@
 #include <math.h>
 
 #include "tetromino.hpp"
-#include "blockEngine.h"
+#include "blockEngine.hpp"
 #include "logging.h"
 #include "posprintf.h"
 

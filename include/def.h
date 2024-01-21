@@ -1,7 +1,7 @@
 #pragma once
 
 #include "platform.hpp"
-#include "blockEngine.h"
+#include "blockEngine.hpp"
 #include "text.h"
 #include "menu.h"
 #include "save.h"
