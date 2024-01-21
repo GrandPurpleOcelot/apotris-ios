@@ -421,20 +421,18 @@ void saveSavefile(){
 }
 
 std::map<int,std::string> keyToString = {
-{0,"A"},
-{1,"B"},
-{2,"X"},
-{3,"Y"},
-{6,"L"},
-{7,"R"},
-{8,"SL"},
-{9,"SR"},
-{10,"+"},
-{11,"-"},
-{12,"Left"},
-{13,"Up"},
-{14,"Right"},
-{15,"Down"},
+{SDL_CONTROLLER_BUTTON_A,"A"},
+{SDL_CONTROLLER_BUTTON_B,"B"},
+{SDL_CONTROLLER_BUTTON_X,"X"},
+{SDL_CONTROLLER_BUTTON_Y,"Y"},
+{SDL_CONTROLLER_BUTTON_BACK,"Select"},
+{SDL_CONTROLLER_BUTTON_START,"Start"},
+{SDL_CONTROLLER_BUTTON_DPAD_LEFT,"Left"},
+{SDL_CONTROLLER_BUTTON_DPAD_UP,"Up"},
+{SDL_CONTROLLER_BUTTON_DPAD_RIGHT,"Right"},
+{SDL_CONTROLLER_BUTTON_DPAD_DOWN,"Down"},
+{SDL_CONTROLLER_BUTTON_LEFTSHOULDER,"L"},
+{SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,"R"},
 };
 
 void quit(){

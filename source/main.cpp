@@ -1110,7 +1110,7 @@ std::string getStringFromKey(int key){
     if(k >= 0 && k < sf::Keyboard::KeyCount)
         return keyToString[k];
 
-    #elif defined(SWITCH) || defined(MM)
+    #elif defined(SWITCH) || defined(MM) || defined(RGB)
 
     return keyToString[key];
 
