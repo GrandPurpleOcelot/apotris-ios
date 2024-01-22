@@ -293,11 +293,11 @@ if host_machine.system() != 'gba'
     subdir('assets')
 
     cmake_options = cmake.subproject_options()
-    cmake_options.add_cmake_defines({'BUILD_SHARED_LIBS': 'ON'})
-    modplug = cmake.subproject('libmodplug', options: cmake_options)
+    cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'ON' })
+    modplug = cmake.subproject('libmodplug', options : cmake_options)
 
-    tilengine = subproject('Tilengine', default_options: ['default_library=static'])
-    sfml = subproject('sfml', default_options: ['default_library=static'])
+    tilengine = subproject('Tilengine', default_options : ['default_library=static'])
+    sfml = subproject('sfml', default_options : ['default_library=static'])
 
     dependencies = [
         modplug.dependency('modplug'),
@@ -319,25 +319,25 @@ if host_machine.system() != 'gba'
         output_h = '@0@_bin.h'.format(fs.name(filename))
 
         if host_machine.system() == 'darwin'
-        output_s = '@0@_bin.s'.format(fs.name(filename))
-        bin2s_target = custom_target(
-            'bin2s_' + fs.name(binfile),
-            output : [output_s, output_h],
-            command : [
-                call_bin2s, bin2s, binfile, output_h, output_s, 'apple'
-            ],
-            depend_files : binfile,
-        )
+            output_s = '@0@_bin.s'.format(fs.name(filename))
+            bin2s_target = custom_target(
+                'bin2s_' + fs.name(binfile),
+                output : [output_s, output_h],
+                command : [
+                    call_bin2s, bin2s, binfile, output_h, output_s, 'apple'
+                ],
+                depend_files : binfile,
+            )
         else
-        output_cpp = '@0@_bin.cpp'.format(fs.name(filename))
-        bin2s_target = custom_target(
-            'bin2s_' + fs.name(binfile),
-            output : [output_cpp, output_h],
-            command : [
-                call_bin2s, bin2s, binfile, output_h, output_cpp
-            ],
-            depend_files : binfile,
-        )
+            output_cpp = '@0@_bin.cpp'.format(fs.name(filename))
+            bin2s_target = custom_target(
+                'bin2s_' + fs.name(binfile),
+                output : [output_cpp, output_h],
+                command : [
+                    call_bin2s, bin2s, binfile, output_h, output_cpp
+                ],
+                depend_files : binfile,
+            )
         endif
         generated_files += bin2s_target
 
@@ -345,7 +345,7 @@ if host_machine.system() != 'gba'
 
     link_args = []
     if host_machine.system() == 'windows'
-      link_args += '-mwindows'
+        link_args += '-mwindows'
     endif
     binary = executable(
         name,
@@ -354,7 +354,7 @@ if host_machine.system() != 'gba'
         dependencies : dependencies,
         link_args : link_args,
     )
-# Platform-specific configuration for AdvancedGameBoy
+    # Platform-specific configuration for AdvancedGameBoy
 else
     # Set up recommended compiler and linker flags.
     subdir('meson/toolchain')
