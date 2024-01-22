@@ -18,7 +18,7 @@
 #include <algorithm>
 
 // #include "soundbank.h"
-#include "blockEngine.h"
+#include "blockEngine.hpp"
 #include "skinEditor.hpp"
 
 void generateTiles();

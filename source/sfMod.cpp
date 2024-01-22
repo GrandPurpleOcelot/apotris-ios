@@ -33,7 +33,7 @@
 #ifdef PC
 
 #include "sfMod.h"
-#include "libmodplug/modplug.h"
+#include "modplug.h"
 
 #include <fstream>
 

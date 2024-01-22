@@ -1,6 +1,6 @@
 #pragma once
 #include "platform.hpp"
-#include "blockEngine.h"
+#include "blockEngine.hpp"
 
 typedef struct Highscore{
     char name[9];

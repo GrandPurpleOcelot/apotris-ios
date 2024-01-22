@@ -1,0 +1,7 @@
+#!/bin/bash
+
+GBAFIX=$1
+TARGET_OUT=$2
+
+$GBAFIX ${TARGET_OUT} -t"DRILL DOZER" -cV49E -m01 -r00
+
