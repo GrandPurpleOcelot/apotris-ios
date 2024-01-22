@@ -63,9 +63,6 @@ following command:
 ```sh
 # Fetch remote dependencies
 meson subprojects download
-git submodule update --init --recursive
-# This meson.build is found on the discord and will be included in the final merge
-vim subprojects/Tilengine/meson.build
 
 # Native build
 meson setup build
