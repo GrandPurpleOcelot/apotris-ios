@@ -209,7 +209,7 @@ class Element{
         virtual std::string getLabel(){return "";};
         virtual std::string getCursor(std::string text){return "";};
         virtual void action(int dir){};
-        virtual void action(){};
+        virtual bool action(){return false;};
         virtual int getValue(){return 0;};
         virtual std::string getCurrentOption(){return "";};
 

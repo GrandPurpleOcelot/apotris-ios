@@ -412,19 +412,22 @@ void toggleRendering(bool state){
 }
 
 void resize(int width, int height){
-    if(savefile != nullptr && savefile->settings.integerScale != 1){
+    if(savefile != nullptr){
+        if(savefile->settings.zoom > -1){
+            windowScale = 1 + (float) savefile->settings.zoom / 10;
+        }else{
+            if(savefile->settings.integerScale){
+                windowScale = (int)windowScale;
 
-        float zoom = ((float) max(savefile->settings.zoom,10) / 20);
-
-        windowScale = ((float) height / 160) * zoom;
-    }else{
-        windowScale = (int) windowScale;
-
-        while(height / windowScale > 160 * 2){
-            windowScale++;
-        }
-        while(windowScale > 1 && height / windowScale < 160){
-            windowScale--;
+                while (height / windowScale > 160 * 2) {
+                    windowScale++;
+                }
+                while (windowScale > 1 && height / windowScale < 160) {
+                    windowScale--;
+                }
+            }else{
+                windowScale = height / 200.0;
+            }
         }
     }
 
@@ -435,6 +438,12 @@ void resize(int width, int height){
 
     rowStart = (512 - (height/windowScale))/2;
     rowEnd = (512 + (height/windowScale))/2;
+
+    if(rowStart < 0)
+        rowStart = 0;
+
+    if(rowEnd > 512)
+        rowEnd = 512;
 
     if(savefile != nullptr)
         setGradient(savefile->settings.backgroundGradient);

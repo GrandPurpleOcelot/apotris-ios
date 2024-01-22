@@ -315,7 +315,7 @@ std::string nameInput(int place) {
         aprint(result, 13, nameHeight);
 
         if (!onDone) {
-            #if defined(GBA) || defined(SWITCH)
+            #if defined(GBA) || defined(SWITCH) || defined(RGB)
             if (key_hit(k.confirm) || key_hit(k.right)) {
                 cursor++;
                 if (cursor > 7) {
@@ -799,7 +799,7 @@ void buildMini(TILE * customSkin){
             }
         }
 
-        delete p;
+        delete []p;
     }
 }
 
@@ -1059,7 +1059,7 @@ std::string getStringFromKey(int key){
     if(k >= 0 && k < sf::Keyboard::KeyCount)
         return keyToString[k];
 
-    #elif defined(SWITCH) || defined(MM)
+    #elif defined(SWITCH) || defined(MM) || defined(RGB)
 
     return keyToString[key];
 

@@ -1,9 +1,10 @@
 #include "sceneAudio.hpp"
 #include "logging.h"
 
-void SongListElement::action(){
+bool SongListElement::action(){
     sfx(SFX_MENUCONFIRM);
     changeScene(new SongListScene(), Transitions::FADE);
+    return true;
 }
 
 void SongElement::select(){
@@ -26,7 +27,8 @@ void SongListScene::init(){
 
 bool SongListScene::control(){
     int previous = selection;
-    OptionListScene::control();
+    if(OptionListScene::control())
+        return true;
 
     if(selection != previous){
         auto it = elementList.begin();

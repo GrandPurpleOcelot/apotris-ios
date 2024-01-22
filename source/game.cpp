@@ -1041,6 +1041,13 @@ bool GameScene::control() {
 
     if(replaying && key_hit(KEY_FULL)){
         exitGame = true;
+
+        for(auto & item:currentReplay)
+            delete item;
+        currentReplay.clear();
+
+        delete currentReplayHeader;
+
         return true;
     }
 
@@ -1471,7 +1478,7 @@ void addGlow(BlockEngine::Drop location) {
         if (game->previousClear.isBackToBack == 1)
             effectList.push_back(Effect(1 + (game->previousClear.isTSpin != 0), xCenter, location.endY));
 
-        for (int i = location.startY; i < location.endY && i < 20; i++)
+        for (int i = max(location.startY,0); i < location.endY && i < 20; i++)
             memset32(&current[i+1][1],2048,10);
 
         damp = 4;
@@ -1479,7 +1486,7 @@ void addGlow(BlockEngine::Drop location) {
         dampTimer = dampTimerMax;
 
     }else{
-        for (int i = location.startY; i < location.endY && i < 20; i++)
+        for (int i = max(location.startY,0); i < location.endY && i < 20; i++)
             for (int j = location.startX; j < location.endX; j++)
                 current[i+1][j+1] = 1024;
     }
@@ -3406,7 +3413,7 @@ void showSpawn(){
         }
     }
 
-    delete b;
+    delete []b;
 
     if(!game->pawn.big){
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);

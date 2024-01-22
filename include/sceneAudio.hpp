@@ -214,7 +214,7 @@ class SongListElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override;
+        bool action() override;
 
         std::string getCurrentOption() override {
             return "...";

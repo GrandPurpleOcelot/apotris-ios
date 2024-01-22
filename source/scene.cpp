@@ -693,7 +693,8 @@ bool OptionListScene::control(){
 
         refreshText = true;
 
-        (*it)->action();
+        if((*it)->action())
+            return true;
 
         refreshOption = true;
     }

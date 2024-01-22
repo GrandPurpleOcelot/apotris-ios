@@ -1234,8 +1234,8 @@ int Game::clear(Drop drop) {
         statTracker.maxStreak = b2bCounter;
 
     //add combo bonus
-    add += scoring[16][0] * level * combo;
-    attack += comboTable[combo];
+    add += scoring[16][0] * level * comboCounter;
+    attack += comboTable[comboCounter];
 
     if (isPerfectClear && gameMode != CLASSIC && clearCount <= 4){
         if(gameMode != BLITZ)

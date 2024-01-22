@@ -394,9 +394,11 @@ void GradientEditorScene::deinit(){
         delete wordSprites[i];
 }
 
-void GradientElement::action(){
+bool GradientElement::action(){
     sfx(SFX_MENUCONFIRM);
     changeScene(new GradientEditorScene(),Transitions::FADE);
+
+    return true;
 }
 
 void GraphicsScene::init(){
@@ -787,19 +789,6 @@ void GraphicsScene::update(){
 }
 
 bool GraphicsScene::control(){
-    // if(key_hit(KEY_A)){
-    //     sfx(SFX_MENUCONFIRM);
-    //     if(selection < options - 1)
-    //         selection++;
-    //     // auto it = optionList.begin();
-    //     // std::advance(it,selection);
-
-    //     // sceneSwitcher(*it);
-
-    //     // previousElement = "";
-    //     return true;
-    // }
-
     MenuKeys k = savefile->settings.menuKeys;
 
     if(key_hit(k.cancel)){
@@ -838,7 +827,8 @@ bool GraphicsScene::control(){
         auto it = elementList.begin();
         std::advance(it,selection);
 
-        (*it)->action();
+        if((*it)->action())
+            return true;
 
         refreshText = true;
         refreshGame = true;

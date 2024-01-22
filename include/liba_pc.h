@@ -26,6 +26,11 @@
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 180
 
+#elif defined(RGB)
+
+#define SCREEN_WIDTH 360
+#define SCREEN_HEIGHT 360
+
 #else
 
 #define SCREEN_WIDTH 512

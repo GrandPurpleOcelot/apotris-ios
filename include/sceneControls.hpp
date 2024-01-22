@@ -130,13 +130,14 @@ class ResetControlsElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override{
+        bool action() override{
             MenuKeys temp = menuKeys;
             setDefaultKeys();
             menuKeys = savefile->settings.menuKeys;
             savefile->settings.menuKeys = temp;
 
             sfx(SFX_MENUCONFIRM);
+            return false;
         }
 
         std::string getCurrentOption() override {
@@ -164,7 +165,7 @@ class RebindElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override{
+        bool action() override{
             std::list<int> foundKeys;
 
             reading = true;
@@ -280,6 +281,8 @@ class RebindElement : public Element{
             }
 
             reading = false;
+
+            return false;
         }
 
         std::string getCurrentOption() override {
@@ -340,7 +343,7 @@ class ControlOptionScene : public OptionListScene{
         for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
             list.push_back(new RebindElement((int *) &savefile->settings.keys,1,counter++,*it,9));
 
-        #if defined(GBA)
+        #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(RGB)
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
         list.push_back(new RumbleElement());
