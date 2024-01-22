@@ -27,6 +27,8 @@ void showModeText();
 void qrScene();
 
 void saveReplay();
+void deleteReplay();
+
 void sleepMenu();
 
 int mode = 0;
@@ -155,8 +157,15 @@ int GameScene::endScreen(){
 
     if(!replaying)
         saveReplay();
-    else
+    else{
+        delete currentReplayHeader;
+
+        for(auto & item:currentReplay)
+            delete item;
+        currentReplay.clear();
+
         replaying = false;
+    }
 
     const int optionsHeight = 11;
 
@@ -237,8 +246,6 @@ int GameScene::endScreen(){
             showQueue();
             showSprites(128);
             clearTilemap(27);
-            // countdown();
-            // updateText();
             break;
         }
 
@@ -1118,17 +1125,20 @@ void saveReplay(){
     #endif
 }
 
-ReplayHeader *curRepHeader = nullptr;
+ReplayHeader *currentReplayHeader = nullptr;
 std::list<Timestamp*> currentReplay;
 
 void loadReplay(){
+    for(auto & item:currentReplay)
+        delete item;
+
     currentReplay.clear();
 
     if(test != nullptr){
-        if(curRepHeader == nullptr)
-            curRepHeader = new ReplayHeader();
+        if(currentReplayHeader == nullptr)
+            currentReplayHeader = new ReplayHeader();
 
-        memcpy32(curRepHeader,&test->header,sizeof(ReplayHeader) / 4);
+        memcpy32(currentReplayHeader,&test->header,sizeof(ReplayHeader) / 4);
 
         for(int i = 0; i < (int)test->header.length; i++){
             currentReplay.push_back(new Timestamp(test->moves[i]));
@@ -1136,7 +1146,7 @@ void loadReplay(){
 
         replaying = true;
         replayIterator = currentReplay.begin();
-        startGame(curRepHeader->options, curRepHeader->seed);
+        startGame(currentReplayHeader->options, currentReplayHeader->seed);
 
         gameLoop();
         return;
@@ -1180,16 +1190,16 @@ void loadReplay(){
     }
     log("Loaded moves.");
 
-    if(curRepHeader == nullptr)
-        curRepHeader = new ReplayHeader();
+    if(currentReplayHeader == nullptr)
+        currentReplayHeader = new ReplayHeader();
 
-    memcpy32(curRepHeader,&rep.header,sizeof(ReplayHeader) / 4);
+    memcpy32(currentReplayHeader,&rep.header,sizeof(ReplayHeader) / 4);
 
     replaying = true;
     replayIterator = currentReplay.begin();
 
     log("trying to start game...");
-    startGame(curRepHeader->options,curRepHeader->seed);
+    startGame(currentReplayHeader->options,currentReplayHeader->seed);
 
     gameLoop();
 
@@ -1321,4 +1331,8 @@ void addGameStats(){
     if(game->gameMode == ZEN){
         savefile->boards.zen = game->score;
     }
+}
+
+void deleteReplay(){
+
 }

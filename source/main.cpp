@@ -851,7 +851,7 @@ void buildMini(TILE * customSkin){
             }
         }
 
-        delete p;
+        delete []p;
     }
 }
 

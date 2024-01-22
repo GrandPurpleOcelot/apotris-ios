@@ -314,6 +314,8 @@ extern MenuKeys menuKeys;
 
 extern int framesSinceLastSave;
 
+extern ReplayHeader *currentReplayHeader;
+
 class Function{
     private:
 

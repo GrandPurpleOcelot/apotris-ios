@@ -65,7 +65,7 @@ class GradientElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override;
+        bool action() override;
 
         std::string getCurrentOption() override {
             return "...";
@@ -720,7 +720,7 @@ class RandomGraphicsElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override{
+        bool action() override{
             setRandomGraphics(savefile);
             setSkin();
             setPalette();
@@ -728,6 +728,8 @@ class RandomGraphicsElement : public Element{
             setClearEffect();
 
             sfx(SFX_MENUCONFIRM);
+
+            return false;
         }
 
         std::string getCurrentOption() override {
@@ -745,7 +747,7 @@ class ResetGraphicsElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override{
+        bool action() override{
             setDefaultGraphics(savefile, 0);
             setSkin();
             setPalette();
@@ -753,6 +755,8 @@ class ResetGraphicsElement : public Element{
             setClearEffect();
 
             sfx(SFX_MENUCONFIRM);
+
+            return false;
         }
 
         std::string getCurrentOption() override {

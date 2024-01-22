@@ -130,13 +130,14 @@ class ResetControlsElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override{
+        bool action() override{
             MenuKeys temp = menuKeys;
             setDefaultKeys();
             menuKeys = savefile->settings.menuKeys;
             savefile->settings.menuKeys = temp;
 
             sfx(SFX_MENUCONFIRM);
+            return false;
         }
 
         std::string getCurrentOption() override {
@@ -164,7 +165,7 @@ class RebindElement : public Element{
             return "[" + text + "]";
         }
 
-        void action() override{
+        bool action() override{
             std::list<int> foundKeys;
 
             reading = true;
@@ -280,6 +281,8 @@ class RebindElement : public Element{
             }
 
             reading = false;
+
+            return false;
         }
 
         std::string getCurrentOption() override {

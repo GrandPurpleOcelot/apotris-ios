@@ -523,8 +523,6 @@ void PlayOptionScene::draw(){
 }
 
 void PlayOptionScene::update(){
-    OptionListScene::update();
-
     if(movingScore > 0){
         if(++movingScoreTimer >= movingScoreTimerMax){
             if(++listStart >= options - 1){
@@ -538,6 +536,8 @@ void PlayOptionScene::update(){
             }
         }
     }
+
+    OptionListScene::update();
 }
 
 void PlayOptionScene::setOptions(){
