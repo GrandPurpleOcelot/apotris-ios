@@ -17,16 +17,9 @@ u8 getInitialId(u8 realId);
 
 u8 enemyBoard[4][20][10];
 u32 enemyPower[4] = { 1, 1, 1, 1 };
+u32 ownPower = 1;
 u8 currentPlayerId = -1;
 int initialPlayerCount = -1;
-// Current to initial
-std::map<u8, u8> currentIdToInitialIdLookup = {
-    { 0, 0 },
-    { 1, 1 },
-    { 2, 2 },
-    { 3, 3 },
-    { 4, 4 }
-};
 
 class BoardUpdate{
 public:
@@ -39,7 +32,6 @@ public:
     }
 };
 
-std::map<u8, u8> playerToBoardIndex;
 std::vector<BoardUpdate> enemyBoardUpdates;
 
 std::map<u8, bool> loseIndex = {
@@ -84,7 +76,7 @@ int GameScene::handleMultiplayer(int state) {
         initialPlayerCount = currentPlayerCount;
 
     // Exit early for a later update if bad state (e.g. some player disconnects)
-    if (currentPlayerCount < initialPlayerCount) {
+    if (!linkConnection->isConnected() || currentPlayerCount < initialPlayerCount) {
         // If reconnect returns false, we got a connection back with all players
         if (!reconnect()) {
             // Get potential new playerId
@@ -92,8 +84,7 @@ int GameScene::handleMultiplayer(int state) {
             u8 newPlayerId = linkConnection->currentPlayerId();
             // Send out initial ID to map to new if changed
             if (currentPlayerId != newPlayerId) {
-                linkConnection->send(ENCODE(CHANGE_STATE) + currentPlayerId);
-                currentIdToInitialIdLookup[newPlayerId] = currentPlayerId;
+                linkConnection->send(ENCODE(CHANGE_STATE) + ownPower);
                 currentPlayerId = newPlayerId;
             }
             return 2;
@@ -110,6 +101,7 @@ int GameScene::handleMultiplayer(int state) {
             i = 1;
         playAgain = true;
         rank = 0;
+        ownPower = 1;
         linkConnection->send((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
         return 0;
     }
@@ -139,6 +131,7 @@ int GameScene::handleMultiplayer(int state) {
                 // Encode and send out attack
                 u8 targetId = getInitialId(weightedRandomPlayerSelection());
                 linkConnection->send((u16) (ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
+                ownPower += atck.amount;
             } else {
                 // Rotate over the 20 rows
                 if (currentScanHeight < 19)
@@ -205,28 +198,17 @@ void GameScene::updateRank() {
 }
 
 int getEnemyIndex(u8 id) {
-    auto realId = currentIdToInitialIdLookup[id];
-    if(realId > currentPlayerId)
-        realId -= 1;
-    return realId;
+    if(id > currentPlayerId)
+        id -= 1;
+    return id;
 }
 
 // Never returns own ID
 u8 getInitialId(u8 realId) {
-    std::map<u8, u8> initialIdToCurrentIdLookup;
-    for (const auto& kv : currentIdToInitialIdLookup) {
-        initialIdToCurrentIdLookup[kv.second] = kv.first;
-    }
     if (realId >= currentPlayerId) {
         realId += 1;
     }
-    auto it = initialIdToCurrentIdLookup.find(realId);
-    if (it != initialIdToCurrentIdLookup.end()) {
-        return it->second;
-    } else {
-        // This should never happen
-        return 255;
-    }
+    return realId;
 }
 
 // Function to process multiplayer packets
@@ -245,16 +227,16 @@ void GameScene::ProcessMultiplayerPacket(u16 data, u8 remotePlayerId) {
     else if (command == CHANGE_STATE)
         // If the value is 0x123, an opponent has lost
         if (value == 0x123) {
-            loseIndex[currentIdToInitialIdLookup[remotePlayerId]] = true;
+            loseIndex[getEnemyIndex(remotePlayerId)] = true;
             if (game->lost)
                 return;
             updateRank();
             if(rank == 1)
                 game->setWin();
         }
-        // Otherwise the value is an old playerId, and we were in a reconnect state, so update
+        // Otherwise the value is player power level, and we were in a reconnect state, so update
         else
-            currentIdToInitialIdLookup[remotePlayerId] = value;
+            enemyPower[getEnemyIndex(remotePlayerId)] = value;
     // If the command is between 3 and 7, process the game update
     else if (command >= SEND_ATTACK && command <= 7)
         ProcessGameUpdate(command, value, remotePlayerId);

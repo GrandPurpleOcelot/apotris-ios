@@ -585,6 +585,7 @@ void MultBattleScene::draw(){
         aprint("connection...", 11, 11);
     } else {
         clearText();
+        refreshText = true;
         aprint("Connected!", 10, 6);
     }
 

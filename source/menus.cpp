@@ -416,8 +416,8 @@ void showScore(){
         if (game->lost) {
             aprint("YOU LOSE", 11, 3);
             if (rank) {
-                aprint("Placed ", 11, 4);
-                aprint(std::to_string(rank), 18, 4);
+                aprint("Placed ", 10, 4);
+                aprint(std::to_string(rank), 16, 4);
                 std::string suffix;
                 switch (rank) {
                     case 1:
