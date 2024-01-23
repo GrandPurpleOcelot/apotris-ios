@@ -281,7 +281,8 @@ binary_files = files(
 if host_machine.system() == 'gba'
     # Set up recommended compiler and linker flags.
     subdir('meson/toolchain')
-    add_global_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language : 'cpp')
+    add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language : 'cpp')
+    add_project_arguments('-DLINK_WIRELESS_USE_SEND_RECEIVE_LATCH=1', language : 'cpp')
 endif
 
 
