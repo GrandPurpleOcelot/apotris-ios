@@ -106,7 +106,7 @@ int GameScene::handleMultiplayer(int state) {
     if (multiplayerStart) {
         multiplayerStart = false;
         loseIndex = { {0, false}, {1, false}, {2, false}, {3, false}, {4, false} };
-        for (unsigned int & i : enemyPower)
+        for (auto & i : enemyPower)
             i = 1;
         playAgain = true;
         rank = 0;
