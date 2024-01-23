@@ -129,6 +129,7 @@ void platformInit(){
         flash_init();
 
     interrupt_init();
+    REG_DISPSTAT |= (1 << 3);
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER3);
@@ -415,11 +416,8 @@ void clearTiles(int tileset, int index, int count){
 }
 
 IWRAM_CODE void onVBlank() {
-    const bool cabled = linkUniversal->getMode() == LinkUniversal::LINK_CABLE;
 
     mmVBlank();
-    if (cabled)
-        REG_IME = 1;
     LINK_UNIVERSAL_ISR_VBLANK();
 
     if(gradientEnabled)
@@ -434,8 +432,6 @@ IWRAM_CODE void onVBlank() {
 
     frameCounter++;
     mmFrame();
-    if (cabled)
-        REG_IME = 0;
 }
 
 void sprite_enable_affine(OBJ_ATTR * sprite,int affineId, bool doubleSize){

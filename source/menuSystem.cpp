@@ -213,7 +213,6 @@ std::string modeToString(BlockEngine::Modes mode){
 }
 
 void WordSprite::setText(std::string _text){
-    const std::lock_guard<std::mutex> lock(text_mutex);
     if (_text == text)
         return;
 
@@ -232,7 +231,6 @@ void WordSprite::setText(std::string _text){
 }
 
 void WordSprite::setTextNum(int n){
-    const std::lock_guard<std::mutex> lock(text_mutex);
     char buff[64];
     posprintf(buff, "%d",n);
 

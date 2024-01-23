@@ -3,7 +3,7 @@ project('Apotris',
         version : '4.0.0',
         license : 'GPL3',
         meson_version : '>=0.60.0',
-        default_options : ['buildtype=minsize', 'cpp_std=c++17', 'default_library=static'])
+        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static'])
 
 
 # The name of your project.
@@ -386,9 +386,17 @@ else
         rt_dep = dependency('minrt')
     endif
 
+    # Figure out a suitable runtime library. Pick devkitARM if possible.
+    dka_rt = dependency('dka-rom-rt', required: false)
+    if dka_rt.found()
+        rt_dep = dka_rt
+    else
+        rt_dep = dependency('minrt')
+    endif
+
     dependencies = [
         rt_dep,
-        dependency('libugba'),
+        dependency('libseven'),
         dependency('libtonc'),
         dependency('posprintf'),
         dependency('gbfs'),
@@ -444,6 +452,7 @@ else
     elf = executable(
         name,
         sources + generated_files,
+        link_args : link_args,
         include_directories : includes,
         dependencies : dependencies,
         link_args : link_args,
@@ -466,7 +475,7 @@ else
         'patched ROM for Analogue Pocket rumble support',
         output : name + '-pocket.gba',
         input : rom,
-        command : [pocket_patch, gbafix, '@INPUT@'],
+        command : [pocket_patch, gbafix, '@INPUT@', '@OUTPUT@'],
         build_by_default : false)
 
 endif
