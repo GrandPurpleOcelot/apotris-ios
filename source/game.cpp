@@ -3051,7 +3051,7 @@ void GameScene::init(){
 
     if(game->gameMode == MASTER || game->gameMode == DEATH){
         maxClearTimer = game->maxClearDelay;
-    }else if(proMode && game->rotationSystem == SRS){
+    }else if(proMode && game->gameMode != CLASSIC){
         maxClearTimer = 1;
         game->maxClearDelay = 1;
     }else{
