@@ -451,7 +451,7 @@ bool GameScene::reconnect(){
 
     std::string exit = "Exit";
 
-    while((linkConnection->playerCount() != initialPlayerCount && closed()) || timer++ < 30){
+    while(timer++ < 30 || (linkConnection->playerCount() != initialPlayerCount && closed())){
         vsync();
         key_poll();
 
