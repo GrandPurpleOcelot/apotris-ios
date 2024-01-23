@@ -14,7 +14,7 @@ elif [[ $5 == 'gba' ]]; then
 else
     "$bin2s_path" -a 4 -H "$header_h" "$input_bin" > /dev/null
     echo "#include \"`(echo $header_h)`\"" > "$output_s"
-	xxd -i "$input_bin" | sed 's/___//' | sed 's/data_//g' | sed 's/unsigned char/const uint8_t/g' | sed '$d' >> "$output_s"
+    xxd -i "$input_bin" | awk '{ gsub(/___/, ""); gsub(/data_/, ""); gsub(/unsigned char/, "const uint8_t"); if (NR != last) print }' >> "$output_s"
 fi
 
 # Check if the last command was successful
