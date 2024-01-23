@@ -166,6 +166,7 @@ int GameScene::handleMultiplayer(int state) {
 }
 
 u8 weightedRandomPlayerSelection() {
+#ifdef GBA
     // Skip 2P mode
     if (linkConnection->playerCount() == 2)
         return 0;
@@ -192,6 +193,7 @@ u8 weightedRandomPlayerSelection() {
     }
 
     // This point should never be reached if the enemyBoard is not empty
+#endif
     return -1; // Return an invalid player ID
 }
 

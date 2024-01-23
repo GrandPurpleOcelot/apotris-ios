@@ -584,6 +584,7 @@ void MultBattleScene::draw(){
         aprint("Link Adapter", 9, 9);
         aprint("connection...", 11, 11);
     } else {
+        clearText();
         aprint("Connected!", 10, 6);
     }
 

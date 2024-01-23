@@ -43,8 +43,8 @@ LinkUniversal* linkUniversal =
                           (LinkUniversal::WirelessOptions){
                                   .retransmission = true,
                                   .maxPlayers = LINK_UNIVERSAL_MAX_PLAYERS,
-                                  .timeout = 30,
-                                  .remoteTimeout = 30,
+                                  .timeout = LINK_WIRELESS_DEFAULT_TIMEOUT,
+                                  .remoteTimeout = LINK_WIRELESS_DEFAULT_REMOTE_TIMEOUT,
                                   .interval = LINK_WIRELESS_DEFAULT_INTERVAL,
                                   .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
                                   .asyncACKTimerId = 2});
@@ -414,15 +414,17 @@ void clearTiles(int tileset, int index, int count){
     memset32(&tile_mem[tileset][index],0,8 * count);
 }
 
-void onVBlank() {
-
-    REG_IME = 1;
+IWRAM_CODE void onVBlank() {
+    const bool cabled = linkUniversal->getMode() == LinkUniversal::LINK_CABLE;
 
     mmVBlank();
+    if (cabled)
+        REG_IME = 1;
+    LINK_UNIVERSAL_ISR_VBLANK();
+
     if(gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
 
-    LINK_UNIVERSAL_ISR_VBLANK();
 
     if (canDraw) {
         canDraw = false;
@@ -432,6 +434,8 @@ void onVBlank() {
 
     frameCounter++;
     mmFrame();
+    if (cabled)
+        REG_IME = 0;
 }
 
 void sprite_enable_affine(OBJ_ATTR * sprite,int affineId, bool doubleSize){
