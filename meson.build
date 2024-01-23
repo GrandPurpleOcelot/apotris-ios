@@ -3,7 +3,7 @@ project('Apotris',
         version : '4.0.0',
         license : 'GPL3',
         meson_version : '>=0.60.0',
-        default_options : ['buildtype=minsize', 'cpp_std=c++17', 'default_library=static'])
+        default_options : ['buildtype=minsize', 'cpp_std=c++17', 'default_library=static', 'b_lto=true'])
 
 
 # The name of your project.
