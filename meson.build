@@ -40,6 +40,7 @@ sources = files(
     src_dir / 'liba_web.cpp',
     src_dir / 'liba_window.cpp',
     src_dir / 'libgbfs.c',
+    src_dir / 'LinkWireless.cpp',
     src_dir / 'main.cpp',
     src_dir / 'menuSystem.cpp',
     src_dir / 'menus.cpp',
@@ -280,6 +281,7 @@ binary_files = files(
 if host_machine.system() == 'gba'
     # Set up recommended compiler and linker flags.
     subdir('meson/toolchain')
+    add_global_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language : 'cpp')
 endif
 
 

@@ -451,7 +451,7 @@ bool GameScene::reconnect(){
 
     std::string exit = "Exit";
 
-    while(linkConnection->playerCount() != initialPlayerCount && closed()){
+    while((linkConnection->playerCount() != initialPlayerCount && closed()) || timer++ < 30){
         vsync();
         key_poll();
 
@@ -489,8 +489,6 @@ bool GameScene::reconnect(){
                 sprite_set_pos(cursorSprites[i], x, 144 - 5);
             }
         }
-
-        timer++;
 
         showSprites(128);
         linkConnection->sync();

@@ -43,8 +43,8 @@ LinkUniversal* linkUniversal =
                           (LinkUniversal::WirelessOptions){
                                   .retransmission = true,
                                   .maxPlayers = LINK_UNIVERSAL_MAX_PLAYERS,
-                                  .timeout = LINK_WIRELESS_DEFAULT_TIMEOUT,
-                                  .remoteTimeout = LINK_WIRELESS_DEFAULT_REMOTE_TIMEOUT,
+                                  .timeout = 30,
+                                  .remoteTimeout = 30,
                                   .interval = LINK_WIRELESS_DEFAULT_INTERVAL,
                                   .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
                                   .asyncACKTimerId = 2});
