@@ -3,7 +3,7 @@ project('Apotris',
         version : '4.0.0',
         license : 'GPL3',
         meson_version : '>=0.60.0',
-        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static'])
+        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=2'])
 
 
 # The name of your project.
@@ -39,7 +39,6 @@ sources = files(
     src_dir / 'liba_rgb30.cpp',
     src_dir / 'liba_web.cpp',
     src_dir / 'liba_window.cpp',
-    src_dir / 'libgbfs.c',
     src_dir / 'LinkWireless.cpp',
     src_dir / 'main.cpp',
     src_dir / 'menuSystem.cpp',
