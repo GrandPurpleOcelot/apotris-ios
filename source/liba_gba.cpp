@@ -647,7 +647,16 @@ void toggleSpriteSorting(bool state){
 }
 
 IWRAM_CODE void onKeyInterrupt(){
+    mmStop();
     REG_IME = 0;
+    REG_DMA0CNT_H &= ~DMA_ENABLE;
+    REG_DMA1CNT_H &= ~DMA_ENABLE;
+    REG_DMA2CNT_H &= ~DMA_ENABLE;
+    REG_DMA3CNT_H &= ~DMA_ENABLE;
+    REG_TM0D = 0;
+    REG_TM1D = 0;
+    REG_TM2D = 0;
+    REG_TM3D = 0;
     SoftReset();
 }
 #endif
