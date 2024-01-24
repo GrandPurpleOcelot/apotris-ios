@@ -380,7 +380,6 @@ else
         rt_dep,
         dependency('libugba'),
         dependency('libtonc'),
-        dependency('agbabi'),
         dependency('posprintf'),
         dependency('gbfs'),
         dependency('maxmod'),

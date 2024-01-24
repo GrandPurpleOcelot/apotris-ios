@@ -39,20 +39,37 @@ Builds are placed inside the `bin` folder.
 As all the libraries and tools are compiled from source, the only things you
 need to have installed and in your PATH are:
 
-- meson (at least version 0.60.0, ideally 1.0.0 or later)
+- meson (at least version 1.0.0 or later)
+  - If your system has an out of date meson, install `pip` and run `pip install meson` to get the latest
 - git
 - A compiler for your system (`cl.exe`, `gcc`, etc.)
 - A compiler for the GBA (`arm-none-eabi-gcc`)
+  - On Ubuntu you really want to install what's 
+    [here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) and follow [this guide](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) to use it.
+  - On macOS just `brew install --cask gcc-arm-embedded`
 
 ### Ubuntu 22.04 and Windows (WSL) dependencies
 
+#### For all systems
 [Install DevKitARM](https://devkitpro.org/wiki/devkitPro_pacman#Debian_and_derivatives) and the `sudo dkp-pacman -S gba-dev` target.
 
 Install the following packages:
 ```bash
-sudo apt install build-essential git meson cmake
+sudo apt install build-essential git meson cmake 
 ```
 also install `mingw-w64` if you plan to cross compile for Windows
+
+#### For Linux native builds
+
+Install the following dependencies of SDL2:
+```bash
+sudo apt-get install build-essential git make \
+  pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
+  libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
+  libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
+  libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+  libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev
+```
 
 ## Compiling
 
@@ -62,6 +79,7 @@ following command:
 
 ```sh
 # Fetch remote dependencies
+git submodules update --init --recursive
 meson subprojects download
 
 # Native build
@@ -69,12 +87,11 @@ meson setup build
 ninja -C build
 
 # GBA Build
-source /etc/profile.d/devkit-env.sh # often automatic
-sed "2cpath = '$DEVKITARM/bin'" meson/gba.ini > dkarm.ini # note you may need to modify this, see below
-meson setup --cross-file=dkarm.ini build-gba
+meson setup --cross-file=meson/gba.ini build-gba
 ninja -C build-gba
+
 # MingW build (Windows using Linux, WSL, or macOS to build)
-# Note: this next command is really bad hack that probably has no consequences but is required
+# Note: the following command is a really bad hack that probably has no consequences but is required
 sudo ln -sf $(which x86_64-w64-mingw32-g++-posix) $(which x86_64-w64-mingw32-g++)
 meson setup --cross-file=meson/mingw.ini build-mingw
 ninja -C build-mingw
@@ -82,20 +99,4 @@ ninja -C build-mingw
 
 The built Apotris ROMs (.elf, .gba) will be in your `build-gba` directory.
 
-The build Apotris executable and its required `assets/` folder will be in your build directories for other builds.
-
-Note the second and fourth commands will fail if you have not set up your path appropriately.
-
-You must use devkitPro for GBA at this time. Set up path references with the following commands to generate a suitable cross file:
-
-MSYS2:
-
-```sh
-sed "2cpath = '$(cygpath -m $DEVKITARM/bin)'" meson/gba.ini > dkarm.ini
-```
-
-WSL / Linux:
-
-```sh
-sed "2cpath = '$DEVKITARM/bin'" meson/gba.ini > dkarm.ini
-```
+The built Apotris executable and its required `assets/` folder will be in your build directories for other builds.
