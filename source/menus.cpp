@@ -417,7 +417,7 @@ void showScore(){
             aprint("YOU LOSE", 11, 3);
             if (rank) {
                 aprint("Placed ", 10, 4);
-                aprint(std::to_string(rank), 16, 4);
+                aprint(std::to_string(rank), 17, 4);
                 std::string suffix;
                 switch (rank) {
                     case 1:
@@ -432,7 +432,7 @@ void showScore(){
                     default:
                         suffix = "th";
                 }
-                aprint(suffix, 19, 4);
+                aprint(suffix, 18, 4);
             }
         }
         else

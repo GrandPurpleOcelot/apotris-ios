@@ -19,7 +19,7 @@ u8 enemyBoard[4][20][10];
 u32 enemyPower[4] = { 1, 1, 1, 1 };
 u32 ownPower = 1;
 u8 currentPlayerId = -1;
-int initialPlayerCount = -1;
+int initialPlayerCount = 0;
 
 class BoardUpdate{
 public:
@@ -70,10 +70,6 @@ int GameScene::handleMultiplayer(int state) {
     linkConnection->sync();
     u8 currentPlayerCount = linkConnection->playerCount();
     currentPlayerId = linkConnection->currentPlayerId();
-
-    // Capture initial player count
-    if (initialPlayerCount < 0)
-        initialPlayerCount = currentPlayerCount;
 
     // Exit early for a later update if bad state (e.g. some player disconnects)
     if (!linkConnection->isConnected() || currentPlayerCount < initialPlayerCount) {
@@ -435,7 +431,7 @@ bool GameScene::reconnect(){
 
     std::string exit = "Exit";
 
-    while(timer++ < 30 || (linkConnection->playerCount() != initialPlayerCount && closed())){
+    while(linkConnection->playerCount() != initialPlayerCount && closed()){
         vsync();
         key_poll();
 
@@ -476,6 +472,7 @@ bool GameScene::reconnect(){
 
         showSprites(128);
         linkConnection->sync();
+        timer++;
     }
 
     clearTilemap(27);

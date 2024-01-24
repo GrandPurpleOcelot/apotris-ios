@@ -31,6 +31,8 @@ void onHBlank() {
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
+#define WIRELESS_TIMEOUT_FRAMES 15
+
 LinkUniversal* linkUniversal =
         new LinkUniversal(LinkUniversal::Protocol::AUTODETECT,
                           "Apotris",
@@ -43,9 +45,9 @@ LinkUniversal* linkUniversal =
                           (LinkUniversal::WirelessOptions){
                                   .retransmission = true,
                                   .maxPlayers = LINK_UNIVERSAL_MAX_PLAYERS,
-                                  .timeout = LINK_WIRELESS_DEFAULT_TIMEOUT,
-                                  .remoteTimeout = LINK_WIRELESS_DEFAULT_REMOTE_TIMEOUT,
-                                  .interval = LINK_WIRELESS_DEFAULT_INTERVAL,
+                                  .timeout = WIRELESS_TIMEOUT_FRAMES,
+                                  .remoteTimeout = WIRELESS_TIMEOUT_FRAMES,
+                                  .interval = LINK_WIRELESS_DEFAULT_INTERVAL * 2,
                                   .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
                                   .asyncACKTimerId = 2});
 LinkUniversal* linkConnection = linkUniversal;

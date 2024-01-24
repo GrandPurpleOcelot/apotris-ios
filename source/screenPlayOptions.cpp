@@ -584,8 +584,6 @@ void MultBattleScene::draw(){
         aprint("Link Adapter", 9, 9);
         aprint("connection...", 11, 11);
     } else {
-        clearText();
-        refreshText = true;
         aprint("Connected!", 10, 6);
     }
 
@@ -635,6 +633,7 @@ void MultBattleScene::update(){
         lastPlayerCount = currentPlayerCount;
 
     if (linkConnection->isConnected()) {
+        initialPlayerCount = linkConnection->playerCount();
         // For player 1 to inform other players to start game
         if(multiplayerStart){
             multiplayerStart = false;
@@ -688,9 +687,8 @@ void MultBattleScene::update(){
             nextSeed = (u16)qran() & 0x1fff;
             multiplayerStart = true;
             linkConnection->send(nextSeed + 100);
-        } else if (!sentReady) {
+        } else {
             linkConnection->send(PLAYER_READY);
-            sentReady = true;
         }
 
         aprint("             ", 0, 19);
@@ -700,7 +698,6 @@ void MultBattleScene::update(){
             clearText();
         }
         connected = -1;
-        sentReady = false;
     }
 
     #endif

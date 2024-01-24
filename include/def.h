@@ -10,6 +10,7 @@
 #ifdef GBA
 #include "LinkUniversal.hpp"
 extern LinkUniversal* linkConnection;
+extern int initialPlayerCount;
 #endif
 
 INLINE FIXED lerp(FIXED a, FIXED b, FIXED mix){
