@@ -37,6 +37,7 @@
 
 #ifdef RGB
 
+#define PLATFORM 5
 #include "liba_rgb30.h"
 
 #endif

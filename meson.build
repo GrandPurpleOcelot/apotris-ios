@@ -36,6 +36,7 @@ sources = files(
     src_dir / 'liba_mm.cpp',
     src_dir / 'liba_pc.cpp',
     src_dir / 'liba_switch.cpp',
+    src_dir / 'liba_rgb30.cpp',
     src_dir / 'liba_web.cpp',
     src_dir / 'liba_window.cpp',
     src_dir / 'libgbfs.c',
@@ -297,16 +298,18 @@ if host_machine.system() != 'gba'
     modplug = cmake.subproject('libmodplug', options : cmake_options)
 
     tilengine = subproject('Tilengine', default_options : ['default_library=static'])
-    sfml = subproject('sfml', default_options : ['default_library=static'])
+    sdl = subproject('sdl2', default_options : ['default_library=static'])
+    soloud = subproject('SoLoud', default_options : ['default_library=static'])
 
     dependencies = [
         modplug.dependency('modplug'),
-        sfml.get_variable('sfml_dep'),
         tilengine.get_variable('tilengine_dep'),
+        sdl.get_variable('sdl2_dep'),
+        soloud.get_variable('soloud_dep')
     ]
 
-    add_project_arguments('-DPC', language : 'cpp')
-    add_project_arguments('-DPC', language : 'c')
+    add_project_arguments('-DRGB', language : 'cpp')
+    add_project_arguments('-DRGB', language : 'c')
     add_project_arguments('-DTE', language : 'cpp')
     add_project_arguments('-DTE', language : 'c')
     add_project_arguments('-Wno-array-bounds', language : 'cpp')
