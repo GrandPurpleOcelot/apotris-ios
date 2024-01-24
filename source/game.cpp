@@ -1550,6 +1550,13 @@ void GameScene::countdown() {
             if (timer == 2 * timerMax / 3 && savefile->settings.announcer)
                 sfx(SFX_GO);
         }
+#ifdef GBA
+        if (multiplayer) {
+            linkConnection->sync();
+            if (linkConnection->playerCount() != initialPlayerCount)
+                return;
+        }
+#endif
     }
 
     paused = false;
