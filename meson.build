@@ -298,14 +298,16 @@ if host_machine.system() != 'gba'
     modplug = cmake.subproject('libmodplug', options : cmake_options)
 
     tilengine = subproject('Tilengine', default_options : ['default_library=static'])
-    sdl = subproject('sdl2', default_options : ['default_library=static'])
+    sdl = subproject('sdl2', default_options : ['default_library=shared'])
     soloud = subproject('SoLoud', default_options : ['default_library=static'])
+    sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=shared'])
 
     dependencies = [
         modplug.dependency('modplug'),
         tilengine.get_variable('tilengine_dep'),
         sdl.get_variable('sdl2_dep'),
-        soloud.get_variable('soloud_dep')
+        soloud.get_variable('soloud_dep'),
+        sdl_mixer.get_variable('sdl2_mixer_dep')
     ]
 
     add_project_arguments('-DRGB', language : 'cpp')

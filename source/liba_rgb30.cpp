@@ -77,7 +77,7 @@ void windowInit(){
         "Apotris PortMaster",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         screenWidth, screenHeight,
-        SDL_WINDOW_SHOWN
+        SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
         );
 
     renderer = SDL_CreateRenderer(window, -1, 0);
