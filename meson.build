@@ -364,10 +364,23 @@ else
     # Set up recommended compiler and linker flags.
     subdir('meson/toolchain')
 
+    cc = meson.get_compiler('c')
+    cc_ver = run_command(cc, '--version', capture: true, check: false)
+    have_devkitarm = cc_ver.stdout().to_lower().contains('devkitarm')
+
+    # Only use devkitarm rom runtime if present
+    dka_rt = dependency('dka-rom-rt', required: false)
+    if dka_rt.found()
+        rt_dep = dka_rt
+    else
+        rt_dep = dependency('minrt')
+    endif
+
     dependencies = [
-        dependency('dka-rom-rt'),
+        rt_dep,
         dependency('libugba'),
         dependency('libtonc'),
+        dependency('agbabi'),
         dependency('posprintf'),
         dependency('gbfs'),
         dependency('maxmod'),
@@ -416,11 +429,17 @@ else
     )
     generated_files += audio_target
 
+    link_args = []
+    if not dka_rt.found()
+        link_args += '-specs=nosys.specs'
+    endif
+
     elf = executable(
         name,
         sources + generated_files,
         include_directories : includes,
         dependencies : dependencies,
+        link_args : link_args,
         name_suffix : 'elf')
 
     rom_base = custom_target(

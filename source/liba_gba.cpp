@@ -130,8 +130,6 @@ void platformInit(){
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
 
     REG_WAITCNT = 0x4317;
-
-    log("iwram usage: " + std::to_string(iwramUsage()));
 }
 
 void deinitialize(){
