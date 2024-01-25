@@ -277,6 +277,10 @@ binary_files = files(
     data_dir / 'title_pal.bin',
     data_dir / 'wiki_qr.bin',
 )
+if host_machine.system() == 'gba'
+    # Set up recommended compiler and linker flags.
+    subdir('meson/toolchain')
+endif
 
 soundbank_file = files('data/soundbank.bin')
 effect_locations_file = files('data/effect_locations.bin')
@@ -285,7 +289,9 @@ icon_file = files('sprites/favicon32.bmp')
 fs = import('fs')
 cmake = import('cmake')
 source_root = meson.project_source_root()
-bin2s = find_program('bin2s', required : true)
+tools = subproject('general-tools')
+bin2s = tools.get_variable('bin2s_executable')
+padbin = tools.get_variable('padbin_executable')
 bin2s_script_path = join_paths(source_root, 'tools', 'call_bin2s.sh')
 call_bin2s = find_program(bin2s_script_path, required : true)
 
@@ -361,9 +367,8 @@ if host_machine.system() != 'gba'
     )
     # Platform-specific configuration for AdvancedGameBoy
 else
-    # Set up recommended compiler and linker flags.
-    subdir('meson/toolchain')
-
+    gba_tools = subproject('gba-tools')
+    gbfs = gba_tools.get_variable('gbfs_executable')
     cc = meson.get_compiler('c')
     cc_ver = run_command(cc, '--version', capture: true, check: false)
     have_devkitarm = cc_ver.stdout().to_lower().contains('devkitarm')
@@ -389,9 +394,7 @@ else
     add_project_arguments('-DGBA', language : 'c')
 
     cat = find_program('cat', required : true)
-    gbfs = find_program('gbfs', required : true)
-    gbafix = find_program('gbafix', required : true)
-    padbin = find_program('padbin', required : true)
+    gbafix = find_program('gbafix-py', required : true)
     makerom = find_program('makerom', required : true)
 
     gbabuild_script_path = join_paths(source_root, 'tools', 'gbabuild.sh')
