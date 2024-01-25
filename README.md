@@ -51,7 +51,6 @@ need to have installed and in your PATH are:
 ### Ubuntu 22.04 and Windows (WSL) dependencies
 
 #### For all systems
-[Install DevKitARM](https://devkitpro.org/wiki/devkitPro_pacman#Debian_and_derivatives) and the `sudo dkp-pacman -S gba-dev` target.
 
 Install the following packages:
 ```bash
