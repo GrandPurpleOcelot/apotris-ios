@@ -1,7 +1,8 @@
-build/
+build*/
 bin/
 .cache/
 .vscode/
+.idea/
 *.gba
 *.elf
 *.sav
