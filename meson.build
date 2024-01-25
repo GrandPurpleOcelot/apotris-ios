@@ -282,6 +282,7 @@ if host_machine.system() == 'gba'
     subdir('meson/toolchain')
 endif
 
+
 soundbank_file = files('data/soundbank.bin')
 effect_locations_file = files('data/effect_locations.bin')
 icon_file = files('sprites/favicon32.bmp')
@@ -290,10 +291,11 @@ fs = import('fs')
 cmake = import('cmake')
 source_root = meson.project_source_root()
 tools = subproject('general-tools')
-bin2s = tools.get_variable('bin2s_executable')
 padbin = tools.get_variable('padbin_executable')
-bin2s_script_path = join_paths(source_root, 'tools', 'call_bin2s.sh')
-call_bin2s = find_program(bin2s_script_path, required : true)
+bin2s_script_path = join_paths(source_root, 'tools', 'bin2s.py')
+call_bin2s_script_path = join_paths(source_root, 'tools', 'call_bin2s.sh')
+bin2s = find_program(bin2s_script_path, required : true)
+call_bin2s = find_program(call_bin2s_script_path, required : true)
 
 # Windows, macOS, and Linux
 if host_machine.system() != 'gba'
