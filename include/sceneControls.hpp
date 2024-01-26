@@ -231,31 +231,31 @@ class RebindElement : public Element{
                     continue;
                 }
 
-                #elif defined(PC)
+                // #elif defined(PC)
 
-                bool found = false;
-                for(int i = 0; i < sf::Keyboard::KeyCount; i++){
-                    if(key_hit(i)){
-                        keys[index] = i;
-                        sfx(SFX_MENUCONFIRM);
-                        found = true;
+                // bool found = false;
+                // for(int i = 0; i < sf::Keyboard::KeyCount; i++){
+                //     if(key_hit(i)){
+                //         keys[index] = i;
+                //         sfx(SFX_MENUCONFIRM);
+                //         found = true;
 
-                        for(int j = 0; j < max; j++){
-                            if(j == index)
-                                continue;
+                //         for(int j = 0; j < max; j++){
+                //             if(j == index)
+                //                 continue;
 
-                            if(keys[j] == i)
-                                keys[j] = KEY_FULL - 2;
-                        }
+                //             if(keys[j] == i)
+                //                 keys[j] = KEY_FULL - 2;
+                //         }
 
-                        break;
-                    }
-                }
+                //         break;
+                //     }
+                // }
 
-                if(found){
-                    exit = true;
-                    continue;
-                }
+                // if(found){
+                //     exit = true;
+                //     continue;
+                // }
 
                 #else
                 u32 key = key_first();

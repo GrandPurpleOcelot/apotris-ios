@@ -1196,7 +1196,7 @@ void GameScene::showTimer() {
             wordSprites[0].show(x * 8, 1 * 8, 15);
 
             #ifndef WEB
-            wordSprites[1].setText(keyToString[savefile->settings.menuKeys.pause]);
+            wordSprites[1].setText(getStringFromKey(savefile->settings.menuKeys.pause));
             wordSprites[1].show(x * 8, 2 * 8, 15);
             #endif
 

@@ -58,7 +58,6 @@ sources = files(
     src_dir / 'screenPlayOptions.cpp',
     src_dir / 'screenSkinEditor.cpp',
     src_dir / 'screenTitle.cpp',
-    src_dir / 'sfMod.cpp',
     src_dir / 'sprites.cpp',
     src_dir / 'tetromino.cpp',
     src_dir / 'text.cpp',
@@ -310,8 +309,8 @@ if host_machine.system() != 'gba'
         sdl_mixer.get_variable('sdl2_mixer_dep')
     ]
 
-    add_project_arguments('-DRGB', language : 'cpp')
-    add_project_arguments('-DRGB', language : 'c')
+    add_project_arguments('-DPC', language : 'cpp')
+    add_project_arguments('-DPC', language : 'c')
     add_project_arguments('-DTE', language : 'cpp')
     add_project_arguments('-DTE', language : 'c')
     add_project_arguments('-Wno-array-bounds', language : 'cpp')

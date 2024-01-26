@@ -1,56 +1,119 @@
 #ifdef PC
 
 #include "liba_window.h"
-#include "liba_pc.h"
-
-#include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
-#include "sfMod.h"
-
-#include "def.h"
+#include <list>
 #include <fstream>
-#include <cstdio>
-#include <vector>
+#include <iostream>
 #include <dirent.h>
-#include <algorithm>
+#include <cstdio>
 
-#define ENABLE_SHADERS 0
+#include "soloud.h"
+#include "soloud_wav.h"
+#include "soloud_openmpt.h"
+#include "def.h"
 
-float windowScale = 3;
-int windowWidth = 400;
-int windowHeight = 240;
+#define NANOTIME_IMPLEMENTATION
+#include "nanotime.h"
 
-int rowStart = (SCREEN_HEIGHT - windowHeight)/2;
-int rowEnd = (SCREEN_HEIGHT + windowHeight)/2;
-
-bool render = true;
-
-void resize(int width, int height);
-std::list<int> currentKeys;
-std::list<int> previousKeys;
-
-std::list<sf::Sound*> soundList;
-
-sf::SoundBuffer sfxBuffers[SFX_COUNT];
-sfmod::Mod *musicArray;
-
-sf::Shader shader;
-
-int currentSong = -1;
-int sfxVolume = 1024;
-int musicVolume = 0;
-
-const int sfxVolumeMultiplier = 4;
+void loadAudio();
+void freeAudio();
 
 Songs songs;
 
+std::list<uint32_t> currentKeys;
+std::list<uint32_t> previousKeys;
+
+// int rowStart = (288 - 288) / 2;
+// int rowEnd = rowStart + 288;
+int rowStart = 0;
+int rowEnd = SCREEN_HEIGHT;
+
+#define FPS_TARGET 60
+
+double clock_timer = 0;
+
+static uint64_t frame_start = nanotime_now();
+
+uint32_t start_time = 0;
+uint32_t frame_time = 0;
+
+float fps = 0;
+
+SDL_Window* window;
+SDL_Renderer * renderer;
+SDL_GameController* controller;
+
+bool fullscreen = false;
+
+bool render = true;
+
+std::list<uint32_t> currentlyPressed;
+
+SoLoud::Soloud gSoloud;
+
+SoLoud::Wav soundEffects[SFX_COUNT];
+
+SoLoud::Openmpt *musicArray;
+
+SoLoud::handle currentSongHandle;
+
 std::vector<std::string> songList;
+
+int screenWidth = 1280;
+int screenHeight = 720;
+
+float windowScale = 3;
+int currentSong = -1;
+int sfxVolume = 1024;
+int musicVolume = 1;
+
+nanotime_step_data stepper;
+
+void windowInit(){
+    // Initialize SDL
+
+    window = NULL;
+
+    SDL_Init(SDL_INIT_VIDEO);
+
+    // SDL_DisplayMode DM;
+    // SDL_GetCurrentDisplayMode(0, &DM);
+    // screenWidth = DM.w;
+    // screenHeight = DM.h;
+
+    window = SDL_CreateWindow(
+        "Apotris PortMaster",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        screenWidth, screenHeight,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
+        );
+
+    renderer = SDL_CreateRenderer(window, -1, 0);
+
+    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    if(SDL_NumJoysticks() > 0){
+        controller = SDL_GameControllerOpen(0);
+    }
+
+    refreshWindowSize();
+
+    gSoloud.init();
+    loadAudio();
+
+    nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
+}
 
 bool hasSuffix(const std::string& s, const std::string& suffix){
     return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
 }
 
 void loadAudio(){
+    for(int i = 0; i < SFX_COUNT; i++){
+        std::string str = (std::string) SoundEffectPaths[i];
+
+        soundEffects[i].load(str.c_str());
+    }
+
     int counter = 0;
 
     std::string path = "assets";
@@ -64,11 +127,7 @@ void loadAudio(){
     dirent *entry;
     std::vector<std::string> songPaths;
     while((entry = readdir(dir)) != nullptr){
-        if(hasSuffix(entry->d_name, ".it") ||
-           hasSuffix(entry->d_name, ".mod") ||
-           hasSuffix(entry->d_name, ".s3m") ||
-           hasSuffix(entry->d_name, ".S3M") ||
-           hasSuffix(entry->d_name, ".xm")){
+        if(hasSuffix(entry->d_name, ".it") || hasSuffix(entry->d_name, ".mod") || hasSuffix(entry->d_name, ".xm")){
             songPaths.push_back(entry->d_name);
         }
     }
@@ -78,340 +137,194 @@ void loadAudio(){
     sort(songPaths.begin(),songPaths.end());
 
     for(auto str : songPaths){
-        if (str.find("MENU_") != std::string::npos) {
-            songList.push_back(path + "/" + str);
-            songs.menu.push_back(counter++);
-        } else {
+        if (str.find("GAME_") != std::string::npos) {
             songList.push_back(path + "/" + str);
             songs.game.push_back(counter++);
+        } else {
+            songList.push_back(path + "/" + str);
+            songs.menu.push_back(counter++);
         }
     }
 
-    for(int i = 0; i < SFX_COUNT; i++){
-        if(!sfxBuffers[i].loadFromFile(SoundEffectPaths[i])){
-            std::string str = "Failed to load ";
-            str += SoundEffectPaths[i];
-            log(str);
-        }
-    }
-
-    musicArray = new sfmod::Mod [counter];
+    musicArray = new SoLoud::Openmpt[counter];
 
     for(int i = 0; i < counter; i++){
-        if(!musicArray[i].loadFromFile(songList.at(i))){
-            std::string str = "Failed to load ";
-            str += songList.at(i);
-            log(str);
+        SoLoud::result loaded = musicArray[i].load(songList.at(i).c_str());
+        if(loaded != SoLoud::SO_NO_ERROR){
+            log("couldn't load: " + songList.at(i) + " " + std::to_string(loaded));
         }
     }
 }
 
 void freeAudio(){
-    // for(int i = 0; i < SFX_COUNT; i++){
-    //     // delete sfxBuffers[i];
-    // }
-    for(auto sound : soundList){
-        delete sound;
-    }
-
-    for(int i = 0; i < MUSIC_COUNT; i++){
-        musicArray[i].unload();
-    }
-}
-
-sf::RenderWindow window(sf::VideoMode(windowWidth * windowScale, windowHeight * windowScale), "Apotris PC");
-sf::Texture frameTexture;
-
-bool isFullscreen = false;
-
-void windowInit(){
-    window.setFramerateLimit(60);
-    frameTexture.create(SCREEN_WIDTH, SCREEN_HEIGHT);
-    sf::Image icon;
-    icon.loadFromFile("assets/favicon32.bmp");
-
-    window.setIcon(32, 32, icon.getPixelsPtr());
-
-    loadAudio();
-
-    // if(!sf::Shader::isAvailable()){
-    //     log("Shaders not available on system.");
-    // }else if(ENABLE_SHADERS){
-    //     if(!shader.loadFromFile("assets/bloom.glsl", sf::Shader::Fragment)){
-    //         log("Couldn't load Bloom shader.");
-    //     }else{
-    //         log("Loaded Bloom Shader.");
-    //         shader.setUniform("pixelWidth",1.f / window.getSize().x);
-    //         shader.setUniform("pixelHeight",1.f / window.getSize().y);
-    //     }
-
-    // }
-
-    if(sf::Joystick::isConnected(0)){
-        log("controller connected");
-
-        int buttonCount = sf::Joystick::getButtonCount(0);
-
-        log("button count: " + std::to_string(buttonCount));
-
-        int axii = 0;
-
-        for(int i = 0; i < 8; i++)
-            axii += sf::Joystick::hasAxis(0, sf::Joystick::Axis(i));
-
-        log("axis count: " + std::to_string(axii));
-
-        log(sf::Joystick::getIdentification(0).name);
-
-        return;
-    }else{
-        log("no controller connected");
-    }
-
-    resize(windowWidth * windowScale, windowHeight * windowScale);
-
-}
-
-void updateWindow(u8 *framebuffer){
-    frameTexture.update((sf::Uint8*)framebuffer);
-    sf::Sprite sprite;
-    sprite.setTexture(frameTexture);
-    sprite.setScale(windowScale,windowScale);
-    sprite.setPosition(0,0);
-
-    if(ENABLE_SHADERS && render){
-        window.draw(sprite, &shader);
-
-        sf::Color c = sf::Color::Black;
-
-        c.a = 60;
-
-        for(int i = 0; i < SCREEN_HEIGHT; i++){
-            sf::RectangleShape rectangle(sf::Vector2f(SCREEN_WIDTH * windowScale,windowScale/2.0));
-
-            rectangle.setPosition(sf::Vector2f(0,i * windowScale + windowScale / 2.0));
-
-            rectangle.setFillColor(c);
-
-            window.draw(rectangle);
-
-            // sf::Vertex line[2];
-
-            // line[0].position = sf::Vector2f(0,i * windowScale + (windowScale - 1));
-            // line[1].position = sf::Vector2f(SCREEN_WIDTH * windowScale,i * windowScale + (windowScale - 1));
-
-            // line[0].color = c;
-            // line[1].color = c;
-
-            // window.draw(line,2,sf::Lines);
-        }
-
-        // for(int i = 0; i < SCREEN_WIDTH; i++){
-        //     sf::Vertex line[2];
-
-        //     line[0].position = sf::Vector2f(i * windowScale + (windowScale),0);
-        //     line[1].position = sf::Vector2f(i * windowScale + (windowScale),SCREEN_HEIGHT * windowScale);
-
-        //     line[0].color = c;
-        //     line[1].color = c;
-
-        //     window.draw(line,2,sf::Lines);
-        // }
-
-    }else{
-        if(render)
-            window.draw(sprite);
-    }
-
-    window.display();
-
-    // TLN_DrawFrame(0);
-    sf::Event event;
-    while (window.pollEvent(event))
-    {
-        // "close requested" event: we close the window
-        if (event.type == sf::Event::Closed){
-            quit();
-        }else if(event.type == sf::Event::Resized){
-            resize(event.size.width, event.size.height);
-
-        }else if(event.type == sf::Event::KeyPressed){
-            if(event.key.code == sf::Keyboard::F11){
-                isFullscreen = !isFullscreen;
-
-                if(isFullscreen){
-                    sf::VideoMode mode = sf::VideoMode::getDesktopMode();
-
-                    window.create(mode, "Apotris PC",sf::Style::Fullscreen);
-
-                    resize(mode.width, mode.height);
-                }else{
-                    window.create(sf::VideoMode(windowWidth * windowScale, windowHeight * windowScale), "Apotris PC");
-
-                    resize(windowWidth * windowScale, windowHeight * windowScale);
-                }
-                window.setFramerateLimit(60);
-            }
-        }
-    }
-
-    #ifndef NO_DIAGNOSE
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Tab)){
-        window.setFramerateLimit(2000);
-
-        if(currentSong >= 0)
-            musicArray[currentSong].setPitch(3);
-    }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num4)){
-        window.setFramerateLimit(5);
-    }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Num5)){
-        window.setFramerateLimit(1);
-    }else{
-        window.setFramerateLimit(60);
-
-        if(currentSong >= 0)
-            musicArray[currentSong].setPitch(1);
-    }
-
-    #endif
-
-    auto it = soundList.begin();
-
-    while(it != soundList.end()){
-        if((*it)->getStatus() == sf::Sound::Stopped){
-            delete *it;
-            soundList.erase(it++);
-        }else{
-            it++;
-        }
-    }
-
-    if(currentSong >= 0 && musicArray[currentSong].getStatus() == sfmod::Mod::Stopped && musicVolume / 2 != 0){
-        if(savefile->settings.cycleSongs){
-            log("next");
-            playNextSong();
-        }else{
-            log("loop");
-            musicArray[currentSong].stop();
-            musicArray[currentSong].play();
-        }
-    }
-
-    // window.draw();
-
-    // Uint64 end = SDL_GetPerformanceCounter();
-
-    // float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
-
-    // // Cap to 60 FPS
-    // SDL_Delay(floor(16.666f - elapsedMS));
-
-}
-
-void setMusicTempo(int tempo){
-
-}
-
-void setMusicVolume(int volume){
-    musicVolume = volume;
-
-    if(currentSong != -1){
-        int f = volume / 4;
-
-        if(f){
-            musicArray[currentSong].setMasterVolume(f);
-            if(musicArray[currentSong].getStatus() != sfmod::Mod::Playing)
-                musicArray[currentSong].play();
-        }else{
-            musicArray[currentSong].pause();
-        }
-    }
-}
-
-void startSong(int song, bool loop){
-    log("song:");
-    log(song);
-    if(song == currentSong && musicArray[currentSong].getStatus() == sfmod::Mod::Playing)
-        return;
-
-    if(currentSong != -1)
-        musicArray[currentSong].stop();
-
-    log(songList.at(song));
-
-    musicArray[song].play();
-    currentSong = song;
-}
-
-void sfx(int n){
-    sf::Sound * sound = new sf::Sound();
-    sound->setBuffer(sfxBuffers[n]);
-    sound->play();
-    sound->setVolume(savefile->settings.sfxVolume * sfxVolumeMultiplier);
-
-    soundList.push_back(sound);
-}
-
-void sfxRate(int n, float rate){
-    sf::Sound * sound = new sf::Sound();
-    sound->setBuffer(sfxBuffers[n]);
-    sound->play();
-    sound->setVolume(savefile->settings.sfxVolume * sfxVolumeMultiplier);
-
-    sound->setPitch(rate);
-
-    soundList.push_back(sound);
-
-    // sfx(sound);
+    delete [] musicArray;
 }
 
 void key_poll(){
     previousKeys = currentKeys;
     currentKeys.clear();
 
-    if(!window.hasFocus()){
-        return;
+    SDL_Event event;
+
+    while( SDL_PollEvent( &event ) ){
+        uint32_t key = 0;
+        auto it = currentlyPressed.begin();
+        bool found = false;
+
+        switch( event.type ){
+        case SDL_KEYDOWN:
+            key = event.key.keysym.sym;
+            if(key == SDLK_F11){
+                if(fullscreen){
+                    SDL_SetWindowFullscreen(window, 0);
+                }else{
+                    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+                }
+                fullscreen = !fullscreen;
+                break;
+            }
+
+            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+            found = (it != currentlyPressed.end());
+            if(!found)
+                currentlyPressed.push_back(key);
+            break;
+        case SDL_KEYUP:
+            key = event.key.keysym.sym;
+            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+            found = (it != currentlyPressed.end());
+            if(found)
+                currentlyPressed.remove(key);
+            break;
+        case SDL_QUIT:
+            quit();
+            break;
+        default:
+            break;
+        }
     }
 
-    // if(sf::Joystick::isConnected(0)){
+    currentKeys = currentlyPressed;
+}
 
-    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 1)) * KEY_A;
-    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 0)) * KEY_B;
-    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 5)) * KEY_R;
-    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 4)) * KEY_L;
-    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 7)) * KEY_START;
-    //     __key_curr |= (sf::Joystick::isButtonPressed(0, 6)) * KEY_SELECT;
+uint32_t key_is_down(uint32_t key){
+    if(key == KEY_FULL)
+        return (!currentKeys.empty());
 
-    //     float pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(7));
-    //     if(pos < 0)
-    //         __key_curr |= (1) * KEY_UP;
-    //     else if (pos > 0)
-    //         __key_curr |= (1) * KEY_DOWN;
+    auto it = currentKeys.begin();
 
-    //     pos = sf::Joystick::getAxisPosition(0, sf::Joystick::Axis(6));
-    //     if(pos < 0)
-    //         __key_curr |= (1) * KEY_LEFT;
-    //     else if (pos > 0)
-    //         __key_curr |= (1) * KEY_RIGHT;
+    it = std::find(currentKeys.begin(),currentKeys.end(),key);
 
-    // }
+    return (it != currentKeys.end());
+}
 
-    for(int i = 0; i < sf::Keyboard::KeyCount; i++){
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key(i)) && sf::Keyboard::Key(i) != sf::Keyboard::Tab)
-            currentKeys.push_back(i + 1);
+uint32_t key_hit(uint32_t key){
+    if(key == KEY_FULL)
+        return (previousKeys.empty() && !currentKeys.empty());
+
+    auto it = previousKeys.begin();
+    it = std::find(previousKeys.begin(),previousKeys.end(),key);
+    bool prev = (it != previousKeys.end());
+
+    it = currentKeys.begin();
+    it = std::find(currentKeys.begin(),currentKeys.end(),key);
+    bool curr = (it != currentKeys.end());
+
+    return (!prev && curr);
+}
+
+uint32_t key_released(uint32_t key){
+    if(key == KEY_FULL)
+        return (!previousKeys.empty() && currentKeys.empty());
+
+    auto it = previousKeys.begin();
+    it = std::find(previousKeys.begin(),previousKeys.end(),key);
+    bool prev = (it != previousKeys.end());
+
+    it = currentKeys.begin();
+    it = std::find(currentKeys.begin(),currentKeys.end(),key);
+    bool curr = (it != currentKeys.end());
+
+    return (prev && !curr);
+}
+
+uint32_t key_first(){
+    if(currentKeys.empty())
+        return KEY_FULL - 1;
+
+    for(auto key : currentKeys){
+        auto it = previousKeys.begin();
+        it = std::find(previousKeys.begin(),previousKeys.end(),key);
+        bool prev = (it != previousKeys.end());
+
+        if(!prev){
+            return key;
+        }
     }
+
+    return KEY_FULL - 1;
 }
 
-bool closed(){
-    bool result = window.isOpen();
+void updateWindow(uint8_t* framebuffer){
+    const int in_width = 512;
+    const int in_height = 512;
 
-    return result;
+    SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
+        framebuffer,
+        in_width,
+        in_height,
+        32,
+        in_width * 4,
+        0x0000ff,
+        0x00ff00,
+        0xff0000,
+        0xff000000
+    );
+
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
+
+    SDL_FreeSurface(img);
+
+    const int x = (in_width - screenWidth / windowScale);
+    const int y = (in_height - screenHeight / windowScale);
+    const int w = screenWidth / windowScale;
+    const int h = screenHeight / windowScale;
+
+    SDL_Rect rect = {x/2,y/2,w,h};
+
+    SDL_RenderClear(renderer);
+
+    SDL_Rect dest_rect;
+
+    if(x < 0 || y < 0){
+        int nx = min(x,0);
+        int ny = min(y,0);
+        dest_rect = {-nx/2,-ny/2,screenWidth+nx,screenHeight+ny};
+    }else{
+        dest_rect = {0,0,screenWidth,screenHeight};
+    }
+
+    if(render){
+        SDL_RenderCopy(renderer,texture,&rect,&dest_rect);
+    }
+
+    SDL_RenderPresent(renderer);
+
+    SDL_DestroyTexture(texture);
+
+    // Cap FPS
+    nanotime_step(&stepper);
+
+    //log FPS
+    uint64_t temp = frame_start;
+    frame_start = stepper.sleep_point;
+
+    uint64_t interval = nanotime_interval(temp, frame_start, nanotime_now_max());
+    float time = (float) interval / NANOTIME_NSEC_PER_SEC;
+    log(std::to_string(time * 3600) + " " + std::to_string(interval));
 }
 
-void toggleRendering(bool state){
-    render = state;
-}
-
-void resize(int width, int height){
+void refreshWindowSize(){
     if(savefile != nullptr){
         if(savefile->settings.zoom > -1){
             windowScale = 1 + (float) savefile->settings.zoom / 10;
@@ -419,64 +332,98 @@ void resize(int width, int height){
             if(savefile->settings.integerScale){
                 windowScale = (int)windowScale;
 
-                while (height / windowScale > 160 * 2) {
+                while (screenHeight / windowScale > 160 * 2) {
                     windowScale++;
                 }
-                while (windowScale > 1 && height / windowScale < 160) {
+                while (windowScale > 1 && screenHeight / windowScale < 160) {
                     windowScale--;
                 }
             }else{
-                windowScale = height / 200.0;
+                windowScale = screenHeight / 200.0;
             }
         }
     }
 
-    sf::FloatRect visibleArea(sf::Vector2f(0,0), sf::Vector2f(width, height));
-    sf::View view(visibleArea);
-    view.setCenter(256 * windowScale,256 * windowScale);
-    window.setView(view);
-
-    rowStart = (512 - (height/windowScale))/2;
-    rowEnd = (512 + (height/windowScale))/2;
+    rowStart = (SCREEN_HEIGHT - (screenHeight/windowScale))/2;
+    rowEnd = (SCREEN_HEIGHT + (screenHeight/windowScale))/2;
 
     if(rowStart < 0)
         rowStart = 0;
 
-    if(rowEnd > 512)
-        rowEnd = 512;
+    if(rowEnd > SCREEN_HEIGHT)
+        rowEnd = SCREEN_HEIGHT;
 
     if(savefile != nullptr)
         setGradient(savefile->settings.backgroundGradient);
 }
 
-void refreshWindowSize(){
-    resize(window.getSize().x, window.getSize().y);
+bool closed(){
+    // //show fps
+    // frame_time = SDL_GetTicks()-start_time;
+    // fps = (frame_time > 0)? 1000.0 / frame_time : 0.0;
+    // start_time = SDL_GetTicks();
+
+    // std::cout << "fps: " << fps << "\n";
+
+
+    return true;
+}
+
+void sfx(int n){
+    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
+    gSoloud.play(soundEffects[n]);
+}
+
+void startSong(int song,bool loop){
+    log(song);
+    // if(song == currentSong && !musicArray[currentSong].hasEnded())
+    if(song == currentSong && !gSoloud.getPause(currentSongHandle))
+        return;
+
+    if(currentSong != -1)
+        musicArray[currentSong].stop();
+
+    currentSongHandle = gSoloud.play(musicArray[song]);
+    currentSong = song;
+
+    gSoloud.setVolume(currentSongHandle,musicVolume);
 }
 
 void stopSong(){
-    if(currentSong == -1)
-        return;
-
     musicArray[currentSong].stop();
-
-    currentSong = -1;
-};
-
-void pauseSong(){
-    if(currentSong == -1)
-        return;
-
-    musicArray[currentSong].pause();
-};
+}
 
 void resumeSong(){
-    if(currentSong == -1 || savefile->settings.volume == 0)
-        return;
+    gSoloud.setPause(currentSongHandle,0);
+}
 
-    musicArray[currentSong].play();
-};
+void setMusicVolume(int volume){
+    musicVolume = (float)volume / 200;
+
+    gSoloud.setVolume(currentSongHandle,musicVolume);
+}
+
+void setMusicTempo(int tempo){
+    gSoloud.setRelativePlaySpeed(currentSongHandle, tempo / 1024);
+}
+
+void toggleRendering(bool r){
+    render = r;
+}
+
+void sfxRate(int n, float rate){
+    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
+    int s = gSoloud.play(soundEffects[n]);
+    gSoloud.setRelativePlaySpeed(s,rate);
+}
+
+void pauseSong(){
+    gSoloud.setPause(currentSongHandle,1);
+}
+void initRumble(){};
 
 void loadSavefile(){
+
     std::ifstream input("Apotris.sav",std::ios::binary | std::ios::in);
 
     if(savefile == nullptr)
@@ -495,6 +442,7 @@ void loadSavefile(){
 }
 
 void saveSavefile(){
+
     std::ofstream output("Apotris.sav",std::ios::binary | std::ios::out);
 
     char * dst = (char * ) savefile;
@@ -516,118 +464,17 @@ void saveSavefile(){
     output.close();
 }
 
-std::vector<std::string> keyToString = {
-    "A",        //!< The A key
-    "B",            //!< The B key
-    "C",            //!< The C key
-    "D",            //!< The D key
-    "E",            //!< The E key
-    "F",            //!< The F key
-    "G",            //!< The G key
-    "H",            //!< The H key
-    "I",            //!< The I key
-    "J",            //!< The J key
-    "K",            //!< The K key
-    "L",            //!< The L key
-    "M",            //!< The M key
-    "N",            //!< The N key
-    "O",            //!< The O key
-    "P",            //!< The P key
-    "Q",            //!< The Q key
-    "R",            //!< The R key
-    "S",            //!< The S key
-    "T",            //!< The T key
-    "U",            //!< The U key
-    "V",            //!< The V key
-    "W",            //!< The W key
-    "X",            //!< The X key
-    "Y",            //!< The Y key
-    "Z",            //!< The Z key
-    "0",         //!< The 0 key
-    "1",         //!< The 1 key
-    "2",         //!< The 2 key
-    "3",         //!< The 3 key
-    "4",         //!< The 4 key
-    "5",         //!< The 5 key
-    "6",         //!< The 6 key
-    "7",         //!< The 7 key
-    "8",         //!< The 8 key
-    "9",         //!< The 9 key
-    "Esc",       //!< The Escape key
-    "LCtrl",     //!< The left Control key
-    "LShift",       //!< The left Shift key
-    "LAlt",         //!< The left Alt key
-    "LWin",      //!< The left OS specific key: window (Windows and Linux), apple (macOS), ...
-    "RCtrl",     //!< The right Control key
-    "RShift",       //!< The right Shift key
-    "RAlt",         //!< The right Alt key
-    "RWin",      //!< The right OS specific key: window (Windows and Linux), apple (macOS), ...
-    "Menu",         //!< The Menu key
-    "[",     //!< The [ key
-    "]",     //!< The ] key
-    ";",    //!< The ; key
-    ",",        //!< The , key
-    ".",       //!< The . key
-    "'",   //!< The ' key
-    "/",        //!< The / key
-    "\\",    //!< The \ key
-    "`",        //!< The ` key
-    "=",        //!< The = key
-    "-",       //!< The - key (hyphen)
-    "Space",        //!< The Space key
-    "Enter",        //!< The Enter/Return keys
-    "Bckspc",    //!< The Backspace key
-    "Tab",          //!< The Tabulation key
-    "PgUp",       //!< The Page up key
-    "PgDn",     //!< The Page down key
-    "End",          //!< The End key
-    "Home",         //!< The Home key
-    "Insert",       //!< The Insert key
-    "Del",       //!< The Delete key
-    "+",          //!< The + key
-    "-",     //!< The - key (minus, usually from numpad)
-    "*",     //!< The * key
-    "/",       //!< The / key
-    "Left",         //!< Left arrow
-    "Right",        //!< Right arrow
-    "Up",           //!< Up arrow
-    "Down",         //!< Down arrow
-    "Num0",      //!< The numpad 0 key
-    "Num1",      //!< The numpad 1 key
-    "Num2",      //!< The numpad 2 key
-    "Num3",      //!< The numpad 3 key
-    "Num4",      //!< The numpad 4 key
-    "Num5",      //!< The numpad 5 key
-    "Num6",      //!< The numpad 6 key
-    "Num7",      //!< The numpad 7 key
-    "Num8",      //!< The numpad 8 key
-    "Num9",      //!< The numpad 9 key
-    "F1",           //!< The F1 key
-    "F2",           //!< The F2 key
-    "F3",           //!< The F3 key
-    "F4",           //!< The F4 key
-    "F5",           //!< The F5 key
-    "F6",           //!< The F6 key
-    "F7",           //!< The F7 key
-    "F8",           //!< The F8 key
-    "F9",           //!< The F9 key
-    "F10",          //!< The F10 key
-    "F11",          //!< The F11 key
-    "F12",          //!< The F12 key
-    "F13",          //!< The F13 key
-    "F14",          //!< The F14 key
-    "F15",          //!< The F15 key
-    "Pause",        //!< The Pause key
-};
-
-void initRumble(){}
-
 void quit(){
-    window.close();
-    deinitialize();
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     freeAudio();
-
+    gSoloud.deinit();
     exit(0);
+}
+
+std::string stringFromKey(uint32_t key){
+    return SDL_GetKeyName(key);
 }
 
 #endif

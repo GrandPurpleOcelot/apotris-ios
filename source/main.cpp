@@ -393,54 +393,54 @@ std::string nameInput(int place) {
                     aprint("_", 13 + cursor, nameHeight);
             }
 
-            #elif defined(PC)
-            for(int i = 0; i < 26; i++){
-                if(key_hit(i)){
-                    result[cursor] = keyToString[i][0];
-                    if(cursor < 7)
-                        cursor++;
-                    sfx(SFX_MENUMOVE);
-                    break;
-                }
-            }
+            // #elif defined(PC)
+            // for(int i = 0; i < 26; i++){
+            //     if(key_hit(i)){
+            //         result[cursor] = keyToString[i][0];
+            //         if(cursor < 7)
+            //             cursor++;
+            //         sfx(SFX_MENUMOVE);
+            //         break;
+            //     }
+            // }
 
-            if(key_hit(sf::Keyboard::Backspace) || (das == maxDas && arr == 0)){
-                result[cursor] = ' ';
-                if(cursor > 0){
-                    cursor--;
+            // if(key_hit(sf::Keyboard::Backspace) || (das == maxDas && arr == 0)){
+            //     result[cursor] = ' ';
+            //     if(cursor > 0){
+            //         cursor--;
 
-                    sfx(SFX_MENUMOVE);
-                }
-            }
+            //         sfx(SFX_MENUMOVE);
+            //     }
+            // }
 
-            if(key_is_down(sf::Keyboard::Backspace)){
-                if(das < maxDas)
-                    das++;
+            // if(key_is_down(sf::Keyboard::Backspace)){
+            //     if(das < maxDas)
+            //         das++;
 
-                if(++arr >= maxArr){
-                    arr = 0;
-                }
-            }else{
-                das = 0;
-            }
+            //     if(++arr >= maxArr){
+            //         arr = 0;
+            //     }
+            // }else{
+            //     das = 0;
+            // }
 
-            if(key_hit(sf::Keyboard::Space) && result.size() < 9){
-                result[cursor] = ' ';
-                if(cursor < 7)
-                    cursor++;
-                sfx(SFX_MENUMOVE);
-            }
+            // if(key_hit(sf::Keyboard::Space) && result.size() < 9){
+            //     result[cursor] = ' ';
+            //     if(cursor < 7)
+            //         cursor++;
+            //     sfx(SFX_MENUMOVE);
+            // }
 
-            if (timer++ > 19)
-                timer = 0;
+            // if (timer++ > 19)
+            //     timer = 0;
 
-            if (timer < 10)
-                aprint("_", 13 + cursor, nameHeight);
+            // if (timer < 10)
+            //     aprint("_", 13 + cursor, nameHeight);
 
-            if (key_hit(sf::Keyboard::Enter) || key_hit(sf::Keyboard::Escape)) {
-                onDone = true;
-                sfx(SFX_MENUCONFIRM);
-            }
+            // if (key_hit(sf::Keyboard::Enter) || key_hit(sf::Keyboard::Escape)) {
+            //     onDone = true;
+            //     sfx(SFX_MENUCONFIRM);
+            // }
 
             #endif
 
@@ -1054,18 +1054,11 @@ std::string getStringFromKey(int key){
         return "?";
     }
 
-    #elif defined(PC)
-
-    u8 k = key & 0xff;
-
-    if(k >= 0 && k < sf::Keyboard::KeyCount)
-        return keyToString[k];
-
     #elif defined(SWITCH) || defined(MM) || defined(RGB)
 
     return keyToString[key];
 
-    #elif defined(WEB)
+    #elif defined(WEB) || defined(PC)
 
     return stringFromKey(key);
 
