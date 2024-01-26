@@ -21,7 +21,7 @@ u32 enemyPower[4] = { 1, 1, 1, 1 };
 u32 ownPower = 1;
 u8 currentPlayerId = -1;
 int initialPlayerCount = 0;
-std::queue<uint16_t> sendQueue;
+std::queue<u16> sendQueue;
 
 class BoardUpdate{
 public:
