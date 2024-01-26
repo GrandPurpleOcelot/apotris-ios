@@ -5,6 +5,7 @@
 #include "blockEngine.hpp"
 #include "text.h"
 #include <string>
+#include <queue>
 #include "logging.h"
 #include "rumble.h"
 #include "scene.hpp"
@@ -20,6 +21,7 @@ u32 enemyPower[4] = { 1, 1, 1, 1 };
 u32 ownPower = 1;
 u8 currentPlayerId = -1;
 int initialPlayerCount = 0;
+std::queue<uint16_t> sendQueue;
 
 class BoardUpdate{
 public:
@@ -60,6 +62,19 @@ const int boardTile = 512 - 32 * 3 - 64;
 #define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
 
+void sendGameUpdates() {
+    // Process up to three sends per frame
+    int sentCounter = 3;
+    while (!sendQueue.empty() && --sentCounter) {
+        u16 payload = sendQueue.front();
+        // Wireless sends return potential failures but cabled sends do not
+        if (linkConnection->getMode() == LinkUniversal::LINK_CABLE)
+            linkConnection->send(payload);
+        else if (linkConnection->linkWireless->send(payload))
+            sendQueue.pop();
+    }
+}
+
 // returns true if we should terminate the game
 int GameScene::handleMultiplayer(int state) {
     #ifdef GBA
@@ -80,7 +95,7 @@ int GameScene::handleMultiplayer(int state) {
             u8 newPlayerId = linkConnection->currentPlayerId();
             // Send out initial ID to map to new if changed
             if (currentPlayerId != newPlayerId) {
-                linkConnection->send(ENCODE(CHANGE_STATE) + ownPower);
+                sendQueue.push(ENCODE(CHANGE_STATE) + ownPower);
                 currentPlayerId = newPlayerId;
             }
             return 2;
@@ -88,6 +103,7 @@ int GameScene::handleMultiplayer(int state) {
             return 1;
         }
     }
+
 
     // Game start
     if (multiplayerStart) {
@@ -98,7 +114,8 @@ int GameScene::handleMultiplayer(int state) {
         playAgain = true;
         rank = 0;
         ownPower = 1;
-        linkConnection->send((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
+        sendQueue.push((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
+        sendGameUpdates();
         return 0;
     }
 
@@ -114,7 +131,7 @@ int GameScene::handleMultiplayer(int state) {
 
         if (game->lost) {
             if (!state) {
-                linkConnection->send((u16) ENCODE(CHANGE_STATE) + 0x123);
+                sendQueue.push((u16) ENCODE(CHANGE_STATE) + 0x123);
                 updateRank();
             }
         } else {
@@ -126,7 +143,7 @@ int GameScene::handleMultiplayer(int state) {
                 game->attackQueue.pop_front();
                 // Encode and send out attack
                 u8 targetId = getInitialId(weightedRandomPlayerSelection());
-                linkConnection->send((u16) (ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
+                sendQueue.push((u16) (ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
                 ownPower += atck.amount;
             } else {
                 // Rotate over the 20 rows
@@ -142,12 +159,14 @@ int GameScene::handleMultiplayer(int state) {
                         row_bitfield += 1 << i;
 
                 if (!state)
+                    // Note that board updates do not use the send queue as they are best-effort
                     linkConnection->send(
                             (u16) (ENCODE(SEND_ROW) + ((currentScanHeight & 0x1f) << 10) + (row_bitfield & 0x3ff)));
             }
         }
     }
 
+    sendGameUpdates();
     drawEnemyBoard();
     #endif
 
