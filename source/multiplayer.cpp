@@ -63,14 +63,19 @@ const int boardTile = 512 - 32 * 3 - 64;
 #define ENCODE(x) ((x) << 13)
 
 void sendGameUpdates() {
-    // Process up to three sends per frame
     int sentCounter = 3;
     while (!sendQueue.empty() && --sentCounter) {
         u16 payload = sendQueue.front();
-        // Wireless sends return potential failures but cabled sends do not
-        if (linkConnection->getMode() == LinkUniversal::LINK_CABLE)
+        bool sent = false;
+
+        if (linkConnection->getMode() == LinkUniversal::LINK_CABLE) {
             linkConnection->send(payload);
+            sent = true;
+        }
         else if (linkConnection->linkWireless->send(payload))
+            sent = true;
+
+        if(sent)
             sendQueue.pop();
     }
 }
