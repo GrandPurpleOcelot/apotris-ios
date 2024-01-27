@@ -152,21 +152,21 @@ void loadSave() {
 Keys getDefaultGameKeys(){
     Keys k;
 
-    // #ifdef PC
-    // k = {
-    //     .moveLeft = sf::Keyboard::Left,
-    //     .moveRight = sf::Keyboard::Right,
-    //     .rotateCCW = sf::Keyboard::Z,
-    //     .rotateCW = sf::Keyboard::Up,
-    //     .rotate180 = sf::Keyboard::A,
-    //     .softDrop = sf::Keyboard::Down,
-    //     .hardDrop = sf::Keyboard::Space,
-    //     .hold = sf::Keyboard::C,
-    //     .zone = sf::Keyboard::S,
-    // };
+    #ifdef PC
+    k = {
+        .moveLeft = SDLK_LEFT,
+        .moveRight = SDLK_RIGHT,
+        .rotateCCW = SDLK_z,
+        .rotateCW = SDLK_UP,
+        .rotate180 = SDLK_a,
+        .softDrop = SDLK_DOWN,
+        .hardDrop = SDLK_SPACE,
+        .hold = SDLK_c,
+        .zone = SDLK_s,
+    };
 
-    // return k;
-    // #endif
+    return k;
+    #endif
 
     k = {
         .moveLeft = KEY_LEFT,

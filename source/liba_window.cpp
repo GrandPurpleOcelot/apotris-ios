@@ -315,13 +315,13 @@ void updateWindow(uint8_t* framebuffer){
     // Cap FPS
     nanotime_step(&stepper);
 
-    //log FPS
-    uint64_t temp = frame_start;
-    frame_start = stepper.sleep_point;
+    // //log FPS
+    // uint64_t temp = frame_start;
+    // frame_start = stepper.sleep_point;
 
-    uint64_t interval = nanotime_interval(temp, frame_start, nanotime_now_max());
-    float time = (float) interval / NANOTIME_NSEC_PER_SEC;
-    log(std::to_string(time * 3600) + " " + std::to_string(interval));
+    // uint64_t interval = nanotime_interval(temp, frame_start, nanotime_now_max());
+    // float time = (float) interval / NANOTIME_NSEC_PER_SEC;
+    // log(std::to_string(time * 3600) + " " + std::to_string(interval));
 }
 
 void refreshWindowSize(){
