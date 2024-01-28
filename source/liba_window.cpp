@@ -82,7 +82,7 @@ void windowInit(){
     // screenHeight = DM.h;
 
     window = SDL_CreateWindow(
-        "Apotris PortMaster",
+        "Apotris PC",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         screenWidth, screenHeight,
         SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
@@ -101,6 +101,12 @@ void windowInit(){
     loadAudio();
 
     nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
+
+    SDL_Surface *icon = SDL_LoadBMP("assets/favicon32.bmp");
+
+    SDL_SetWindowIcon(window,icon);
+
+    delete icon;
 }
 
 bool hasSuffix(const std::string& s, const std::string& suffix){
