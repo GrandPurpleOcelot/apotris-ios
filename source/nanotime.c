@@ -52,5 +52,9 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef GBA
+
 #define NANOTIME_IMPLEMENTATION
 #include "nanotime.h"
+
+#endif
