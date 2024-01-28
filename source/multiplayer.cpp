@@ -400,6 +400,7 @@ void handleBotGame(){
 bool GameScene::reconnect(){
     #ifdef GBA
     pauseSong();
+    game->liftKeys();
 
     resetSmallText();
     clearText();
