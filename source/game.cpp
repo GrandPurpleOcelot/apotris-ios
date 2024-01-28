@@ -1048,6 +1048,9 @@ bool GameScene::control() {
 
         delete currentReplayHeader;
 
+        stopSong();
+        playSongRandom(0);
+
         return true;
     }
 
