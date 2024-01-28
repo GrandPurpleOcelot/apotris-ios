@@ -12,7 +12,6 @@
 #include "soloud_openmpt.h"
 #include "def.h"
 
-#define NANOTIME_IMPLEMENTATION
 #include "nanotime.h"
 
 void loadAudio();

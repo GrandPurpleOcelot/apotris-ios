@@ -61,6 +61,7 @@ sources = files(
     src_dir / 'sprites.cpp',
     src_dir / 'tetromino.cpp',
     src_dir / 'text.cpp',
+    src_dir / 'nanotime.c',
 )
 
 binary_files = files(
