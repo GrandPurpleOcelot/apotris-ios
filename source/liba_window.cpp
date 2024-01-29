@@ -84,7 +84,7 @@ void windowInit(){
         "Apotris PC",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         screenWidth, screenHeight,
-        SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
+        SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
         );
 
     renderer = SDL_CreateRenderer(window, -1, 0);
@@ -201,6 +201,13 @@ void key_poll(){
             if(found)
                 currentlyPressed.remove(key);
             break;
+        case SDL_WINDOWEVENT:
+            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED){
+                screenWidth = event.window.data1;
+                screenHeight = event.window.data2;
+                refreshWindowSize();
+            }
+            break;
         case SDL_QUIT:
             quit();
             break;
@@ -302,7 +309,7 @@ void updateWindow(uint8_t* framebuffer){
     SDL_Rect dest_rect;
 
     if(x < 0 || y < 0){
-        int nx = min(x,0);
+        int nx = min(in_width * windowScale - screenWidth,0);
         int ny = min(y,0);
         dest_rect = {-nx/2,-ny/2,screenWidth+nx,screenHeight+ny};
     }else{
