@@ -35,7 +35,7 @@
 #define PLATFORM 4
 #endif
 
-#ifdef RGB
+#ifdef PORTMASTER
 
 #define PLATFORM 5
 #include "liba_rgb30.h"

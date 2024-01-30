@@ -317,7 +317,7 @@ std::string nameInput(int place) {
         aprint(result, 13, nameHeight);
 
         if (!onDone) {
-            #if defined(GBA) || defined(SWITCH) || defined(RGB)
+            #if defined(GBA) || defined(SWITCH) || defined(PORTMASTER)
             if (key_hit(k.confirm) || key_hit(k.right)) {
                 cursor++;
                 if (cursor > 7) {
@@ -1054,7 +1054,7 @@ std::string getStringFromKey(int key){
         return "?";
     }
 
-    #elif defined(SWITCH) || defined(MM) || defined(RGB)
+    #elif defined(SWITCH) || defined(MM) || defined(PORTMASTER)
 
     return keyToString[key];
 

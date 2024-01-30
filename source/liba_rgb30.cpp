@@ -1,4 +1,4 @@
-#ifdef RGB
+#ifdef PORTMASTER
 
 #include "liba_rgb30.h"
 #include <list>

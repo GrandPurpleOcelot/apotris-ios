@@ -343,7 +343,7 @@ class ControlOptionScene : public OptionListScene{
         for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
             list.push_back(new RebindElement((int *) &savefile->settings.keys,1,counter++,*it,9));
 
-        #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(RGB)
+        #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER)
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
         list.push_back(new RumbleElement());

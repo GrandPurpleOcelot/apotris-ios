@@ -26,7 +26,7 @@
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 180
 
-#elif defined(RGB)
+#elif defined(PORTMASTER)
 
 #define SCREEN_WIDTH 360
 #define SCREEN_HEIGHT 360
@@ -95,6 +95,7 @@ typedef SpriteAttributes OBJ_ATTR;
 #define INLINE static inline
 
 typedef int FIXED;
+
 #define FIXED_BITS	8
 #define float2fx(f)	(FIXED)(f*((float)(1 << FIXED_BITS)))
 #define int2fx(i)		((int)(i) << FIXED_BITS)
