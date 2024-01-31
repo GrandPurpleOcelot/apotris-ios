@@ -12,6 +12,7 @@
 #include "soloud_openmpt.h"
 #include "def.h"
 
+#include "shader.h"
 #include "nanotime.h"
 
 void loadAudio();
@@ -93,6 +94,8 @@ void windowInit(){
     if(SDL_NumJoysticks() > 0){
         controller = SDL_GameControllerOpen(0);
     }
+
+    initShaders(window);
 
     refreshWindowSize();
 
@@ -293,36 +296,40 @@ void updateWindow(uint8_t* framebuffer){
         0xff000000
     );
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
+    if(render){
+        drawWithShaders(window, img);
+    }
+
+    // SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
 
     SDL_FreeSurface(img);
 
-    const int x = (in_width - screenWidth / windowScale);
-    const int y = (in_height - screenHeight / windowScale);
-    const int w = screenWidth / windowScale;
-    const int h = screenHeight / windowScale;
+    // const int x = (in_width - screenWidth / windowScale);
+    // const int y = (in_height - screenHeight / windowScale);
+    // const int w = screenWidth / windowScale;
+    // const int h = screenHeight / windowScale;
 
-    SDL_Rect rect = {x/2,y/2,w,h};
+    // SDL_Rect rect = {x/2,y/2,w,h};
 
-    SDL_RenderClear(renderer);
+    // SDL_RenderClear(renderer);
 
-    SDL_Rect dest_rect;
+    // SDL_Rect dest_rect;
 
-    if(x < 0 || y < 0){
-        int nx = min(in_width * windowScale - screenWidth,0);
-        int ny = min(y,0);
-        dest_rect = {-nx/2,-ny/2,screenWidth+nx,screenHeight+ny};
-    }else{
-        dest_rect = {0,0,screenWidth,screenHeight};
-    }
+    // if(x < 0 || y < 0){
+    //     int nx = min(in_width * windowScale - screenWidth,0);
+    //     int ny = min(y,0);
+    //     dest_rect = {-nx/2,-ny/2,screenWidth+nx,screenHeight+ny};
+    // }else{
+    //     dest_rect = {0,0,screenWidth,screenHeight};
+    // }
 
-    if(render){
-        SDL_RenderCopy(renderer,texture,&rect,&dest_rect);
-    }
+    // if(render){
+    //     SDL_RenderCopy(renderer,texture,&rect,&dest_rect);
+    // }
 
-    SDL_RenderPresent(renderer);
+    // SDL_RenderPresent(renderer);
 
-    SDL_DestroyTexture(texture);
+    // SDL_DestroyTexture(texture);
 
     // Cap FPS
     nanotime_step(&stepper);
@@ -367,6 +374,8 @@ void refreshWindowSize(){
 
     if(savefile != nullptr)
         setGradient(savefile->settings.backgroundGradient);
+
+    refreshShaderResolution(screenWidth, screenHeight,windowScale);
 }
 
 bool closed(){

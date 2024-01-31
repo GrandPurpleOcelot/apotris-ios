@@ -62,6 +62,7 @@ sources = files(
     src_dir / 'tetromino.cpp',
     src_dir / 'text.cpp',
     src_dir / 'nanotime.c',
+    src_dir / 'shader.cpp',
 )
 
 binary_files = files(
@@ -307,7 +308,9 @@ if host_machine.system() != 'gba'
         tilengine.get_variable('tilengine_dep'),
         sdl.get_variable('sdl2_dep'),
         soloud.get_variable('soloud_dep'),
-        sdl_mixer.get_variable('sdl2_mixer_dep')
+        sdl_mixer.get_variable('sdl2_mixer_dep'),
+        dependency('gl'),
+        dependency('glew'),
     ]
 
     add_project_arguments('-DPC', language : 'cpp')
