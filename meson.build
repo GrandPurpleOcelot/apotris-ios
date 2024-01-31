@@ -84,6 +84,14 @@ padbin = tools.get_variable('padbin_executable')
 bin2s = files('tools/bin2s.py')
 call_bin2s = files('tools/callBin2S.py')
 
+pymod = import('python')
+py3 = pymod.find_installation('python3', required: true)
+if build_machine.system() == 'windows'
+    xxd = files('tools/xxd.exe')
+else
+    xxd = find_program('xxd', required : true)
+endif
+
 # Windows, macOS, and Linux
 if host_machine.system() != 'gba'
     subdir('assets')
@@ -128,7 +136,7 @@ if host_machine.system() != 'gba'
                 'bin2s_' + fs.name(binfile),
                 output : [output_s, output_h],
                 command : [
-                    call_bin2s, bin2s, binfile, output_h, output_s, 'apple'
+                    py3, call_bin2s, bin2s, binfile, output_h, output_s, 'apple', xxd
                 ],
                 depend_files : binfile,
             )
@@ -138,7 +146,7 @@ if host_machine.system() != 'gba'
                 'bin2s_' + fs.name(binfile),
                 output : [output_cpp, output_h],
                 command : [
-                    call_bin2s, bin2s, binfile, output_h, output_cpp
+                    py3, call_bin2s, bin2s, binfile, output_h, output_cpp, 'gcc', xxd
                 ],
                 depend_files : binfile,
             )
@@ -206,7 +214,7 @@ else
             'bin2s_' + fs.name(binfile),
             output : [output_s, output_h],
             command : [
-                call_bin2s, bin2s, binfile, output_h, output_s, 'gba'
+                py3, call_bin2s, bin2s, binfile, output_h, output_s, 'gba', xxd
             ],
             depend_files : binfile,
         )
@@ -248,14 +256,14 @@ else
         'final ROM with audio',
         output : name + '.gba',
         input : rom_base,
-        command : [gbabuild, padbin, '256', '@INPUT@', audio_target, '0x400000', '@OUTPUT@', gbafix],
+        command : [py3, gbabuild, padbin, '256', '@INPUT@', audio_target, '0x400000', '@OUTPUT@', gbafix],
         build_by_default : true)
 
     pocket = custom_target(
         'patched ROM for Analogue Pocket rumble support',
         output : name + '-pocket.gba',
         input : rom,
-        command : [pocket_patch, gbafix, '@INPUT@', '@OUTPUT@'],
+        command : [py3, pocket_patch, gbafix, '@INPUT@', '@OUTPUT@'],
         build_by_default : false)
 
 endif
