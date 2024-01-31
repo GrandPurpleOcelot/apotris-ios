@@ -79,13 +79,10 @@ icon_file = files('sprites/favicon32.bmp')
 
 fs = import('fs')
 cmake = import('cmake')
-source_root = meson.project_source_root()
 tools = subproject('general-tools')
 padbin = tools.get_variable('padbin_executable')
-bin2s_script_path = join_paths(source_root, 'tools', 'bin2s.py')
-call_bin2s_script_path = join_paths(source_root, 'tools', 'call_bin2s.sh')
-bin2s = find_program(bin2s_script_path, required : true)
-call_bin2s = find_program(call_bin2s_script_path, required : true)
+bin2s = files('tools/bin2s.py')
+call_bin2s = files('tools/callBin2S.py')
 
 # Windows, macOS, and Linux
 if host_machine.system() != 'gba'
@@ -195,10 +192,8 @@ else
     gbafix = find_program('gbafix-py', required : true)
     makerom = find_program('makerom', required : true)
 
-    gbabuild_script_path = join_paths(source_root, 'tools', 'gbabuild.sh')
-    gbabuild = find_program(gbabuild_script_path, required : true)
-    pocket_script_path = join_paths(source_root, 'tools', 'pocket.sh')
-    pocket_patch = find_program(pocket_script_path, required : true)
+    gbabuild = files('tools/gbaBuild.py')
+    pocket_patch = files('tools/pocket.py')
 
     generated_files = []
     foreach binfile : binary_files
