@@ -171,7 +171,7 @@ void sceneSwitcher(std::string str){
         changeScene(new DeathScene(),Transitions::FADE);
     }else if(str == "Zen"){
         changeScene(new ZenScene(),Transitions::FADE);
-    }else if(str == "Multi Battle"){
+    }else if(str == "2P Battle"){
         changeScene(new MultBattleScene(),Transitions::FADE);
     }else if(str == "CPU Battle" || str == "Battle"){
         changeScene(new CPUBattleScene(),Transitions::FADE);

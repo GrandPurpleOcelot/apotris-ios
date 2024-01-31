@@ -36,7 +36,7 @@ std::string getDescription(std::string element){
     }else if(element == "Zen"){
         return "The goal is to relax...";
 
-    }else if(element == "Multi Battle"){
+    }else if(element == "2P Battle"){
         return "Battle your friends through the Link Cable.";
 
     }else if(element == "CPU Battle"){
