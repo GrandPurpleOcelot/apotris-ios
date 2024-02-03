@@ -196,7 +196,6 @@ else
     add_project_arguments('-DGBA', language : 'cpp')
     add_project_arguments('-DGBA', language : 'c')
 
-    cat = find_program('cat', required : true)
     gbafix = find_program('gbafix-py', required : true)
     makerom = find_program('makerom', required : true)
 
