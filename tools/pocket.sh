@@ -1,9 +1,0 @@
-#!/bin/bash
-
-GBAFIX=$1
-TARGET_IN=$2
-TARGET_OUT=$3
-
-cp ${TARGET_IN} ${TARGET_OUT}
-$GBAFIX ${TARGET_OUT} -t"DRILL DOZER" -cV49E -m01 -r00
-

@@ -68,10 +68,16 @@ void sendGameUpdates() {
     int sentCounter = 3;
     while (!sendQueue.empty() && --sentCounter) {
         u16 payload = sendQueue.front();
-        // Wireless sends return potential failures but cabled sends do not
-        if (linkConnection->getMode() == LinkUniversal::LINK_CABLE)
+        bool sent = false;
+
+        if (linkConnection->getMode() == LinkUniversal::LINK_CABLE) {
             linkConnection->send(payload);
+            sent = true;
+        }
         else if (linkConnection->linkWireless->send(payload))
+            sent = true;
+
+        if(sent)
             sendQueue.pop();
     }
 
@@ -96,11 +102,12 @@ int GameScene::handleMultiplayer(int state) {
             // Get potential new playerId
             linkConnection->sync();
             u8 newPlayerId = linkConnection->currentPlayerId();
-            // Send out initial ID to map to new if changed
-            if (currentPlayerId != newPlayerId) {
-                sendQueue.push(ENCODE(CHANGE_STATE) + ownPower);
-                currentPlayerId = newPlayerId;
-            }
+            // Send out power and ID or lose state to map to new if changed
+            u32 power = ownPower;
+            if (game->lost)
+                power = 1023;
+            sendQueue.push(ENCODE(CHANGE_STATE) + power);
+            currentPlayerId = newPlayerId;
             return 2;
         } else {
             return 1;
@@ -115,6 +122,7 @@ int GameScene::handleMultiplayer(int state) {
         for (auto & i : enemyPower)
             i = 1;
         playAgain = true;
+        ended = false;
         rank = 0;
         ownPower = 1;
         sendQueue.push((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
@@ -134,7 +142,7 @@ int GameScene::handleMultiplayer(int state) {
 
         if (game->lost) {
             if (!state) {
-                sendQueue.push((u16) ENCODE(CHANGE_STATE) + 0x123);
+                sendQueue.push((u16) ENCODE(CHANGE_STATE) + 1023);
                 updateRank();
             }
         } else {
@@ -182,9 +190,12 @@ u8 weightedRandomPlayerSelection() {
     if (linkConnection->playerCount() == 2)
         return 0;
 
+    //TODO: The rest of this function appears to be subtly broken at runtime, hence 3+ player mode being disabled
+
     // Calculate the total attack power
     u32 totalAttackPower = 0;
     for (int i = 0; i < initialPlayerCount; ++i) {
+        if (loseIndex[i]) continue;
         totalAttackPower += enemyPower[i];
     }
 
@@ -198,6 +209,7 @@ u8 weightedRandomPlayerSelection() {
     // Determine which player is selected
     u32 accumulatedPower = 0;
     for (int i = 0; i < initialPlayerCount; ++i) {
+        if (loseIndex[i]) continue;
         accumulatedPower += enemyPower[i];
         if (r < accumulatedPower)
             return i; // Return the player ID
@@ -239,12 +251,13 @@ void GameScene::ProcessMultiplayerPacket(u16 data, u8 remotePlayerId) {
     // If the command is 1, restart the game with a new seed
     if (command == PLAY_AGAIN) {
         playAgain = true;
+        ended = false;
         nextSeed = value;
     }
     // Command 2 means special updates
     else if (command == CHANGE_STATE)
         // If the value is 0x123, an opponent has lost
-        if (value == 0x123) {
+        if (value == 1023) {
             loseIndex[getEnemyIndex(remotePlayerId)] = true;
             if (game->lost)
                 return;
@@ -441,6 +454,7 @@ void handleBotGame(){
 bool GameScene::reconnect(){
     #ifdef GBA
     pauseSong();
+    game->liftKeys();
 
     resetSmallText();
     clearText();
