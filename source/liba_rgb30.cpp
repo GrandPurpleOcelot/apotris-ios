@@ -11,6 +11,10 @@
 #include "soloud_wav.h"
 #include "soloud_openmpt.h"
 #include "def.h"
+
+#define NANOTIME_IMPLEMENTATION
+#include "nanotime.h"
+
 void loadAudio();
 void freeAudio();
 
@@ -22,13 +26,13 @@ std::list<uint32_t> previousKeys;
 // int rowStart = (288 - 288) / 2;
 // int rowEnd = rowStart + 288;
 int rowStart = 0;
-int rowEnd = 360;
+int rowEnd = SCREEN_HEIGHT;
 
 #define FPS_TARGET 60
 
 double clock_timer = 0;
 
-static uint64_t frame_start = SDL_GetPerformanceCounter();
+static uint64_t frame_start = nanotime_now();
 
 uint32_t start_time = 0;
 uint32_t frame_time = 0;
@@ -53,13 +57,15 @@ SoLoud::handle currentSongHandle;
 
 std::vector<std::string> songList;
 
-int screenWidth = 720;
+int screenWidth = 1280;
 int screenHeight = 720;
 
 float windowScale = 3;
 int currentSong = -1;
 int sfxVolume = 1024;
 int musicVolume = 1;
+
+nanotime_step_data stepper;
 
 void windowInit(){
     // Initialize SDL
@@ -68,10 +74,10 @@ void windowInit(){
 
     SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_DisplayMode DM;
-    SDL_GetCurrentDisplayMode(0, &DM);
-    screenWidth = DM.w;
-    screenHeight = DM.h;
+    // SDL_DisplayMode DM;
+    // SDL_GetCurrentDisplayMode(0, &DM);
+    // screenWidth = DM.w;
+    // screenHeight = DM.h;
 
     window = SDL_CreateWindow(
         "Apotris PortMaster",
@@ -91,6 +97,8 @@ void windowInit(){
 
     gSoloud.init();
     loadAudio();
+
+    nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 }
 
 bool hasSuffix(const std::string& s, const std::string& suffix){
@@ -236,8 +244,8 @@ uint32_t key_first(){
 }
 
 void updateWindow(uint8_t* framebuffer){
-    const int in_width = 360;
-    const int in_height = 360;
+    const int in_width = SCREEN_WIDTH;
+    const int in_height = SCREEN_HEIGHT;
 
     SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
         framebuffer,
@@ -271,14 +279,16 @@ void updateWindow(uint8_t* framebuffer){
 
     SDL_DestroyTexture(texture);
 
-    // Cap to 60 FPS
-    Uint64 end = SDL_GetPerformanceCounter();
+    // Cap FPS
+    nanotime_step(&stepper);
 
-    float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
+    // //log FPS
+    // uint64_t temp = frame_start;
+    // frame_start = nanotime_now();
 
-    float delay = max(floor(16.666f - elapsedMS),0);
-    SDL_Delay(delay);
-    frame_start = SDL_GetPerformanceCounter();
+    // uint64_t interval = nanotime_interval(temp, frame_start, nanotime_now_max());
+    // float time = (float) interval / NANOTIME_NSEC_PER_SEC;
+    // log(std::to_string(time * 3600));
 }
 
 void refreshWindowSize(){
@@ -301,14 +311,16 @@ void refreshWindowSize(){
         }
     }
 
-    rowStart = (360 - (screenHeight/windowScale))/2;
-    rowEnd = (360 + (screenHeight/windowScale))/2;
+    log("scale " + std::to_string(windowScale));
+
+    rowStart = (SCREEN_HEIGHT - (screenHeight/windowScale))/2;
+    rowEnd = (SCREEN_HEIGHT + (screenHeight/windowScale))/2;
 
     if(rowStart < 0)
         rowStart = 0;
 
-    if(rowEnd > 360)
-        rowEnd = 360;
+    if(rowEnd > SCREEN_HEIGHT)
+        rowEnd = SCREEN_HEIGHT;
 
     if(savefile != nullptr)
         setGradient(savefile->settings.backgroundGradient);
