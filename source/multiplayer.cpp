@@ -54,7 +54,7 @@ int currentScanHeight = 0;
 Game *botGame;
 int botIncomingHeight = 0;
 
-const int boardTile = 512 - 32 * 3 - 64;
+const int boardTile = 512 - 32 * 3 - 64 - 8;
 
 #define PLAY_AGAIN 1
 #define CHANGE_STATE 2
@@ -63,6 +63,7 @@ const int boardTile = 512 - 32 * 3 - 64;
 #define ENCODE(x) ((x) << 13)
 
 void sendGameUpdates() {
+    #ifdef GBA
     // Process up to three sends per frame
     int sentCounter = 3;
     while (!sendQueue.empty() && --sentCounter) {
@@ -73,6 +74,8 @@ void sendGameUpdates() {
         else if (linkConnection->linkWireless->send(payload))
             sendQueue.pop();
     }
+
+    #endif
 }
 
 // returns true if we should terminate the game
@@ -323,14 +326,54 @@ void drawEnemyBoard() {
         return;
     }
 
+    bool zoom = false;
+    if(multiplayer){
+        #ifdef GBA
+        if(linkConnection->isConnected() && linkConnection->playerCount() <= 2){
+            zoom = true;
+        }
+        #endif
+    }else{
+        zoom = true;
+    }
+
+    int x = 43 - 32;
+    int y = 20 - 32;
+
+    if(zoom){
+        x += 32;
+        y += 32;
+    }
+
     enemyBoardSprite = &obj_buffer[25];
     sprite_set_attr(enemyBoardSprite, ShapeSquare, 3, boardTile, 15, 1);
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
     sprite_enable_affine(enemyBoardSprite, 6, true);
-    sprite_set_pos(enemyBoardSprite, 43 - 32, 20 - 32);
-    sprite_set_size(enemyBoardSprite, int2fx(1), 6);
+    sprite_set_pos(enemyBoardSprite, x, y);
+    sprite_set_size(enemyBoardSprite, int2fx(1) >> zoom, 6);
 
-    const int margin = 2;
+    const int margin = 3;
+
+    int count = 1;
+    if(multiplayer){
+        #ifdef GBA
+        if(linkConnection->isConnected()){
+            count = linkConnection->playerCount() - 1;
+        }
+        #endif
+    }
+
+    for(int i = 0; i < count; i++){
+        OBJ_ATTR * boardFrame = &obj_buffer[26 + i];
+
+        const int offsetX = (i % 2) * (10 + margin) + (25) * !zoom;
+        const int offsetY = (i / 2) * (20 + margin) + (17) * !zoom;
+
+        sprite_set_attr(boardFrame, ShapeTall, 2, boardTile + 64, 14, 1);
+        sprite_unhide(boardFrame, ATTR0_AFF_DBL);
+        sprite_enable_affine(boardFrame, 6, true);
+        sprite_set_pos(boardFrame, x + offsetX - 2, y + offsetY - 2);
+    }
 
     for(auto const& update : enemyBoardUpdates){
         const int offsetX = (update.playerId % 2) * (10 + margin);
@@ -372,12 +415,15 @@ void handleBotGame(){
         game->clearAttack(atck.id);
     }
 
+    const int id = 0;
+
     for(int i = 0; i < 20; i++){
         for(int j = 0; j < 10; j++){
-            enemyBoard[0][i][j] = (botGame->board[i+20][j] > 0) * 1;
+            enemyBoard[id][i][j] = (botGame->board[i+20][j] > 0) * 1;
         }
     }
 
+    enemyBoardUpdates.emplace_back(botIncomingHeight,id);
     drawEnemyBoard();
 
     if(botGame->clearLock){

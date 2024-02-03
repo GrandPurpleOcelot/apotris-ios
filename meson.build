@@ -1,8 +1,7 @@
 project('Apotris',
         'c', 'cpp',
         version : '4.0.0',
-        license : 'GPL3',
-        meson_version : '>=0.60.0',
+        license : 'GPL3', meson_version : '>=0.60.0',
         default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=2'])
 
 
@@ -261,6 +260,8 @@ binary_files = files(
     data_dir / 'sprite57tiles.bin',
     data_dir / 'sprite58map.bin',
     data_dir / 'sprite58tiles.bin',
+    data_dir / 'sprite59map.bin',
+    data_dir / 'sprite59tiles.bin',
     data_dir / 'sprite5map.bin',
     data_dir / 'sprite5tiles.bin',
     data_dir / 'sprite6map.bin',

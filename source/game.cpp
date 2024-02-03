@@ -3018,6 +3018,9 @@ void GameScene::init(){
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
 
+    //enemy board frame
+    loadSpriteTiles(408, sprite59tiles_bin, 2, 4);
+
     setSkin();
 
     clearTilemap(25);
