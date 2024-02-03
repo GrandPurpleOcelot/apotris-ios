@@ -195,6 +195,10 @@ else
     ]
     add_project_arguments('-DGBA', language : 'cpp')
     add_project_arguments('-DGBA', language : 'c')
+    if get_option('buildtype').startswith('release')
+        add_project_arguments('-DNO_DIAGNOSE', language : 'cpp')
+        add_project_arguments('-DNO_DIAGNOSE', language : 'c')
+    endif
 
     gbafix = find_program('gbafix-py', required : true)
     makerom = find_program('makerom', required : true)
