@@ -62,6 +62,11 @@ const int boardTile = 512 - 32 * 3 - 64 - 8;
 #define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
 
+void clearEnemyBoard() {
+    memset32((u32*)enemyBoard, 0, sizeof(enemyBoard) / 4);
+    clearSpriteTiles(boardTile, 8, 8);
+}
+
 void sendGameUpdates() {
     #ifdef GBA
     // Process up to three sends per frame
@@ -123,6 +128,7 @@ int GameScene::handleMultiplayer(int state) {
             i = 1;
         playAgain = true;
         ended = false;
+        clearEnemyBoard();
         rank = 0;
         ownPower = 1;
         sendQueue.push((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
@@ -326,6 +332,7 @@ void startMultiplayerGame(int seed) {
     game->setLevel(1);
     game->setGoal(100);
     multiplayer = true;
+    clearEnemyBoard();
 
     #ifdef GBA
     linkConnection->send(50);
