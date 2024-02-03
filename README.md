@@ -1,18 +1,18 @@
-# Info
+# Apotris
 
-https://akouzoukos.com/apotris
+<https://akouzoukos.com/apotris>
 
-Apotris is a block stacking game for the Gameboy Advance! It features satisfying graphics, responsive controls and a large amount of customization so that you can tailor the game to your preferences! 
+Apotris is a block stacking game for the Gameboy Advance! It features satisfying graphics, responsive controls and a large amount of customization so that you can tailor the game to your preferences!
 
 Join the [discord server](https://discord.com/invite/jQnxmXS7tr) for updates, beta releases, or to give me feedback!
 
-# Dependencies
+## Dependencies
 
 The linux version requires SFML.
 
-# Build
+## Build
 
-Run 
+Run
 
 ```
 make <platform>
@@ -21,7 +21,7 @@ make <platform>
 Available Platforms:
 
 | Name            | Platform |
-|-----------------|----------|
+| --------------- | -------- |
 | Gameboy Advance | gba      |
 | Linux           | linux    |
 | Windows 32-bit  | w32      |
@@ -30,37 +30,66 @@ Omitting `<platform>` builds for all platforms
 
 Builds are placed inside the `bin` folder.
 
-# Meson build (experimental)
+## Meson build (experimental)
 
-## Installation
-
-### Base requirements for all systems
+### Overview of requirements for most systems
 
 As all the libraries and tools are compiled from source, the only things you
 need to have installed and in your PATH are:
 
-- meson (at least version 1.0.0 or later)
+- meson (at least version 1.1.0 or later)
   - If your system has an out of date meson, install `pip` and run `pip install meson` to get the latest
 - git
 - A compiler for your system (`cl.exe`, `gcc`, etc.)
 - A compiler for the GBA (`arm-none-eabi-gcc`)
-  - On Ubuntu you really want to install what's 
+  - On Windows you can download the [.exe installer](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) for `mingw-w64-i686-arm-none-eabi-gcc`
+  - On Ubuntu you really want to install what's
     [here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) and follow [this guide](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) to use it.
   - On macOS just `brew install --cask gcc-arm-embedded`
 
+### Windows dependencies
+
+You will need to install:
+
+- [Python 3](https://www.python.org/downloads/windows/)
+  - get the latest stable Windows installer for your platform
+  - ensure you "add to PATH" when you run the installer (unless you know what you're doing otherwise)
+- Meson
+  - Run `pip install meson` after installing Python to get meson
+- A Windows-native compiler and build tools
+  - MSYS2 has a set of build tools and is [free](https://www.msys2.org)
+    - Install a base toolchain with (assuming a 64 bit system) `pacman -S mingw-w64-x86_64-toolchain`
+  - Visual Studio Community Edition is also [free](https://visualstudio.microsoft.com/vs/community/)
+    - You will need to set up your meson cross files to point to `cl.exe` and friends
+
+#### Windows cross file
+
+For the GBA target, you will need to update the `meson/gba.ini` file to have the path to your ARM compiler:
+
+```ini
+[constants]
+path = 'C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\13.2 Rel1\bin'
+# ... rest of original file
+```
+
+Ensure the version string is correct for your installation.
+
 ### Ubuntu 22.04 and Windows (WSL) dependencies
 
-#### For all systems
+#### For all Linux systems
 
 Install the following packages:
+
 ```bash
 sudo apt install build-essential git meson cmake 
 ```
+
 also install `mingw-w64` if you plan to cross compile for Windows
 
 #### For Linux native builds
 
 Install the following dependencies of SDL2:
+
 ```bash
 sudo apt-get install build-essential git make \
   pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
