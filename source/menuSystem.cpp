@@ -212,13 +212,13 @@ std::string modeToString(BlockEngine::Modes mode){
     }
 }
 
-void WordSprite::setText(std::string _text){
+void WordSprite::setText(const std::string& _text){
     if (_text == text)
         return;
 
     text = _text;
 
-    if(text == ""){
+    if(text.empty()){
         clearSpriteTiles(startTiles, (big)?20:12 , 1);
         return;
     }
@@ -240,7 +240,7 @@ void WordSprite::setTextNum(int n){
 
     text = _text;
 
-    if(text == ""){
+    if(text.empty()){
         clearSpriteTiles(startTiles, (big)?20:12 , 0);
         return;
     }
