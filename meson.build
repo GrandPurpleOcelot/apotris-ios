@@ -37,7 +37,6 @@ sources = files(
     src_dir / 'liba_rgb30.cpp',
     src_dir / 'liba_web.cpp',
     src_dir / 'liba_window.cpp',
-    src_dir / 'LinkWireless.cpp',
     src_dir / 'main.cpp',
     src_dir / 'menuSystem.cpp',
     src_dir / 'menus.cpp',
@@ -65,17 +64,18 @@ sources = files(
 # Bring in binary/data files
 subdir(data_dir)
 
+# Set up recommended compiler and linker flags for GBA before loading any other projects
 if host_machine.system() == 'gba'
-    # Set up recommended compiler and linker flags.
     subdir('meson/toolchain')
-    add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language : 'cpp')
     add_project_arguments('-DLINK_WIRELESS_USE_SEND_RECEIVE_LATCH=1', language : 'cpp')
 endif
 
+# Common build file references
 soundbank_file = files('data/soundbank.bin')
 effect_locations_file = files('data/effect_locations.bin')
 icon_file = files('sprites/favicon32.bmp')
 
+# Various helper libraries, subprojects, and scripts common to all builds
 fs = import('fs')
 cmake = import('cmake')
 tools = subproject('general-tools')
@@ -83,8 +83,11 @@ padbin = tools.get_variable('padbin_executable')
 bin2s = files('tools/bin2s.py')
 call_bin2s = files('tools/callBin2S.py')
 
+# Required to invoke python scripts in a Windows-native build environment
 pymod = import('python')
 py3 = pymod.find_installation('python3', required: true)
+
+# Windows uses a pre-compiled xxd
 if build_machine.system() == 'windows'
     xxd = files('tools/xxd.exe')
 else
@@ -103,14 +106,20 @@ add_project_arguments('-Wno-unused', language : 'cpp')
 add_project_arguments('-Wno-unused', language : 'c')
 
 
-# Windows, macOS, and Linux
 if host_machine.system() != 'gba'
+    #############################
+    # Windows, macOS, and Linux #
+    #############################
+
+    # Bring in required audio assets to copy to build output
     subdir('assets')
 
+    # libmodplug must be built as a dynamic/shared library
     cmake_options = cmake.subproject_options()
     cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'ON' })
     modplug = cmake.subproject('libmodplug', options : cmake_options)
 
+    # Other required dependencies
     tilengine = subproject('Tilengine', default_options : ['default_library=static'])
     sdl = subproject('sdl2', default_options : ['default_library=shared'])
     soloud = subproject('SoLoud', default_options : ['default_library=static'])
@@ -124,12 +133,14 @@ if host_machine.system() != 'gba'
         sdl_mixer.get_variable('sdl2_mixer_dep')
     ]
 
+    # Define non-GBA specific preprocessor guards
     add_project_arguments('-DPC', language : 'cpp')
     add_project_arguments('-DPC', language : 'c')
     add_project_arguments('-DTE', language : 'cpp')
     add_project_arguments('-DTE', language : 'c')
 
     generated_files = []
+    # Assemble bin2s targets
     foreach binfile : binary_files
         filename = fs.name(binfile).split('.')[0]
         output_o = '@0@.bin.o'.format(fs.name(filename))
@@ -161,11 +172,14 @@ if host_machine.system() != 'gba'
     endforeach
 
     link_args = []
+    # TODO: This should prevent a terminal from spawning when double-clicking Apotris.exe but it doesn't...
     if host_machine.system() == 'windows'
         add_project_arguments('-mwindows', language : 'cpp')
         add_project_arguments('-mwindows', language : 'c')
         link_args += '-mwindows'
     endif
+
+    # The final Apotris compile target
     binary = executable(
         name,
         generated_files + sources,
@@ -174,23 +188,12 @@ if host_machine.system() != 'gba'
         link_args : link_args,
     )
 else
-    # Platform-specific configuration for AdvancedGameBoy
-    gba_tools = subproject('gba-tools')
-    gbfs = gba_tools.get_variable('gbfs_executable')
-    cc = meson.get_compiler('c')
-    cc_ver = run_command(cc, '--version', capture: true, check: false)
-    have_devkitarm = cc_ver.stdout().to_lower().contains('devkitarm')
-
-    # Only use devkitarm rom runtime if present
-    dka_rt = dependency('dka-rom-rt', required: false)
-    if dka_rt.found()
-        rt_dep = dka_rt
-    else
-        rt_dep = dependency('minrt')
-    endif
+    ##########################################
+    # GameBoy-Advance-specific configuration #
+    ##########################################
 
     dependencies = [
-        rt_dep,
+        dependency('minrt'),
         dependency('libseven'),
         dependency('libtonc'),
         dependency('posprintf'),
@@ -198,20 +201,33 @@ else
         dependency('maxmod'),
         dependency('gba-link-connection'),
     ]
+
+    # Suppress LinkWireless header warnings
+    add_project_arguments('-Wno-format', language : 'cpp')
+    add_project_arguments('-Wno-format', language : 'c')
+
+    # Enable all GBA-specific code
     add_project_arguments('-DGBA', language : 'cpp')
     add_project_arguments('-DGBA', language : 'c')
+
+    # Disable mGBA printf on release builds
     if get_option('buildtype').startswith('release')
         add_project_arguments('-DNO_DIAGNOSE', language : 'cpp')
         add_project_arguments('-DNO_DIAGNOSE', language : 'c')
     endif
 
+    # Get build-machine native tools
+    gba_tools = subproject('gba-tools')
+    gbfs = gba_tools.get_variable('gbfs_executable')
     gbafix = find_program('gbafix-py', required : true)
     makerom = find_program('makerom', required : true)
 
+    # References to python helper scripts
     gbabuild = files('tools/gbaBuild.py')
     pocket_patch = files('tools/pocket.py')
 
     generated_files = []
+    # Assemble bin2s targets
     foreach binfile : binary_files
         filename = fs.name(binfile).split('.')[0]
         output_o = '@0@.bin.o'.format(fs.name(filename))
@@ -230,6 +246,7 @@ else
         generated_files += bin2s_target
     endforeach
 
+    # Use gbfs to create archive to append to ROM with sound data
     audio_target = custom_target(
         'audio and effect bank',
         output : 'audio.gbfs',
@@ -240,11 +257,10 @@ else
     )
     generated_files += audio_target
 
-    link_args = []
-    if not dka_rt.found()
-        link_args += '-specs=nosys.specs'
-    endif
+    # Required for minrt
+    link_args = ['-specs=nosys.specs']
 
+    # The base elf binary
     elf = executable(
         name,
         sources + generated_files,
@@ -254,12 +270,14 @@ else
         link_args : link_args,
         name_suffix : 'elf')
 
+    # The base GBA ROM with no audio
     rom_base = custom_target(
         name + '-base',
         input : elf,
         output : name + '-base.gba',
         command : [makerom, '@INPUT@', '@OUTPUT@'])
 
+    # The final GBA ROM with audio
     rom = custom_target(
         'final ROM with audio',
         output : name + '.gba',
@@ -267,6 +285,7 @@ else
         command : [py3, gbabuild, padbin, '256', '@INPUT@', audio_target, '0x400000', '@OUTPUT@', gbafix],
         build_by_default : true)
 
+    # Analogue Pocket rumble-patched ROM (masquerades as DRILL DOZER)
     pocket = custom_target(
         'patched ROM for Analogue Pocket rumble support',
         output : name + '-pocket.gba',
