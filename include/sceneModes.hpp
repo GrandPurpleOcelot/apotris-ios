@@ -308,6 +308,8 @@ class TupleSelectorElement : public Element{
 
 };
 
+#ifndef MULTIBOOT
+
 class MarathonScene : public PlayOptionScene{
     public:
 
@@ -568,6 +570,8 @@ class TrainingScene : public PlayOptionScene{
     std::string name(){return "Training";};
 };
 
+#endif
+
 class MultBattleScene : public PlayOptionScene{
     public:
 
@@ -587,6 +591,8 @@ class MultBattleScene : public PlayOptionScene{
     std::string name(){return "2P Battle";};
 };
 
+#ifndef MULTIBOOT
+
 class CPUBattleScene : public PlayOptionScene{
     public:
 
@@ -600,3 +606,5 @@ class CPUBattleScene : public PlayOptionScene{
 
     std::string name(){return "CPU Battle";};
 };
+
+#endif

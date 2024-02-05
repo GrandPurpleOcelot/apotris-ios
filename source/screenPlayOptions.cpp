@@ -2,6 +2,8 @@
 #include "sprites.h"
 #include "logging.h"
 #include "sceneModes.hpp"
+#include "LinkCableMultiboot.hpp"
+#include "sendMultiboot.h"
 #include <cstring>
 
 static int lastPlayerCount = -1;
@@ -543,6 +545,8 @@ void PlayOptionScene::setOptions(){
     }
 }
 
+#ifndef MULTIBOOT
+
 void ClassicScene::update(){
     if(!subMode){
         if(elementList.back()->getLabel() == "Height"){
@@ -563,6 +567,8 @@ void ClassicScene::update(){
 
     PlayOptionScene::update();
 }
+
+#endif
 
 void MultBattleScene::init(){
     PlayOptionScene::init();
@@ -621,10 +627,38 @@ bool MultBattleScene::control(){
     return false;
 }
 
+bool multibootSent = false;
+
 void MultBattleScene::update(){
     PlayOptionScene::update();
 
     #ifdef GBA
+
+    #ifndef MULTIBOOT
+    /*if (!multibootSent) {
+        auto result = sendMultiboot();
+        if (result == LinkCableMultiboot::SUCCESS)
+            multibootSent = true;
+        else
+            switch (result) {
+                case LinkCableMultiboot::INVALID_SIZE:
+                    aprint("Invalid size", 0, 0);
+                    break;
+                case LinkCableMultiboot::CANCELED:
+                    aprint("Canceled", 0, 0);
+                    break;
+                case LinkCableMultiboot::FAILURE_DURING_HANDSHAKE:
+                    aprint("Handshake failure", 0, 0);
+                    break;
+                case LinkCableMultiboot::FAILURE_DURING_TRANSFER:
+                    aprint("Transfer failure", 0, 0);
+                    break;
+                default:
+                    break;
+            }
+    }*/
+    #endif
+
     linkConnection->sync();
     // Store state of all player IDs
     u8 currentPlayerId = linkConnection->currentPlayerId();

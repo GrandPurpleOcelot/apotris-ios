@@ -202,6 +202,16 @@ else
         dependency('gba-link-connection'),
     ]
 
+    dependencies_multi = [
+        dependency('minrt-multiboot'),
+        dependency('libseven'),
+        dependency('libtonc'),
+        dependency('posprintf'),
+        dependency('gbfs'),
+        dependency('maxmod'),
+        dependency('gba-link-connection'),
+    ]
+
     # Suppress LinkWireless header warnings
     add_project_arguments('-Wno-format', language : 'cpp')
     add_project_arguments('-Wno-format', language : 'c')
@@ -225,6 +235,7 @@ else
     # References to python helper scripts
     gbabuild = files('tools/gbaBuild.py')
     pocket_patch = files('tools/pocket.py')
+    multibootbuild = files('tools/multibootBuild.py')
 
     generated_files = []
     # Assemble bin2s targets
@@ -260,14 +271,53 @@ else
     # Required for minrt
     link_args = ['-specs=nosys.specs']
 
+    # The base multiboot elf binary
+    multi = executable(
+        name + '-multi',
+        sources + generated_files,
+        link_args : link_args,
+        cpp_args : ['-DMULTIBOOT', '-Os'],
+        c_args : ['-Os'],
+        include_directories : includes,
+        dependencies : dependencies_multi,
+        name_suffix : 'elf')
+
+    # The base multiboot ROM with no audio, unpadded
+    multi_base = custom_target(
+        name + '-multi-base',
+        input : multi,
+        output : name + '-multi-base.gba',
+        command : [makerom, '@INPUT@', '@OUTPUT@'])
+
+    # The base multiboot ROM with no audio, padded and fixed
+    multi_rom = custom_target(
+        name + '-multi',
+        input : multi_base,
+        output : name + '-multi.gba',
+        command : [multibootbuild, padbin, '0x10', '@INPUT@', '@OUTPUT@', gbafix])
+
+    output_o = 'Multiboot.o'
+    output_h = 'Multiboot.h'
+    output_s = 'Multiboot.s'
+
+    embedded_multiboot = custom_target(
+        'bin2s_multiboot',
+        output : [output_s, output_h],
+        command : [
+            py3, call_bin2s, bin2s, multi_rom, output_h, output_s, 'gba', xxd
+        ],
+        depends : multi_rom,
+    )
+
+    generated_files += embedded_multiboot
+
     # The base elf binary
     elf = executable(
         name,
-        sources + generated_files,
+        sources + generated_files + files('source/sendMultiboot.cpp'),
         link_args : link_args,
         include_directories : includes,
         dependencies : dependencies,
-        link_args : link_args,
         name_suffix : 'elf')
 
     # The base GBA ROM with no audio

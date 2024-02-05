@@ -353,6 +353,8 @@ class SettingsScene : public SimpleListScene{
         std::string name(){return "Settings";};
 };
 
+#ifndef MULTIBOOT
+
 class CreditsScene : public Scene{
     public:
 
@@ -520,6 +522,8 @@ public:
         qrY = 33;
     }
 };
+
+#endif
 
 class LabelElement : public Element{
     std::string label;

@@ -3,6 +3,7 @@
 #ifdef GBA
 #include "logging.h"
 #include "LinkUniversal.hpp"
+#include "LinkCableMultiboot.hpp"
 #include "maxmod.h"
 #include "rumble.h"
 #include "gbp_logo.hpp"
