@@ -2,8 +2,10 @@
 #include "sprites.h"
 #include "logging.h"
 #include "sceneModes.hpp"
+#ifdef GBA
 #include "LinkCableMultiboot.hpp"
 #include "sendMultiboot.h"
+#endif
 #include <cstring>
 
 static int lastPlayerCount = -1;
