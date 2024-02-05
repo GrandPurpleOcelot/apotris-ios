@@ -90,7 +90,7 @@ void sendGameUpdates() {
 }
 
 // returns true if we should terminate the game
-int GameScene::handleMultiplayer(int state) {
+int GameScene::handleMultiplayer(bool duringGame) {
     #ifdef GBA
     if (!multiplayer)
         return 0;
@@ -103,7 +103,7 @@ int GameScene::handleMultiplayer(int state) {
     // Exit early for a later update if bad state (e.g. some player disconnects)
     if (!linkConnection->isConnected() || currentPlayerCount < initialPlayerCount) {
         // If reconnect returns false, we got a connection back with all players
-        if (!reconnect()) {
+        if (reconnect()) {
             // Get potential new playerId
             linkConnection->sync();
             u8 newPlayerId = linkConnection->currentPlayerId();
@@ -113,12 +113,11 @@ int GameScene::handleMultiplayer(int state) {
                 power = 1023;
             sendQueue.push(ENCODE(CHANGE_STATE) + power);
             currentPlayerId = newPlayerId;
-            return 2;
+            return 0;
         } else {
             return 1;
         }
     }
-
 
     // Game start
     if (multiplayerStart) {
@@ -147,7 +146,7 @@ int GameScene::handleMultiplayer(int state) {
             ProcessMultiplayerPacket(linkConnection->read(remotePlayerId), remotePlayerId);
 
         if (game->lost) {
-            if (!state) {
+            if (duringGame) {
                 sendQueue.push((u16) ENCODE(CHANGE_STATE) + 1023);
                 updateRank();
             }
@@ -175,7 +174,7 @@ int GameScene::handleMultiplayer(int state) {
                     if (game->board[currentScanHeight + 20][i])
                         row_bitfield += 1 << i;
 
-                if (!state)
+                if (duringGame)
                     // Note that board updates do not use the send queue as they are best-effort
                     linkConnection->send(
                             (u16) (ENCODE(SEND_ROW) + ((currentScanHeight & 0x1f) << 10) + (row_bitfield & 0x3ff)));
@@ -458,6 +457,7 @@ void handleBotGame(){
     }
 }
 
+//returns true on reconnect
 bool GameScene::reconnect(){
     #ifdef GBA
     pauseSong();
@@ -535,8 +535,8 @@ bool GameScene::reconnect(){
                 enableBlend(prevBld);
                 playSongRandom(0);
                 buildBG(3, 0, 27, 0, 1, true);
-                changeScene(new MainMenuScene(), Transitions::FADE);
-                return true;
+                changeScene(new TitleScene(), Transitions::FADE);
+                return false;
             }
 
             cursorFloat += 6;
@@ -583,12 +583,15 @@ bool GameScene::reconnect(){
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 
-    if(!(game->won || game->lost))
+    if(!(game->won || game->lost)){
         countdown();
+    }else{
+        endScreenSetup();
+    }
 
     resumeSong();
 
     #endif
 
-    return false;
+    return true;
 }

@@ -3126,7 +3126,8 @@ void GameScene::update(){
     if(!game->lost && !paused && !game->eventLock){
         game->update();
     }
-    if(handleMultiplayer(0) == 1){
+
+    if(handleMultiplayer(1)){
         return;
     }
 
@@ -3205,7 +3206,7 @@ void GameScene::update(){
     if((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
         paused = true;
 
-        while(endScreen() == 1);
+        endScreen();
 
         paused = false;
         if(!(playAgain && multiplayer)){

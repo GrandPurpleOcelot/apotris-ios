@@ -27,7 +27,6 @@ void showModeText();
 void qrScene();
 
 void saveReplay();
-void deleteReplay();
 
 void sleepMenu();
 
@@ -74,22 +73,18 @@ const std::string modeOptionStrings[][4] = {
     {"Normal","Classic"},
 };
 
-int GameScene::endScreen(){
-    clearSmallText();
-    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
-
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
-
-    stopSong();
-
+void GameScene::endScreen(){
+    const int optionsHeight = 11;
+    int max = 3;
     int selection = 0;
 
-    //calculate pps
+    // - calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
     FIXED pps =  fxdiv(int2fx(game->pieceCounter),(t));
 
     std::string ppsStr = std::to_string(fx2int(pps)) + ".";
+
+    igt = game->inGameTimer;
 
     int fractional = pps & 0xff;
     for(int i = 0; i < 2; i++){
@@ -100,17 +95,16 @@ int GameScene::endScreen(){
 
     std::string totalTime = timeToString(gameSeconds,false);
 
-    if(!ended)
-        endAnimation();
+    stopSong();
 
     int prevBld = blendInfo;
-    enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
 
-    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
-    buildBG(3, 0, 27, 0, 0, true);
-    clearTilemap(25);
+    endScreenSetup();
 
-    drawFrame(1);
+    if(multiplayer)
+        max = 2;
+
+    playSongRandom(0);
 
     if(savefile->settings.announcer){
         if (game->gameMode == ULTRA || game->gameMode == BLITZ) {
@@ -133,21 +127,7 @@ int GameScene::endScreen(){
         }
     }
 
-    igt = game->inGameTimer;
-
-    resetZonePalette();
-
-    playSongRandom(0);
-
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
-
-    showScore();
     int record = onRecord();
-
-    if (multiplayer) {
-        progressBar(1);
-    }
 
     savefile->stats.gamesCompleted++;
     if(game->lost)
@@ -168,34 +148,6 @@ int GameScene::endScreen(){
 
         replaying = false;
     }
-
-    const int optionsHeight = 11;
-
-    int max = 3;
-    int counter = 0;
-
-    wordSprites[1].setText("Play");
-    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 15);
-    wordSprites[2].setText("Again");
-    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
-
-    counter += 3;
-
-    if(!multiplayer){
-        wordSprites[3].setText("Change");
-        wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 15);
-        wordSprites[4].setText("Options");
-        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
-
-        counter += 3;
-    }else{
-        max = 2;
-    }
-
-    wordSprites[5].setText("Main");
-    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 15);
-    wordSprites[6].setText("Menu");
-    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
 
     int cursorFloat = 0;
     OBJ_ATTR * cursorSprite;
@@ -218,11 +170,9 @@ int GameScene::endScreen(){
 
     MenuKeys k = savefile->settings.menuKeys;
 
-    showModeText();
-
     while (closed()) {
-        if(handleMultiplayer(1) == 2){
-            return 1;
+        if(handleMultiplayer(0)){
+            return;
         }
 
         vsync();
@@ -293,7 +243,7 @@ int GameScene::endScreen(){
 #endif
                 multiplayer = false;
                 changeScene(new MainMenuScene, Transitions::FADE);
-                return 0;
+                return;
             } else if (selection == 1){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
@@ -303,7 +253,7 @@ int GameScene::endScreen(){
                 buildBG(3, 0, 27, 0, 1, true);
                 sceneSwitcher(modeToString(previousGameOptions->mode));
                 nextSeed = 0;
-                return 0;
+                return;
             }
         }
 
@@ -349,7 +299,7 @@ int GameScene::endScreen(){
 
     buildBG(3, 0, 27, 0, 1, true);
     enableBlend(prevBld);
-    return 0;
+    return;
 }
 
 void endAnimation() {
@@ -1398,6 +1348,56 @@ void addGameStats(){
     }
 }
 
-void deleteReplay(){
+void GameScene::endScreenSetup(){
+    clearSmallText();
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
+
+    if(!ended)
+        endAnimation();
+
+    enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
+
+    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    buildBG(3, 0, 27, 0, 0, true);
+    clearTilemap(25);
+
+    drawFrame(1);
+
+    resetZonePalette();
+
+    showScore();
+
+    if (multiplayer) {
+        progressBar(1);
+    }
+
+    const int optionsHeight = 11;
+
+    int counter = 0;
+
+    wordSprites[1].setText("Play");
+    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[2].setText("Again");
+    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+
+    counter += 3;
+
+    if(!multiplayer){
+        wordSprites[3].setText("Change");
+        wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 15);
+        wordSprites[4].setText("Options");
+        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+
+        counter += 3;
+    }
+
+    wordSprites[5].setText("Main");
+    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[6].setText("Menu");
+    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+
+    showModeText();
 }

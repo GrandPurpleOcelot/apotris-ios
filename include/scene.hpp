@@ -59,7 +59,7 @@ class GameScene : public Scene{
     void showTimer();
     void showComboStreak();
     int pauseMenu();
-    int endScreen();
+    void endScreen();
     void showModeText();
     void showStats(bool, std::string, std::string, bool);
     void setupCredits();
@@ -67,7 +67,8 @@ class GameScene : public Scene{
     void refreshCredits();
     void checkSounds();
     bool reconnect();
-    int handleMultiplayer(int state);
+    int handleMultiplayer(bool duringGame);
+    void endScreenSetup();
 
     bool counted = false;
 
