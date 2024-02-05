@@ -569,7 +569,7 @@ void sprite_enable_flip(OBJ_ATTR *sprite, bool flipX, bool flipY){
 void quit(){}
 
 void findSoundbank(){
-    const GBFS_FILE * gbfsFile = find_first_gbfs_file(0);
+    const GBFS_FILE * gbfsFile = find_first_gbfs_file(reinterpret_cast<const void *>(AGB_ROM));
     const void * myFile = gbfs_get_obj(gbfsFile, "soundbank.bin", NULL);
 
     if(myFile == NULL){
@@ -584,7 +584,7 @@ void findSoundbank(){
 
 void buildEffectLocations(){
 
-    const GBFS_FILE * gbfsFile = find_first_gbfs_file(0);
+    const GBFS_FILE * gbfsFile = find_first_gbfs_file(reinterpret_cast<const void *>(AGB_ROM));
     const void * myFile = gbfs_get_obj(gbfsFile, "effect_locations.bin", NULL);
 
     u32 * file = (u32*) myFile;

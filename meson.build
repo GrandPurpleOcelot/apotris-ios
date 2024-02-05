@@ -2,7 +2,7 @@ project('Apotris',
         'c', 'cpp',
         version : '4.0.0',
         license : 'GPL3', meson_version : '>=0.60.0',
-        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=2'])
+        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=true'])
 
 
 # The name of your project.
@@ -91,6 +91,18 @@ else
     xxd = find_program('xxd', required : true)
 endif
 
+
+# Custom warning level flags
+add_project_arguments('-Wall', language : 'cpp')
+add_project_arguments('-Wall', language : 'c')
+add_project_arguments('-Wno-array-bounds', language : 'cpp')
+add_project_arguments('-Wno-array-bounds', language : 'c')
+add_project_arguments('-Wno-shadow', language : 'cpp')
+add_project_arguments('-Wno-shadow', language : 'c')
+add_project_arguments('-Wno-unused', language : 'cpp')
+add_project_arguments('-Wno-unused', language : 'c')
+
+
 # Windows, macOS, and Linux
 if host_machine.system() != 'gba'
     subdir('assets')
@@ -116,12 +128,6 @@ if host_machine.system() != 'gba'
     add_project_arguments('-DPC', language : 'c')
     add_project_arguments('-DTE', language : 'cpp')
     add_project_arguments('-DTE', language : 'c')
-
-    # Custom warning level flags
-    add_project_arguments('-Wall', language : 'cpp')
-    add_project_arguments('-Wall', language : 'c')
-    add_project_arguments('-Wno-array-bounds', language : 'cpp')
-    add_project_arguments('-Wno-array-bounds', language : 'c')
 
     generated_files = []
     foreach binfile : binary_files

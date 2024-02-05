@@ -471,7 +471,7 @@ namespace BlockEngine
         bool moveLeft();
         bool moveRight();
         void moveDown();
-        int clear(Drop);
+        int clear(const Drop&);
         void lockCheck();
         void place();
         void generateGarbage(int,int);
@@ -485,7 +485,7 @@ namespace BlockEngine
         void updateDisappear();
         void endZone();
         void clearBoard();
-        void fixConnected(std::list<int>);
+        void fixConnected(const std::list<int>&);
         void connectBoard(int startY, int endY);
         void updateColumns(int height);
         void setupPawnSpawn();
@@ -583,7 +583,7 @@ namespace BlockEngine
         void hardDrop();
         void update();
         int lowest();
-        Color color(int);
+        static Color color(int);
         void hold(int dir);
         void keyLeft(int);
         void keyRight(int);
@@ -599,7 +599,7 @@ namespace BlockEngine
         void clearAttack(int);
         void setWin();
         void addToGarbageQueue(int,int);
-        std::list<int> getBestFinesse(int,int,int);
+        static std::list<int> getBestFinesse(int,int,int);
         int getIncomingGarbage();
         Move findBestDrop();
         void setTrainingMode(bool);
