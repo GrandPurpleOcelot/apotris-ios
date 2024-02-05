@@ -398,16 +398,16 @@ void drawEnemyBoard() {
         const int offsetX = (update.playerId % 2) * (10 + margin);
         const int offsetY = (update.playerId / 2) * (20 + margin);
 
-        const int y = update.row + offsetY;
+        const int yy = update.row + offsetY;
 
         for (int j = 0; j < 10; j++) {
-            const int x = j + offsetX;
+            const int xx = j + offsetX;
 
             if (enemyBoard[update.playerId][update.row][j])
-                setSpritePixel(boardTile, x / 8, y/8, 8, x % 8, y % 8,
-                            ((enemyBoard[update.playerId][update.row][j]) + 1 + savefile->settings.lightMode));
+                setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8,
+                               ((enemyBoard[update.playerId][update.row][j]) + 1 + savefile->settings.lightMode));
             else
-                setSpritePixel(boardTile, x / 8, y/8, 8, x % 8, y % 8, 0);
+                setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8, 0);
         }
     }
 
