@@ -1,9 +1,4 @@
-//
-// Created by Isaac Aronson on 2/7/24.
-//
-
-#include "../include/multiplayerClasses.h"
-#include "def.h"
+#include "multiplayerClasses.h"
 RemotePlayerId::RemotePlayerId(u8 playerId) {
     id = playerId;
 }
