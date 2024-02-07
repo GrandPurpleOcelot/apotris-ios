@@ -130,6 +130,7 @@ extern void reset();
 
 extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
+extern void acknowledgeGarbage(BlockEngine::Garbage);
 extern void progressBar(int layer);
 
 extern void saveToSram();

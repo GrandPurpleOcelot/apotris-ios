@@ -766,16 +766,23 @@ void Game::place() {
                 generateGarbage(goal-(garbageCleared+garbageHeight),0);
         }else if(gameMode == BATTLE){
             int sum = 0;
-            std::list<Garbage>::iterator index = garbageQueue.begin();
+            std::vector<Garbage> collectedGarbage;
+            auto index = garbageQueue.begin();
             while(index != garbageQueue.end()){
                 if(index->timer == 0){
                     sum+=index->amount;
+                    collectedGarbage.emplace_back(index->id, index->amount);
                     garbageQueue.erase(index++);
                 }else{
                     ++index;
                 }
             }
             generateGarbage(sum,1);
+#ifdef GBA
+            if (linkConnection->isConnected())
+                for (auto & garbage : collectedGarbage)
+                    acknowledgeGarbage(garbage);
+#endif
         }
 
         if(gameMode == MASTER || gameMode == DEATH)

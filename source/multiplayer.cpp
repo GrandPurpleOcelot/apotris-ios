@@ -59,6 +59,7 @@ const int boardTile = 512 - 32 * 3 - 64 - 8;
 #define PLAY_AGAIN 1
 #define CHANGE_STATE 2
 #define SEND_ATTACK 3
+#define ACK_ATTACK 4
 #define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
 
@@ -225,6 +226,13 @@ u8 weightedRandomPlayerSelection() {
     return -1; // Return an invalid player ID
 }
 
+void acknowledgeGarbage(BlockEngine::Garbage garbage) {
+#ifdef GBA
+    if (!multiplayer) return;
+    sendQueue.push(ENCODE(ACK_ATTACK) + (garbage.id << 4) + garbage.amount);
+#endif
+}
+
 void GameScene::updateRank() {
     rank = 0;
     for (int playerId = 0; playerId < initialPlayerCount; playerId++)
@@ -289,6 +297,13 @@ void GameScene::ProcessGameUpdate(int command, int value, u8 remotePlayerId) {
         // Add the attack to the garbage queue if it's for us
         if (targetId == currentPlayerId)
             game->addToGarbageQueue(targetId, value & 0xF);
+    }
+    else if (command == ACK_ATTACK) {
+        // The player just had garbage placed on their board
+        int garbageSenderPlayerId = (value >> 4) & 0xFF;
+        int attackValue = value & 0xf;
+        aprint("ACK: ", 0, 0);
+        aprint(std::to_string(attackValue), 5, 0);
     }
     // If the command is between 5 and 7, update the enemy board
     else
