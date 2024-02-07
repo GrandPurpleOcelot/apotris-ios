@@ -1928,9 +1928,9 @@ void Game::addToGarbageQueue(int id, int amount){
     if(amount <= 0)
         return;
 
-    for(const auto& attack : garbageQueue)
-        if(attack.id == id)
-            return;
+    // for(const auto& attack : garbageQueue)
+    //     if(attack.id == id)
+    //         return;
 
     garbageQueue.emplace_back(id,amount);
 }
