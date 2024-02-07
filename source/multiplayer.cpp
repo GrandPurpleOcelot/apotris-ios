@@ -9,6 +9,7 @@
 #include "logging.h"
 #include "rumble.h"
 #include "scene.hpp"
+#include "multiplayerClasses.h"
 
 using namespace BlockEngine;
 
@@ -151,7 +152,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
 
         // Process remote player's packets
         while (linkConnection->canRead(remotePlayerId))
-            ProcessMultiplayerPacket(linkConnection->read(remotePlayerId), remotePlayerId);
+            ProcessMultiplayerPacket(linkConnection->read(remotePlayerId), RemotePlayerId(remotePlayerId));
 
         if (game->lost) {
             if (duringGame) {
@@ -252,12 +253,6 @@ void GameScene::updateRank() {
             rank++;
 }
 
-int getEnemyIndex(u8 id) {
-    if(id > currentPlayerId)
-        id -= 1;
-    return id;
-}
-
 // Never returns own ID
 u8 getInitialId(u8 realId) {
     if (realId >= currentPlayerId) {
@@ -267,7 +262,7 @@ u8 getInitialId(u8 realId) {
 }
 
 // Function to process multiplayer packets
-void GameScene::ProcessMultiplayerPacket(u16 data, u8 remotePlayerId) {
+void GameScene::ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId) {
     // Extract the command from the upper 3 bits of the data
     int command = data >> 13;
     // Extract the value from the lower 13 bits of the data
@@ -282,8 +277,10 @@ void GameScene::ProcessMultiplayerPacket(u16 data, u8 remotePlayerId) {
     // Command 2 means special updates
     else if (command == CHANGE_STATE)
         // If the value is 0x123, an opponent has lost
+    {
+        const u8 remotePlayerIndex = remotePlayerId.getIndex().index;
         if (value == 1023) {
-            loseIndex[getEnemyIndex(remotePlayerId)] = true;
+            loseIndex[remotePlayerIndex] = true;
             if (game->lost)
                 return;
             updateRank();
@@ -292,29 +289,31 @@ void GameScene::ProcessMultiplayerPacket(u16 data, u8 remotePlayerId) {
         }
         // Otherwise the value is player power level, and we were in a reconnect state, so update
         else
-            enemyPower[getEnemyIndex(remotePlayerId)] = value;
+            enemyPower[remotePlayerIndex] = value;
+    }
     // If the command is between 3 and 7, process the game update
     else if (command >= SEND_ATTACK && command <= 7)
         ProcessGameUpdate(command, value, remotePlayerId);
 }
 
 // Function to process game updates
-void GameScene::ProcessGameUpdate(int command, int value, u8 remotePlayerId) {
+void GameScene::ProcessGameUpdate(int command, int value, RemotePlayerId remotePlayerId) {
+    const u8 remotePlayerIndex = remotePlayerId.getIndex().index;
     // If the command is 3, receive an attack
     if (command == SEND_ATTACK) {
         int targetId = (value >> 4) & 0xFF;
         int attackValue = value & 0xF;
         // Record this attack to judge relative multiplayer rank
-        enemyPower[getEnemyIndex(remotePlayerId)] += attackValue;
+        enemyPower[remotePlayerIndex] += attackValue;
         // Add the attack to the garbage queue if it's for us
         if (targetId == currentPlayerId)
             game->addToGarbageQueue(targetId, value & 0xF);
     }
     else if (command == ACK_ATTACK) {
         // The player just had garbage placed on their board
-        int garbageSenderPlayerId = (value >> 4) & 0xFF;
+        //int garbageSenderPlayerId = (value >> 4) & 0xFF;
         int attackValue = value & 0xf;
-        attackAnimationTimers[getEnemyIndex(garbageSenderPlayerId)] = animationMax * attackValue;
+        attackAnimationTimers[remotePlayerIndex] = animationMax * attackValue;
     }
     // If the command is between 5 and 7, update the enemy board
     else
@@ -322,14 +321,14 @@ void GameScene::ProcessGameUpdate(int command, int value, u8 remotePlayerId) {
 }
 
 // Function to update the enemy board
-void GameScene::UpdateEnemyBoard(int command, int value, u8 remotePlayerId) {
+void GameScene::UpdateEnemyBoard(int command, int value, RemotePlayerId remotePlayerId) {
     // Calculate the base height based on the command
     int baseHeight = (command - 5) * 8;
     // Calculate the row to be updated
     int row = (value >> 10) + baseHeight;
     // If the row is within the board's height
     if (row < 20) {
-        int id = getEnemyIndex(remotePlayerId);
+        auto id = remotePlayerId.getIndex().index;
         // Loop through each column in the row
         for (int j = 0; j < 10; j++)
             // Update the cell in the enemy board based on the value

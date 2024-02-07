@@ -41,6 +41,7 @@ sources = files(
     src_dir / 'menuSystem.cpp',
     src_dir / 'menus.cpp',
     src_dir / 'multiplayer.cpp',
+    src_dir / 'multiplayerClasses.cpp',
     src_dir / 'music.cpp',
     src_dir / 'qrcodegen.c',
     src_dir / 'rumble.c',

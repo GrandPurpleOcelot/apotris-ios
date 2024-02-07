@@ -4,6 +4,8 @@
 #include "blockEngine.hpp"
 #ifdef GBA
 #include "LinkUniversal.hpp"
+#include "multiplayerClasses.h"
+
 #endif
 #include <list>
 #include <string>
@@ -80,11 +82,11 @@ class GameScene : public Scene{
         deinit();
     };
 
-    static void ProcessMultiplayerPacket(u16 data, u8 remotePlayerId);
+    static void ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId);
 
-    static void ProcessGameUpdate(int command, int value, u8 remotePlayerId);
+    static void ProcessGameUpdate(int command, int value, RemotePlayerId remotePlayerId);
 
-    static void UpdateEnemyBoard(int command, int value, u8 remotePlayerId);
+    static void UpdateEnemyBoard(int command, int value, RemotePlayerId remotePlayerId);
 
     static void updateRank() ;
 };
