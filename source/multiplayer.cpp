@@ -233,11 +233,16 @@ u8 weightedRandomPlayerSelection() {
     return -1; // Return an invalid player ID
 }
 
-void acknowledgeGarbage(BlockEngine::Garbage garbage) {
-#ifdef GBA
-    if (!multiplayer) return;
-    sendQueue.push(ENCODE(ACK_ATTACK) + (garbage.id << 4) + garbage.amount);
-#endif
+void acknowledgeGarbage(BlockEngine::Game *sourceGame, BlockEngine::Garbage garbage) {
+    if (multiplayer){
+        #ifdef GBA
+        sendQueue.push(ENCODE(ACK_ATTACK) + (garbage.id << 4) + garbage.amount);
+        #endif
+    }else{
+        if(sourceGame == botGame){
+            attackAnimationTimers[0] = animationMax * garbage.amount;
+        }
+    }
 }
 
 void GameScene::updateRank() {

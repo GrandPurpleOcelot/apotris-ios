@@ -778,11 +778,9 @@ void Game::place() {
                 }
             }
             generateGarbage(sum,1);
-#ifdef GBA
-            if (linkConnection->isConnected())
-                for (auto & garbage : collectedGarbage)
-                    acknowledgeGarbage(garbage);
-#endif
+
+            for (auto &garbage : collectedGarbage)
+                acknowledgeGarbage(this,garbage);
         }
 
         if(gameMode == MASTER || gameMode == DEATH)
