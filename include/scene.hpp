@@ -1,11 +1,10 @@
 #pragma once
 
 #include "def.h"
+#include "multiplayerClasses.h"
 #include "blockEngine.hpp"
 #ifdef GBA
 #include "LinkUniversal.hpp"
-#include "multiplayerClasses.h"
-
 #endif
 #include <list>
 #include <string>
