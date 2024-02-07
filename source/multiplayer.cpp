@@ -303,15 +303,13 @@ void GameScene::ProcessGameUpdate(int command, int value, u8 remotePlayerId) {
         enemyPower[getEnemyIndex(remotePlayerId)] += attackValue;
         // Add the attack to the garbage queue if it's for us
         if (targetId == currentPlayerId)
-            game->addToGarbageQueue(targetId, value & 0xF);
+            game->addToGarbageQueue(qran() & 0xff, value & 0xF);
     }
     else if (command == ACK_ATTACK) {
         // The player just had garbage placed on their board
         int garbageSenderPlayerId = (value >> 4) & 0xFF;
         int attackValue = value & 0xf;
         attackAnimationTimers[getEnemyIndex(garbageSenderPlayerId)] = animationMax * attackValue;
-        // aprint("ACK: ", 0, 0);
-        // aprint(std::to_string(attackValue), 5, 0);
     }
     // If the command is between 5 and 7, update the enemy board
     else
