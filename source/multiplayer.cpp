@@ -354,6 +354,7 @@ void startMultiplayerGame(int seed) {
         previousGameOptions = new BlockEngine::Options();
 
     game->setOptions(*previousGameOptions);
+    game->setTuning(getTuning());
     game->setLevel(1);
     game->setGoal(100);
     multiplayer = true;
