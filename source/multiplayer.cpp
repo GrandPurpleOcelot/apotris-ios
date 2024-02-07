@@ -18,6 +18,10 @@ u8 getInitialId(u8 realId);
 
 u8 enemyBoard[4][20][10];
 u32 enemyPower[4] = { 1, 1, 1, 1 };
+u8 attackAnimationTimers[4];
+
+const int animationMax = 15;
+
 u32 ownPower = 1;
 u8 currentPlayerId = -1;
 int initialPlayerCount = 0;
@@ -66,6 +70,9 @@ const int boardTile = 512 - 32 * 3 - 64 - 8;
 void clearEnemyBoard() {
     memset32((u32*)enemyBoard, 0, sizeof(enemyBoard) / 4);
     clearSpriteTiles(boardTile, 8, 8);
+
+    for(auto & timer: attackAnimationTimers)
+        timer = 0;
 }
 
 void sendGameUpdates() {
@@ -302,8 +309,9 @@ void GameScene::ProcessGameUpdate(int command, int value, u8 remotePlayerId) {
         // The player just had garbage placed on their board
         int garbageSenderPlayerId = (value >> 4) & 0xFF;
         int attackValue = value & 0xf;
-        aprint("ACK: ", 0, 0);
-        aprint(std::to_string(attackValue), 5, 0);
+        attackAnimationTimers[getEnemyIndex(garbageSenderPlayerId)] = animationMax * attackValue;
+        // aprint("ACK: ", 0, 0);
+        // aprint(std::to_string(attackValue), 5, 0);
     }
     // If the command is between 5 and 7, update the enemy board
     else
@@ -403,10 +411,13 @@ void drawEnemyBoard() {
         const int offsetX = (i % 2) * (10 + margin) + (25) * !zoom;
         const int offsetY = (i / 2) * (20 + margin) + (17) * !zoom;
 
-        sprite_set_attr(boardFrame, ShapeTall, 2, boardTile + 64, 14, 1);
+        sprite_set_attr(boardFrame, ShapeTall, 2, boardTile + 64, 14 + (attackAnimationTimers[i] > 0), 1);
         sprite_unhide(boardFrame, ATTR0_AFF_DBL);
         sprite_enable_affine(boardFrame, 6, true);
         sprite_set_pos(boardFrame, x + offsetX - 2, y + offsetY - 2);
+
+        if(attackAnimationTimers[i])
+            attackAnimationTimers[i]--;
     }
 
     for(auto const& update : enemyBoardUpdates){
