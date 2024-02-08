@@ -65,16 +65,28 @@ sources = files(
 # Bring in binary/data files
 subdir(data_dir)
 
+# Common build file references
+soundbank_file = files('data/soundbank.bin')
+effect_locations_file = files('data/effect_locations.bin')
+icon_file = files('sprites/favicon32.bmp')
+
 # Set up recommended compiler and linker flags for GBA before loading any other projects
 if host_machine.system() == 'gba'
     subdir('meson/toolchain')
     add_project_arguments('-DLINK_WIRELESS_USE_SEND_RECEIVE_LATCH=1', language : 'cpp')
 endif
 
-# Common build file references
-soundbank_file = files('data/soundbank.bin')
-effect_locations_file = files('data/effect_locations.bin')
-icon_file = files('sprites/favicon32.bmp')
+build_type = get_option('buildtype')
+# Don't use mGBA logging in release or custom build types, only debug and friends
+if build_type.startswith('release') or build_type.startswith('custom')
+  add_project_arguments('-DNO_DIAGNOSE', language : 'cpp')
+  add_project_arguments('-DNO_DIAGNOSE', language : 'c')
+endif
+# Custom target is the fastest possible
+if build_type.startswith('custom')
+  add_global_arguments('-Ofast', language : 'cpp')
+  add_global_arguments('-Ofast', language : 'c')
+endif
 
 # Various helper libraries, subprojects, and scripts common to all builds
 fs = import('fs')
