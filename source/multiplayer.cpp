@@ -28,6 +28,8 @@ u8 currentPlayerId = -1;
 int initialPlayerCount = 0;
 std::queue<u16> sendQueue;
 
+bool pendingPlayAgain = false;
+
 class BoardUpdate{
 public:
     int row = 0;
@@ -131,16 +133,18 @@ int GameScene::handleMultiplayer(bool duringGame) {
     // Game start
     if (multiplayerStart) {
         multiplayerStart = false;
-        loseIndex = { {0, false}, {1, false}, {2, false}, {3, false}, {4, false} };
-        for (auto & i : enemyPower)
+        loseIndex = {{0, false},
+                     {1, false},
+                     {2, false},
+                     {3, false},
+                     {4, false}};
+        for (auto &i: enemyPower)
             i = 1;
         playAgain = true;
         ended = false;
         clearEnemyBoard();
         rank = 0;
         ownPower = 1;
-        sendQueue.push((u16) (ENCODE(PLAY_AGAIN) + (nextSeed & 0x1fff)));
-        sendGameUpdates();
         return 0;
     }
 
@@ -270,9 +274,14 @@ void GameScene::ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId
 
     // If the command is 1, restart the game with a new seed
     if (command == PLAY_AGAIN) {
-        playAgain = true;
-        ended = false;
-        nextSeed = value;
+        if (value == 0x1FFF){
+            multiplayerStart = true;
+            pendingPlayAgain = false;
+        } else {
+            aprint("Would you like to play again?", 0, 0);
+            pendingPlayAgain = true;
+            nextSeed = value;
+        }
     }
     // Command 2 means special updates
     else if (command == CHANGE_STATE)
@@ -358,10 +367,6 @@ void startMultiplayerGame(int seed) {
     game->setGoal(100);
     multiplayer = true;
     clearEnemyBoard();
-
-    #ifdef GBA
-    linkConnection->send(50);
-    #endif
 
     nextSeed = 0;
 }

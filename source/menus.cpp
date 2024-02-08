@@ -227,8 +227,17 @@ void GameScene::endScreen(){
                 } else {
                     if (connected == 1) {
                         sfx(SFX_MENUCONFIRM);
-                        multiplayerStart = true;
-                        nextSeed = (u16)qran();
+                        if (!pendingPlayAgain) {
+                            pendingPlayAgain = true;
+#ifdef GBA
+                            nextSeed = (u16) qran() % 0x1FFE;
+                            linkConnection->send((1 << 13) + nextSeed);
+                            aprint("Waiting for other player...", 0, 0);
+#endif
+                        } else {
+                            linkConnection->send((1 << 13) + 0x1FFF);
+                            multiplayerStart = true;
+                        }
                     } else {
                         sfx(SFX_MENUCANCEL);
                     }

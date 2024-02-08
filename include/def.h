@@ -229,6 +229,7 @@ extern bool canDraw;
 extern int gameSeconds;
 
 extern bool playAgain;
+extern bool pendingPlayAgain;
 
 // extern bool resumeJourney;
 // extern bool journeyLevelUp;
