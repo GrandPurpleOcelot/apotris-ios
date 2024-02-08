@@ -235,7 +235,9 @@ void GameScene::endScreen(){
                             aprint("Waiting for other player...", 0, 0);
 #endif
                         } else {
+#ifdef GBA
                             linkConnection->send((1 << 13) + 0x1FFF);
+#endif
                             multiplayerStart = true;
                         }
                     } else {
