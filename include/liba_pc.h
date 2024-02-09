@@ -195,6 +195,16 @@ INLINE void memset32(void * dst, u32 n, int count){
     }
 }
 
+INLINE void memcpy16_fast(void* dest, const void* src, int hwCount) {
+    memcpy16(dest, src, hwCount);
+}
+INLINE void memcpy32_fast(void* dest, const void* src, int wCount) {
+    memcpy32(dest, src, wCount);
+}
+INLINE void memset32_fast(void* dest, int word, int wCount){
+    memset32(dest, word, wCount);
+}
+
 INLINE int qran(){
     return rand();
 }
