@@ -6,31 +6,36 @@ Apotris is a block stacking game for the Gameboy Advance! It features satisfying
 
 Join the [discord server](https://discord.com/invite/jQnxmXS7tr) for updates, beta releases, or to give me feedback!
 
-## Dependencies
+## Docker build
 
-The linux version requires SFML.
+Want to bypass all the work and use a system shipped by the developers intended to build Apotris? Try the docker image:
 
-## Build
+First, [install Docker](https://docs.docker.com/get-docker/) for your system. Then get it running and open up a terminal:
 
-Run
+```bash
+# Download and log in to the Apotris builder docker image
+docker run -it <template-tag-goes-here> bash
+# OR Optional: build the image yourself
+docker build -t apotris-builder . && docker run -it apotris-builder bash
+# You are now in the docker image environment, use Ctrl+D or "exit" command to return to main OS
 
+# Clone the latest sources
+git clone --branch ports https://gitea.com/akouzoukos/apotris.git
+# Enter source dir
+cd apotris
+# From here you can build one of the available targets
+
+# GBA
+meson setup --cross-file=meson/gba.ini build-gba && meson compile -C build-gba
+# Windows
+meson setup --cross-file=meson/mingw.ini build-windows && meson compile -C build-windows
+# Linux
+meson setup build-linux && meson compile -C build-linux
+
+# Built executables are now in the Docker environment's apotris/build-*/ folders
 ```
-make <platform>
-```
 
-Available Platforms:
-
-| Name            | Platform |
-| --------------- | -------- |
-| Gameboy Advance | gba      |
-| Linux           | linux    |
-| Windows 32-bit  | w32      |
-
-Omitting `<platform>` builds for all platforms
-
-Builds are placed inside the `bin` folder.
-
-## Meson build (experimental)
+## Meson build
 
 ### Overview of requirements for most systems
 
@@ -74,7 +79,7 @@ path = 'C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\13.2 Rel1\bin'
 
 Ensure the version string is correct for your installation.
 
-### Ubuntu 22.04 and Windows (WSL) dependencies
+### Ubuntu 22.04+ and Windows (WSL) dependencies
 
 #### For all Linux systems
 

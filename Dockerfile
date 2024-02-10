@@ -26,16 +26,3 @@ RUN ln -sf /usr/share/arm-gnu-toolchain-*/bin/* /usr/bin/
 
 # Get missing windows deps and hack them in
 RUN curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-dlfcn-1.4.1-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/
-
-# Get sources and go into them
-RUN git clone --branch wireless https://gitea.com/luigi/apotris.git
-
-# Build GBA
-RUN cd apotris && meson setup --cross-file=meson/gba.ini --buildtype=custom build-gba && ninja -C build-gba Apotris-pocket.gba
-
-# Build Linux native
-RUN cd apotris && meson setup --buildtype=custom build-linux && ninja -C build-linux
-
-# Build Windows mingw
-RUN cd apotris && meson setup --cross-file=meson/mingw.ini --buildtype=custom build-windows && ninja -C build-windows
-
