@@ -293,7 +293,7 @@ void nanotime_sleep(uint64_t nsec_count) {
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <Windows.h>
+#include <windows.h>
 void nanotime_yield() {
 	YieldProcessor();
 }
