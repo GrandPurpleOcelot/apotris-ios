@@ -59,7 +59,7 @@ class List{
         }
 
         int back(){
-            if(length == 0)
+           if(length == 0)
                 return 0;
 
             return array[length-1];
@@ -633,7 +633,7 @@ namespace BlockEngine
         float speed;
         int linesCleared = 0;
         int level = 0;
-        int score = 0;
+        unsigned int score = 0;
         int comboCounter = -1;
         bool lineClearArray[40];
         bool clearLock = false;

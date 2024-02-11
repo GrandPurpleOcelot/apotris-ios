@@ -49,7 +49,7 @@ need to have installed and in your PATH are:
 - A compiler for the GBA (`arm-none-eabi-gcc`)
   - On Windows you can download the [.exe installer](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) for `mingw-w64-i686-arm-none-eabi-gcc`
   - On Ubuntu you really want to install what's
-    [here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) and follow [this guide](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) to use it.
+    [here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) and follow [this guide](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) to use it. Make sure to symlink everything `sudo ln -sf /usr/share/arm-gnu-toolchain-YOUR_VERSION/bin/* /usr/bin/`
   - On macOS just `brew install --cask gcc-arm-embedded`
 
 ### Windows dependencies
@@ -112,7 +112,7 @@ following command:
 
 ```sh
 # Fetch remote dependencies
-git submodules update --init --recursive
+git submodule update --init --recursive
 meson subprojects download
 
 # Native build

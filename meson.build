@@ -154,6 +154,10 @@ if host_machine.system() != 'gba'
     add_project_arguments('-DPC', language : 'c')
     add_project_arguments('-DTE', language : 'cpp')
     add_project_arguments('-DTE', language : 'c')
+    add_project_arguments('-DGL', language : 'cpp')
+    add_project_arguments('-DGL', language : 'c')
+    add_project_arguments('-Wno-array-bounds', language : 'cpp')
+    add_project_arguments('-Wno-array-bounds', language : 'c')
 
     generated_files = []
     # Assemble bin2s targets

@@ -12,7 +12,10 @@
 #include "soloud_openmpt.h"
 #include "def.h"
 
+#ifdef GL
 #include "shader.h"
+#endif
+
 #include "nanotime.h"
 
 void loadAudio();
@@ -76,10 +79,12 @@ void windowInit(){
 
     SDL_Init(SDL_INIT_VIDEO);
 
-    // SDL_DisplayMode DM;
-    // SDL_GetCurrentDisplayMode(0, &DM);
-    // screenWidth = DM.w;
-    // screenHeight = DM.h;
+    #ifdef PORTMASTER
+    SDL_DisplayMode DM;
+    SDL_GetCurrentDisplayMode(0, &DM);
+    screenWidth = DM.w;
+    screenHeight = DM.h;
+    #endif
 
     window = SDL_CreateWindow(
         "Apotris PC",
@@ -95,7 +100,9 @@ void windowInit(){
         controller = SDL_GameControllerOpen(0);
     }
 
+    #ifdef GL
     initShaders(window);
+    #endif
 
     refreshWindowSize();
 
@@ -296,13 +303,46 @@ void updateWindow(uint8_t* framebuffer){
         0xff000000
     );
 
-    if(render){
-        drawWithShaders(window, img);
-    }
+    #ifndef GL
 
-    // SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
 
     SDL_FreeSurface(img);
+
+    const int x = (in_width - screenWidth / windowScale);
+    const int y = (in_height - screenHeight / windowScale);
+    const int w = screenWidth / windowScale;
+    const int h = screenHeight / windowScale;
+
+    SDL_Rect rect = {x/2,y/2,w,h};
+
+    SDL_RenderClear(renderer);
+
+    SDL_Rect dest_rect;
+
+    if(x < 0 || y < 0){
+        int nx = min(x,0);
+        int ny = min(y,0);
+        dest_rect = {-nx/2,-ny/2,screenWidth+nx,screenHeight+ny};
+    }else{
+        dest_rect = {0,0,screenWidth,screenHeight};
+    }
+
+    if(render){
+        SDL_RenderCopy(renderer,texture,&rect,&dest_rect);
+    }
+
+    SDL_RenderPresent(renderer);
+
+    SDL_DestroyTexture(texture);
+
+    #else
+    if(render){
+        drawWithShaders(window, img, false);
+    }
+
+    SDL_FreeSurface(img);
+    #endif
 
     // const int x = (in_width - screenWidth / windowScale);
     // const int y = (in_height - screenHeight / windowScale);
@@ -375,7 +415,9 @@ void refreshWindowSize(){
     if(savefile != nullptr)
         setGradient(savefile->settings.backgroundGradient);
 
+    #ifdef GL
     refreshShaderResolution(screenWidth, screenHeight,windowScale);
+    #endif
 }
 
 bool closed(){

@@ -1,3 +1,4 @@
+#ifdef GL
 #include "shader.h"
 
 #include <GL/glew.h>
@@ -60,8 +61,9 @@ uint loadShaderFromFile(std::string path, int type){
 }
 
 uint getShader(){
-    uint vertexShader = loadShaderFromFile("assets/shaders/crt-pi.glsl", GL_VERTEX_SHADER);
-    uint fragmentShader = loadShaderFromFile("assets/shaders/crt-pi.glsl", GL_FRAGMENT_SHADER);
+    std::string shaderPath = "assets/shaders/crt/shaders/crt-lottes.glsl";
+    uint vertexShader = loadShaderFromFile(shaderPath, GL_VERTEX_SHADER);
+    uint fragmentShader = loadShaderFromFile(shaderPath, GL_FRAGMENT_SHADER);
 
     uint program = glCreateProgram();
     glAttachShader(program, vertexShader);
@@ -99,7 +101,7 @@ void initShaders(SDL_Window *window){
     int res_tex = glGetUniformLocation(shaderProgram,"TextureSize");
     glUniform2f(res_tex,(float)512,(float)512);
 
-    glUseProgram(shaderProgram);
+    // glUseProgram(shaderProgram);
 
     glGenBuffers(1,&vbo);
     glGenBuffers(1, &ebo);
@@ -130,18 +132,22 @@ void initShaders(SDL_Window *window){
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
-void drawWithShaders(SDL_Window * window, SDL_Surface *img){
+void drawWithShaders(SDL_Window * window, SDL_Surface *img,bool shadersEnabled){
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
-    glUseProgram(shaderProgram);
+
+    if(shadersEnabled){
+        glUseProgram(shaderProgram);
+    }
+
     glBindVertexArray(vao);
     glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
 
@@ -166,7 +172,7 @@ void refreshShaderResolution(int w, int h, float s){
     glUniform2f(res_out,(float)width,(float)height);
 
     int res_in = glGetUniformLocation(shaderProgram,"InputSize");
-    glUniform2f(res_in,(float)width,(float)height);
+    glUniform2f(res_in,(float)512,(float)512);
 
     int res_tex = glGetUniformLocation(shaderProgram,"TextureSize");
     glUniform2f(res_tex,(float)512,(float)512);
@@ -189,3 +195,4 @@ void refreshShaderResolution(int w, int h, float s){
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 }
+#endif
