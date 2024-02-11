@@ -17,6 +17,8 @@
 #include <tuple>
 #include <algorithm>
 
+#ifndef MULTIBOOT
+
 // #include "soundbank.h"
 #include "blockEngine.hpp"
 #include "skinEditor.hpp"
@@ -647,3 +649,5 @@ void showHelpText(){
         aprints("help",15,72,2);
     }
 }
+
+#endif

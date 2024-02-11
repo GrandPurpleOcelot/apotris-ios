@@ -1,11 +1,12 @@
 #pragma once
+#include <string>
 #include <stdint.h>
 #include <tonc.h>
+#include "interrupt.h"
 #include "mm_types.h"
 #include "audio_files.h"
 /* #include "soundbank.h" */
 #include "posprintf.h"
-#include "LinkConnection.h"
 #include <map>
 
 static inline void setTile(int sbb, int x, int y, uint32_t value){

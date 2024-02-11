@@ -1,58 +1,108 @@
-# Info
+# Apotris
 
-https://akouzoukos.com/apotris
+<https://akouzoukos.com/apotris>
 
-Apotris is a block stacking game for the Gameboy Advance! It features satisfying graphics, responsive controls and a large amount of customization so that you can tailor the game to your preferences! 
+Apotris is a block stacking game for the Gameboy Advance! It features satisfying graphics, responsive controls and a large amount of customization so that you can tailor the game to your preferences!
 
 Join the [discord server](https://discord.com/invite/jQnxmXS7tr) for updates, beta releases, or to give me feedback!
 
-# Dependencies
+## Docker build
 
-The linux version requires SFML.
+Want to bypass all the work and use a system shipped by the developers intended to build Apotris? Try the docker image:
 
-# Build
+First, [install Docker](https://docs.docker.com/get-docker/) for your system. Then get it running and open up a terminal:
 
-Run 
+```bash
+# Download and log in to the Apotris builder docker image
+docker run -it <template-tag-goes-here> bash
+# OR Optional: build the image yourself
+docker build -t apotris-builder . && docker run -it apotris-builder bash
+# You are now in the docker image environment, use Ctrl+D or "exit" command to return to main OS
 
+# Clone the latest sources
+git clone --branch ports https://gitea.com/akouzoukos/apotris.git
+# Enter source dir
+cd apotris
+# From here you can build one of the available targets
+
+# GBA
+meson setup --cross-file=meson/gba.ini build-gba && meson compile -C build-gba
+# Windows
+meson setup --cross-file=meson/mingw.ini build-windows && meson compile -C build-windows
+# Linux
+meson setup build-linux && meson compile -C build-linux
+
+# Built executables are now in the Docker environment's apotris/build-*/ folders
 ```
-make <platform>
-```
 
-Available Platforms:
+## Meson build
 
-| Name            | Platform |
-|-----------------|----------|
-| Gameboy Advance | gba      |
-| Linux           | linux    |
-| Windows 32-bit  | w32      |
-
-Omitting `<platform>` builds for all platforms
-
-Builds are placed inside the `bin` folder.
-
-# Meson build (experimental)
-
-## Installation
-
-### Base requirements for all systems
+### Overview of requirements for most systems
 
 As all the libraries and tools are compiled from source, the only things you
 need to have installed and in your PATH are:
 
-- meson (at least version 0.60.0, ideally 1.0.0 or later)
+- meson (at least version 1.1.0 or later)
+  - If your system has an out of date meson, install `pip` and run `pip install meson` to get the latest
 - git
 - A compiler for your system (`cl.exe`, `gcc`, etc.)
 - A compiler for the GBA (`arm-none-eabi-gcc`)
+  - On Windows you can download the [.exe installer](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) for `mingw-w64-i686-arm-none-eabi-gcc`
+  - On Ubuntu you really want to install what's
+    [here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) and follow [this guide](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) to use it.
+  - On macOS just `brew install --cask gcc-arm-embedded`
 
-### Ubuntu 22.04 and Windows (WSL) dependencies
+### Windows dependencies
 
-[Install DevKitARM](https://devkitpro.org/wiki/devkitPro_pacman#Debian_and_derivatives) and the `sudo dkp-pacman -S gba-dev` target.
+You will need to install:
+
+- [Python 3](https://www.python.org/downloads/windows/)
+  - get the latest stable Windows installer for your platform
+  - ensure you "add to PATH" when you run the installer (unless you know what you're doing otherwise)
+- Meson
+  - Run `pip install meson` after installing Python to get meson
+- A Windows-native compiler and build tools
+  - MSYS2 has a set of build tools and is [free](https://www.msys2.org)
+    - Install a base toolchain with (assuming a 64 bit system) `pacman -S mingw-w64-x86_64-toolchain`
+  - Visual Studio Community Edition is also [free](https://visualstudio.microsoft.com/vs/community/)
+    - You will need to set up your meson cross files to point to `cl.exe` and friends
+
+#### Windows cross file
+
+For the GBA target, you will need to update the `meson/gba.ini` file to have the path to your ARM compiler:
+
+```ini
+[constants]
+path = 'C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\13.2 Rel1\bin'
+# ... rest of original file
+```
+
+Ensure the version string is correct for your installation.
+
+### Ubuntu 22.04+ and Windows (WSL) dependencies
+
+#### For all Linux systems
 
 Install the following packages:
+
 ```bash
-sudo apt install build-essential git meson cmake
+sudo apt install build-essential git meson cmake 
 ```
+
 also install `mingw-w64` if you plan to cross compile for Windows
+
+#### For Linux native builds
+
+Install the following dependencies of SDL2:
+
+```bash
+sudo apt-get install build-essential git make \
+  pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
+  libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
+  libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
+  libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+  libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev
+```
 
 ## Compiling
 
@@ -62,6 +112,7 @@ following command:
 
 ```sh
 # Fetch remote dependencies
+git submodules update --init --recursive
 meson subprojects download
 
 # Native build
@@ -69,12 +120,11 @@ meson setup build
 ninja -C build
 
 # GBA Build
-source /etc/profile.d/devkit-env.sh # often automatic
-sed "2cpath = '$DEVKITARM/bin'" meson/gba.ini > dkarm.ini # note you may need to modify this, see below
-meson setup --cross-file=dkarm.ini build-gba
+meson setup --cross-file=meson/gba.ini build-gba
 ninja -C build-gba
+
 # MingW build (Windows using Linux, WSL, or macOS to build)
-# Note: this next command is really bad hack that probably has no consequences but is required
+# Note: the following command is a really bad hack that probably has no consequences but is required
 sudo ln -sf $(which x86_64-w64-mingw32-g++-posix) $(which x86_64-w64-mingw32-g++)
 meson setup --cross-file=meson/mingw.ini build-mingw
 ninja -C build-mingw
@@ -82,20 +132,4 @@ ninja -C build-mingw
 
 The built Apotris ROMs (.elf, .gba) will be in your `build-gba` directory.
 
-The build Apotris executable and its required `assets/` folder will be in your build directories for other builds.
-
-Note the second and fourth commands will fail if you have not set up your path appropriately.
-
-You must use devkitPro for GBA at this time. Set up path references with the following commands to generate a suitable cross file:
-
-MSYS2:
-
-```sh
-sed "2cpath = '$(cygpath -m $DEVKITARM/bin)'" meson/gba.ini > dkarm.ini
-```
-
-WSL / Linux:
-
-```sh
-sed "2cpath = '$DEVKITARM/bin'" meson/gba.ini > dkarm.ini
-```
+The built Apotris executable and its required `assets/` folder will be in your build directories for other builds.

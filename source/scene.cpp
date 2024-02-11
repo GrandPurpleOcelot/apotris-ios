@@ -78,26 +78,26 @@ void SimpleListScene::init(){
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 
-    if(name() != ""){
-        bool found = false;
-        int count = 0;
-        auto it = path.begin();
-        while(it != path.end()){
-            if(*it == name()){
-                found = true;
-                break;
-            }
-            count++;
-            it++;
-        }
+    if(!name().empty()){
+         bool found = false;
+         unsigned int count = 0;
+         auto it = path.begin();
+         while(it != path.end()){
+             if(*it == name()){
+                 found = true;
+                 break;
+             }
+             count++;
+             it++;
+         }
 
-        if(found){
-            int n = path.size() - (count+1);
-            for(int i = 0; i < n; i++)
-                path.pop_back();
-        }else{
-            path.push_back(name());
-        }
+         if(found){
+             unsigned int n = path.size() - (count+1);
+             for(int i = 0; i < n; i++)
+                 path.pop_back();
+         }else{
+             path.push_back(name());
+         }
     }
 
     std::string p;

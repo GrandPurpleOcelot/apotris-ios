@@ -1,9 +1,10 @@
 #pragma once
 
 #include "def.h"
+#include "multiplayerClasses.h"
 #include "blockEngine.hpp"
 #ifdef GBA
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
 #endif
 #include <list>
 #include <string>
@@ -19,6 +20,10 @@ extern const std::list<std::string> gameOptions;
 extern const std::list<std::string> settingsOptions;
 extern const std::list<std::string> controlOptions;
 extern const std::list<std::string> menuControlOptions;
+
+static const int READY = 0xC0DE;
+
+static const int START = 0xBEEF;
 
 extern std::string getDescription(std::string element);
 extern std::string getDescription(std::string mode, std::string element, std::string option);
@@ -55,13 +60,17 @@ class GameScene : public Scene{
     void showTimer();
     void showComboStreak();
     int pauseMenu();
-    int endScreen();
+    void endScreen();
     void showModeText();
     void showStats(bool, std::string, std::string, bool);
     void setupCredits();
     void showCredits();
     void refreshCredits();
     void checkSounds();
+    bool reconnect();
+    int handleMultiplayer(bool duringGame);
+    int endScreenSetup();
+    void showReadyPlayers();
 
     bool counted = false;
 
@@ -72,6 +81,14 @@ class GameScene : public Scene{
     ~GameScene(){
         deinit();
     };
+
+    static void ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId);
+
+    static void ProcessGameUpdate(int command, int value, RemotePlayerId remotePlayerId);
+
+    static void UpdateEnemyBoard(int command, int value, RemotePlayerId remotePlayerId);
+
+    static void updateRank() ;
 };
 
 class TitleScene : public Scene{
@@ -338,6 +355,8 @@ class SettingsScene : public SimpleListScene{
         std::string name(){return "Settings";};
 };
 
+#ifndef MULTIBOOT
+
 class CreditsScene : public Scene{
     public:
 
@@ -506,6 +525,8 @@ public:
     }
 };
 
+#endif
+
 class LabelElement : public Element{
     std::string label;
     public:
@@ -531,3 +552,4 @@ enum class Transitions{
 extern void changeScene(Scene * newScene);
 extern void changeScene(Scene * newScene,Transitions transition);
 
+extern int rank;

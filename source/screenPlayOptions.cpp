@@ -2,7 +2,16 @@
 #include "sprites.h"
 #include "logging.h"
 #include "sceneModes.hpp"
+#ifdef GBA
+#include "LinkCableMultiboot.hpp"
+#include "sendMultiboot.h"
+#endif
 #include <cstring>
+
+static int lastPlayerCount = -1;
+static bool sentReady = false;
+#define PLAYER_READY 2
+#define GAME_START 3
 
 void PlayOptionScene::init(){
     loadSpriteTiles(620,&sprite49tiles_bin,1,1);
@@ -538,6 +547,8 @@ void PlayOptionScene::setOptions(){
     }
 }
 
+#ifndef MULTIBOOT
+
 void ClassicScene::update(){
     if(!subMode){
         if(elementList.back()->getLabel() == "Height"){
@@ -559,11 +570,12 @@ void ClassicScene::update(){
     PlayOptionScene::update();
 }
 
+#endif
+
 void MultBattleScene::init(){
     PlayOptionScene::init();
 
     #ifdef GBA
-
 
     linkConnection->activate();
 
@@ -577,7 +589,7 @@ void MultBattleScene::draw(){
 
     if (connected < 1) {
         aprint("Waiting for", 7, 7);
-        aprint("Link Cable", 9, 9);
+        aprint("Link Adapter", 9, 9);
         aprint("connection...", 11, 11);
     } else {
         aprint("Connected!", 10, 6);
@@ -617,71 +629,102 @@ bool MultBattleScene::control(){
     return false;
 }
 
+bool multibootSent = false;
+
 void MultBattleScene::update(){
     PlayOptionScene::update();
 
     #ifdef GBA
-    if(multiplayerStartTimer){
-        if(--multiplayerStartTimer == 0){
+
+    #ifndef MULTIBOOT
+    /*if (!multibootSent) {
+        auto result = sendMultiboot();
+        if (result == LinkCableMultiboot::SUCCESS)
+            multibootSent = true;
+        else
+            switch (result) {
+                case LinkCableMultiboot::INVALID_SIZE:
+                    aprint("Invalid size", 0, 0);
+                    break;
+                case LinkCableMultiboot::CANCELED:
+                    aprint("Canceled", 0, 0);
+                    break;
+                case LinkCableMultiboot::FAILURE_DURING_HANDSHAKE:
+                    aprint("Handshake failure", 0, 0);
+                    break;
+                case LinkCableMultiboot::FAILURE_DURING_TRANSFER:
+                    aprint("Transfer failure", 0, 0);
+                    break;
+                default:
+                    break;
+            }
+    }*/
+    #endif
+
+    linkConnection->sync();
+    // Store state of all player IDs
+    u8 currentPlayerId = linkConnection->currentPlayerId();
+    u8 currentPlayerCount = linkConnection->playerCount();
+    if (lastPlayerCount < 0 || currentPlayerCount == 0)
+        lastPlayerCount = currentPlayerCount;
+
+    if (linkConnection->isConnected()) {
+        initialPlayerCount = linkConnection->playerCount();
+        // For player 1 to inform other players to start game
+        if(multiplayerStart){
+            multiplayerStart = false;
+            linkConnection->send(GAME_START);
             startMultiplayerGame(nextSeed);
             gameLoop();
-        }else{
-            linkConnection->send((u16)nextSeed + 100);
-        }
-        return;
-    }
-
-    auto linkState = linkConnection->linkState.get();
-
-    MenuKeys k = savefile->settings.menuKeys;
-
-    if (linkState->isConnected()) {
-        u16 data[LINK_MAX_PLAYERS];
-        for (u32 i = 0; i < LINK_MAX_PLAYERS; i++)
-            data[i] = 0;
-        for (u32 i = 0; i < linkState->playerCount; i++) {
-            while (linkState->hasMessage(i))
-                data[i] = linkState->readMessage(i);
+            return;
         }
 
-        for (u32 i = 0; i < LINK_MAX_PLAYERS; i++) {
-            if (data[i] == 2) {
-                if (connected < 1) {
-                    refreshText = true;
-                    clearText();
+        MenuKeys k = savefile->settings.menuKeys;
+
+        // Poll all remotes for data
+        for (int remotePlayerId = 0; remotePlayerId < currentPlayerCount; remotePlayerId++)
+            while(remotePlayerId != currentPlayerId && linkConnection->canRead(remotePlayerId)) {
+                u16 msg = linkConnection->read(remotePlayerId);
+                // Any ready event means we're ready too
+                if (msg == PLAYER_READY) {
+                    if (connected < 1) {
+                        refreshText = true;
+                        clearText();
+                    }
+                    connected = 1;
+                // Messages from player 0 (1st) can start game and set seed
+                } else if (remotePlayerId == 0) {
+                    if (msg > 100)
+                        nextSeed = msg - 100;
+                    else if (msg == GAME_START) {
+                        // For clients (e.g. not player 1) to start games
+                        startMultiplayerGame(nextSeed);
+                        gameLoop();
+                        return;
+                    }
                 }
-                connected = 1;
-            } else if (data[i] > 100){
-                nextSeed = data[i] - 100;
             }
-        }
 
-        if (linkState->playerCount == 2) {
-            if (linkState->currentPlayerId != 0) {
-                if (nextSeed > 100) {
-                    startMultiplayerGame(nextSeed);
-                    gameLoop();
-                    return;
-                }
-                aprint("Waiting", 12, 13);
-                aprint("for host...", 12, 14);
-            } else {
-                aprint("Press Start", 10, 13);
-
-            }
-        } else if (linkState->playerCount == 1) {
-            if (connected > -1) {
-                refreshText = true;
-                clearText();
-            }
-            connected = -1;
-        }
-
-        if (key_hit(k.pause) && linkState->currentPlayerId == 0) {
-            nextSeed = (u16)qran() & 0x1fff;
-            multiplayerStartTimer = 3;
+        // At this point we're set up and processed incoming messages, so we wait for the players to be ready
+        if (currentPlayerId != 0) {
+            aprint("Waiting", 12, 13);
+            aprint("for host...", 12, 14);
         } else {
-            linkConnection->send(2);
+            // Inform new players we're all ready and what the seed is
+            if (lastPlayerCount != currentPlayerCount) {
+                lastPlayerCount = currentPlayerCount;
+                linkConnection->send(PLAYER_READY);
+            }
+            aprint("Press Start", 10, 13);
+        }
+
+        // Await start signal and otherwise re-transmit ready signal
+        if (key_hit(k.pause) && currentPlayerId == 0) {
+            nextSeed = (u16)qran() & 0x1fff;
+            multiplayerStart = true;
+            linkConnection->send(nextSeed + 100);
+        } else {
+            linkConnection->send(PLAYER_READY);
         }
 
         aprint("             ", 0, 19);

@@ -2,6 +2,7 @@
 
 #include <list>
 #include "platform.hpp"
+#include <mutex>
 #include <string>
 #include "font1tiles_bin.h"
 #include "save.h"
@@ -119,7 +120,7 @@ public:
         }
     }
 
-    void setText(std::string _text);
+    void setText(const std::string& _text);
     void setTextNum(int n);
 
     void setTextSlow(std::string _text) {

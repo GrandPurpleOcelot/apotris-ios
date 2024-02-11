@@ -124,6 +124,7 @@ void sceneSwitcher(std::string str){
 
     }else if(str == "Stats"){
         changeScene(new StatScene(),Transitions::FADE);
+#ifndef MULTIBOOT
     }else if(str == "Links"){
         changeScene(new LinksScene(),Transitions::FADE);
     }else if(str == "Skin Editor"){
@@ -135,6 +136,7 @@ void sceneSwitcher(std::string str){
         changeScene(new EditorScene(),Transitions::FADE);
     }else if(str == "Credits"){
         changeScene(new CreditsScene(),Transitions::FADE);
+#endif
     }else if(str == "Graphics"){
         changeScene(new GraphicsScene(),Transitions::FADE);
     }else if(str == "Audio"){
@@ -145,6 +147,7 @@ void sceneSwitcher(std::string str){
         changeScene(new HandlingOptionScene(),Transitions::FADE);
     }else if(str == "Gameplay"){
         changeScene(new GameplayOptionScene(),Transitions::FADE);
+#ifndef MULTIBOOT
     }else if(str == "Saving"){
         changeScene(new SavingOptionScene(),Transitions::FADE);
     }else if(str == "Video"){
@@ -171,8 +174,10 @@ void sceneSwitcher(std::string str){
         changeScene(new DeathScene(),Transitions::FADE);
     }else if(str == "Zen"){
         changeScene(new ZenScene(),Transitions::FADE);
+#endif
     }else if(str == "2P Battle"){
         changeScene(new MultBattleScene(),Transitions::FADE);
+#ifndef MULTIBOOT
     }else if(str == "CPU Battle" || str == "Battle"){
         changeScene(new CPUBattleScene(),Transitions::FADE);
     }else if(str == "Training"){
@@ -185,6 +190,7 @@ void sceneSwitcher(std::string str){
         changeScene(new DonateLinkScene(),Transitions::FADE);
     }else if(str == "Discord"){
         changeScene(new DiscordLinkScene(),Transitions::FADE);
+#endif
     }else if(str == "Quit"){
         quit();
     }else{
@@ -212,13 +218,13 @@ std::string modeToString(BlockEngine::Modes mode){
     }
 }
 
-void WordSprite::setText(std::string _text){
+void WordSprite::setText(const std::string& _text){
     if (_text == text)
         return;
 
     text = _text;
 
-    if(text == ""){
+    if(text.empty()){
         clearSpriteTiles(startTiles, (big)?20:12 , 1);
         return;
     }
@@ -240,7 +246,7 @@ void WordSprite::setTextNum(int n){
 
     text = _text;
 
-    if(text == ""){
+    if(text.empty()){
         clearSpriteTiles(startTiles, (big)?20:12 , 0);
         return;
     }

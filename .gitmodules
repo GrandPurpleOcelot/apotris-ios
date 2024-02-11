@@ -8,3 +8,9 @@
 [submodule "subprojects/libmodplug"]
 	path = subprojects/libmodplug
 	url = https://github.com/Konstanty/libmodplug.git
+[submodule "subprojects/general-tools"]
+	path = subprojects/general-tools
+	url = https://github.com/aronson/general-tools.git
+[submodule "subprojects/gba-tools"]
+	path = subprojects/gba-tools
+	url = https://github.com/aronson/gba-tools.git

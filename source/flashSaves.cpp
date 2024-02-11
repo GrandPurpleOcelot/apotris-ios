@@ -2,7 +2,6 @@
 
 #ifdef GBA
 #include "flashSaves.h"
-#include "LinkConnection.h"
 #include "logging.h"
 
 #include "text.h"
@@ -312,7 +311,12 @@ void save_sram_flash()
 	if (flash_type == 0) return;
 
 	aprint("Saving...",21,19);
-    irq_disable(II_VBLANK);
+
+    bool isLinked = linkConnection->isActive();
+    if(isLinked)
+		linkConnection->deactivate();
+
+    interrupt_disable(INTR_VBLANK);
 	int prev = gradientEnabled;
 	gradient(false);
     int stat_value = REG_SNDSTAT;
@@ -323,13 +327,9 @@ void save_sram_flash()
     REG_SNDDSCNT = 0;
     REG_SNDDMGCNT = 0;
 
-    bool isLinked = linkConnection->isActive();
-
-    if(isLinked)
-		linkConnection->deactivate();
-
-    irq_disable(II_TIMER3);
-    irq_disable(II_SERIAL);
+    interrupt_disable(INTR_TIMER3);
+    interrupt_disable(INTR_TIMER2);
+    interrupt_disable(INTR_SERIAL);
 
 	flash_write(flash_type, flash_sram_area);
 
@@ -337,13 +337,14 @@ void save_sram_flash()
     REG_SNDDSCNT = dsc_value;
     REG_SNDDMGCNT = dmg_value;
 
+
+    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER2);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_enable(INTR_VBLANK);
+
     if(isLinked)
 		linkConnection->activate();
-
-    irq_enable(II_TIMER3);
-    irq_enable(II_SERIAL);
-    irq_delete(II_KEYPAD);
-    irq_enable(II_VBLANK);
 
 	if(prev)
 		gradient(1);

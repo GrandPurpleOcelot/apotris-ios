@@ -122,7 +122,7 @@ int Game::getNbr(int x, int y, int ex, int sy , int ey){
 void Game::rotateCW(int dir) {
     rotates[0] = dir;
 
-    replay.push_back(Timestamp(timer,2,dir));
+    replay.emplace_back(timer,2,dir);
 
     rotate(1,dir);
 }
@@ -130,7 +130,7 @@ void Game::rotateCW(int dir) {
 void Game::rotateCCW(int dir) {
     rotates[1] = dir;
 
-    replay.push_back(Timestamp(timer,3,dir));
+    replay.emplace_back(timer,3,dir);
 
     rotate(-1,dir);
 }
@@ -141,7 +141,7 @@ void Game::rotateTwice(int dir) {
 
     rotates[2] = dir;
 
-    replay.push_back(Timestamp(timer,4,dir));
+    replay.emplace_back(timer,4,dir);
 
     rotate(2,dir);
 }
@@ -766,16 +766,21 @@ void Game::place() {
                 generateGarbage(goal-(garbageCleared+garbageHeight),0);
         }else if(gameMode == BATTLE){
             int sum = 0;
-            std::list<Garbage>::iterator index = garbageQueue.begin();
+            std::vector<Garbage> collectedGarbage;
+            auto index = garbageQueue.begin();
             while(index != garbageQueue.end()){
                 if(index->timer == 0){
                     sum+=index->amount;
+                    collectedGarbage.emplace_back(index->id, index->amount);
                     garbageQueue.erase(index++);
                 }else{
                     ++index;
                 }
             }
             generateGarbage(sum,1);
+
+            for (auto &garbage : collectedGarbage)
+                acknowledgeGarbage(this,garbage);
         }
 
         if(gameMode == MASTER || gameMode == DEATH)
@@ -856,7 +861,7 @@ void Game::place() {
     checkSecretGrade();
 }
 
-int Game::clear(Drop drop) {
+int Game::clear(const Drop& drop) {
     int clearCount = 0;
     int attack = 0;
     int isTSpin = 0;
@@ -1235,7 +1240,8 @@ int Game::clear(Drop drop) {
 
     //add combo bonus
     add += scoring[16][0] * level * comboCounter;
-    attack += comboTable[comboCounter];
+    if (comboCounter >= 0)
+        attack += comboTable[comboCounter];
 
     if (isPerfectClear && gameMode != CLASSIC && clearCount <= 4){
         if(gameMode != BLITZ)
@@ -1265,7 +1271,7 @@ int Game::clear(Drop drop) {
         clearLock = true;
     specialTspin = false;
 
-    if(garbageQueue.size()){
+    if(!garbageQueue.empty()){
         auto index = garbageQueue.begin();
         while(attack > 0 && index != garbageQueue.end()){
             bool cleared = false;
@@ -1284,7 +1290,7 @@ int Game::clear(Drop drop) {
     }
 
     if(attack){
-        attackQueue.push_back(Garbage(timer & 0xff,attack));
+        attackQueue.emplace_back(timer & 0xff,attack);
         linesSent+=attack;
     }
 
@@ -1294,7 +1300,7 @@ int Game::clear(Drop drop) {
 }
 
 Color Game::color(int n) {
-    Color result;
+    Color result{};
     result.r = colors[n][0];
     result.g = colors[n][1];
     result.b = colors[n][2];
@@ -1314,8 +1320,8 @@ void Game::fillBag() {
             bigBag[i] = i / 5;
 
         //fill drought history
-        for(int i = 0; i < 7; i++)
-            pieceDrought[i] = 4;
+        for(int & i : pieceDrought)
+            i = 4;
 
         //fill piece history
         historyList.push_back(PIECE_Z);
@@ -1420,8 +1426,8 @@ void Game::fillQueue(int count) {
             }
 
             //update droughted list
-            for(int i = 0; i < 7; i++)
-                pieceDrought[i]++;
+            for(int & ii : pieceDrought)
+                ii++;
             pieceDrought[n] = 0;
 
             //find most droughted
@@ -1447,7 +1453,7 @@ void Game::fillQueue(int count) {
 void Game::hold(int dir) {
     holding = dir;
 
-    replay.push_back(Timestamp(timer,5,dir));
+    replay.emplace_back(timer,5,dir);
 
     if((clearLock || entryDelay) && gameMode != CLASSIC){
         // holding = dir;
@@ -1529,7 +1535,7 @@ void Game::lockCheck() {
 }
 
 void Game::keyLeft(int dir) {
-    replay.push_back(Timestamp(timer,0,dir));
+    replay.emplace_back(timer,0,dir);
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         left = dir;
@@ -1559,7 +1565,7 @@ void Game::keyLeft(int dir) {
 }
 
 void Game::keyRight(int dir) {
-    replay.push_back(Timestamp(timer,1,dir));
+    replay.emplace_back(timer,1,dir);
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         right = dir;
@@ -1588,7 +1594,7 @@ void Game::keyRight(int dir) {
 }
 
 void Game::keyDown(int dir) {
-    replay.push_back(Timestamp(timer,6,dir));
+    replay.emplace_back(timer,6,dir);
     if (clearLock || eventLock || entryDelay) {
         if(!(entryDelay && rotationSystem == NRS))
             down = dir;
@@ -1712,7 +1718,7 @@ void Game::setGoal(int newGoal){
     goal = newGoal;
 }
 
-void Game::generateGarbage(int height,int mode){
+void Game::generateGarbage(int height,int localMode){
     setupRNG();
 
     int hole = qran() % lengthX;
@@ -1732,7 +1738,7 @@ void Game::generateGarbage(int height,int mode){
     for(int i = lengthY-height; i < lengthY; i++){
         int prevHole = hole;
         int count = 0;
-        if(!mode || qran() % 10 < 3){
+        if(!localMode || qran() % 10 < 3){
             do{
                 hole = qran() % lengthX;
             }while(++count < 11 && ((!board[i-1][hole] && height < garbageHeight) || hole == prevHole));
@@ -1761,7 +1767,7 @@ void Game::generateGarbage(int height,int mode){
 }
 
 void Game::keyDrop(int dir){
-    replay.push_back(Timestamp(timer, 7,dir));
+    replay.emplace_back(timer, 7,dir);
 
     if(dir == 0 && (gameMode == MASTER || gameMode == DEATH))
         dropping = false;
@@ -1903,7 +1909,7 @@ void Game::setDeathTuning(){
 }
 
 void Game::clearAttack(int id){
-    std::list<Garbage>::iterator index = attackQueue.begin();
+    auto index = attackQueue.begin();
 
     while(index != attackQueue.end()){
         if(index->id == id){
@@ -1922,11 +1928,11 @@ void Game::addToGarbageQueue(int id, int amount){
     if(amount <= 0)
         return;
 
-    for(const auto& attack : garbageQueue)
-        if(attack.id == id)
-            return;
+    // for(const auto& attack : garbageQueue)
+    //     if(attack.id == id)
+    //         return;
 
-    garbageQueue.push_back(Garbage(id,amount));
+    garbageQueue.emplace_back(id,amount);
 }
 
 int Game::getIncomingGarbage(){
@@ -1976,10 +1982,10 @@ std::list<int> Game::getBestFinesse(int piece,int dx, int rotation){
     return result;
 }
 
-void Game::setTrainingMode(bool mode){
+void Game::setTrainingMode(bool localMode){
     if(pawn.big)
         return;
-    trainingMode = mode;
+    trainingMode = localMode;
 }
 
 void Game::demoClear(){
@@ -2109,7 +2115,7 @@ void Game::updateDisappear(){
 
             if(disappearTimers[i][j] == 1){
                 found = true;
-                toDisappear.push_back(std::make_tuple(j,i));
+                toDisappear.emplace_back(j,i);
             }
         }
     }
@@ -2186,7 +2192,7 @@ void Game::clearBoard(){
     clearLock = false;
 }
 
-void Game::fixConnected(std::list<int> sourceList){
+void Game::fixConnected(const std::list<int>& sourceList){
     std::list<std::tuple<int,int>> fixList;
 
     for(auto const& line : sourceList){
@@ -2203,11 +2209,11 @@ void Game::fixConnected(std::list<int> sourceList){
         }
 
         if(!found && line > 0){
-            fixList.push_back(std::make_tuple(line-1,0));
+            fixList.emplace_back(line-1,0);
         }
 
         if(line < lengthY-1){
-            fixList.push_back(std::make_tuple(line+1,1));
+            fixList.emplace_back(line+1,1);
         }
     }
 
@@ -2352,7 +2358,7 @@ void Game::chargeDas(){
     das = maxDas;
 }
 
-int poll(int max, std::string buffer){
+int poll(int max, const std::string& buffer){
     int result = 0;
 
     for(int i = 0; i < max; i++){
@@ -2452,8 +2458,7 @@ std::string Game::getFumen(){
     return result;
 }
 
-Game::~Game(){
-}
+Game::~Game()= default;
 
 Game::Game(int gm, int sd, bool big){
     gameMode = gm;
@@ -2767,8 +2772,8 @@ void Game::setRandomizer(int rand){
     fillBag();
 
     if(enableFumen && enableFumenQueue){
-        for(int i = 0; i < 5; i++)
-            queue.push_back(fumenQueue[i]);
+        for(unsigned char i : fumenQueue)
+            queue.push_back(i);
     }else{
         fillQueue(5);
     }
