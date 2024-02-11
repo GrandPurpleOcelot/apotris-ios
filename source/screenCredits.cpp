@@ -3,6 +3,8 @@
 #include "sprites.h"
 #include "logging.h"
 
+#ifndef MULTIBOOT
+
 std::list<std::string> creditsText = {
     "",
     "",
@@ -175,3 +177,5 @@ void CreditsScene::deinit(){
 
     buildBG(0, 2, 29, 0, 0, true);
 }
+
+#endif

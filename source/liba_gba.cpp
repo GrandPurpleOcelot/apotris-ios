@@ -2,7 +2,8 @@
 
 #ifdef GBA
 #include "logging.h"
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
+#include "LinkCableMultiboot.hpp"
 #include "maxmod.h"
 #include "rumble.h"
 #include "gbp_logo.hpp"
@@ -16,6 +17,7 @@
 // #include "main.hpp"
 bool unlock_gbp();
 void loadAudio();
+void onKeyInterrupt();
 
 int spriteVOffset = 0;
 
@@ -30,7 +32,26 @@ void onHBlank() {
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
-LinkConnection* linkConnection = new LinkConnection();
+#define WIRELESS_TIMEOUT_FRAMES 120
+
+LinkUniversal* linkUniversal =
+        new LinkUniversal(LinkUniversal::Protocol::AUTODETECT,
+                          "Apotris",
+                          (LinkUniversal::CableOptions){
+                                  .baudRate = LinkCable::BAUD_RATE_1,
+                                  .timeout = LINK_WIRELESS_DEFAULT_TIMEOUT,
+                                  .remoteTimeout = LINK_WIRELESS_DEFAULT_REMOTE_TIMEOUT,
+                                  .interval = 250,
+                                  .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
+                          (LinkUniversal::WirelessOptions){
+                                  .retransmission = true,
+                                  .maxPlayers = LINK_UNIVERSAL_MAX_PLAYERS,
+                                  .timeout = WIRELESS_TIMEOUT_FRAMES,
+                                  .remoteTimeout = WIRELESS_TIMEOUT_FRAMES,
+                                  .interval = 75,
+                                  .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
+                                  .asyncACKTimerId = 2});
+LinkUniversal* linkConnection = linkUniversal;
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
@@ -110,15 +131,23 @@ void platformInit(){
     if(ENABLE_FLASH_SAVE)
         flash_init();
 
-    irq_init(0);
-    irq_enable(II_VBLANK);
-    irq_add(II_VBLANK, onVBlank);
+    interrupt_init();
+    REG_DISPSTAT |= (1 << 3);
+    interrupt_enable(INTR_VBLANK);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER2);
+    REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
+    interrupt_set_handler(INTR_KEYPAD, onKeyInterrupt);
+    interrupt_enable(INTR_KEYPAD);
+    interrupt_set_handler(INTR_VBLANK, onVBlank);
 
-    irq_add(II_SERIAL, LINK_ISR_SERIAL);
-    irq_add(II_TIMER3, LINK_ISR_TIMER);
+    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
+    interrupt_set_handler(INTR_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
 
-    // irq_add(II_HBLANK, onHBlank);
-    irq_disable(II_HBLANK);
+    // interrupt_add(INTR_HBLANK, onHBlank);
+    interrupt_disable(INTR_HBLANK);
 
     loadAudio();
 
@@ -130,8 +159,6 @@ void platformInit(){
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
 
     REG_WAITCNT = 0x4317;
-
-    log("iwram usage: " + std::to_string(iwramUsage()));
 }
 
 void deinitialize(){
@@ -261,8 +288,8 @@ void initRumble(){
     if (unlock_gbp()) {
 
         RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
-            irq_enable(II_SERIAL);
-            irq_add(II_SERIAL, rumble_isr);
+            interrupt_enable(INTR_SERIAL);
+            interrupt_set_handler(INTR_SERIAL, rumble_isr);
         }};
 
         rumble_init(&conf);
@@ -301,7 +328,7 @@ void sleep() {
     int display_value = REG_DISPCNT;
 
     bool prevGradient = gradientEnabled;
-    irq_disable(II_VBLANK);
+    interrupt_disable(INTR_VBLANK);
     gradient(false);
 
     int stat_value = REG_SNDSTAT;
@@ -318,11 +345,11 @@ void sleep() {
     if(isLinked)
         linkConnection->deactivate();
 
-    irq_disable(II_TIMER3);
-    irq_disable(II_SERIAL);
+    interrupt_disable(INTR_TIMER3);
+    interrupt_disable(INTR_TIMER2);
+    interrupt_disable(INTR_SERIAL);
 
     REG_P1CNT = 0b1100001100000100;
-    irq_add(II_KEYPAD, nullptr);
 
     Stop();
 
@@ -334,10 +361,10 @@ void sleep() {
     if(isLinked)
         linkConnection->activate();
 
-    irq_enable(II_TIMER3);
-    irq_enable(II_SERIAL);
-    irq_delete(II_KEYPAD);
-    irq_enable(II_VBLANK);
+    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER2);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_enable(INTR_VBLANK);
 
     if(prevGradient)
         gradient(true);
@@ -391,22 +418,21 @@ void clearTiles(int tileset, int index, int count){
     memset32(&tile_mem[tileset][index],0,8 * count);
 }
 
-void onVBlank(void) {
+IWRAM_CODE void onVBlank() {
 
     mmVBlank();
+    LINK_UNIVERSAL_ISR_VBLANK();
+
     if(gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
 
-    LINK_ISR_VBLANK();
 
-    REG_IME = 1;
     if (canDraw) {
-        canDraw = 0;
+        canDraw = false;
 
         scene->draw();
     }
 
-    REG_IME = 0;
     frameCounter++;
     mmFrame();
 }
@@ -506,9 +532,10 @@ void mirrorPalettes(int index, int count){
 
 void toggleHBlank(bool state){
     if(state){
-        irq_add(II_HBLANK, onHBlank);
+        interrupt_set_handler(INTR_HBLANK, onHBlank);
+        interrupt_enable(INTR_HBLANK);
     }else{
-        irq_disable(II_HBLANK);
+        interrupt_disable(INTR_HBLANK);
     }
 }
 
@@ -543,7 +570,7 @@ void sprite_enable_flip(OBJ_ATTR *sprite, bool flipX, bool flipY){
 void quit(){}
 
 void findSoundbank(){
-    const GBFS_FILE * gbfsFile = find_first_gbfs_file(0);
+    const GBFS_FILE * gbfsFile = find_first_gbfs_file(reinterpret_cast<const void *>(AGB_ROM));
     const void * myFile = gbfs_get_obj(gbfsFile, "soundbank.bin", NULL);
 
     if(myFile == NULL){
@@ -558,7 +585,7 @@ void findSoundbank(){
 
 void buildEffectLocations(){
 
-    const GBFS_FILE * gbfsFile = find_first_gbfs_file(0);
+    const GBFS_FILE * gbfsFile = find_first_gbfs_file(reinterpret_cast<const void *>(AGB_ROM));
     const void * myFile = gbfs_get_obj(gbfsFile, "effect_locations.bin", NULL);
 
     u32 * file = (u32*) myFile;
@@ -618,5 +645,19 @@ void refreshWindowSize(){}
 
 void toggleSpriteSorting(bool state){
     sortSprites = state;
+}
+
+IWRAM_CODE void onKeyInterrupt(){
+    mmStop();
+    REG_IME = 0;
+    REG_DMA0CNT_H &= ~DMA_ENABLE;
+    REG_DMA1CNT_H &= ~DMA_ENABLE;
+    REG_DMA2CNT_H &= ~DMA_ENABLE;
+    REG_DMA3CNT_H &= ~DMA_ENABLE;
+    REG_TM0D = 0;
+    REG_TM1D = 0;
+    REG_TM2D = 0;
+    REG_TM3D = 0;
+    SoftReset();
 }
 #endif

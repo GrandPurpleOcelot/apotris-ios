@@ -23,11 +23,9 @@ void endAnimation();
 void showScore();
 int onRecord();
 std::string nameInput(int);
-void showModeText();
 void qrScene();
 
 void saveReplay();
-void deleteReplay();
 
 void sleepMenu();
 
@@ -39,6 +37,8 @@ BlockEngine::Game* quickSave = nullptr;
 BlockEngine::Bot *testBot = nullptr;
 
 int igt = 0;
+
+bool ended = false;
 
 const std::string modeStrings[] = {
     "Marathon",
@@ -72,22 +72,18 @@ const std::string modeOptionStrings[][4] = {
     {"Normal","Classic"},
 };
 
-int GameScene::endScreen(){
-    clearSmallText();
-    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
-
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
-
-    stopSong();
-
+void GameScene::endScreen(){
+    const int optionsHeight = 11;
+    int max = 3;
     int selection = 0;
 
-    //calculate pps
+    // - calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
     FIXED pps =  fxdiv(int2fx(game->pieceCounter),(t));
 
     std::string ppsStr = std::to_string(fx2int(pps)) + ".";
+
+    igt = game->inGameTimer;
 
     int fractional = pps & 0xff;
     for(int i = 0; i < 2; i++){
@@ -98,16 +94,16 @@ int GameScene::endScreen(){
 
     std::string totalTime = timeToString(gameSeconds,false);
 
-    endAnimation();
+    stopSong();
 
     int prevBld = blendInfo;
-    enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
 
-    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
-    buildBG(3, 0, 27, 0, 0, true);
-    clearTilemap(25);
+    int record = endScreenSetup();
 
-    drawFrame(1);
+    if(multiplayer)
+        max = 2;
+
+    playSongRandom(0);
 
     if(savefile->settings.announcer){
         if (game->gameMode == ULTRA || game->gameMode == BLITZ) {
@@ -130,23 +126,6 @@ int GameScene::endScreen(){
         }
     }
 
-    igt = game->inGameTimer;
-
-    resetZonePalette();
-
-    playSongRandom(0);
-
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
-
-    showScore();
-    int record = onRecord();
-
-    if (multiplayer) {
-        enemyHeight = 0;
-        progressBar(1);
-    }
-
     savefile->stats.gamesCompleted++;
     if(game->lost)
         savefile->stats.gamesLost++;
@@ -167,23 +146,6 @@ int GameScene::endScreen(){
         replaying = false;
     }
 
-    const int optionsHeight = 11;
-
-    wordSprites[1].setText("Play");
-    wordSprites[1].show(12 * 8, (optionsHeight + 0) * 8, 15);
-    wordSprites[2].setText("Again");
-    wordSprites[2].show(14 * 8, (optionsHeight + 1) * 8, 15);
-
-    wordSprites[3].setText("Change");
-    wordSprites[3].show(12 * 8, (optionsHeight + 3) * 8, 15);
-    wordSprites[4].setText("Options");
-    wordSprites[4].show(14 * 8, (optionsHeight + 4) * 8, 15);
-
-    wordSprites[5].setText("Main");
-    wordSprites[5].show(12 * 8, (optionsHeight + 6) * 8, 15);
-    wordSprites[6].setText("Menu");
-    wordSprites[6].show(14 * 8, (optionsHeight + 7) * 8, 15);
-
     int cursorFloat = 0;
     OBJ_ATTR * cursorSprite;
 
@@ -191,24 +153,37 @@ int GameScene::endScreen(){
     cursorSprite = &obj_buffer[1];
     sprite_hide(cursorSprite);
 
+    std::string placeString;
     if (record != -1 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= ULTRA)){
-        std::string str;
         switch(record){
-            case 0: str = "1st"; break;
-            case 1: str = "2nd"; break;
-            case 2: str = "3rd"; break;
-            case 3: str = "4th"; break;
-            case 4: str = "5th"; break;
+            case 0: placeString = "1st"; break;
+            case 1: placeString = "2nd"; break;
+            case 2: placeString = "3rd"; break;
+            case 3: placeString = "4th"; break;
+            case 4: placeString = "5th"; break;
         }
-        aprint(str+" Place", 11, 5);
+    }else if(game->gameMode == BATTLE){
+        switch(rank - 1){
+            case 0: placeString = "1st"; break;
+            case 1: placeString = "2nd"; break;
+            case 2: placeString = "3rd"; break;
+            case 3: placeString = "4th"; break;
+            case 4: placeString = "5th"; break;
+        }
+    }
+
+    if(placeString != ""){
+        placeString += " Place";
+        naprint(placeString, 15 * 8 - getVariableWidth(placeString) / 2, 5 * 8);
     }
 
     MenuKeys k = savefile->settings.menuKeys;
 
-    showModeText();
-
     while (closed()) {
-        handleMultiplayer(1);
+        if(handleMultiplayer(0)){
+            return;
+        }
+
         vsync();
         key_poll();
 
@@ -231,21 +206,7 @@ int GameScene::endScreen(){
 
         if (playAgain && multiplayer) {
             startMultiplayerGame(nextSeed);
-
-            stopSong();
-            playSongRandom(1);
-
-            floatingList.clear();
-            placeEffectList.clear();
-
-            drawFrame(1);
-            clearText();
-
-            clearSprites(128);
-            showHold();
-            showQueue();
-            showSprites(128);
-            clearTilemap(27);
+            changeScene(new GameScene());
             break;
         }
 
@@ -261,13 +222,35 @@ int GameScene::endScreen(){
                 } else {
                     if (connected == 1) {
                         sfx(SFX_MENUCONFIRM);
-                        multiplayerStartTimer = 5;
-                        nextSeed = (u16)qran();
+                        // Mark that we are ready
+                        playAgainMutex->updatePlayerReady(currentPlayerId, true);
+                        if (!playAgainMutex->checkAllReady()) {
+#ifdef GBA
+                            nextSeed = (u16) qran() % 0x1FFE;
+                            linkConnection->send((1 << 13) + nextSeed);
+#endif
+                        } else {
+#ifdef GBA
+                            linkConnection->send((1 << 13) + 0x1FFF);
+#endif
+                            multiplayerStart = true;
+                            playAgainMutex->clear();
+                        }
                     } else {
                         sfx(SFX_MENUCANCEL);
                     }
                 }
-
+            } else if (selection == max - 1){
+                sfx(SFX_MENUCANCEL);
+                enableBlend(prevBld);
+                buildBG(3, 0, 27, 0, 1, true);
+#ifdef GBA
+                if (linkConnection->isActive())
+                    linkConnection->deactivate();
+#endif
+                multiplayer = false;
+                changeScene(new MainMenuScene, Transitions::FADE);
+                return;
             } else if (selection == 1){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
@@ -277,27 +260,20 @@ int GameScene::endScreen(){
                 buildBG(3, 0, 27, 0, 1, true);
                 sceneSwitcher(modeToString(previousGameOptions->mode));
                 nextSeed = 0;
-                return 1;
-            } else if (selection == 2){
-                sfx(SFX_MENUCANCEL);
-                enableBlend(prevBld);
-                buildBG(3, 0, 27, 0, 1, true);
-                multiplayer = false;
-                changeScene(new MainMenuScene, Transitions::FADE);
-                return 1;
+                return;
             }
         }
 
         if (key_hit(k.up)) {
             if (selection == 0)
-                selection = 2;
+                selection = max-1;
             else
                 selection--;
             sfx(SFX_MENUMOVE);
         }
 
         if (key_hit(k.down)) {
-            if (selection == 2)
+            if (selection == max-1)
                 selection = 0;
             else
                 selection++;
@@ -311,7 +287,7 @@ int GameScene::endScreen(){
             showStats(showingStats, totalTime, ppsStr, true);
         }
 
-        if(key_hit(k.special2)){
+        if(!multiplayer && key_hit(k.special2)){
             if(game->replayElligible){
                 sfx(SFX_MENUCONFIRM);
                 loadReplay();
@@ -319,6 +295,10 @@ int GameScene::endScreen(){
             }else{
                 sfx(SFX_MENUCANCEL);
             }
+        }
+
+        if(multiplayer){
+            showReadyPlayers();
         }
 
         showSprites(128);
@@ -330,10 +310,11 @@ int GameScene::endScreen(){
 
     buildBG(3, 0, 27, 0, 1, true);
     enableBlend(prevBld);
-    return 0;
+    return;
 }
 
 void endAnimation() {
+    ended = true;
     shake = 0;
     push = 0;
 
@@ -393,13 +374,14 @@ void endAnimation() {
 
 void showScore(){
     if (game->gameMode == BATTLE) {
-        if (game->lost)
+        if (game->lost) {
             aprint("YOU LOSE", 11, 3);
-        else
+        } else {
             aprint("YOU WIN!", 11, 3);
+        }
 
-        aprint("Lines Sent", 10, 5);
-        aprintf(game->linesSent, 14, 7);
+        aprint("Lines Sent", 10, 7);
+        aprintf(game->linesSent, 14, 9);
 
     } else if (game->gameMode == MASTER){
         int grade = game->grade + game->coolCount + (int) game->creditGrade;
@@ -477,7 +459,7 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps, boo
         aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special1), 0, 0, 2);
         aprints("for Stats", 0, 7, 2);
 
-        if(end){
+        if(end && !multiplayer){
             if(game->replayElligible){
                 aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special2), 0, 21, 2);
                 aprints("for Replay", 0, 28, 2);
@@ -1358,6 +1340,79 @@ void addGameStats(){
     }
 }
 
-void deleteReplay(){
+int GameScene::endScreenSetup(){
+    clearSmallText();
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
+    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
+
+    if(!ended)
+        endAnimation();
+
+    enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
+
+    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    buildBG(3, 0, 27, 0, 0, true);
+    clearTilemap(25);
+
+    drawFrame(1);
+
+    resetZonePalette();
+
+    showScore();
+
+    int record = -1;
+    if (multiplayer) {
+        progressBar(1);
+    } else {
+        record = onRecord();
+    }
+
+    const int optionsHeight = 11;
+
+    int counter = 0;
+
+    wordSprites[1].setText("Play");
+    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[2].setText("Again");
+    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+
+    counter += 3;
+
+    if(!multiplayer){
+        wordSprites[3].setText("Change");
+        wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 15);
+        wordSprites[4].setText("Options");
+        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+
+        counter += 3;
+    }else{
+        showReadyPlayers();
+    }
+
+    wordSprites[5].setText("Main");
+    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[6].setText("Menu");
+    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+
+    showModeText();
+    return record;
+}
+
+void GameScene::showReadyPlayers(){
+    int readyPlayers = playAgainMutex->getReadyCount();
+
+    std::string readyText = std::to_string(readyPlayers) + "/" + std::to_string(initialPlayerCount);
+
+    wordSprites[8].setText(readyText);
+    wordSprites[8].show(236 - wordSprites[8].width, 160 - 12 - 8, 14);
+
+    if(playAgainMutex->checkCurrentReady()){
+        wordSprites[7].setText("Ready!");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else{
+        wordSprites[7].setText("Not Ready");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }
 }

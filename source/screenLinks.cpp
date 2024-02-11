@@ -3,7 +3,7 @@
 #include "logging.h"
 
 #include "site_qr_bin.h"
-
+#ifndef MULTIBOOT
 void QRScene::init(){
     resetSmallText();
     clearText();
@@ -138,3 +138,4 @@ void QRScene::deinit(){
     for(int i = 0; i < MAX_WORD_SPRITES; i++)
         delete wordSprites[i];
 }
+#endif

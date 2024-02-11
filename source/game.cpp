@@ -1553,6 +1553,13 @@ void GameScene::countdown() {
             if (timer == 2 * timerMax / 3 && savefile->settings.announcer)
                 sfx(SFX_GO);
         }
+#ifdef GBA
+        if (multiplayer) {
+            linkConnection->sync();
+            if (linkConnection->playerCount() != initialPlayerCount)
+                return;
+        }
+#endif
     }
 
     paused = false;
@@ -3014,6 +3021,9 @@ void GameScene::init(){
     for(int i = 0; i < 8; i++)
         loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
 
+    //enemy board frame
+    loadSpriteTiles(408, sprite59tiles_bin, 2, 4);
+
     setSkin();
 
     clearTilemap(25);
@@ -3070,6 +3080,8 @@ void GameScene::init(){
         showSpeedMeter((int)game->speed);
 
     showZoneMeter();
+
+    ended = false;
 }
 
 void GameScene::update(){
@@ -3114,9 +3126,10 @@ void GameScene::update(){
     if(!game->lost && !paused && !game->eventLock){
         game->update();
     }
-    handleMultiplayer(0);
 
-    // progressBar(-1);
+    if(handleMultiplayer(1)){
+        return;
+    }
 
     if(game->gameMode == BATTLE && !multiplayer){
         if(!botGame->clearLock){
@@ -3192,7 +3205,9 @@ void GameScene::update(){
 
     if((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
         paused = true;
+
         endScreen();
+
         paused = false;
         if(!(playAgain && multiplayer)){
             return;

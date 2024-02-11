@@ -7,6 +7,11 @@
 #include "save.h"
 
 #define glowDuration 12
+#ifdef GBA
+#include "LinkUniversal.hpp"
+extern LinkUniversal* linkConnection;
+#endif
+extern int initialPlayerCount;
 
 INLINE FIXED lerp(FIXED a, FIXED b, FIXED mix){
     return a + (((b-a)*mix)>>8);
@@ -125,6 +130,7 @@ extern void reset();
 
 extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
+extern void acknowledgeGarbage(BlockEngine::Game *, BlockEngine::Garbage);
 extern void progressBar(int layer);
 
 extern void saveToSram();
@@ -223,6 +229,8 @@ extern bool canDraw;
 extern int gameSeconds;
 
 extern bool playAgain;
+class PlayerStateMutex;
+extern PlayerStateMutex* playAgainMutex;
 
 // extern bool resumeJourney;
 // extern bool journeyLevelUp;
@@ -230,7 +238,7 @@ extern bool playAgain;
 // extern BlockEngine::Game* journeySave;
 
 extern int connected;
-extern int multiplayerStartTimer;
+extern bool multiplayerStart;
 
 extern int initialLevel;
 extern int frameCounter;
@@ -238,10 +246,9 @@ extern int frameCounter;
 extern OBJ_ATTR * titleSprites[2];
 extern OBJ_ATTR * queueFrameSprites[3];
 
-extern int enemyHeight;
-
 extern BlockEngine::Bot *testBot;
-extern u8 enemyBoard[20][10];
+extern u8 enemyBoard[4][20][10];
+extern u8 currentPlayerId;
 
 extern int mode;
 
@@ -313,6 +320,8 @@ extern int peekShift;
 extern MenuKeys menuKeys;
 
 extern int framesSinceLastSave;
+
+extern bool ended;
 
 extern ReplayHeader *currentReplayHeader;
 

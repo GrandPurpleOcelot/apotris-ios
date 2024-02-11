@@ -6,7 +6,7 @@
 #include "sprites.h"
 
 #ifdef GBA
-#include "LinkConnection.h"
+#include "LinkUniversal.hpp"
 #endif
 
 #include "logging.h"
@@ -754,6 +754,9 @@ void setPalette(){
         setPaletteColor(i,15,RGB15(0,31,0),1);
         setPaletteColor(16+i,15,RGB15(0,31,0),1);
     }
+
+    setPaletteColor(30, 14, RGB15(25, 27, 28), 1);
+    setPaletteColor(31, 14, RGB15(31, 5, 5), 1);
 }
 
 int getClassicPalette(){
