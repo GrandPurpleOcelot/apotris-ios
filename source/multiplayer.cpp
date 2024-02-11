@@ -71,7 +71,7 @@ const int boardTile = 512 - 32 * 3 - 64 - 8;
 #define ENCODE(x) ((x) << 13)
 
 void clearEnemyBoard() {
-    memset32_fast((u32*)enemyBoard, 0, sizeof(enemyBoard) / 4);
+    memset32((u32*)enemyBoard, 0, sizeof(enemyBoard) / 4);
     clearSpriteTiles(boardTile, 8, 8);
 
     for(auto & timer: attackAnimationTimers)

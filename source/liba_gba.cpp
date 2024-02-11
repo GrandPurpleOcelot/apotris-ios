@@ -11,8 +11,6 @@
 #include "flashSaves.h"
 #include "scene.hpp"
 #include "gbfs.h"
-#include "agbabi.h"
-#include "aeabi.h"
 
 // #include <string>
 // #include "scene.hpp"
@@ -170,29 +168,17 @@ bool closed(){
     return true;
 }
 
-IWRAM_CODE void memcpy16_fast(void* dest, const void* src, int hwCount) {
-    __agbabi_memcpy2(dest, src, hwCount * 2);
-}
-
-IWRAM_CODE void memcpy32_fast(void* dest, const void* src, int wCount) {
-    __agbabi_fiq_memcpy4(dest, src, wCount * 4);
-}
-
-IWRAM_CODE void memset32_fast(void* dest, int word, int wCount) {
-    __aeabi_memset4(dest, wCount * 4, word);
-}
-
 void loadPalette(int palette, int index, const void *src, int count){
-    memcpy16_fast(&pal_bg_mem[16*palette + index], src, count);
+    memcpy16(&pal_bg_mem[16*palette + index], src, count);
 }
 
 void loadTiles(int tileset, int index, const void *src, int count){
-    memcpy32_fast(&tile_mem[tileset][index], src,count*8);
+    memcpy32(&tile_mem[tileset][index], src,count*8);
 }
 
 void loadTilemap(int tilemap, int index, const void *src, int count){
     u16 * dst = (u16 * ) &se_mem[tilemap];
-    memcpy16_fast(&dst[index], src, count);
+    memcpy16(&dst[index], src, count);
 }
 
 void clearTilemap(int tilemap){
@@ -200,19 +186,19 @@ void clearTilemap(int tilemap){
 }
 
 void clearSpriteTiles(int index, int lengthX, int lengthY){
-    memset32_fast(&tile_mem[4][index],0,lengthX*lengthY*8);
+    memset32(&tile_mem[4][index],0,lengthX*lengthY*8);
 }
 
 void clearSpriteTile(int index, int tx, int ty, int width){
-    memset32_fast(&tile_mem[4][index + ty * width + tx],0,8);
+    memset32(&tile_mem[4][index + ty * width + tx],0,8);
 }
 
 void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY){
-    memcpy32_fast(&tile_mem[4][index], src,lengthX * lengthY * 8);
+    memcpy32(&tile_mem[4][index], src,lengthX * lengthY * 8);
 }
 
 void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY, int rowLength){
-    memcpy32_fast(&tile_mem[4][index + ty * rowLength + tx], src,lengthX * lengthY * 8);
+    memcpy32(&tile_mem[4][index + ty * rowLength + tx], src,lengthX * lengthY * 8);
 }
 
 void setPaletteColor(int palette, int index, u16 color, int count){
@@ -315,9 +301,9 @@ void initRumble(){
 bool unlock_gbp(){
     bool gbp_detected = false;
 
-    memcpy16_fast((u16*)0x6008000, gbp_logo_pixels, (sizeof gbp_logo_pixels)/2);
-    memcpy16_fast((u16*)0x6000000, gbp_logo_tiles, (sizeof gbp_logo_tiles)/2);
-    memcpy16_fast(pal_bg_mem, gbp_logo_palette, (sizeof gbp_logo_palette)/2);
+    memcpy16((u16*)0x6008000, gbp_logo_pixels, (sizeof gbp_logo_pixels)/2);
+    memcpy16((u16*)0x6000000, gbp_logo_tiles, (sizeof gbp_logo_tiles)/2);
+    memcpy16(pal_bg_mem, gbp_logo_palette, (sizeof gbp_logo_palette)/2);
 
     static volatile u32* keys = (volatile u32*)0x04000130;
 
@@ -429,7 +415,7 @@ void clearSprites(int count){
 }
 
 void clearTiles(int tileset, int index, int count){
-    memset32_fast(&tile_mem[tileset][index],0,8 * count);
+    memset32(&tile_mem[tileset][index],0,8 * count);
 }
 
 IWRAM_CODE void onVBlank() {
@@ -541,7 +527,7 @@ void saveSavefile(){
 }
 
 void mirrorPalettes(int index, int count){
-    memcpy16_fast(&pal_bg_mem[index],&pal_obj_mem[index],(8 * 16));
+    memcpy16(&pal_bg_mem[index],&pal_obj_mem[index],(8 * 16));
 }
 
 void toggleHBlank(bool state){
@@ -554,7 +540,7 @@ void toggleHBlank(bool state){
 }
 
 void savePalette(COLOR * dst){
-    memcpy32_fast(dst, pal_bg_mem, 256);
+    memcpy32(dst, pal_bg_mem, 256);
 }
 
 void enableBlend(int info){

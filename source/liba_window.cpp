@@ -456,8 +456,8 @@ void saveSavefile(){
 
     char temp[saveSize];
 
-    memset32_fast(temp, 0, saveSize / 4);
-    memcpy32_fast(temp, dst, sizeof(Save) / 4);
+    memset32(temp, 0, saveSize / 4);
+    memcpy32(temp, dst, sizeof(Save) / 4);
 
     output.write(temp, saveSize);
 

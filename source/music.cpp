@@ -137,8 +137,8 @@ void checkSongs(){
 
     if((u8) songs.menu.size() != set->menu ||
        (u8) songs.game.size() != set->game){
-        memset32_fast(set->gameBits, 0, 4);
-        memset32_fast(set->menuBits, 0, 4);
+        memset32(set->gameBits, 0, 4);
+        memset32(set->menuBits, 0, 4);
 
         set->menu = (u8) songs.menu.size();
         set->game = (u8) songs.game.size();

@@ -67,9 +67,9 @@ int Game::checkSpecialRotation(int dx, int r){
 }
 
 void Pawn::setBlock(int system) {
-    memset32_fast(boardLowest,-1,16);
-    memset32_fast(heighest,-1,4);
-    memset32_fast(lowestBlock,0,4);
+    memset32(boardLowest,-1,16);
+    memset32(heighest,-1,4);
+    memset32(lowestBlock,0,4);
 
     for (int r = 0; r < 4; r++){
         int * shape = getShape(current,r,system);
@@ -1523,7 +1523,7 @@ int* BlockEngine::getShape(int n,int r, int rotationSystem) {
         break;
     }
 
-    memcpy32_fast(result,source,16);
+    memcpy32(result,source,16);
     return result;
 }
 
@@ -1628,16 +1628,16 @@ void Game::removeClearLock() {
         if(index != linesToClear.rend() && *index == i){
             index++;
         }else{
-            memcpy32_fast(board[pos],board[i],10);
+            memcpy32(board[pos],board[i],10);
             bitboard[pos] = bitboard[i];
             if(disappearing)
-                memcpy16_fast(disappearTimers[pos],disappearTimers[i],10);
+                memcpy16(disappearTimers[pos],disappearTimers[i],10);
             pos--;
         }
     }
 
     for(int i = stackHeight; i < stackHeight + len; i++){
-        memset32_fast(board[i],0,10);
+        memset32(board[i],0,10);
         bitboard[i] = 0;
         if(disappearing)
             memset16(disappearTimers[i],0,10);
@@ -1689,7 +1689,7 @@ void Game::removeClearLock() {
     }
 
     linesToClear.clear();
-    memset32_fast(lineClearArray, 0, 40 / 4);
+    memset32(lineClearArray, 0, 40 / 4);
 
     if(!entryDelay && !zoneExit){
         next();
@@ -1730,7 +1730,7 @@ void Game::generateGarbage(int height,int localMode){
                 board[i][j] = board[i+height][j];
             bitboard[i] = bitboard[i+height];
         } else{
-            memset32_fast(board[i],0,10);
+            memset32(board[i],0,10);
             bitboard[i] = 0;
         }
     }
@@ -2180,14 +2180,14 @@ void Game::clearBoard(){
         bitboard[i] = 0;
     }
 
-    memset32_fast(columnHeights,0,10);
+    memset32(columnHeights,0,10);
 
     garbageHeight = 0;
 
     stackHeight = lengthY;
 
     linesToClear.clear();
-    memset32_fast(lineClearArray, 0, 40 / 4);
+    memset32(lineClearArray, 0, 40 / 4);
 
     clearLock = false;
 }
@@ -2788,7 +2788,7 @@ void Game::deathGarbage(){
                 board[i][j] = board[i+1][j];
             bitboard[i] = bitboard[i+1];
         } else{
-            memset32_fast(board[i],0,10);
+            memset32(board[i],0,10);
             bitboard[i] = 0;
         }
     }

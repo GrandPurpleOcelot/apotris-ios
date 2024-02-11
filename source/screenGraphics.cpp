@@ -735,9 +735,9 @@ void GraphicsScene::update(){
 
         FIXED temp[22][12];
 
-        memcpy32_fast(temp, current, 22 * 12);
-        memcpy32_fast(current, previous, 22 * 12);
-        memcpy32_fast(previous, temp, 22 * 12);
+        memcpy32(temp, current, 22 * 12);
+        memcpy32(current, previous, 22 * 12);
+        memcpy32(previous, temp, 22 * 12);
     }
 
     if(dampTimer){

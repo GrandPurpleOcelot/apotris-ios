@@ -1162,7 +1162,7 @@ void loadReplay(){
         if(currentReplayHeader == nullptr)
             currentReplayHeader = new ReplayHeader();
 
-        memcpy32_fast(currentReplayHeader,&test->header,sizeof(ReplayHeader) / 4);
+        memcpy32(currentReplayHeader,&test->header,sizeof(ReplayHeader) / 4);
 
         for(int i = 0; i < (int)test->header.length; i++){
             currentReplay.push_back(new Timestamp(test->moves[i]));
@@ -1217,7 +1217,7 @@ void loadReplay(){
     if(currentReplayHeader == nullptr)
         currentReplayHeader = new ReplayHeader();
 
-    memcpy32_fast(currentReplayHeader,&rep.header,sizeof(ReplayHeader) / 4);
+    memcpy32(currentReplayHeader,&rep.header,sizeof(ReplayHeader) / 4);
 
     replaying = true;
     replayIterator = currentReplay.begin();
