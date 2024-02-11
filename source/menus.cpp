@@ -99,7 +99,7 @@ void GameScene::endScreen(){
 
     int prevBld = blendInfo;
 
-    endScreenSetup();
+    int record = endScreenSetup();
 
     if(multiplayer)
         max = 2;
@@ -126,8 +126,6 @@ void GameScene::endScreen(){
                 sfx(SFX_YOULOSE);
         }
     }
-
-    int record = onRecord();
 
     savefile->stats.gamesCompleted++;
     if(game->lost)
@@ -1359,7 +1357,7 @@ void addGameStats(){
     }
 }
 
-void GameScene::endScreenSetup(){
+int GameScene::endScreenSetup(){
     clearSmallText();
     setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
@@ -1381,8 +1379,11 @@ void GameScene::endScreenSetup(){
 
     showScore();
 
+    int record = -1;
     if (multiplayer) {
         progressBar(1);
+    } else {
+        record = onRecord();
     }
 
     const int optionsHeight = 11;
@@ -1411,4 +1412,5 @@ void GameScene::endScreenSetup(){
     wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
 
     showModeText();
+    return record;
 }

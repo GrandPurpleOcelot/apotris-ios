@@ -69,7 +69,7 @@ class GameScene : public Scene{
     void checkSounds();
     bool reconnect();
     int handleMultiplayer(bool duringGame);
-    void endScreenSetup();
+    int endScreenSetup();
 
     bool counted = false;
 
