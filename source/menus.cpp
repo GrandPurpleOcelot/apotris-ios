@@ -153,16 +153,28 @@ void GameScene::endScreen(){
     cursorSprite = &obj_buffer[1];
     sprite_hide(cursorSprite);
 
+    std::string placeString;
     if (record != -1 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= ULTRA)){
-        std::string str;
         switch(record){
-            case 0: str = "1st"; break;
-            case 1: str = "2nd"; break;
-            case 2: str = "3rd"; break;
-            case 3: str = "4th"; break;
-            case 4: str = "5th"; break;
+            case 0: placeString = "1st"; break;
+            case 1: placeString = "2nd"; break;
+            case 2: placeString = "3rd"; break;
+            case 3: placeString = "4th"; break;
+            case 4: placeString = "5th"; break;
         }
-        aprint(str+" Place", 10, 5);
+    }else if(game->gameMode == BATTLE){
+        switch(rank - 1){
+            case 0: placeString = "1st"; break;
+            case 1: placeString = "2nd"; break;
+            case 2: placeString = "3rd"; break;
+            case 3: placeString = "4th"; break;
+            case 4: placeString = "5th"; break;
+        }
+    }
+
+    if(placeString != ""){
+        placeString += " Place";
+        naprint(placeString, 15 * 8 - getVariableWidth(placeString) / 2, 5 * 8);
     }
 
     MenuKeys k = savefile->settings.menuKeys;
@@ -378,31 +390,12 @@ void showScore(){
     if (game->gameMode == BATTLE) {
         if (game->lost) {
             aprint("YOU LOSE", 11, 3);
-            if (rank) {
-                aprint("Placed ", 10, 4);
-                aprint(std::to_string(rank), 17, 4);
-                std::string suffix;
-                switch (rank) {
-                    case 1:
-                        suffix = "st";
-                        break;
-                    case 2:
-                        suffix = "nd";
-                        break;
-                    case 3:
-                        suffix = "rd";
-                        break;
-                    default:
-                        suffix = "th";
-                }
-                aprint(suffix, 18, 4);
-            }
-        }
-        else
+        } else {
             aprint("YOU WIN!", 11, 3);
+        }
 
-        aprint("Lines Sent", 10, 5);
-        aprintf(game->linesSent, 14, 7);
+        aprint("Lines Sent", 10, 7);
+        aprintf(game->linesSent, 14, 9);
 
     } else if (game->gameMode == MASTER){
         int grade = game->grade + game->coolCount + (int) game->creditGrade;
