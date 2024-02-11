@@ -225,8 +225,9 @@ void GameScene::endScreen(){
                 } else {
                     if (connected == 1) {
                         sfx(SFX_MENUCONFIRM);
-                        if (!pendingPlayAgain) {
-                            pendingPlayAgain = true;
+                        // Mark that we are ready
+                        playAgainMutex->updatePlayerReady(currentPlayerId, true);
+                        if (!playAgainMutex->checkAllReady()) {
 #ifdef GBA
                             nextSeed = (u16) qran() % 0x1FFE;
                             linkConnection->send((1 << 13) + nextSeed);
@@ -237,6 +238,7 @@ void GameScene::endScreen(){
                             linkConnection->send((1 << 13) + 0x1FFF);
 #endif
                             multiplayerStart = true;
+                            playAgainMutex->clear();
                         }
                     } else {
                         sfx(SFX_MENUCANCEL);

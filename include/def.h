@@ -229,7 +229,8 @@ extern bool canDraw;
 extern int gameSeconds;
 
 extern bool playAgain;
-extern bool pendingPlayAgain;
+class PlayerStateMutex;
+extern PlayerStateMutex* playAgainMutex;
 
 // extern bool resumeJourney;
 // extern bool journeyLevelUp;

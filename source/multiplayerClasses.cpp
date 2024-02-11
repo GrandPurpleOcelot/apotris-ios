@@ -21,3 +21,23 @@ RemotePlayerIndex::RemotePlayerIndex(u8 index, u8 originalId) {
 RemotePlayerId RemotePlayerIndex::getOriginalId() const {
     return RemotePlayerId(originalId);
 }
+
+void PlayerStateMutex::clear() {
+    this->locks.clear();
+}
+
+void PlayerStateMutex::updatePlayerReady(u8 remotePlayerId, bool readyState) {
+    this->locks[remotePlayerId] = readyState;
+}
+
+bool PlayerStateMutex::checkAllReady() {
+    return this->getReadyCount() == initialPlayerCount;
+}
+
+int PlayerStateMutex::getReadyCount() {
+    int readyCount = 0;
+    for (int playerId = 0; playerId < initialPlayerCount; playerId++)
+        if (this->locks[playerId])
+            readyCount++;
+    return readyCount;
+}

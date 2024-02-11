@@ -28,7 +28,7 @@ u8 currentPlayerId = -1;
 int initialPlayerCount = 0;
 std::queue<u16> sendQueue;
 
-bool pendingPlayAgain = false;
+PlayerStateMutex* playAgainMutex = new PlayerStateMutex();
 
 class BoardUpdate{
 public:
@@ -276,10 +276,10 @@ void GameScene::ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId
     if (command == PLAY_AGAIN) {
         if (value == 0x1FFF){
             multiplayerStart = true;
-            pendingPlayAgain = false;
+            playAgainMutex->clear();
         } else {
             aprint("Would you like to play again?", 0, 0);
-            pendingPlayAgain = true;
+            playAgainMutex->updatePlayerReady(remotePlayerId.id, true);
             nextSeed = value;
         }
     }
