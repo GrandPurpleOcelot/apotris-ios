@@ -70,6 +70,7 @@ class GameScene : public Scene{
     bool reconnect();
     int handleMultiplayer(bool duringGame);
     int endScreenSetup();
+    void showReadyPlayers();
 
     bool counted = false;
 

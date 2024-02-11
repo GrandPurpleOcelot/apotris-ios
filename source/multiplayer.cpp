@@ -1,4 +1,7 @@
 #include "def.h"
+
+int initialPlayerCount = 0;
+
 #ifdef GBA
 #include "LinkUniversal.hpp"
 #endif
@@ -25,7 +28,6 @@ const int animationMax = 15;
 
 u32 ownPower = 1;
 u8 currentPlayerId = -1;
-int initialPlayerCount = 0;
 std::queue<u16> sendQueue;
 
 PlayerStateMutex* playAgainMutex = new PlayerStateMutex();
@@ -278,7 +280,6 @@ void GameScene::ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId
             multiplayerStart = true;
             playAgainMutex->clear();
         } else {
-            aprint("Would you like to play again?", 0, 0);
             playAgainMutex->updatePlayerReady(remotePlayerId.id, true);
             nextSeed = value;
         }

@@ -23,7 +23,6 @@ void endAnimation();
 void showScore();
 int onRecord();
 std::string nameInput(int);
-void showModeText();
 void qrScene();
 
 void saveReplay();
@@ -231,7 +230,6 @@ void GameScene::endScreen(){
 #ifdef GBA
                             nextSeed = (u16) qran() % 0x1FFE;
                             linkConnection->send((1 << 13) + nextSeed);
-                            aprint("Waiting for other player...", 0, 0);
 #endif
                         } else {
 #ifdef GBA
@@ -299,6 +297,10 @@ void GameScene::endScreen(){
             }else{
                 sfx(SFX_MENUCANCEL);
             }
+        }
+
+        if(multiplayer){
+            showReadyPlayers();
         }
 
         showSprites(128);
@@ -1406,6 +1408,8 @@ int GameScene::endScreenSetup(){
         wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
 
         counter += 3;
+    }else{
+        showReadyPlayers();
     }
 
     wordSprites[5].setText("Main");
@@ -1415,4 +1419,21 @@ int GameScene::endScreenSetup(){
 
     showModeText();
     return record;
+}
+
+void GameScene::showReadyPlayers(){
+    int readyPlayers = playAgainMutex->getReadyCount();
+
+    std::string readyText = std::to_string(readyPlayers) + "/" + std::to_string(initialPlayerCount);
+
+    wordSprites[8].setText(readyText);
+    wordSprites[8].show(236 - wordSprites[8].width, 160 - 12 - 8, 14);
+
+    if(playAgainMutex->checkCurrentReady()){
+        wordSprites[7].setText("Ready!");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else{
+        wordSprites[7].setText("Not Ready");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }
 }

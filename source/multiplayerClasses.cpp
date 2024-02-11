@@ -1,4 +1,5 @@
 #include "multiplayerClasses.h"
+
 RemotePlayerId::RemotePlayerId(u8 playerId) {
     id = playerId;
 }
@@ -32,6 +33,10 @@ void PlayerStateMutex::updatePlayerReady(u8 remotePlayerId, bool readyState) {
 
 bool PlayerStateMutex::checkAllReady() {
     return this->getReadyCount() == initialPlayerCount;
+}
+
+bool PlayerStateMutex::checkCurrentReady() {
+    return this->locks[currentPlayerId];
 }
 
 int PlayerStateMutex::getReadyCount() {

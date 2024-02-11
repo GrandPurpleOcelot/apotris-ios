@@ -1,5 +1,4 @@
-#ifndef APOTRIS_MULTIPLAYERCLASSES_H
-#define APOTRIS_MULTIPLAYERCLASSES_H
+#pragma once
 
 #include <memory>
 #include "def.h"
@@ -29,7 +28,6 @@ public:
     void updatePlayerReady(u8 remotePlayerId, bool readyState);
     int getReadyCount();
     bool checkAllReady();
+    bool checkCurrentReady();
 };
 
-
-#endif //APOTRIS_MULTIPLAYERCLASSES_H
