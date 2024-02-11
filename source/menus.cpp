@@ -206,21 +206,7 @@ void GameScene::endScreen(){
 
         if (playAgain && multiplayer) {
             startMultiplayerGame(nextSeed);
-
-            stopSong();
-            playSongRandom(1);
-
-            floatingList.clear();
-            placeEffectList.clear();
-
-            drawFrame(1);
-            clearText();
-
-            clearSprites(128);
-            showHold();
-            showQueue();
-            showSprites(128);
-            clearTilemap(27);
+            changeScene(new GameScene());
             break;
         }
 
