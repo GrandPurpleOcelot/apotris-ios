@@ -6,7 +6,7 @@
 #include "mm_types.h"
 #include "audio_files.h"
 /* #include "soundbank.h" */
-#include "posprintf.h"
+#include <posprintf.h>
 #include <map>
 
 static inline void setTile(int sbb, int x, int y, uint32_t value){
@@ -69,33 +69,10 @@ extern mm_word myEventHandler(mm_word msg, mm_word param);
 
 #define blendInfo REG_BLDCNT
 
-extern unsigned __iwram_start__;
-extern unsigned __iwram_top;
-extern unsigned __fini_array_end;
-extern unsigned __ewram_start;
-extern unsigned __ewram_end;
-extern char __eheap_start[], __eheap_end[];
 
-INLINE int iwramUsage(){
-    auto iwram_start = reinterpret_cast<uint8_t*>(&__iwram_start__);
-    auto iwram_end = reinterpret_cast<uint8_t*>(&__fini_array_end);
-
-    return iwram_end - iwram_start;
-}
-
-INLINE int ewramUsage(){
-    auto ewram_start = reinterpret_cast<uint8_t*>(&__ewram_start);
-    auto ewram_end = reinterpret_cast<uint8_t*>(&__ewram_end);
-
-    return ewram_end - ewram_start;
-}
-
-INLINE int ewramHeapUsage(){
-    auto ewram_start = reinterpret_cast<uint8_t*>(&__eheap_start);
-    auto ewram_end = reinterpret_cast<uint8_t*>(&__eheap_end);
-
-    return ewram_end - ewram_start;
-}
+IWRAM_CODE void memcpy16_fast(void* dest, const void* src, int hwCount);
+IWRAM_CODE void memcpy32_fast(void* dest, const void* src, int wCount);
+IWRAM_CODE void memset32_fast(void* dest, int word, int wCount);
 
 extern u16 gradientTable[192 + 1];
 

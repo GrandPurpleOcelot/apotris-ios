@@ -2,7 +2,7 @@
 #include <string>
 #include "logging.h"
 #include "platform.hpp"
-#include "posprintf.h"
+#include <posprintf.h>
 
 #include "font1tiles_bin.h"
 

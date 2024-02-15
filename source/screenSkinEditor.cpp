@@ -3,7 +3,7 @@
 #include "menu.h"
 #include "platform.hpp"
 #include "text.h"
-#include "posprintf.h"
+#include <posprintf.h>
 
 #include "sprite29tiles_bin.h"
 #include "sprite30tiles_bin.h"

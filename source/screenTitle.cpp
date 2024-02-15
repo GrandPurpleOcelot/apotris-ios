@@ -8,7 +8,7 @@
 #include <list>
 #include "flashSaves.h"
 
-#include "posprintf.h"
+#include <posprintf.h>
 #include "logging.h"
 #include "sprites.h"
 #include "classic_pal_bin.h"

@@ -843,7 +843,7 @@ void PlayOptionScene::resetScoreboard(){
         if(getMode() != BlockEngine::ZEN){
             EntryBoard * board = getBoard(subMode, goal);
 
-            memset32(board, 0, sizeof(EntryBoard) / 4);
+            memset32_fast(board, 0, sizeof(EntryBoard) / 4);
         }else{
             savefile->boards.zen = 0;
         }

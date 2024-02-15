@@ -3,7 +3,7 @@
 #include <string>
 #include <tuple>
 #include "logging.h"
-#include "posprintf.h"
+#include <posprintf.h>
 
 int botThinkingSpeed = 11;
 int botSleepDuration = 1;
@@ -390,12 +390,12 @@ int findBestDrop(int ii,int jj, Game * game, std::list<Move> &moves, Weights wei
 
     uint16_t testBoard[40];
     int columnHeights[10];
-    memcpy16(testBoard,&game->bitboard[8],height);
-    memcpy32(columnHeights,game->columnHeights,10);
+    memcpy16_fast(testBoard,&game->bitboard[8],height);
+    memcpy32_fast(columnHeights,game->columnHeights,10);
 
     // for(int i = 0; i < game->lengthY; i++)
     //     testBoard[i] = game->bitboard[i];
-        // memcpy32(testBoard[i],game->board[i+20],10);
+        // memcpy32_fast(testBoard[i],game->board[i+20],10);
 
     int minH = -1;
     int count = 0;
