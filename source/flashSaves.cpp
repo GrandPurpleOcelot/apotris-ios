@@ -9,7 +9,7 @@
 
 #if ENABLE_FLASH_SAVE
 
-#define FLASH_CODE __attribute__ ((noinline, section(".ewram")))
+#define FLASH_CODE __attribute__ ((noinline, section(".ewram.flash")))
 
 void flash_write(u8 flash_type, u32 sa);
 

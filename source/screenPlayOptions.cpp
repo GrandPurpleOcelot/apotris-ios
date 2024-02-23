@@ -5,6 +5,8 @@
 #ifdef GBA
 #include "LinkCableMultiboot.hpp"
 #include "sendMultiboot.h"
+#include "detectEmulators.h"
+
 #endif
 #include <cstring>
 
@@ -576,6 +578,20 @@ void MultBattleScene::init(){
     PlayOptionScene::init();
 
     #ifdef GBA
+
+    key_poll();
+    // Check for mGBA and gpSP (but don't check if it would crash the emu)
+    const bool inaccurateEmulator = detect_inaccurate_emulator();
+    // Secret feature: hold L on real hardware to force cable mode
+    if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba()))
+        // mGBA only supports cable, so set it to speed up initial multiplayer sync
+        linkConnection->setProtocol(LinkUniversal::CABLE);
+    else if (inaccurateEmulator)
+        // gpSP only does wireless
+        linkConnection->setProtocol(LinkUniversal::WIRELESS_AUTO);
+    else
+        // This undoes the hold L override if exiting and returning to this screen
+        linkConnection->setProtocol(LinkUniversal::AUTODETECT);
 
     linkConnection->activate();
 

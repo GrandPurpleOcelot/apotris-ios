@@ -26,6 +26,7 @@ sources = files(
     src_dir / 'blockEngine.cpp',
     src_dir / 'bot.cpp',
     src_dir / 'descriptions.cpp',
+    src_dir / 'detectEmulators.c',
     src_dir / 'flashSaves.cpp',
     src_dir / 'game.cpp',
     src_dir / 'gbp_logo.cpp',
