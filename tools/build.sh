@@ -36,5 +36,14 @@ mkdir -p bin/windows/assets
 
 cp assets/* bin/windows/assets/.
 cp build-windows/Apotris.exe bin/windows/.
-cp lib/*.dll bin/windows/.
-cp lib/win-x64/*.dll bin/windows/.
+
+cp /usr/lib/gcc/x86_64-w64-mingw32/12-win32/libgcc_s_seh-1.dll bin/windows/.
+cp /usr/x86_64-w64-mingw32/bin/libdl.dll bin/windows/.
+cp /usr/lib/gcc/x86_64-w64-mingw32/12-win32/libstdc++-6.dll bin/windows/.
+cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll bin/windows/.
+
+cp build-windows/subprojects/SDL2-2.28.5/libsdl2.dll bin/windows/.
+cp build-windows/subprojects/libmodplug/libmodplug.dll bin/windows/.
+cp subprojects/SFML-2.6.1/extlibs/bin/x86/openal32.dll bin/windows/.
+cp build-windows/subprojects/SDL2_mixer-2.6.2/libsdl2mixer.dll bin/windows/.
+cp lib/* bin/windows/.

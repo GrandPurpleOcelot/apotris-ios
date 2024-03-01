@@ -77,6 +77,17 @@ if host_machine.system() == 'gba'
     add_project_arguments('-DLINK_WIRELESS_USE_SEND_RECEIVE_LATCH=1', language : 'cpp')
 endif
 
+if host_machine.system() == 'windows'
+  add_global_arguments('-DWIN32', language : 'cpp')
+  add_global_arguments('-DWIN32', language : 'c')
+  add_global_arguments('-mwin32', language : 'cpp')
+  add_global_arguments('-mwin32', language : 'c')
+  add_global_arguments('-static-libgcc', language : 'cpp')
+  add_global_arguments('-static-libgcc', language : 'c')
+  add_global_arguments('-static-libstdc++', language : 'cpp')
+  add_global_arguments('-static-libstdc++', language : 'c')
+endif
+
 build_type = get_option('buildtype')
 # Don't use mGBA logging in release or custom build types, only debug and friends
 if build_type.startswith('release') or build_type.startswith('custom')
@@ -136,8 +147,8 @@ if host_machine.system() != 'gba'
     # Other required dependencies
     tilengine = subproject('Tilengine', default_options : ['default_library=static'])
     sdl = subproject('sdl2', default_options : ['default_library=shared'])
-    soloud = subproject('SoLoud', default_options : ['default_library=static'])
     sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=shared'])
+    soloud = subproject('SoLoud', default_options : ['default_library=static'])
 
     dependencies = [
         modplug.dependency('modplug'),

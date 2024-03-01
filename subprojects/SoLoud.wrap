@@ -1,9 +1,0 @@
-[wrap-git]
-url =  https://github.com/akouzoukos/soloud.git
-revision = master
-
-[wrap-file]
-patch_directory = SoLoud
-
-[provide]
-SoLoud = soloud_dep
