@@ -3410,6 +3410,7 @@ void showSpawn(){
 
     sprite_unhide(sprite, 0);
 
+    int piece = game->queue.front();
     int * b = BlockEngine::getShape(game->queue.front(), 0, game->rotationSystem);
 
     bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS || game->rotationSystem == BARS);
@@ -3436,12 +3437,12 @@ void showSpawn(){
     if(!game->pawn.big){
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
         sprite_enable_mosaic(sprite);
-        sprite_set_pos(sprite, (10 + x) * 8 + push * savefile->settings.shake, (y - game->boardOffset + peek) * 8 + shake * savefile->settings.shake + peekShift - 8 * (game->rotationSystem == BARS && * b != PIECE_I));
+        sprite_set_pos(sprite, (10 + x) * 8 + push * savefile->settings.shake, (y - game->boardOffset + peek) * 8 + shake * savefile->settings.shake + peekShift - 8 * (game->rotationSystem == BARS && piece != PIECE_I));
     }else{
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
         sprite_enable_mosaic(sprite);
         sprite_enable_affine(sprite, 29, true);
         sprite_set_size(sprite, 1<<7, 29);
-        sprite_set_pos(sprite, (10 + x*2) * 8 + push * savefile->settings.shake, (y - game->boardOffset + peek) * 8 * 2 + shake * savefile->settings.shake + peekShift - 16 * (game->rotationSystem == BARS && * b != PIECE_I));
+        sprite_set_pos(sprite, (10 + x*2) * 8 + push * savefile->settings.shake, (y - game->boardOffset + peek) * 8 * 2 + shake * savefile->settings.shake + peekShift - 16 * (game->rotationSystem == BARS && piece != PIECE_I));
     }
 }
