@@ -145,8 +145,8 @@ if host_machine.system() != 'gba'
         sdl.get_variable('sdl2_dep'),
         soloud.get_variable('soloud_dep'),
         sdl_mixer.get_variable('sdl2_mixer_dep'),
-        dependency('gl'),
-        dependency('glew'),
+        # dependency('gl'),
+        # dependency('glew'),
     ]
 
     # Define non-GBA specific preprocessor guards
@@ -154,8 +154,8 @@ if host_machine.system() != 'gba'
     add_project_arguments('-DPC', language : 'c')
     add_project_arguments('-DTE', language : 'cpp')
     add_project_arguments('-DTE', language : 'c')
-    add_project_arguments('-DGL', language : 'cpp')
-    add_project_arguments('-DGL', language : 'c')
+    # add_project_arguments('-DGL', language : 'cpp')
+    # add_project_arguments('-DGL', language : 'c')
     add_project_arguments('-Wno-array-bounds', language : 'cpp')
     add_project_arguments('-Wno-array-bounds', language : 'c')
 
