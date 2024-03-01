@@ -53,7 +53,7 @@ void CreditsScene::init(){
     //letterbox on pc
     buildBG(0, 0, 29, 0, 0, true);
     TILE tile;
-    memset32(&tile,0xeeeeeeee,8);
+    memset32_fast(&tile,0xeeeeeeee,8);
     loadTiles(0, 50, &tile, 1);
 
     setTiles(29, 20 * 64, 44 * 64,50);

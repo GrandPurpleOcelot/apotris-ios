@@ -63,9 +63,9 @@ void loadSave() {
         for (int i = 0; i < size; i++)
             tmp[i] = sf[i];
 
-        memcpy32(&tmp[pmSettings+ sizeof(u8)], &sf[size], (pmSave - size) / 4);
+        memcpy32_fast(&tmp[pmSettings+ sizeof(u8)], &sf[size], (pmSave - size) / 4);
 
-        memcpy32(savefile, temp, pmSave / 4);
+        memcpy32_fast(savefile, temp, pmSave / 4);
 
         delete temp;
     } else if (savefile->newGame != SAVE_TAG) {
@@ -102,7 +102,7 @@ void loadSave() {
 
         applySaveChanges(tmp, sf, sizeof(Save));
 
-        memcpy32(savefile, temp, sizeof(Save) / 4);
+        memcpy32_fast(savefile, temp, sizeof(Save) / 4);
 
         delete temp;
 
@@ -217,8 +217,8 @@ void setDefaultKeys(){
 
 void resetSkins(Save *save){
     for(int i = 0; i < MAX_CUSTOM_SKINS; i++){
-        memcpy16(&save->customSkins[i].board,sprite1tiles_bin,sprite1tiles_bin_size/2);
-        memcpy16(&save->customSkins[i].smallBoard,mini[0],sprite1tiles_bin_size/2);
+        memcpy16_fast(&save->customSkins[i].board,sprite1tiles_bin,sprite1tiles_bin_size/2);
+        memcpy16_fast(&save->customSkins[i].smallBoard,mini[0],sprite1tiles_bin_size/2);
         save->customSkins[i].changed = false;
     }
 }
@@ -238,16 +238,16 @@ void setDefaults(Save *save, int depth){
             savefile->latestName[i] = ' ';
         savefile->latestName[8] = '\0';
 
-        memset32(savefile->boards.marathon, 0, sizeof(EntryBoard) * 4 / 4);
-        memset32(savefile->boards.sprint, 0, sizeof(EntryBoard) * 3 / 4);
-        memset32(savefile->boards.dig, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32_fast(savefile->boards.marathon, 0, sizeof(EntryBoard) * 4 / 4);
+        memset32_fast(savefile->boards.sprint, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32_fast(savefile->boards.dig, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
     if(depth < 2){
         for (int i = 0; i < 10; i++)
             save->settings.songList[i] = true;
 
-        memset32(savefile->boards.ultra, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32_fast(savefile->boards.ultra, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
     if(depth < 3){
@@ -260,9 +260,9 @@ void setDefaults(Save *save, int depth){
         save->settings.abHold = true;
         save->settings.resetHoldType = false;
 
-        memset32(savefile->boards.blitz, 0, sizeof(EntryBoard) * 2 / 4);
-        memset32(&savefile->boards.combo, 0, sizeof(EntryBoard) * 1 / 4);
-        memset32(savefile->boards.survival, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32_fast(savefile->boards.blitz, 0, sizeof(EntryBoard) * 2 / 4);
+        memset32_fast(&savefile->boards.combo, 0, sizeof(EntryBoard) * 1 / 4);
+        memset32_fast(savefile->boards.survival, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
     if(depth < 4){
@@ -270,9 +270,9 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 5){
-        memset32(savefile->boards.sprintAttack, 0, sizeof(EntryBoard) * 3 / 4);
-        memset32(savefile->boards.digEfficiency, 0, sizeof(EntryBoard) * 3 / 4);
-        memset32(savefile->boards.classic, 0, sizeof(EntryBoard) * 2 / 4);
+        memset32_fast(savefile->boards.sprintAttack, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32_fast(savefile->boards.digEfficiency, 0, sizeof(EntryBoard) * 3 / 4);
+        memset32_fast(savefile->boards.classic, 0, sizeof(EntryBoard) * 2 / 4);
 
         save->stats.timePlayed = 0;
         save->stats.gamesStarted = 0;
@@ -283,8 +283,8 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 6){
-        memset32(savefile->boards.master, 0, sizeof(EntryBoard) * 2 / 4);
-        memset32(savefile->boards.zone, 0, sizeof(EntryBoard) * 4 / 4);
+        memset32_fast(savefile->boards.master, 0, sizeof(EntryBoard) * 2 / 4);
+        memset32_fast(savefile->boards.zone, 0, sizeof(EntryBoard) * 4 / 4);
 
         save->settings.diagonalType = save->settings.noDiagonals;
         save->settings.delaySoftDrop = false;
@@ -413,7 +413,7 @@ void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
 
         int count = saveChanges[i].location - oldPos;
 
-        memcpy32(&newSave[newPos],&oldSave[oldPos],count / 4);
+        memcpy32_fast(&newSave[newPos],&oldSave[oldPos],count / 4);
 
         oldPos = saveChanges[i].location;
         newPos += count + saveChanges[i].size;
@@ -421,9 +421,9 @@ void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
         i++;
 
         if(i >= changeLength || saveChanges[i-1].saveId != saveChanges[i].saveId){
-            memcpy32(&newSave[newPos], &oldSave[oldPos], (migSize - oldPos) / 4);
+            memcpy32_fast(&newSave[newPos], &oldSave[oldPos], (migSize - oldPos) / 4);
 
-            memcpy32(oldSave, newSave, (newPos + migSize - oldPos) / 4);
+            memcpy32_fast(oldSave, newSave, (newPos + migSize - oldPos) / 4);
 
             migSize += newPos - oldPos;
 
@@ -432,7 +432,7 @@ void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
     }
 
     if(!changed){
-        memcpy32(newSave, oldSave, sizeof(Save) / 4);
+        memcpy32_fast(newSave, oldSave, sizeof(Save) / 4);
     }
 }
 
@@ -491,16 +491,16 @@ void convertScores(Save *save){
 
     ModeBoards newBoards;
 
-    memcpy32(&newBoards.marathon, &oldBoards->marathon, sizeof(EntryBoard) * 4 / 4);
-    memcpy32(&newBoards.sprint, &oldBoards->sprint, sizeof(EntryBoard) * 3 / 4);
-    memcpy32(&newBoards.dig, &oldBoards->dig, sizeof(EntryBoard) * 3 / 4);
-    memcpy32(&newBoards.ultra, &oldBoards->ultra, sizeof(EntryBoard) * 3 / 4);
-    memcpy32(&newBoards.blitz, &oldBoards->blitz, sizeof(EntryBoard) * 2 / 4);
-    memcpy32(&newBoards.combo, &oldBoards->combo, sizeof(EntryBoard) * 1 / 4);
-    memcpy32(&newBoards.survival, &oldBoards->survival, sizeof(EntryBoard) * 3 / 4);
-    memcpy32(&newBoards.sprintAttack, &oldBoards->sprintAttack, sizeof(EntryBoard) * 3 / 4);
-    memcpy32(&newBoards.digEfficiency, &oldBoards->digEfficiency, sizeof(EntryBoard) * 3 / 4);
-    memcpy32(&newBoards.classic, &oldBoards->classic, sizeof(EntryBoard) * 2 / 4);
+    memcpy32_fast(&newBoards.marathon, &oldBoards->marathon, sizeof(EntryBoard) * 4 / 4);
+    memcpy32_fast(&newBoards.sprint, &oldBoards->sprint, sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.dig, &oldBoards->dig, sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.ultra, &oldBoards->ultra, sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.blitz, &oldBoards->blitz, sizeof(EntryBoard) * 2 / 4);
+    memcpy32_fast(&newBoards.combo, &oldBoards->combo, sizeof(EntryBoard) * 1 / 4);
+    memcpy32_fast(&newBoards.survival, &oldBoards->survival, sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.sprintAttack, &oldBoards->sprintAttack, sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.digEfficiency, &oldBoards->digEfficiency, sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.classic, &oldBoards->classic, sizeof(EntryBoard) * 2 / 4);
 
     for(int i = 0; i < 2; i++){
         for(int j = 0; j < 5; j++){
@@ -524,9 +524,9 @@ void convertScores(Save *save){
         b++;
     }
 
-    memcpy32(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);
+    memcpy32_fast(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);
 
-    memcpy32(&save->boards, &newBoards, sizeof(ModeBoards) / 4);
+    memcpy32_fast(&save->boards, &newBoards, sizeof(ModeBoards) / 4);
 }
 
 void profileToSave(GraphicsOptions *profile, Settings *settings){

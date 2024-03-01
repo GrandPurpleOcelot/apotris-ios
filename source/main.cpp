@@ -15,7 +15,7 @@
 
 #include "flashSaves.h"
 
-#include "posprintf.h"
+#include <posprintf.h>
 #include "rumble.h"
 
 #include "classic1tiles_bin.h"
@@ -261,12 +261,12 @@ void reset() {
     int g = savefile->settings.backgroundGradient;
 
     if(g == 0)
-        memcpy16(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
+        memcpy16_fast(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
     else
         setGradient(g);
 
-    memset32(current, 0, 22 * 12);
-    memset32(previous, 0, 22 * 12);
+    memset32_fast(current, 0, 22 * 12);
+    memset32_fast(previous, 0, 22 * 12);
 
     #ifdef GBA
     toggleSpriteSorting(false);
@@ -870,7 +870,7 @@ void setGradient(int color){
 
 void setDefaultGradient(){
     #ifdef GBA
-    memcpy16(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
+    memcpy16_fast(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
     #endif
 
     #ifdef PC

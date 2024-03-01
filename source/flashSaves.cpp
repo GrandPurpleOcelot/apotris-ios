@@ -2,14 +2,17 @@
 
 #ifdef GBA
 #include "flashSaves.h"
+#include "agbabi.h"
 #include "logging.h"
 
 #include "text.h"
 
 #if ENABLE_FLASH_SAVE
 
+#define FLASH_CODE __attribute__ ((noinline, section(".ewram")))
+
 void flash_write(u8 flash_type, u32 sa);
-void save_sram_flash();
+
 
 // static u32 total_rom_size = 0;
 u32 flash_size = 0;
@@ -17,19 +20,8 @@ u32 flash_sram_area = 0;
 u8 flash_type = 0;
 bool escape = false;
 
-__attribute__((section(".iwram"), target("arm")))
-static void bytecopy(vu8 *dst, vu8 *src, int count) {
-	for (int i = 0; i < count; i++) {
-		dst[i] = src[i];
-	}
-}
-
-__attribute__((section(".ewram")))
-static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
-	if (count == 0) {
-		return 0;
-	}
-	while (--count && *buf1 == *buf2) {
+EWRAM_CODE static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
+    while (--count && *buf1 == *buf2) {
 		buf1++;
 		buf2++;
 	}
@@ -40,8 +32,7 @@ static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
 // types of reproduction flash cartridges.
 // Must run in EWRAM because ROM data is
 // not visible to the system while checking.
-__attribute__((section(".ewram")))
-u32 get_flash_type() {
+FLASH_CODE u32 get_flash_type() {
 
 	//test if able to write to SRAM/FRAM
 	loadSavefile();
@@ -116,8 +107,7 @@ u32 get_flash_type() {
 // write 64 kilobytes of SRAM data to Flash ROM.
 // Must run in EWRAM because ROM data is
 // not visible to the system while erasing/writing.
-__attribute__((section(".ewram")))
-void flash_write(u8 flash_type, u32 sa)
+FLASH_CODE void flash_write(u8 flash_type, u32 sa)
 {
 	if (flash_type == 0) return;
 	u16 ie = REG_IE;
@@ -284,9 +274,9 @@ void flash_init() {
 		flash_sram_area = flash_size - 0x40000;
 
 		// Finally, restore the SRAM data and proceed.
-		bytecopy(AGB_SRAM, ((vu8*)AGB_ROM+flash_sram_area), AGB_SRAM_SIZE);
+        __agbabi_memcpy1((void *) AGB_SRAM, (const void *) ((vu8 *) AGB_ROM + flash_sram_area), AGB_SRAM_SIZE);
 
-	} else { // Emulator mode?
+    } else { // Emulator mode?
 		if(escape)
 			return;
 
@@ -301,8 +291,8 @@ void flash_init() {
 		}
 
 		if (flash_sram_area != 0) {
-			bytecopy(AGB_SRAM, ((vu8*)AGB_ROM+flash_sram_area), AGB_SRAM_SIZE);
-		}
+            __agbabi_memcpy1((void *) AGB_SRAM, (const void *) ((vu8 *) AGB_ROM + flash_sram_area), AGB_SRAM_SIZE);
+        }
 	}
 }
 

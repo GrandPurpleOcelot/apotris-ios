@@ -13,7 +13,7 @@
 
 #include "classic_pal_bin.h"
 #include "logging.h"
-#include "posprintf.h"
+#include <posprintf.h>
 #include "scene.hpp"
 #include "sceneHandling.hpp"
 
@@ -1482,7 +1482,7 @@ void addGlow(BlockEngine::Drop location) {
             effectList.push_back(Effect(1 + (game->previousClear.isTSpin != 0), xCenter, location.endY));
 
         for (int i = max(location.startY,0); i < location.endY && i < 20; i++)
-            memset32(&current[i+1][1],2048,10);
+            memset32_fast(&current[i+1][1],2048,10);
 
         damp = 4;
 
@@ -2094,7 +2094,7 @@ void showBar(int current, int max, int x, int palette, int layer) {
         if (segments == 19 && edge != 0) {
             t = 10;
 
-            // memcpy32(&temp,&sprite8tiles_bin[32 * t],8);
+            // memcpy32_fast(&temp,&sprite8tiles_bin[32 * t],8);
             // for (int j = 0; j < 7; j++) {
             //     if (j == 0) {
             //         if (6 - j > edge)
@@ -2215,7 +2215,7 @@ void showPlaceEffect(){
         switch(it->piece){
         case 0:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n], 8, 3);
-            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n],size/2);
+            // memcpy32_fast(&tile_mem[5][138 + 32 * i],placeEffectTiles[n],size/2);
             if(game->rotationSystem == NRS){
                 if(r % 2 == 1)
                     r = 1;
@@ -2230,7 +2230,7 @@ void showPlaceEffect(){
             break;
         case 1:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 3], 8, 3);
-            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
+            // memcpy32_fast(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
             xoffset = yoffset = -4;
 
             if (game->rotationSystem == ARS && r == 2)
@@ -2242,7 +2242,7 @@ void showPlaceEffect(){
             break;
         case 2:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 3], 8, 3);
-            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
+            // memcpy32_fast(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+3],size/2);
             xoffset = yoffset = -4;
             flip = true;
 
@@ -2254,13 +2254,13 @@ void showPlaceEffect(){
             break;
         case 3:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 6], 8, 3);
-            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+6],size/2);
+            // memcpy32_fast(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+6],size/2);
             yoffset = -4 + (game->rotationSystem == NRS || game-> rotationSystem == ARS) * 8;
             r = 0;
             break;
         case 4:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 9], 8, 3);
-            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
+            // memcpy32_fast(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
             xoffset = -4;
             yoffset = -4;
             if(game->rotationSystem == NRS || game-> rotationSystem == ARS){
@@ -2272,7 +2272,7 @@ void showPlaceEffect(){
             break;
         case 5:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 12], 8, 3);
-            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+12],size/2);
+            // memcpy32_fast(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+12],size/2);
             xoffset = yoffset = -4;
 
             if (game->rotationSystem == ARS && r == 2)
@@ -2283,7 +2283,7 @@ void showPlaceEffect(){
             break;
         case 6:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 9], 8, 3);
-            // memcpy32(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
+            // memcpy32_fast(&tile_mem[5][138 + 32 * i],placeEffectTiles[n+9],size/2);
             xoffset = -4;
             yoffset = -4;
             flip = true;
@@ -2481,7 +2481,7 @@ void zoneFlash(){
             delete previousPalette;
         previousPalette = new COLOR [512];
         savePalette(previousPalette);
-        // memcpy32(&previousPalette[0], pal_bg_mem, 256);
+        // memcpy32_fast(&previousPalette[0], pal_bg_mem, 256);
     }
 
     flashTimer--;
@@ -2522,7 +2522,7 @@ void resetZonePalette(){
     // mmSetModuleTempo(1024);
 
     loadTiles(0, 4, sprite5tiles_bin, 1);
-    // memcpy16(&tile_mem[0][4],sprite5tiles_bin,16);
+    // memcpy16_fast(&tile_mem[0][4],sprite5tiles_bin,16);
 
     if(game->lost)
         return;
@@ -2798,7 +2798,7 @@ void showFullMeter(){
         if(fullMeterTimer < fullMeterAnimationLength){
             fullMeterTimer = 0;
             loadSpriteTiles(256+3, meterTiles[0], 4, 4);
-            // memcpy32(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
+            // memcpy32_fast(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
         }
         return;
     }
@@ -2806,14 +2806,14 @@ void showFullMeter(){
     if(--fullMeterTimer <= 0){
         fullMeterTimer = fullMeterTimerMax;
         loadSpriteTiles(256+3, meterTiles[0], 4, 4);
-        // memcpy32(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
+        // memcpy32_fast(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
         return;
     }
 
     if(fullMeterTimer < fullMeterAnimationLength){
     int n = 2 - (fullMeterTimer/(fullMeterAnimationLength/3));
         loadSpriteTiles(256+3, meterTiles[n+1], 4, 4);
-        // memcpy32(&tile_mem[4][256+3],meterTiles[n+1],meter1_tiles_bin_size/4);
+        // memcpy32_fast(&tile_mem[4][256+3],meterTiles[n+1],meter1_tiles_bin_size/4);
     }
 }
 
@@ -2976,7 +2976,7 @@ void replayControl(){
 
 void GameScene::init(){
     // TILE d;
-    // memset32(&d, 0x11111111, 8);
+    // memset32_fast(&d, 0x11111111, 8);
     // for(int i = 0; i < 1024; i++)
     //     loadSpriteTiles(i, &d, 1, 1);
 
@@ -3304,9 +3304,9 @@ void updateFluid(){
 
         FIXED temp[22][12];
 
-        memcpy32(temp, current, 22 * 12);
-        memcpy32(current, previous, 22 * 12);
-        memcpy32(previous, temp, 22 * 12);
+        memcpy32_fast(temp, current, 22 * 12);
+        memcpy32_fast(current, previous, 22 * 12);
+        memcpy32_fast(previous, temp, 22 * 12);
     }
 
     if(dampTimer){
@@ -3347,7 +3347,7 @@ void showGoalLine(){
     }
 
     TILE d;
-    memset32(&d, 0, 8);
+    memset32_fast(&d, 0, 8);
 
     if(savefile->settings.goalLine == 1)
         d.data[0] = 0x00333300;
