@@ -202,13 +202,10 @@ if host_machine.system() != 'gba'
 
     endforeach
 
-    link_args = []
-    # TODO: This should prevent a terminal from spawning when double-clicking Apotris.exe but it doesn't...
-    if host_machine.system() == 'windows'
-        add_project_arguments('-mwindows', language : 'cpp')
-        add_project_arguments('-mwindows', language : 'c')
-        link_args += '-mwindows'
-    endif
+    link_args = [
+        '-static-libgcc',
+        '-static-libstdc++',
+    ]
 
     # The final Apotris compile target
     binary = executable(
@@ -217,6 +214,8 @@ if host_machine.system() != 'gba'
         include_directories : includes,
         dependencies : dependencies,
         link_args : link_args,
+        gui_app : true,
+        install_rpath: 'lib'
     )
 else
     ##########################################
