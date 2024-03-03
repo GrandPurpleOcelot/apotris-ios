@@ -27,7 +27,7 @@ cp tools/build.bat bin/gba/.
 #linux
 meson setup $TYPE build-linux && meson compile -C build-linux
 mkdir -p bin/linux/assets
-mkdir -p bin/linux/subprojects
+mkdir -p bin/linux/subprojects/SDL2-2.28.5
 
 cp assets/* bin/linux/assets/.
 cp build-linux/subprojects/SDL2-2.28.5/libsdl2.so bin/linux/subprojects/SDL2-2.28.5/libsdl2.so
