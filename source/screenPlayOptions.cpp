@@ -757,6 +757,9 @@ void MultBattleScene::update(){
 
 void MultBattleScene::deinit(){
     PlayOptionScene::deinit();
+#ifdef GBA
+    linkConnection->deactivate();
+#endif
 }
 
 void PlayOptionScene::resetScoreboard(){
