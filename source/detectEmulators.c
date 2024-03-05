@@ -1,8 +1,9 @@
 /**
-  * Detects MyBoy and gpSP emulators through exploiting a bug in ram overclocking.
+ * Detects MyBoy and gpSP emulators through exploiting a bug in ram overclocking.
  * Credit to Evan Bowman from the gbadev discord
  */
 
+#ifdef GBA
 #include "detectEmulators.h"
 
 EWRAM_DATA static int _ewram_static_data = 0xFF;
@@ -39,3 +40,4 @@ bool detect_inaccurate_emulator()
     REG_DISPCNT = prev_dispcnt;
     return detected;
 }
+#endif
