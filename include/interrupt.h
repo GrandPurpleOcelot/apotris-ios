@@ -28,6 +28,7 @@ void interrupt_init(void);
 void interrupt_set_handler(interrupt_index index, interrupt_vector function);
 void interrupt_enable(interrupt_index index);
 void interrupt_disable(interrupt_index index);
+void interrupt_unmask(void);
 
 #ifdef __cplusplus
 }

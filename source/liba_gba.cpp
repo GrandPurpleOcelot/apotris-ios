@@ -127,6 +127,7 @@ void platformInit(){
         flash_init();
 
     interrupt_init();
+    interrupt_unmask();
     REG_DISPSTAT |= (1 << 3) | (1 << 4);
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
@@ -160,7 +161,7 @@ void platformInit(){
                           LinkUniversal::Protocol::AUTODETECT;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
     const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
-    const u32 interval = 25;
+    const u32 interval = 50;
     const u32 wirelessRemoteTimeout = calculateRemoteTimeout(interval, wirelessRemoteTimeoutFrames);
     linkUniversal = new LinkUniversal(protocol,
                       "Apotris",
@@ -168,7 +169,7 @@ void platformInit(){
                               .baudRate = LinkCable::BAUD_RATE_3,
                               .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
                               .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
-                              .interval = 125,
+                              .interval = interval * 2,
                               .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
                       (LinkUniversal::WirelessOptions){
                               .retransmission = true,
