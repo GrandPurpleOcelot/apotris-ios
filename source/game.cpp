@@ -2677,6 +2677,9 @@ void showZoneText(){
 
     int height = (game->lengthY - game->zonedLines) / 2;
 
+    if(game->pawn.big)
+        height *= 2;
+
     char buff[4];
 
     int lines = game->zonedLines;
@@ -2698,7 +2701,7 @@ void showZoneText(){
         loadPalette(13, 2, pal[1], 2);
     }
 
-    aprintColor(text, 15 - text.size()/2, height , 2);
+    aprintColor(text, 15 - text.size()/2, height, 2);
 }
 
 static FIXED creditCurrentHeight = int2fx(SCREEN_HEIGHT);
