@@ -1252,10 +1252,14 @@ void GameScene::showText() {
         wordSprites[1].setTextNum(game->pieceCounter);
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 15 * 8,15);
     } else if (gm == MASTER || gm == DEATH){
-        wordSprites[0].setText("Grade");
-        wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
+        std::string str;
 
-        std::string str = GameInfo::masterGrades[game->grade + game->coolCount];
+        if(gm == MASTER){
+            wordSprites[0].setText("Grade");
+            wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
+
+            str = GameInfo::masterGrades[game->grade + game->coolCount];
+        }
 
         wordSprites[1].setText(str);
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
