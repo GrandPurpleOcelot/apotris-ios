@@ -2040,7 +2040,6 @@ void Game::setSubMode(int sm){
 
     if(gameMode == MASTER || gameMode == DEATH){
         setRotationSystem(ARS);
-        setRandomizer(BAG_35);
 
         sonicDrop = true;
     }else if(gameMode == CLASSIC){
@@ -2317,6 +2316,10 @@ void Game::setOptions(Options newOptions){
     bTypeHeight = newOptions.bTypeHeight;
     setRotationSystem(newOptions.rotationSystem);
     setSubMode(newOptions.subMode);
+
+    if(newOptions.subMode && (newOptions.mode == MASTER || newOptions.mode == DEATH)){
+        newOptions.randomizer = BAG_35;
+    }
 
     setRandomizer(newOptions.randomizer);
 }
@@ -2763,6 +2766,7 @@ void Game::calculatePeek(){
 }
 
 void Game::setRandomizer(int rand){
+
     randomizer = rand;
 
     bagCounter = 0;
