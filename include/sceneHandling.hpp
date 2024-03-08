@@ -367,6 +367,27 @@ class InitialSystemElement : public Element{
         }
 };
 
+class ResetHandlingElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Reset Handling";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        bool action() override{
+            setDefaultHandling(savefile);
+
+            sfx(SFX_MENUCONFIRM);
+            return false;
+        }
+
+        std::string getCurrentOption() override {
+            return "_";
+        }
+};
 
 class HandlingOptionScene : public OptionListScene{
     public:
@@ -384,6 +405,7 @@ class HandlingOptionScene : public OptionListScene{
             new IHSElement(),
             new IRSElement(),
             new InitialSystemElement(),
+            new ResetHandlingElement(),
         };
     };
 

@@ -215,6 +215,25 @@ void setDefaultKeys(){
     savefile->settings.menuKeys = getDefaultMenuKeys();
 }
 
+void setDefaultHandling(Save *save){
+    save->settings.customDas = false;
+    save->settings.das = 11;
+    save->settings.arr = 2;
+    save->settings.sfr = 2;
+    save->settings.delaySoftDrop = false;
+    save->settings.dropProtection = true;
+    save->settings.dropProtectionFrames = 8;
+
+    save->settings.directionalDas = true;
+
+    save->settings.noDiagonals = false;
+    save->settings.diagonalType = false;
+
+    save->settings.irs = true;
+    save->settings.ihs = true;
+    save->settings.initialType = 1;
+}
+
 void resetSkins(Save *save){
     for(int i = 0; i < MAX_CUSTOM_SKINS; i++){
         memcpy16_fast(&save->customSkins[i].board,sprite1tiles_bin,sprite1tiles_bin_size/2);

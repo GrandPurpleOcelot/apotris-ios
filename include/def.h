@@ -188,6 +188,7 @@ extern std::string getStringFromKey(int key);
 extern void checkPeek();
 extern MenuKeys getDefaultMenuKeys();
 extern Keys getDefaultGameKeys();
+extern void setDefaultHandling(Save *save);
 
 extern bool getSongState(int group, int index);
 extern void toggleSong(int group, int index, bool state);
