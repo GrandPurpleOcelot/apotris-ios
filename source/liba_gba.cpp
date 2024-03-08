@@ -134,7 +134,7 @@ void platformInit(){
         flash_init();
 
     interrupt_init();
-    REG_DISPSTAT |= (1 << 3);
+    REG_DISPSTAT |= (1 << 3) | (1 << 4);
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER3);
