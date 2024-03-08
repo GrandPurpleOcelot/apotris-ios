@@ -370,7 +370,7 @@ class InitialSystemElement : public Element{
 class ResetHandlingElement : public Element{
     public:
         std::string getLabel() override {
-            return "Reset Handling";
+            return "Reset Options";
         }
 
         std::string getCursor(std::string text) override {

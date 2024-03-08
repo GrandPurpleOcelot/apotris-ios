@@ -275,6 +275,28 @@ class PauseCountdownElement : public Element{
         }
 };
 
+class ResetGameplayElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Reset Options";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        bool action() override{
+            setDefaultGameplay(savefile);
+
+            sfx(SFX_MENUCONFIRM);
+            return false;
+        }
+
+        std::string getCurrentOption() override {
+            return "_";
+        }
+};
+
 class GameplayOptionScene : public OptionListScene{
     public:
     std::string name(){return "Gameplay";};
@@ -288,6 +310,7 @@ class GameplayOptionScene : public OptionListScene{
                 new BigModeElement(),
                 new PeekElement(),
                 new PauseCountdownElement(),
+                new ResetGameplayElement(),
             };
         };
 

@@ -215,6 +215,17 @@ void setDefaultKeys(){
     savefile->settings.menuKeys = getDefaultMenuKeys();
 }
 
+void setDefaultGameplay(Save *save){
+    save->settings.maxQueue = 5;
+    save->settings.pro = false;
+    save->settings.goalLine = 2;
+    save->settings.pauseCountdown = 1;
+    save->settings.peek = true;
+    save->settings.big = false;
+    save->settings.rotationSystem = BlockEngine::SRS;
+    save->settings.randomizer = BlockEngine::BAG_7;
+}
+
 void setDefaultHandling(Save *save){
     save->settings.customDas = false;
     save->settings.das = 11;
