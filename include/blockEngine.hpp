@@ -819,6 +819,8 @@ namespace BlockEngine
         Bot(Game* _game){
             game = _game;
             testGame = new Game(game);
+
+            game->replayElligible = false;
         }
 
         ~Bot(){

@@ -653,7 +653,7 @@ void Game::update() {
     while((int)moveHistory.size() > 10)
         moveHistory.pop_front();
 
-    if(replay.size() > MAX_REPLAY_SIZE){
+    if(!replayElligible || replay.size() > MAX_REPLAY_SIZE){
         replay.clear();
 
         replayElligible = false;
