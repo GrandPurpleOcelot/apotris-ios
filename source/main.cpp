@@ -393,54 +393,57 @@ std::string nameInput(int place) {
                     aprint("_", 13 + cursor, nameHeight);
             }
 
-            // #elif defined(PC)
-            // for(int i = 0; i < 26; i++){
-            //     if(key_hit(i)){
-            //         result[cursor] = keyToString[i][0];
-            //         if(cursor < 7)
-            //             cursor++;
-            //         sfx(SFX_MENUMOVE);
-            //         break;
-            //     }
-            // }
+            #elif defined(PC)
 
-            // if(key_hit(sf::Keyboard::Backspace) || (das == maxDas && arr == 0)){
-            //     result[cursor] = ' ';
-            //     if(cursor > 0){
-            //         cursor--;
+            u32 key = key_first();
 
-            //         sfx(SFX_MENUMOVE);
-            //     }
-            // }
+            char character = getStringFromKey(key)[0];
 
-            // if(key_is_down(sf::Keyboard::Backspace)){
-            //     if(das < maxDas)
-            //         das++;
+            if(cursor > 0 && ((key == SDLK_BACKSPACE) || (das == maxDas && arr == 0))){
+                if(cursor < 7 || result[cursor] == ' '){
+                    result[cursor - 1] = ' ';
 
-            //     if(++arr >= maxArr){
-            //         arr = 0;
-            //     }
-            // }else{
-            //     das = 0;
-            // }
+                    cursor--;
+                }else{
+                    result[cursor] = ' ';
+                }
 
-            // if(key_hit(sf::Keyboard::Space) && result.size() < 9){
-            //     result[cursor] = ' ';
-            //     if(cursor < 7)
-            //         cursor++;
-            //     sfx(SFX_MENUMOVE);
-            // }
+                sfx(SFX_MENUMOVE);
+            }else if(key == SDLK_SPACE && result.size() < 9){
+                result[cursor] = ' ';
+                if(cursor < 7)
+                    cursor++;
+                sfx(SFX_MENUMOVE);
+            }else if(getStringFromKey(key).size() == 1 && ((character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z'))){
+                result[cursor] = character;
 
-            // if (timer++ > 19)
-            //     timer = 0;
+                if (cursor < 7)
+                    cursor++;
 
-            // if (timer < 10)
-            //     aprint("_", 13 + cursor, nameHeight);
+                sfx(SFX_MENUMOVE);
+            }
 
-            // if (key_hit(sf::Keyboard::Enter) || key_hit(sf::Keyboard::Escape)) {
-            //     onDone = true;
-            //     sfx(SFX_MENUCONFIRM);
-            // }
+            if(key_is_down(SDLK_BACKSPACE)){
+                if(das < maxDas)
+                    das++;
+
+                if(++arr >= maxArr){
+                    arr = 0;
+                }
+            }else{
+                das = 0;
+            }
+
+            if (timer++ > 19)
+                timer = 0;
+
+            if (timer < 10)
+                aprint("_", 13 + cursor, nameHeight);
+
+            if (key_hit(SDLK_RETURN) || key_hit(SDLK_ESCAPE)) {
+                onDone = true;
+                sfx(SFX_MENUCONFIRM);
+            }
 
             #endif
 
