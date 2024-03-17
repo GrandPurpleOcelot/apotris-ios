@@ -734,7 +734,7 @@ void showPawn() {
     int blend = 0;
 
     if(game->maxLockTimer > 1)
-        blend += 16-(game->lockTimer * 16) / game->maxLockTimer;
+        blend += max(16-(game->lockTimer * 16) / game->maxLockTimer,0);
 
     if(!game->zoneTimer){
         setPawnPalette(11, n, blend);
