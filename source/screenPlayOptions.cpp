@@ -390,7 +390,11 @@ void PlayOptionScene::draw(){
 
                 std::string str = "";
                 if(getIfGrade() && board->entries[i].value > 0){
-                    str += GameInfo::masterGrades[board->entries[i].grade];
+                    if(name() == "Master"){
+                        str += GameInfo::masterGrades[board->entries[i].grade];
+                    }else if(name() == "Death"){
+                        str += GameInfo::deathGrades[board->entries[i].grade];
+                    }
                     str += " ";
                 }
 

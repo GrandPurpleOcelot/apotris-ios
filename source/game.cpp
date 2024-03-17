@@ -1254,11 +1254,13 @@ void GameScene::showText() {
     } else if (gm == MASTER || gm == DEATH){
         std::string str;
 
-        if(gm == MASTER){
-            wordSprites[0].setText("Grade");
-            wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
+        wordSprites[0].setText("Grade");
+        wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
 
+        if (gm == MASTER) {
             str = GameInfo::masterGrades[game->grade + game->coolCount];
+        } else if (gm == DEATH) {
+            str = GameInfo::deathGrades[game->level / 100 - game->regretCount];
         }
 
         wordSprites[1].setText(str);

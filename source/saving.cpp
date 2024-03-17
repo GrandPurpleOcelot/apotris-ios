@@ -379,6 +379,8 @@ void setDefaults(Save *save, int depth){
         save->stats.totalLines = 0;
         save->stats.gameStats = BlockEngine::Stats();
 
+        memset32_fast(savefile->boards.death, 0, sizeof(EntryBoard) * 2 / 4);
+
         //swapped CW/CCW rotates in settings
         int temp = save->settings.keys.rotateCW;
         save->settings.keys.rotateCW = save->settings.keys.rotateCCW;
@@ -531,6 +533,7 @@ void convertScores(Save *save){
     memcpy32_fast(&newBoards.sprintAttack, &oldBoards->sprintAttack, sizeof(EntryBoard) * 3 / 4);
     memcpy32_fast(&newBoards.digEfficiency, &oldBoards->digEfficiency, sizeof(EntryBoard) * 3 / 4);
     memcpy32_fast(&newBoards.classic, &oldBoards->classic, sizeof(EntryBoard) * 2 / 4);
+    memcpy32_fast(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);
 
     for(int i = 0; i < 2; i++){
         for(int j = 0; j < 5; j++){
@@ -553,8 +556,6 @@ void convertScores(Save *save){
         }
         b++;
     }
-
-    memcpy32_fast(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);
 
     memcpy32_fast(&save->boards, &newBoards, sizeof(ModeBoards) / 4);
 }

@@ -520,8 +520,7 @@ class DeathScene : public PlayOptionScene{
     };
 
     EntryBoard* getBoard(int submode, int goal){
-        return nullptr;
-        // return &savefile->boards.master[submode];
+        return &savefile->boards.death[submode];
     }
 
     std::string name(){return "Death";};

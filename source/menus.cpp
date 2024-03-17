@@ -967,6 +967,31 @@ int onRecord() {
             place = i;
             break;
         }
+    } else if (game->gameMode == DEATH) {
+        int grade = (game->level / 100) - game->regretCount;
+
+        if(grade > 13)
+            grade = 13;
+
+        EntryBoard &board = savefile->boards.death[subMode];
+
+        for(int i = 0; i < 5; i++){
+            if (grade < board.entries[i].grade || (grade == board.entries[i].grade && (gameSeconds > board.entries[i].value && board.entries[i].value != 0)))
+                continue;
+
+            for (int j = 3; j >= i; j--)
+                board.entries[j+1] = board.entries[j];
+
+            std::string name = nameInput(i);
+
+            board.entries[i].value = gameSeconds;
+            board.entries[i].grade = grade;
+
+            strncpy(board.entries[i].name, name.c_str(), 9);
+
+            place = i;
+            break;
+        }
     }
 
     if(place >= 0){

@@ -241,6 +241,7 @@ typedef struct ModeBoards{
     EntryBoard master[2];
     EntryBoard zone[4];
     u32 zen;
+    EntryBoard death[2];
 }ALIGN(4) ModeBoards;
 
 class Save{
@@ -253,7 +254,7 @@ public:
 
     ModeBoards boards;
 
-    int placeHolder[1003];
+    int placeHolder[963];
 
     TotalStats stats;
 
