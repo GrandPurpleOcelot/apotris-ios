@@ -454,6 +454,7 @@ void startSong(int song,bool loop){
 
 void stopSong(){
     musicArray[currentSong].stop();
+    currentSong = -1;
 }
 
 void resumeSong(){
