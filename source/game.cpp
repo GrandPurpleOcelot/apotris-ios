@@ -2485,7 +2485,7 @@ void showZoneMeter(){
 void zoneFlash(){
     if(flashTimer == flashTimerMax){
         if(previousPalette != nullptr)
-            delete previousPalette;
+            delete []previousPalette;
         previousPalette = new COLOR [512];
         savePalette(previousPalette);
         // memcpy32_fast(&previousPalette[0], pal_bg_mem, 256);
