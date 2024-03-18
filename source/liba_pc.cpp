@@ -195,7 +195,7 @@ void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
         TLN_SetLayerPriority(pos, (((layerInfo[a[pos]].priority >> 4) & 0x3) == 0));
         TLN_SetLayerTilemap(pos, tilemaps[layerInfo[a[pos]].sbb]);
 
-        toggleBG(pos,layerInfo[pos].enabled);
+        //toggleBG(pos,layerInfo[pos].enabled);
     }
 
     enableBlend(blendInfo);

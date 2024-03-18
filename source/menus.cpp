@@ -138,6 +138,7 @@ void GameScene::endScreen(){
         saveReplay();
     } else {
         delete currentReplayHeader;
+        currentReplayHeader = nullptr;
 
         for(auto & item:currentReplay)
             delete item;

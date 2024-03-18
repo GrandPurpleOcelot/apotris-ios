@@ -75,7 +75,7 @@ nanotime_step_data stepper;
 void windowInit(){
     // Initialize SDL
 
-    window = NULL;
+    window = nullptr;
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -115,7 +115,7 @@ void windowInit(){
 
     SDL_SetWindowIcon(window,icon);
 
-    delete icon;
+    SDL_FreeSurface(icon);
 }
 
 bool hasSuffix(const std::string& s, const std::string& suffix){
