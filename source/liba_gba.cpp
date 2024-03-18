@@ -169,7 +169,7 @@ void platformInit(){
                               .baudRate = LinkCable::BAUD_RATE_3,
                               .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
                               .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
-                              .interval = interval * 2,
+                              .interval = interval * 3,
                               .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
                       (LinkUniversal::WirelessOptions){
                               .retransmission = true,
