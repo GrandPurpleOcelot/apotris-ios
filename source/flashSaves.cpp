@@ -9,7 +9,8 @@
 
 #if ENABLE_FLASH_SAVE
 
-#define FLASH_CODE __attribute__ ((noinline, section(".ewram")))
+#define FLASH_CODE __attribute__ ((noinline, section(".ewram.flash")))
+#define BYTECMP_CODE __attribute ((section(".ewram.bytecmp")))
 
 void flash_write(u8 flash_type, u32 sa);
 
@@ -20,7 +21,7 @@ u32 flash_sram_area = 0;
 u8 flash_type = 0;
 bool escape = false;
 
-EWRAM_CODE static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
+BYTECMP_CODE static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
     while (--count && *buf1 == *buf2) {
 		buf1++;
 		buf2++;

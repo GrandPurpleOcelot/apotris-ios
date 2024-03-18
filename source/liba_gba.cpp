@@ -13,6 +13,7 @@
 #include "gbfs.h"
 #include "agbabi.h"
 #include "aeabi.h"
+#include "detectEmulators.h"
 
 // #include <string>
 // #include "scene.hpp"
@@ -34,26 +35,8 @@ void onHBlank() {
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
-#define WIRELESS_TIMEOUT_FRAMES 120
-
-LinkUniversal* linkUniversal =
-        new LinkUniversal(LinkUniversal::Protocol::AUTODETECT,
-                          "Apotris",
-                          (LinkUniversal::CableOptions){
-                                  .baudRate = LinkCable::BAUD_RATE_1,
-                                  .timeout = LINK_WIRELESS_DEFAULT_TIMEOUT,
-                                  .remoteTimeout = LINK_WIRELESS_DEFAULT_REMOTE_TIMEOUT,
-                                  .interval = 250,
-                                  .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
-                          (LinkUniversal::WirelessOptions){
-                                  .retransmission = true,
-                                  .maxPlayers = LINK_UNIVERSAL_MAX_PLAYERS,
-                                  .timeout = WIRELESS_TIMEOUT_FRAMES,
-                                  .remoteTimeout = WIRELESS_TIMEOUT_FRAMES,
-                                  .interval = 75,
-                                  .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
-                                  .asyncACKTimerId = 2});
-LinkUniversal* linkConnection = linkUniversal;
+LinkUniversal* linkUniversal;
+LinkUniversal* linkConnection;
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
@@ -124,6 +107,16 @@ void showSprites(int count){
     obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
 }
 
+unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait) {
+    // Calculate the duration of one transfer in milliseconds
+    float transferDurationMs = (float)interval * 61.04f / 1000.0f;
+    // Calculate the total duration for the specified number of frames in milliseconds
+    float totalDurationMs = (float)framesToWait * 16.67f;
+    // Calculate how many transfers can occur in the total duration
+    u32 transfers = (u32)((float)totalDurationMs / transferDurationMs);
+    return transfers;
+}
+
 void platformInit(){
 
     #ifndef NO_DIAGNOSE
@@ -134,6 +127,7 @@ void platformInit(){
         flash_init();
 
     interrupt_init();
+    interrupt_unmask();
     REG_DISPSTAT |= (1 << 3) | (1 << 4);
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
@@ -161,6 +155,31 @@ void platformInit(){
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
 
     REG_WAITCNT = 0x4317;
+
+    const bool inaccurateEmulator = detect_inaccurate_emulator();
+    const auto protocol = inaccurateEmulator ? LinkUniversal::Protocol::WIRELESS_AUTO :
+                          LinkUniversal::Protocol::AUTODETECT;
+    const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
+    const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
+    const u32 interval = 50;
+    const u32 wirelessRemoteTimeout = calculateRemoteTimeout(interval, wirelessRemoteTimeoutFrames);
+    linkUniversal = new LinkUniversal(protocol,
+                      "Apotris",
+                      (LinkUniversal::CableOptions){
+                              .baudRate = LinkCable::BAUD_RATE_3,
+                              .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
+                              .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
+                              .interval = interval * 2,
+                              .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
+                      (LinkUniversal::WirelessOptions){
+                              .retransmission = true,
+                              .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
+                              .timeout = wirelessTimeout,
+                              .remoteTimeout = wirelessRemoteTimeout,
+                              .interval = interval,
+                              .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
+                              .asyncACKTimerId = 2});
+    linkConnection = linkUniversal;
 }
 
 void deinitialize(){
