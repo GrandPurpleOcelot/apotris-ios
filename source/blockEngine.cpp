@@ -540,8 +540,9 @@ void Game::update() {
     if(gameMode == BATTLE){
         auto index = garbageQueue.begin();
 
+        int count = 0;
         while(index != garbageQueue.end()){
-            if(index->timer){
+            if(index->timer > count++){
                 index->timer--;
             }
             ++index;
