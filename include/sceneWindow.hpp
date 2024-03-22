@@ -63,7 +63,7 @@ class ScaleElement : public Element{
         }
 
         void action(int dir) override{
-            int add = 1 + 9 * (savefile->settings.integerScale);
+            int add = 1 + 9 * (savefile->settings.integerScale && savefile->settings.zoom > -1);
             if(dir > 0){
                 if(savefile->settings.zoom < max){
                     savefile->settings.zoom+=add;
