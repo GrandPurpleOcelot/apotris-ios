@@ -645,7 +645,7 @@ void showBackground(int offset) {
 
                 if(savefile->settings.skin == 7 || savefile->settings.skin == 8)
                     offset = 48 + (n);
-                else if(savefile->settings.skin >= 11)
+                else if(savefile->settings.skin >= 11 && savefile->settings.skin < 1000)
                     offset = 128 + GameInfo::connectedConversion[b >> 4];
 
                 if(n != 8)
