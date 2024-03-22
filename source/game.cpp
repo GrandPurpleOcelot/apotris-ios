@@ -1060,6 +1060,7 @@ bool GameScene::control() {
 
     if(handlingTest && key_hit(m.pause)){
         exitGame = true;
+        playSongRandom(0);
 
         return true;
     }
@@ -3106,7 +3107,7 @@ void GameScene::update(){
     if(!counted){
         countdown();
 
-        if (!(game->gameMode == TRAINING))
+        if (!(game->gameMode == TRAINING || handlingTest))
             playSongRandom(1);
         return;
     }

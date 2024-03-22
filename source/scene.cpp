@@ -508,7 +508,6 @@ void OptionListScene::init(){
         }
     }
 
-
     showPath();
 
     draw();
