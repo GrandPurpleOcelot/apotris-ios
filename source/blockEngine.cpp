@@ -1358,7 +1358,7 @@ void Game::next() {//~21-29k cycles
     }
     fromLockRotate = false;
 
-    if(gameMode == DEATH){
+    if(gameMode == DEATH && level >= 500){
         deathGarbageCounter++;
     }
 }
