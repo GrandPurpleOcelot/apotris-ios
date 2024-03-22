@@ -219,6 +219,7 @@ void setDefaultGameplay(Save *save){
     save->settings.maxQueue = 5;
     save->settings.pro = false;
     save->settings.goalLine = 2;
+    save->settings.showSpawn = 0;
     save->settings.pauseCountdown = 1;
     save->settings.peek = true;
     save->settings.big = false;
@@ -363,6 +364,7 @@ void setDefaults(Save *save, int depth){
         save->settings.big = false;
         save->settings.pro = false;
         save->settings.goalLine = 2;
+        save->settings.showSpawn = 0;
         save->settings.rotationSystem = BlockEngine::SRS;
         save->settings.randomizer = BlockEngine::BAG_7;
         save->settings.zoom = -1;

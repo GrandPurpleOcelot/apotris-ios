@@ -275,6 +275,30 @@ class PauseCountdownElement : public Element{
         }
 };
 
+class SpawnElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Spawn Preview";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.showSpawn= !savefile->settings.showSpawn;
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.showSpawn)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+
 class ResetGameplayElement : public Element{
     public:
         std::string getLabel() override {
@@ -304,11 +328,12 @@ class GameplayOptionScene : public OptionListScene{
             return {
                 new PreviewsElement(),
                 new ProModeElement(),
+                new PeekElement(),
                 new GoalLineElement(),
+                new SpawnElement(),
                 new RotationSystemElement(),
                 new RandomizerElement(),
                 new BigModeElement(),
-                new PeekElement(),
                 new PauseCountdownElement(),
                 new ResetGameplayElement(),
             };

@@ -3405,6 +3405,9 @@ void checkPeek(){
 }
 
 void showSpawn(){
+    if(!savefile->settings.showSpawn)
+        return;
+
     OBJ_ATTR* sprite = &obj_buffer[110];
 
     if(game->lengthY - game->stackHeight < 17 / (1 + game->pawn.big)){

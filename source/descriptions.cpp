@@ -110,6 +110,9 @@ std::string getDescription(std::string element){
     }else if(element == "Goal Line"){
         return "Shows the remaining lines to clear.";
 
+    }else if(element == "Spawn Preview"){
+        return "Shows where the next piece will spawn so you can avoid blocking out";
+
     }else if(element == "Rotation System"){
         return "Changes how minos rotate.";
 

@@ -163,8 +163,9 @@ typedef struct Settings{
     int autosave;
 
     SongDisabling songDisabling;
+    bool showSpawn;
 
-    int placeHolder[33];
+    int placeHolder[32];
 
 }ALIGN(4) Settings;
 
