@@ -42,6 +42,8 @@ std::list<std::string> creditsText = {
 };
 
 void CreditsScene::init(){
+    resetSmallText();
+    clearText();
     clearSprites(128);
 
     //backgroundGrid
