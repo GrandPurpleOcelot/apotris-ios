@@ -62,7 +62,7 @@ void GradientEditorScene::init(){
 void GradientEditorScene::draw(){
 
     const int space = 4;
-    const int height = 12;
+    const int height = 11;
 
     c = 0;
 
@@ -188,9 +188,7 @@ void GradientEditorScene::draw(){
     sprite_enable_affine(cursorSprite, 10, true);
     sprite_set_size(cursorSprite, scale, 10);
 
-    if(onValues){
-
-    }else if(selection == 0){
+    if(selection == 0){
 
         int x = 3 * 8 - ((8) + offset + 4) - 4;
 
