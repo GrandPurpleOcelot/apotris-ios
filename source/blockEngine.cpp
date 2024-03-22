@@ -1897,8 +1897,8 @@ void Game::setDeathTuning(){
 
     int n = level / 100;
 
-    if(n > 12)
-        n = 12;
+    if(n > 13)
+        n = 13;
 
     arr = 1;
     areMax = deathDelays[n][0];
