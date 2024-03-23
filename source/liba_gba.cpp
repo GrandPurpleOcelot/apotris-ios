@@ -128,7 +128,7 @@ void testSaveMedia() {
     const int testMirror = 0xFFFF;
     flashInfo.size = 0;
     if (detect_inaccurate_emulator()) {
-        sramInfo.size = 64000;
+        sramInfo.size = testRegion;
         return;
     }
     int err;
@@ -136,19 +136,20 @@ void testSaveMedia() {
     err = sram_write(testRegion, (u8 *) "S", 1);
     if (!err) {
         // Is SRAM
-        __agbabi_memcpy1(sram_mem + testMirror, (u8 *) "R", 1);
         char a = '\0';
-        // Write to mirror region and see if it was mirrored or persisted
+        // Write to mirror region and read lower mirror half
+        __agbabi_memcpy1(sram_mem + testMirror, (u8 *) "R", 1);
         __agbabi_memcpy1((u8 *)(&a), sram_mem + testRegion, 1);
+        // See if it was overwritten (mirrored) or persisted
         switch (a) {
             case 'R':
-                sramInfo.size = 32000;
+                sramInfo.size = testRegion;
                 break;
             case 'S':
-                sramInfo.size = 64000;
+                sramInfo.size = testMirror;
                 break;
             default:
-                sramInfo.size = 32000;
+                sramInfo.size = testRegion;
                 break;
         }
         // Detect bootlegs
@@ -201,14 +202,17 @@ void platformInit(){
 
     REG_WAITCNT = 0x4317;
 
-    const bool inaccurateEmulator = detect_inaccurate_emulator();
-    const auto protocol = inaccurateEmulator ? LinkUniversal::Protocol::WIRELESS_AUTO :
-                          LinkUniversal::Protocol::AUTODETECT;
+    setUpLinkUniversal(false);
+}
+
+void setUpLinkUniversal(bool detectEmus) {
+    const bool inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
     const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
     const u32 interval = 50;
     const u32 wirelessRemoteTimeout = calculateRemoteTimeout(interval, wirelessRemoteTimeoutFrames);
-    linkUniversal = new LinkUniversal(protocol,
+    delete linkUniversal;
+    linkUniversal = new LinkUniversal(LinkUniversal::WIRELESS_AUTO,
                       "Apotris",
                       (LinkUniversal::CableOptions){
                               .baudRate = LinkCable::BAUD_RATE_3,

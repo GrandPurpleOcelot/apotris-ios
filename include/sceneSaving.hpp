@@ -51,11 +51,11 @@ public:
 
 #ifdef GBA
 
-        if(flashInfo.size == FLASH_SIZE_64KB || sramInfo.size == 64000)
+        if(flashInfo.size == FLASH_SIZE_64KB || sramInfo.size == 0xFFFF)
             result = "64KB";
         else if(flashInfo.size == FLASH_SIZE_128KB)
             result = "128KB";
-        else if (sramInfo.size == 32000)
+        else if (sramInfo.size == 0x7FFF)
             result = "32KB";
         else
             result = std::to_string(sizeof(Save)) + "KB";
