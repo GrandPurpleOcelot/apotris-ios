@@ -58,7 +58,7 @@ public:
         else if (sramInfo.size == 0x7FFF)
             result = "32KB";
         else
-            result = std::to_string(sizeof(Save)) + "KB";
+            result = std::to_string(sizeof(Save)) + "B";
 
 #endif
 
