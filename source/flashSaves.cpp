@@ -252,7 +252,7 @@ FLASH_CODE void flash_write(u8 flash_type, u32 sa)
 	//resume_interrupts();
 }
 
-void flash_init() {
+void detect_rom_backed_flash() {
 
 	REG_DISPCNT = 0;
 

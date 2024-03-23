@@ -17,6 +17,18 @@ extern u8 flash_type;
 
 extern u32 get_flash_type();
 void save_sram_flash();
-void flash_init();
+void detect_rom_backed_flash();
+
+struct FlashInfo {
+    u8 device;
+    u8 manufacturer;
+    u8 size;
+};
+struct SramInfo {
+    size_t size = 0;
+};
+
+extern struct FlashInfo flashInfo;
+extern struct SramInfo sramInfo;
 
 #endif

@@ -14,6 +14,8 @@
 #include "agbabi.h"
 #include "aeabi.h"
 #include "detectEmulators.h"
+#include "gba_sram.h"
+#include "gba_flash.h"
 
 // #include <string>
 // #include "scene.hpp"
@@ -117,14 +119,57 @@ unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait) {
     return transfers;
 }
 
+extern struct FlashInfo gFlashInfo;
+struct FlashInfo flashInfo;
+struct SramInfo sramInfo;
+
+void testSaveMedia() {
+    const int testRegion = 0x7FFF;
+    const int testMirror = 0xFFFF;
+    flashInfo.size = 0;
+    if (detect_inaccurate_emulator()) {
+        sramInfo.size = 64000;
+        return;
+    }
+    int err;
+    // Test SRAM
+    err = sram_write(testRegion, (u8 *) "S", 1);
+    if (!err) {
+        // Is SRAM
+        __agbabi_memcpy1(sram_mem + testMirror, (u8 *) "R", 1);
+        char a = '\0';
+        // Write to mirror region and see if it was mirrored or persisted
+        __agbabi_memcpy1((u8 *)(&a), sram_mem + testRegion, 1);
+        switch (a) {
+            case 'R':
+                sramInfo.size = 32000;
+                break;
+            case 'S':
+                sramInfo.size = 64000;
+                break;
+            default:
+                sramInfo.size = 32000;
+                break;
+        }
+        // Detect bootlegs
+        if (ENABLE_FLASH_SAVE)
+            detect_rom_backed_flash();
+        return;
+    }
+
+    // Test Flash
+    err = flash_init(FLASH_SIZE_AUTO);
+    if (err) return; // EEPROM or no save media, no luck
+    flashInfo = gFlashInfo;
+}
+
 void platformInit(){
+
+    testSaveMedia();
 
     #ifndef NO_DIAGNOSE
     logInitMgba();
     #endif
-
-    if(ENABLE_FLASH_SAVE)
-        flash_init();
 
     interrupt_init();
     interrupt_unmask();
@@ -538,19 +583,23 @@ void loadSavefile(){
 
     savefile = new Save();
 
-    __agbabi_memcpy1((u8 *) savefile, (const void *) sram_mem, sizeof(Save));
+    if (flashInfo.size != 0) {
+        flash_read(0, (u8 *) savefile, sizeof(Save));
+    } else {
+        __agbabi_memcpy1((u8 *) savefile, sram_mem, sizeof(Save));
+    }
+
 }
 
 void saveSavefile(){
-    volatile u8* sf = (volatile u8*)sram_mem;
+    if (flashInfo.size != 0) {
+        flash_write(0, (u8 *) savefile, sizeof(Save));
+    } else {
+        __agbabi_memcpy1(sram_mem, savefile, sizeof(Save));
 
-    u8* arr = (u8*)savefile;
-
-    for (int i = 0; i < (int)sizeof(Save); i++)
-        sf[i] = (u8)arr[i];
-
-    if(ENABLE_FLASH_SAVE)
-        save_sram_flash();
+        if (ENABLE_FLASH_SAVE)
+            save_sram_flash();
+    }
 }
 
 void mirrorPalettes(int index, int count){
