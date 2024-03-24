@@ -21,7 +21,7 @@ class SaveTypeElement : public Element{
 
             #ifdef GBA
 
-            if(flash_type)
+            if(bootleg_type)
                 result = "ROM";
             else if(flashInfo.size)
                 result = "FLASH";
