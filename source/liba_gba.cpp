@@ -728,6 +728,9 @@ void toggleSpriteSorting(bool state){
 }
 
 IWRAM_CODE void onKeyInterrupt(){
+    // Soft reset on bootleg carts will destroy the save
+    if (bootleg_type)
+        return;
     mmStop();
     REG_IME = 0;
     REG_DMA0CNT_H &= ~DMA_ENABLE;
