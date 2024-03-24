@@ -164,8 +164,9 @@ typedef struct Settings{
 
     SongDisabling songDisabling;
     bool showSpawn;
+    int bootlegOverrideType;
 
-    int placeHolder[32];
+    int placeHolder[31];
 
 }ALIGN(4) Settings;
 

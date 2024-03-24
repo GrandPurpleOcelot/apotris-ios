@@ -38,10 +38,12 @@ FLASH_CODE u32 get_flash_type() {
 	//test if able to write to SRAM/FRAM
 	loadSavefile();
 
-	if(savefile->newGame >= 0x4b && savefile->newGame <= SAVE_TAG){
-		escape = true;
-		return 0;
-	}
+    if(savefile->newGame >= 0x4b && savefile->newGame <= SAVE_TAG){
+        if (savefile->settings.bootlegOverrideType)
+            return savefile->settings.bootlegOverrideType;
+        escape = true;
+        return 0;
+    }
 
 	u32 rom_data, data;
 	u16 ie = REG_IE;
@@ -257,6 +259,7 @@ void detect_rom_backed_flash() {
 	REG_DISPCNT = 0;
 
     bootleg_type = get_flash_type();
+    savefile->settings.bootlegOverrideType = bootleg_type;
     if (bootleg_type > 0) {
 
 		// Determine the size of the flash chip by checking for ROM loops,
