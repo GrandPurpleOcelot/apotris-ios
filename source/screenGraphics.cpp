@@ -638,6 +638,8 @@ void GraphicsScene::draw(){
             wordSprites[index]->hide();
             labels[index]->hide();
         }
+
+        refreshOption = false;
     }
 
     if(refreshGame){
@@ -700,7 +702,6 @@ void GraphicsScene::draw(){
     showSprites(128);
 
     refreshText = false;
-    refreshOption = false;
 }
 
 void GraphicsScene::update(){
