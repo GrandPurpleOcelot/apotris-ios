@@ -1,6 +1,6 @@
 [wrap-git]
-url = https://github.com/aronson/posprintf.git
-revision = 1.0.0
+url = https://github.com/sdk-seven/posprintf.git
+revision = main
 
 [provide]
 dependency_names = posprintf
