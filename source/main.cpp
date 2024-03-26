@@ -849,6 +849,9 @@ void setGradient(int color){
     else if(savefile->settings.backgroundType == 1)
         div = (end-start)/16;
 
+    if(div == 0)
+        div = 1;
+
     COLOR color1 = color & 0xffff;
     COLOR color2 = (color >> 16) & 0xffff;
 

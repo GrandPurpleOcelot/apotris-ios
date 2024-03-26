@@ -391,7 +391,7 @@ void refreshWindowSize(){
             if(savefile->settings.integerScale){
                 windowScale = (int)windowScale;
 
-                while (screenHeight / windowScale > 160 * 2) {
+                while (windowScale > 0 && screenHeight / windowScale > 160 * 2) {
                     windowScale++;
                 }
                 while (windowScale > 1 && screenHeight / windowScale < 160) {
@@ -402,6 +402,9 @@ void refreshWindowSize(){
             }
         }
     }
+
+    if(windowScale <= 0)
+        return;
 
     rowStart = (SCREEN_HEIGHT - (screenHeight/windowScale))/2;
     rowEnd = (SCREEN_HEIGHT + (screenHeight/windowScale))/2;
