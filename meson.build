@@ -222,9 +222,17 @@ else
     ##########################################
     # GameBoy-Advance-specific configuration #
     ##########################################
+    
+    # Only use devkitarm rom runtime if present			
+    dka_rt = dependency('dka-rom-rt', required: false)			
+    if dka_rt.found()			
+        rt_dep = dka_rt			
+    else			
+        rt_dep = dependency('minrt')			
+    endif
 
     dependencies = [
-        dependency('minrt'),
+        rt_dep,
         dependency('libseven'),
         dependency('libsavgba'),
         dependency('libtonc'),
