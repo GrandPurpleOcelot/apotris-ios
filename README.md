@@ -62,12 +62,9 @@ You will need to install:
 - Meson
   - Run `pip install meson` after installing Python to get meson
 - A Windows-native compiler and build tools
-  - MSYS2 has a set of build tools and is [free](https://www.msys2.org)
-    - Install a base toolchain with (assuming a 64 bit system) `pacman -S mingw-w64-x86_64-toolchain`
-  - Visual Studio Community Edition is also [free](https://visualstudio.microsoft.com/vs/community/)
-    - You will need to set up your meson cross files to point to `cl.exe` and friends
+  - [Strawberry Perl](https://strawberryperl.com) works out of the box, get the system installer to make it easiest
 
-#### Windows cross file
+#### Windows specific instructions
 
 For the GBA target, you will need to update the `meson/gba.ini` file to have the path to your ARM compiler:
 
@@ -77,7 +74,13 @@ path = 'C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\13.2 Rel1\bin'
 # ... rest of original file
 ```
 
-Ensure the version string is correct for your installation.
+You can avoid editing a file by setting this with a powershell command per-session
+
+```powershell
+$env:PATH="$env:PATH;C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\13.2 Rel1\bin"
+```
+
+Ensure the version string and directory paths are correct for your installation. They may change with future updates.
 
 ### Ubuntu 22.04+ and Windows (WSL) dependencies
 
