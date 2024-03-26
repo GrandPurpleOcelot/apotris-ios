@@ -114,10 +114,6 @@ navigate to the directory in a terminal (or "command-line") window, and run the
 following command:
 
 ```sh
-# Fetch remote dependencies
-git submodule update --init --recursive
-meson subprojects download
-
 # Native build
 meson setup build
 ninja -C build
