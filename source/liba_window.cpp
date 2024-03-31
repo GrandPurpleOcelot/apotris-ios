@@ -68,7 +68,7 @@ int screenHeight = 720;
 float windowScale = 3;
 int currentSong = -1;
 int sfxVolume = 1024;
-int musicVolume = 1;
+float musicVolume = 1;
 
 nanotime_step_data stepper;
 
@@ -465,7 +465,7 @@ void resumeSong(){
 }
 
 void setMusicVolume(int volume){
-    musicVolume = (float)volume / 200;
+    musicVolume = volume / (512.0 / 2);
 
     gSoloud.setVolume(currentSongHandle,musicVolume);
 }
