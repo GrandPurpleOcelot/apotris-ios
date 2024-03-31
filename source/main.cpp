@@ -33,7 +33,7 @@
 
 using namespace BlockEngine;
 
-const std::string save_type = "SRAM_Vnnn";
+[[maybe_unused]] const std::string save_type = "SRAM_Vnnn";
 int getClassicPalette();
 void setPawnPalette(int dest, int n, int blend);
 void genWidths();

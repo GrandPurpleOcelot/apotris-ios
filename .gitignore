@@ -14,3 +14,9 @@ compile_commands.json
 apotris*.png
 
 dkarm.ini
+
+# Apple stuff
+.DS_Store
+.AppleDouble
+.LSOverride
+._*

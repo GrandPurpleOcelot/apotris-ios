@@ -81,3 +81,5 @@ extern std::map<int,std::string> keyToString;
 #define UNBOUND 0
 
 extern void toggleSpriteSorting(bool state);
+void setUpLinkUniversal(bool detectEmus);
+
