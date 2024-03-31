@@ -461,10 +461,6 @@ void sfx(int s){
 
     mm_sfxhand h = mmEffect(id);
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
-
-    if((s == SFX_PLACE) && game->zoneTimer){
-        mmEffectRate(h,512);
-    }
 }
 
 void sfxRate(int sound, float rate){
@@ -475,7 +471,7 @@ void sfxRate(int sound, float rate){
 
     mm_sound_effect s = {
         {(mm_word) id},
-        (mm_hword)((rate) * (1 << (10 - (game->zoneTimer != 0)))),
+        (mm_hword)((rate) * (1 << 10)),
         0,
         (u8)(255 * (float) savefile->settings.sfxVolume / 10),
         128,

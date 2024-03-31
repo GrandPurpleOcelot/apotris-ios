@@ -221,7 +221,11 @@ void GameScene::checkSounds() {
         sfx(SFX_SHIFT2);
 
     if (game->sounds.place) {
-        sfx(SFX_PLACE);
+        if(!game->zoneTimer){
+            sfx(SFX_PLACE);
+        }else{
+            sfxRate(SFX_PLACE, 0.5);
+        }
 
         if(savefile->settings.screenShakeType == 0){
             shake = (shakeMax * (savefile->settings.shakeAmount) / 4) /2;
@@ -259,7 +263,7 @@ void GameScene::checkSounds() {
             if (speed > 10)
                 speed = 10;
 
-            sfxRate(SFX_LEVELUP,1.0 + (float)speed/10);
+            sfxRate(SFX_LEVELUP,(1.0 + (float)speed/10)/(1+(game->zoneTimer != 0)));
         }else{
             sfx(SFX_MULTICLEAR);
         }
