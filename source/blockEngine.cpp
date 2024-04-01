@@ -2056,7 +2056,7 @@ void Game::setSpeed(){
         else
             speed = 0;
     } else if(gameMode == BLITZ)
-        speed = blitzGravity[(level < 15) ? level - 1 : 14];
+        speed = blitzGravity[(level < 15 && level) ? level - 1 : 14];
     else if(gameMode == CLASSIC)
         speed = classicGravity[(level < 30) ? level: 29];
     else if(gameMode == MASTER){

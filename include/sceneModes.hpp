@@ -423,6 +423,7 @@ class BlitzScene : public PlayOptionScene{
 
     BlitzScene(){
         goal = 2 * 3600;
+        level = 1;
     }
 };
 
