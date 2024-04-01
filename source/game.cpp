@@ -2099,74 +2099,79 @@ void showBar(int current, int max, int x, int palette, int layer) {
             setTile(l,x,i,tileBuild(t,false,false,palette));
         }
     }else{
-        // TILE temp;
+        TILE temp;
 
         //top
-        t = 6;
         if (segments == 19 && edge != 0) {
-            t = 10;
-
-            // memcpy32_fast(&temp,&sprite8tiles_bin[32 * t],8);
-            // for (int j = 0; j < 7; j++) {
-            //     if (j == 0) {
-            //         if (6 - j > edge)
-            //             setTileRow(0,10,j+1,0x13300332);
-            //         else
-            //             setTileRow(0,10,j+1,0x13344332);
-            //     } else {
-            //         if (6 - j > edge)
-            //             setTileRow(0,10,j+1,0x13000032);
-            //         else
-            //             setTileRow(0,10,j+1,0x13444432);
-            //     }
-            // }
+            memcpy32_fast(&temp,&sprite8tiles_bin[32 * (4)],8);
+            for (int j = 0; j < 7; j++) {
+                if (j == 0) {
+                    if (6 - j > edge) {
+                        temp.data[j+1] = 0x13300332;
+                    } else {
+                        temp.data[j+1] = 0x13344332;
+                    }
+                } else {
+                    if (6 - j > edge) {
+                        temp.data[j+1] = 0x13000032;
+                    } else {
+                        temp.data[j+1] = 0x13444432;
+                    }
+                }
+            }
+            setSpriteTile(200 + (x > 9) * 20, 0, 0, 1, &temp);
         } else if (segments >= 20){
             t = 8;
+            setSpriteTile(200 + (x > 9) * 20, 0, 0, 1, &sprite8tiles_bin[32 * (2)]);
+        }else{
+            setSpriteTile(200 + (x > 9) * 20, 0, 0, 1, &sprite8tiles_bin[32 * (0)]);
         }
-
-        setSpriteTile(200 + (x > 9) * 20, 0, 0, 1, &sprite8tiles_bin[32 * (t-6)]);
 
         //bottom
-        t = 13;
         if (segments == 0) {
-            t = 12;
-            if (edge != 0){
-                t = 14;
-                // for (int j = 0; j < 7; j++) {
-                //     if (j == 0) {
-                //         if (j >= edge)
-                //             setTileRow(0,10,j+1,0x13300332);
-                //         else
-                //             setTileRow(0,10,j+1,0x13344332);
-                //     } else {
-                //         if (j >= edge)
-                //             setTileRow(0,10,j+1,0x13000032);
-                //         else
-                //             setTileRow(0,10,j+1,0x13444432);
-                //     }
-                // }
-            }
-        }
+            memcpy32_fast(&temp,&sprite8tiles_bin[32 * (8)],8);
 
-        setSpriteTile(200 + (x > 9) * 20 + 16, 0, 3, 1, &sprite8tiles_bin[32 * (t-6)]);
+            if (edge != 0){
+                for (int j = 0; j < 7; j++) {
+                    if (j == 6) {
+                        if (6-j >= edge) {
+                            temp.data[j] = 0x13300332;
+                        } else {
+                            temp.data[j] = 0x13344332;
+                        }
+                    } else {
+                        if (6-j >= edge) {
+                            temp.data[j] = 0x13000032;
+                        } else {
+                            temp.data[j] = 0x13444432;
+                        }
+                    }
+                }
+                setSpriteTile(200 + (x > 9) * 20 + 16, 0, 3, 1, &temp);
+            }else{
+                setSpriteTile(200 + (x > 9) * 20 + 16, 0, 3, 1, &sprite8tiles_bin[32 * (12-6)]);
+            }
+        }else{
+            setSpriteTile(200 + (x > 9) * 20 + 16, 0, 3, 1, &sprite8tiles_bin[32 * (13-6)]);
+        }
 
         //middle
         for (int i = 1; i < 19; i++) {
-            t = 9;
             if (19 - i > segments) {
-                t = 7;
+                setSpriteTile(200 + (x > 9) * 20 + (i/4) * 4, 0, i % 4, 1, &sprite8tiles_bin[32 * (1)]);
             } else if (19 - i == segments) {
-                t = 11;
-                // for (int j = 0; j < 7; j++) {
-                //     if (7 - j > edge) {
-                //         setTileRow(0,11,j+1,0x13000032);
-                //     } else {
-                //         setTileRow(0,11,j+1,0x13444432);
-                //     }
-                // }
+                memcpy32_fast(&temp,&sprite8tiles_bin[32 * (5)],8);
+                for (int j = 0; j < 7; j++) {
+                    if (7 - j > edge) {
+                        temp.data[j+1] = 0x13000032;
+                    } else {
+                        temp.data[j+1] = 0x13444432;
+                    }
+                }
+                setSpriteTile(200 + (x > 9) * 20 + (i/4) * 4, 0, i % 4, 1, &temp);
+            } else {
+                setSpriteTile(200 + (x > 9) * 20 + (i/4) * 4, 0, i % 4, 1, &sprite8tiles_bin[32 * (3)]);
             }
-
-            setSpriteTile(200 + (x > 9) * 20 + (i/4) * 4, 0, i % 4, 1, &sprite8tiles_bin[32 * (t-6)]);
         }
     }
 }
