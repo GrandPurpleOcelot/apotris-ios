@@ -14,6 +14,8 @@
 #include "agbabi.h"
 #include "aeabi.h"
 #include "detectEmulators.h"
+#include "gba_sram.h"
+#include "gba_flash.h"
 
 // #include <string>
 // #include "scene.hpp"
@@ -117,14 +119,58 @@ unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait) {
     return transfers;
 }
 
+extern struct FlashInfo gFlashInfo;
+struct FlashInfo flashInfo;
+struct SramInfo sramInfo;
+
+void testSaveMedia() {
+    const int testRegion = 0x7FFF;
+    const int testMirror = 0xFFFF;
+    flashInfo.size = 0;
+    if (detect_inaccurate_emulator()) {
+        sramInfo.size = testRegion;
+        return;
+    }
+    int err;
+    // Test SRAM
+    err = sram_write(testRegion, (u8 *) "S", 1);
+    if (!err) {
+        // Is SRAM
+        char a = '\0';
+        // Write to mirror region and read lower mirror half
+        __agbabi_memcpy1(sram_mem + testMirror, (u8 *) "R", 1);
+        __agbabi_memcpy1((u8 *)(&a), sram_mem + testRegion, 1);
+        // See if it was overwritten (mirrored) or persisted
+        switch (a) {
+            case 'R':
+                sramInfo.size = testRegion;
+                break;
+            case 'S':
+                sramInfo.size = testMirror;
+                break;
+            default:
+                sramInfo.size = testRegion;
+                break;
+        }
+        // Detect bootlegs
+        if (ENABLE_FLASH_SAVE)
+            detect_rom_backed_flash();
+        return;
+    }
+
+    // Test Flash
+    err = flash_init(FLASH_SIZE_AUTO);
+    if (err) return; // EEPROM or no save media, no luck
+    flashInfo = gFlashInfo;
+}
+
 void platformInit(){
+
+    testSaveMedia();
 
     #ifndef NO_DIAGNOSE
     logInitMgba();
     #endif
-
-    if(ENABLE_FLASH_SAVE)
-        flash_init();
 
     interrupt_init();
     interrupt_unmask();
@@ -156,14 +202,17 @@ void platformInit(){
 
     REG_WAITCNT = 0x4317;
 
-    const bool inaccurateEmulator = detect_inaccurate_emulator();
-    const auto protocol = inaccurateEmulator ? LinkUniversal::Protocol::WIRELESS_AUTO :
-                          LinkUniversal::Protocol::AUTODETECT;
+    setUpLinkUniversal(false);
+}
+
+void setUpLinkUniversal(bool detectEmus) {
+    const bool inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
     const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
     const u32 interval = 50;
     const u32 wirelessRemoteTimeout = calculateRemoteTimeout(interval, wirelessRemoteTimeoutFrames);
-    linkUniversal = new LinkUniversal(protocol,
+    delete linkUniversal;
+    linkUniversal = new LinkUniversal(LinkUniversal::WIRELESS_AUTO,
                       "Apotris",
                       (LinkUniversal::CableOptions){
                               .baudRate = LinkCable::BAUD_RATE_3,
@@ -412,10 +461,6 @@ void sfx(int s){
 
     mm_sfxhand h = mmEffect(id);
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
-
-    if((s == SFX_PLACE) && game->zoneTimer){
-        mmEffectRate(h,512);
-    }
 }
 
 void sfxRate(int sound, float rate){
@@ -426,7 +471,7 @@ void sfxRate(int sound, float rate){
 
     mm_sound_effect s = {
         {(mm_word) id},
-        (mm_hword)((rate) * (1 << (10 - (game->zoneTimer != 0)))),
+        (mm_hword)((rate) * (1 << 10)),
         0,
         (u8)(255 * (float) savefile->settings.sfxVolume / 10),
         128,
@@ -538,19 +583,23 @@ void loadSavefile(){
 
     savefile = new Save();
 
-    __agbabi_memcpy1((u8 *) savefile, (const void *) sram_mem, sizeof(Save));
+    if (flashInfo.size != 0) {
+        flash_read(0, (u8 *) savefile, sizeof(Save));
+    } else {
+        __agbabi_memcpy1((u8 *) savefile, sram_mem, sizeof(Save));
+    }
+
 }
 
 void saveSavefile(){
-    volatile u8* sf = (volatile u8*)sram_mem;
+    if (flashInfo.size != 0) {
+        flash_write(0, (u8 *) savefile, sizeof(Save));
+    } else {
+        __agbabi_memcpy1(sram_mem, savefile, sizeof(Save));
 
-    u8* arr = (u8*)savefile;
-
-    for (int i = 0; i < (int)sizeof(Save); i++)
-        sf[i] = (u8)arr[i];
-
-    if(ENABLE_FLASH_SAVE)
-        save_sram_flash();
+        if (ENABLE_FLASH_SAVE)
+            save_sram_flash();
+    }
 }
 
 void mirrorPalettes(int index, int count){
@@ -675,6 +724,9 @@ void toggleSpriteSorting(bool state){
 }
 
 IWRAM_CODE void onKeyInterrupt(){
+    // Soft reset on bootleg carts will destroy the save
+    if (bootleg_type)
+        return;
     mmStop();
     REG_IME = 0;
     REG_DMA0CNT_H &= ~DMA_ENABLE;

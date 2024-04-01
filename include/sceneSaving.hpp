@@ -2,6 +2,9 @@
 
 #include "scene.hpp"
 #include "flashSaves.h"
+#ifdef GBA
+#include "gba_flash.h"
+#endif
 
 class SaveTypeElement : public Element{
     public:
@@ -18,15 +21,49 @@ class SaveTypeElement : public Element{
 
             #ifdef GBA
 
-            if(flash_type)
+            if(bootleg_type)
                 result = "ROM";
-            else
+            else if(flashInfo.size)
+                result = "FLASH";
+            else if (sramInfo.size)
                 result = "SRAM";
+            else
+                result = "ERROR!";
 
             #endif
 
             return result;
         }
+};
+
+class SaveSizeElement : public Element{
+public:
+    std::string getLabel() override {
+        return "Chip Size";
+    }
+
+    std::string getCursor(std::string text) override {
+        return " " + text + " ";
+    }
+
+    std::string getCurrentOption() override {
+        std::string result;
+
+#ifdef GBA
+
+        if(flashInfo.size == FLASH_SIZE_64KB || sramInfo.size == 0xFFFF)
+            result = "64KB";
+        else if(flashInfo.size == FLASH_SIZE_128KB)
+            result = "128KB";
+        else if (sramInfo.size == 0x7FFF)
+            result = "32KB";
+        else
+            result = std::to_string(sizeof(Save)) + "B";
+
+#endif
+
+        return result;
+    }
 };
 
 
@@ -83,6 +120,7 @@ class SavingOptionScene : public OptionListScene{
 
             #ifdef GBA
             list.push_back(new SaveTypeElement());
+            list.push_back(new SaveSizeElement());
             #endif
 
             list.push_back(new AutoSaveElement());

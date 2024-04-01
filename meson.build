@@ -222,10 +222,19 @@ else
     ##########################################
     # GameBoy-Advance-specific configuration #
     ##########################################
+    
+    # Only use devkitarm rom runtime if present			
+    dka_rt = dependency('dka-rom-rt', required: false)			
+    if dka_rt.found()			
+        rt_dep = dka_rt			
+    else			
+        rt_dep = dependency('minrt')			
+    endif
 
     dependencies = [
-        dependency('minrt'),
+        rt_dep,
         dependency('libseven'),
+        dependency('libsavgba'),
         dependency('libtonc'),
         dependency('agbabi'),
         dependency('posprintf'),
@@ -234,16 +243,16 @@ else
         dependency('gba-link-connection'),
     ]
 
-    dependencies_multi = [
-        dependency('minrt-multiboot'),
-        dependency('libseven'),
-        dependency('libtonc'),
-        dependency('agbabi'),
-        dependency('posprintf'),
-        dependency('gbfs'),
-        dependency('maxmod'),
-        dependency('gba-link-connection'),
-    ]
+    #dependencies_multi = [
+    #    dependency('minrt-multiboot'),
+    #    dependency('libseven'),
+    #    dependency('libtonc'),
+    #    dependency('agbabi'),
+    #    dependency('posprintf'),
+    #    dependency('gbfs'),
+    #    dependency('maxmod'),
+    #    dependency('gba-link-connection'),
+    #]
 
     # Suppress LinkWireless header warnings
     add_project_arguments('-Wno-format', language : 'cpp')
@@ -305,49 +314,49 @@ else
     link_args = ['-specs=nosys.specs']
 
     # The base multiboot elf binary
-    multi = executable(
-        name + '-multi',
-        sources + generated_files,
-        link_args : link_args,
-        cpp_args : ['-DMULTIBOOT', '-Os'],
-        c_args : ['-Os'],
-        include_directories : includes,
-        dependencies : dependencies_multi,
-        name_suffix : 'elf')
+    #multi = executable(
+    #    name + '-multi',
+    #    sources + generated_files,
+    #    link_args : link_args,
+    #    cpp_args : ['-DMULTIBOOT', '-Os'],
+    #    c_args : ['-Os'],
+    #    include_directories : includes,
+    #    dependencies : dependencies_multi,
+    #    name_suffix : 'elf')
 
     # The base multiboot ROM with no audio, unpadded
-    multi_base = custom_target(
-        name + '-multi-base',
-        input : multi,
-        output : name + '-multi-base.gba',
-        command : [makerom, '@INPUT@', '@OUTPUT@'])
+    #multi_base = custom_target(
+    #    name + '-multi-base',
+    #    input : multi,
+    #    output : name + '-multi-base.gba',
+    #    command : [makerom, '@INPUT@', '@OUTPUT@'])
 
     # The base multiboot ROM with no audio, padded and fixed
-    multi_rom = custom_target(
-        name + '-multi',
-        input : multi_base,
-        output : name + '-multi.gba',
-        command : [multibootbuild, padbin, '0x10', '@INPUT@', '@OUTPUT@', gbafix])
+    #multi_rom = custom_target(
+    #    name + '-multi',
+    #    input : multi_base,
+    #    output : name + '-multi.gba',
+    #    command : [multibootbuild, padbin, '0x10', '@INPUT@', '@OUTPUT@', gbafix])
 
-    output_o = 'Multiboot.o'
-    output_h = 'Multiboot.h'
-    output_s = 'Multiboot.s'
+    #output_o = 'Multiboot.o'
+    #output_h = 'Multiboot.h'
+    #output_s = 'Multiboot.s'
 
-    embedded_multiboot = custom_target(
-        'bin2s_multiboot',
-        output : [output_s, output_h],
-        command : [
-            py3, call_bin2s, bin2s, multi_rom, output_h, output_s, 'gba', xxd
-        ],
-        depends : multi_rom,
-    )
+    #embedded_multiboot = custom_target(
+    #    'bin2s_multiboot',
+    #    output : [output_s, output_h],
+    #    command : [
+    #        py3, call_bin2s, bin2s, multi_rom, output_h, output_s, 'gba', xxd
+    #    ],
+    #    depends : multi_rom,
+    #)
 
-    generated_files += embedded_multiboot
+    #generated_files += embedded_multiboot
 
     # The base elf binary
     elf = executable(
         name,
-        sources + generated_files + files('source/sendMultiboot.cpp'),
+        sources + generated_files, #+ files('source/sendMultiboot.cpp'),
         link_args : link_args,
         include_directories : includes,
         dependencies : dependencies,

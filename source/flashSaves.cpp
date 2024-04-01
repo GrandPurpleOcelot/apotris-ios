@@ -18,7 +18,7 @@ void flash_write(u8 flash_type, u32 sa);
 // static u32 total_rom_size = 0;
 u32 flash_size = 0;
 u32 flash_sram_area = 0;
-u8 flash_type = 0;
+u8 bootleg_type = 0;
 bool escape = false;
 
 BYTECMP_CODE static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
@@ -38,10 +38,12 @@ FLASH_CODE u32 get_flash_type() {
 	//test if able to write to SRAM/FRAM
 	loadSavefile();
 
-	if(savefile->newGame >= 0x4b && savefile->newGame <= SAVE_TAG){
-		escape = true;
-		return 0;
-	}
+    if(savefile->newGame >= 0x4b && savefile->newGame <= SAVE_TAG){
+        if (savefile->settings.bootlegOverrideType)
+            return savefile->settings.bootlegOverrideType;
+        escape = true;
+        return 0;
+    }
 
 	u32 rom_data, data;
 	u16 ie = REG_IE;
@@ -252,12 +254,13 @@ FLASH_CODE void flash_write(u8 flash_type, u32 sa)
 	//resume_interrupts();
 }
 
-void flash_init() {
+void detect_rom_backed_flash() {
 
 	REG_DISPCNT = 0;
 
-	flash_type = get_flash_type();
-	if (flash_type > 0) {
+    bootleg_type = get_flash_type();
+    savefile->settings.bootlegOverrideType = bootleg_type;
+    if (bootleg_type > 0) {
 
 		// Determine the size of the flash chip by checking for ROM loops,
 		// then set the SRAM storage area 0x40000 bytes before the end.
@@ -299,7 +302,7 @@ void flash_init() {
 
 void save_sram_flash()
 {
-	if (flash_type == 0) return;
+	if (bootleg_type == 0) return;
 
 	aprint("Saving...",21,19);
 
@@ -322,7 +325,7 @@ void save_sram_flash()
     interrupt_disable(INTR_TIMER2);
     interrupt_disable(INTR_SERIAL);
 
-	flash_write(flash_type, flash_sram_area);
+	flash_write(bootleg_type, flash_sram_area);
 
     REG_SNDSTAT = stat_value;
     REG_SNDDSCNT = dsc_value;

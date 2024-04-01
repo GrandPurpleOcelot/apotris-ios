@@ -582,6 +582,8 @@ void MultBattleScene::init(){
     PlayOptionScene::init();
 
     #ifdef GBA
+    // Need to do this again to set timeout values
+    setUpLinkUniversal(true);
 
     key_poll();
     // Check for mGBA and gpSP (but don't check if it would crash the emu)
