@@ -83,10 +83,6 @@ if host_machine.system() == 'windows'
   add_global_arguments('-DWIN32', language : 'c')
   add_global_arguments('-mwin32', language : 'cpp')
   add_global_arguments('-mwin32', language : 'c')
-  add_global_arguments('-static-libgcc', language : 'cpp')
-  add_global_arguments('-static-libgcc', language : 'c')
-  add_global_arguments('-static-libstdc++', language : 'cpp')
-  add_global_arguments('-static-libstdc++', language : 'c')
 endif
 
 build_type = get_option('buildtype')
@@ -146,17 +142,17 @@ if host_machine.system() != 'gba'
     modplug = cmake.subproject('libmodplug', options : cmake_options)
 
     # Other required dependencies
-    tilengine = subproject('Tilengine', default_options : ['default_library=static'])
-    sdl = subproject('sdl2', default_options : ['default_library=shared'])
-    sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=shared'])
-    soloud = subproject('SoLoud', default_options : ['default_library=static'])
+    tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+    sdl2_dep = dependency('sdl2', default_options : ['default_library=shared'], fallback : ['sdl2', 'sdl2_dep'])
+    sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=shared'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+    soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
 
     dependencies = [
         modplug.dependency('modplug'),
-        tilengine.get_variable('tilengine_dep'),
-        sdl.get_variable('sdl2_dep'),
-        soloud.get_variable('soloud_dep'),
-        sdl_mixer.get_variable('sdl2_mixer_dep'),
+        sdl_mixer,
+        tilengine,
+        sdl2_dep,
+        soloud,
         # dependency('gl'),
         # dependency('glew'),
     ]
@@ -203,10 +199,14 @@ if host_machine.system() != 'gba'
 
     endforeach
 
-    link_args = [
-        '-static-libgcc',
-        '-static-libstdc++',
-    ]
+    if meson.get_compiler('c').get_id() != 'clang'
+        link_args = [
+            '-static-libgcc',
+            '-static-libstdc++',
+        ]
+    else
+        link_args = []
+    endif
 
     # The final Apotris compile target
     binary = executable(
@@ -215,7 +215,7 @@ if host_machine.system() != 'gba'
         include_directories : includes,
         dependencies : dependencies,
         link_args : link_args,
-        gui_app : true,
+        win_subsystem: 'windows',
         install_rpath: 'lib'
     )
 else
