@@ -600,7 +600,7 @@ class CPUBattleScene : public PlayOptionScene{
 
     std::list<Element*> getElementList(){
         return {
-            new TupleSelectorElement("Difficulty",{{1,"EASY"},{2,"MEDIUM"},{3,"HARD"},{4,"V.HARD"}}),
+        new TupleSelectorElement("Difficulty",{{1,"EASY"},{2,"MEDIUM"},{3,"HARD"},{4,"V.HARD"},{5,"INSANE"}}),
         };
     };
 
