@@ -424,6 +424,7 @@ void drawEnemyBoard() {
         sprite_unhide(boardFrame, ATTR0_AFF_DBL);
         sprite_enable_affine(boardFrame, 6, true);
         sprite_set_pos(boardFrame, x + offsetX - 2, y + offsetY - 2);
+        sprite_set_size(boardFrame, int2fx(1) >> zoom, 6);
 
         if(attackAnimationTimers[i])
             attackAnimationTimers[i]--;

@@ -807,10 +807,13 @@ void showShadow() {
         for (int j = 0; j < 4; j++) {
             int n = b[i * 4 + j];
             if(n > 0){
-                if(savefile->settings.shadow == 5)
+                if(savefile->settings.shadow == 5){
                     setSpriteTile(16 * 8, j, i, 4, &sprite51tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
-                else
+                }else if(savefile->settings.shadow == 6){
+                    setSpriteTile(16 * 8, j, i, 4, &sprite60tiles_bin[GameInfo::connectedConversion[(n)>>4] * 32]);
+                }else{
                     setSpriteTile(16 * 8, j, i, 4, shadowTexture);
+                }
             }
         }
     }

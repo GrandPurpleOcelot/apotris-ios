@@ -86,7 +86,7 @@ public:
 
 #define TRAINING_MESSAGE_MAX 300
 #define MAX_SKINS 15
-#define MAX_SHADOWS 6
+#define MAX_SHADOWS 7
 #define MAX_BACKGROUNDS 8
 #define MAX_COLORS 7
 #define MAX_CLEAR_EFFECTS 4

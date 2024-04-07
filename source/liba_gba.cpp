@@ -29,6 +29,7 @@ int spriteVOffset = 0;
 u8 * soundbank = nullptr;
 
 bool sortSprites = false;
+int musicVolume = 0;
 
 Songs songs;
 
@@ -543,6 +544,7 @@ void setMusicTempo(int tempo){
 }
 
 void setMusicVolume(int volume){
+    musicVolume = volume;
     mmSetModuleVolume(volume);
 }
 
@@ -553,6 +555,7 @@ void startSong(int song, bool loop){
         return;
 
     mmStart(n, (!loop)? MM_PLAY_ONCE:MM_PLAY_LOOP);
+    mmSetModuleVolume(musicVolume);
 }
 
 void stopSong(){

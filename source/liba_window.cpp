@@ -422,7 +422,9 @@ void startSong(int song,bool loop){
     if(currentSong != -1)
         musicArray[currentSong].stop();
 
-    currentSongHandle = gSoloud.play(musicArray[song]);
+    if(musicVolume > 0)
+        currentSongHandle = gSoloud.play(musicArray[song]);
+
     currentSong = song;
 
     gSoloud.setVolume(currentSongHandle,musicVolume);
@@ -442,6 +444,10 @@ void resumeSong(){
 }
 
 void setMusicVolume(int volume){
+    if(musicVolume == 0 && volume != 0){
+        currentSongHandle = gSoloud.play(musicArray[currentSong]);
+    }
+
     musicVolume = volume / (512.0 / 2);
 
     gSoloud.setVolume(currentSongHandle,musicVolume);

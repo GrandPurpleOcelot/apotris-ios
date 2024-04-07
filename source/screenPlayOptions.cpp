@@ -218,6 +218,22 @@ bool PlayOptionScene::control(){
     return false;
 }
 
+constexpr int getDelayForBotDifficulty(int diff){
+    int delay = 0;
+
+    float pps[] = {
+        0.6,
+        1.5,
+        4,
+        10,
+        100,
+    };
+
+    delay = (int)((1.0 / pps[diff-1]) * 60.0);
+
+    return delay;
+}
+
 void PlayOptionScene::start(){
     bool training = false;
     int subMode = 0;
@@ -242,8 +258,8 @@ void PlayOptionScene::start(){
             training = value;
         }else if(s == "Difficulty"){
             if(name() == "CPU Battle"){
-                botThinkingSpeed = value*3;
-                botSleepDuration = 5-value*2;
+                botThinkingSpeed = 12;
+                botSleepDuration = getDelayForBotDifficulty(value);
                 botStepMax = 10;
             }else{
                 goal = value;

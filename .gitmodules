@@ -2,9 +2,6 @@
 	path = subprojects/Tilengine
 	url = https://github.com/akouzoukos/tilengine/
 	branch = static
-[submodule "subprojects/libmodplug"]
-	path = subprojects/libmodplug
-	url = https://github.com/Konstanty/libmodplug.git
 [submodule "subprojects/general-tools"]
 	path = subprojects/general-tools
 	url = https://github.com/aronson/general-tools.git
@@ -14,3 +11,6 @@
 [submodule "subprojects/SoLoud"]
 	path = subprojects/SoLoud
 	url = https://github.com/akouzoukos/soloud
+[submodule "subprojects/libopenmpt"]
+	path = subprojects/openmpt
+	url = https://github.com/aronson/openmpt.git

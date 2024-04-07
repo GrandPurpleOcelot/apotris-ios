@@ -2,7 +2,7 @@ project('Apotris',
         'c', 'cpp',
         version : '4.0.0',
         license : 'GPL3', meson_version : '>=0.60.0',
-        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=true'])
+        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=false', 'b_pic=true'])
 
 
 # The name of your project.
@@ -83,12 +83,10 @@ if host_machine.system() == 'windows'
   add_global_arguments('-DWIN32', language : 'c')
   add_global_arguments('-mwin32', language : 'cpp')
   add_global_arguments('-mwin32', language : 'c')
-  add_global_arguments('-static-libgcc', language : 'cpp')
-  add_global_arguments('-static-libgcc', language : 'c')
-  add_global_arguments('-static-libstdc++', language : 'cpp')
-  add_global_arguments('-static-libstdc++', language : 'c')
 elif host_machine.system() == 'emscripten'
   add_global_arguments('-pthread', language : ['cpp', 'c'])
+  add_global_arguments('-fno-stack-protector', language : ['cpp', 'c'])
+  add_global_arguments('-U_FORTIFY_SOURCE', language : ['cpp', 'c'])
 endif
 
 build_type = get_option('buildtype')
@@ -144,36 +142,48 @@ if host_machine.system() != 'gba'
 
     # libmodplug must be built as a dynamic/shared library
     cmake_options = cmake.subproject_options()
-    if host_machine.system() == 'emscripten'
+    opus = dependency('opus', fallback : ['opus', 'opus_dep'])
+    ogg = dependency('ogg', fallback : ['ogg', 'libogg_dep'])
+    if host_machine.system() == 'emscripten' or host_machine.system() == 'horizon'
         cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'OFF' })
         # Other required dependencies
-        tilengine = subproject('Tilengine', default_options : ['default_library=static'])
-        sdl = subproject('sdl2', default_options : ['default_library=static', 'test=false'])
-        sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=static'])
-        soloud = subproject('SoLoud', default_options : ['default_library=static'])
+        openmpt = dependency('openmpt', default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
+        tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+        sdl2_dep = dependency('sdl2', default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
+        sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+        soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+        #vorbis = dependency('vorbis', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbis_dep'])
+        vorbisfile = dependency('vorbisfile', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbisfile_dep'])
     else
         cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'ON' })
         # Other required dependencies
-        tilengine = subproject('Tilengine', default_options : ['default_library=static'])
-        sdl = subproject('sdl2', default_options : ['default_library=shared'])
-        sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=shared'])
-        soloud = subproject('SoLoud', default_options : ['default_library=static'])
+        openmpt = dependency('openmpt', default_options : ['default_library=shared'], fallback : ['openmpt', 'openmpt_dep'])
+        tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+        sdl2_dep = dependency('sdl2', default_options : ['default_library=shared'], fallback : ['sdl2', 'sdl2_dep'])
+        sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=shared'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+        soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+        #vorbis = dependency('vorbis', default_options : ['default_library=shared'], fallback : ['vorbis', 'vorbis_dep'])
+        vorbisfile = dependency('vorbisfile', default_options : ['default_library=shared'], fallback : ['vorbis', 'vorbisfile_dep'])
     endif
-    modplug = cmake.subproject('libmodplug', options : cmake_options)
-
 
     dependencies = [
-        modplug.dependency('modplug'),
-        tilengine.get_variable('tilengine_dep'),
-        sdl.get_variable('sdl2_dep'),
-        soloud.get_variable('soloud_dep'),
-        sdl_mixer.get_variable('sdl2_mixer_dep'),
+        #vorbis,
+        ogg,
+        vorbisfile,
+        openmpt,
+        sdl_mixer,
+        opus,
+        tilengine,
+        sdl2_dep,
+        soloud,
         # dependency('gl'),
         # dependency('glew'),
     ]
 
     # Define non-GBA specific preprocessor guards
-    if host_machine.system() != 'emscripten'
+    if host_machine.system() == 'horizon'
+        add_project_arguments('-DSWITCH', language : ['cpp', 'c'])
+    elif host_machine.system() != 'emscripten'
         add_project_arguments('-DPC', language : ['cpp', 'c'])
     else
         add_project_arguments('-DWEB', language : ['cpp', 'c'])
@@ -218,37 +228,44 @@ if host_machine.system() != 'gba'
 
     endforeach
 
-    link_args = [
-        '-static-libgcc',
-        '-static-libstdc++',
-    ]
-    name_suffix = ''
+    if meson.get_compiler('c').get_id() != 'clang'
+        link_args = [
+            '-static-libgcc',
+            '-static-libstdc++',
+        ]
+    else
+        link_args = []
+    endif
 
+    name_suffix = ''
 
     if host_machine.system() == 'emscripten'
         link_args += '-sAUDIO_WORKLET=1'
         link_args += '-sWASM_WORKERS=1'
         link_args += '--emrun'
-        link_args += '-sUSE_SDL=2'
-        link_args += '-sUSE_SDL_MIXER=2'
+        #link_args += '-sUSE_SDL=2'
+        #link_args += '-sUSE_SDL_MIXER=2'
         link_args += '-sASYNCIFY'
         link_args += '-lidbfs.js'
         link_args += '-sALLOW_MEMORY_GROWTH=0'
         link_args += '--preload-file'
         link_args += 'assets'
         name_suffix = 'html'
+    elif host_machine.system() == 'horizon'
+        link_args += '-specs=/opt/devkitpro/libnx/switch.specs'
+        name_suffix = 'elf'
     endif
 
 
     # The final Apotris compile target
-    if host_machine.system() != 'emscripten'
+    if host_machine.system() != 'emscripten' and host_machine.system() != 'horizon'
         binary = executable(
             name,
             generated_files + sources,
             include_directories : includes,
             dependencies : dependencies,
             link_args : link_args,
-            gui_app : true,
+            win_subsystem : 'windows',
             install_rpath: 'lib'
         )
     else
@@ -259,7 +276,7 @@ if host_machine.system() != 'gba'
             dependencies : dependencies,
             name_suffix : name_suffix,
             link_args : link_args,
-            gui_app : true,
+            win_subsystem: 'windows',
             install_rpath: 'lib'
         )
     endif
