@@ -87,6 +87,8 @@ if host_machine.system() == 'windows'
   add_global_arguments('-static-libgcc', language : 'c')
   add_global_arguments('-static-libstdc++', language : 'cpp')
   add_global_arguments('-static-libstdc++', language : 'c')
+elif host_machine.system() == 'emscripten'
+  add_global_arguments('-pthread', language : ['cpp', 'c'])
 endif
 
 build_type = get_option('buildtype')
@@ -142,14 +144,23 @@ if host_machine.system() != 'gba'
 
     # libmodplug must be built as a dynamic/shared library
     cmake_options = cmake.subproject_options()
-    cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'ON' })
+    if host_machine.system() == 'emscripten'
+        cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'OFF' })
+        # Other required dependencies
+        tilengine = subproject('Tilengine', default_options : ['default_library=static'])
+        sdl = subproject('sdl2', default_options : ['default_library=static', 'test=false'])
+        sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=static'])
+        soloud = subproject('SoLoud', default_options : ['default_library=static'])
+    else
+        cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'ON' })
+        # Other required dependencies
+        tilengine = subproject('Tilengine', default_options : ['default_library=static'])
+        sdl = subproject('sdl2', default_options : ['default_library=shared'])
+        sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=shared'])
+        soloud = subproject('SoLoud', default_options : ['default_library=static'])
+    endif
     modplug = cmake.subproject('libmodplug', options : cmake_options)
 
-    # Other required dependencies
-    tilengine = subproject('Tilengine', default_options : ['default_library=static'])
-    sdl = subproject('sdl2', default_options : ['default_library=shared'])
-    sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=shared'])
-    soloud = subproject('SoLoud', default_options : ['default_library=static'])
 
     dependencies = [
         modplug.dependency('modplug'),
@@ -162,8 +173,12 @@ if host_machine.system() != 'gba'
     ]
 
     # Define non-GBA specific preprocessor guards
-    add_project_arguments('-DPC', language : 'cpp')
-    add_project_arguments('-DPC', language : 'c')
+    if host_machine.system() != 'emscripten'
+        add_project_arguments('-DPC', language : ['cpp', 'c'])
+    else
+        add_project_arguments('-DWEB', language : ['cpp', 'c'])
+    endif
+
     add_project_arguments('-DTE', language : 'cpp')
     add_project_arguments('-DTE', language : 'c')
     # add_project_arguments('-DGL', language : 'cpp')
@@ -207,17 +222,47 @@ if host_machine.system() != 'gba'
         '-static-libgcc',
         '-static-libstdc++',
     ]
+    name_suffix = ''
+
+
+    if host_machine.system() == 'emscripten'
+        link_args += '-sAUDIO_WORKLET=1'
+        link_args += '-sWASM_WORKERS=1'
+        link_args += '--emrun'
+        link_args += '-sUSE_SDL=2'
+        link_args += '-sUSE_SDL_MIXER=2'
+        link_args += '-sASYNCIFY'
+        link_args += '-lidbfs.js'
+        link_args += '-sALLOW_MEMORY_GROWTH=0'
+        link_args += '--preload-file'
+        link_args += 'assets'
+        name_suffix = 'html'
+    endif
+
 
     # The final Apotris compile target
-    binary = executable(
-        name,
-        generated_files + sources,
-        include_directories : includes,
-        dependencies : dependencies,
-        link_args : link_args,
-        gui_app : true,
-        install_rpath: 'lib'
-    )
+    if host_machine.system() != 'emscripten'
+        binary = executable(
+            name,
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            link_args : link_args,
+            gui_app : true,
+            install_rpath: 'lib'
+        )
+    else
+        binary = executable(
+            name,
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            name_suffix : name_suffix,
+            link_args : link_args,
+            gui_app : true,
+            install_rpath: 'lib'
+        )
+    endif
 else
     ##########################################
     # GameBoy-Advance-specific configuration #

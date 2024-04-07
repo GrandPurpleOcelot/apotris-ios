@@ -334,7 +334,8 @@ bool closed(){
 
 void sfx(int n){
     soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
-    int s = gSoloud.play(soundEffects[n]);
+    unsigned int s = gSoloud.play(soundEffects[n]);
+    s + 1;
 }
 
 void startSong(int,bool){
