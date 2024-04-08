@@ -103,7 +103,6 @@ endif
 
 # Various helper libraries, subprojects, and scripts common to all builds
 fs = import('fs')
-cmake = import('cmake')
 tools = subproject('general-tools')
 padbin = tools.get_variable('padbin_executable')
 bin2s = files('tools/bin2s.py')
@@ -141,11 +140,9 @@ if host_machine.system() != 'gba'
     subdir('assets')
 
     # libmodplug must be built as a dynamic/shared library
-    cmake_options = cmake.subproject_options()
     opus = dependency('opus', fallback : ['opus', 'opus_dep'])
     ogg = dependency('ogg', fallback : ['ogg', 'libogg_dep'])
     if host_machine.system() == 'emscripten' or host_machine.system() == 'horizon'
-        cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'OFF' })
         # Other required dependencies
         openmpt = dependency('openmpt', default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
         tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
@@ -155,7 +152,6 @@ if host_machine.system() != 'gba'
         #vorbis = dependency('vorbis', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbis_dep'])
         vorbisfile = dependency('vorbisfile', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbisfile_dep'])
     else
-        cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'ON' })
         # Other required dependencies
         openmpt = dependency('openmpt', default_options : ['default_library=shared'], fallback : ['openmpt', 'openmpt_dep'])
         tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
