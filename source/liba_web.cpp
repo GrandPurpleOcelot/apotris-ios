@@ -512,6 +512,7 @@ void quit() {
     SDL_Quit();
 
     gSoloud.deinit();
+    emscripten_cancel_main_loop();
 }
 
 void resizeWindow(int width, int height){
