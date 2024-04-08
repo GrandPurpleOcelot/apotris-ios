@@ -16,9 +16,6 @@
 #include "flashSaves.h"
 
 #include <posprintf.h>
-#ifdef WEB
-#include <emscripten/emscripten.h>
-#endif
 #include "rumble.h"
 
 #include "classic1tiles_bin.h"
@@ -170,18 +167,6 @@ void initialize(){
     checkSongs();
 }
 
-static void mainLoop(void) {
-#ifdef WEB
-    if (!closed()) {
-        emscripten_cancel_main_loop();
-        deinitialize();
-        exit(0);
-    }
-#endif
-    vsync();
-    scene->update();
-}
-
 int main(void) {
     platformInit();
 
@@ -191,18 +176,14 @@ int main(void) {
 
     changeScene(new TitleScene());
 
-#ifdef WEB
-    emscripten_set_main_loop(mainLoop, 0, 1);
-#else
     //start screen animation
     while(closed()){
-        mainLoop();
+        vsync();
+        scene->update();
     }
-#endif
 
     deinitialize();
 }
-
 
 #ifdef PC
 int WinMain(void){
