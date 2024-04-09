@@ -107,6 +107,11 @@ tools = subproject('general-tools')
 padbin = tools.get_variable('padbin_executable')
 bin2s = files('tools/bin2s.py')
 call_bin2s = files('tools/callBin2S.py')
+if host_machine.system() == 'horizon'
+    build_romfs = find_program('build_romfs')
+    elf2nro = find_program('elf2nro')
+    call_build_rom = files('tools/switchMakeNRO.py')
+endif
 
 # Required to invoke python scripts in a Windows-native build environment
 pymod = import('python')
@@ -255,17 +260,7 @@ if host_machine.system() != 'gba'
 
 
     # The final Apotris compile target
-    if host_machine.system() != 'emscripten' and host_machine.system() != 'horizon'
-        binary = executable(
-            name,
-            generated_files + sources,
-            include_directories : includes,
-            dependencies : dependencies,
-            link_args : link_args,
-            win_subsystem : 'windows',
-            install_rpath: 'lib'
-        )
-    else
+    if host_machine.system() == 'emscripten'
         binary = executable(
             name,
             generated_files + sources,
@@ -274,6 +269,34 @@ if host_machine.system() != 'gba'
             name_suffix : name_suffix,
             link_args : link_args,
             win_subsystem: 'windows',
+            install_rpath: 'lib'
+        )
+    elif host_machine.system() == 'horizon'
+        binary = executable(
+            name,
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            link_args : link_args,
+            install_rpath: 'lib'
+        )
+        nro = custom_target(
+            'Build romfs and final NRO for Apotris on Nintendo Switch',
+            output : 'Apotris.nro',
+            command : [
+                py3, call_build_rom, build_romfs, meson.current_build_dir() / 'assets', elf2nro, binary
+            ],
+            depends : binary,
+            build_by_default : true,
+        )
+    else
+        binary = executable(
+            name,
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            link_args : link_args,
+            win_subsystem : 'windows',
             install_rpath: 'lib'
         )
     endif
