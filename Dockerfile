@@ -3,7 +3,7 @@ FROM ubuntu:23.10
 # Install apt-available deps
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
-  && apt-get install -y python3 ash zsh vim build-essential git make curl meson zstd\
+  && apt-get install -y python3 ash zsh vim build-essential git make curl meson zstd wget sudo\
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
@@ -39,3 +39,10 @@ RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/ems
 
 # Return to root home folder
 WORKDIR /root
+
+# Install DevKitPro
+ADD tools/install_devkit_pro_pacman.bash .
+RUN chmod +x ./install_devkit_pro_pacman.bash && ./install_devkit_pro_pacman.bash
+RUN dkp-pacman -Syu --noconfirm switch-dev switch-portlibs
+RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
+RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile && echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
