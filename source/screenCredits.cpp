@@ -39,6 +39,21 @@ std::list<std::string> creditsText = {
     "",
     "  - schizofrenium_long",
     "        by panther, karl",
+    "",
+    "",
+    "Add. Code Contributors:",
+    " - Toolchain",
+    " - Wireless multiplayer",
+    "  by Isaac Aronson",
+    "     (@luigi___)",
+    "",
+    " - BARS",
+    "  by CreeperCraftT99",
+    "",
+    " - Wireless library",
+    " - Wireless bugfixes",
+    "  by Rodrigo Alfonso",
+    "     (@afska)",
 };
 
 void CreditsScene::init(){
@@ -154,7 +169,7 @@ void CreditsScene::update(){
         }
     }
 
-    if(listStart > 35){
+    if(listStart > 42){
         changeScene(previousScene(),Transitions::FADE);
         return;
     }
