@@ -46,3 +46,9 @@ RUN chmod +x ./install_devkit_pro_pacman.bash && ./install_devkit_pro_pacman.bas
 RUN dkp-pacman -Syu --noconfirm switch-dev switch-portlibs
 RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
 RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile && echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
+RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bash_profile
+RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bash_profile
+RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bash_profile
+RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bashrc
+RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bashrc
+RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bashrc
