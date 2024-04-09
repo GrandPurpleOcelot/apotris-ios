@@ -26,3 +26,16 @@ RUN ln -sf /usr/share/arm-gnu-toolchain-*/bin/* /usr/bin/
 
 # Get missing windows deps and hack them in
 RUN curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-dlfcn-1.4.1-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/
+
+# Install latest meson 1.4.0
+ADD https://github.com/mesonbuild/meson/releases/download/1.4.0/meson-1.4.0.tar.gz .
+RUN tar xf meson-1.4.0.tar.gz && cd meson-1.4.0 && python3 setup.py install
+
+# Install latest emscripten compiler
+WORKDIR /root
+RUN git clone https://github.com/emscripten-core/emsdk.git
+WORKDIR emsdk
+RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bash_profile && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bashrc
+
+# Return to root home folder
+WORKDIR /root
