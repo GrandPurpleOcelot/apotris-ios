@@ -151,8 +151,8 @@ if host_machine.system() != 'gba'
         # Other required dependencies
         openmpt = dependency('openmpt', default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
         tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
-        sdl2_dep = dependency('sdl2', default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
-        sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+        sdl2_dep = dependency('SDL2', default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
+        sdl_mixer = dependency('SDL2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
         #vorbis = dependency('vorbis', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbis_dep'])
         vorbisfile = dependency('vorbisfile', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbisfile_dep'])
@@ -160,8 +160,8 @@ if host_machine.system() != 'gba'
         # Other required dependencies
         openmpt = dependency('openmpt', default_options : ['default_library=shared'], fallback : ['openmpt', 'openmpt_dep'])
         tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
-        sdl2_dep = dependency('sdl2', default_options : ['default_library=shared'], fallback : ['sdl2', 'sdl2_dep'])
-        sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=shared'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+        sdl2_dep = dependency('SDL2', default_options : ['default_library=shared'], fallback : ['sdl2', 'sdl2_dep'])
+        sdl_mixer = dependency('SDL2_mixer', default_options : ['default_library=shared'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
         #vorbis = dependency('vorbis', default_options : ['default_library=shared'], fallback : ['vorbis', 'vorbis_dep'])
         vorbisfile = dependency('vorbisfile', default_options : ['default_library=shared'], fallback : ['vorbis', 'vorbisfile_dep'])
