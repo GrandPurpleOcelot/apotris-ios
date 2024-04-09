@@ -3,7 +3,7 @@ FROM ubuntu:23.10
 # Install apt-available deps
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
-  && apt-get install -y python3 ash zsh vim build-essential git make curl meson zstd\
+  && apt-get install -y python3 ash zsh vim build-essential git make curl meson zstd wget sudo\
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
@@ -26,3 +26,29 @@ RUN ln -sf /usr/share/arm-gnu-toolchain-*/bin/* /usr/bin/
 
 # Get missing windows deps and hack them in
 RUN curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-dlfcn-1.4.1-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/
+
+# Install latest meson 1.4.0
+ADD https://github.com/mesonbuild/meson/releases/download/1.4.0/meson-1.4.0.tar.gz .
+RUN tar xf meson-1.4.0.tar.gz && cd meson-1.4.0 && python3 setup.py install
+
+# Install latest emscripten compiler
+WORKDIR /root
+RUN git clone https://github.com/emscripten-core/emsdk.git
+WORKDIR emsdk
+RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bash_profile && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bashrc
+
+# Return to root home folder
+WORKDIR /root
+
+# Install DevKitPro
+ADD tools/install_devkit_pro_pacman.bash .
+RUN chmod +x ./install_devkit_pro_pacman.bash && ./install_devkit_pro_pacman.bash
+RUN dkp-pacman -Syu --noconfirm switch-dev switch-portlibs
+RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
+RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile && echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
+RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bash_profile
+RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bash_profile
+RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bash_profile
+RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bashrc
+RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bashrc
+RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bashrc

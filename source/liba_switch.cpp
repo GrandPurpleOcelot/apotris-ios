@@ -3,11 +3,13 @@
 #include "liba_switch.h"
 #include <list>
 #include <fstream>
+#include <sys/dirent.h>
 
 #include "def.h"
 #include "switch.h"
 #include "soloud.h"
 #include "soloud_wav.h"
+#include "soloud_openmpt.h"
 
 void loadAudio();
 void freeAudio();
@@ -44,6 +46,16 @@ SoLoud::Soloud gSoloud;
 
 SoLoud::Wav soundEffects[SFX_COUNT];
 
+SoLoud::Openmpt *musicArray;
+
+SoLoud::handle currentSongHandle;
+
+std::vector<std::string> songList;
+
+int currentSong = -1;
+int sfxVolume = 1024;
+float musicVolume = 1;
+
 void windowInit(){
     // Initialize SDL
     romfsInit();
@@ -68,11 +80,55 @@ void windowInit(){
     loadAudio();
 }
 
+bool hasSuffix(const std::string& s, const std::string& suffix){
+    return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
+}
+
 void loadAudio(){
     for(int i = 0; i < SFX_COUNT; i++){
         std::string str = "romfs:/" + (std::string) SoundEffectPaths[i];
 
         soundEffects[i].load(str.c_str());
+    }
+    int counter = 0;
+
+    std::string path = "romfs:/assets";
+
+    DIR *dir = opendir(path.c_str());
+    if(!dir){
+        log("couldn't open dir");
+        return;
+    }
+
+    dirent *entry;
+    std::vector<std::string> songPaths;
+    while((entry = readdir(dir)) != nullptr){
+        if(hasSuffix(entry->d_name, ".it") || hasSuffix(entry->d_name, ".mod") || hasSuffix(entry->d_name, ".xm")){
+            songPaths.push_back(entry->d_name);
+        }
+    }
+
+    closedir(dir);
+
+    sort(songPaths.begin(),songPaths.end());
+
+    for(auto str : songPaths){
+        if (str.find("MENU_") != std::string::npos) {
+            songList.push_back(path + "/" + str);
+            songs.menu.push_back(counter++);
+        } else {
+            songList.push_back(path + "/" + str);
+            songs.game.push_back(counter++);
+        }
+    }
+
+    musicArray = new SoLoud::Openmpt[counter];
+
+    for(int i = 0; i < counter; i++){
+        SoLoud::result loaded = musicArray[i].load(songList.at(i).c_str());
+        if(loaded != SoLoud::SO_NO_ERROR){
+            log("couldn't load: " + songList.at(i) + " " + std::to_string(loaded));
+        }
     }
 }
 
@@ -274,8 +330,25 @@ void sfx(int n){
     gSoloud.play(soundEffects[n]);
 }
 
-void startSong(int,bool){
+void startSong(int song, bool loop){
+    log(song);
+    // if(song == currentSong && !musicArray[currentSong].hasEnded())
+    if(song == currentSong && !gSoloud.getPause(currentSongHandle))
+        return;
 
+    if(currentSong != -1)
+        musicArray[currentSong].stop();
+
+    if(musicVolume > 0)
+        currentSongHandle = gSoloud.play(musicArray[song]);
+
+    currentSong = song;
+
+    gSoloud.setVolume(currentSongHandle,musicVolume);
+
+    float speed = gSoloud.getRelativePlaySpeed(currentSongHandle);
+
+    gSoloud.setRelativePlaySpeed(currentSongHandle, speed * 0.5f);
 }
 
 void stopSong(){};

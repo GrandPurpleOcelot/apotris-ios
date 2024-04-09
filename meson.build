@@ -2,7 +2,7 @@ project('Apotris',
         'c', 'cpp',
         version : '4.0.0',
         license : 'GPL3', meson_version : '>=0.60.0',
-        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=true'])
+        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=false'])
 
 
 # The name of your project.
@@ -83,10 +83,10 @@ if host_machine.system() == 'windows'
   add_global_arguments('-DWIN32', language : 'c')
   add_global_arguments('-mwin32', language : 'cpp')
   add_global_arguments('-mwin32', language : 'c')
-  add_global_arguments('-static-libgcc', language : 'cpp')
-  add_global_arguments('-static-libgcc', language : 'c')
-  add_global_arguments('-static-libstdc++', language : 'cpp')
-  add_global_arguments('-static-libstdc++', language : 'c')
+elif host_machine.system() == 'emscripten'
+  add_global_arguments('-pthread', language : ['cpp', 'c'])
+  add_global_arguments('-fno-stack-protector', language : ['cpp', 'c'])
+  add_global_arguments('-U_FORTIFY_SOURCE', language : ['cpp', 'c'])
 endif
 
 build_type = get_option('buildtype')
@@ -103,11 +103,15 @@ endif
 
 # Various helper libraries, subprojects, and scripts common to all builds
 fs = import('fs')
-cmake = import('cmake')
 tools = subproject('general-tools')
 padbin = tools.get_variable('padbin_executable')
 bin2s = files('tools/bin2s.py')
 call_bin2s = files('tools/callBin2S.py')
+if host_machine.system() == 'horizon'
+    build_romfs = find_program('build_romfs')
+    elf2nro = find_program('elf2nro')
+    call_build_rom = files('tools/switchMakeNRO.py')
+endif
 
 # Required to invoke python scripts in a Windows-native build environment
 pymod = import('python')
@@ -141,29 +145,51 @@ if host_machine.system() != 'gba'
     subdir('assets')
 
     # libmodplug must be built as a dynamic/shared library
-    cmake_options = cmake.subproject_options()
-    cmake_options.add_cmake_defines({ 'BUILD_SHARED_LIBS' : 'ON' })
-    modplug = cmake.subproject('libmodplug', options : cmake_options)
-
-    # Other required dependencies
-    tilengine = subproject('Tilengine', default_options : ['default_library=static'])
-    sdl = subproject('sdl2', default_options : ['default_library=shared'])
-    sdl_mixer = subproject('sdl2_mixer', default_options : ['default_library=shared'])
-    soloud = subproject('SoLoud', default_options : ['default_library=static'])
+    opus = dependency('opus', fallback : ['opus', 'opus_dep'])
+    ogg = dependency('ogg', fallback : ['ogg', 'libogg_dep'])
+    if host_machine.system() == 'emscripten' or host_machine.system() == 'horizon'
+        # Other required dependencies
+        openmpt = dependency('openmpt', default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
+        tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+        sdl2_dep = dependency('SDL2', default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
+        sdl_mixer = dependency('SDL2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+        soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+        #vorbis = dependency('vorbis', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbis_dep'])
+        vorbisfile = dependency('vorbisfile', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbisfile_dep'])
+    else
+        # Other required dependencies
+        openmpt = dependency('openmpt', default_options : ['default_library=shared'], fallback : ['openmpt', 'openmpt_dep'])
+        tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+        sdl2_dep = dependency('SDL2', default_options : ['default_library=shared'], fallback : ['sdl2', 'sdl2_dep'])
+        sdl_mixer = dependency('SDL2_mixer', default_options : ['default_library=shared'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+        soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+        #vorbis = dependency('vorbis', default_options : ['default_library=shared'], fallback : ['vorbis', 'vorbis_dep'])
+        vorbisfile = dependency('vorbisfile', default_options : ['default_library=shared'], fallback : ['vorbis', 'vorbisfile_dep'])
+    endif
 
     dependencies = [
-        modplug.dependency('modplug'),
-        tilengine.get_variable('tilengine_dep'),
-        sdl.get_variable('sdl2_dep'),
-        soloud.get_variable('soloud_dep'),
-        sdl_mixer.get_variable('sdl2_mixer_dep'),
+        #vorbis,
+        ogg,
+        vorbisfile,
+        openmpt,
+        sdl_mixer,
+        opus,
+        tilengine,
+        sdl2_dep,
+        soloud,
         # dependency('gl'),
         # dependency('glew'),
     ]
 
     # Define non-GBA specific preprocessor guards
-    add_project_arguments('-DPC', language : 'cpp')
-    add_project_arguments('-DPC', language : 'c')
+    if host_machine.system() == 'horizon'
+        add_project_arguments('-DSWITCH', language : ['cpp', 'c'])
+    elif host_machine.system() != 'emscripten'
+        add_project_arguments('-DPC', language : ['cpp', 'c'])
+    else
+        add_project_arguments('-DWEB', language : ['cpp', 'c'])
+    endif
+
     add_project_arguments('-DTE', language : 'cpp')
     add_project_arguments('-DTE', language : 'c')
     # add_project_arguments('-DGL', language : 'cpp')
@@ -203,21 +229,77 @@ if host_machine.system() != 'gba'
 
     endforeach
 
-    link_args = [
-        '-static-libgcc',
-        '-static-libstdc++',
-    ]
+    if meson.get_compiler('c').get_id() != 'clang'
+        link_args = [
+            '-static-libgcc',
+            '-static-libstdc++',
+        ]
+    else
+        link_args = []
+    endif
+
+    name_suffix = ''
+
+    if host_machine.system() == 'emscripten'
+        link_args += '-sAUDIO_WORKLET=1'
+        link_args += '-sWASM_WORKERS=1'
+        link_args += '-sSTACK_SIZE=131072'
+        link_args += '--emrun'
+        link_args += '-sUSE_SDL=2'
+        link_args += '-sUSE_SDL_MIXER=2'
+        link_args += '-sASYNCIFY'
+        link_args += '-lidbfs.js'
+        link_args += '-sALLOW_MEMORY_GROWTH=0'
+        link_args += '--preload-file'
+        link_args += 'assets@/assets'
+        name_suffix = 'html'
+    elif host_machine.system() == 'horizon'
+        link_args += '-specs=/opt/devkitpro/libnx/switch.specs'
+        name_suffix = 'elf'
+    endif
+
 
     # The final Apotris compile target
-    binary = executable(
-        name,
-        generated_files + sources,
-        include_directories : includes,
-        dependencies : dependencies,
-        link_args : link_args,
-        gui_app : true,
-        install_rpath: 'lib'
-    )
+    if host_machine.system() == 'emscripten'
+        binary = executable(
+            name,
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            name_suffix : name_suffix,
+            link_args : link_args,
+            win_subsystem: 'windows',
+            install_rpath: 'lib'
+        )
+    elif host_machine.system() == 'horizon'
+        binary = executable(
+            name,
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            link_args : link_args,
+            install_rpath: 'lib'
+        )
+        nro = custom_target(
+            'Build romfs and final NRO for Apotris on Nintendo Switch',
+            output : 'Apotris.nro',
+            command : [
+                py3, call_build_rom, build_romfs, meson.current_build_dir() / 'assets', elf2nro, binary
+            ],
+            depends : binary,
+            build_by_default : true,
+        )
+    else
+        binary = executable(
+            name,
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            link_args : link_args,
+            win_subsystem : 'windows',
+            install_rpath: 'lib'
+        )
+    endif
 else
     ##########################################
     # GameBoy-Advance-specific configuration #

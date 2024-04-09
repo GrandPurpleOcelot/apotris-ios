@@ -5,8 +5,8 @@
 #include "liba_pc.h"
 #include "audio_files.h"
 
-#include "SDL2/SDL.h"
-#include <SDL2/SDL_mixer.h>
+#include "SDL.h"
+#include <SDL_mixer.h>
 #include <string>
 
 #define KEY_A SDLK_RETURN
