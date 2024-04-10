@@ -4,6 +4,7 @@ FROM ubuntu:23.10
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
   && apt-get install -y python3 ash zsh vim build-essential git make curl meson zstd wget sudo\
+    libsdl2-dev libsdl2-mixer-dev libopus-dev libvorbis-dev\
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
@@ -44,7 +45,7 @@ WORKDIR /root
 ADD tools/install_devkit_pro_pacman.bash .
 RUN chmod +x ./install_devkit_pro_pacman.bash && ./install_devkit_pro_pacman.bash
 RUN dkp-pacman -Syu --noconfirm switch-dev switch-portlibs
-RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
+#RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
 RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile && echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
 RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bash_profile
 RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bash_profile
