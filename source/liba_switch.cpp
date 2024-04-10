@@ -11,6 +11,8 @@
 #include "soloud_wav.h"
 #include "soloud_openmpt.h"
 
+#include "nanotime.h"
+
 void loadAudio();
 void freeAudio();
 
@@ -28,7 +30,7 @@ int rowEnd = 320;
 
 double clock_timer = 0;
 
-static uint64_t frame_start = SDL_GetPerformanceCounter();
+static uint64_t frame_start = nanotime_now();
 
 uint32_t start_time = 0;
 uint32_t frame_time = 0;
@@ -60,6 +62,8 @@ int currentSong = -1;
 int sfxVolume = 1024;
 float musicVolume = 1;
 
+nanotime_step_data stepper;
+
 void windowInit(){
     // Initialize SDL
     romfsInit();
@@ -82,6 +86,8 @@ void windowInit(){
     gSoloud.init();
 
     loadAudio();
+
+    nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 }
 
 bool hasSuffix(const std::string& s, const std::string& suffix){
@@ -285,13 +291,15 @@ void updateWindow(uint8_t* framebuffer){
     SDL_DestroyTexture(texture);
 
     // Cap to 60 FPS
+    nanotime_step(&stepper);
+
     Uint64 end = SDL_GetPerformanceCounter();
 
     float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
 
-    SDL_Delay(floor(16.666f - elapsedMS));
-    frame_start = SDL_GetPerformanceCounter();
+    fps = 1000.0f / elapsedMS;
 
+    frame_start = SDL_GetPerformanceCounter();
 }
 
 void refreshWindowSize(){

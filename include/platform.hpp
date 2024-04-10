@@ -164,3 +164,5 @@ extern void quit();
 
 extern void deinitialize();
 extern void refreshWindowSize();
+
+extern float fps;

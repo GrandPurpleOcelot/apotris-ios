@@ -204,6 +204,8 @@ void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
 void vsync(){
     onVBlank();
 
+    // aprint(std::to_string(fps), 0, 0);
+
     TLN_UpdateFrame(0);
 
     updateWindow(framebuffer);
