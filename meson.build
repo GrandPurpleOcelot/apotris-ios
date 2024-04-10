@@ -82,6 +82,7 @@ if host_machine.system() == 'windows'
   add_global_arguments('-DWIN32', language : ['c', 'cpp'])
   add_global_arguments('-mwin32', language : ['c', 'cpp'])
 elif host_machine.system() == 'emscripten'
+  add_global_arguments('-pthread', language : ['cpp', 'c'])
   add_global_arguments('-fno-stack-protector', language : ['cpp', 'c'])
   add_global_arguments('-U_FORTIFY_SOURCE', language : ['cpp', 'c'])
 endif
