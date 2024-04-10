@@ -17,9 +17,8 @@
 
 #elif defined(SWITCH)
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 180
-
+#define SCREEN_WIDTH 512
+#define SCREEN_HEIGHT 512
 
 #elif defined(MM)
 

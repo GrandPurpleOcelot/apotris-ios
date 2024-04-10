@@ -22,7 +22,7 @@ std::list<uint32_t> previousKeys;
 // int rowStart = (288 - 288) / 2;
 // int rowEnd = rowStart + 288;
 int rowStart = 0;
-int rowEnd = 180;
+int rowEnd = 320;
 
 #define FPS_TARGET 60
 
@@ -52,6 +52,10 @@ SoLoud::handle currentSongHandle;
 
 std::vector<std::string> songList;
 
+int screenWidth = 1280;
+int screenHeight = 720;
+
+float windowScale = 4;
 int currentSong = -1;
 int sfxVolume = 1024;
 float musicVolume = 1;
@@ -133,6 +137,7 @@ void loadAudio(){
 }
 
 void freeAudio(){
+    delete [] musicArray;
 }
 
 void key_poll(){
@@ -231,51 +236,15 @@ uint32_t key_first(){
 }
 
 void updateWindow(uint8_t* framebuffer){
-    // // // Update the screen
-    // // SDL_UpdateRect(screen, 0, 0, 0, 0);
-
-    // uint8_t * newBuffer = new uint8_t[640 * 480 * 4];
-
-    // const int in_width = 320;
-    // const int in_height = 240;
-
-    // uint32_t* out_ptr = (uint32_t *) newBuffer;
-    // uint32_t* in_ptr = (uint32_t *) framebuffer;
-    // int in_pitch = in_width;
-    // int out_pitch = 640;
-
-    // in_ptr += (((in_height - 240) / 2)) * in_pitch;
-    // in_ptr += (in_width - 320) / 2;
-
-    // for(int y = 0; y < 240; y++){
-    //     uint32_t * line_ptr = in_ptr;
-
-    //     for(int x = 0; x < 320; x++){
-    //         uint32_t * out_line_ptr = out_ptr;
-    //         uint32_t color = *line_ptr;
-
-    //         *out_line_ptr = color;
-    //         *(out_line_ptr + 1) = color;
-
-    //         out_line_ptr += out_pitch;
-    //         *out_line_ptr = color;
-    //         *(out_line_ptr + 1) = color;
-
-    //         out_ptr += 2;
-
-    //         line_ptr++;
-    //     }
-
-    //     in_ptr += in_pitch;
-    //     out_ptr += out_pitch;
-    // }
+    const int in_width = 512;
+    const int in_height = 512;
 
     SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
         framebuffer,
-        320,
-        180,
+        in_width,
+        in_height,
         32,
-        320 * 4,
+        in_width * 4,
         0x0000ff,
         0x00ff00,
         0xff0000,
@@ -288,12 +257,28 @@ void updateWindow(uint8_t* framebuffer){
 
     SDL_FreeSurface(img);
 
-    SDL_Rect rect = {(320 - 320) / 2, (180 - 180) / 2, 320, 180};
-
     SDL_RenderClear(renderer);
 
-    if(render)
-        SDL_RenderCopy(renderer,texture,&rect,NULL);
+    SDL_Rect rect = {
+        0,
+        0,
+        in_width,
+        in_height,
+    };
+
+    const int w = in_width * windowScale;
+    const int h = in_height * windowScale;
+
+    SDL_Rect dest_rect = {
+        -(w - screenWidth)/2,
+        -(h - screenHeight)/2,
+        w,
+        h,
+    };
+
+    if(render){
+        SDL_RenderCopy(renderer,texture,&rect,&dest_rect);
+    }
 
     SDL_RenderPresent(renderer);
 
@@ -310,7 +295,39 @@ void updateWindow(uint8_t* framebuffer){
 }
 
 void refreshWindowSize(){
+    if(savefile != nullptr){
+        if(savefile->settings.zoom > -1){
+            windowScale = 1 + (float) savefile->settings.zoom / 10;
+        }else{
+            if(savefile->settings.integerScale){
+                windowScale = (int)windowScale;
 
+                while (windowScale > 0 && screenHeight / windowScale > 160 * 2) {
+                    windowScale++;
+                }
+                while (windowScale > 1 && screenHeight / windowScale < 160) {
+                    windowScale--;
+                }
+            }else{
+                windowScale = screenHeight / 200.0;
+            }
+        }
+    }
+
+    if(windowScale <= 0)
+        return;
+
+    rowStart = (SCREEN_HEIGHT - (screenHeight/windowScale))/2;
+    rowEnd = (SCREEN_HEIGHT + (screenHeight/windowScale))/2;
+
+    if(rowStart < 0)
+        rowStart = 0;
+
+    if(rowEnd > SCREEN_HEIGHT)
+        rowEnd = SCREEN_HEIGHT;
+
+    if(savefile != nullptr)
+        setGradient(savefile->settings.backgroundGradient);
 }
 
 bool closed(){
