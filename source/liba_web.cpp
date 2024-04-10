@@ -117,7 +117,6 @@ void windowInit(){
 
     loadAudio();
 
-    nanotime_step(&stepper);
     nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,nullptr,false,resizeCallback);
