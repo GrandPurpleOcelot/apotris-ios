@@ -474,6 +474,7 @@ void sfxRate(int n, float rate){
 void pauseSong(){
     gSoloud.setPause(currentSongHandle,1);
 }
+
 void initRumble(){};
 
 void loadSavefile(){

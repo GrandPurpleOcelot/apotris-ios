@@ -24,7 +24,7 @@ class IntegerScaleElement : public Element{
                 savefile->settings.zoom = (savefile->settings.zoom / 10) * 10; //round to 10s
             }
 
-            #if defined(PC) || defined(WEB) || defined(PORTMASTER)
+            #if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH)
             refreshWindowSize();
             #endif
         }
@@ -84,7 +84,7 @@ class ScaleElement : public Element{
                 }
             }
 
-            #if defined(PC) || defined(WEB) || defined(PORTMASTER)
+            #if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH)
             refreshWindowSize();
             #endif
         }

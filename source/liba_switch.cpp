@@ -351,13 +351,32 @@ void startSong(int song, bool loop){
     gSoloud.setRelativePlaySpeed(currentSongHandle, speed * 0.5f);
 }
 
-void stopSong(){};
+void stopSong(){
+    musicArray[currentSong].stop();
+    currentSong = -1;
+}
 
-void resumeSong(){};
+void resumeSong(){
+    gSoloud.setPause(currentSongHandle,0);
+}
 
-void setMusicVolume(int){};
+void setMusicVolume(int volume){
+    if(musicVolume == 0 && volume != 0){
+        currentSongHandle = gSoloud.play(musicArray[currentSong]);
+    }
 
-void setMusicTempo(int){};
+    musicVolume = volume / (512.0 / 2);
+
+    gSoloud.setVolume(currentSongHandle,musicVolume);
+}
+
+void setMusicTempo(int tempo){
+    float nt = tempo / 1024.0;
+
+    log(std::to_string(nt));
+
+    gSoloud.setRelativePlaySpeed(currentSongHandle, tempo / 1024.0);
+}
 
 void toggleRendering(bool r){
     render = r;
@@ -369,8 +388,11 @@ void sfxRate(int n, float rate){
     gSoloud.setRelativePlaySpeed(s,rate);
 }
 
-void pauseSong(){};
-void initRumble(){};
+void pauseSong(){
+    gSoloud.setPause(currentSongHandle,1);
+}
+
+void initRumble(){}
 
 void loadSavefile(){
     std::ifstream input("Apotris.sav",std::ios::binary | std::ios::in);
