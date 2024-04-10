@@ -11,6 +11,7 @@
 #include "soloud_wav.h"
 #include "def.h"
 #include "soloud_openmpt.h"
+#include "nanotime.h"
 
 void loadAudio();
 void freeAudio();
@@ -32,12 +33,13 @@ int rowEnd = rowStart + 240;
 
 double clock_timer = 0;
 
+static uint64_t frame_start = nanotime_now();
+nanotime_step_data stepper;
+
 SDL_Window* window;
 SDL_Renderer * renderer;
 
 bool render = true;
-
-static uint64_t frame_start = SDL_GetPerformanceCounter();
 
 uint32_t start_time = 0;
 uint32_t frame_time = 0;
@@ -114,6 +116,9 @@ void windowInit(){
     gSoloud.init();
 
     loadAudio();
+
+    nanotime_step(&stepper);
+    nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,nullptr,false,resizeCallback);
 }
@@ -359,12 +364,7 @@ void updateWindow(uint8_t* framebuffer){
 
     SDL_DestroyTexture(texture);
 
-    Uint64 end = SDL_GetPerformanceCounter();
-
-    float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
-
-    SDL_Delay(floor(16.666f - elapsedMS));
-    frame_start = SDL_GetPerformanceCounter();
+    nanotime_step(&stepper);
 }
 
 void refreshWindowSize(){
