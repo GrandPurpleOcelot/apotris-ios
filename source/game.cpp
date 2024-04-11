@@ -1049,13 +1049,6 @@ bool GameScene::control() {
     if(replaying && key_hit(KEY_FULL)){
         exitGame = true;
 
-        for(auto & item:currentReplay)
-            delete item;
-        currentReplay.clear();
-
-        delete currentReplayHeader;
-        currentReplayHeader = nullptr;
-
         stopSong();
         playSongRandom(0);
 
@@ -3141,6 +3134,14 @@ void GameScene::update(){
             enableBot = false;
             changeScene(new TitleScene(),Transitions::FADE);
         }
+
+        for(auto & item:currentReplay)
+            delete item;
+        currentReplay.clear();
+
+        delete currentReplayHeader;
+        currentReplayHeader = nullptr;
+
 
         exitGame = false;
         return;

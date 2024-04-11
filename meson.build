@@ -79,10 +79,8 @@ if host_machine.system() == 'gba'
 endif
 
 if host_machine.system() == 'windows'
-  add_global_arguments('-DWIN32', language : 'cpp')
-  add_global_arguments('-DWIN32', language : 'c')
-  add_global_arguments('-mwin32', language : 'cpp')
-  add_global_arguments('-mwin32', language : 'c')
+  add_global_arguments('-DWIN32', language : ['c', 'cpp'])
+  add_global_arguments('-mwin32', language : ['c', 'cpp'])
 elif host_machine.system() == 'emscripten'
   add_global_arguments('-pthread', language : ['cpp', 'c'])
   add_global_arguments('-fno-stack-protector', language : ['cpp', 'c'])
@@ -90,15 +88,9 @@ elif host_machine.system() == 'emscripten'
 endif
 
 build_type = get_option('buildtype')
-# Don't use mGBA logging in release or custom build types, only debug and friends
-if build_type.startswith('release') or build_type.startswith('custom')
-  add_project_arguments('-DNO_DIAGNOSE', language : 'cpp')
-  add_project_arguments('-DNO_DIAGNOSE', language : 'c')
-endif
-# Custom target is the fastest possible
-if build_type.startswith('custom')
-  add_global_arguments('-Ofast', language : 'cpp')
-  add_global_arguments('-Ofast', language : 'c')
+# Don't use mGBA logging in release build types, only debug and friends
+if build_type.startswith('release')
+  add_project_arguments('-DNO_DIAGNOSE', language : ['c', 'cpp'])
 endif
 
 # Various helper libraries, subprojects, and scripts common to all builds
@@ -126,14 +118,10 @@ endif
 
 
 # Custom warning level flags
-add_project_arguments('-Wall', language : 'cpp')
-add_project_arguments('-Wall', language : 'c')
-add_project_arguments('-Wno-array-bounds', language : 'cpp')
-add_project_arguments('-Wno-array-bounds', language : 'c')
-add_project_arguments('-Wno-shadow', language : 'cpp')
-add_project_arguments('-Wno-shadow', language : 'c')
-add_project_arguments('-Wno-unused', language : 'cpp')
-add_project_arguments('-Wno-unused', language : 'c')
+add_project_arguments('-Wall', language : ['c', 'cpp'])
+add_project_arguments('-Wno-array-bounds', language : ['c', 'cpp'])
+add_project_arguments('-Wno-shadow', language : ['c', 'cpp'])
+add_project_arguments('-Wno-unused', language : ['c', 'cpp'])
 
 
 if host_machine.system() != 'gba'
@@ -174,6 +162,7 @@ if host_machine.system() != 'gba'
     endif
 
     dependencies = [
+        dependency('threads'),
         ogg,
         vorbisfile,
         openmpt,
@@ -198,12 +187,8 @@ if host_machine.system() != 'gba'
         add_project_arguments('-DWEB', language : ['cpp', 'c'])
     endif
 
-    add_project_arguments('-DTE', language : 'cpp')
-    add_project_arguments('-DTE', language : 'c')
-    # add_project_arguments('-DGL', language : 'cpp')
-    # add_project_arguments('-DGL', language : 'c')
-    add_project_arguments('-Wno-array-bounds', language : 'cpp')
-    add_project_arguments('-Wno-array-bounds', language : 'c')
+    add_project_arguments('-DTE', language : ['c', 'cpp'])
+    # add_project_arguments('-DGL', language : ['c', 'cpp'])
 
     generated_files = []
     # Assemble bin2s targets
@@ -264,6 +249,10 @@ if host_machine.system() != 'gba'
     elif host_machine.system() == 'horizon'
         link_args += '-specs=/opt/devkitpro/libnx/switch.specs'
         name_suffix = 'elf'
+    elif host_machine.system() == 'windows'
+        link_args += '-Wl,-Bstatic,--whole-archive'
+        link_args += '-lwinpthread'
+        link_args += '-Wl,--no-whole-archive'
     endif
 
 
