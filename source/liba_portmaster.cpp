@@ -12,7 +12,6 @@
 #include "soloud_openmpt.h"
 #include "def.h"
 
-#define NANOTIME_IMPLEMENTATION
 #include "nanotime.h"
 
 void loadAudio();
@@ -263,17 +262,28 @@ void updateWindow(uint8_t* framebuffer){
 
     SDL_FreeSurface(img);
 
-    const int x = (in_width - screenWidth / windowScale) / 2;
-    const int y = (in_height - screenHeight / windowScale) / 2;
-    const int w = screenWidth / windowScale;
-    const int h = screenHeight / windowScale;
-
-    SDL_Rect rect = {x,y,w,h};
-
     SDL_RenderClear(renderer);
 
-    if(render)
-        SDL_RenderCopy(renderer,texture,&rect,NULL);
+    SDL_Rect rect = {
+        0,
+        0,
+        in_width,
+        in_height,
+    };
+
+    const int w = in_width * windowScale;
+    const int h = in_height * windowScale;
+
+    SDL_Rect dest_rect = {
+        -(w - screenWidth)/2,
+        -(h - screenHeight)/2,
+        w,
+        h,
+    };
+
+    if(render){
+        SDL_RenderCopy(renderer,texture,&rect,&dest_rect);
+    }
 
     SDL_RenderPresent(renderer);
 
@@ -299,7 +309,7 @@ void refreshWindowSize(){
             if(savefile->settings.integerScale){
                 windowScale = (int)windowScale;
 
-                while (screenHeight / windowScale > 160 * 2) {
+                while (windowScale > 0 && screenHeight / windowScale > 160 * 2) {
                     windowScale++;
                 }
                 while (windowScale > 1 && screenHeight / windowScale < 160) {
@@ -311,7 +321,8 @@ void refreshWindowSize(){
         }
     }
 
-    log("scale " + std::to_string(windowScale));
+    if(windowScale <= 0)
+        return;
 
     rowStart = (SCREEN_HEIGHT - (screenHeight/windowScale))/2;
     rowEnd = (SCREEN_HEIGHT + (screenHeight/windowScale))/2;
@@ -352,14 +363,21 @@ void startSong(int song,bool loop){
     if(currentSong != -1)
         musicArray[currentSong].stop();
 
-    currentSongHandle = gSoloud.play(musicArray[song]);
+    if(musicVolume > 0)
+        currentSongHandle = gSoloud.play(musicArray[song]);
+
     currentSong = song;
 
     gSoloud.setVolume(currentSongHandle,musicVolume);
+
+    float speed = gSoloud.getRelativePlaySpeed(currentSongHandle);
+
+    gSoloud.setRelativePlaySpeed(currentSongHandle, speed * 0.5f);
 }
 
 void stopSong(){
     musicArray[currentSong].stop();
+    currentSong = -1;
 }
 
 void resumeSong(){
@@ -367,13 +385,21 @@ void resumeSong(){
 }
 
 void setMusicVolume(int volume){
-    musicVolume = (float)volume / 200;
+    if(musicVolume == 0 && volume != 0){
+        currentSongHandle = gSoloud.play(musicArray[currentSong]);
+    }
+
+    musicVolume = volume / (512.0 / 2);
 
     gSoloud.setVolume(currentSongHandle,musicVolume);
 }
 
 void setMusicTempo(int tempo){
-    gSoloud.setRelativePlaySpeed(currentSongHandle, tempo / 1024);
+    float nt = tempo / 1024.0;
+
+    log(std::to_string(nt));
+
+    gSoloud.setRelativePlaySpeed(currentSongHandle, tempo / 1024.0);
 }
 
 void toggleRendering(bool r){

@@ -121,8 +121,7 @@ endif
 add_project_arguments('-Wall', language : ['c', 'cpp'])
 add_project_arguments('-Wno-array-bounds', language : ['c', 'cpp'])
 add_project_arguments('-Wno-shadow', language : ['c', 'cpp'])
-add_project_arguments('-Wno-unused', language : ['c', 'cpp'])
-
+add_project_arguments('-Wno-unused', language : ['c', 'cpp')]
 
 if host_machine.system() != 'gba'
     #############################
@@ -183,6 +182,8 @@ if host_machine.system() != 'gba'
         add_project_arguments('-DSWITCH', language : ['cpp', 'c'])
     elif host_machine.system() != 'emscripten'
         add_project_arguments('-DPC', language : ['cpp', 'c'])
+    elif host_machine.system() != 'emscripten'
+        add_project_arguments('-DPORTMASTER', language : ['cpp', 'c'])
     else
         add_project_arguments('-DWEB', language : ['cpp', 'c'])
     endif
