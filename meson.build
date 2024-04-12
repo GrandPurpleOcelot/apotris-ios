@@ -121,7 +121,7 @@ endif
 add_project_arguments('-Wall', language : ['c', 'cpp'])
 add_project_arguments('-Wno-array-bounds', language : ['c', 'cpp'])
 add_project_arguments('-Wno-shadow', language : ['c', 'cpp'])
-add_project_arguments('-Wno-unused', language : ['c', 'cpp')]
+add_project_arguments('-Wno-unused', language : ['c', 'cpp'])
 
 if host_machine.system() != 'gba'
     #############################
