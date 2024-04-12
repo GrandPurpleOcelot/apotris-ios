@@ -35,7 +35,7 @@ sources = files(
     src_dir / 'liba_mm.cpp',
     src_dir / 'liba_pc.cpp',
     src_dir / 'liba_switch.cpp',
-    src_dir / 'liba_rgb30.cpp',
+    src_dir / 'liba_portmaster.cpp',
     src_dir / 'liba_web.cpp',
     src_dir / 'liba_window.cpp',
     src_dir / 'main.cpp',
