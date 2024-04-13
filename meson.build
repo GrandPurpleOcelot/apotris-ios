@@ -180,10 +180,10 @@ if host_machine.system() != 'gba'
     # Define non-GBA specific preprocessor guards
     if host_machine.system() == 'horizon'
         add_project_arguments('-DSWITCH', language : ['cpp', 'c'])
+    elif get_option('portmaster')
+        add_project_arguments('-DPORTMASTER', language : ['cpp', 'c'])
     elif host_machine.system() != 'emscripten'
         add_project_arguments('-DPC', language : ['cpp', 'c'])
-    elif host_machine.system() != 'emscripten'
-        add_project_arguments('-DPORTMASTER', language : ['cpp', 'c'])
     else
         add_project_arguments('-DWEB', language : ['cpp', 'c'])
     endif

@@ -1,6 +1,6 @@
 #ifdef PORTMASTER
 
-#include "liba_rgb30.h"
+#include "liba_portmaster.h"
 #include <list>
 #include <fstream>
 #include <iostream>
