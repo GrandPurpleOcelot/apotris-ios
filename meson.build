@@ -145,8 +145,6 @@ if host_machine.system() != 'gba'
             sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         endif
         soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
-        #vorbis = dependency('vorbis', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbis_dep'])
-        vorbisfile = dependency('vorbisfile', static : true, default_options : ['default_library=static'], fallback : ['vorbis', 'vorbisfile_dep'])
     else
         # Other required dependencies
         openmpt = dependency('openmpt', default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
@@ -154,16 +152,11 @@ if host_machine.system() != 'gba'
         sdl2_dep = dependency('sdl2', default_options : ['default_library=static'], fallback : ['sdl2', 'sdl2_dep'])
         sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
-        if host_machine.system() == 'linux'
-            vorbis = dependency('vorbis', default_options : ['default_library=static'], fallback : ['vorbis', 'vorbis_dep'])
-        endif
-        vorbisfile = dependency('vorbisfile', default_options : ['default_library=static'], fallback : ['vorbis', 'vorbisfile_dep'])
     endif
 
     dependencies = [
         dependency('threads'),
         ogg,
-        vorbisfile,
         openmpt,
         sdl_mixer,
         opus,
@@ -173,9 +166,6 @@ if host_machine.system() != 'gba'
         # dependency('gl'),
         # dependency('glew'),
     ]
-    if host_machine.system() == 'linux'
-          dependencies += vorbis
-    endif
 
     # Define non-GBA specific preprocessor guards
     if host_machine.system() == 'horizon'
