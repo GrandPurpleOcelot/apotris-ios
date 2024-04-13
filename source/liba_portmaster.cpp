@@ -73,10 +73,10 @@ void windowInit(){
 
     SDL_Init(SDL_INIT_VIDEO);
 
-    // SDL_DisplayMode DM;
-    // SDL_GetCurrentDisplayMode(0, &DM);
-    // screenWidth = DM.w;
-    // screenHeight = DM.h;
+    SDL_DisplayMode DM;
+    SDL_GetCurrentDisplayMode(0, &DM);
+    screenWidth = DM.w;
+    screenHeight = DM.h;
 
     window = SDL_CreateWindow(
         "Apotris PortMaster",
