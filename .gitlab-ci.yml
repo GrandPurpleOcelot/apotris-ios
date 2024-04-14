@@ -18,10 +18,15 @@ build:
   # instead of calling g++ directly you can also use some build toolkit like make
   # install the necessary build tools when needed
 
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+      allow_failure: false
+    - when: manual
+      allow_failure: true
 
-  # variables:
-  #   GIT_SUBMODULE_STRATEGY: recursive
-  #   NO_DIAGNOSE: -DNO_DIAGNOSE
+  variables:
+      GIT_SUBMODULE_STRATEGY: recursive
   script:
     - ./tools/build.sh
   artifacts:
