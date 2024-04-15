@@ -15,6 +15,7 @@
 
 #include "liba_pc.h"
 #include "liba_window.h"
+#include "liba_sdl_audio.hpp"
 
 #define PLATFORM 1
 #endif
@@ -39,6 +40,7 @@
 
 #define PLATFORM 5
 #include "liba_portmaster.h"
+#include "liba_sdl_audio.hpp"
 
 #endif
 

@@ -38,6 +38,7 @@ sources = files(
     src_dir / 'liba_portmaster.cpp',
     src_dir / 'liba_web.cpp',
     src_dir / 'liba_window.cpp',
+    src_dir / 'liba_sdl_audio.cpp',
     src_dir / 'main.cpp',
     src_dir / 'menuSystem.cpp',
     src_dir / 'menus.cpp',
