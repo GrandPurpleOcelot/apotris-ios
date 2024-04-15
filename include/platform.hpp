@@ -26,8 +26,11 @@
 #endif
 
 #ifdef WEB
+
 #include "liba_web.h"
+#include "liba_sdl_audio.hpp"
 #define PLATFORM 3
+
 #endif
 
 #ifdef SWITCH

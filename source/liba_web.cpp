@@ -7,17 +7,10 @@
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #include <dirent.h>
-#include "soloud.h"
-#include "soloud_wav.h"
 #include "def.h"
-#include "soloud_openmpt.h"
 #include "nanotime.h"
 
-void loadAudio();
-void freeAudio();
 void resizeWindow(int width, int height);
-
-Songs songs;
 
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
@@ -46,25 +39,10 @@ uint32_t frame_time = 0;
 
 float fps = 0;
 
-SoLoud::Wav soundEffects[SFX_COUNT];
-
-int currentSong = -1;
-int sfxVolume = 1024;
-float musicVolume = 1;
-
 int windowWidth = 640;
 int windowHeight = 480;
 
 float zoom = 0;
-
-SoLoud::Soloud gSoloud;
-
-SoLoud::Openmpt *musicArray;
-
-SoLoud::handle currentSongHandle;
-
-std::vector<std::string> songList;
-
 
 EM_JS(int, getWindowWidth, (), {
   return window.innerWidth;
@@ -113,70 +91,12 @@ void windowInit(){
     renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-    gSoloud.init();
-
     loadAudio();
 
     nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,nullptr,false,resizeCallback);
 }
-
-bool hasSuffix(const std::string& s, const std::string& suffix){
-    return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
-}
-
-void loadAudio(){
-    for(int i = 0; i < SFX_COUNT; i++){
-        std::string str = "/" + (std::string) SoundEffectPaths[i];
-
-        soundEffects[i].load(str.c_str());
-    }
-    int counter = 0;
-
-    std::string dirPath = "/assets";
-
-    DIR *dir = opendir(dirPath.c_str());
-    if(!dir){
-        log("couldn't open dir");
-        return;
-    }
-
-    dirent *entry;
-    std::vector<std::string> songPaths;
-    while((entry = readdir(dir)) != nullptr){
-        if(hasSuffix(entry->d_name, ".it") || hasSuffix(entry->d_name, ".mod") || hasSuffix(entry->d_name, ".xm")){
-            songPaths.push_back(entry->d_name);
-        }
-    }
-
-    closedir(dir);
-
-    sort(songPaths.begin(),songPaths.end());
-
-    for(const auto& str : songPaths){
-        if (str.find("MENU_") != std::string::npos) {
-            songList.push_back(dirPath + "/" + str);
-            songs.menu.push_back(counter++);
-        } else {
-            songList.push_back(dirPath + "/" + str);
-            songs.game.push_back(counter++);
-        }
-    }
-
-    musicArray = new SoLoud::Openmpt[counter];
-
-    for(int i = 0; i < counter; i++){
-        SoLoud::result loaded = musicArray[i].load(songList.at(i).c_str());
-        if(loaded != SoLoud::SO_NO_ERROR){
-            log("couldn't load: " + songList.at(i) + " " + std::to_string(loaded));
-        }
-    }
-}
-
-void freeAudio(){
-}
-
 
 void key_poll(){
     previousKeys = currentKeys;
@@ -372,6 +292,7 @@ void refreshWindowSize(){
 
 bool closed(){
     emscripten_sleep(0);
+    songEndHandler();
     // // Cap to 60 FPS
 
     // //show fps
@@ -385,71 +306,6 @@ bool closed(){
     return true;
 }
 
-void sfx(int n){
-    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
-    unsigned int s = gSoloud.play(soundEffects[n]);
-    s + 1;
-}
-
-void startSong(int song, bool loop){
-    log(song);
-    // if(song == currentSong && !musicArray[currentSong].hasEnded())
-    if(song == currentSong && !gSoloud.getPause(currentSongHandle))
-        return;
-
-    if(currentSong != -1)
-        musicArray[currentSong].stop();
-
-    if(musicVolume > 0)
-        currentSongHandle = gSoloud.play(musicArray[song]);
-
-    currentSong = song;
-
-    gSoloud.setVolume(currentSongHandle, musicVolume);
-
-    float speed = gSoloud.getRelativePlaySpeed(currentSongHandle);
-
-    gSoloud.setRelativePlaySpeed(currentSongHandle, speed * 0.5f);
-}
-
-void stopSong(){
-    musicArray[currentSong].stop();
-    currentSong = -1;
-}
-
-void resumeSong(){
-    gSoloud.setPause(currentSongHandle, false);
-}
-
-void setMusicVolume(int volume){
-    if(musicVolume == 0 && volume != 0){
-        currentSongHandle = gSoloud.play(musicArray[currentSong]);
-    }
-
-    musicVolume = volume / (512.0f / 2);
-
-    gSoloud.setVolume(currentSongHandle,musicVolume);
-}
-
-void setMusicTempo(int tempo){
-    float nt = tempo / 1024.0;
-
-    log(std::to_string(nt));
-
-    gSoloud.setRelativePlaySpeed(currentSongHandle, tempo / 1024.0);
-}
-
-void toggleRendering(bool r){
-    render = r;
-}
-
-void sfxRate(int n, float rate){
-    soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
-    int s = gSoloud.play(soundEffects[n]);
-    gSoloud.setRelativePlaySpeed(s,rate);
-}
-
-void pauseSong(){};
 void initRumble(){};
 
 void loadSavefile(){
@@ -509,8 +365,6 @@ void quit() {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-
-    gSoloud.deinit();
 }
 
 void resizeWindow(int width, int height){

@@ -1,6 +1,6 @@
 #include "platform.hpp"
 
-#if defined(PC) | defined(PORTMASTER)
+#if defined(PC) || defined(PORTMASTER) || defined(WEB)
 
 #include <fstream>
 #include <iostream>
