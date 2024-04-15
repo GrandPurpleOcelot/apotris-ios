@@ -393,7 +393,7 @@ std::string nameInput(int place) {
                     aprint("_", 13 + cursor, nameHeight);
             }
 
-            #elif defined(PC)
+            #elif defined(PC) || defined(WEB)
 
             u32 key = key_first();
 
