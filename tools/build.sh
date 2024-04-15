@@ -26,29 +26,16 @@ cp tools/build.bat bin/gba/.
 
 #linux
 meson setup $TYPE build-linux && meson compile -C build-linux
-mkdir -p bin/linux/assets
-mkdir -p bin/linux/subprojects/SDL2-2.28.5
+mkdir -p bin/linux-x64/assets
+mkdir -p bin/linux-x64/subprojects/SDL2-2.28.5
 
-cp assets/* bin/linux/assets/.
-cp build-linux/subprojects/SDL2-2.28.5/libsdl2.so bin/linux/subprojects/SDL2-2.28.5/libsdl2.so
-cp build-linux/subprojects/SDL2-2.28.5/libsdl2.so bin/linux/subprojects/SDL2-2.28.5/SDL2.so
-cp build-linux/Apotris bin/linux/.
-cp tools/README_LINUX.txt bin/linux/README.txt
+cp assets/* bin/linux-x64/assets/.
+cp build-linux/Apotris bin/linux-x64/.
+cp tools/README_LINUX.txt bin/linux-x64/README.txt
 
 #windows
 meson setup --cross-file=meson/mingw.ini $TYPE build-windows && meson compile -C build-windows
-mkdir -p bin/windows/assets
+mkdir -p bin/windows-x64/assets
 
-cp assets/* bin/windows/assets/.
-cp build-windows/Apotris.exe bin/windows/.
-
-cp /usr/lib/gcc/x86_64-w64-mingw32/12-win32/libgcc_s_seh-1.dll bin/windows/.
-cp /usr/x86_64-w64-mingw32/bin/libdl.dll bin/windows/.
-cp /usr/lib/gcc/x86_64-w64-mingw32/12-win32/libstdc++-6.dll bin/windows/.
-cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll bin/windows/.
-
-cp build-windows/subprojects/SDL2-2.28.5/libsdl2.dll bin/windows/.
-cp build-windows/subprojects/libmodplug/libmodplug.dll bin/windows/.
-cp subprojects/SFML-2.6.1/extlibs/bin/x86/openal32.dll bin/windows/.
-cp build-windows/subprojects/SDL2_mixer-2.6.2/libsdl2mixer.dll bin/windows/.
-cp lib/* bin/windows/.
+cp assets/* bin/windows-x64/assets/.
+cp build-windows/Apotris.exe bin/windows-x64/.
