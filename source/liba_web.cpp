@@ -39,10 +39,10 @@ uint32_t frame_time = 0;
 
 float fps = 0;
 
-int windowWidth = 640;
-int windowHeight = 480;
+int screenWidth = 640;
+int screenHeight = 480;
 
-float zoom = 0;
+float windowScale = 3;
 
 EM_JS(int, getWindowWidth, (), {
   return window.innerWidth;
@@ -53,10 +53,10 @@ EM_JS(int, getWindowHeight, (), {
 });
 
 int resizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData){
-    windowWidth = getWindowWidth();
-    windowHeight = getWindowHeight();
+    screenWidth = getWindowWidth();
+    screenHeight = getWindowHeight();
 
-    resizeWindow(windowWidth, windowHeight);
+    resizeWindow(screenWidth, screenHeight);
     return 0;
 }
 
@@ -82,7 +82,7 @@ void windowInit(){
     window = SDL_CreateWindow(
         "Apotris Web",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        windowWidth, windowHeight,
+        screenWidth, screenHeight,
         SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
         );
 
@@ -215,44 +215,8 @@ uint32_t key_first(){
 }
 
 void updateWindow(uint8_t* framebuffer){
-    // // // Update the screen
-    // // SDL_UpdateRect(screen, 0, 0, 0, 0);
-
-    // uint8_t * newBuffer = new uint8_t[640 * 480 * 4];
-
-    const int in_width = 512;
-    const int in_height = 512;
-
-    // uint32_t* out_ptr = (uint32_t *) newBuffer;
-    // uint32_t* in_ptr = (uint32_t *) framebuffer;
-    // int in_pitch = in_width;
-    // int out_pitch = 640;
-
-    // in_ptr += (((in_height - 240) / 2)) * in_pitch;
-    // in_ptr += (in_width - 320) / 2;
-
-    // for(int y = 0; y < 240; y++){
-    //     uint32_t * line_ptr = in_ptr;
-
-    //     for(int x = 0; x < 320; x++){
-    //         uint32_t * out_line_ptr = out_ptr;
-    //         uint32_t color = *line_ptr;
-
-    //         *out_line_ptr = color;
-    //         *(out_line_ptr + 1) = color;
-
-    //         out_line_ptr += out_pitch;
-    //         *out_line_ptr = color;
-    //         *(out_line_ptr + 1) = color;
-
-    //         out_ptr += 2;
-
-    //         line_ptr++;
-    //     }
-
-    //     in_ptr += in_pitch;
-    //     out_ptr += out_pitch;
-    // }
+    const int in_width = SCREEN_WIDTH;
+    const int in_height = SCREEN_HEIGHT;
 
     SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
         framebuffer,
@@ -263,31 +227,86 @@ void updateWindow(uint8_t* framebuffer){
         0x0000ff,
         0x00ff00,
         0xff0000,
-        0
+        0xff000000
     );
 
-    // delete [] newBuffer;
-
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
-
-    SDL_Rect rect = {(in_width - windowWidth) / 2, (in_height - windowHeight) / 2, windowWidth, windowHeight};
 
     SDL_FreeSurface(img);
 
     SDL_RenderClear(renderer);
 
-    if(render)
-        SDL_RenderCopy(renderer,texture,&rect,NULL);
+    SDL_Rect rect = {
+        0,
+        0,
+        in_width,
+        in_height,
+    };
+
+    const int w = in_width * windowScale;
+    const int h = in_height * windowScale;
+
+    SDL_Rect dest_rect = {
+        -(w - screenWidth)/2,
+        -(h - screenHeight)/2,
+        w,
+        h,
+    };
+
+    if(render){
+        SDL_RenderCopy(renderer,texture,&rect,&dest_rect);
+    }
 
     SDL_RenderPresent(renderer);
 
     SDL_DestroyTexture(texture);
 
+    // Cap FPS
     nanotime_step(&stepper);
+
+    // //log FPS
+    // uint64_t temp = frame_start;
+    // frame_start = nanotime_now();
+
+    // uint64_t interval = nanotime_interval(temp, frame_start, nanotime_now_max());
+    // float time = (float) interval / NANOTIME_NSEC_PER_SEC;
+    // log(std::to_string(time * 3600));
 }
 
 void refreshWindowSize(){
-    resizeWindow(getWindowWidth(),getWindowHeight());
+    if(savefile != nullptr){
+        if(savefile->settings.zoom > -1){
+            windowScale = 1 + (float) savefile->settings.zoom / 10;
+        }else{
+            if(savefile->settings.integerScale){
+                windowScale = (int)windowScale;
+
+                while (windowScale > 0 && screenHeight / windowScale > 160 * 2) {
+                    windowScale++;
+                }
+                while (windowScale > 1 && screenHeight / windowScale < 160) {
+                    windowScale--;
+                }
+            }else{
+                windowScale = screenHeight / 200.0;
+            }
+        }
+    }
+
+    if(windowScale <= 0)
+        return;
+
+    rowStart = (SCREEN_HEIGHT - (screenHeight/windowScale))/2;
+    rowEnd = (SCREEN_HEIGHT + (screenHeight/windowScale))/2;
+
+    if(rowStart < 0)
+        rowStart = 0;
+
+    if(rowEnd > SCREEN_HEIGHT)
+        rowEnd = SCREEN_HEIGHT;
+
+    if(savefile != nullptr)
+        setGradient(savefile->settings.backgroundGradient);
 }
 
 bool closed(){
@@ -368,27 +387,19 @@ void quit() {
 }
 
 void resizeWindow(int width, int height){
-    if(savefile != nullptr){
-        zoom = ((float) max(savefile->settings.zoom,10) / 20);
-    }else{
-        zoom = 1;
-    }
-
-    log("test:");
-    log((int)(zoom * 100));
-
     emscripten_set_canvas_size(width, height);
     SDL_SetWindowSize(window, width, height);
 
-    windowHeight = (int) 160 / zoom;
-    windowWidth = ((float)width / height) * windowHeight;
-
-    rowStart = (512 - (windowHeight))/2;
-    rowEnd = (512 + (windowHeight))/2;
+    screenWidth = width;
+    screenHeight = height;
 }
 
 std::string stringFromKey(uint32_t key){
     return SDL_GetKeyName(key);
+}
+
+void toggleRendering(bool r){
+    render = r;
 }
 
 #endif
