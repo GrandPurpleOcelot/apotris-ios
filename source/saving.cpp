@@ -152,7 +152,7 @@ void loadSave() {
 Keys getDefaultGameKeys(){
     Keys k;
 
-    #ifdef PC
+    #if defined(PC) || defined(WEB)
     k = {
         .moveLeft = SDLK_LEFT,
         .moveRight = SDLK_RIGHT,
