@@ -53,6 +53,7 @@ bool render = true;
 std::list<uint32_t> currentlyPressed;
 
 SoLoud::Soloud gSoloud;
+SoLoud::Queue musicQueue;
 
 SoLoud::Wav soundEffects[SFX_COUNT];
 
@@ -397,13 +398,9 @@ void refreshWindowSize(){
 }
 
 bool closed(){
-    // //show fps
-    // frame_time = SDL_GetTicks()-start_time;
-    // fps = (frame_time > 0)? 1000.0 / frame_time : 0.0;
-    // start_time = SDL_GetTicks();
-
-    // std::cout << "fps: " << fps << "\n";
-
+    if(currentSong != -1 && !musicQueue.isCurrentlyPlaying(musicArray[currentSong])){
+        playNextSong();
+    }
 
     return true;
 }
@@ -416,26 +413,35 @@ void sfx(int n){
 void startSong(int song,bool loop){
     log(song);
     // if(song == currentSong && !musicArray[currentSong].hasEnded())
-    if(song == currentSong && !gSoloud.getPause(currentSongHandle))
+    if(song == currentSong && !gSoloud.getPause(currentSongHandle) && musicQueue.isCurrentlyPlaying(musicArray[currentSong]))
         return;
 
-    if(currentSong != -1)
-        musicArray[currentSong].stop();
+    if(currentSong != -1 && musicQueue.isCurrentlyPlaying(musicArray[currentSong])){
+        // musicArray[currentSong].stop();
+        musicQueue.stop();
+        musicQueue.skip();
+    }
 
-    if(musicVolume > 0)
-        currentSongHandle = gSoloud.play(musicArray[song]);
+    if(musicVolume > 0){
+        musicQueue.setParams(44100, 2);
+        currentSongHandle = gSoloud.play(musicQueue);
+        musicArray[song].setLooping(loop);
+        musicQueue.play(musicArray[song]);
+    }
 
     currentSong = song;
 
     gSoloud.setVolume(currentSongHandle,musicVolume);
 
-    float speed = gSoloud.getRelativePlaySpeed(currentSongHandle);
+    // float speed = gSoloud.getRelativePlaySpeed(currentSongHandle);
 
-    gSoloud.setRelativePlaySpeed(currentSongHandle, speed * 0.5f);
+    // gSoloud.setRelativePlaySpeed(currentSongHandle, speed * 0.5f);
 }
 
 void stopSong(){
-    musicArray[currentSong].stop();
+    musicQueue.stop();
+    musicQueue.skip();
+
     currentSong = -1;
 }
 
@@ -445,7 +451,9 @@ void resumeSong(){
 
 void setMusicVolume(int volume){
     if(musicVolume == 0 && volume != 0){
-        currentSongHandle = gSoloud.play(musicArray[currentSong]);
+        musicQueue.setParams(44100, 2);
+        currentSongHandle = gSoloud.play(musicQueue);
+        musicQueue.play(musicArray[currentSong]);
     }
 
     musicVolume = volume / (512.0 / 2);

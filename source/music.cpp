@@ -74,6 +74,8 @@ void playNextSong(){
         max = songs.menu.size();
     } else if (menuId == 1) {
         max = songs.game.size();
+    } else {
+        return;
     }
 
     if (max <= 0)
@@ -83,7 +85,7 @@ void playNextSong(){
     int count = 0;
 
     do{
-        int index = currentlyPlayingSong+1;
+        index = currentlyPlayingSong+1;
         if(index >= max)
             index = 0;
     }while(getSongState(menuId, index) && count++ < 1000);
