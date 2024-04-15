@@ -391,4 +391,8 @@ std::string stringFromKey(uint32_t key){
     return SDL_GetKeyName(key);
 }
 
+void toggleRendering(bool r){
+    render = r;
+}
+
 #endif
