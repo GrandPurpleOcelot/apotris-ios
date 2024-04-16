@@ -9,4 +9,8 @@ Customizing sound effects:
     Replace any of the sound effects in the 'audio' folder with ones with the
     same file name.
 
-After any changes, run 'build.bat' to add them to the ROM.
+WINDOWS:
+    After any changes, run 'build.bat' to add them to the ROM.
+
+LINUX:
+    Python is required to build songs. After any changes, run 'build.sh' to add them to the ROM.
