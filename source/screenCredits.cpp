@@ -15,7 +15,7 @@ std::list<std::string> creditsText = {
     "        by supernao",
     "",
     "  - optikal innovation",
-    "       by substance",
+    "        by substance",
     "",
     "  - space taxi",
     "        by schmid",
@@ -41,19 +41,55 @@ std::list<std::string> creditsText = {
     "        by panther, karl",
     "",
     "",
-    "Add. Code Contributors:",
+    "",
+    "Made with:",
+    " - Meson",
+    " - SDL & SDL_mixer",
+    " - Xiph audio",
+    " - Tilengine",
+    " - SoLoud",
+    " - meson-gba",
+    " - sdk-seven",
+    " - gba-link-connection",
+    " - gba-rumble",
+    " - posprintf",
+    " - libsavgba",
+    "",
+    "",
+    "Code Contributors:",
     " - Toolchain",
     " - Wireless multiplayer",
     "  by Isaac Aronson",
     "     (@luigi___)",
     "",
-    " - BARS",
+    " - BARS Rotation System",
     "  by CreeperCraftT99",
     "",
-    " - Wireless library",
+    " - Explore option",
+    "   prototype",
+    "  by tanwk",
+    "",
     " - Wireless bugfixes",
     "  by Rodrigo Alfonso",
     "     (@afska)",
+    "",
+    " - Linux Makefile",
+    "   improvements",
+    "  by abouvier",
+    "",
+    "",
+    "",
+    "Special thanks to:",
+    " - all donators",
+    "",
+    " - everyone who tested",
+    "   early versions to",
+    "   help find bugs",
+    "",
+    " - the members of the",
+    "   discord server",
+    "",
+    " - you ;)",
 };
 
 void CreditsScene::init(){
@@ -161,7 +197,7 @@ void CreditsScene::update(){
 
     if(delay < delayMax){
         delay++;
-    }else if(++scrollTimer >= scrollTimerMax){
+    }else if(scrollTimer++ >= scrollTimerMax){
         scrollTimer = 0;
         if(++scrollOffset >= space){
             scrollOffset = 0;
@@ -169,7 +205,7 @@ void CreditsScene::update(){
         }
     }
 
-    if(listStart > 42){
+    if(listStart > creditsText.size()){
         changeScene(previousScene(),Transitions::FADE);
         return;
     }
