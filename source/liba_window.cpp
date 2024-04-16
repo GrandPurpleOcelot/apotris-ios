@@ -267,14 +267,17 @@ void updateWindow(uint8_t* framebuffer){
 
     // Cap FPS
     nanotime_step(&stepper);
+    Uint64 end = SDL_GetPerformanceCounter();
 
-    // //log FPS
-    // uint64_t temp = frame_start;
-    // frame_start = stepper.sleep_point;
+    float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
 
-    // uint64_t interval = nanotime_interval(temp, frame_start, nanotime_now_max());
-    // float time = (float) interval / NANOTIME_NSEC_PER_SEC;
-    // log(std::to_string(time * 3600) + " " + std::to_string(interval));
+    if(elapsedMS > 100){
+        nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
+    }
+
+    fps = 1000.0f / elapsedMS;
+
+    frame_start = SDL_GetPerformanceCounter();
 }
 
 void refreshWindowSize(){
