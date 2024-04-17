@@ -417,7 +417,7 @@ bool ConfirmSaveScene::control(){
 
             setMusicVolume(512 * ((float)savefile->settings.volume / 10));
             setSkin();
-            setLightMode();
+            setPalette();
             setGradient(savefile->settings.backgroundGradient);
 
         }else{

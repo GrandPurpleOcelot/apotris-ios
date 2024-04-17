@@ -91,6 +91,9 @@ void freeAudio(){
 }
 
 void songEndHandler(){
+    if(musicVolume == 0)
+        return;
+
     if(currentSong != -1 && !musicQueue.isCurrentlyPlaying(musicArray[currentSong])){
         playNextSong();
     }
