@@ -27,6 +27,7 @@ std::vector<std::string> songList;
 int currentSong = -1;
 int sfxVolume = 1024;
 float musicVolume = 1;
+bool looping = false;
 
 Songs songs;
 
@@ -124,6 +125,7 @@ void startSong(int song,bool loop){
     }
 
     currentSong = song;
+    looping = loop;
 
     gSoloud.setVolume(currentSongHandle,musicVolume);
 
@@ -147,6 +149,7 @@ void setMusicVolume(int volume){
     if(musicVolume == 0 && volume != 0){
         musicQueue.setParams(44100, 2);
         currentSongHandle = gSoloud.play(musicQueue);
+        musicArray[currentSong].setLooping(looping);
         musicQueue.play(musicArray[currentSong]);
     }
 
