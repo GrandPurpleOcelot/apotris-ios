@@ -56,11 +56,11 @@ const std::string modeStrings[] = {
     "Death",
 };
 
-const std::string modeOptionStrings[][4] = {
+const std::string modeOptionStrings[][5] = {
     {"150","200","300","Endless"},
     {"20","40","100"},
     {"10","20","100"},
-    {""},
+    {"EASY","MEDIUM","HARD","V.HARD","INSANE"},
     {"3","5","10"},
     {""},
     {""},
@@ -1024,7 +1024,9 @@ void GameScene::showModeText(){
             if(game->trainingMode)
                 str = "Finesse";
         }else{
-            if(game->gameMode != CLASSIC && game->gameMode != MASTER)
+            if(game->gameMode == BATTLE && mode >= 0)
+                str = modeOptionStrings[game->gameMode-1][mode-1];
+            else if(game->gameMode != CLASSIC && game->gameMode != MASTER)
                 str = modeOptionStrings[game->gameMode-1][mode];
             else if(game->gameMode == MASTER)
                 str = modeOptionStrings[game->gameMode-1][game->subMode];

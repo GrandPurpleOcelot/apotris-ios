@@ -261,6 +261,7 @@ void PlayOptionScene::start(){
                 botThinkingSpeed = 12;
                 botSleepDuration = getDelayForBotDifficulty(value);
                 botStepMax = 10;
+                mode = value;
             }else{
                 goal = value;
                 mode = element->value;
