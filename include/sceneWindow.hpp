@@ -98,6 +98,32 @@ class ScaleElement : public Element{
         }
 };
 
+class FPSElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Show FPS";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.showFPS = !savefile->settings.showFPS;
+
+            if(!savefile->settings.showFPS)
+                clearText();
+
+            sfx(SFX_MENUCONFIRM);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.showFPS)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
 class WindowOptionScene : public OptionListScene{
     public:
     std::string name(){return "Video";};
@@ -105,6 +131,7 @@ class WindowOptionScene : public OptionListScene{
             return {
                 new IntegerScaleElement(),
                 new ScaleElement(),
+                new FPSElement(),
             };
         };
 

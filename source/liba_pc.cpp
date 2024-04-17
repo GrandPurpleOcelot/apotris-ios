@@ -27,6 +27,9 @@ int blendInfo = 0;
 
 void onHBlank(int line);
 uint8_t customBlend(uint8_t a,uint8_t b);
+void showFPS();
+
+std::list<float> fpsHistory;
 
 class ColorSplit{
 
@@ -204,7 +207,7 @@ void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
 void vsync(){
     onVBlank();
 
-    // aprint(std::to_string(fps), 0, 0);
+    showFPS();
 
     TLN_UpdateFrame(0);
 
@@ -873,6 +876,29 @@ void enableLayerWindow(int layer, int x1, int y1, int x2, int y2, bool invert){
 
 void disableLayerWindow(int layer){
     TLN_DisableLayerWindow(layerInfo[layer].id);
+}
+
+void showFPS(){
+    if(savefile->settings.showFPS){
+        if(fpsHistory.size() > 9){
+            fpsHistory.pop_front();
+        }
+
+        fpsHistory.push_back(fps);
+
+        float average = 0;
+
+        for(const float value : fpsHistory)
+            average += value;
+
+        average /= fpsHistory.size();
+
+        char buff[8];
+        snprintf(buff,8,"%.1f",average);
+
+        const int width = 30 - 2 * (savefile->settings.aspectRatio == 1);
+        aprintColor(buff, width - 4, 0, 1);
+    }
 }
 
 #endif

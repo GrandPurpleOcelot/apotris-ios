@@ -376,6 +376,7 @@ void setDefaults(Save *save, int depth){
         save->settings.selectedProfile = 0;
         save->settings.journey = false;
         save->settings.autosave = 1;
+        save->settings.showFPS = false;
 
         save->stats.maxLevel = 0;
         save->stats.totalLines = 0;

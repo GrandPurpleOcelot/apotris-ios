@@ -675,6 +675,7 @@ class AspectRatioElement : public Element{
 
         void action(int dir) override{
             savefile->settings.aspectRatio = !savefile->settings.aspectRatio;
+            clearText();
 
             sfx(SFX_MENUCONFIRM);
         }
