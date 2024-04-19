@@ -1,6 +1,6 @@
 #include "platform.hpp"
 
-#if defined(PC) || defined(PORTMASTER) || defined(WEB)
+#if defined(PC) || defined(PORTMASTER) || defined(WEB) || defined(SWITCH)
 
 #include <fstream>
 #include <iostream>
@@ -35,18 +35,18 @@ bool hasSuffix(const std::string& s, const std::string& suffix){
     return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
 }
 
-void loadAudio(){
+void loadAudio(std::string pathPrefix){
     gSoloud.init();
 
     for(int i = 0; i < SFX_COUNT; i++){
-        std::string str = (std::string) SoundEffectPaths[i];
+        std::string str = pathPrefix + (std::string) SoundEffectPaths[i];
 
         soundEffects[i].load(str.c_str());
     }
 
     int counter = 0;
 
-    std::string path = "assets";
+    std::string path = pathPrefix + "assets";
 
     DIR *dir = opendir(path.c_str());
     if(!dir){

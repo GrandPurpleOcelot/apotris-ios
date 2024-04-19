@@ -35,8 +35,10 @@
 
 #ifdef SWITCH
 
-#include "liba_switch.h"
 #define PLATFORM 4
+#include "liba_switch.h"
+#include "liba_sdl_audio.hpp"
+
 #endif
 
 #ifdef PORTMASTER

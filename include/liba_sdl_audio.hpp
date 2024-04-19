@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 extern void sfx(int);
 extern void startSong(int,bool);
 extern void stopSong();
@@ -10,6 +12,6 @@ extern void toggleRendering(bool);
 extern void sfxRate(int,float);
 extern void pauseSong();
 
-extern void loadAudio();
+extern void loadAudio(std::string pathPrefix);
 extern void freeAudio();
 extern void songEndHandler();
