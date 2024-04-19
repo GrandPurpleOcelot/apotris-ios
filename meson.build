@@ -132,27 +132,31 @@ if host_machine.system() != 'gba'
     # Bring in required audio assets to copy to build output
     subdir('assets')
 
-    # libmodplug must be built as a dynamic/shared library
-    opus = dependency('opus', fallback : ['opus', 'opus_dep'])
-    ogg = dependency('ogg', fallback : ['ogg', 'libogg_dep'])
+    # All the dependencies should be static to work around various issues or platform specific behavior
+    opus = dependency('opus', static : true, fallback : ['opus', 'opus_dep'])
+    ogg = dependency('ogg', static : true, fallback : ['ogg', 'libogg_dep'])
     if host_machine.system() == 'emscripten' or host_machine.system() == 'horizon'
         # Other required dependencies
-        openmpt = dependency('openmpt', default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
-        tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
-        sdl2_dep = dependency('sdl2', default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
+        openmpt = dependency('openmpt', static : true, default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
+        tilengine = dependency('Tilengine', static : true, default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+        sdl2_dep = dependency('sdl2', static : true, default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
         if host_machine.system() == 'horizon'
-            sdl_mixer = dependency('SDL2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+            sdl_mixer = dependency('SDL2_mixer', static : true, default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         else
-            sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+            sdl_mixer = dependency('sdl2_mixer', static : true, default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         endif
-        soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+        soloud = dependency('SoLoud', static : true, default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
     else
         # Other required dependencies
-        openmpt = dependency('openmpt', default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
-        tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
-        sdl2_dep = dependency('sdl2', default_options : ['default_library=static'], fallback : ['sdl2', 'sdl2_dep'])
-        sdl_mixer = dependency('sdl2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
-        soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+        openmpt = dependency('openmpt', static : true, default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
+        tilengine = dependency('Tilengine', static : true, default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+        if host_machine.system() == 'darwin'
+            sdl2_dep = subproject('sdl2', default_options : ['default_library=static']).get_variable('sdl2_dep')
+        else
+            sdl2_dep = dependency('sdl2', static : true, default_options : ['default_library=static'], fallback : ['sdl2', 'sdl2_dep'])
+        endif
+        sdl_mixer = dependency('sdl2_mixer', static : true, default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+        soloud = dependency('SoLoud', static : true, default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
     endif
 
     dependencies = [
@@ -258,7 +262,6 @@ if host_machine.system() != 'gba'
             name_suffix : name_suffix,
             link_args : link_args,
             win_subsystem: 'windows',
-            install_rpath: 'lib'
         )
     elif host_machine.system() == 'horizon'
         binary = executable(
@@ -267,7 +270,6 @@ if host_machine.system() != 'gba'
             include_directories : includes,
             dependencies : dependencies,
             link_args : link_args,
-            install_rpath: 'lib'
         )
         nro = custom_target(
             'Build romfs and final NRO for Apotris on Nintendo Switch',
@@ -286,8 +288,16 @@ if host_machine.system() != 'gba'
             dependencies : dependencies,
             link_args : link_args,
             win_subsystem : 'windows',
-            install_rpath: 'lib'
+            install : true
         )
+        if host_machine.system() == 'darwin'
+            install_data('dist' / 'Apotris.icns', install_dir : 'Contents/Resources')
+            install_data('dist' / 'Apotris.bash', install_dir : 'Contents/MacOS')
+            install_data('dist' / 'Info.plist', install_dir : 'Contents')
+            install_subdir(audio_dir, install_dir : 'Contents/MacOS')
+        else
+            install_subdir(audio_dir, install_dir : '.')
+        endif
     endif
 else
     ##########################################

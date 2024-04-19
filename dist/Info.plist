@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleGetInfoString</key>
+  <string>Apotris</string>
+  <key>CFBundleExecutable</key>
+  <string>Apotris.bash</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.apotris</string>
+  <key>CFBundleName</key>
+  <string>apotris</string>
+  <key>CFBundleIconFile</key>
+  <string>Apotris.icns</string>
+  <key>CFBundleShortVersionString</key>
+  <string>4.0.0b</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>IFMajorVersion</key>
+  <integer>4</integer>
+  <key>IFMinorVersion</key>
+  <integer>0</integer>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.games</string>
+</dict>
+</plist>
