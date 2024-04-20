@@ -10,7 +10,7 @@ Customizing sound effects:
     same file name.
 
 WINDOWS:
-    After any changes, run 'build.bat' to add them to the ROM.
+    After any changes, run 'WINDOWS_build.bat' to add them to the ROM.
 
 LINUX:
-    Python is required to build songs. After any changes, run 'build.sh' to add them to the ROM.
+    Python is required to build songs. After any changes, run 'LINUX_build.sh' to add them to the ROM.
