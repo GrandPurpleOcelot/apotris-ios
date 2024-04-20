@@ -252,8 +252,6 @@ if host_machine.system() != 'gba'
         link_args += '-Wl,--no-whole-archive'
     endif
 
-    link_args += '-lxcb-randr'
-
     # The final Apotris compile target
     if host_machine.system() == 'emscripten'
         binary = executable(
