@@ -507,28 +507,32 @@ void Game::update() {
 
     if (das == maxDas && !(left && right)) {
         if (arr >= 0 && --arrCounter <= 0 && !(gameMode == CLASSIC && down)) {
+            bool moved = false;
+
             for(int i = 0; i < 1 + (arr == 0); i++){//move piece twice if arr is 0
                 if (left)
-                    moveLeft();
+                    moved = moveLeft();
                 else if(right)
-                    moveRight();
+                    moved = moveRight();
 
-                if(speed == 20 && mode != BLITZ){
+                if(speed == 20 && gameMode != BLITZ){
                     int counter = 0;
                     while(counter++ < 20 && checkRotation(0,1,pawn.rotation))
                         pawn.y++;
                 }
             }
-            arrCounter = arr;
-        }else if(arr < 0){
-            bool c = true;
-            while(c){
-                if(left)
-                    c = moveLeft();
-                else if(right)
-                    c = moveRight();
 
-                if(speed == 20 && mode != BLITZ){
+            if(!(gameMode == CLASSIC && !moved))
+                arrCounter = arr;
+        }else if(arr < 0){
+            bool moved = true;
+            while(moved){
+                if(left)
+                    moved = moveLeft();
+                else if(right)
+                    moved = moveRight();
+
+                if(speed == 20 && gameMode != BLITZ){
                     int counter = 0;
                     while(counter++ < 20 && checkRotation(0,1,pawn.rotation))
                         pawn.y++;
