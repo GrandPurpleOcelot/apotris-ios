@@ -1,5 +1,4 @@
 audio_files = files(
-    'favicon32.bmp',
     'GAME_a_thirno.it',
     'GAME_b_oh_my_god.mod',
     'GAME_c_unsuspected_h.mod',
@@ -52,7 +51,10 @@ audio_files = files(
 
 fs = import('fs')
 
-foreach file : audio_files
+list = audio_files
+list += files('favicon32.bmp')
+
+foreach file : list
     filename = fs.name(file)
     audio_target = configure_file(
         input : file,

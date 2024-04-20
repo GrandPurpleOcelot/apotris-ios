@@ -69,9 +69,9 @@ sources = files(
 subdir(data_dir)
 
 # Common build file references
-soundbank_file = files('data/soundbank.bin')
-effect_locations_file = files('data/effect_locations.bin')
+
 icon_file = files('sprites/favicon32.bmp')
+effect_locations_file = 'effect_locations.bin'
 
 # Set up recommended compiler and linker flags for GBA before loading any other projects
 if host_machine.system() == 'gba'
@@ -124,13 +124,14 @@ add_project_arguments('-Wno-array-bounds', language : ['c', 'cpp'])
 add_project_arguments('-Wno-shadow', language : ['c', 'cpp'])
 add_project_arguments('-Wno-unused', language : ['c', 'cpp'])
 
+subdir('assets')
+
 if host_machine.system() != 'gba'
     #############################
     # Windows, macOS, and Linux #
     #############################
 
     # Bring in required audio assets to copy to build output
-    subdir('assets')
 
     # All the dependencies should be static to work around various issues or platform specific behavior
     opus = dependency('opus', static : true, fallback : ['opus', 'opus_dep'])
@@ -251,6 +252,7 @@ if host_machine.system() != 'gba'
         link_args += '-Wl,--no-whole-archive'
     endif
 
+    link_args += '-lxcb-randr'
 
     # The final Apotris compile target
     if host_machine.system() == 'emscripten'
@@ -354,13 +356,31 @@ else
     gbfs = gba_tools.get_variable('gbfs_executable')
     gbafix = find_program('gbafix-py', required : true)
     makerom = find_program('makerom', required : true)
+    subproject('mmutil')
+    mmutil = find_program('mmutil')
 
     # References to python helper scripts
+    buildSoundbank = files('tools/buildSoundbank.py')
     gbabuild = files('tools/gbaBuild.py')
     pocket_patch = files('tools/pocket.py')
     multibootbuild = files('tools/multibootBuild.py')
 
+    soundbank_files = audio_files
+    soundbank_bin = 'soundbank.bin'
+    soundbank_header = 'soundbank.h'
+    sound_effects = files('tools/sound_effects.txt')
+
     generated_files = []
+    soundbank_target = custom_target(
+        'soundbank',
+        output : [soundbank_bin, soundbank_header, effect_locations_file, 'audio.gbfs'],
+        command : [
+            py3, buildSoundbank, 'default', mmutil, gbfs, sound_effects,soundbank_files,
+        ],
+        depend_files : soundbank_files,
+    )
+    generated_files += soundbank_target
+
     # Assemble bin2s targets
     foreach binfile : binary_files
         filename = fs.name(binfile).split('.')[0]
@@ -380,16 +400,17 @@ else
         generated_files += bin2s_target
     endforeach
 
-    # Use gbfs to create archive to append to ROM with sound data
-    audio_target = custom_target(
-        'audio and effect bank',
-        output : 'audio.gbfs',
-        command : [
-            gbfs, 'audio.gbfs', soundbank_file, effect_locations_file,
-        ],
-        depend_files : [soundbank_file, effect_locations_file]
-    )
-    generated_files += audio_target
+    # # Use gbfs to create archive to append to ROM with sound data
+    # audio_target = custom_target(
+    #     'audio and effect bank',
+    #     output : 'audio.gbfs',
+    #     command : [
+    #         gbfs, 'audio.gbfs', soundbank_bin, effect_locations_file,
+    #     ],
+    #     depend_files : [soundbank_bin, effect_locations_file],
+    #     depends : soundbank_target,
+    # )
+    # generated_files += audio_target
 
     # Required for minrt
     link_args = ['-specs=nosys.specs']
@@ -455,7 +476,7 @@ else
         'final ROM with audio',
         output : name + '.gba',
         input : rom_base,
-        command : [py3, gbabuild, padbin, '256', '@INPUT@', audio_target, '0x400000', '@OUTPUT@', gbafix],
+        command : [py3, gbabuild, padbin, '256', '@INPUT@', 'audio.gbfs', '0x400000', '@OUTPUT@', gbafix],
         build_by_default : true)
 
     # Analogue Pocket rumble-patched ROM (masquerades as DRILL DOZER)
