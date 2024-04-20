@@ -212,7 +212,7 @@ class ModeListScene: public SimpleListScene{
     std::list<std::string> getOptionList(){
         std::list<std::string> l = gameOptions;
 
-        #ifdef PC
+        #if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH)
         l.remove("2P Battle");
         #endif
 

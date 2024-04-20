@@ -48,6 +48,7 @@ with open("./include/audio_files.h","w") as header:
     header.write("//DO NOT EDIT DIRECTLY\n\n");
     header.write("#pragma once\n\n");
 
+    header.write(f"#define SFX_COUNT {count}\n\n")
     header.write(f"extern const char * SoundEffectPaths[];\n")
     header.write(f"extern int SoundEffectIds[];\n")
 

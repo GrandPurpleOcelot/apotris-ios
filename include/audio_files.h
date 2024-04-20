@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define SFX_COUNT 39
+
 extern const char * SoundEffectPaths[];
 extern int SoundEffectIds[];
 
