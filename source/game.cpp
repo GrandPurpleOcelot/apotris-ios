@@ -1621,6 +1621,10 @@ void screenShake() {
     enableLayerWindow(1, 0, shake, 240, 160 + shake, false);
     enableLayerWindow(2, 0, shake, 240, 160 + shake, false);
 
+    #ifdef TE
+    setSpriteMaskRegion(shake);
+    #endif
+
     if(savefile->settings.screenShakeType == 0){
         if (shake) {
             if (shake > 0)

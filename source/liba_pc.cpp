@@ -269,7 +269,13 @@ void showSprites(int n ){
         else
             TLN_SetSpriteBlendMode(counter, (blendSprites)?BLEND_CUSTOM:BLEND_MIX75 , 0);
 
-        TLN_SetSpriteFlags(counter, (sprite->flipx * FLAG_FLIPX) + (sprite->flipy * FLAG_FLIPY) + ((sprite->priority == 1) * FLAG_PRIORITY));
+        TLN_SetSpriteFlags(
+            counter,
+            (sprite->flipx * FLAG_FLIPX) +
+            (sprite->flipy * FLAG_FLIPY) +
+            ((sprite->priority == 1) * FLAG_PRIORITY) +
+            FLAG_MASKED
+        );
 
         counter++;
     }
@@ -899,6 +905,13 @@ void showFPS(){
         const int width = 30 - 2 * (savefile->settings.aspectRatio == 1);
         aprintColor(buff, width - 4, 0, 1);
     }
+}
+
+void setSpriteMaskRegion(int shift){
+    const int top = offsety + 164 + shift;
+    const int bot = offsety + shift;
+
+    TLN_SetSpritesMaskRegion(top,bot);
 }
 
 #endif

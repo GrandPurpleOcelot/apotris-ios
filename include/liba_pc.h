@@ -299,6 +299,6 @@ extern "C"{
 
 extern u16 gradientTable[SCREEN_HEIGHT + 1];
 
-// extern void sfx(int n);
-// extern void sfx
+extern void setSpriteMaskRegion(int shift);
+
 #define UNBOUND -2
