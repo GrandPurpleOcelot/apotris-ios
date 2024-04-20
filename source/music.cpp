@@ -81,12 +81,11 @@ void playNextSong(){
     if (max <= 0)
         return;
 
-    int index = 0;
+    int index = currentlyPlayingSong;
     int count = 0;
 
     do{
-        index = currentlyPlayingSong+1;
-        if(index >= max)
+        if(++index >= max)
             index = 0;
     }while(getSongState(menuId, index) && count++ < 1000);
 
