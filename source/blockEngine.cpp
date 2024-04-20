@@ -513,7 +513,7 @@ void Game::update() {
                 else if(right)
                     moveRight();
 
-                if(speed == 20){
+                if(speed == 20 && mode != BLITZ){
                     int counter = 0;
                     while(counter++ < 20 && checkRotation(0,1,pawn.rotation))
                         pawn.y++;
@@ -528,7 +528,7 @@ void Game::update() {
                 else if(right)
                     c = moveRight();
 
-                if(speed == 20){
+                if(speed == 20 && mode != BLITZ){
                     int counter = 0;
                     while(counter++ < 20 && checkRotation(0,1,pawn.rotation))
                         pawn.y++;
