@@ -4,7 +4,7 @@ FROM ubuntu:23.10
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
   && apt-get install -y python3 ash zsh vim build-essential git make curl meson zstd wget sudo\
-    libsdl2-dev libsdl2-mixer-dev libopus-dev libvorbis-dev\
+    libsdl2-mixer-dev libopus-dev libvorbis-dev\
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
@@ -53,3 +53,6 @@ RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bash_profile
 RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bashrc
 RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bashrc
 RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bashrc
+
+# fix linux SDL2 xrandr dependency issue
+RUN sudo apt remove --purge libsdl2-dev -y
