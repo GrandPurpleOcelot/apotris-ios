@@ -103,7 +103,7 @@ class TitleScene : public Scene{
     const int flashMax = 48;
 
     int demoTimer = 0;
-    const int demoMax = 60 * 15;
+    const int demoMax = 60 * 10;
 
     bool testDraw = false;
 
