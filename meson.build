@@ -80,12 +80,14 @@ if host_machine.system() == 'gba'
 endif
 
 if host_machine.system() == 'windows'
-  add_global_arguments('-DWIN32', language : ['c', 'cpp'])
-  add_global_arguments('-mwin32', language : ['c', 'cpp'])
+    add_global_arguments('-DWIN32', language : ['c', 'cpp'])
+    add_global_arguments('-mwin32', language : ['c', 'cpp'])
 elif host_machine.system() == 'emscripten'
-  add_global_arguments('-pthread', language : ['cpp', 'c'])
-  add_global_arguments('-fno-stack-protector', language : ['cpp', 'c'])
-  add_global_arguments('-U_FORTIFY_SOURCE', language : ['cpp', 'c'])
+    add_global_arguments('-pthread', language : ['cpp', 'c'])
+    add_global_arguments('-fno-stack-protector', language : ['cpp', 'c'])
+    add_global_arguments('-U_FORTIFY_SOURCE', language : ['cpp', 'c'])
+elif host_machine.system() == 'darwin'
+    add_global_arguments('-mmacosx-version-min=10.15', language : ['cpp', 'c'])
 endif
 
 build_type = get_option('buildtype')
@@ -152,7 +154,7 @@ if host_machine.system() != 'gba'
         openmpt = dependency('openmpt', static : true, default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
         tilengine = dependency('Tilengine', static : true, default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
         if host_machine.system() == 'darwin'
-            sdl2_dep = subproject('sdl2', default_options : ['default_library=static']).get_variable('sdl2_dep')
+            sdl2_dep = subproject('sdl2', default_options : ['default_library=static', 'test=false']).get_variable('sdl2_dep')
         else
             sdl2_dep = dependency('sdl2', static : true, default_options : ['default_library=static'], fallback : ['sdl2', 'sdl2_dep'])
         endif
@@ -250,6 +252,8 @@ if host_machine.system() != 'gba'
         link_args += '-Wl,-Bstatic,--whole-archive'
         link_args += '-lwinpthread'
         link_args += '-Wl,--no-whole-archive'
+    elif host_machine.system() == 'darwin'
+        link_args += '-mmacosx-version-min=10.15'
     endif
 
     # The final Apotris compile target
@@ -294,7 +298,7 @@ if host_machine.system() != 'gba'
             install_data('dist' / 'Apotris.icns', install_dir : 'Contents/Resources')
             install_data('dist' / 'Apotris.bash', install_dir : 'Contents/MacOS')
             install_data('dist' / 'Info.plist', install_dir : 'Contents')
-            install_subdir(audio_dir, install_dir : 'Contents/MacOS')
+            install_subdir(audio_dir, install_dir : 'Contents/Resources')
         else
             install_subdir(audio_dir, install_dir : '.')
         endif

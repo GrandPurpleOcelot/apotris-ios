@@ -1,4 +1,5 @@
 #!/bin/bash
 
 cd "${0%/*}"
-./Apotris
+cd ../Resources/
+../MacOS/Apotris
