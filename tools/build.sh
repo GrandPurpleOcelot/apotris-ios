@@ -47,7 +47,7 @@ cp build-windows/Apotris.exe bin/windows-x64/.
 
 #switch
 meson setup --cross-file=meson/switch.ini $TYPE build-switch && meson compile -C build-switch
-mkdir -b bin/switch/
+mkdir -p bin/switch/
 
 cp build-switch/Apotris.nro bin/switch/.
 cp tools/README_SWITCH.txt bin/switch/README.txt
