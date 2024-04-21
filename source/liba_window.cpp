@@ -89,11 +89,13 @@ void windowInit(){
 
     nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 
+#ifndef __APPLE__
     SDL_Surface *icon = SDL_LoadBMP("assets/favicon32.bmp");
 
     SDL_SetWindowIcon(window,icon);
 
     SDL_FreeSurface(icon);
+#endif
 }
 
 void key_poll(){
