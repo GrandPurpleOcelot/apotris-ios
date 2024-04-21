@@ -10,7 +10,9 @@ def main():
     build_romfs_path = sys.argv[1]
     assets_folder = sys.argv[2]
     elf2nro_path = sys.argv[3]
-    output_binary = sys.argv[4]
+    nacptool_path = sys.argv[4]
+    icon_path = sys.argv[5]
+    output_binary = sys.argv[6]
 
     with tempfile.TemporaryDirectory() as temp_dir:
         # Construct the destination path by appending the source directory name
@@ -32,8 +34,16 @@ def main():
             print("build_romfs command failed.")
             sys.exit(1)
 
-        args = [elf2nro_path, output_binary, output_binary + '.nro', f'--romfs={os.path.join(temp_dir, "romfs.bin")}']
-        return_code = subprocess.run(args, stdout=subprocess.DEVNULL)
+        args = [nacptool_path, "--create", "Apotris", "akouzoukos", "v4.0.0RC", os.path.join(temp_dir, 'control.nacp')]
+        return_code = subprocess.run(args)
+
+        if return_code.returncode != 0:
+            print("nacptool command failed.")
+            sys.exit(1)
+
+        args = [elf2nro_path, output_binary, output_binary + '.nro', f'--nacp={os.path.join(temp_dir, "control.nacp")}', f'--romfs={os.path.join(temp_dir, "romfs.bin")}', f'--icon={icon_path}']
+        #return_code = subprocess.run(args, stdout=subprocess.DEVNULL)
+        return_code = subprocess.run(args)
 
         if return_code.returncode != 0:
             print("elf2nro command failed.")
