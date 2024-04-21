@@ -7,7 +7,7 @@ std::string getDescription(std::string element){
         return "Try to get the best score as the game gets faster and faster.";
 
     }else if(element == "Sprint"){
-        return "Reach the goal as fast as possible.";
+        return "Clear lines to reach the goal as fast as possible.";
 
     }else if(element == "Dig"){
         return "Dig through lines of garbage.";
@@ -37,7 +37,7 @@ std::string getDescription(std::string element){
         return "The goal is to relax...";
 
     }else if(element == "2P Battle"){
-        return "Battle your friends through the Link Cable.";
+        return "Battle your friends.";
 
     }else if(element == "CPU Battle"){
         return "Go against an AI opponent.";
@@ -127,7 +127,6 @@ std::string getDescription(std::string element){
 
     }else if(element == "Unpause Countdown"){
         return "Enables a grace period countdown when unpausing.";
-
     }
 
     return "";
