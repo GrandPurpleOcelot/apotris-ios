@@ -234,15 +234,17 @@ if host_machine.system() != 'gba'
     name_suffix = ''
 
     if host_machine.system() == 'emscripten'
-        link_args += '-sAUDIO_WORKLET=1'
-        link_args += '-sWASM_WORKERS=1'
-        link_args += '-sSTACK_SIZE=131072'
+        link_args += '-sAUDIO_WORKLET=1' # Avoid deprecated features in Chrome, Safari, etc.
+        link_args += '-sWASM_WORKERS=1' # New threading model
+        link_args += '-sSTACK_SIZE=131072' # musl default; gcc default crashes
         link_args += '--emrun'
         link_args += '-sUSE_SDL=2'
         link_args += '-sUSE_SDL_MIXER=2'
-        link_args += '-sASYNCIFY'
-        link_args += '-lidbfs.js'
-        link_args += '-sALLOW_MEMORY_GROWTH=1'
+        link_args += '-sASYNCIFY' # Necessary to feed JS event pump
+        link_args += '-lidbfs.js' # Game doesn't boot without it
+        link_args += '-sALLOW_MEMORY_GROWTH=0' # Necessary for mobile webkit
+        link_args += '-sINITIAL_MEMORY=536870912' # Reserve 512 MB of RAM (measured at 250MB used in release mode)
+        link_args += '-sMIN_SAFARI_VERSION=150000' # Necessary for pthreads; not relevant on other browsers
         link_args += '--preload-file'
         link_args += 'assets@/assets'
         name_suffix = 'html'
