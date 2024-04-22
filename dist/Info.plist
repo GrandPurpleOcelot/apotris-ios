@@ -8,12 +8,14 @@
   <string>Apotris.bash</string>
   <key>CFBundleIdentifier</key>
   <string>com.apotris</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>English</string>
   <key>CFBundleName</key>
-  <string>apotris</string>
+  <string>Apotris PC</string>
   <key>CFBundleIconFile</key>
   <string>Apotris.icns</string>
   <key>CFBundleShortVersionString</key>
-  <string>4.0.0b</string>
+  <string>4.0.0RC</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>
@@ -24,5 +26,11 @@
   <integer>0</integer>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.games</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>10.15.0</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
 </dict>
 </plist>
