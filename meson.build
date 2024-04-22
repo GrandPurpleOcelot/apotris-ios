@@ -243,7 +243,7 @@ if host_machine.system() != 'gba'
         link_args += '-sASYNCIFY' # Necessary to feed JS event pump
         link_args += '-lidbfs.js' # Game doesn't boot without it
         link_args += '-sALLOW_MEMORY_GROWTH=0' # Necessary for mobile webkit
-        link_args += '-sINITIAL_MEMORY=536870912' # Reserve 512 MB of RAM (measured at 250MB used in release mode)
+        link_args += '-sINITIAL_MEMORY=67108864' # Reserve 64 MB of heap (default of 16MB works everywhere but let's be safe)
         link_args += '-sMIN_SAFARI_VERSION=150000' # Necessary for pthreads; not relevant on other browsers
         link_args += '--preload-file'
         link_args += 'assets@/assets'
