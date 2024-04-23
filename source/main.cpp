@@ -757,6 +757,9 @@ void setPalette(){
     setPaletteColor(15, 5, RGB15(25, 5, 5), 1);
 
     for(int i = 0; i < 16; i++){
+        if(i == 12)
+            continue;
+
         setPaletteColor(i,15,RGB15(0,31,0),1);
         setPaletteColor(16+i,15,RGB15(0,31,0),1);
     }
