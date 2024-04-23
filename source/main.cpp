@@ -476,6 +476,9 @@ std::string nameInput(int place) {
         result = result.substr(0, 8);
 
     for (int i = 0; i < 8; i++)
+        savefile->latestName[i] = ' ';
+
+    for (int i = 0; i < result.size(); i++)
         savefile->latestName[i] = result.at(i);
 
     return result;
