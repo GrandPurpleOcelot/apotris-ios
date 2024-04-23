@@ -2171,7 +2171,9 @@ void Game::endZone(){
     clear(Drop());
 
     eventLock = true;
-    zoneExit = true;
+
+    if(zonedLines)
+        zoneExit = true;
 
     previousClear.isPerfectClear = false;
 }
