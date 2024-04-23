@@ -418,12 +418,19 @@ void GameScene::checkSounds() {
         setClearEffect();
         showBackground(0);
 
+
         flashTimer = flashTimerMax;
         zoneFlash();
 
-        for(int i = 0; i < 20; i++){
-            setTile(25, 9, i, tileBuild(4, false, false, 0));
-            setTile(25, 20, i, tileBuild(4, true, false, 0));
+        for(int layer = 0; layer < 2; layer++){
+            for(int i = 0; i < 20; i++){
+                setTile(25 + layer, 9, i, 0);
+                setTile(25, 20, i, 0);
+            }
+
+            for(int i = 0; i < 12; i++){
+                setTile(25 + layer, 9 + i, 20, 0);
+            }
         }
 
         if (savefile->settings.lightMode){
@@ -448,18 +455,12 @@ void GameScene::checkSounds() {
             }
         }
 
-        // if(savefile->settings.lightMode)
-        //     memset16(&pal_bg_mem[4 * 16 + 5], 0x4a52, 1);
-
     } else if (game->sounds.zone == -1) {
         aprintClearArea(10, 0, 10, 20);
         resetZonePalette();
 
         flashTimer = flashTimerMax;
         eventPauseTimer = flashTimerMax + 2;
-
-        //FIXME:
-        //zoneFlash();
     }
 
     if(game->sounds.meter){
@@ -2536,33 +2537,29 @@ void resetZonePalette(){
 
     setMusicTempo(1024);
     setMusicVolume(512 * ((float)savefile->settings.volume / 10));
-    // mmSetModuleTempo(1024);
 
     loadTiles(0, 4, sprite5tiles_bin, 1);
-    // memcpy16_fast(&tile_mem[0][4],sprite5tiles_bin,16);
+
+    //board side frame tiles
+    for(int i = 0; i < 10; i++)
+        for(int j = 0; j < 4; j++)
+            loadSpriteTilesPartial(200 + i * 4, &sprite5tiles_bin, 0, j, 1, 1, 1);
 
     if(game->lost)
         return;
 
-    // u16 * dest = (u16*) &se_mem[26];
-    for(int i = 0; i < 20; i++){
-        setTile(25, 9, i, tileBuild(4, false, false, 8));
-        setTile(25, 20, i, tileBuild(4, true, false, 8));
-        // dest[i * 32 + 9] = 4 + 0x8000;
-        // dest[i * 32 + 20] = 4 + 0x8400;
+    for (int layer = 0; layer < 2; layer++) {
+        for (int i = 0; i < 20; i++) {
+            setTile(25 + layer, 9, i, 0);
+            setTile(25, 20, i, 0);
+        }
+
+        for(int i = 0; i < 12; i++){
+            setTile(25 + layer, 9 + i, 20, 0);
+        }
     }
 
-    #ifdef TE
-
-    setTile(25,20,20,tileBuild(29,true,true,8));// right bottom frame corner
-    setTile(25,9,20,tileBuild(29,false,true,8));// left bottom frame corner
-
-    for(int i = 0; i < 10; i++)
-        setTile(25,10+i,20,tileBuild(28,false,true,8));
-
-    #endif
-
-    if(!eventPauseTimer)
+    if (!eventPauseTimer)
         flashTimer = 0;
 }
 
@@ -2585,17 +2582,14 @@ void showFinesseCombo(){
 }
 
 void frameSnow(int layer){
+    if(layer != -1)
+        log("snow" + std::to_string(layer));
     const int fillAmount = 20;
-
-    int l = 25 + layer;
 
     TILE * t = (TILE *) sprite5tiles_bin;
 
     TILE * dest = new TILE();
     TILE * topTile = new TILE();
-
-    // TILE * dest = (TILE *) &tile_mem[0][4];
-    // TILE * topTile = (TILE *) &tile_mem[0][46];
 
     for(int i = 0; i < 8; i++){
         int add1 = 0;
@@ -2612,33 +2606,49 @@ void frameSnow(int layer){
     loadTiles(0, 4, dest, 1);
     loadTiles(0, 46, topTile, 1);
 
-    // u16 * dest2 = (u16 *) &se_mem[25];
+    if(layer >= 0){
+        int l = 25 + layer;
 
-    int i;
-    for(i = 0; i < 20 - ((20 * game->zoneTimer) / game->zoneStart); i++){
-        setTile(l, 9, i, 0);
-        setTile(l, 20, i, 0);
-        // dest2[i * 32 + 9] = 0;
-        // dest2[i * 32 + 20] = 0;
+        int i;
+        for(i = 0; i < 20 - ((20 * game->zoneTimer) / game->zoneStart); i++){
+            setTile(l, 9, i, 0);
+            setTile(l, 20, i, 0);
+        }
+
+        if(i == 20)
+            i = 19;
+
+        setTile(l, 9, i, tileBuild(46,false,false,0));
+        setTile(l, 20, i, tileBuild(46,true,false,0));
+
+        #ifdef TE
+
+        setTile(l,20,20,tileBuild(29,true,true,0));// right bottom frame corner
+        setTile(l,9,20,tileBuild(29,false,true,0));// left bottom frame corner
+
+        for(i = 0; i < 10; i++)
+            setTile(l,10+i,20,tileBuild(28,false,true,0));
+
+        #endif
+    }else{
+        const int timer = min(20 - ((20 * game->zoneTimer) / game->zoneStart),19);
+
+        for(int i = 0; i < 20; i++){
+            if(i < (timer)){
+                clearSpriteTile(200 + (i / 4) * 4,0,i % 4,1);
+                clearSpriteTile(220 + (i / 4) * 4,0,i % 4,1);
+            }else if(i == timer){
+                setSpriteTile(200 + (i / 4) * 4, 0, i % 4, 1, topTile);
+                setSpriteTile(220 + (i / 4) * 4, 0, i % 4, 1, topTile);
+            }else{
+                setSpriteTile(200 + (i / 4) * 4, 0, i % 4, 1, dest);
+                setSpriteTile(220 + (i / 4) * 4, 0, i % 4, 1, dest);
+            }
+        }
+        //board frame corners
+        loadSpriteTilesPartial(240, &sprite20tiles_bin[32 * 2], 0, 0, 1, 1, 4);
+        loadSpriteTilesPartial(248, &sprite20tiles_bin[32 * 3], 3, 0, 1, 1, 4);
     }
-
-    if(i == 20)
-        i = 19;
-
-    setTile(l, 9, i, tileBuild(46,false,false,0));
-    setTile(l, 20, i, tileBuild(46,true,false,0));
-    // dest2[i * 32 + 9] = 46;
-    // dest2[i * 32 + 20] = 46 + 0x400;
-
-    #ifdef TE
-
-    setTile(l,20,20,tileBuild(29,true,true,0));// right bottom frame corner
-    setTile(l,9,20,tileBuild(29,false,true,0));// left bottom frame corner
-
-    for(int i = 0; i < 10; i++)
-        setTile(l,10+i,20,tileBuild(28,false,true,0));
-
-    #endif
 
     delete dest;
     delete topTile;
@@ -3027,7 +3037,7 @@ void GameScene::init(){
         for(int j = 0; j < 4; j++)
             loadSpriteTilesPartial(200 + i * 4, &sprite5tiles_bin, 0, j, 1, 1, 1);
 
-    //board side frame tiles
+    //board bottom frame tiles
     for(int i = 1; i < 11; i++)
         loadSpriteTilesPartial(240 + (i / 4) * 4, &sprite20tiles_bin[32], i % 4, 0, 1, 1, 4);
 
@@ -3264,7 +3274,7 @@ void GameScene::update(){
 
     if(game->zoneTimer){
         if(gameSeconds % 4 == 0){
-            frameSnow(0);
+            frameSnow(-1);
         }
 
         if(!flashTimer)
