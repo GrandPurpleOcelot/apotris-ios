@@ -482,7 +482,7 @@ void setDefaultGraphics(Save *save, int depth){
         save->settings.edges = true;
         save->settings.backgroundGrid = 6;
         save->settings.skin = 12;
-        save->settings.palette = 1;
+        save->settings.palette = 5;
         save->settings.shadow = 5;
         save->settings.lightMode = false;
     }
