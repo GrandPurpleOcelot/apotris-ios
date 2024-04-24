@@ -2561,6 +2561,8 @@ Game::Game(int gm, int sd, bool big){
         level = 0;
         speed = 20;
         setDeathTuning();
+    }else if(gameMode == BATTLE){
+        replayElligible = false;
     }
 
     for (int i = 0; i < 40; i++) {

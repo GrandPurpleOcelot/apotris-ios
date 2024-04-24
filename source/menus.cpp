@@ -460,7 +460,7 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps, boo
         aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special1), 0, 0, 2);
         aprints("for Stats", 0, 7, 2);
 
-        if(end && !multiplayer){
+        if(end && !(multiplayer || game->gameMode == BATTLE)){
             if(game->replayElligible){
                 aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special2), 0, 21, 2);
                 aprints("for Replay", 0, 28, 2);
