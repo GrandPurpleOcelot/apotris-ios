@@ -34,7 +34,7 @@ def main():
             print("build_romfs command failed.")
             sys.exit(1)
 
-        args = [nacptool_path, "--create", "Apotris", "akouzoukos", "v4.0.0RC", os.path.join(temp_dir, 'control.nacp')]
+        args = [nacptool_path, "--create", "Apotris", "akouzoukos", "v4.0.0RC2", os.path.join(temp_dir, 'control.nacp')]
         return_code = subprocess.run(args)
 
         if return_code.returncode != 0:
