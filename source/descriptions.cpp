@@ -54,6 +54,9 @@ std::string getDescription(std::string element){
     }else if(element == "Playback"){
         return "Cycle through songs or Loop the same song.";
 
+    }else if(element == "Piece Move SFX"){
+        return "Play a sound affect when you move the falling piece. Initial only plays a sound for the start of the movement.";
+
     }else if(element == "Song List"){
         return "Enable/Disable songs.";
 
@@ -99,7 +102,11 @@ std::string getDescription(std::string element){
         return "Buffer rotations during delays.";
 
     }else if(element == "Initial System"){
-        return "TYPE A always buffers actions, TYPE B only buffers if you started holding the button during the delay.";
+        return "TYPE A always buffers actions, TYPE B only buffers if you started holding the button during a delay.";
+
+    }else if(element == "Reset Handling"){
+        return "Set handling options back to default.";
+
 // GAMEPLAY ------------------------------------------------------------------------------
     }else if(element == "Previews"){
         return "Number of upcoming pieces to show.";
@@ -111,7 +118,7 @@ std::string getDescription(std::string element){
         return "Shows the remaining lines to clear.";
 
     }else if(element == "Spawn Preview"){
-        return "Shows where the next piece will spawn so you can avoid blocking out";
+        return "Shows where the next piece will spawn so you can avoid blocking out.";
 
     }else if(element == "Rotation System"){
         return "Changes how minos rotate.";
@@ -127,6 +134,16 @@ std::string getDescription(std::string element){
 
     }else if(element == "Unpause Countdown"){
         return "Enables a grace period countdown when unpausing.";
+
+// SAVING ------------------------------------------------------------------------------
+    }else if(element == "Save Type"){
+        return "Autodetected save type.";
+
+    }else if(element == "Chip Size"){
+        return "Autodetected save chip size (has no effect on features).";
+
+    }else if(element == "Autosave"){
+        return "How often the game saves automatically (doesn't save while in a round).";
     }
 
     return "";
@@ -175,6 +192,10 @@ std::string getDescription(std::string mode, std::string element,std::string opt
             return "Goal lines.";
 
         }
+    }else if(mode == "Survival"){
+        if(element == "Difficulty"){
+            return "How often garbage lines rise from the bottom.";
+        }
     }else if(mode == "Classic"){
         if(element == "Type"){
             if(option == "A-TYPE"){
@@ -187,8 +208,16 @@ std::string getDescription(std::string mode, std::string element,std::string opt
         }else if(element == "Level"){
             return "Starting Level.";
 
-        }else if(element == "Lines"){
-            return "How many lines to clear before the game ends.";
+        }else if(element == "Height"){
+            return "How high the starting garbage lines are.";
+
+        }
+    }else if(mode == "Master"){
+        if(option == "Normal"){
+            return "Mechanics that mirror the other normal modes.";
+
+        }else if(option == "Classic"){
+            return "Classic mechanics for Grandmaster fanatics.";
 
         }
     }else if(mode == "Master"){
@@ -204,7 +233,7 @@ std::string getDescription(std::string mode, std::string element,std::string opt
             return "Forces you to play with perfect finesse, showing the correct move when you make a mistake.";
 
         }else if(element == "Level"){
-            return "Starting Level.";
+            return "Starting Level. (Level 0 turns off gravity)";
 
         }
     }
