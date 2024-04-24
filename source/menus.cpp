@@ -323,7 +323,7 @@ void endAnimation() {
     clearSprites(128);
     showHold();
 
-    showQueue();
+    showQueue(1);
     drawFrame(-1);
 
     showSprites(128);
@@ -701,7 +701,7 @@ int GameScene::pauseMenu(){
                     sleepMenu();
                     showStats(showingStats, totalTime, ppsStr, false);
                     showModeText();
-                    showQueue();
+                    showQueue(1);
                     showHold();
                     hideMinos();
                     continue;

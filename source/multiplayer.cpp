@@ -397,11 +397,11 @@ void drawEnemyBoard() {
     }
 
     enemyBoardSprite = &obj_buffer[25];
-    sprite_set_attr(enemyBoardSprite, ShapeSquare, 3, boardTile, 15, 1);
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
-    sprite_enable_affine(enemyBoardSprite, 6, true);
+    sprite_set_attr(enemyBoardSprite, ShapeSquare, 3, boardTile, 15, 1);
+    sprite_enable_affine(enemyBoardSprite, 25, true);
     sprite_set_pos(enemyBoardSprite, x, y);
-    sprite_set_size(enemyBoardSprite, int2fx(1) >> zoom, 6);
+    sprite_set_size(enemyBoardSprite, int2fx(1) >> zoom, 25);
 
     const int margin = 3;
 

@@ -647,7 +647,7 @@ void GraphicsScene::draw(){
 
         drawFrame(0);
 
-        showQueue();
+        showQueue(1);
         showHold();
         showBackground(0);
     }

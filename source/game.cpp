@@ -163,7 +163,7 @@ void GameScene::draw(){
     showSpawn();
 
     showHold();
-    showQueue();
+    showQueue(0);
 
     drawFrame(-1);
 
@@ -918,7 +918,10 @@ void showHold() {
     }
 }
 
-void showQueue() {
+void showQueue(bool offsetSpriteIndex) {
+    const int frameIndex = (offsetSpriteIndex)? 122 : 117;
+    const int spriteIndex = (offsetSpriteIndex)? 117 : 6;
+
     int maxQueue = savefile->settings.maxQueue;
 
     if(game->gameMode == CLASSIC)
@@ -927,14 +930,14 @@ void showQueue() {
         maxQueue = (maxQueue < 3)? maxQueue : 3;
 
     for (int i = 0; i < 5; i++)
-        queueSprites[i] = &obj_buffer[117 + i];
+        queueSprites[i] = &obj_buffer[spriteIndex + i];
 
     for (int i = 0; i < 3; i++)
-        queueFrameSprites[i] = &obj_buffer[122 + i];
+        queueFrameSprites[i] = &obj_buffer[frameIndex + i];
 
     OBJ_ATTR *background[3];
     for(int i = 0; i < 3; i++)
-        background[i] = &obj_buffer[125+i];
+        background[i] = &obj_buffer[frameIndex + 3 + i];
 
     if(game->zoneTimer){
         for(int i = 0; i < 3; i++){
@@ -1526,7 +1529,7 @@ void GameScene::countdown() {
     screenShake();
 
     showTimer();
-    showQueue();
+    showQueue(0);
     showHold();
     showPawn();
     showShadow();
@@ -2349,13 +2352,15 @@ void showPlaceEffect(){
             y = it->y;
         }
 
-        x += xoffset + push * savefile->settings.shake;
-        y += yoffset - shake * savefile->settings.shake + peek * 8 + peekShift;
+        const bool doubleSize = (it->piece == PIECE_I && (spin != 0 || r != 0));
+
+        x += xoffset + push * savefile->settings.shake + !doubleSize * 32;
+        y += yoffset - shake * savefile->settings.shake + peek * 8 + peekShift + 16 * !doubleSize;
 
         it->sprite = &obj_buffer[19+i];
         sprite_unhide(it->sprite,ATTR0_AFF_DBL);
         sprite_set_attr(it->sprite, ShapeWide, 3, tileStart + 32 * i, (game->zoneTimer != 0)?11:it->piece, 3 - (it->rotating != 0));
-        sprite_enable_affine(it->sprite, 7+i, true);
+        sprite_enable_affine(it->sprite, 7+i, doubleSize);
         sprite_set_pos(it->sprite, x, y);
         sprite_rotscale(it->sprite, ((flip)?-1:1) << 8, 1<<8, - 0x4000 * (r) + spin,7+i);
 
@@ -3088,7 +3093,7 @@ void GameScene::init(){
 
     showHold();
 
-    showQueue();
+    showQueue(0);
 
     showSprites(128);
 

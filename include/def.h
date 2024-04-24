@@ -117,7 +117,7 @@ extern void setClearEffect();
 extern void showBackground(int offset);
 extern void showPawn();
 extern void showShadow();
-extern void showQueue();
+extern void showQueue(bool offsetSpriteIndex);
 extern void showHold();
 extern void drawGrid();
 extern void drawFrame(int layer);
