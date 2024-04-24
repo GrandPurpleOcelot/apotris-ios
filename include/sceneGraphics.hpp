@@ -734,7 +734,7 @@ class RandomGraphicsElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return "";
+            return "_";
         }
 };
 
@@ -761,7 +761,7 @@ class ResetGraphicsElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            return "";
+            return "_";
         }
 };
 

@@ -108,7 +108,7 @@ const std::list<std::string> menuControlOptions = {
     "Confirm",
     "Cancel",
     "Pause",
-    "Reset",
+    "Restart",
     "Special 1",
     "Special 2",
     "Special 3",
