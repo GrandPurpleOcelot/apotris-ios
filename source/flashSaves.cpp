@@ -38,7 +38,7 @@ FLASH_CODE u32 get_flash_type() {
 	//test if able to write to SRAM/FRAM
 	loadSavefile();
 
-    if(savefile->newGame >= 0x4b && savefile->newGame <= SAVE_TAG){
+    if(savefile->newGame >= 0x51 && savefile->newGame <= SAVE_TAG){
         if (savefile->settings.bootlegOverrideType)
             return savefile->settings.bootlegOverrideType;
         escape = true;
