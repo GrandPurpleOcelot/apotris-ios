@@ -29,6 +29,8 @@ cp build-gba/Apotris.gba bin/gba/.
 cp tools/buildSongs.bat bin/gba/WINDOWS_build.bat
 cp tools/buildSongs.sh bin/gba/LINUX_build.sh
 
+cp -r license/ bin/gba/.
+
 #linux
 meson setup $TYPE build-linux && meson compile -C build-linux
 mkdir -p bin/linux-x64/assets
@@ -38,6 +40,8 @@ cp assets/* bin/linux-x64/assets/.
 cp build-linux/Apotris bin/linux-x64/.
 cp tools/README_LINUX.txt bin/linux-x64/README.txt
 
+cp -r license/ bin/linux-x64/.
+
 #windows
 meson setup --cross-file=meson/mingw.ini $TYPE build-windows && meson compile -C build-windows
 mkdir -p bin/windows-x64/assets
@@ -45,9 +49,13 @@ mkdir -p bin/windows-x64/assets
 cp assets/* bin/windows-x64/assets/.
 cp build-windows/Apotris.exe bin/windows-x64/.
 
+
+cp -r license/ bin/windows-x64/.
 #switch
 meson setup --cross-file=meson/switch.ini $TYPE build-switch && meson compile -C build-switch
 mkdir -p bin/switch/
 
 cp build-switch/Apotris.nro bin/switch/.
 cp tools/README_SWITCH.txt bin/switch/README.txt
+
+cp -r license/ bin/switch/.
