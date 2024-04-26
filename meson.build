@@ -155,7 +155,7 @@ if host_machine.system() != 'gba'
         openmpt = dependency('openmpt', static : true, default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
         tilengine = dependency('Tilengine', static : true, default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
         if host_machine.system() == 'darwin'
-            sdl2_dep = subproject('sdl2', default_options : ['default_library=static', 'test=false']).get_variable('sdl2_dep')
+            sdl2_dep = subproject('sdl2', default_options : ['use_audio_jack=disabled', 'default_library=static', 'test=false']).get_variable('sdl2_dep')
         else
             sdl2_dep = dependency('sdl2', static : true, default_options : ['default_library=static'], fallback : ['sdl2', 'sdl2_dep'])
         endif
@@ -303,8 +303,10 @@ if host_machine.system() != 'gba'
             install_data('dist' / 'Apotris.bash', install_dir : 'Contents/MacOS')
             install_data('dist' / 'Info.plist', install_dir : 'Contents')
             install_subdir(audio_dir, install_dir : 'Contents/Resources')
+            install_subdir('license', install_dir : 'Contents/Resources')
         else
             install_subdir(audio_dir, install_dir : '.')
+            install_subdir('license', install_dir : '.')
         endif
     endif
 else
