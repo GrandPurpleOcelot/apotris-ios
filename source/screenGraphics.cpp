@@ -1,713 +1,371 @@
 #include "def.h"
-#include "tonc.h"
+#include "platform.hpp"
 #include "text.h"
-#include "soundbank.h"
 #include "sprites.h"
 #include <string>
-#include "posprintf.h"
+#include <posprintf.h>
 #include "logging.h"
-#include "tonc_irq.h"
-
-using namespace Tetris;
-
-void showLabels();
-void gradientEditor();
-
-static const int startX = 5;
-static const int endX = 24;
-
-static const int startY = 2;
-static const int options = 15;
-
-void graphicTest() {
-    gradient(false);
-    irq_enable(II_HBLANK);
-
-    setPalette();
-    setGradient(savefile->settings.backgroundGradient);
-
-    if (savefile->settings.lightMode)
-        memset16(pal_bg_mem, 0x5ad6, 1);//background gray
-    else
-        memset16(pal_bg_mem, 0x0000, 1);
-
-    memset16(&se_mem[26], 0x0000, 32 * 20);
-
-    delete game;
-    game = new Game(DIG,bigMode);
-    game->setGoal(0);
-    game->setLevel(1);
-    game->rotationSystem = SRS;
-
-    game->update();
-
-    game->pawn.y++;
-
-    bool showOptions = true;
-    bool showGame = true;
-
-    int selection = 0;
-
-    const int maxDas = 16;
-    int dasVer = 0;
-    int dasHor = 0;
-    int dasOffset = 0;
-
-    const int maxArr = 3;
-    int arr = 0;
-
-    REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG0 | DCNT_BG1 | DCNT_BG2 | DCNT_BG3; //Set to Sprite mode, 1d rendering
-
-    int prevBld = REG_BLDCNT;
-    REG_BLDCNT = (1 << 6) + (0b111111 << 8) + (1 << 3) ;
-    REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(1);
-    memset16(&se_mem[27], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
-
-    showBackground();
-    showLabels();
-
-    while (1) {
-        VBlankIntrWait();
-        drawGrid();
-        drawFrame();
-        screenShake();
-        showPlaceEffect();
-
-        if(savefile->settings.floatText){
-            showClearText();
-
-            if(!floatingList.empty() && showOptions)
-                showLabels();
-        }
-
-        key_poll();
-
-        aprint("R: Toggle", 0, 18);
-        aprint("Options", 3, 19);
-
-        if (key_hit(KEY_START) || (key_hit(KEY_A) && selection != 0)) {
-            sfx(SFX_MENUCONFIRM);
-            if (selection != options - 1) {
-                selection = options - 1;
-            } else {
-                break;
-            }
-            setSkin();
-            // setLightMode();
-        }
-
-        if (key_hit(KEY_B)) {
-            sfx(SFX_MENUCANCEL);
-            if (selection == options - 1)
-                selection = 0;
-            else
-                break;
-        }
-
-        if (key_hit(KEY_R)) {
-            showOptions = !showOptions;
-
-            if (!showOptions) {
-                clearText();
-                REG_DISPCNT &= ~DCNT_BG3;
-                aprint("R: Toggle", 0, 18);
-                aprint("Options", 3, 19);
-            }else{
-                REG_DISPCNT |= DCNT_BG3;
-                showLabels();
-            }
-        }
-
-        if (key_hit(KEY_UP)) {
-            if (selection > 0)
-                selection--;
-            else
-                selection = options - 1;
-            sfx(SFX_MENUMOVE);
-        }
-
-        if (key_hit(KEY_DOWN)) {
-            if (selection < options - 1)
-                selection++;
-            else
-                selection = 0;
-            sfx(SFX_MENUMOVE);
-        }
-
-        if(key_hit(KEY_SELECT)){
-            setDefaultGraphics(savefile, 0);
-            setSkin();
-            setPalette();
-            memset16(&se_mem[27], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
-        }
-
-        if (key_is_down(KEY_UP)) {
-            if (dasVer < maxDas) {
-                dasVer++;
-            } else if(selection != 0){
-                if (arr++ > maxArr) {
-                    arr = 0;
-                    selection--;
-                    sfx(SFX_MENUMOVE);
-                }
-            }
-        } else if (key_is_down(KEY_DOWN)) {
-            if (dasVer < maxDas) {
-                dasVer++;
-            } else if(selection != options-1){
-                if (arr++ > maxArr) {
-                    arr = 0;
-                    selection++;
-                    sfx(SFX_MENUMOVE);
-                }
-            }
-        } else {
-            dasVer = 0;
-        }
-
-        if(selection == 2){
-            if (key_is_down(KEY_LEFT)) {
-                if (dasHor < maxDas) {
-                    dasHor++;
-                } else if(savefile->settings.skin+dasOffset > - MAX_CUSTOM_SKINS){
-                    if (arr++ > maxArr) {
-                        arr = 0;
-                        // savefile->settings.skin--;
-                        dasOffset--;
-                        sfx(SFX_MENUMOVE);
-                    }
-                }
-            } else if (key_is_down(KEY_RIGHT)) {
-                if (dasHor < maxDas) {
-                    dasHor++;
-                } else if(savefile->settings.skin+dasOffset < MAX_SKINS-1){
-                    if (arr++ > maxArr) {
-                        arr = 0;
-                        // savefile->settings.skin++;
-                        dasOffset++;
-                        sfx(SFX_MENUMOVE);
-                    }
-                }
-            } else {
-                if(dasHor == maxDas){
-                    savefile->settings.skin += dasOffset;
-                    dasOffset = 0;
-                    setSkin();
-                    showPawn();
-                    showShadow();
-                }
-                dasHor = 0;
-            }
-        }
-
-        if(key_hit(KEY_A) && selection == 0){
-            clearText();
-
-            oam_init(obj_buffer, 128);
-            oam_copy(oam_mem, obj_buffer, 128);
-
-            gradientEditor();
-            if(showOptions)
-                showLabels();
-        }
-
-        if (key_hit(KEY_LEFT) || key_hit(KEY_RIGHT)) {
-            switch (selection) {
-            case 0:
-                break;
-            case 1:
-                if (key_hit(KEY_LEFT)) {
-                    if (savefile->settings.backgroundGrid > 0) {
-                        savefile->settings.backgroundGrid--;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                } else {
-                    if (savefile->settings.backgroundGrid < MAX_BACKGROUNDS - 1) {
-                        savefile->settings.backgroundGrid++;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                }
-
-                drawGrid();
-                break;
-            case 2:
-                if (key_hit(KEY_LEFT)) {
-                    if (savefile->settings.skin > -(MAX_CUSTOM_SKINS)) {
-                        savefile->settings.skin--;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                } else {
-                    if (savefile->settings.skin < MAX_SKINS - 1) {
-                        savefile->settings.skin++;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                }
-
-                setSkin();
-                showPawn();
-                showShadow();
-                break;
-            case 3:
-                if (key_hit(KEY_LEFT)) {
-                    if (savefile->settings.shadow > 0) {
-                        savefile->settings.shadow--;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                } else {
-                    if (savefile->settings.shadow < MAX_SHADOWS - 1) {
-                        savefile->settings.shadow++;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                }
-                break;
-            case 4:
-                if (key_hit(KEY_LEFT)) {
-                    if (savefile->settings.palette > 0) {
-                        savefile->settings.palette--;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                } else {
-                    if (savefile->settings.palette < 7) {
-                        savefile->settings.palette++;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                }
-                setPalette();
-                break;
-            case 5:
-                if (key_hit(KEY_LEFT)) {
-                    if (savefile->settings.colors > 0) {
-                        savefile->settings.colors--;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                } else {
-                    if (savefile->settings.colors < MAX_COLORS-1) {
-                        savefile->settings.colors++;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                }
-                setPalette();
-                break;
-            case 6:
-                savefile->settings.edges = !savefile->settings.edges;
-                sfx(SFX_MENUMOVE);
-                break;
-            case 7:
-                savefile->settings.lightMode = !savefile->settings.lightMode;
-                memset16(&se_mem[27], 12+4*0x1000 * (savefile->settings.lightMode), 32 * 20);
-                setSkin();
-                // setLightMode();
-
-                sfx(SFX_MENUMOVE);
-                break;
-            case 8:
-                savefile->settings.effects = !savefile->settings.effects;
-                if (savefile->settings.effects) {
-                    effectList.push_back(Effect(1, 4, 5));
-                }
-                sfx(SFX_MENUMOVE);
-                break;
-            case 9:
-                if (key_hit(KEY_LEFT)) {
-                    if (savefile->settings.clearEffect > 0) {
-                        savefile->settings.clearEffect--;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                } else {
-                    if (savefile->settings.clearEffect < MAX_CLEAR_EFFECTS - 1) {
-                        savefile->settings.clearEffect++;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                }
-
-                setClearEffect();
-                break;
-            case 10:
-                savefile->settings.placeEffect = !savefile->settings.placeEffect;
-                if(savefile->settings.placeEffect && (int)placeEffectList.size() <= 3){
-                    placeEffectList.push_back(PlaceEffect(game->pawn.x, game->pawn.y-20, 0, 0, game->pawn.current, 0, false));
-                }
-
-                sfx(SFX_MENUMOVE);
-                break;
-            case 11:
-                if (key_hit(KEY_LEFT)) {
-                    if (savefile->settings.shakeAmount > 0) {
-                        savefile->settings.shakeAmount--;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                } else {
-                    if (savefile->settings.shakeAmount < 4) {
-                        savefile->settings.shake = true;
-                        savefile->settings.shakeAmount++;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                }
-                shake = -shakeMax * (savefile->settings.shakeAmount) / 4;
-                break;
-            case 12:
-                savefile->settings.floatText = !savefile->settings.floatText;
-
-                if(savefile->settings.floatText){
-                    floatingList.push_back(FloatText("quad"));
-                }else{
-                    for(auto const & floating : floatingList){
-                        int height;
-                        if (floating.timer < 2 * 100 / 3)
-                            height = 5 * (float)floating.timer / ((float)2 * 100 / 3);
-                        else
-                            height = (30 * (float)(floating.timer) / 100) - 15;
-                        aprintClearArea(9, 15-height, 12, 1);
-                    }
-
-                    if(showOptions)
-                        showLabels();
-
-                    floatingList.clear();
-                }
-                sfx(SFX_MENUMOVE);
-                break;
-            case 13:
-                if (key_hit(KEY_LEFT)) {
-                    if (savefile->settings.maxQueue > 1) {
-                        savefile->settings.maxQueue--;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                } else {
-                    if (savefile->settings.maxQueue < 5) {
-                        savefile->settings.maxQueue++;
-                        sfx(SFX_MENUMOVE);
-                    } else {
-                        sfx(SFX_MENUCANCEL);
-                    }
-                }
-                break;
-            }
-        }
-
-        if (showOptions) {
-
-            aprint(" DONE ", 12, 17);
-
-            int counter = 0;
-
-            for (int i = 0; i < options; i++)
-                aprint("       ", endX - 2, startY + i);
-
-            aprint("...", endX, startY + counter++);
-
-            aprintf(savefile->settings.backgroundGrid + 1, endX, startY + counter++);
-
-            if(savefile->settings.skin+dasOffset >= 0)
-                aprintf(savefile->settings.skin + 1 + dasOffset, endX, startY + counter);
-            else
-                aprint("C" + std::to_string(-(savefile->settings.skin + dasOffset)), endX-1, startY + counter);
-
-            counter++;
-
-            aprintf(savefile->settings.shadow + 1, endX, startY + counter++);
-
-            aprintf(savefile->settings.palette + 1, endX, startY + counter++);
-
-            aprintf(savefile->settings.colors+1, endX, startY + counter++);
-
-            if (savefile->settings.edges)
-                aprint("ON", endX, startY + counter);
-            else
-                aprint("OFF", endX, startY + counter);
-
-            counter++;
-
-            if (savefile->settings.lightMode)
-                aprint("ON", endX, startY + counter);
-            else
-                aprint("OFF", endX, startY + counter);
-
-            counter++;
-
-            if (savefile->settings.effects)
-                aprint("ON", endX, startY + counter);
-            else
-                aprint("OFF", endX, startY + counter);
-
-            counter++;
-
-            aprintf(savefile->settings.clearEffect + 1, endX, startY + counter);
-
-            counter++;
-
-            if (savefile->settings.placeEffect)
-                aprint("ON", endX, startY + counter);
-            else
-                aprint("OFF", endX, startY + counter);
-
-            counter++;
-
-            std::string shakeString = std::to_string(savefile->settings.shakeAmount * 25) + "%";
-            aprint(shakeString, endX, startY + counter);
-
-            counter++;
-
-            if (savefile->settings.floatText)
-                aprint("ON", endX, startY + counter);
-            else
-                aprint("OFF", endX, startY + counter);
-
-            counter++;
-
-            aprintf(savefile->settings.maxQueue, endX, startY + counter++);
-
-            switch (selection) {
-            case 0:
-                aprint("[",endX-1,startY+selection);
-                aprint("]",endX+3,startY+selection);
-                break;
-            case 1:
-                if (savefile->settings.backgroundGrid > 0)
-                    aprint("<", endX - 1, startY + selection);
-                if (savefile->settings.backgroundGrid < MAX_BACKGROUNDS - 1)
-                    aprint(">", endX + 1, startY + selection);
-                break;
-            case 2:
-                if (savefile->settings.skin+dasOffset > -(MAX_CUSTOM_SKINS))
-                    aprint("<", endX - 1 - (savefile->settings.skin+dasOffset < 0), startY + selection);
-                if (savefile->settings.skin+dasOffset < MAX_SKINS - 1)
-                    aprint(">", endX + 1 + (savefile->settings.skin+dasOffset > 8), startY + selection);
-                break;
-            case 3:
-                if (savefile->settings.shadow > 0)
-                    aprint("<", endX - 1, startY + selection);
-                if (savefile->settings.shadow < MAX_SHADOWS-1)
-                    aprint(">", endX + 1, startY + selection);
-                break;
-            case 4:
-                if (savefile->settings.palette > 0)
-                    aprint("<", endX - 1, startY + selection);
-                if (savefile->settings.palette < 7)
-                    aprint(">", endX + 1, startY + selection);
-                break;
-            case 5:
-                if (savefile->settings.colors > 1)
-                    aprint("<", endX - 1, startY + selection);
-                if (savefile->settings.colors < MAX_COLORS)
-                    aprint(">", endX + 1, startY + selection);
-                break;
-            case 6:
-                aprint("[", endX - 1, startY + selection);
-                aprint("]", endX + 2 + !(savefile->settings.edges), startY + selection);
-                break;
-            case 7:
-                aprint("[", endX - 1, startY + selection);
-                aprint("]", endX + 2 + !(savefile->settings.lightMode), startY + selection);
-                break;
-            case 8:
-                aprint("[", endX - 1, startY + selection);
-                aprint("]", endX + 2 + !(savefile->settings.effects), startY + selection);
-                break;
-            case 9:
-                if (savefile->settings.clearEffect > 0)
-                    aprint("<", endX - 1, startY + selection);
-                if (savefile->settings.clearEffect < MAX_CLEAR_EFFECTS-1)
-                    aprint(">", endX + 1, startY + selection);
-                break;
-            case 10:
-                aprint("[", endX - 1, startY + selection);
-                aprint("]", endX + 2 + !(savefile->settings.placeEffect), startY + selection);
-                break;
-            case 11:
-                if (savefile->settings.shakeAmount > 0)
-                    aprint("<", endX - 1, startY + selection);
-                if (savefile->settings.shakeAmount < 4)
-                    aprint(">", endX + shakeString.size(), startY + selection);
-                break;
-            case 12:
-                aprint("[", endX - 1, startY + selection);
-                aprint("]", endX + 2 + !(savefile->settings.floatText), startY + selection);
-                break;
-            case 13:
-                if (savefile->settings.maxQueue > 1)
-                    aprint("<", endX - 1, startY + selection);
-                if (savefile->settings.maxQueue < 5)
-                    aprint(">", endX + 1, startY + selection);
-                break;
-            case 14:
-                aprint("[", 12, 17);
-                aprint("]", 17, 17);
-                break;
-            }
-        }
-
-        if (showGame) {
-            showQueue();
-            showPawn();
-            showShadow();
-            showHold();
-            showBackground();
-
-            if(selection == 9){
-                u16 *dest = (u16*) &se_mem[25];
-                for(int i = 0; i < game->lengthX; i++){
-                    dest[10+i+32*18] = 3 + savefile->settings.lightMode * 0x1000;
-                    dest[10+i+32*19] = 3 + savefile->settings.lightMode * 0x1000;
-                }
-            }
-        } else {
-            oam_init(obj_buffer, 128);
-        }
-
-        oam_copy(oam_mem, obj_buffer, 128);
-    }
-
-    reset();
-
-    REG_DISPCNT |= DCNT_BG3;
-    REG_BLDCNT = prevBld;
-    REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(3);
-
-    irq_disable(II_HBLANK);
-    gradient(true);
-}
-
-void setClearEffect(){
-    switch(savefile->settings.clearEffect){
-    case 0:
-        memcpy16(&tile_mem[0][3], sprite4tiles_bin, sprite4tiles_bin_size / 2);
-        break;
-    case 1:
-        memcpy16(&tile_mem[0][3], sprite25tiles_bin, sprite25tiles_bin_size / 2);
-        break;
-    case 2:
-        memcpy16(&tile_mem[0][3], sprite26tiles_bin, sprite26tiles_bin_size / 2);
-        break;
-    }
-}
-
-static const std::list<std::string> labels = {
-    "Background",
-    "Grid",
-    "Skin",
-    "Ghost Piece",
-    "Frame Color",
-    "Palette",
-    "Block Edges",
-    "Light Mode",
-    "Board Effects",
-    "Clear Style",
-    "Place Effect",
-    "Screen Shake",
-    "Clear Text",
-    "Previews",
-};
-
-void showLabels(){
-    int counter = 0;
-
-    for(auto const& label : labels){
-        aprint(label,startX, startY + counter++);
-    }
-}
-
-void gradientEditor(){
-    irq_enable(II_HBLANK);
-
-    int display_value = REG_DISPCNT;
-    REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG2; //Disable all backgrounds except text
-
-    int color[3];
+#include "scene.hpp"
+#include "sceneGraphics.hpp"
+
+using namespace BlockEngine;
+
+static void screenShake();
+void setClearEffect();
+
+void GradientEditorScene::init(){
+    toggleBG(0, true);
+    toggleBG(1, false);
+    toggleBG(2, false);
+    toggleBG(3, false);
 
     for(int i = 0; i < 3; i++){
         color[i] = (savefile->settings.backgroundGradient >> (5*i)) & 0x1f;
     }
 
-    int selection = 0;
+    for(int i = 0; i < 3; i++){
+        color2[i] = (savefile->settings.backgroundGradient >> (5*i + 16)) & 0x1f;
+    }
 
-    int das = 0;
+    clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i] = new WordSprite(i, 32 + i * 3, 256 + i * 12);
 
-    const int dasMax = 10;
-    const int arrMax = 4;
+    resetSmallText();
 
-    int c = 0;
+    setSmallTextArea(256, 0, 18, 30, 20);
 
-    aprint("Press B to Exit",7,18);
+    drawText();
 
-    while(1){
-        VBlankIntrWait();
-        key_poll();
+    setMaxSelection();
 
-        if(key_hit(KEY_START) || key_hit(KEY_B)){
-            sfx(SFX_MENUCANCEL);
-            break;
+    loadSpriteTiles(254, &sprite48tiles_bin, 1, 1);
+
+    loadSpriteTiles(255, blockSprite, 1, 1);
+    cursorSprite = &obj_buffer[14];
+    sprite_set_attr(cursorSprite, ShapeSquare, 0, 255, 5, 0);
+    sprite_enable_affine(cursorSprite, 10, true);
+    sprite_hide(cursorSprite);
+
+    for(int i = 0; i < 6; i++){
+        colorSprites[i] = &obj_buffer[15 + i];
+
+        sprite_set_attr(colorSprites[i], ShapeSquare, 0, 254, i % 3, 0);
+        sprite_hide(colorSprites[i]);
+    }
+
+    setPaletteColor(16 + 0, 15, RGB15(31, 0, 0), 1);
+    setPaletteColor(16 + 1, 15, RGB15(0, 31, 0), 1);
+    setPaletteColor(16 + 2, 15, RGB15(5, 5, 31), 1);
+}
+
+void GradientEditorScene::draw(){
+
+    const int space = 4;
+    const int height = 11;
+
+    c = 0;
+
+    const int tile = 105;
+
+    if(savefile->settings.backgroundType == 0){
+        for(int i = 0; i < 3; i++){
+            int x = 19 + (i-1)*space;
+
+            char buff[8];
+            posprintf(buff, "%02d",color[i]);
+
+            aprintColor(buff, x, height, !onValues);
+
+            if(i == colorSelection && onValues){
+                setTile(29, x, height - 1 , tileBuild(tile, false, false, 15));
+                setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 15));
+                setTile(29, x, height + 1 , tileBuild(tile, false, true, 15));
+                setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 15));
+            }else{
+                aprint("  " , x,height-1);
+                aprint("  " , x,height+1);
+            }
+
+            c += color[i] << (5*i);
+
+            sprite_unhide(colorSprites[i],0);
+            sprite_set_pos(colorSprites[i], x * 8 - 9, height * 8);
         }
 
-        if(key_hit(KEY_LEFT)){
+        for(int i = 0; i < 3; i++)
+            sprite_hide(colorSprites[i+3]);
+
+    }else if(savefile->settings.backgroundType == 1){
+        int height = 8;
+
+        for(int i = 0; i < 3; i++){
+            int x = 19 + (i-1)*space;
+
+            char buff[8];
+            posprintf(buff, "%02d",color[i]);
+
+            aprintColor(buff, x, height, !(selection == 1 && onValues));
+
+            if(i == colorSelection && onValues && selection == 1){
+                setTile(29, x, height - 1 , tileBuild(tile, false, false, 15));
+                setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 15));
+                setTile(29, x, height + 1 , tileBuild(tile, false, true, 15));
+                setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 15));
+            }else{
+                aprint("  " , x,height-1);
+                aprint("  " , x,height+1);
+            }
+
+            c += color[i] << (5*i);
+
+            sprite_unhide(colorSprites[i],0);
+            sprite_set_pos(colorSprites[i], x * 8 - 9, height * 8);
+        }
+
+        height = 13;
+
+        for(int i = 0; i < 3; i++){
+            int x = 19 + (i-1)*space;
+
+            char buff[8];
+            posprintf(buff, "%02d",color2[i]);
+
+            aprintColor(buff, x, height, !(selection == 2 && onValues));
+
+            if(i == colorSelection && onValues && selection == 2){
+                setTile(29, x, height - 1 , tileBuild(tile, false, false, 15));
+                setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 15));
+                setTile(29, x, height + 1 , tileBuild(tile, false, true, 15));
+                setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 15));
+            }else{
+                aprint("  " , x,height-1);
+                aprint("  " , x,height+1);
+            }
+
+            c += color2[i] << (5*i + 16);
+
+            sprite_unhide(colorSprites[i + 3],0);
+            sprite_set_pos(colorSprites[i + 3], x * 8 - 9, height * 8);
+        }
+
+    }
+
+    std::string temp;
+
+    switch(savefile->settings.backgroundType){
+    case 0: temp = "Single Color"; break;
+    case 1: temp = "Dual Color"; break;
+    default: temp = "Single Color"; break;
+    }
+
+    std::string typeString;
+    if(selection == 0){
+        if(savefile->settings.backgroundType > 0)
+            typeString += "<";
+        else
+            typeString += " ";
+
+        typeString += temp;
+
+        if(savefile->settings.backgroundType < 1)
+            typeString += ">";
+        else
+            typeString += " ";
+    }else{
+        typeString += " " + temp + " ";
+    }
+
+    wordSprites[0]->setText(typeString);
+    wordSprites[0]->show(25 * 8 - wordSprites[0]->width, 3 * 8, 15);
+
+    showSprites(128);
+
+    int offset = (sinLut(cursorFloat) * 2) >> 12;
+    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+    sprite_unhide(cursorSprite,0);
+    sprite_enable_affine(cursorSprite, 10, true);
+    sprite_set_size(cursorSprite, scale, 10);
+
+    if(selection == 0){
+
+        int x = 3 * 8 - ((8) + offset + 4) - 4;
+
+        sprite_set_pos(cursorSprite, x, 3 * 8 - 5);
+    }else{
+        int x = 3 * 8 - ((8) + offset + 4) - 4;
+
+        if(savefile->settings.backgroundType == 0){
+            sprite_set_pos(cursorSprite, x, 11 * 8 - 5);
+        }else if(savefile->settings.backgroundType == 1){
+            if(selection == 1){
+                sprite_set_pos(cursorSprite, x, 8 * 8 - 5);
+            }else if(selection == 2){
+                sprite_set_pos(cursorSprite, x, 13 * 8 - 5);
+            }
+        }
+    }
+}
+
+void GradientEditorScene::drawText(){
+    clearText();
+
+    int offset = 0;
+    if(savefile->settings.aspectRatio == 1){
+        offset = (240 - 214) / 2;
+    }
+
+    std::string keyString = getStringFromKey(savefile->settings.menuKeys.cancel);
+
+    std::transform(keyString.begin(), keyString.end(), keyString.begin(), ::toupper);
+
+    std::string s = "Press " + keyString + " to Exit";
+    aprints(s, 30 * 8 - 4 * s.size() - offset,10,2);
+
+    naprint("Type:", 3 * 8, 3 * 8);
+
+    if(savefile->settings.backgroundType == 0){
+        naprint("Color:", 3 * 8, 11 * 8);
+    }else if(savefile->settings.backgroundType == 1){
+        naprint("Top:", 3 * 8, 8 * 8);
+        naprint("Bottom:", 3 * 8, 13 * 8);
+    }
+
+    aprints("Randomize: " + getStringFromKey(savefile->settings.menuKeys.special3),1 + offset,10,2);
+}
+
+void GradientEditorScene::update(){
+    canDraw = 1;
+    key_poll();
+
+    setGradient(c);
+    gradient(2);
+
+    cursorFloat += 6;
+    if(cursorFloat >= 512)
+        cursorFloat = 0;
+
+    control();
+}
+
+bool GradientEditorScene::control(){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.special3)){
+        sfx(SFX_MENUCONFIRM);
+
+        for(int i = 0; i < 3; i++){
+            color[i] = qran() % 31;
+            color2[i] = qran() % 31;
+        }
+
+        savefile->settings.backgroundType = ((qran() % 10) > 3);
+        drawText();
+        setMaxSelection();
+    }
+
+    if(!onValues){
+        if(key_hit(k.up)){
             if(selection > 0)
                 selection--;
 
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_RIGHT)){
-            if(selection < 2)
+        if(key_hit(k.down)){
+            if(selection < maxSelection - 1)
                 selection++;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(KEY_UP)){
-            if(color[selection] < 31)
-                color[selection]++;
+        if(key_hit(k.cancel)){
+            sfx(SFX_MENUCANCEL);
+            changeScene(previousScene(),Transitions::FADE);
+            return true;
+        }
+
+        if(selection == 0){
+            if(key_hit(k.left)){
+                if(savefile->settings.backgroundType > 0){
+                    savefile->settings.backgroundType--;
+                    drawText();
+                    setMaxSelection();
+                }
+
+                sfx(SFX_MENUMOVE);
+            }
+
+            if(key_hit(k.right)){
+                if(savefile->settings.backgroundType < 1){
+                    savefile->settings.backgroundType++;
+                    drawText();
+                    setMaxSelection();
+                }
+
+                sfx(SFX_MENUMOVE);
+            }
+        }else{
+            if(key_hit(k.right) || key_hit(k.confirm)){
+                onValues = true;
+                colorSelection = 0;
+                sfx(SFX_MENUCONFIRM);
+            }
+        }
+    }else{
+        if(key_hit(k.left)){
+            if(colorSelection > 0){
+                colorSelection--;
+                sfx(SFX_MENUMOVE);
+            } else{
+                onValues = false;
+                sfx(SFX_MENUCANCEL);
+            }
+        }
+
+        if(key_hit(k.cancel)){
+            onValues = false;
+            sfx(SFX_MENUCANCEL);
+        }
+
+        if(key_hit(k.right)){
+            if(colorSelection< 2)
+                colorSelection++;
+            sfx(SFX_MENUMOVE);
+        }
+
+        int * arr;
+        if(selection == 1)
+            arr = (int *) color;
+        else
+            arr = (int *) color2;
+
+        if(key_hit(k.up)){
+            if(arr[colorSelection] < 31)
+                arr[colorSelection]++;
             sfx(SFX_SHIFT2);
         }
 
-        if(key_hit(KEY_DOWN)){
-            if(color[selection] > 0)
-                color[selection]--;
+        if(key_hit(k.down)){
+            if(arr[colorSelection] > 0)
+                arr[colorSelection]--;
             sfx(SFX_SHIFT2);
         }
 
-        if(key_is_down(KEY_UP) || key_is_down(KEY_DOWN)){
+        if(key_is_down(k.up) || key_is_down(k.down)){
             das++;
 
             if(das == dasMax){
                 das -= arrMax;
 
-                if(key_is_down(KEY_UP)){
-                    if(color[selection] < 31){
-                        color[selection]++;
+                if(key_is_down(k.up)){
+                    if(arr[colorSelection] < 31){
+                        arr[colorSelection]++;
                         sfx(SFX_SHIFT2);
                     }
-                }else if(key_is_down(KEY_DOWN)){
-                    if(color[selection] > 0){
-                        color[selection]--;
+                }else if(key_is_down(k.down)){
+                    if(arr[colorSelection] > 0){
+                        arr[colorSelection]--;
                         sfx(SFX_SHIFT2);
                     }
                 }
@@ -715,51 +373,778 @@ void gradientEditor(){
         }else{
             das = 0;
         }
-
-        const int space = 7;
-        const int height = 11;
-
-        u16 * dest = (u16*) &se_mem[29];
-
-        c = 0;
-
-        const int tile = 105 + 0xf000;
-
-        for(int i = 0; i < 3; i++){
-            int x = 14 + (i-1)*space;
-
-            std::string str = "";
-            switch(i){
-                case 0: str = "RED"; break;
-                case 1: str = "GREEN"; break;
-                case 2: str = "BLUE"; break;
-            }
-            aprint(str,x-str.length()/2 + (i - 1) * (i > 0), height - 4);
-
-            char buff[2];
-            posprintf(buff, "%02d",color[i]);
-
-            aprint(buff, x, height);
-
-            if(i == selection){
-                dest[32 * (height - 1) + x] = tile;
-                dest[32 * (height - 1) + x+1] = tile + 1;
-                dest[32 * (height + 1) + x] = tile + 0x800;
-                dest[32 * (height + 1) + x+1] = tile + 0x800 + 1;
-            }else{
-                aprint("  " , x,height-1);
-                aprint("  " , x,height+1);
-            }
-
-            c += color[i] << (5*i);
-        }
-
-        setGradient(c);
     }
 
+    return false;
+}
+
+void GradientEditorScene::deinit(){
     savefile->settings.backgroundGradient = c;
 
-    REG_DISPCNT = display_value;
+    toggleBG(0, true);
+    toggleBG(1, true);
+    toggleBG(2, true);
+
+    resetSmallText();
     clearText();
 
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        delete wordSprites[i];
+}
+
+bool GradientElement::action(){
+    sfx(SFX_MENUCONFIRM);
+    changeScene(new GradientEditorScene(),Transitions::FADE);
+
+    return true;
+}
+
+void GraphicsScene::init(){
+    loadTiles(2,102,sprite37tiles_bin,sprite37tiles_bin_size/32);
+    loadTiles(2,105,sprite41tiles_bin,sprite41tiles_bin_size/32);
+
+    clearSprites(128);
+
+    elementList = getElementList();
+    options = (int) elementList.size();
+
+    startY = 24;
+    if(options < 7){
+       startY += ((7 - options) * 8) & ~0xf;
+    }
+
+    selection = 0;
+
+    //transparent gray
+    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i] = new WordSprite(i, 32 + i * 3, 256 + i * 12);
+
+    for (int i = 0; i < 7; i++)
+        labels[i] = new WordSprite(MAX_WORD_SPRITES + i, 32 + 3 * MAX_WORD_SPRITES + i * 5, 512 + 64 + i * 20, true);
+
+    for (int i = 0; i < 3; i++)
+        scrollingText[i] = new WordSprite(MAX_WORD_SPRITES + 7 + i, 23 + i * 3, 672 + 64 + i * 12);
+
+    loadSpriteTiles(255, blockSprite, 1, 1);
+    for(int i = 0; i < 2; i++){
+        cursorSprites[i] = &obj_buffer[14 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 255, 5, 0);
+        sprite_enable_affine(cursorSprites[i], 10, true);
+        sprite_hide(cursorSprites[i]);
+    }
+
+    loadSpriteTiles(910, sprite41tiles_bin, 2, 1);
+    for(int i = 0; i < 2; i++){
+        arrowSprites[i] = &obj_buffer[21 + i];
+        sprite_set_attr(arrowSprites[i], ShapeWide, 0, 910, 14, 0);
+
+        if(i) sprite_enable_flip(arrowSprites[1], false, true);
+
+        sprite_hide(arrowSprites[i]);
+    }
+
+    if(name() != ""){
+        bool found = false;
+        int count = 0;
+        auto it = path.begin();
+        while(it != path.end()){
+            if(*it == name()){
+                found = true;
+                break;
+            }
+            count++;
+            it++;
+        }
+
+        if(found){
+            int n = path.size() - count;
+            for(int i = 0; i < n; i++)
+                path.pop_back();
+        }else{
+            path.push_back(name());
+        }
+    }
+
+    int i = 0;
+    auto it = path.begin();
+    while(it != path.end()){
+        if(i != 0)
+            p += " > ";
+
+        p += *it;
+
+        it++;
+        i++;
+    }
+
+    int width = getVariableWidth(p) >> 3;
+    pathCount = (width) / 12 + 1;
+
+    int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
+
+    wordSprites[wordIndex]->setText(p);
+
+    for(int i = 0; i < pathCount; i++)
+        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
+
+    setPalette();
+    setSkin();
+    setGradient(savefile->settings.backgroundGradient);
+
+    if (savefile->settings.lightMode)
+        setPaletteColor(0, 0, 0x5ad6, 1);
+    else
+        setPaletteColor(0, 0, 0x0000, 1);
+
+    clearTilemap(26);
+
+    enableFumen = true;
+    fumenString = "v115@fgY4Aeo0Ae4wAeItAeYpAeolAe4hKeAgHfg4DAeoHA?eYLAeIPAe4SAeoWAeQaQ4WaKeAAAchAAA8QeAAA";
+
+    if(game != nullptr)
+        delete game;
+
+    game = new Game(NO_MODE,bigMode);
+
+    game->demoGarbage();
+    game->setGoal(0);
+    game->setLevel(1);
+    game->rotationSystem = SRS;
+    game->setRandomizer(BlockEngine::Randomizers::BAG_7);
+
+    game->update();
+
+    game->pawn.y += 1;
+
+    enableFumen = false;
+
+    enableBlend((1 << 6) + (0b111110 << 8) + (0b1010));
+
+    buildBG(3, 0, 27, 0, 0, 0);
+
+    drawFrameBackgrounds();
+
+    loadSpriteTiles(512, sprite6tiles_bin,4,4);
+
+    loadSpriteTiles(512 + 16, sprite6tiles_bin,4,3);
+    loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3,4,1,4);
+    loadSpriteTiles(512 + 32, &sprite6tiles_bin[128],4,2);
+    loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2,4);
+    loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
+    loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
+
+    draw();
+
+    refreshGame = true;
+
+    for(int i = 0; i < 3; i++)
+        scrollingText[i]->show(12 * 8 * i,160-8,15);
+
+    scrollingText[0]->setTextSlow(scrollText);
+
+    int offset = 0;
+    if(savefile->settings.aspectRatio == 1){
+        offset = (240 - 214) / 2;
+    }
+
+    resetSmallText();
+    setSmallTextArea(110, 0, 17, 15, 20);
+    clearText();
+
+    std::string hide = "Hide Options: " + getStringFromKey(savefile->settings.menuKeys.special2);
+    aprints(hide,1 + offset, 24 - 7, 2);
+
+    previousAspectRatio = savefile->settings.aspectRatio;
+}
+
+void GraphicsScene::draw(){
+    if(showText){
+        if(refreshText){
+            setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
+        }
+
+        const int space = 1;
+        const int startX = 3 * 8;
+        const int endX = 30-4;
+
+        int offset = (sinLut(cursorFloat) * 2) >> 12;
+        FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+        int verticalOffset = 0;
+        if(moving){
+            int temp = lerp((movingDirection) * (space + 1) * 8,0,64*movingTimer);
+            verticalOffset = lerp(temp,0,64*movingTimer);
+            setLayerScroll(2, 0, -verticalOffset);
+        }else{
+            setLayerScroll(2, 0, 0);
+        }
+
+        int i = 0;//drawing index, starts at listStart
+        int counter = 0;//element index
+        for(auto & option : elementList){
+            if(counter < listStart){
+                counter++;
+                continue;
+            }
+
+            if(i > elementMax + 1){ // break if elements drawn reached max
+                continue;
+            }
+
+            std::string opt = option->getCurrentOption();
+
+            int index = (i + listStart) % (elementMax + 2);
+
+            if(refreshText || refreshOption){
+                if(counter == selection)
+                    wordSprites[index]->setText(option->getCursor(opt)); //draw option with text cursor
+                else
+                    wordSprites[index]->setText(" " + opt); // draw option without text cursor
+            }
+
+            if(refreshText)
+                labels[index]->setText(option->getLabel());
+
+            int x = (endX) * 8 - getVariableWidth(opt);
+            int y = startY + 8 * (space + 1) * i + verticalOffset - spriteVOffset;
+
+            wordSprites[index]->setPriority(0);
+            wordSprites[index]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
+
+            labels[index]->show(startX, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
+
+            if(counter == selection){ //draw sprite cursor
+                currentOption = option->getLabel();
+                for(int i = 0; i < 2; i++){
+                    sprite_unhide(cursorSprites[i],0);
+                    sprite_enable_affine(cursorSprites[i], 10, true);
+                    sprite_set_size(cursorSprites[i], scale, 10);
+
+                    int x = startX - ((8) + offset + 4) - 4;
+
+                    sprite_set_pos(cursorSprites[i], x, y - 5);
+                }
+            }
+
+            i++;
+            counter++;
+        }
+
+        for(int j = i; j < elementMax + 2; j++){
+            int index = (j + listStart) % (elementMax + 2);
+
+            wordSprites[index]->hide();
+            labels[index]->hide();
+        }
+
+        refreshOption = false;
+    }
+
+    if(refreshGame){
+        refreshGame = false;
+
+        drawFrame(0);
+
+        showQueue(1);
+        showHold();
+        showBackground(0);
+    }
+
+    showPawn();
+    showShadow();
+    screenShake();
+    drawGrid();
+    showClear();
+
+    showPlaceEffect();
+
+    if(savefile->settings.clearText == 2){
+        showClearText();
+    }
+
+    if(listStart > 0 && showText){
+        sprite_unhide(arrowSprites[0], 0);
+        sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 11);
+    }else{
+        sprite_hide(arrowSprites[0]);
+    }
+
+    if(listStart + elementMax + 2 <  (int) elementList.size() && showText){
+        sprite_unhide(arrowSprites[1], 0);
+        sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * 2 * 8 + startY + 0);
+    }else{
+        sprite_hide(arrowSprites[1]);
+    }
+
+    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
+    if(refreshText){
+        scrollText = getDescription(currentOption);
+        clearSpriteTiles(672 + 64, 144, 1);
+        if(scrollText != ""){
+            scrollTextLength = getVariableWidth(scrollText);
+
+            endDelay = 0;
+            scrollOffset = - max((width - scrollTextLength),0) / 2;
+            scrollDelay = 0;
+            scrollingText[0]->setTextSlow(scrollText);
+        }else{
+            scrollingText[0]->setTextSlow(scrollText);
+        }
+    }
+
+    int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
+    for(int i = 0; i < pathCount; i++)
+        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
+
+    showSprites(128);
+
+    refreshText = false;
+}
+
+void GraphicsScene::update(){
+    canDraw = 1;
+    key_poll();
+    gradient(1);
+
+    toggleBG(0, true);
+    toggleBG(1, true);
+    toggleBG(2, true);
+    toggleBG(3, true);
+
+    cursorFloat += 6;
+    if(cursorFloat >= 512)
+        cursorFloat = 0;
+
+    if(moving){
+        if(++movingTimer > 4){
+            moving = false;
+            movingHor = false;
+            movingTimer = 0;
+            movingDirection = 0;
+            refreshText = true;
+        }
+    }
+
+    if(++gridUpdateTimer >= gridUpdateTimerMax){
+        gridUpdateTimer = 0;
+        updateGrid();
+
+        FIXED temp[22][12];
+
+        memcpy32_fast(temp, current, 22 * 12);
+        memcpy32_fast(current, previous, 22 * 12);
+        memcpy32_fast(previous, temp, 22 * 12);
+    }
+
+    if(dampTimer){
+        dampTimer--;
+        if(!dampTimer)
+            damp = 2;
+    }
+
+    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+
+    if(endDelay){
+        endDelay--;
+        if(!endDelay){
+            scrollOffset = 0;
+            scrollDelay = 0;
+            clearSpriteTiles(672 + 64, scrollTextLength / 8 + 1, 1);
+            scrollingText[0]->setTextSlow(scrollText);
+        }
+    }else if(scrollDelay < scrollDelayMax){
+        scrollDelay++;
+    }else if(scrollTextLength > width){
+        if(++scrollTimer >= scrollTimerMax){
+            scrollTimer = 0;
+            if(++scrollOffset >= max(scrollTextLength-width,0)){
+                endDelay = endDelayMax;
+            }
+        }
+    }
+
+    for(int i = 0; i < 3; i++){
+        scrollingText[i]->setScroll(scrollOffset);
+        scrollingText[i]->show(12 * 8 * i + 13 * savefile->settings.aspectRatio,160-8,14);
+    }
+
+    if(previousAspectRatio != savefile->settings.aspectRatio){
+        clearSmallText();
+        int offset = 0;
+        if(savefile->settings.aspectRatio == 1){
+            offset = (240 - 214) / 2;
+        }
+
+        std::string hide = "Hide Options: " + getStringFromKey(savefile->settings.menuKeys.special2);
+        aprints(hide, 1 + offset, 24 - 7, 2);
+
+        previousAspectRatio = savefile->settings.aspectRatio;
+    }
+
+    control();
+}
+
+bool GraphicsScene::control(){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.cancel)){
+        sfx(SFX_MENUCANCEL);
+        previousElement = name();
+        previousSelection = selection;
+
+        if(path.size())
+            path.pop_back();
+
+        changeScene(previousScene(),Transitions::FADE);
+        return true;
+    }
+
+    if(key_hit(k.left)){
+        auto it = elementList.begin();
+        std::advance(it,selection);
+
+        (*it)->action(-1);
+
+        refreshGame = true;
+        refreshOption = true;
+    }
+
+    if(key_hit(k.right)){
+        auto it = elementList.begin();
+        std::advance(it,selection);
+
+        (*it)->action(1);
+
+        refreshGame = true;
+        refreshOption = true;
+    }
+
+    if(key_hit(k.confirm)){
+        auto it = elementList.begin();
+        std::advance(it,selection);
+
+        if((*it)->action())
+            return true;
+
+        refreshText = true;
+        refreshGame = true;
+        refreshOption = true;
+    }
+
+    if(key_hit(k.special2)){
+        showText = !showText;
+
+        if(showText){
+            setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
+
+            int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
+            for(int i = 0; i < pathCount; i++)
+                wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+
+        }else{
+            clearTilemap(27);
+
+            for(int j = 0; j < elementMax + 2; j++){
+                int index = (j + listStart) % (elementMax + 2);
+
+                wordSprites[index]->hide();
+                labels[index]->hide();
+            }
+
+            for(int i = 0; i < 2; i++)
+                sprite_hide(cursorSprites[i]);
+
+            int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
+            for(int i = 0; i < pathCount; i++)
+                wordSprites[wordIndex+i]->hide();
+        }
+
+        refreshGame = true;
+    }
+
+    int prev = listStart;
+
+    if (key_hit(k.up)) {
+        movingDirection = -1;
+
+        if (selection == 0)
+            selection = options - 1;
+        else
+            selection--;
+
+        if(selection == options -1)
+            listStart = max(0,selection-elementMax);
+        else if(selection < listStart + 1){
+            listStart--;
+            if(listStart < 0)
+                listStart = 0;
+        }
+
+        sfx(SFX_MENUMOVE);
+        refreshText = true;
+        // refreshGame = true;
+    }
+
+    if (key_hit(k.down)) {
+        movingDirection = 1;
+
+        if (selection == options - 1)
+            selection = 0;
+        else
+            selection++;
+
+        if(selection == 0)
+            listStart = 0;
+        else if(selection > listStart + elementMax)
+            listStart++;
+
+        sfx(SFX_MENUMOVE);
+        refreshText = true;
+        // refreshGame = true;
+    }
+
+    if (key_is_down(k.up) || key_is_down(k.down)) {
+        if (dasVer < maxDas) {
+            dasVer++;
+        } else {
+            int dir = (key_is_down(k.up)? -1 : 1);
+
+            if (selection + dir >= 0 && selection + dir <= options-1 && arr++ > maxArr) {
+                arr = 0;
+
+                movingDirection = dir;
+
+                selection += dir;
+
+                if(dir < 0){
+                    if(selection == options -1)
+                        listStart = max(0,selection-elementMax);
+                    else if(selection < listStart + 1){
+                        listStart--;
+                        if(listStart < 0)
+                            listStart = 0;
+                    }
+                }else{
+                    if(selection == 0)
+                        listStart = 0;
+                    else if(selection > listStart + elementMax)
+                        listStart++;
+
+                }
+
+                refreshText = true;
+                // refreshGame = true;
+                sfx(SFX_MENUMOVE);
+            }
+        }
+    } else {
+        dasVer = 0;
+    }
+
+    if (key_is_down(k.left) || key_is_down(k.right)) {
+        if (dasHor < maxDas) {
+            dasHor++;
+        } else{
+            int dir = (key_is_down(k.left)? -1 : 1);
+            if (arr++ > maxArr) {
+                arr = 0;
+
+                auto it = elementList.begin();
+                std::advance(it,selection);
+
+                (*it)->action(dir);
+
+                refreshGame = true;
+                refreshOption = true;
+            }
+        }
+    } else {
+        dasHor = 0;
+    }
+
+    if(prev != listStart){
+        moving = true;
+    }
+
+    if(key_hit(k.special3)){
+        setDefaultGraphics(savefile, 0);
+        setSkin();
+        setPalette();
+        drawFrameBackgrounds();
+
+        refreshGame = true;
+
+        sfx(SFX_MENUCONFIRM);
+    }
+
+    return false;
+}
+
+void GraphicsScene::deinit(){
+    buildBG(3, 0, 27, 0, 1, true);
+
+    clearSprites(128);
+    showSprites(128);
+
+    clearTilemap(25);
+    clearTilemap(26);
+    clearTilemap(27);
+    clearSpriteTiles(2, 100, 1);
+    clearSpriteTiles(256, 256, 1);
+    for(int i = 0; i < 7; i++)
+        clearSpriteTiles(512 + 64 + i * 20, 20, 1);
+
+    resetSmallText();
+    clearText();
+
+    auto it = elementList.begin();
+
+    while(it != elementList.end()){
+        delete *it;
+        it++;
+    }
+
+    gradient(false);
+    spriteVOffset = 0;
+
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        delete wordSprites[i];
+
+    for (int i = 0; i < 7; i++)
+        delete labels[i];
+
+    for (int i = 0; i < 3; i++)
+        delete scrollingText[i];
+
+    disableLayerWindow(1);
+    disableLayerWindow(2);
+}
+
+void screenShake() {
+    // int scroll = 0;
+    // if(clearTimer){
+    //     int n = game->previousClear.linesCleared;
+
+    //     FIXED s = fxdiv(int2fx(8 * n * clearTimer),int2fx(maxClearTimer));
+
+    //     scroll = fx2int(s);
+    // }
+
+    setLayerScroll(1, -push, -(shake + peekShift));
+    setLayerScroll(2, -push, -(shake + peekShift));
+
+    enableLayerWindow(1, 0, shake, 240, 168 + shake, false);
+    enableLayerWindow(2, 0, shake, 240, 168 + shake, false);
+
+    if(savefile->settings.screenShakeType == 0){
+        if (shake) {
+            if (shake > 0)
+                shake--;
+            else
+                shake++;
+            shake *= -1;
+        }
+
+    }else if(savefile->settings.screenShakeType == 1){
+        shake = fx2int(shakeBuff);
+        const FIXED deccel = float2fx(0.768);
+        if(shakeBuff){
+
+            shakeBuff = fxmul(shakeBuff,deccel);
+
+            if(abs(shakeBuff) < int2fx(1))
+                shakeBuff = 0;
+        }
+
+        if(shakeVelocity){
+            shakeBuff += shakeVelocity;
+            shakeVelocity = fxmul(shakeVelocity, deccel);
+            if(shakeVelocity <= 0){
+                shakeVelocity = 0;
+            }
+
+            if(shake >= (shakeMax * (savefile->settings.shakeAmount) / 4)){
+                shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
+            }
+        }
+    }
+
+    if (game->pushDir != 0) {
+        if (abs(push) < pushMax * (savefile->settings.shakeAmount)/4)
+            push += game->pushDir * (1 + (savefile->settings.shakeAmount > 2));
+    } else {
+        if (push > 0)
+            push--;
+        else if (push < 0)
+            push++;
+    }
+}
+
+void GraphicsScene::showClear(){
+    if(currentOption != "Clear Direction"){
+        for (int i = 0; i < game->lengthX; i++) {
+            setTile(25, 10 + i, 18, tileBuild(3, false, false, savefile->settings.lightMode));
+            setTile(25, 10 + i, 19, tileBuild(3, false, false, savefile->settings.lightMode));
+        }
+
+        return;
+    }
+
+    if(++clearAnimationTimer >= maxClearAnimationTimer * 2){
+        clearAnimationTimer = -maxClearAnimationTimer;
+    }
+
+    clearTilemapEntries(25, 18 * 32 + 10, 10);
+    clearTilemapEntries(25, 19 * 32 + 10, 10);
+
+    if(clearAnimationTimer >= maxClearAnimationTimer){
+        return;
+    }
+
+    int timer = max(clearAnimationTimer,0);
+
+    for(int i = 0; i < 2; i++){
+        if(savefile->settings.clearDirection == 0){
+            for(int j = 0; j < 5; j++){
+                if (timer < maxClearAnimationTimer - 10 + j * 2)
+                    setTile(25, 10+j, 18+i, 3);
+            }
+            for(int j = 5; j < 10; j++){
+                if (timer < maxClearAnimationTimer - 10 + (9 - j) * 2)
+                    setTile(25, 10+j, 18+i, 3);
+            }
+        }else if(savefile->settings.clearDirection == 1){
+            for(int j = 0; j < 5; j++){
+                if (timer < maxClearAnimationTimer - 10 + (4 - j) * 2)
+                    setTile(25, 10+j, 18+i, 3);
+            }
+            for(int j = 5; j < 10; j++){
+                if (timer < maxClearAnimationTimer - 10 + (j-5) * 2)
+                    setTile(25, 10+j, 18+i, 3);
+            }
+        }
+    }
+}
+
+void setClearEffect(){
+    switch(savefile->settings.clearEffect){
+    case 0:
+        loadTiles(0, 3, sprite4tiles_bin, sprite4tiles_bin_size/32);
+        break;
+    case 1:
+        loadTiles(0, 3, sprite25tiles_bin, sprite25tiles_bin_size/32);
+        break;
+    case 2:
+        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
+        break;
+    case 3:
+        clearTiles(0, 3, 1);
+        break;
+    default:
+        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
+        break;
+    }
 }

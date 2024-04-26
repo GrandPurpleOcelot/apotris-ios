@@ -1,35 +1,28 @@
-// #include "tonc.h"
 #include "def.h"
+
+#ifdef GBA
 #include "flashSaves.h"
-#include "LinkConnection.h"
+#include "agbabi.h"
 #include "logging.h"
 
 #include "text.h"
 
 #if ENABLE_FLASH_SAVE
 
+#define FLASH_CODE __attribute__ ((noinline, section(".ewram.flash")))
+#define BYTECMP_CODE __attribute ((section(".ewram.bytecmp")))
+
 void flash_write(u8 flash_type, u32 sa);
-void save_sram_flash();
+
 
 // static u32 total_rom_size = 0;
 u32 flash_size = 0;
 u32 flash_sram_area = 0;
-u8 flash_type = 0;
+u8 bootleg_type = 0;
 bool escape = false;
 
-__attribute__((section(".iwram"), target("arm")))
-static void bytecopy(vu8 *dst, vu8 *src, int count) {
-	for (int i = 0; i < count; i++) {
-		dst[i] = src[i];
-	}
-}
-
-__attribute__((section(".ewram")))
-static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
-	if (count == 0) {
-		return 0;
-	}
-	while (--count && *buf1 == *buf2) {
+BYTECMP_CODE static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
+    while (--count && *buf1 == *buf2) {
 		buf1++;
 		buf2++;
 	}
@@ -40,22 +33,17 @@ static int bytecmp(vu8 *buf1, vu8 *buf2, size_t count) {
 // types of reproduction flash cartridges.
 // Must run in EWRAM because ROM data is
 // not visible to the system while checking.
-__attribute__((section(".ewram")))
-u32 get_flash_type() {
+FLASH_CODE u32 get_flash_type() {
 
 	//test if able to write to SRAM/FRAM
-    volatile u8* sf = (volatile u8*)sram_mem;
+	loadSavefile();
 
-    savefile = new Save();
-    u8* arr = (u8*)savefile;
-
-    for (int i = 0; i < (int)sizeof(Save); i++)
-		arr[i] = (u8)sf[i];
-
-	if(savefile->newGame >= 0x4b && savefile->newGame <= SAVE_TAG){
-		escape = true;
-		return 0;
-	}
+    if(savefile->newGame >= 0x51 && savefile->newGame <= SAVE_TAG){
+        if (savefile->settings.bootlegOverrideType)
+            return savefile->settings.bootlegOverrideType;
+        escape = true;
+        return 0;
+    }
 
 	u32 rom_data, data;
 	u16 ie = REG_IE;
@@ -122,8 +110,7 @@ u32 get_flash_type() {
 // write 64 kilobytes of SRAM data to Flash ROM.
 // Must run in EWRAM because ROM data is
 // not visible to the system while erasing/writing.
-__attribute__((section(".ewram")))
-void flash_write(u8 flash_type, u32 sa)
+FLASH_CODE void flash_write(u8 flash_type, u32 sa)
 {
 	if (flash_type == 0) return;
 	u16 ie = REG_IE;
@@ -267,12 +254,13 @@ void flash_write(u8 flash_type, u32 sa)
 	//resume_interrupts();
 }
 
-void flash_init() {
+void detect_rom_backed_flash() {
 
 	REG_DISPCNT = 0;
 
-	flash_type = get_flash_type();
-	if (flash_type > 0) {
+    bootleg_type = get_flash_type();
+    savefile->settings.bootlegOverrideType = bootleg_type;
+    if (bootleg_type > 0) {
 
 		// Determine the size of the flash chip by checking for ROM loops,
 		// then set the SRAM storage area 0x40000 bytes before the end.
@@ -290,9 +278,9 @@ void flash_init() {
 		flash_sram_area = flash_size - 0x40000;
 
 		// Finally, restore the SRAM data and proceed.
-		bytecopy(AGB_SRAM, ((vu8*)AGB_ROM+flash_sram_area), AGB_SRAM_SIZE);
+        __agbabi_memcpy1((void *) AGB_SRAM, (const void *) ((vu8 *) AGB_ROM + flash_sram_area), AGB_SRAM_SIZE);
 
-	} else { // Emulator mode?
+    } else { // Emulator mode?
 		if(escape)
 			return;
 
@@ -307,17 +295,23 @@ void flash_init() {
 		}
 
 		if (flash_sram_area != 0) {
-			bytecopy(AGB_SRAM, ((vu8*)AGB_ROM+flash_sram_area), AGB_SRAM_SIZE);
-		}
+            __agbabi_memcpy1((void *) AGB_SRAM, (const void *) ((vu8 *) AGB_ROM + flash_sram_area), AGB_SRAM_SIZE);
+        }
 	}
 }
 
 void save_sram_flash()
 {
-	if (flash_type == 0) return;
+	if (bootleg_type == 0) return;
 
 	aprint("Saving...",21,19);
-    irq_disable(II_VBLANK);
+
+    bool isLinked = linkConnection->isActive();
+    if(isLinked)
+		linkConnection->deactivate();
+
+    interrupt_disable(INTR_VBLANK);
+	int prev = gradientEnabled;
 	gradient(false);
     int stat_value = REG_SNDSTAT;
     int dsc_value = REG_SNDDSCNT;
@@ -327,28 +321,29 @@ void save_sram_flash()
     REG_SNDDSCNT = 0;
     REG_SNDDMGCNT = 0;
 
-    bool isLinked = linkConnection->isActive();
+    interrupt_disable(INTR_TIMER3);
+    interrupt_disable(INTR_TIMER2);
+    interrupt_disable(INTR_SERIAL);
 
-    if(isLinked)
-		linkConnection->deactivate();
-
-    irq_disable(II_TIMER3);
-    irq_disable(II_SERIAL);
-
-	flash_write(flash_type, flash_sram_area);
+	flash_write(bootleg_type, flash_sram_area);
 
     REG_SNDSTAT = stat_value;
     REG_SNDDSCNT = dsc_value;
     REG_SNDDMGCNT = dmg_value;
 
+
+    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER2);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_enable(INTR_VBLANK);
+
     if(isLinked)
 		linkConnection->activate();
 
-    irq_enable(II_TIMER3);
-    irq_enable(II_SERIAL);
-    irq_delete(II_KEYPAD);
-    irq_enable(II_VBLANK);
+	if(prev)
+		gradient(1);
 
 	aprint("   Saved!",21,19);//spaces necessary to "erase" the previous text
 }
+#endif
 #endif

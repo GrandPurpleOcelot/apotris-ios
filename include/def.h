@@ -1,11 +1,17 @@
 #pragma once
 
-#include <string>
-#include <tonc_types.h>
-#include <maxmod.h>
-#include "tetrisEngine.h"
-#include "tonc_core.h"
-#include "tonc_video.h"
+#include "platform.hpp"
+#include "blockEngine.hpp"
+#include "text.h"
+#include "menu.h"
+#include "save.h"
+
+#define glowDuration 12
+#ifdef GBA
+#include "LinkUniversal.hpp"
+extern LinkUniversal* linkConnection;
+#endif
+extern int initialPlayerCount;
 
 INLINE FIXED lerp(FIXED a, FIXED b, FIXED mix){
     return a + (((b-a)*mix)>>8);
@@ -18,151 +24,6 @@ INLINE int flipSign(int x, int y){
 extern const u16 fontTiles[1552];
 #define fontTilesLen 3104
 extern const u16 font3x5[96];
-
-typedef struct Highscore{
-    char name[9];
-    int score;
-}ALIGN(4) Highscore;
-
-typedef struct Scoreboard{
-    Highscore highscores[5];
-}ALIGN(4) Scoreboard;
-
-typedef struct Time{
-    char name[9];
-    int frames;
-}ALIGN(4) Time;
-
-typedef struct Timeboard{
-    Time times[5];
-}ALIGN(4) Timeboard;
-
-typedef struct Gradeboard{
-    Time times[5];
-    s8 grade[5];
-}ALIGN(4) Gradeboard;
-
-typedef struct Keys{
-    int moveLeft;
-    int moveRight;
-    int rotateCW;
-    int rotateCCW;
-    int rotate180;
-    int softDrop;
-    int hardDrop;
-    int hold;
-    int zone;
-
-    int placeHolder[19];
-}ALIGN(4) Keys;
-
-typedef struct Settings{
-
-    bool announcer;
-    bool finesse;
-    bool floatText;
-    bool shake;
-    bool effects;
-    int volume;
-    int das;
-    int arr;
-    int sfr;
-    bool dropProtection;
-    int backgroundGrid;
-    bool edges;
-    int skin;
-    int palette;
-    int shadow;
-    bool lightMode;
-    bool songList[10];
-    int sfxVolume;
-    bool directionalDas;
-    int shakeAmount;
-    bool noDiagonals;
-    int maxQueue;
-    int colors;
-    bool cycleSongs;
-    int dropProtectionFrames;
-    bool abHold;
-    struct Keys keys;
-    int clearEffect;
-    bool resetHoldType;
-    bool placeEffect;
-    bool resetHoldToggle;
-    int rumble;
-    int diagonalType;
-    bool delaySoftDrop;
-    int backgroundGradient;
-    bool customDas;
-    int ihs;
-    int irs;
-    int initialType;
-
-    int placeHolder[93];
-}ALIGN(4) Settings;
-
-typedef struct Test{
-    bool t1[6];
-    int t2[4];
-}ALIGN(4) Test;
-
-typedef struct Test2{
-    bool t1[18];
-    int t2[10];
-}ALIGN(4) Test2;
-
-typedef struct Test3{
-    bool t1[14];//14
-    int t2[30];//22
-}ALIGN(4) Test3;
-
-typedef struct TotalStats{
-    int timePlayed;
-    int gamesStarted;
-    int gamesCompleted;
-    int gamesLost;
-}ALIGN(4) TotalStats;
-
-typedef struct Skin{
-    TILE board;
-    TILE smallBoard;
-    int previewStyle;
-}ALIGN(4) Skin;
-
-#define MAX_CUSTOM_SKINS 5
-
-typedef struct Save{
-    u8 newGame;
-
-    Settings settings;
-    int seed;
-    char latestName[9];
-
-    Scoreboard marathon[4];
-    Timeboard sprint[3];
-    Timeboard dig[3];
-    Scoreboard ultra[3];
-    Scoreboard blitz[2];
-    Scoreboard combo;
-    Timeboard survival[3];
-    Timeboard sprintAttack[3];
-    Scoreboard digEfficiency[3];
-    Scoreboard classic[2];
-    Gradeboard master[2];
-    Scoreboard zone[4];
-
-    int placeHolder[1000];
-
-    TotalStats stats;
-
-    int placeHolder2[100];
-
-    Skin customSkins[MAX_CUSTOM_SKINS];
-}ALIGN(4) Save;
-
-extern Save *savefile;
-
-#define glowDuration 12
 
 class FloatText {
 public:
@@ -224,21 +85,20 @@ public:
 };
 
 #define TRAINING_MESSAGE_MAX 300
-#define MAX_SKINS 14
-#define MAX_SHADOWS 5
-#define MAX_BACKGROUNDS 6
+#define MAX_SKINS 15
+#define MAX_SHADOWS 7
+#define MAX_BACKGROUNDS 8
 #define MAX_COLORS 7
-#define MAX_CLEAR_EFFECTS 3
+#define MAX_CLEAR_EFFECTS 4
+#define MAX_FRAME_BACKGROUNDS 3
 
-#define MAX_MENU_SONGS 2
-#define MAX_GAME_SONGS 4
+#define MAX_MENU_SONGS 3
+#define MAX_GAME_SONGS 6
 
 #define GRADIENT_COLOR 0x71a6
 
 #define SHOW_FINESSE 1
-#define DIAGNOSE 0
-#define SAVE_TAG 0x50
-#define ENABLE_BOT 0
+#define SAVE_TAG 0x51
 
 #define ENABLE_FLASH_SAVE 1
 
@@ -247,79 +107,101 @@ extern void gameLoop();
 extern void playSong(int,int);
 extern void playSongRandom(int);
 extern void playNextSong();
-extern void settingsText();
 extern void songListMenu();
-extern void graphicTest();
-extern void audioSettings();
-extern void handlingSettings();
-extern void controlsSettings();
 extern void showTitleSprites();
 extern void setLightMode();
 extern void setSkin();
-extern void update();
 extern void setDefaultKeys();
 extern void setClearEffect();
 
-extern void showBackground();
+extern void showBackground(int offset);
 extern void showPawn();
 extern void showShadow();
-extern void showQueue();
+extern void showQueue(bool offsetSpriteIndex);
 extern void showHold();
 extern void drawGrid();
-extern void drawFrame();
+extern void drawFrame(int layer);
+extern void drawFrameBackgrounds();
 extern void clearGlow();
 extern void showClearText();
 extern void hideMinos();
 
 extern void reset();
-extern void sleep();
 
 extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
-extern void progressBar();
-
-extern int endScreen();
-extern int pauseMenu();
-extern void countdown();
-extern void screenShake();
+extern void acknowledgeGarbage(BlockEngine::Game *, BlockEngine::Garbage);
+extern void progressBar(int layer);
 
 extern void saveToSram();
 extern void addToResults(int,int);
 
-extern void drawEnemyBoard();
 extern void handleBotGame();
 extern void showPPS();
-extern void showFinesse();
+extern void showGoalLine();
 extern void setPalette();
 extern void loadSave();
-extern void startScreen();
-extern void showText();
 extern void showPlaceEffect();
-extern void checkSounds();
 extern int getClassicPalette();
-extern void skinEditor();
-extern void maxModInit();
-extern void drawUIFrame(int,int,int,int);
 extern void buildMini(TILE *);
 extern void showZoneMeter();
 extern void resetZonePalette();
 extern void showBestMove();
-extern Tetris::Tuning getTuning();
+extern BlockEngine::Tuning getTuning();
 extern void showFinesseCombo();
-extern void showTimer();
 extern void setGradient(int);
 extern void setDefaultGradient();
-extern void gradient(bool state);
-extern std::string timeToString(int);
+extern void gradient(int state);
+extern std::string timeToString(int frames, bool small);
+extern std::string timeToStringHours(int frames);
 extern void setDefaultGraphics(Save * save, int depth);
-extern void showCredits();
-extern void setupCredits();
-extern void refreshCredits();
+extern void setRandomGraphics(Save *save);
+extern void setPawnPalette(int dest, int n, int blend);
 
-extern OBJ_ATTR obj_buffer[128];
-extern OBJ_AFFINE* obj_aff_buffer;
-extern Tetris::Game *game;
-extern Tetris::Game *botGame;
+extern void startGame(BlockEngine::Options options, int seed);
+extern void startGame(int seed);
+extern void startGame();
+
+extern void startBotGame(int seed);
+
+extern void loadReplay();
+extern void frameSnow(int layer);
+
+extern void initFallingBlocks();
+
+extern void gradientEditor();
+
+extern bool settingsChanged();
+
+extern void fallingBlocks();
+
+extern void updateGrid();
+
+extern void updateFluid();
+
+extern void addGameStats();
+
+extern std::string modeToString(BlockEngine::Modes mode);
+
+extern std::string getStringFromKey(int key);
+
+extern void checkPeek();
+extern MenuKeys getDefaultMenuKeys();
+extern Keys getDefaultGameKeys();
+extern void setDefaultHandling(Save *save);
+extern void setDefaultGameplay(Save *save);
+
+extern bool getSongState(int group, int index);
+extern void toggleSong(int group, int index, bool state);
+extern void checkSongs();
+
+extern int countClears(u16 *board, int lengthX, int lengthY, int startY);
+extern IWRAM_CODE BlockEngine::Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int startY);
+extern int findBestDrop(int ii,int jj, BlockEngine::Game * game, std::list<BlockEngine::Move> &moves, BlockEngine::Weights weights);
+
+extern BlockEngine::Game *game;
+extern BlockEngine::Game *quickSave;
+extern BlockEngine::Game *botGame;
 
 extern u8 * blockSprite;
 
@@ -349,9 +231,16 @@ extern bool canDraw;
 extern int gameSeconds;
 
 extern bool playAgain;
+class PlayerStateMutex;
+extern PlayerStateMutex* playAgainMutex;
+
+// extern bool resumeJourney;
+// extern bool journeyLevelUp;
+// extern bool journeySaveExists;
+// extern BlockEngine::Game* journeySave;
 
 extern int connected;
-extern int multiplayerStartTimer;
+extern bool multiplayerStart;
 
 extern int initialLevel;
 extern int frameCounter;
@@ -359,10 +248,9 @@ extern int frameCounter;
 extern OBJ_ATTR * titleSprites[2];
 extern OBJ_ATTR * queueFrameSprites[3];
 
-extern int enemyHeight;
-
-extern Tetris::Bot *testBot;
-extern bool enemyBoard[20][10];
+extern BlockEngine::Bot *testBot;
+extern u8 enemyBoard[4][20][10];
+extern u8 currentPlayerId;
 
 extern int mode;
 
@@ -378,153 +266,70 @@ extern int rumbleMax;
 extern bool rumbleInitialized;
 extern bool bigMode;
 
-extern int subMode;
-extern int goalSelection;
-extern int level;
-
 extern TILE* customSkin;
 
 extern bool proMode;
 
 extern bool gradientEnabled;
 
-extern Tetris::Game *quickSave;
+extern int botThinkingSpeed;
+extern int botSleepDuration;
+extern int botStepMax;
+
+extern int clearTimer;
+extern int maxClearTimer;
+
+extern BlockEngine::Options *previousGameOptions;
+
+extern FIXED shakeBuff;
+extern FIXED shakeVelocity;
+
+extern std::list<BlockEngine::Timestamp*>::iterator replayIterator;
+extern std::list<BlockEngine::Timestamp*> currentReplay;
+
+extern BlockEngine::Game *quickSave;
 extern bool saveExists;
 
 #define shakeMax 10
 
-class Scene{
-public:
-    virtual void draw();
+extern bool replaying;
 
-    Scene(){};
-    virtual ~Scene(){};
-};
+extern bool enableBot;
+extern bool demo;
+extern bool handlingTest;
 
-class GameScene : public Scene{
-    void draw();
-};
+extern int current[22][12];
+extern int previous[22][12];
 
-class TitleScene : public Scene{
-    void draw();
-};
-
-class GraphicsScene : public Scene{
-    void draw();
-};
-
-class EditorScene : public Scene{
-    void draw();
-};
-
-extern void changeScene(Scene * newScene);
-
-class WordSprite {
-public:
-    std::string text = "";
-    int startIndex;
-    int startTiles;
-    int id;
-    int priority = 1;
-    OBJ_ATTR* sprites[3];
-
-    void show(int x, int y, int palette) {
-        for (int i = 0; i < 3; i++) {
-            obj_unhide(sprites[i], 0);
-            obj_set_attr(sprites[i], ATTR0_WIDE, ATTR1_SIZE(1), ATTR2_BUILD(startTiles + i * 4, palette, priority));
-            obj_set_pos(sprites[i], x + i * 32, y);
-        }
-    }
-
-    void show(int x, int y, int palette, FIXED scale) {
-        for (int i = 0; i < 3; i++) {
-            int affId = id*3+i;
-            obj_unhide(sprites[i], 0);
-            obj_set_attr(sprites[i], ATTR0_WIDE | ATTR0_AFF, ATTR1_SIZE(1) | ATTR1_AFF_ID(affId), palette);
-            sprites[i]->attr2 = ATTR2_BUILD(startTiles + i * 4, palette, 1);
-            obj_set_pos(sprites[i], x + i * 32, y);
-            obj_aff_identity(&obj_aff_buffer[affId]);
-            obj_aff_scale(&obj_aff_buffer[affId], scale, scale);
-        }
-    }
-
-    void hide() {
-        for (int i = 0; i < 3; i++)
-            obj_hide(sprites[i]);
-    }
-
-    void setTextFast(char** _text, int size) {
-        if (*_text == text)
-            return;
-
-        text = *_text;
-
-        if(text == ""){
-            memset32(&tile_mem[4][startTiles], 0, 12 * 8);
-            return;
-        }
-
-        int n = min(size,12);
-
-        TILE* font = (TILE*)fontTiles;
-        int i;
-        for (i = 0; i < n; i++) {
-            int c = *_text[i] - 32;
-
-            // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
-            dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
-        }
-
-        if(i < 12){
-            memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
-        }
-    }
-
-    void setText(std::string _text) {
-        if (_text == text)
-            return;
-
-        text = _text;
-
-
-        if(text == ""){
-            memset32(&tile_mem[4][startTiles], 0, 12 * 8);
-            return;
-        }
-
-        int n = min((int)text.size(),12);
-
-        TILE* font = (TILE*)fontTiles;
-        int i;
-        for (i = 0; i < n; i++) {
-            int c = text[i] - 32;
-
-            // memcpy32(&tile_mem[4][startTiles + i], &font[c], 8);
-            dma3_cpy(&tile_mem[4][startTiles + i], &font[c], 32);
-        }
-
-        if(i < 12){
-            memset32(&tile_mem[4][startTiles + i], 0, (12-i) * 8);
-        }
-    }
-
-    WordSprite(int _id,int _index, int _tiles) {
-        id = _id;
-        startIndex = _index;
-        startTiles = _tiles;
-
-        for (int i = 0; i < 3; i++) {
-            sprites[i] = &obj_buffer[startIndex + i];
-        }
-    }
-};
-
-#define MAX_WORD_SPRITES 15
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+extern Settings previousSettings;
+extern Skin previousSkins[MAX_CUSTOM_SKINS];
+
+extern std::list<std::string> path;
+extern std::string previousElement;
+
+extern int gridUpdateTimer;
+extern int gridUpdateTimerMax;
+extern int damp;
+extern int dampTimer;
+extern int dampTimerMax;
+
+extern int peek;
+extern FIXED peekValue;
+extern int peekShift;
+
+extern MenuKeys menuKeys;
+
+extern int framesSinceLastSave;
+
+extern bool ended;
+
+extern ReplayHeader *currentReplayHeader;
 
 class Function{
     private:
 
     public:
-        void (Tetris::Game::*gameFunction)(int);
+        void (BlockEngine::Game::*gameFunction)(int);
 };

@@ -1,17 +1,13 @@
-#include <tonc.h>
 #include <string>
-#include <maxmod.h>
 
 #include "def.h"
-#include "sprite37tiles_bin.h"
-#include "sprite5tiles_bin.h"
-#include "tetrisEngine.h"
+#include "platform.hpp"
+#include "blockEngine.hpp"
 #include "sprites.h"
 
-#include "soundbank.h"
-#include "soundbank_bin.h"
-
-#include "LinkConnection.h"
+#ifdef GBA
+#include "LinkUniversal.hpp"
+#endif
 
 #include "logging.h"
 
@@ -19,41 +15,32 @@
 
 #include "flashSaves.h"
 
-#include "posprintf.h"
-
+#include <posprintf.h>
 #include "rumble.h"
-#include "gbp_logo.hpp"
+
 #include "classic1tiles_bin.h"
 #include "classic_pal_bin.h"
 
 #include "tetromino.hpp"
-#include "tonc_bios.h"
-#include "tonc_core.h"
-#include "tonc_input.h"
-#include "tonc_irq.h"
-#include "tonc_memdef.h"
-#include "tonc_memmap.h"
-#include "tonc_oam.h"
-#include "tonc_types.h"
-#include "tonc_video.h"
 
 #include "defaultGradient_bin.h"
 
-using namespace Tetris;
+#include "menu.h"
+#include "scene.hpp"
 
-const std::string save_type = "SRAM_Vnnn";
+#include "font1tiles_bin.h"
+#include "font2tiles_bin.h"
 
-mm_word myEventHandler();
-bool unlock_gbp();
-void initRumble();
+using namespace BlockEngine;
+
+[[maybe_unused]] const std::string save_type = "SRAM_Vnnn";
 int getClassicPalette();
-
-LinkConnection* linkConnection = new LinkConnection();
-
-int frameCounter = 1;
+void setPawnPalette(int dest, int n, int blend);
+void genWidths();
 
 OBJ_ATTR obj_buffer[128];
-OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
+
+int frameCounter = 1;
 
 int shake = 0;
 
@@ -71,7 +58,7 @@ int profileResults[10];
 
 void addToResults(int input, int index);
 
-Save* savefile;
+Save* savefile = nullptr;
 
 u8* blockSprite;
 
@@ -89,155 +76,123 @@ bool rumbleInitialized = false;
 
 Scene * scene = nullptr;
 
-u16 gradientTable[SCREEN_HEIGHT + 1];
-
 bool gradientEnabled = false;
 
-void onVBlank(void) {
+Options *previousGameOptions = nullptr;
 
-    mmVBlank();
-    if(gradientEnabled)
-        DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
+#ifdef GBA
+u16 gradientTable[192 + 1];
+#endif
 
-    LINK_ISR_VBLANK();
+#ifndef GBA
+u16 gradientTable[SCREEN_HEIGHT + 1];
+#endif
 
-    REG_IME = 1;
-    if (canDraw) {
-        canDraw = 0;
+const std::list<std::string> controlOptions = {
+    "Move Left",
+    "Move Right",
+    "Rotate Left",
+    "Rotate Right",
+    "Rotate 180",
+    "Soft Drop",
+    "Hard Drop",
+    "Hold",
+    "Activate Zone",
+};
 
-        scene->draw();
-    }
-
-    REG_IME = 0;
-    frameCounter++;
-    mmFrame();
-}
-
-void onHBlank() {
-    if(REG_VCOUNT < 160)
-        pal_bg_mem[0] = gradientTable[REG_VCOUNT];
-}
-
-mm_word myEventHandler(mm_word msg, mm_word param){
-    if(msg == MMCB_SONGMESSAGE)
-        return 0;
-
-    playNextSong();
-
-    return 0;
-}
+const std::list<std::string> menuControlOptions = {
+    "Up",
+    "Down",
+    "Left",
+    "Right",
+    "Confirm",
+    "Cancel",
+    "Pause",
+    "Restart",
+    "Special 1",
+    "Special 2",
+    "Special 3",
+};
 
 void initialize(){
-
-    irq_init(NULL);
-    irq_enable(II_VBLANK);
-    irq_add(II_VBLANK, onVBlank);
-
-    irq_add(II_SERIAL, LINK_ISR_SERIAL);
-    irq_add(II_TIMER3, LINK_ISR_TIMER);
-
-    irq_add(II_HBLANK, onHBlank);
-    irq_disable(II_HBLANK);
-
-    mmInitDefault((mm_addr)soundbank_bin, 12);
-    mmSetEventHandler((mm_callback)myEventHandler);
-
     initRumble();
 
-    REG_BG0CNT = BG_CBB(0) | BG_SBB(25) | BG_SIZE(0) | BG_PRIO(2) | BG_MOSAIC;
-    REG_BG1CNT = BG_CBB(0) | BG_SBB(26) | BG_SIZE(0) | BG_PRIO(3) | BG_MOSAIC;
-    REG_BG2CNT = BG_CBB(2) | BG_SBB(29) | BG_SIZE(0) | BG_PRIO(0) | BG_MOSAIC;
-    REG_BG3CNT = BG_CBB(0) | BG_SBB(27) | BG_SIZE(0) | BG_PRIO(3);
-    REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG0 | DCNT_BG1 | DCNT_BG2 | DCNT_BG3; //Set to Sprite mode, 1d rendering
+    toggleSprites(true);
 
-        // //Load bg tiles
-    memcpy16(&tile_mem[0][2], sprite3tiles_bin, sprite3tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][4], sprite5tiles_bin, sprite3tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][6], sprite8tiles_bin, sprite8tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][12], sprite10tiles_bin, sprite10tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][13], sprite11tiles_bin, sprite11tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][14], sprite12tiles_bin, sprite12tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][15], sprite13tiles_bin, sprite13tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][26], sprite17tiles_bin, sprite17tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][27], sprite20tiles_bin, sprite20tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][30], sprite22tiles_bin, sprite22tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][31], sprite23tiles_bin, sprite23tiles_bin_size / 2);
-    memcpy16(&tile_mem[0][32], sprite24tiles_bin, sprite24tiles_bin_size / 2);
+    buildBG(0, 2, 29, 0, 0, true);
+    buildBG(1, 0, 26, 0, 3, true);
+    buildBG(2, 0, 25, 0, 2, true);
+    buildBG(3, 0, 27, 0, 1, true);
 
-    //hold tiles
-    memcpy16(&tile_mem[5][0], sprite6tiles_bin, sprite6tiles_bin_size / 2);
+    for(int i = 0; i < 4; i++){
+        toggleBG(i,true);
+        setLayerScroll(i, 0, 0);
+    }
 
-    //queue frame Tiles
+    //Load bg tiles
 
-    memcpy16(&tile_mem[5][16], sprite6tiles_bin, sprite6tiles_bin_size / 2 * 3 / 4);
-    memcpy16(&tile_mem[5][16 + 12], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 1 / 4);
-    memcpy16(&tile_mem[5][32], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 2 / 4);
-    memcpy16(&tile_mem[5][32 + 8], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 2 / 4);
-    memcpy16(&tile_mem[5][48], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 1 / 4);
-    memcpy16(&tile_mem[5][48 + 4], &sprite6tiles_bin[128], sprite6tiles_bin_size / 2 * 3 / 4);
-
-    memcpy16(&tile_mem[5][64], title1tiles_bin, title1tiles_bin_size / 2);
-    memcpy16(&tile_mem[5][96], title2tiles_bin, title2tiles_bin_size / 2);
+    loadTiles(0,2,sprite3tiles_bin,sprite3tiles_bin_size/32);
+    loadTiles(0,4,sprite5tiles_bin,sprite5tiles_bin_size/32);
+    loadTiles(0,6,sprite8tiles_bin,sprite8tiles_bin_size/32);
+    loadTiles(0,12,sprite10tiles_bin,sprite10tiles_bin_size/32);
+    loadTiles(0,13,sprite11tiles_bin,sprite11tiles_bin_size/32);
+    loadTiles(0,14,sprite12tiles_bin,sprite12tiles_bin_size/32);
+    loadTiles(0,15,sprite13tiles_bin,sprite13tiles_bin_size/32);
+    loadTiles(0,26,sprite17tiles_bin,sprite17tiles_bin_size/32);
+    loadTiles(0,27,sprite20tiles_bin,sprite20tiles_bin_size/32);
+    loadTiles(0,30,sprite22tiles_bin,sprite22tiles_bin_size/32);
+    loadTiles(0,31,sprite23tiles_bin,sprite23tiles_bin_size/32);
+    loadTiles(0,32,sprite24tiles_bin,sprite24tiles_bin_size/32);
+    loadTiles(0,33,sprite42tiles_bin,sprite42tiles_bin_size/32);
+    loadTiles(0,34,sprite45tiles_bin,sprite45tiles_bin_size/32);
+    loadTiles(0,35,sprite46tiles_bin,sprite46tiles_bin_size/32);
+    loadTiles(0,36,sprite47tiles_bin,sprite47tiles_bin_size/32);
 
     for(int i = 0; i < 8; i++)
-        memcpy16(&tile_mem[5][128+i], moveSpriteTiles[i], 16);
+        loadSpriteTiles(512 + 128 + i, moveSpriteTiles[i],1,1);
 
-    memcpy16(&tile_mem[2][0], fontTiles, fontTilesLen / 2);
-
-    //load tetriminoes into tile memory for menu screen animation
+    clearTiles(2, 0, 1);
+    loadTiles(2,1,font1tiles_bin,font1tiles_bin_size/32);
 
     setSkin();
+    setPalette();
     setClearEffect();
 
-    // REG_BLDCNT = BLD_BUILD(BLD_BG1,BLD_BACKDROP,BLD_STD);
-    REG_BLDCNT = (1 << 6) + (1 << 13) + (1 << 1);
-    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(2);
+    initFallingBlocks();
+
+    refreshWindowSize();
 
     setGradient(GRADIENT_COLOR);
+
+    checkSongs();
 }
 
-
 int main(void) {
-    if(DIAGNOSE)
-        logInitMgba();
-
-    if(ENABLE_FLASH_SAVE)
-        flash_init();
+    platformInit();
 
     loadSave();
 
     initialize();
 
+    changeScene(new TitleScene());
+
     //start screen animation
-    while(1){
-        reset();
-
-        if(!playAgain){
-            startScreen();
-        }else{
-            playAgain = false;
-
-            int goal = game->goal;
-            int training = game->trainingMode;
-            int rs = game->rotationSystem;
-
-            delete game;
-            game = new Game(game->gameMode,bigMode);
-            game->setGoal(goal);
-            game->setLevel(initialLevel);
-            game->setTuning(getTuning());
-            game->setTrainingMode(training);
-            game->pawn.big = bigMode;
-            game->bTypeHeight = goalSelection;
-            game->setSubMode(subMode);
-            game->setRotationSystem(rs);
-        }
-
-        gameLoop();
+    while(closed()){
+        vsync();
+        scene->update();
     }
+
+    deinitialize();
 }
 
-std::string timeToString(int frames) {
+#ifdef PC
+int WinMain(void){
+    main();
+    return 0;
+}
+#endif
+
+std::string timeToString(int frames, bool small) {
     int t = (int)frames * 0.0167f;
     int millis = (int)(frames * 1.67f) % 100;
     int seconds = t % 60;
@@ -245,7 +200,10 @@ std::string timeToString(int frames) {
 
     char res[30];
 
-    posprintf(res,"%02d:%02d:%02d",minutes,seconds,millis);
+    if(!small)
+        posprintf(res,"%02d:%02d.%02d",minutes,seconds,millis);
+    else
+        posprintf(res,"%02d:%02d",minutes,seconds);
 
     std::string result = "";
 
@@ -254,38 +212,46 @@ std::string timeToString(int frames) {
     return result;
 }
 
-
 void addToResults(int input, int index) {
     profileResults[index] = input;
 }
 
 void reset() {
-    oam_init(obj_buffer, 128);
+    clearSprites(128);
     clearText();
-    REG_BG0HOFS = 0;
-    REG_BG1HOFS = 0;
-    REG_BG0VOFS = 0;
-    REG_BG1VOFS = 0;
+    setLayerScroll(1, 0, 0);
+    setLayerScroll(2, 0, 0);
+
     shake = 0;
+    shakeBuff = 0;
+    shakeVelocity = 0;
     push = 0;
+
+    peek = 0;
+    peekValue = 0;
+    peekShift = 0;
 
     floatingList.clear();
     placeEffectList.clear();
     rumbleTimer = 0;
+
+    //TODO:
+    #ifdef GBA
     rumble_set_state(RumbleState(rumble_stop));
+    #endif
 
     resetZonePalette();
+
+    clearTilemap(25);
+    clearTilemap(26);
+    clearTilemap(27);
 
     if(saveExists){
         delete quickSave;
         saveExists = false;
     }
 
-    memset32(&se_mem[25], 0x0000, 32 * 20);
-    memset32(&se_mem[26], 0x0000, 32 * 20);
-    memset32(&se_mem[27], 0x0000, 32 * 20);
-
-    REG_MOSAIC = MOS_BUILD(0,0,0,0);
+    setMosaic(0, 0);
 
     //reset glow
     for (int i = 0; i < 20; i++)
@@ -293,10 +259,18 @@ void reset() {
             glow[i][j] = 0;
 
     int g = savefile->settings.backgroundGradient;
+
     if(g == 0)
-        memcpy16(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
+        memcpy16_fast(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
     else
         setGradient(g);
+
+    memset32_fast(current, 0, 22 * 12);
+    memset32_fast(previous, 0, 22 * 12);
+
+    #ifdef GBA
+    toggleSpriteSorting(false);
+    #endif
 }
 
 std::string nameInput(int place) {
@@ -323,8 +297,12 @@ std::string nameInput(int place) {
 
     bool onDone = false;
 
-    while (1) {
-        VBlankIntrWait();
+    showSprites(128);
+
+    MenuKeys k = savefile->settings.menuKeys;
+
+    while (closed()) {
+        vsync();
 
         if (place == 0 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ))
             aprint("New Record", 10, 5);
@@ -335,12 +313,12 @@ std::string nameInput(int place) {
 
         key_poll();
 
-        u16 key = key_hit(KEY_FULL);
-
+        aprintClearArea(13, nameHeight, 10, 1);
         aprint(result, 13, nameHeight);
 
         if (!onDone) {
-            if (key == KEY_A || key == KEY_RIGHT) {
+            #if defined(GBA) || defined(SWITCH) || defined(PORTMASTER)
+            if (key_hit(k.confirm) || key_hit(k.right)) {
                 cursor++;
                 if (cursor > 7) {
                     onDone = true;
@@ -351,26 +329,21 @@ std::string nameInput(int place) {
                 }
             }
 
-            if (key == KEY_B) {
+            if (key_hit(k.cancel)) {
                 result[cursor] = ' ';
                 if (cursor > 0)
                     cursor--;
                 sfx(SFX_MENUCANCEL);
             }
 
-            if (key == KEY_LEFT) {
+            if (key_hit(k.left)) {
                 if (cursor > 0)
                     cursor--;
                 sfx(SFX_MENUMOVE);
             }
 
-            if (key == KEY_START) {
-                onDone = true;
-                sfx(SFX_MENUCONFIRM);
-            }
-
             char curr = result.at(cursor);
-            if (key == KEY_UP) {
+            if (key_hit(k.up)) {
                 if (curr == 'A')
                     result[cursor] = ' ';
                 else if (curr == ' ')
@@ -379,7 +352,7 @@ std::string nameInput(int place) {
                     result[cursor] = curr - 1;
 
                 sfx(SFX_MENUMOVE);
-            } else if (key == KEY_DOWN) {
+            } else if (key_hit(k.down)) {
                 if (curr == 'Z')
                     result[cursor] = ' ';
                 else if (curr == ' ')
@@ -387,13 +360,13 @@ std::string nameInput(int place) {
                 else if (curr < 'Z')
                     result[cursor] = curr + 1;
                 sfx(SFX_MENUMOVE);
-            } else if (key_is_down(KEY_UP) || key_is_down(KEY_DOWN)) {
+            } else if (key_is_down(k.up) || key_is_down(k.down)) {
                 if (das < maxDas)
                     das++;
                 else {
                     if (arr++ > maxArr) {
                         arr = 0;
-                        if (key_is_down(KEY_UP)) {
+                        if (key_is_down(k.up)) {
                             if (curr == 'A')
                                 result[cursor] = ' ';
                             else if (curr == ' ')
@@ -420,20 +393,81 @@ std::string nameInput(int place) {
                     aprint("_", 13 + cursor, nameHeight);
             }
 
+            #elif defined(PC) || defined(WEB)
+
+            u32 key = key_first();
+
+            char character = getStringFromKey(key)[0];
+
+            if(cursor > 0 && ((key == SDLK_BACKSPACE) || (das == maxDas && arr == 0))){
+                if(cursor < 7 || result[cursor] == ' '){
+                    result[cursor - 1] = ' ';
+
+                    cursor--;
+                }else{
+                    result[cursor] = ' ';
+                }
+
+                sfx(SFX_MENUMOVE);
+            }else if(key == SDLK_SPACE && result.size() < 9){
+                result[cursor] = ' ';
+                if(cursor < 7)
+                    cursor++;
+                sfx(SFX_MENUMOVE);
+            }else if(getStringFromKey(key).size() == 1 && ((character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z'))){
+                result[cursor] = character;
+
+                if (cursor < 7)
+                    cursor++;
+
+                sfx(SFX_MENUMOVE);
+            }
+
+            if(key_is_down(SDLK_BACKSPACE)){
+                if(das < maxDas)
+                    das++;
+
+                if(++arr >= maxArr){
+                    arr = 0;
+                }
+            }else{
+                das = 0;
+            }
+
+            if (timer++ > 19)
+                timer = 0;
+
+            if (timer < 10)
+                aprint("_", 13 + cursor, nameHeight);
+
+            if (key_hit(SDLK_RETURN) || key_hit(SDLK_ESCAPE)) {
+                onDone = true;
+                sfx(SFX_MENUCONFIRM);
+            }
+
+            #endif
+
+            if (key_hit(k.pause)) {
+                onDone = true;
+                sfx(SFX_MENUCONFIRM);
+            }
+
             aprint(" ", 12, 16);
         } else {
             aprint(">", 12, 16);
 
-            if (key == KEY_A || key == KEY_START) {
+            if (key_hit(k.confirm) || key_hit(k.pause)) {
                 sfx(SFX_MENUCONFIRM);
                 break;
             }
 
-            if (key == KEY_B) {
+            if (key_hit(k.cancel)) {
                 onDone = false;
                 sfx(SFX_MENUCANCEL);
             }
         }
+        updateFluid();
+        drawGrid();
     }
 
     clearText();
@@ -442,6 +476,9 @@ std::string nameInput(int place) {
         result = result.substr(0, 8);
 
     for (int i = 0; i < 8; i++)
+        savefile->latestName[i] = ' ';
+
+    for (int i = 0; i < result.size(); i++)
         savefile->latestName[i] = result.at(i);
 
     return result;
@@ -449,7 +486,6 @@ std::string nameInput(int place) {
 
 
 void setSkin() {
-    setPalette();
 
     switch (savefile->settings.skin) {
     case 0:
@@ -474,14 +510,15 @@ void setSkin() {
         blockSprite = (u8*)sprite21tiles_bin;
         break;
     case 7:
+
         for(int i = 0; i < 8; i++)
-            memcpy16(&tile_mem[0][48+i],classicTiles[0][i],classic1tiles_bin_size/2);
+            loadTiles(0,48+i,classicTiles[0][i],classic1tiles_bin_size/32);
 
         blockSprite = (u8*)classicTiles[0][0];
         break;
     case 8:
         for(int i = 0; i < 8; i++)
-            memcpy16(&tile_mem[0][48+i],classicTiles[1][i],classic1tiles_bin_size/2);
+            loadTiles(0,48+i,classicTiles[1][i],classic1tiles_bin_size/32);
 
         blockSprite = (u8*)classicTiles[1][0];
         break;
@@ -494,17 +531,28 @@ void setSkin() {
     case 11:
         blockSprite = (u8*)&sprite38tiles_bin[12*32];
 
-        memcpy32(&tile_mem[0][128],sprite38tiles_bin,sprite38tiles_bin_size/4);
+        loadTiles(0,128,sprite38tiles_bin,sprite38tiles_bin_size/32);
         break;
     case 12:
         blockSprite = (u8*)&sprite39tiles_bin[12*32];
 
-        memcpy32(&tile_mem[0][128],sprite39tiles_bin,sprite39tiles_bin_size/4);
+        loadTiles(0,128,sprite39tiles_bin,sprite39tiles_bin_size/32);
         break;
     case 13:
         blockSprite = (u8*)&sprite40tiles_bin[12*32];
 
-        memcpy32(&tile_mem[0][128],sprite40tiles_bin,sprite40tiles_bin_size/4);
+        loadTiles(0,128,sprite40tiles_bin,sprite40tiles_bin_size/32);
+        break;
+    case 14:
+        blockSprite = (u8*)&sprite53tiles_bin[12*32];
+
+        loadTiles(0,128,sprite53tiles_bin,sprite53tiles_bin_size/32);
+        break;
+    case 1001:
+        blockSprite = (u8*)sprite55tiles_bin;
+        break;
+    case 1002:
+        blockSprite = (u8*)sprite56tiles_bin;
         break;
     default:
         if(savefile->settings.skin < 0){
@@ -517,182 +565,104 @@ void setSkin() {
         break;
     }
 
-    if(savefile->settings.skin < 7){
-        VBlankIntrWait();
-        if(savefile->settings.skin < 0){
-            int n = savefile->settings.skin;
+    if(savefile->settings.skin < 7 || savefile->settings.skin == 9 || savefile->settings.skin == 10 || savefile->settings.skin > 1000){
+        //TODO:
+        //vsync might not be necessary here
+        vsync();
+        int n = savefile->settings.skin;
+
+        if(n < 0){
             n *= -1;
             n--;
             buildMini(&savefile->customSkins[n].smallBoard);
+        }else if(n == 1001 || n == 1002){
+            buildMini((TILE*)boneMini[n-1001]);
         }else{
-            buildMini((TILE*)mini[savefile->settings.skin]);
+            if (n >= 9)
+                n-=2;
+            buildMini((TILE*)mini[n]);
         }
     }
 
-    memcpy16(&tile_mem[0][1], blockSprite, sprite1tiles_bin_size / 2);
-    memcpy16(&tile_mem[2][97], blockSprite, sprite1tiles_bin_size / 2);
+    loadTiles(0,1,blockSprite,1);
+    loadTiles(2,97,blockSprite,1);
 
-    int** board;
+    int* board;
     for (int i = 0; i < 7; i++) {
-        board = getShape(i, 0, game->rotationSystem);
+        int n;
+        if(game == nullptr)
+            n = SRS;
+        else
+            n = game->rotationSystem;
 
+        board = getShape(i, 0, n);
+
+        int iy = 16 * i;
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < 4; k++) {
-                if (board[j][k]) {
+                int ix = j * 4 + k;
+                if (board[ix]) {
                     if(savefile->settings.skin == 11)
-                        memcpy16(&tile_mem[4][16 * i + j * 4 + k], &sprite38tiles_bin[GameInfo::connectedConversion[(board[j][k])>>4] * 32], sprite1tiles_bin_size / 2);
+                        loadSpriteTilesPartial(iy, &sprite38tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
                     else if(savefile->settings.skin == 12)
-                        memcpy16(&tile_mem[4][16 * i + j * 4 + k], &sprite39tiles_bin[GameInfo::connectedConversion[(board[j][k])>>4] * 32], sprite1tiles_bin_size / 2);
+                        loadSpriteTilesPartial(iy, &sprite39tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
                     else if(savefile->settings.skin == 13)
-                        memcpy16(&tile_mem[4][16 * i + j * 4 + k], &sprite40tiles_bin[GameInfo::connectedConversion[(board[j][k])>>4] * 32], sprite1tiles_bin_size / 2);
+                        loadSpriteTilesPartial(iy, &sprite40tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
+                    else if(savefile->settings.skin == 14)
+                        loadSpriteTilesPartial(iy, &sprite53tiles_bin[GameInfo::connectedConversion[(board[ix])>>4]*32],k,j,1,1,4);
                     else if(savefile->settings.skin < 7 || savefile->settings.skin > 8)
-                        memcpy16(&tile_mem[4][16 * i + j * 4 + k], blockSprite, sprite1tiles_bin_size / 2);
+                        loadSpriteTilesPartial(iy, blockSprite,k,j,1,1,4);
                     else
-                        memcpy16(&tile_mem[4][16 * i + j * 4 + k], classicTiles[savefile->settings.skin-7][i], sprite1tiles_bin_size / 2);
+                        loadSpriteTilesPartial(iy, classicTiles[savefile->settings.skin-7][i],k,j,1,1,4);
                 }else{
-                    memcpy16(&tile_mem[4][16 * i + j * 4 + k], &tile_mem[4][0], sprite1tiles_bin_size / 2);
+                    clearSpriteTile(iy, k, j, 4);
                 }
             }
         }
 
-        for (int i = 0; i < 4; i++)
-            delete[] board[i];
         delete[] board;
     }
 }
 
 void setLightMode() {
-
     if (savefile->settings.lightMode) {
-        memset16(pal_bg_mem, 0x5ad6, 1);//background gray
-        memset16(&pal_bg_mem[8 * 16 + 4], 0x0421, 1);//progressbar
+        setPaletteColor(0,0,0x5ad6,1);//background gray
+        setPaletteColor(8,4,0x0421,1);//progressbar
+        setPaletteColor(0,8,0x5ad6,1);
 
-        //activated font
-        memset16(&pal_bg_mem[15 * 16 + 2], 0x0000, 1);//font main
-        memset16(&pal_bg_mem[15 * 16 + 3], 0x5ad6, 1);//font shadow
-        memset16(&pal_obj_mem[15 * 16 + 2], 0x0000, 1);//obj font main
-        memset16(&pal_obj_mem[15 * 16 + 3], 0x5ad6, 1);//boj font shadow
+        setPaletteColor(16 + 8,6,0x6739,1);//frame background
 
-        //unactivated font
-        memset16(&pal_bg_mem[14 * 16 + 2], 0x7fff, 1);//font main
-        memset16(&pal_bg_mem[14 * 16 + 3], 0x5ad6, 1);//font shadow
-        memset16(&pal_obj_mem[14 * 16 + 2], 0x7fff, 1);//obj font main
-        memset16(&pal_obj_mem[14 * 16 + 3], 0x5ad6, 1);//boj font shadow
-
-        memset16(&pal_obj_mem[8 * 16 + 6], 0x6739, 1);//frame background
+        //faded Text Palette
+        color_adj_brightness(13, 0, fontPalettes[1][0], 8, int2fx(1) >> 2);
+        color_adj_brightness(13 + 16, 0, fontPalettes[1][0], 8, int2fx(1) >> 2);
     } else {
-        memset16(pal_bg_mem, 0x0000, 1);
-        memset16(&pal_bg_mem[8 * 16 + 4], 0x7fff, 1);
+        setPaletteColor(0,0,0x0000,1);//background gray
+        setPaletteColor(8,4,0x7fff,1);//progressbar
+        setPaletteColor(0,8,0x0c63,1);
 
-        //activated font
-        memset16(&pal_bg_mem[15 * 16 + 2], 0x7fff, 1);
-        memset16(&pal_bg_mem[15 * 16 + 3], 0x294a, 1);
-        memset16(&pal_obj_mem[15 * 16 + 2], 0x7fff, 1);
-        memset16(&pal_obj_mem[15 * 16 + 3], 0x294a, 1);
+        setPaletteColor(16 + 8,6,0x0c63,1);//frame background
 
-        //unactivated font
-        memset16(&pal_bg_mem[14 * 16 + 2], 0x318c, 1);//font main
-        memset16(&pal_bg_mem[14 * 16 + 3], 0x0421, 1);//font shadow
-        memset16(&pal_obj_mem[14 * 16 + 2], 0x318c, 1);//obj font main
-        memset16(&pal_obj_mem[14 * 16 + 3], 0x0421, 1);//boj font shadow
-        memset16(&pal_obj_mem[8 * 16 + 6], 0x0c63, 1);//frame background
+        //faded Text Palette
+        color_fade_palette(13, 0, fontPalettes[0][0], 0, 8, 15);
+        color_fade_palette(13 + 16, 0, fontPalettes[0][0], 0, 8, 15);
     }
+
+    //main text
+    loadPalette(15, 0, fontPalettes[savefile->settings.lightMode][1], 5);
+    loadPalette(15 + 16, 0, fontPalettes[savefile->settings.lightMode][1], 5);
+
+    //sub text
+    loadPalette(14, 0, fontPalettes[savefile->settings.lightMode][0], 5);
+    loadPalette(14 + 16, 0, fontPalettes[savefile->settings.lightMode][0], 5);
+
 
     setGradient(savefile->settings.backgroundGradient);
 }
 
-void sleep() {
-    int display_value = REG_DISPCNT;
-    REG_DISPCNT = 0x1000 | 0x0040 | DCNT_MODE0 | DCNT_BG2; //Disable all backgrounds except text
-    clearText();
-
-    oam_init(obj_buffer, 128);
-    oam_copy(oam_mem, obj_buffer, 128);
-
-    while (1) {
-        aprint("Entering sleep...", 7, 4);
-        aprint("Press", 13, 8);
-        aprint("L + R + SELECT", 9, 10);
-        aprint("to leave sleep", 8, 12);
-
-        aprint("A: Sleep      B: Cancel", 4, 17);
-
-        VBlankIntrWait();
-
-        key_poll();
-
-        if (key_hit(KEY_A)) {
-            clearText();
-            break;
-        }
-
-        if (key_hit(KEY_B)) {
-            REG_DISPCNT = display_value;
-            clearText();
-            sfx(SFX_MENUCANCEL);
-            return;
-        }
-    }
-
-    irq_disable(II_VBLANK);
-
-    bool tmp = gradientEnabled;
-    gradient(false);
-    int stat_value = REG_SNDSTAT;
-    int dsc_value = REG_SNDDSCNT;
-    int dmg_value = REG_SNDDMGCNT;
-
-    REG_DISPCNT |= 0x0080;
-    REG_SNDSTAT = 0;
-    REG_SNDDSCNT = 0;
-    REG_SNDDMGCNT = 0;
-
-    bool isLinked = linkConnection->isActive();
-
-    if(isLinked)
-        linkConnection->deactivate();
-
-    irq_disable(II_TIMER3);
-    irq_disable(II_SERIAL);
-
-    REG_P1CNT = 0b1100001100000100;
-    irq_add(II_KEYPAD, nullptr);
-
-    Stop();
-
-    REG_DISPCNT = display_value;
-    REG_SNDSTAT = stat_value;
-    REG_SNDDSCNT = dsc_value;
-    REG_SNDDMGCNT = dmg_value;
-
-    if(isLinked)
-        linkConnection->activate();
-
-    irq_enable(II_TIMER3);
-    irq_enable(II_SERIAL);
-    irq_delete(II_KEYPAD);
-    irq_enable(II_VBLANK);
-
-    if(tmp)
-        gradient(true);
-}
-
 void diagnose() {
-    if (!DIAGNOSE)
-        return;
-
-    std::string str = "";
-
-    // for(int i = 0; i < 5; i++){
-    //     // str += std::to_string(profileResults[i]) + " ";
-
-    // }
-    // str+= "Garbage Height: " + std::to_string(game->garbageHeight);
-
-    // str += std::to_string(game->previousBest.size()) + " " + std::to_string(game->moveHistory.size());
-
-    // str += std::to_string(profileResults[0]);
-
+    #ifdef NO_DIAGNOSE
+    return;
+    #endif
 }
 
 void setPalette(){
@@ -701,14 +671,14 @@ void setPalette(){
     for(int i = 0; i < 16; i++){
 
         if (i < 8 && savefile->settings.colors < 2){
-            memcpy16(&pal_bg_mem[i*16], &palette[n][i*16], 8);
-            memcpy16(&pal_obj_mem[i*16], &palette[n][i*16], 8);
+            loadPalette(i, 0, &palette[n][i*16], 8);
+            loadPalette(i+16, 0, &palette[n][i*16], 8);
         }else if (i < 8){
-            memcpy16(&pal_bg_mem[i*16+4], &palette[n][i*16+4], 4);
-            memcpy16(&pal_obj_mem[i*16+4], &palette[n][i*16+4], 4);
+            loadPalette(i, 4, &palette[n][i*16+4], 4);
+            loadPalette(i+16, 4, &palette[n][i*16+4], 4);
         }else if (i > 9){
-            memcpy16(&pal_bg_mem[i*16], &palette[n][i*16], 16);
-            memcpy16(&pal_obj_mem[i*16], &palette[n][i*16], 16);
+            loadPalette(i, 0, &palette[n][i*16], 16);
+            loadPalette(i+16, 0, &palette[n][i*16], 16);
         }
     }
 
@@ -716,108 +686,96 @@ void setPalette(){
 
     if(savefile->settings.colors == 2){
         for(int i = 0; i < 9; i++){
-            memcpy16(&pal_bg_mem[i*16], classic_pal_bin,4);
-            memcpy16(&pal_obj_mem[i*16], classic_pal_bin,4);
+            loadPalette(i, 0, classic_pal_bin, 4);
+            loadPalette(i+16, 0, classic_pal_bin, 4);
         }
     }else if(savefile->settings.colors == 3){
         //set frame color
-        memcpy16(&pal_obj_mem[8 * 16], &palette[n][color * 16], 16);
-        memcpy16(&pal_bg_mem[8 * 16], &palette[n][color * 16], 16);
+        loadPalette(8, 0, &palette[n][color*16], 16);
+        loadPalette(8+16, 0, &palette[n][color*16], 16);
 
         int n = getClassicPalette();
+
         for(int i = 0; i < 8; i++){
-            memcpy16(&pal_bg_mem[i*16+1], &nesPalette[n][0],4);
-            memcpy16(&pal_obj_mem[i*16+1], &nesPalette[n][0],4);
+            loadPalette(i,1, &nesPalette[n][0],4);
+            loadPalette(i+16,1, &nesPalette[n][0],4);
         }
 
     }else if(savefile->settings.colors == 4){
+        COLOR c;
+        if(savefile->settings.palette < 7){
+            int *clr = (int *) GameInfo::colors[savefile->settings.palette];
+            c = RGB15_SAFE(clr[0] >> 3, clr[1] >> 3, clr[2] >> 3);
+        } else
+            c = monoPalette[savefile->settings.lightMode][0];
+
         for(int i = 0; i < 9; i++){
-            memcpy16(&pal_bg_mem[i*16+1], &monoPalette[savefile->settings.lightMode],4);
-            memcpy16(&pal_obj_mem[i*16+1], &monoPalette[savefile->settings.lightMode],4);
+            setPaletteColor(i, 1, c, 4);
+            setPaletteColor(i+16, 1, c, 4);
         }
 
-        if(!savefile->settings.lightMode){
-            memset16(&pal_bg_mem[7], 0x7fff,2);
-            memset16(&pal_obj_mem[7], 0x7fff,2);
-        }else{
-            memset16(&pal_bg_mem[7], 0x0421,2);
-            memset16(&pal_obj_mem[7], 0x0421,2);
-        }
+        // if(!savefile->settings.lightMode){
+        //     setPaletteColor(7, 0, 0x7fff, 2);
+        //     setPaletteColor(7+16, 0, 0x7fff, 2);
+        // }else{
+        //     setPaletteColor(7, 0, 0x0421, 2);
+        //     setPaletteColor(7+16, 0, 0x0421, 2);
+        // }
 
     }else if(savefile->settings.colors == 5){
         for(int i = 0; i < 8; i++){
-            memcpy16(&pal_bg_mem[i*16+1], &arsPalette[0][i],4);
-            memcpy16(&pal_obj_mem[i*16+1], &arsPalette[0][i],4);
+            loadPalette(i, 1, &arsPalette[0][i], 4);
+            loadPalette(i+16, 1, &arsPalette[0][i], 4);
         }
 
         //set frame color
-        memcpy16(&pal_obj_mem[8 * 16], &palette[0][color * 16], 16);
-        memcpy16(&pal_bg_mem[8 * 16], &palette[0][color * 16], 16);
+        loadPalette(8, 0, &palette[0][color*16], 16);
+        loadPalette(8+16, 0, &palette[0][color*16], 16);
     }else if(savefile->settings.colors == 6){
         for(int i = 0; i < 8; i++){
-            memcpy16(&pal_bg_mem[i*16+1], &arsPalette[1][i],4);
-            memcpy16(&pal_obj_mem[i*16+1], &arsPalette[1][i],4);
+            loadPalette(i, 1, &arsPalette[1][i], 4);
+            loadPalette(i+16, 1, &arsPalette[1][i], 4);
         }
         //set frame color
-        memcpy16(&pal_obj_mem[8 * 16], &palette[1][color * 16], 16);
-        memcpy16(&pal_bg_mem[8 * 16], &palette[1][color * 16], 16);
+        loadPalette(8, 0, &palette[1][color*16], 16);
+        loadPalette(8+16, 0, &palette[1][color*16], 16);
     }else{
         //set frame color
-        memcpy16(&pal_obj_mem[8 * 16], &palette[n][color * 16], 16);
-        memcpy16(&pal_bg_mem[8 * 16], &palette[n][color * 16], 16);
-
+        loadPalette(8, 0, &palette[n][color*16], 16);
+        loadPalette(8+16, 0, &palette[n][color*16], 16);
     }
 
-    memcpy16(&pal_obj_mem[13 * 16], title_pal_bin, title_pal_bin_size / 2);
     setLightMode();
-}
 
-void initRumble(){
-    if(!savefile->settings.rumble)
-        return;
-
-    rumbleInitialized = true;
-    RegisterRamReset(RESET_VRAM);
-    REG_DISPCNT = DCNT_MODE0 | DCNT_BG0;
-    *((volatile u16*)0x4000008) = 0x0088;
-
-    if (unlock_gbp()) {
-
-        RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
-            irq_enable(II_SERIAL);
-            irq_add(II_SERIAL, rumble_isr);
-        }};
-
-        rumble_init(&conf);
-    } else {
-        rumble_init(nullptr);
-    }
-}
-
-bool unlock_gbp(){
-    bool gbp_detected = false;
-
-    memcpy16((u16*)0x6008000, gbp_logo_pixels, (sizeof gbp_logo_pixels)/2);
-    memcpy16((u16*)0x6000000, gbp_logo_tiles, (sizeof gbp_logo_tiles)/2);
-    memcpy16(pal_bg_mem, gbp_logo_palette, (sizeof gbp_logo_palette)/2);
-
-    static volatile u32* keys = (volatile u32*)0x04000130;
-
-    for(int i = 0; i < 120; i++){
-        // if(key_is_down(KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT)){
-        if(*keys==0x030f){
-            gbp_detected = true;
+    if(savefile->settings.effects == 2){
+        for(int i = 0; i < 16; i++){
+            int color = (savefile->settings.lightMode)?29-i:i;
+            setPaletteColor(i, 5, RGB15(color, color, color), 1);
         }
-        VBlankIntrWait();
     }
 
-    RegisterRamReset(RESET_VRAM);
+    setPaletteColor(15, 5, RGB15(25, 5, 5), 1);
 
-    return gbp_detected;
+    for(int i = 0; i < 16; i++){
+        if(i == 12)
+            continue;
+
+        setPaletteColor(i,15,RGB15(0,31,0),1);
+        setPaletteColor(16+i,15,RGB15(0,31,0),1);
+    }
+
+    setPaletteColor(30, 14, RGB15(25, 27, 28), 1);
+    setPaletteColor(31, 14, RGB15(31, 5, 5), 1);
 }
 
 int getClassicPalette(){
     int n = 0;
+
+    if(game == nullptr){
+        n = abs(savefile->seed) % 10;
+        return n;
+    }
+
     int mode = game->gameMode;
     if((mode == MARATHON || mode == BLITZ || mode == CLASSIC ) && game->level >= 0 && game->level < 255)
         n = (game->level-(game->gameMode != CLASSIC)) % 10;
@@ -828,34 +786,34 @@ int getClassicPalette(){
 }
 
 void buildMini(TILE * customSkin){
-    memset32(&tile_mem[4][9*16],0,8*8*7);
+    for(int i = 0; i < 7; i++)
+        clearSpriteTiles(9*16 + 8 * i, 4, 2);
 
-    int add = (game->rotationSystem == NRS || game->rotationSystem == ARS);
+    int add = 0;
+    int rs = SRS;
+    if(game != nullptr){
+        add = (game->rotationSystem == NRS || game->rotationSystem == ARS || game->rotationSystem == BARS);
+        rs = game->rotationSystem;
+    }
 
     for (int i = 0; i < 7; i++){
-
-        TILE * t;
-        int** p = getShape(i, 0, game->rotationSystem);
+        int* p = getShape(i, 0, rs);
         int tileStart = 9 * 16 + i * 8;
 
         for(int y = 0; y < 2; y++){
             for(int x = 0; x < 4; x++){
-                if(!p[y+add][x])
+                if(!p[(y+add)*4+x])
                     continue;
 
                 for(int ii = 0; ii < 6; ii++){
                     for(int jj = 0; jj < 6; jj++){
-                        t = &tile_mem[4][tileStart + (x*6+jj)/8 + ((y*6+ii)/8)*4];
-
-                        t->data[(y*6+ii)%8] |= ((customSkin->data[ii] >> (4*jj)) & 0xf) << (((x*6+jj)%8)*4);
+                        setSpritePixel(tileStart, (x * 6 + jj)/8, (y*6+ii)/8, 4, ((x*6+jj)%8), (y*6+ii)%8, (customSkin->data[ii] >> (4*jj)) & 0xf);
                     }
                 }
             }
         }
 
-        for(int i = 0; i < 4; i++)
-            delete p[i];
-        delete p;
+        delete []p;
     }
 }
 
@@ -875,58 +833,312 @@ Tuning getTuning(){
     return t;
 }
 
-void changeScene(Scene *newScene){
-    if(scene != nullptr){
-        delete scene;
-    }
-
-    scene = newScene;
-}
-
 void setGradient(int color){
-    REG_DMA0CNT &= ~(1 << 0x1f);
+    stopDMA();
 
-    int n = (savefile->settings.colors < 2)?savefile->settings.colors:0;
+    int div = 20;
 
-    COLOR * src = (COLOR *) &palette[n];
+    int start = 0;
+    int end = 160;
+
+    COLOR src = 0;
+
+    #ifdef TE
+
+    start = rowStart;
+    end = rowEnd;
+
+    #endif
+
+    if(savefile->settings.backgroundType == 0)
+        div = (end-start)/8;
+    else if(savefile->settings.backgroundType == 1)
+        div = (end-start)/16;
+
+    if(div == 0)
+        div = 1;
+
+    COLOR color1 = color & 0xffff;
+    COLOR color2 = (color >> 16) & 0xffff;
 
     if(!(savefile->settings.lightMode && color == 0)){
-        for(int i = 0; i < SCREEN_HEIGHT; i++){
-            clr_fade(src, color, (COLOR *) &gradientTable[i], 1, ((SCREEN_HEIGHT-1-i) / 20) * 2 + 16);
+        for(int i = 0; i < end-start; i++){
+            if(savefile->settings.backgroundType == 0)
+                color_fade((COLOR *) &gradientTable[i+start], &src, color, 1, (((end-start)-1-i) / div) * 2 + 16);
+            else if(savefile->settings.backgroundType == 1)
+                color_fade((COLOR *) &gradientTable[i+start], &color2, color1, 1, (((end-start)-1-i) / div) * 2);
         }
 
-        gradientTable[SCREEN_HEIGHT-1] = gradientTable[0];
+        #ifdef GBA
+        memset16(&gradientTable[SCREEN_HEIGHT-1], gradientTable[0], 192 - SCREEN_HEIGHT);
+        // gradientTable[SCREEN_HEIGHT-1] = gradientTable[0];
+        // gradientTable[192-1] = gradientTable[0];
+        #endif
     }else{
-        for(int i = 0; i < SCREEN_HEIGHT; i++)
-            gradientTable[i] = 0x5ad6;
-    }
-
-    gradientTable[SCREEN_HEIGHT] = 0x1f;
-}
-
-void sfx(int s){
-    mm_sfxhand h = mmEffect(s);
-    mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
-
-    if((s == SFX_PLACE) && game->zoneTimer){
-        mmEffectRate(h,512);
+        for(int i = 0; i < end-start; i++)
+            gradientTable[i + start] = 0x5ad6;
     }
 }
 
 void setDefaultGradient(){
-    memcpy16(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
-}
+    #ifdef GBA
+    memcpy16_fast(gradientTable,defaultGradient_bin,defaultGradient_bin_size/2);
+    #endif
 
-void gradient(bool state){
-    if(state){
-        bool light = savefile->settings.lightMode;
-        if((!light && gradientTable[0] == 0) || (light && gradientTable[0] == 0x5ad6)){
-            memset16(pal_bg_mem, gradientTable[0], 1);
-            return;
-        }
-    }else{
-        REG_DMA0CNT &= ~(1 << 0x1f);
+    #ifdef PC
+
+    int div = SCREEN_HEIGHT/8;
+    int n = (savefile->settings.colors < 2)?savefile->settings.colors:0;
+
+    COLOR * src = (COLOR *) &palette[n];
+
+    for(int i = 0; i < SCREEN_HEIGHT; i++){
+        color_fade((COLOR *) &gradientTable[i],src,GRADIENT_COLOR,1,((SCREEN_HEIGHT-1-i) / div) * 2 + 16);
     }
 
-    gradientEnabled = state;
+    #endif
+}
+
+void gradient(int state){
+    if(state == 1){
+        gradientEnabled = true;
+        bool light = savefile->settings.lightMode;
+        if((!light && gradientTable[0] == 0) || (light && gradientTable[0] == 0x5ad6)){
+            setPaletteColor(0, 0, gradientTable[0], 1);
+            return;
+        }
+        toggleHBlank(false);
+    }else if(state == 2){
+        stopDMA();
+        gradientEnabled = false;
+        toggleHBlank(true);
+    }else{
+        stopDMA();
+        gradientEnabled = false;
+        toggleHBlank(false);
+    }
+}
+
+void startGame(BlockEngine::Options options,int seed){
+    if(game != nullptr)
+        delete game;
+    game = new Game(options.mode,seed,options.bigMode);
+    game->setOptions(options);
+
+    savefile->stats.gamesStarted++;
+
+    if(previousGameOptions != nullptr)
+        delete previousGameOptions;
+    previousGameOptions = new Options();
+
+    *previousGameOptions = options;
+
+    if (!replaying && enableBot) {
+        log("starting bot!");
+
+        delete testBot;
+        testBot = new Bot(game);
+    }else if(options.mode == BATTLE && !multiplayer){
+        startBotGame(seed);
+    }
+
+    if(options.mode == BlockEngine::ZEN){
+        game->score = savefile->boards.zen;
+    }
+}
+
+void startGame(int seed){
+    if(previousGameOptions == nullptr)
+        previousGameOptions = new Options();
+
+    startGame(*previousGameOptions,seed);
+}
+
+void startGame(){
+    if(previousGameOptions == nullptr)
+        previousGameOptions = new Options();
+
+    startGame(*previousGameOptions,qran());
+}
+
+void startBotGame(int seed){
+    startMultiplayerGame(seed);
+    multiplayer = false;
+
+    if(botGame != nullptr)
+        delete botGame;
+
+    botGame = new Game(BATTLE,seed & 0x1fff,false);
+    botGame->setOptions(*previousGameOptions);
+    botGame->setGoal(100);
+    botGame->setLevel(1);
+    botGame->maxClearDelay = 20;
+
+    delete testBot;
+    testBot = new Bot(botGame);
+
+    clearText();
+}
+
+void setPawnPalette(int dest, int n, int blend){
+    dest += 16;
+
+    if (savefile->settings.lightMode){
+        if(savefile->settings.colors == 2)
+            color_fade_palette(dest,0,(COLOR*)classic_pal_bin,0x0000,5,blend);
+        else if(savefile->settings.colors == 3){
+            int n = getClassicPalette();
+            color_fade_palette(dest,1, &nesPalette[n][0],0x0000,4,blend);
+        }else if(savefile->settings.colors == 4){
+            COLOR c;
+            if(savefile->settings.palette < 7){
+                int *clr = (int *) GameInfo::colors[savefile->settings.palette];
+                c = RGB15_SAFE(clr[0] >> 3, clr[1] >> 3, clr[2] >> 3);
+            } else{
+                c = monoPalette[savefile->settings.lightMode][0];
+            }
+            COLOR mono[4];
+            memset16(mono,c,4);
+
+            color_fade_palette(dest,1,(COLOR*)&mono[0],0x0000,4,blend);
+        }else if(savefile->settings.colors == 5){
+            color_fade_palette(dest,1,(COLOR*)&arsPalette[0][n],0x0000,4,blend);
+        }else if(savefile->settings.colors == 6){
+            color_fade_palette(dest,1,(COLOR*)&arsPalette[1][n],0x0000,4,blend);
+        } else
+            color_fade_palette(dest,0,(COLOR*)&palette[savefile->settings.colors][n*16],0x0000,5,blend);
+    }else{
+        if(dest == 11+16)
+            blend = int2fx(blend) >> 5;
+        else if(dest == 10+16)
+            blend = float2fx(0.25);
+
+        if(savefile->settings.colors == 2)
+            color_adj_brightness(dest, 0, (COLOR*)classic_pal_bin, 5, blend);
+        else if(savefile->settings.colors == 3){
+            color_adj_brightness(dest, 1, (COLOR*)&nesPalette[getClassicPalette()][0], 4, blend);
+        }else if(savefile->settings.colors == 4){
+            COLOR c;
+            if(savefile->settings.palette < 7){
+                int *clr = (int *) GameInfo::colors[savefile->settings.palette];
+                c = RGB15_SAFE(clr[0] >> 3, clr[1] >> 3, clr[2] >> 3);
+            } else{
+                c = monoPalette[savefile->settings.lightMode][0];
+            }
+            COLOR mono[4];
+            memset16(mono,c,4);
+
+            color_adj_brightness(dest, 1, (COLOR*)&mono[0], 4, blend);
+        }else if(savefile->settings.colors == 5){
+            color_adj_brightness(dest, 1, (COLOR*)&arsPalette[0][n], 4, blend);
+        }else if(savefile->settings.colors == 6){
+            color_adj_brightness(dest, 1, (COLOR*)&arsPalette[1][n], 4, blend);
+        }else
+            color_adj_brightness(dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16], 5, blend);
+    }
+}
+
+std::string getStringFromKey(int key){
+    #if defined(GBA)
+
+    std::string result;
+
+    if((key & (key - 1)) == 0){
+        result = keyToString[key];
+    }else{
+
+        int k = key;
+
+        int counter = 0;
+        do{
+            if(k & (1 << counter)){
+                result+= keyToString[1<<counter] + " ";
+                k-= 1 << counter;
+            }
+
+            counter++;
+        }while(k != 0);
+
+        //remove trailing space
+        result.pop_back();
+    }
+
+    if(result != ""){
+        return result;
+    }else{
+        return "?";
+    }
+
+    #elif defined(SWITCH) || defined(MM) || defined(PORTMASTER)
+
+    return keyToString[key];
+
+    #elif defined(WEB) || defined(PC)
+
+    return stringFromKey(key);
+
+    #endif
+
+    return "?";
+
+}
+
+void genWidths(){
+    const int len = 96;
+
+    int output[len][2];
+
+    output[0][0] = 0;
+    output[0][1] = 0;
+
+    for(int i = 0; i < len; i++){
+        TILE * t = (TILE *) &font1tiles_bin[i * 32];
+
+        int found = 0;
+        for(int x = 7; x >= 0; x--){
+            for(int y = 0; y < 8; y++){
+                if((t->data[y] >> (4 * x)) & 0xf){
+                    output[i][1] = x;
+                    found = 1;
+                }
+
+                if(found)
+                    break;
+            }
+            if(found)
+                break;
+        }
+    }
+
+    for(int i = 0; i < len; i++){
+        TILE * t = (TILE *) &font1tiles_bin[i * 32];
+
+        int found = 0;
+        for(int x = 0; x < 8; x++){
+            for(int y = 0; y < 8; y++){
+                if((t->data[y] >> (4 * x)) & 0xf){
+                    output[i][0] = x;
+                    found = 1;
+                }
+
+                if(found)
+                    break;
+            }
+            if(found)
+                break;
+        }
+    }
+
+    std::string str;
+    for(int i = 0; i < len; i++){
+        output[i][1] -= output[i][0] - 1;
+
+        str += "{" + std::to_string(output[i][0]) + ", " + std::to_string(output[i][1]) + "}, ";
+
+        if(((i+1) % 8) == 0){
+            log(str);
+            str = "";
+        }
+    }
+
 }

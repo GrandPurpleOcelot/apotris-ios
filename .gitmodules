@@ -1,0 +1,16 @@
+[submodule "tilengine"]
+	path = subprojects/Tilengine
+	url = https://github.com/akouzoukos/tilengine/
+	branch = static
+[submodule "subprojects/general-tools"]
+	path = subprojects/general-tools
+	url = https://github.com/aronson/general-tools.git
+[submodule "subprojects/gba-tools"]
+	path = subprojects/gba-tools
+	url = https://github.com/aronson/gba-tools.git
+[submodule "subprojects/SoLoud"]
+	path = subprojects/SoLoud
+	url = https://github.com/akouzoukos/soloud
+[submodule "subprojects/libopenmpt"]
+	path = subprojects/openmpt
+	url = https://github.com/aronson/openmpt.git

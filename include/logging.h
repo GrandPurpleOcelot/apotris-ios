@@ -1,6 +1,8 @@
 #pragma once
 #include "def.h"
-#include "tonc_types.h"
+
+#ifdef GBA
+
 #include <string>
 
 #define VOLADDR(a, t) (*(t volatile *)(a))
@@ -25,8 +27,22 @@ static void logOutputMgba(u8 level, const char *message)
     REG_MGBA_FLAGS = (level - 1) | 0x100;
 }
 
-static inline void log(std::string str){
-    if(!DIAGNOSE)
-        return;
+static inline void log(int n){
+    #ifdef NO_DIAGNOSE
+    return;
+    #endif
+
+    std::string str = std::to_string(n);
+
     logOutputMgba(4, str.c_str());
 }
+
+static inline void log(std::string str){
+    #ifdef NO_DIAGNOSE
+    return;
+    #endif
+
+    logOutputMgba(4, str.c_str());
+}
+
+#endif

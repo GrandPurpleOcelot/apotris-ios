@@ -1,8 +1,5 @@
-#include "maxmod.h"
-#include "mm_types.h"
-#include "soundbank.h"
 #include "def.h"
-#include "tonc_core.h"
+#include "logging.h"
 
 int currentMenu = 0;
 int currentlyPlayingSong = 0;
@@ -10,41 +7,29 @@ int currentlyPlayingSong = 0;
 void playSong(int menuId, int songId) {
     int song = 0;
 
+    std::list<int> *songList;
+
     if (menuId == 0) {
-        switch (songId) {
-        case 0:
-            song = MOD_MENU;
-            break;
-        case 1:
-            song = MOD_OPTIKAL_INNOVATION;
-            break;
-        default:
-            return;
-        }
+        songList = &songs.menu;
     } else if (menuId == 1) {
-        switch (songId) {
-        case 0:
-            song = MOD_THIRNO;
-            break;
-        case 1:
-            song = MOD_OH_MY_GOD;
-            break;
-        case 2:
-            song = MOD_UNSUSPECTED_H;
-            break;
-        case 3:
-            song = MOD_WARNING_INFECTED;
-            break;
-        default:
-            return;
-        }
+        songList = &songs.game;
+    } else{
+        return;
     }
+
+    if(songId > (int) songList->size())
+        return;
+
+    auto it = songList->begin();
+    std::advance(it,songId);
+
+    song = *it;
 
     currentMenu = menuId;
     currentlyPlayingSong = songId;
 
-    mmStart(song, (savefile->settings.cycleSongs)? MM_PLAY_ONCE:MM_PLAY_LOOP);
-    mmSetModuleVolume(512 * ((float)savefile->settings.volume / 10));
+    setMusicVolume(512 * ((float)savefile->settings.volume / 10));
+    startSong(song,(!savefile->settings.cycleSongs));
 }
 
 void playSongRandom(int menuId) {
@@ -53,33 +38,25 @@ void playSongRandom(int menuId) {
     int max = 0;
 
     if (menuId == 0) {
-        for (int i = 0; i < MAX_MENU_SONGS; i++)
-            max += (savefile->settings.songList[i]);
+        max = songs.menu.size();
     } else if (menuId == 1) {
-        for (int i = 0; i < MAX_GAME_SONGS; i++)
-            max += (savefile->settings.songList[i + MAX_MENU_SONGS]);
+        max = songs.game.size();
     }
 
     if (max <= 0)
         return;
 
-    int index = qran() % max;
+    int index = 0;
+    int count = 0;
 
-    int start = 0;
-    if (menuId == 1)
-        start = MAX_MENU_SONGS;
+    do{
+        index = qran() % max;
+    }while(getSongState(menuId, index) && count++ < 1000);
 
-    int counter = 0;
-    for (int i = start; i < 10;i++) {
-        if (counter == index && savefile->settings.songList[i]) {
-            songId = i;
-            if (menuId == 1)
-                songId -= MAX_MENU_SONGS;
-            break;
-        }
-        if (savefile->settings.songList[i])
-            counter++;
-    }
+    if(count >= 1000)
+        return;
+
+    songId = index;
 
     if (songId == -1)
         return;
@@ -94,38 +71,77 @@ void playNextSong(){
     int menuId = currentMenu;
 
     if (menuId == 0) {
-        for (int i = 0; i < MAX_MENU_SONGS; i++)
-            max += (savefile->settings.songList[i]);
+        max = songs.menu.size();
     } else if (menuId == 1) {
-        for (int i = 0; i < MAX_GAME_SONGS; i++)
-            max += (savefile->settings.songList[i + MAX_MENU_SONGS]);
+        max = songs.game.size();
+    } else {
+        return;
     }
 
     if (max <= 0)
         return;
 
-    int index = currentlyPlayingSong+1;
-    if(index >= max)
-        index = 0;
+    int index = currentlyPlayingSong;
+    int count = 0;
 
-    int start = 0;
-    if (menuId == 1)
-        start = MAX_MENU_SONGS;
+    do{
+        if(++index >= max)
+            index = 0;
+    }while(getSongState(menuId, index) && count++ < 1000);
 
-    int counter = 0;
-    for (int i = start; i < 10;i++) {
-        if (counter == index && savefile->settings.songList[i]) {
-            songId = i;
-            if (menuId == 1)
-                songId -= MAX_MENU_SONGS;
-            break;
-        }
-        if (savefile->settings.songList[i])
-            counter++;
-    }
+    if(count >= 1000)
+        return;
+
+    songId = index;
 
     if (songId == -1)
         return;
 
     playSong(menuId, songId);
+}
+
+void toggleSong(int group, int index, bool state){
+    int *list = nullptr;
+
+    if(group == 0){//MENU
+        list = savefile->settings.songDisabling.menuBits;
+    }else if(group == 1){//IN-GAME
+        list = savefile->settings.songDisabling.gameBits;
+    }
+
+    if(!list)
+        return;
+
+    if(state)
+        list[index/32] |= 1 << (index % 32);
+    else
+        list[index/32] &= ~(1 << (index % 32));
+}
+
+bool getSongState(int group, int index){
+    int *list = nullptr;
+
+    if(group == 0){//MENU
+        list = savefile->settings.songDisabling.menuBits;
+    }else if(group == 1){//IN-GAME
+        list = savefile->settings.songDisabling.gameBits;
+    }
+
+    if(!list)
+        return true;
+
+    return (list[index/32] >> (index % 32)) & 1;
+}
+
+void checkSongs(){
+    SongDisabling * set = &savefile->settings.songDisabling;
+
+    if((u8) songs.menu.size() != set->menu ||
+       (u8) songs.game.size() != set->game){
+        memset32_fast(set->gameBits, 0, 4);
+        memset32_fast(set->menuBits, 0, 4);
+
+        set->menu = (u8) songs.menu.size();
+        set->game = (u8) songs.game.size();
+    }
 }

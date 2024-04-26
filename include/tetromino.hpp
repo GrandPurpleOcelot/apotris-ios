@@ -1,13 +1,16 @@
 #pragma once
 
-#include "tonc_types.h"
+#include <cstdint>
 #include <string>
 #include <list>
+#include <map>
 
 namespace GameInfo{
     extern const int colors[7][3];
 
-    extern const int tetraminos[7][4][4][4];
+    extern const int tetrominos[7][4][4][4];
+
+    extern const int bars[7][4][4][4];
 
     extern const int classic[7][4][4][4];
 
@@ -15,7 +18,11 @@ namespace GameInfo{
 
     extern const int kickTwice[4][6][2];
 
+    extern const int barsKickTwice[4][8][2];
+
     extern const int kicks[2][2][4][5][2];
+
+    extern const int barsKicks[2][2][4][7][2];
 
     extern const int arikaKicks[];
 
@@ -35,15 +42,23 @@ namespace GameInfo{
 
     extern const int finesse[7][4][10][4];
 
-    extern const u16 masterDelays[9][5];
+    extern const uint16_t masterDelays[9][5];
 
     extern const float masterGravity[30][2];
+
+    extern const uint16_t deathDelays[14][5];
+
+    extern const uint8_t deathQuota[5];
 
     extern const int sectionTimeGoal[10][2];
 
     extern const char* masterGrades[33];
 
-    extern const u8 gradeTable[32][6];
+    extern const char* deathGrades[14];
+
+    extern const char* secretGrades[10];
+
+    extern const uint8_t gradeTable[32][6];
 
     extern const float masterComboMultiplayer[10][4];
 
@@ -51,9 +66,15 @@ namespace GameInfo{
 
     extern const float creditPoints[5][2];
 
-    extern const u16 connectedConversion[24];
+    extern const uint16_t connectedConversion[24];
 
-    extern const u16 connectedFix[3][24];
+    extern const uint16_t connectedFix[3][24];
 
     extern const std::list<std::string> credits;
+
+    extern const std::map<std::string,int> base64Decode;
+    extern const std::map<int,std::string> base64Encode;
+
+    extern const uint8_t fumenBlocksDecode[9];
+    extern const uint8_t fumenBlocksEncode[9];
 }

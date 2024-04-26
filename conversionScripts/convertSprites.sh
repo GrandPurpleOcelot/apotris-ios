@@ -8,6 +8,6 @@ do
     for sprite in ${f}*.png
     do
         ((counter++))
-        ./superfamiconv -v -i "$sprite" -p "$OUTPUT"sprite_pal.bin -t "$OUTPUT"sprite"$counter"tiles.bin -m "$OUTPUT"sprite"$counter"map.bin -M gba -R -D
+        ./tools/superfamiconv -v -i "$sprite" -p "$OUTPUT"sprite_pal.bin -t "$OUTPUT"sprite"$counter"tiles.bin -m "$OUTPUT"sprite"$counter"map.bin -M gba -R -D
     done
 done
