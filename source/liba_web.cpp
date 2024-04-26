@@ -39,10 +39,10 @@ uint32_t frame_time = 0;
 
 float fps = 0;
 
-int screenWidth = 640;
-int screenHeight = 480;
+int screenWidth = 1280;
+int screenHeight = 720;
 
-float windowScale = 3;
+float windowScale = 4;
 
 EM_JS(int, getWindowWidth, (), {
   return window.innerWidth;
