@@ -441,7 +441,7 @@ void MainMenuScene::init(){
     path.clear();
     SimpleListScene::init();
 
-    #ifdef PC
+    #if defined(PC) || defined(WEB)
     int offset = 0;
     if(savefile->settings.aspectRatio == 1){
         offset = (240 - 214) / 2;
