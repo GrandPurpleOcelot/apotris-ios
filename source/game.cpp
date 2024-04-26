@@ -335,9 +335,9 @@ void GameScene::checkSounds() {
         if (savefile->settings.announcer && soundEffect != -1)
             sfx(soundEffect);
 
-        if(!game->zoneTimer && (demo || savefile->settings.journey) && game->linesCleared / 10 > (game->linesCleared - game->previousClear.linesCleared) / 10){
+        if(!game->zoneTimer && (demo || savefile->settings.journey) && game->linesCleared / 4 > (game->linesCleared - game->previousClear.linesCleared) / 4){
             flashTimer = flashTimerMax;
-            setJourneyGraphics(savefile, game->linesCleared / 10);
+            setJourneyGraphics(savefile, game->linesCleared / 4);
             setPalette();
             zoneFlash();
             refreshSkin = true;

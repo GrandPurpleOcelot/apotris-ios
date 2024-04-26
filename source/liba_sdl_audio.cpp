@@ -135,7 +135,11 @@ void startSong(int song,bool loop){
 }
 
 void stopSong(){
+    if(currentSong == -1)
+        return;
+
     musicQueue.stop();
+
     musicQueue.skip();
 
     currentSong = -1;
