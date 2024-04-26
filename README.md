@@ -1,6 +1,8 @@
 # Apotris
 
-<https://akouzoukos.com/apotris>
+<https://apotris.com>
+
+You can find builds/releases at https://apotris.com/downloads
 
 Apotris is a block stacking game for the Gameboy Advance! It features satisfying graphics, responsive controls and a large amount of customization so that you can tailor the game to your preferences!
 
