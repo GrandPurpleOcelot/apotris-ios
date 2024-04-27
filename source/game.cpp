@@ -5,7 +5,7 @@
 #include "blockEngine.hpp"
 #include "tetromino.hpp"
 #include "logging.h"
-#include <string>
+#include <string >
 #include <tuple>
 #include "text.h"
 
@@ -335,9 +335,9 @@ void GameScene::checkSounds() {
         if (savefile->settings.announcer && soundEffect != -1)
             sfx(soundEffect);
 
-        if(!game->zoneTimer && (demo || savefile->settings.journey) && game->linesCleared / 4 > (game->linesCleared - game->previousClear.linesCleared) / 4){
+        if(!game->zoneTimer && (demo || savefile->settings.journey) && game->linesCleared / 10 > (game->linesCleared - game->previousClear.linesCleared) / 10){
             flashTimer = flashTimerMax;
-            setJourneyGraphics(savefile, game->linesCleared / 4);
+            setJourneyGraphics(savefile, game->linesCleared / 10);
             setPalette();
             zoneFlash();
             refreshSkin = true;
