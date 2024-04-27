@@ -1194,8 +1194,12 @@ int Game::clear(const Drop& drop) {
                 add += scoring[clearCount - 1][0] * prevLevel;
                 isDifficult = scoring[clearCount - 1][1];
                 attack = scoring[clearCount - 1][2];
-            } else
+            } else{
+                log("classic");
+                log(clearCount);
+                log(level);
                 add += classicScoring[clearCount-1] * (level+1);
+            }
 
             statTracker.clears[clearCount-1]++;
         }else if(isTSpin == 1){
@@ -1244,9 +1248,10 @@ int Game::clear(const Drop& drop) {
         statTracker.maxStreak = b2bCounter;
 
     //add combo bonus
-    add += scoring[16][0] * level * comboCounter;
-    if (comboCounter >= 0)
+    if (comboCounter >= 0){
+        add += scoring[16][0] * level * comboCounter;
         attack += comboTable[comboCounter];
+    }
 
     if (isPerfectClear && gameMode != CLASSIC && clearCount <= 4){
         if(gameMode != BLITZ)
