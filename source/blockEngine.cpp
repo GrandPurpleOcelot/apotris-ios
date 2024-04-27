@@ -1195,9 +1195,6 @@ int Game::clear(const Drop& drop) {
                 isDifficult = scoring[clearCount - 1][1];
                 attack = scoring[clearCount - 1][2];
             } else{
-                log("classic");
-                log(clearCount);
-                log(level);
                 add += classicScoring[clearCount-1] * (level+1);
             }
 
