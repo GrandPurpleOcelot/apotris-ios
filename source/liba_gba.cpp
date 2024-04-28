@@ -388,10 +388,9 @@ bool unlock_gbp(){
     memcpy16_fast((u16*)0x6000000, gbp_logo_tiles, (sizeof gbp_logo_tiles)/2);
     memcpy16_fast(pal_bg_mem, gbp_logo_palette, (sizeof gbp_logo_palette)/2);
 
-    static volatile u32* keys = (volatile u32*)0x04000130;
+    static volatile u16* keys = (volatile u16*)0x04000130;
 
     for(int i = 0; i < 120; i++){
-        // if(key_is_down(KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT)){
         if(*keys==0x030f){
             gbp_detected = true;
         }
