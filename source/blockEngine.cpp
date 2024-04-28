@@ -601,6 +601,7 @@ void Game::update() {
             pawn.y++;
             if(rotationSystem == ARS)
                 lockTimer = maxLockTimer;
+            lastMoveRotation = false;
         }else if(rotationSystem == NRS){
             place();
         }
