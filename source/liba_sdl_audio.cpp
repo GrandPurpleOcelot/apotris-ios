@@ -108,7 +108,7 @@ void sfx(int n){
 void startSong(int song,bool loop){
     log(song);
     // if(song == currentSong && !musicArray[currentSong].hasEnded())
-    if(song == currentSong && !gSoloud.getPause(currentSongHandle) && musicQueue.isCurrentlyPlaying(musicArray[currentSong]))
+    if(song == currentSong && !gSoloud.getPause(currentSongHandle) && (currentSong != -1 && musicQueue.isCurrentlyPlaying(musicArray[currentSong])))
         return;
 
     if(currentSong != -1 && musicQueue.isCurrentlyPlaying(musicArray[currentSong])){
@@ -150,13 +150,6 @@ void resumeSong(){
 }
 
 void setMusicVolume(int volume){
-    if(musicVolume == 0 && volume != 0 && currentSong != -1){
-        musicQueue.setParams(44100, 2);
-        currentSongHandle = gSoloud.play(musicQueue);
-        musicArray[currentSong].setLooping(looping);
-        musicQueue.play(musicArray[currentSong]);
-    }
-
     musicVolume = volume / (512.0 / 2);
 
     gSoloud.setVolume(currentSongHandle,musicVolume);

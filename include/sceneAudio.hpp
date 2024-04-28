@@ -25,6 +25,8 @@ class MusicVolumeElement : public Element{
         }
 
         void action(int dir) override{
+            int previous = savefile->settings.volume;
+
             if(dir > 0){
                 if(savefile->settings.volume < 10){
                     savefile->settings.volume++;
@@ -36,6 +38,11 @@ class MusicVolumeElement : public Element{
                     sfx(SFX_MENUMOVE);
                 }
             }
+
+            if(previous != savefile->settings.volume && previous == 0){
+                playSongRandom(currentMenu);
+            }
+
             setMusicVolume(512 * ((float)savefile->settings.volume / 10));
         }
 

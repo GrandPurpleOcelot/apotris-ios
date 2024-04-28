@@ -2,7 +2,7 @@
 #include "logging.h"
 
 int currentMenu = 0;
-int currentlyPlayingSong = 0;
+int currentlyPlayingSong = -1;
 
 void playSong(int menuId, int songId) {
     int song = 0;
@@ -81,7 +81,7 @@ void playNextSong(){
     if (max <= 0)
         return;
 
-    int index = currentlyPlayingSong;
+    int index = std::max(currentlyPlayingSong,0);
     int count = 0;
 
     do{
