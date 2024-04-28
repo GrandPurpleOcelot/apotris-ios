@@ -343,9 +343,9 @@ void GameScene::checkSounds() {
             refreshSkin = true;
             sfx(SFX_LEVELUPSOUND);
         }
-    }else if(game->sounds.tspin){
+    }else if(game->sounds.tspin != 0){
         int sound = 0;
-        if(game->previousClear.isTSpin == 1){
+        if(game->sounds.tspin == 1){
             clearTypeText = "t-spin mini";
             sound = SFX_TSPINMINI;
         }else{

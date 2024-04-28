@@ -1004,7 +1004,7 @@ int Game::clear(const Drop& drop) {
         if(isTSpin > 0){
             // previousClear = Score(clearCount, scoring[1 + isTSpin * 3][0], comboCounter, isTSpin, isPerfectClear, isBackToBack, isDifficult, drop);
             score += scoring[1 + isTSpin * 3][0];
-            sounds.tspin = 1;
+            sounds.tspin = isTSpin;
             statTracker.tspins++;
         }
 
