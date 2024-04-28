@@ -150,7 +150,7 @@ void resumeSong(){
 }
 
 void setMusicVolume(int volume){
-    if(musicVolume == 0 && volume != 0){
+    if(musicVolume == 0 && volume != 0 && currentSong != -1){
         musicQueue.setParams(44100, 2);
         currentSongHandle = gSoloud.play(musicQueue);
         musicArray[currentSong].setLooping(looping);
