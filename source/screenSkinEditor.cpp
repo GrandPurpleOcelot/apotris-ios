@@ -610,7 +610,7 @@ void helpScreen(){
     toggleBG(2, false);
     toggleBG(3, false);
 
-    while(true){
+    while(closed()){
         vsync();
         key_poll();
 
