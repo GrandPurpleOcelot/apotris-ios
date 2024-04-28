@@ -183,6 +183,11 @@ void platformInit(){
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
     interrupt_set_handler(INTR_KEYPAD, onKeyInterrupt);
     interrupt_enable(INTR_KEYPAD);
+
+    // Must init maxmod before setting vblank handler to support Everdrive/EZFlash Fast/Quick boot
+    loadAudio();
+    mmInitDefault((mm_addr)soundbank, 12);
+    mmSetEventHandler((mm_callback)myEventHandler);
     interrupt_set_handler(INTR_VBLANK, onVBlank);
 
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
@@ -191,11 +196,6 @@ void platformInit(){
 
     // interrupt_add(INTR_HBLANK, onHBlank);
     interrupt_disable(INTR_HBLANK);
-
-    loadAudio();
-
-    mmInitDefault((mm_addr)soundbank, 12);
-    mmSetEventHandler((mm_callback)myEventHandler);
 
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
 
