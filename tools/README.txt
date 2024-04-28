@@ -1,7 +1,8 @@
 Customizing songs:
     Add or remove songs in the 'audio' folder. Songs need to be in a tracker
-    format (specifically either .mod, .it, .xm or .s3m). The only limits are
-    that songs need to use 8 channels at most, and the max ROM size for GBA (32MB).
+    format (specifically either .mod, .it, .xm or .s3m). The limits are
+    that songs need to use 8 channels at most, the max ROM size for GBA (32MB)
+    and the game has a software limit of 255 songs for the menu and game categories each.
     You can specify if the songs are going to play during menus or in-game by
     adding 'MENU_' or 'GAME_' respectively in front of the song's name.
 
