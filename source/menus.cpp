@@ -1079,6 +1079,7 @@ void GameScene::showModeText(){
                 switch(game->rotationSystem){
                 case BlockEngine::NRS: text = "NRS"; break;
                 case BlockEngine::ARS: text = "ARS"; break;
+                case BlockEngine::BARS: text = "BARS"; break;
                 default: text = "SRS"; break;
                 }
 
