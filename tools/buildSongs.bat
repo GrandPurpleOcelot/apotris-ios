@@ -1,3 +1,10 @@
+@echo off
+cd audio
+for %%f in (*.mod *.it *.xm *.s3m) do (
+    ..\tools\countchan.exe "%%f"
+)
+cd ..
+
 .\tools\buildSoundbank.exe append
 
 .\tools\gbfs .\tools\audio.gbfs .\tools\soundbank.bin .\tools\effect_locations.bin
