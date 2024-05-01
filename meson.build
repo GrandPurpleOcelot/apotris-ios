@@ -159,10 +159,10 @@ if host_machine.system() != 'gba'
             sdl_mixer = dependency('sdl2_mixer', static : true, default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         else
             if not get_option('portmaster')
-                sdl2_dep = dependency('sdl2', static : true, default_options : ['default_library=static'], fallback : ['sdl2', 'sdl2_dep'])
+                sdl2_dep = dependency('sdl2', static : true, default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
                 sdl_mixer = dependency('sdl2_mixer', static : true, default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
             else
-                sdl2_dep = dependency('sdl2', static : false, default_options : ['default_library=shared'], fallback : ['sdl2', 'sdl2_dep'])
+                sdl2_dep = dependency('sdl2', static : false, default_options : ['default_library=shared', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
                 sdl_mixer = dependency('sdl2_mixer', static : false, default_options : ['default_library=shared'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
             endif
         endif
