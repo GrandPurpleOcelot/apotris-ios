@@ -54,7 +54,8 @@ need to have installed and in your PATH are:
     [here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) 
     - Extract the archive into your system path with `tar xf ./arm-gnu-toolchain-*-arm-none-eabi.tar.xz -C /usr/share/`
     - Make sure to symlink everything `sudo ln -sf /usr/share/arm-gnu-toolchain-YOUR_VERSION/bin/* /usr/bin/`
-  - On macOS one can `brew install --cask gcc-arm-embedded` and use the latest
+
+**Note:** On macOS one can `brew install --cask gcc-arm-embedded && brew install meson ninja opus pkg-config cmake` to get all required deps.
 
 ### Windows (native) requirements
 
