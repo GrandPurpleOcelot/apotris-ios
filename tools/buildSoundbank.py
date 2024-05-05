@@ -56,7 +56,7 @@ else:
 print(files)
 # run mmutil
 if platform.system() == 'Linux':
-    os.system(f"/bin/sh -c {mmutil} {files} -o{soundbank_binary} -h{mmutil_header}")
+    os.system(f"/bin/sh -c '{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}'")
 else:
     os.system(f"{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}")
 
