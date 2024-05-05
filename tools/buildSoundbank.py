@@ -42,23 +42,25 @@ else:
 
     for filename in os.listdir(directory):
         if(filename.find('.wav') != -1):
-            files += f"{directory}/{filename} "
+            files += f"'{directory}/{filename}' "
 
         if(filename.find('.mod') != -1) or\
         (filename.find('.it') != -1) or\
         (filename.find('.xm') != -1) or\
         (filename.find('.S3M') != -1) or\
         (filename.find('.s3m') != -1):
-            files += f"{directory}/{filename} "
+            files += f"'{directory}/{filename}' "
 
     mmutil = Path("./tools/mmutil.exe")
 
 print(files)
 # run mmutil
 if platform.system() == 'Linux':
-    os.system(f"/bin/sh -c '{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}'")
+    command = f"/bin/sh -c \"{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}\""
+    os.system(command)
 else:
-    os.system(f"{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}")
+    command = f"{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}"
+    os.system(command)
 
 # wait for mmutil to finish
 print("Waiting for header...")
