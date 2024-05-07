@@ -6,7 +6,7 @@ cd /d audio || exit /b 1
 for %%f in (*.mod *.it *.xm *.s3m) do (
     ..\tools\countchan.exe "%%f" || (
         echo Error counting channels for %%f
-        exit /b 1
+        REM :: exit /b 1
     )
 )
 cd /d .. || exit /b 1

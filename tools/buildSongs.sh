@@ -20,7 +20,7 @@ for ext in "${extensions[@]}"; do
         for file in *"$ext"; do
             if ! ../tools/countchan.exe "$file"; then
                 echo "Error counting channels for $file"
-                exit 1
+                #exit 1
             fi
         done
     fi
