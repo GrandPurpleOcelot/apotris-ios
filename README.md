@@ -22,7 +22,7 @@ docker build -t apotris-builder . && docker run -it apotris-builder bash
 # You are now in the docker image environment, use Ctrl+D or "exit" command to return to main OS
 
 # Clone the latest sources
-git clone --branch ports https://gitea.com/akouzoukos/apotris.git
+git clone --recursive https://gitea.com/akouzoukos/apotris.git
 # Enter source dir
 cd apotris
 # From here you can build one of the available targets
@@ -44,17 +44,20 @@ meson setup build-linux && meson compile -C build-linux
 As all the libraries and tools are compiled from source, the only things you
 need to have installed and in your PATH are:
 
-- meson (at least version 1.1.0 or later)
-  - If your system has an out of date meson, install `pip` and run `pip install meson` to get the latest
+- meson (at least version 1.3.0 or later)
+  - If your system has an out of date meson, install `pip` and run `pip install -U meson` to get the latest
 - git
-- A compiler for your system (`cl.exe`, `gcc`, etc.)
+- A compiler for your system (`gcc`, `clang`, etc.)
 - A compiler for the GBA (`arm-none-eabi-gcc`)
   - On Windows you can download the [.exe installer](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) for `mingw-w64-i686-arm-none-eabi-gcc`
-  - On Ubuntu you really want to install what's
-    [here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) and follow [this guide](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) to use it. Make sure to symlink everything `sudo ln -sf /usr/share/arm-gnu-toolchain-YOUR_VERSION/bin/* /usr/bin/`
-  - On macOS just `brew install --cask gcc-arm-embedded`
+  - On Ubuntu download at least 13.2 of arm-none-eabi-gcc for your system
+    [here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) 
+    - Extract the archive into your system path with `tar xf ./arm-gnu-toolchain-*-arm-none-eabi.tar.xz -C /usr/share/`
+    - Make sure to symlink everything `sudo ln -sf /usr/share/arm-gnu-toolchain-YOUR_VERSION/bin/* /usr/bin/`
 
-### Windows dependencies
+**Note:** On macOS one can `brew install --cask gcc-arm-embedded && brew install meson ninja opus pkg-config cmake` to get all required deps.
+
+### Windows (native) requirements
 
 You will need to install:
 
@@ -63,10 +66,11 @@ You will need to install:
   - ensure you "add to PATH" when you run the installer (unless you know what you're doing otherwise)
 - Meson
   - Run `pip install meson` after installing Python to get meson
+  - An alternative is [the Windows installer](https://github.com/mesonbuild/meson/releases/download/1.4.0/meson-1.4.0-64.msi)
 - A Windows-native compiler and build tools
   - [Strawberry Perl](https://strawberryperl.com) works out of the box, get the system installer to make it easiest
 
-#### Windows specific instructions
+#### Windows GBA build
 
 For the GBA target, you will need to update the `meson/gba.ini` file to have the path to your ARM compiler:
 
@@ -109,28 +113,93 @@ sudo apt-get install build-essential git make \
   libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev libglew-dev
 ```
 
+**Note:** On some Ubuntu installations the SDL2 libraries are not imported correctly by the build. Removing `libsdl2-dev` may resolve these issues. 
+
 ## Compiling
 
-Once you have everything, `git clone` or [download] this repository, then
-navigate to the directory in a terminal (or "command-line") window, and run the
-following command:
+Once you have everything, `git clone --recursive https://gitea.com/akouzoukos/apotris.git` or [download](https://gitea.com/akouzoukos/apotris/archive/main.zip) this repository, then
+navigate to the directory in a terminal (or "command-line") window, and run some or all of the
+following commands depending on your desired target:
 
 ```sh
 # Native build
 meson setup build
-ninja -C build
+meson compile -C build
 
 # GBA Build
 meson setup --cross-file=meson/gba.ini build-gba
-ninja -C build-gba
+meson compile -C build-gba
 
 # MingW build (Windows using Linux, WSL, or macOS to build)
 # Note: the following command is a really bad hack that probably has no consequences but is required
 sudo ln -sf $(which x86_64-w64-mingw32-g++-posix) $(which x86_64-w64-mingw32-g++)
 meson setup --cross-file=meson/mingw.ini build-mingw
-ninja -C build-mingw
+meson compile -C build-mingw
 ```
 
 The built Apotris ROMs (.elf, .gba) will be in your `build-gba` directory.
 
 The built Apotris executable and its required `assets/` folder will be in your build directories for other builds.
+
+## Less common platforms
+
+### Nintendo Switch
+
+The Switch build requires one have the DevkitARM A64 toolchain installed. Installing this is covered by [this reference](https://devkitpro.org/wiki/Getting_Started). You will want the `switch-dev` and `switch-portlibs` targets installed.
+
+Ensure the compiler is in your PATH and run the cross build:
+
+```bash
+meson setup --cross-file=meson/switch.ini build-switch
+meson compile -C build-switch
+```
+
+The file is output to `build-switch/Apotris.nro`.
+
+### Emscripten
+
+The Emscripten build requires one to have the Emscripten toolchain/SDK installed. See [this reference](https://emscripten.org/docs/getting_started/downloads.html). The latest should work, but at least `3.1.51` is required.
+
+The Emscripten build has a bug. The workaround is relatively simple.
+
+```bash
+$ meson setup --cross-file=meson/emscripten.ini build-web
+
+$ meson compile -C build-web # this command will throw an error:
+
+AssertionError: attempt to lock the cache while a parent process is holding the lock (sysroot/lib/wasm32-emscripten/libSDL2.a)
+em++: error: subprocess 1/34 failed (returned 1)! (cmdline: /opt/homebrew/Cellar/emscripten/3.1.58/libexec/emcc -c /opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src/mixer.c -o /opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports-builds/sdl2_mixer/src/mixer.c.o -g -sSTRICT -Werror -O2 -I/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0 -sUSE_SDL=2 -O2 -DMUSIC_WAV -sUSE_VORBIS -DMUSIC_OGG -I/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/include -I/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src -I/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src/codecs)
+ninja: build stopped: subcommand failed.
+```
+
+Take the command it failed on (in the `cmdline:` section) and run it manually:
+
+```bash
+$ /opt/homebrew/Cellar/emscripten/3.1.58/libexec/emcc -c /opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src/mixer.c -o /opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports-builds/sdl2_mixer/src/mixer.c.o -g -sSTRICT -Werror -O2 -I/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0 -sUSE_SDL=2 -O2 -DMUSIC_WAV -sUSE_VORBIS -DMUSIC_OGG -I/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/include -I/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src -I/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src/codecs
+
+cache:INFO: generating port: sysroot/lib/wasm32-emscripten/libSDL2.a... (this will be cached in "/opt/homebrew/Cellar/emscripten/3.1.58/libexec/cache/sysroot/lib/wasm32-emscripten/libSDL2.a" for subsequent builds)
+system_libs:INFO: compiled 117 inputs in 2.99s
+cache:INFO:  - ok
+```
+
+Then re-run the compile step again:
+
+```bash
+$ meson compile -C build-web
+
+ninja: Entering directory `build-web`
+[1/1] Linking target Apotris.html # success !
+```
+
+### Portmaster
+
+You'll need to load the portmaster development environment, covered [here](https://portmaster.games/docker.html).
+
+Once inside the container, clone the repo and configure as if it were a native build, but with one key config:
+
+```bash
+meson setup -Dportmaster=true build-pm
+meson compile -C build-pm
+```
+
+**Note:** on typical Intel/AMD machines this can take a *long* time.
