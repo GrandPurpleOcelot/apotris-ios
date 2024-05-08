@@ -1,40 +1,60 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-pushd audio
+# Set -e to exit the script if any command fails
+set -e
 
-# Detect the operating system
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    OS="Linux"
-    COUNTCHAN_CMD="countchan"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    OS="macOS"
-    COUNTCHAN_CMD="countchan.mac"
-else
-    echo "Unsupported operating system: $OSTYPE"
-    exit 1
-fi
+# Set -u to treat unset variables as an error
+set -u
+
+# Set -o pipefail to make pipelines fail if any command fails
+set -o pipefail
+
+pushd audio || exit 1
 
 extensions=(".mod" ".it" ".xm" ".s3m")
+
 # Iterate over files and count their channels
 for ext in "${extensions[@]}"; do
     # Check if any files with the current extension exist
     if ls *"$ext" &>/dev/null; then
         for file in *"$ext"; do
-            ../tools/$COUNTCHAN_CMD "$file"
+            if ! ../tools/countchan.exe "$file"; then
+                echo "Error counting channels for $file"
+                #exit 1
+            fi
         done
     fi
 done
 
-popd
+popd || exit 1
 
-python3 ./tools/buildSoundbank.py append
+if ! python3 ./tools/buildSoundbank.py append; then
+    echo "Error building soundbank"
+    exit 1
+fi
 
-./tools/gbfs ./tools/audio.gbfs ./tools/soundbank.bin ./tools/effect_locations.bin
-./tools/padbin 256 ./tools/Apotris-base.gba
-cat ./tools/Apotris-base.gba ./tools/audio.gbfs > Apotris.gba
+if ! tools/gbfs.exe ./tools/audio.gbfs ./tools/soundbank.bin ./tools/effect_locations.bin; then
+    echo "Error creating audio.gbfs"
+    exit 1
+fi
+
+if ! tools/padbin.exe 256 ./tools/Apotris-base.gba; then
+    echo "Error padding Apotris-base.gba"
+    exit 1
+fi
+
+if ! tools/cat.exe tools/Apotris-base.gba ./tools/audio.gbfs > Apotris.gba; then
+    echo "Error creating Apotris.gba"
+    exit 1
+fi
 
 file="Apotris.gba"
-size=$(stat --format=%s "$file")
+
+if [[ $(uname) == "Darwin" ]]; then
+    size=$(stat -f "%z" "$file")
+else
+    size=$(stat --format=%s "$file")
+fi
 
 power=1
 while (( $power < $size )); do
@@ -47,4 +67,8 @@ if (( $power > 33554432 )); then
 fi
 
 echo $power
-./tools/padbin $power $file
+
+if ! tools/padbin.exe $power $file; then
+    echo "Error padding Apotris.gba"
+    exit 1
+fi
