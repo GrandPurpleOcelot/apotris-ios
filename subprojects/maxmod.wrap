@@ -1,6 +1,6 @@
 [wrap-git]
-url = https://github.com/devkitPro/maxmod
-revision = v1.0.15
+url = https://github.com/aronson/maxmod.git
+revision = 19a4e35
 patch_directory = maxmod
 
 [provide]
