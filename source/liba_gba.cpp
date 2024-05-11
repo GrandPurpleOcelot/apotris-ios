@@ -16,6 +16,7 @@
 #include "detectEmulators.h"
 #include "gba_sram.h"
 #include "gba_flash.h"
+#include "achievementStructure.h"
 
 // #include <string>
 // #include "scene.hpp"
@@ -37,6 +38,8 @@ void onHBlank() {
     if(REG_VCOUNT < 160)
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
+
+StatusData * status = nullptr;
 
 LinkUniversal* linkUniversal;
 LinkUniversal* linkConnection;
@@ -509,6 +512,8 @@ IWRAM_CODE void onVBlank() {
         canDraw = false;
 
         scene->draw();
+        if (status)
+            status->externalSettings->update();
     }
 
     frameCounter++;

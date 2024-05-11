@@ -817,20 +817,23 @@ void buildMini(TILE * customSkin){
     }
 }
 
-Tuning getTuning(){
+Tuning getTuning(Save *save){
     Tuning t = {
-        t.das = savefile->settings.das,
-        t.arr = savefile->settings.arr,
-        t.sfr = savefile->settings.sfr,
-        t.dropProtection = savefile->settings.dropProtectionFrames,
-        t.directionalDas = savefile->settings.directionalDas,
-        t.delaySoftDrop = savefile->settings.delaySoftDrop,
-        t.ihs = savefile->settings.ihs,
-        t.irs = savefile->settings.irs,
-        t.initialType = savefile->settings.initialType,
+            t.das = save->settings.das,
+            t.arr = save->settings.arr,
+            t.sfr = save->settings.sfr,
+            t.dropProtection = save->settings.dropProtectionFrames,
+            t.directionalDas = save->settings.directionalDas,
+            t.delaySoftDrop = save->settings.delaySoftDrop,
+            t.ihs = save->settings.ihs,
+            t.irs = save->settings.irs,
+            t.initialType = save->settings.initialType,
     };
 
     return t;
+}
+Tuning getTuning(){
+    return getTuning(savefile);
 }
 
 void setGradient(int color){

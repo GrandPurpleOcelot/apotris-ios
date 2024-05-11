@@ -6,6 +6,7 @@
 #include "logging.h"
 #include <algorithm>
 #include <cstring>
+#include "achievementStructure.h"
 
 class SaveChange{
 public:
@@ -35,8 +36,7 @@ const SaveChange saveChanges[] = {
 int changeLength = 3;
 
 void loadSave() {
-    if(savefile != nullptr)
-        delete savefile;
+    delete savefile;
 
     savefile = new Save();
     loadSavefile();
@@ -146,6 +146,10 @@ void loadSave() {
     sqran(sum);
 
     savefile->seed = qran();
+#ifdef GBA
+    delete status;
+    status = new StatusData(&savefile->settings);
+#endif
     saveSavefile();
 }
 
