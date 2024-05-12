@@ -2,6 +2,7 @@
 #include "flashSaves.h"
 #include "sprite1tiles_bin.h"
 #include "sprites.h"
+#include <memory>
 #include <string>
 #include "logging.h"
 #include <algorithm>
@@ -147,8 +148,7 @@ void loadSave() {
 
     savefile->seed = qran();
 #ifdef GBA
-    delete status;
-    status = new StatusData(&savefile->settings);
+    status.update(&savefile->settings);
 #endif
     saveSavefile();
 }

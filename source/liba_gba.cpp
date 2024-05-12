@@ -39,7 +39,7 @@ void onHBlank() {
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
-StatusData * status = nullptr;
+StatusData status{};
 
 LinkUniversal* linkUniversal;
 LinkUniversal* linkConnection;
@@ -512,8 +512,6 @@ IWRAM_CODE void onVBlank() {
         canDraw = false;
 
         scene->draw();
-        if (status)
-            status->externalSettings->update();
     }
 
     frameCounter++;
@@ -607,6 +605,7 @@ void saveSavefile(){
         if (ENABLE_FLASH_SAVE)
             save_sram_flash();
     }
+    status.update(&savefile->settings);
 }
 
 void mirrorPalettes(int index, int count){

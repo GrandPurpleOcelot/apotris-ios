@@ -8,6 +8,7 @@
 /* #include "soundbank.h" */
 #include <posprintf.h>
 #include <map>
+#include <memory>
 
 static inline void setTile(int sbb, int x, int y, uint32_t value){
     se_mem[sbb][y * 32 + x] = value & 0xffff;
@@ -85,4 +86,4 @@ void setUpLinkUniversal(bool detectEmus);
 
 
 struct StatusData;
-extern StatusData * status;
+extern StatusData status;

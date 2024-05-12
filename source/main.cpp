@@ -7,6 +7,7 @@
 
 #ifdef GBA
 #include "LinkUniversal.hpp"
+#include "achievementStructure.h"
 #endif
 
 #include "logging.h"
@@ -923,15 +924,13 @@ void gradient(int state){
 }
 
 void startGame(BlockEngine::Options options,int seed){
-    if(game != nullptr)
-        delete game;
+    delete game;
     game = new Game(options.mode,seed,options.bigMode);
     game->setOptions(options);
 
     savefile->stats.gamesStarted++;
 
-    if(previousGameOptions != nullptr)
-        delete previousGameOptions;
+    delete previousGameOptions;
     previousGameOptions = new Options();
 
     *previousGameOptions = options;
@@ -948,6 +947,10 @@ void startGame(BlockEngine::Options options,int seed){
     if(options.mode == BlockEngine::ZEN){
         game->score = savefile->boards.zen;
     }
+
+#ifdef GBA
+    status.startGame();
+#endif
 }
 
 void startGame(int seed){
@@ -968,8 +971,7 @@ void startBotGame(int seed){
     startMultiplayerGame(seed);
     multiplayer = false;
 
-    if(botGame != nullptr)
-        delete botGame;
+    delete botGame;
 
     botGame = new Game(BATTLE,seed & 0x1fff,false);
     botGame->setOptions(*previousGameOptions);
@@ -981,6 +983,10 @@ void startBotGame(int seed){
     testBot = new Bot(botGame);
 
     clearText();
+
+#ifdef GBA
+    status.startGame();
+#endif
 }
 
 void setPawnPalette(int dest, int n, int blend){
