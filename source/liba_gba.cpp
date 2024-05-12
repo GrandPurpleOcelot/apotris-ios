@@ -39,7 +39,7 @@ void onHBlank() {
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
-StatusData status{};
+__attribute((section(".ewram.status"))) StatusData status{};
 
 LinkUniversal* linkUniversal;
 LinkUniversal* linkConnection;

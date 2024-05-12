@@ -7,9 +7,14 @@ struct StatusData {
     // Handling Settings
     [[maybe_unused]] BlockEngine::Tuning tuning;
     // In-game Settings
-    [[maybe_unused]] bool *BigMode = nullptr, *ProMode = nullptr;
+    [[maybe_unused]] bool *BigMode = nullptr, *ProMode = nullptr, *Paused = nullptr;
     [[maybe_unused]] int *GoalLine = nullptr, *RotationSystem = nullptr, *PeekAbove = nullptr, *UnpauseCountdown = nullptr;
-    [[maybe_unused]] int *Randomizer = nullptr, *PlayerLost = nullptr, *PlayerWon = nullptr;
+    [[maybe_unused]] int *Randomizer = nullptr, *PlayerLost = nullptr, *PlayerWon = nullptr, *Combo = nullptr;
+    [[maybe_unused]] int *ZoneScore = nullptr, *GameMode = nullptr, *SubMode = nullptr;
+    [[maybe_unused]] unsigned int *Score = nullptr;
+    // Stats
+    [[maybe_unused]] BlockEngine::Stats *Stats = nullptr;
+    [[maybe_unused]] int *ElapsedTime = nullptr;
 
     // Methods for updating
     void update(Settings* settings) {
@@ -24,7 +29,15 @@ struct StatusData {
             PeekAbove = &game->peek;
             PlayerLost = &game->lost;
             PlayerWon = &game->won;
+            Combo = &game->comboCounter;
+            Score = &game->score;
+            ZoneScore = &game->zoneScore;
+            GameMode = &game->gameMode;
+            SubMode = &game->subMode;
+            Stats = &game->statTracker;
+            ElapsedTime = &game->inGameTimer;
         }
+        Paused = &paused;
         BigMode = &bigMode;
         ProMode = &proMode;
     }
