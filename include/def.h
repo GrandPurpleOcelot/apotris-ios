@@ -333,3 +333,6 @@ class Function{
     public:
         void (BlockEngine::Game::*gameFunction)(int);
 };
+
+struct StatusData;
+extern StatusData status;

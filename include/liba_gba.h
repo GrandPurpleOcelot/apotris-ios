@@ -83,7 +83,3 @@ extern std::map<int,std::string> keyToString;
 
 extern void toggleSpriteSorting(bool state);
 void setUpLinkUniversal(bool detectEmus);
-
-
-struct StatusData;
-extern StatusData status;

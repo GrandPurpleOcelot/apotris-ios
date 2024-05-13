@@ -7,10 +7,10 @@
 
 #ifdef GBA
 #include "LinkUniversal.hpp"
-#include "achievementStructure.h"
 #endif
 
 #include "logging.h"
+#include "achievementStructure.h"
 
 #include "text.h"
 
@@ -80,6 +80,11 @@ Scene * scene = nullptr;
 bool gradientEnabled = false;
 
 Options *previousGameOptions = nullptr;
+
+#ifdef GBA
+__attribute((section(".ewram.status")))
+#endif
+StatusData status{};
 
 #ifdef GBA
 u16 gradientTable[192 + 1];
@@ -948,9 +953,8 @@ void startGame(BlockEngine::Options options,int seed){
         game->score = savefile->boards.zen;
     }
 
-#ifdef GBA
     status.startGame();
-#endif
+    status.Options = previousGameOptions;
 }
 
 void startGame(int seed){
@@ -984,9 +988,8 @@ void startBotGame(int seed){
 
     clearText();
 
-#ifdef GBA
     status.startGame();
-#endif
+    status.Options = previousGameOptions;
 }
 
 void setPawnPalette(int dest, int n, int blend){

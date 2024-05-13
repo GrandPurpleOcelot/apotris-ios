@@ -15,6 +15,10 @@ struct StatusData {
     // Stats
     [[maybe_unused]] BlockEngine::Stats *Stats = nullptr;
     [[maybe_unused]] int *ElapsedTime = nullptr;
+    [[maybe_unused]] int *LinesSent = nullptr;
+    [[maybe_unused]] BlockEngine::Options *Options;
+    [[maybe_unused]] int gradeIndex;
+    [[maybe_unused]] std::string gradeString;
 
     // Methods for updating
     void update(Settings* settings) {
@@ -36,10 +40,12 @@ struct StatusData {
             SubMode = &game->subMode;
             Stats = &game->statTracker;
             ElapsedTime = &game->inGameTimer;
+            LinesSent = &game->linesSent;
         }
         Paused = &paused;
         BigMode = &bigMode;
         ProMode = &proMode;
     }
+
 }
 __attribute((aligned(4)));
