@@ -9,7 +9,7 @@ bool ControlOptionScene::control(){
         auto it = elementList.begin();
         std::advance(it,selection);
 
-        RebindElement* el = (RebindElement*) *it;
+        auto* el = (RebindElement*) *it;
 
         el->reset();
 

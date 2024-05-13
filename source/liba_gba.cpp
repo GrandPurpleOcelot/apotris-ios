@@ -14,8 +14,7 @@
 #include "agbabi.h"
 #include "aeabi.h"
 #include "detectEmulators.h"
-#include "gba_sram.h"
-#include "gba_flash.h"
+#include "multiplayerClasses.h"
 #include "achievementStructure.h"
 
 // #include <string>
@@ -24,6 +23,8 @@
 bool unlock_gbp();
 void loadAudio();
 void onKeyInterrupt();
+
+MultiplayerLink* multiplayerLink = nullptr;
 
 int spriteVOffset = 0;
 
@@ -45,8 +46,13 @@ void onHBlank() {
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
-LinkUniversal* linkUniversal;
-LinkUniversal* linkConnection;
+LinkUniversal* linkUniversal = nullptr;
+LinkUniversal* linkConnection = nullptr;
+
+extern struct FlashInfo gFlashInfo;
+struct FlashInfo flashInfo;
+struct SramInfo sramInfo;
+
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
@@ -131,13 +137,9 @@ unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait) {
     return transfers;
 }
 
-extern struct FlashInfo gFlashInfo;
-struct FlashInfo flashInfo;
-struct SramInfo sramInfo;
-
 void testSaveMedia() {
-    const int testRegion = 0x7FFF;
-    const int testMirror = 0xFFFF;
+    const int testRegion = SAVE_32K_END;
+    const int testMirror = SAVE_64K_END;
     flashInfo.size = 0;
     int err;
     // Test SRAM
@@ -161,7 +163,7 @@ void testSaveMedia() {
                 break;
         }
         // Detect bootlegs
-        if (ENABLE_FLASH_SAVE)
+        if (ENABLE_ROM_SAVE)
             detect_rom_backed_flash();
         return;
     }
@@ -185,12 +187,22 @@ void platformInit(){
     logInitMgba();
     #endif
 
+    // Init RTC for RNG
+    int rtc_error_code = __agbabi_rtc_init();
+    if (!rtc_error_code)
+        sqran((int) __agbabi_rtc_time());
+
+    loadAudio();
+
+    mmInitDefault((mm_addr)soundbank, 12);
+    mmSetEventHandler((mm_callback)myEventHandler);
+
     interrupt_init();
     interrupt_unmask();
     REG_DISPSTAT |= (1 << 3) | (1 << 4);
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
-    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER1);
     interrupt_enable(INTR_TIMER2);
 
     #ifndef NO_DIAGNOSE
@@ -202,7 +214,7 @@ void platformInit(){
     interrupt_set_handler(INTR_VBLANK, onVBlank);
 
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
-    interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
+    interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
     interrupt_set_handler(INTR_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
 
     // interrupt_add(INTR_HBLANK, onHBlank);
@@ -228,6 +240,7 @@ void setUpLinkUniversal(bool detectEmus) {
     const u32 wirelessInterval = 50; // No reason to go lower
     const u32 wiredInterval = 300; // 150 usually works but some devices needed 300...
     const u32 wirelessRemoteTimeout = calculateRemoteTimeout(wirelessInterval, wirelessRemoteTimeoutFrames);
+    delete multiplayerLink;
     delete linkUniversal;
     linkUniversal = new LinkUniversal(LinkUniversal::WIRELESS_AUTO,
                       "Apotris",
@@ -236,16 +249,16 @@ void setUpLinkUniversal(bool detectEmus) {
                               .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
                               .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
                               .interval = wiredInterval,
-                              .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
+                              .sendTimerId = 1},
                       (LinkUniversal::WirelessOptions){
                               .retransmission = true,
                               .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
                               .timeout = wirelessTimeout,
                               .remoteTimeout = wirelessRemoteTimeout,
                               .interval = wirelessInterval,
-                              .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
+                              .sendTimerId = 1,
                               .asyncACKTimerId = 2});
-    linkConnection = linkUniversal;
+    multiplayerLink = new MultiplayerLink(linkUniversal);
 }
 
 void deinitialize(){
@@ -386,7 +399,7 @@ void initRumble(){
 
     if (unlock_gbp()) {
 
-        RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
+        RumbleGBPConfig conf{[](void (*rumble_isr)()) {
             interrupt_enable(INTR_SERIAL);
             interrupt_set_handler(INTR_SERIAL, rumble_isr);
         }};
@@ -396,6 +409,7 @@ void initRumble(){
         rumble_init(nullptr);
     }
 }
+
 
 bool unlock_gbp(){
     bool gbp_detected = false;
@@ -422,52 +436,65 @@ bool unlock_gbp(){
     return gbp_detected;
 }
 
-void sleep() {
-    int display_value = REG_DISPCNT;
+int display_value, stat_value, dsc_value, dmg_value;
+bool prevGradient, isLinked;
 
-    bool prevGradient = gradientEnabled;
+void disableVolatileInterrupts(bool setDispCnt) {
+    display_value = REG_DISPCNT;
+
+    prevGradient = gradientEnabled;
     interrupt_disable(INTR_VBLANK);
     gradient(0);
 
-    int stat_value = REG_SNDSTAT;
-    int dsc_value = REG_SNDDSCNT;
-    int dmg_value = REG_SNDDMGCNT;
+    stat_value = REG_SNDSTAT;
+    dsc_value = REG_SNDDSCNT;
+    dmg_value = REG_SNDDMGCNT;
 
-    REG_DISPCNT |= 0x0080;
+    if (setDispCnt) REG_DISPCNT |= 0x0080;
     REG_SNDSTAT = 0;
     REG_SNDDSCNT = 0;
     REG_SNDDMGCNT = 0;
 
-    bool isLinked = linkConnection->isActive();
+    isLinked = multiplayerLink->universal->isActive();
 
     if(isLinked)
-        linkConnection->deactivate();
+        multiplayerLink->universal->deactivate();
 
-    interrupt_disable(INTR_TIMER3);
+    interrupt_disable(INTR_TIMER1);
     interrupt_disable(INTR_TIMER2);
     interrupt_disable(INTR_SERIAL);
 
     REG_P1CNT = 0b1100001100000100;
     interrupt_enable(INTR_KEYPAD);
     interrupt_set_handler(INTR_KEYPAD, nullptr);
+}
 
-    Stop();
-
-    REG_DISPCNT = display_value;
+void enableVolatileInterrupts(bool setDispCnt) {
+    if(setDispCnt) REG_DISPCNT = display_value;
     REG_SNDSTAT = stat_value;
     REG_SNDDSCNT = dsc_value;
     REG_SNDDMGCNT = dmg_value;
 
     if(isLinked)
-        linkConnection->activate();
+        multiplayerLink->activate();
 
-    interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER1);
     interrupt_enable(INTR_TIMER2);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_VBLANK);
 
     if(prevGradient)
         gradient(1);
+}
+
+void sleep() {
+    disableVolatileInterrupts(true);
+
+    REG_P1CNT = 0b1100001100000100;
+
+    Stop();
+
+    enableVolatileInterrupts(true);
 }
 
 void sfx(int s){
@@ -626,7 +653,7 @@ void saveSavefile(){
     } else {
         __agbabi_memcpy1(sram_mem, savefile, sizeof(Save));
 
-        if (ENABLE_FLASH_SAVE)
+        if (ENABLE_ROM_SAVE)
             save_sram_flash();
     }
     status.update(&savefile->settings);
@@ -769,4 +796,22 @@ IWRAM_CODE void onKeyInterrupt(){
     REG_TM3D = 0;
     SoftReset();
 }
+
+#ifdef LINK_WIRELESS_PUT_ISR_IN_IWRAM
+LINK_WIRELESS_CODE_IWRAM void LinkWireless::_onSerial() {
+    __onSerial();
+}
+LINK_WIRELESS_CODE_IWRAM void LinkWireless::_onTimer() {
+    __onTimer();
+}
+LINK_WIRELESS_CODE_IWRAM void LinkWireless::_onACKTimer() {
+    __onACKTimer();
+}
+#endif
+
+void setUpPresentException(std::string error) {
+    multiplayerLink->deactivate(true);
+    changeScene(new MultiplayerExceptionScene(std::move(error)));
+}
+
 #endif

@@ -2,7 +2,7 @@
 #include "shader.h"
 
 #include <GL/glew.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL_opengl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -45,7 +45,7 @@ uint loadShaderFromFile(std::string path, int type){
     // std::cout << str << std::endl;
 
     uint shader = glCreateShader(type);
-    glShaderSource(shader, 1, (const char* const *) &str, NULL);
+    glShaderSource(shader, 1, (const char* const *) &str, nullptr);
     glCompileShader(shader);
 
     int  success;
@@ -53,7 +53,7 @@ uint loadShaderFromFile(std::string path, int type){
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
     if(!success){
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
         std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
@@ -77,7 +77,7 @@ uint getShader(){
     char infoLog[512];
     glGetProgramiv(program, GL_LINK_STATUS, &success);
     if(!success) {
-        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        glGetProgramInfoLog(program, 512, nullptr, infoLog);
         std::cout << "ERROR::SHADER::LINKING_FAILED\n" << infoLog << std::endl;
     }
     return program;
@@ -116,7 +116,7 @@ void initShaders(SDL_Window *window){
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     int position = glGetAttribLocation(shaderProgram,"VertexCoord");
-    glVertexAttribPointer(position,3,GL_FLOAT,GL_FALSE,5*sizeof(float),(void*)0);
+    glVertexAttribPointer(position,3,GL_FLOAT,GL_FALSE,5*sizeof(float),(void*)nullptr);
     glEnableVertexAttribArray(position);
 
     int texCoord = glGetAttribLocation(shaderProgram,"TexCoord");
@@ -149,7 +149,7 @@ void drawWithShaders(SDL_Window * window, SDL_Surface *img,bool shadersEnabled){
     }
 
     glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,nullptr);
 
     SDL_GL_SwapWindow(window);
 }

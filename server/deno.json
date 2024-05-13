@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true
+  },
+  "lint": {
+    "include": ["source/", "test/", "server.ts"],
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["no-explicit-any"]
+    }
+  },
+  "fmt": {
+    "lineWidth": 120,
+    "semiColons": true,
+    "singleQuote": true,
+    "include": ["source/", "test/", "server.ts", "README.md"]
+  },
+  "tasks": {
+    "start": "deno run --allow-net --allow-env=PORT,HOST_NAME server.ts",
+    "prepare": "deno compile --allow-net --allow-env=PORT,HOST_NAME server.ts"
+  },
+  "test": {
+    "include": ["test/"]
+  }
+}

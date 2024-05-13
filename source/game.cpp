@@ -9,6 +9,10 @@
 #include <tuple>
 #include "text.h"
 
+#ifdef GBA
+#include "multiplayerClasses.h"
+#endif
+
 #include "rumble.h"
 
 #include "classic_pal_bin.h"
@@ -21,38 +25,41 @@
 using namespace BlockEngine;
 
 void diagnose();
-void clearGlow();
+
 void addGlow(Drop);
-void addPlaceEffect(Drop);
-void drawFrame(int layer);
-void drawFrameBackgrounds();
-void drawGrid();
-void progressBar(int layer);
+void addPlaceEffect(const Drop&);
+
+
+
+
 void showBar(int, int, int, int, int);
-void showBestMove();
+
 bool checkDiagonal(int);
 void showSpeedMeter(int);
-void hideMinos();
+
 void disappear();
 INLINE int getBoard(int,int);
 void zoneFlash();
-void resetZonePalette();
+
 void rainbowPalette();
-void frameSnow(int layer);
+
 void showZoneText();
 void showFullMeter();
 Function getActionFromKey(int key);
 void liftKeys();
 void setJourneyGraphics(Save * save, int level);
 void replayControl();
-void checkPeek();
+
 void showSpawn();
 static void screenShake();
 
 INLINE int prep(int n);
-IWRAM_CODE void updateGrid();
 
+#ifdef GBA
+__attribute((section(".iwram.game")))
+#endif
 Game* game = nullptr;
+
 OBJ_ATTR* pawnSprite;
 OBJ_ATTR* pawnShadow;
 OBJ_ATTR* holdSprite;
@@ -69,7 +76,7 @@ int clearTimer = 0;
 
 int maxClearTimer = 20;
 
-std::string clearTypeText = "";
+std::string clearTypeText;
 #define maxClearTextTimer 100
 #define clearTextHeight 15
 
@@ -106,7 +113,7 @@ static int flashTimer = 0;
 COLOR * previousPalette = nullptr;
 
 static int rainbowTimer = 1;
-static bool rainbowIncreasing = 0;
+static bool rainbowIncreasing = false;
 
 static u16 rainbow[5];
 
@@ -236,8 +243,8 @@ void GameScene::checkSounds() {
         }
 
         if(!game->sounds.finesse && game->trainingMode)
-            for(int i = 0; i < 3; i++)
-                sprite_hide(moveSprites[i]);
+            for(auto & moveSprite : moveSprites)
+                sprite_hide(moveSprite);
 
         rumbleTimer = rumbleMax * savefile->settings.rumble;
     }
@@ -277,7 +284,7 @@ void GameScene::checkSounds() {
         } else if (game->previousClear.isPerfectClear == 1) {
             soundEffect = SFX_PERFECTCLEAR;
             clearTypeText = "perfect clear";
-            effectList.push_back(Effect(0));
+            effectList.emplace_back(0);
         } else if (game->previousClear.isTSpin == 2) {
             if (game->previousClear.isBackToBack == 1)
                 soundEffect = SFX_BACKTOBACKTSPIN;
@@ -330,8 +337,8 @@ void GameScene::checkSounds() {
             clearTypeText = "double";
         }
 
-        if (savefile->settings.clearText == 2 && clearTypeText != "")
-            floatingList.push_back(FloatText(clearTypeText));
+        if (savefile->settings.clearText == 2 && !clearTypeText.empty())
+            floatingList.emplace_back(clearTypeText);
 
         if (savefile->settings.announcer && soundEffect != -1)
             sfx(soundEffect);
@@ -358,7 +365,7 @@ void GameScene::checkSounds() {
             sfx(sound);
 
         if (savefile->settings.clearText == 2)
-            floatingList.push_back(FloatText(clearTypeText));
+            floatingList.emplace_back(clearTypeText);
     }
 
     if (game->sounds.levelUp) {
@@ -382,7 +389,7 @@ void GameScene::checkSounds() {
         sfx(SFX_INITIAL);
     }
 
-    std::string sectionText = "";
+    std::string sectionText;
 
     switch(game->sounds.section){
         case -1:
@@ -396,8 +403,8 @@ void GameScene::checkSounds() {
         case 2: sfx(SFX_SECRET); break;
     }
 
-    if (sectionText.size() && savefile->settings.clearText == 2)
-        floatingList.push_back(FloatText(sectionText));
+    if (!sectionText.empty() && savefile->settings.clearText == 2)
+        floatingList.emplace_back(sectionText);
 
     if(game->sounds.disappear){
         disappear();
@@ -974,8 +981,8 @@ void showQueue(bool offsetSpriteIndex) {
 
     #ifdef TE
     if(flashTimer){
-        for(int i = 0; i < 5; i++)
-            sprite_hide(queueSprites[i]);
+        for(auto & queueSprite : queueSprites)
+            sprite_hide(queueSprite);
         return;
     }
     #endif
@@ -1226,7 +1233,7 @@ void GameScene::showText() {
         wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8,15);
 
         int score = game->score;
-        std::string unit = "";
+        std::string unit;
 
         if(savefile->settings.aspectRatio == 1){
             int unitCount = 0;
@@ -1365,14 +1372,14 @@ void showPPS(){
         pps = fxdiv(int2fx(game->pieceCounter),(t));
     }
 
-    std::string str = "";
+    std::string str;
 
     str += std::to_string(fx2int(pps)) + ".";
 
     int fractional = pps & 0xff;
     for(int i = 0; i < 2; i++){
         fractional *= 10;
-        str += '0' + (fractional >> 8);
+        str += std::to_string('0' + (fractional >> 8));
         fractional &= 0xff;
     }
 
@@ -1444,7 +1451,7 @@ void showClearText() {
                 aprint(text, 15 - text.size() / 2, 15 - height);
 
             } else {
-                std::size_t pos = text.find(" ");
+                std::size_t pos = text.find(' ');
 
                 if(pos != std::string::npos){
                     // aprint("            ", 9, 15 - height);
@@ -1498,7 +1505,7 @@ void addGlow(BlockEngine::Drop location) {
         }
 
         if (game->previousClear.isBackToBack == 1)
-            effectList.push_back(Effect(1 + (game->previousClear.isTSpin != 0), xCenter, location.endY));
+            effectList.emplace_back(1 + (game->previousClear.isTSpin != 0), xCenter, location.endY);
 
         for (int i = max(location.startY,0); i < location.endY && i < 20; i++)
             memset32_fast(&current[i+1][1],2048,10);
@@ -1515,9 +1522,9 @@ void addGlow(BlockEngine::Drop location) {
 }
 
 void clearGlow() {
-    for (int i = 0; i < 20; i++)
+    for (auto & i : glow)
         for (int j = 0; j < 10; j++)
-            glow[i][j] = 0;
+            i[j] = 0;
     drawGrid();
 }
 
@@ -1574,11 +1581,11 @@ void GameScene::countdown() {
                 sfx(SFX_GO);
         }
 #ifdef GBA
-        if (multiplayer) {
-            linkConnection->sync();
-            if (linkConnection->playerCount() != initialPlayerCount)
-                return;
-        }
+            if(multiplayerLink->active && !multiplayerLink->sync()) {
+                if (multiplayer)
+                    clearText();
+                break;
+            }
 #endif
     }
 
@@ -1648,7 +1655,7 @@ void screenShake() {
 
     }else if(savefile->settings.screenShakeType == 1){
         shake = fx2int(shakeBuff);
-        const FIXED deccel = float2fx(0.768);
+        const auto deccel = float2fx(0.768);
         if(shakeBuff){
 
             shakeBuff = fxmul(shakeBuff,deccel);
@@ -1850,16 +1857,16 @@ IWRAM_CODE void updateGrid(){
 }
 
 void drawGrid() {
-    std::list<Effect>::iterator index = effectList.begin();
+    auto index = effectList.begin();
 
     for (int i = 0; i < (int)effectList.size() && (savefile->settings.effects); i++) {
         if (index->timer < index->duration) {
             switch (index->type) {
             case 0:
                 if (index->timer % glowDuration == 0) {
-                    for (int i = 0; i < 20; i++)
+                    for (auto & i : glow)
                         for (int j = 0; j < 10; j++)
-                            glow[i][j] = glowDuration;
+                            i[j] = glowDuration;
                 }
                 break;
             case 1:
@@ -2377,11 +2384,11 @@ void showPlaceEffect(){
     }
 }
 
-void addPlaceEffect(BlockEngine::Drop drop){
+void addPlaceEffect(const BlockEngine::Drop& drop){
     if((int)placeEffectList.size() >= 3 || !savefile->settings.placeEffect || game->pawn.big)
         return;
 
-    placeEffectList.push_back(PlaceEffect(drop.x, drop.y, drop.dx, drop.dy, drop.piece, drop.rotation, drop.rotating * (game->gameMode != CLASSIC)));
+    placeEffectList.emplace_back(drop.x, drop.y, drop.dx, drop.dy, drop.piece, drop.rotation, drop.rotating * (game->gameMode != CLASSIC));
 }
 
 void hideMinos(){
@@ -2390,8 +2397,8 @@ void hideMinos(){
     sprite_hide(holdSprite);
     sprite_hide(&obj_buffer[110]);//spawn sprite
 
-    for(int i = 0; i < 5; i++)
-        sprite_hide(queueSprites[i]);
+    for(auto & queueSprite : queueSprites)
+        sprite_hide(queueSprite);
 
     for(int i = 0; i < 3; i++)
         sprite_hide(&obj_buffer[19+i]);
@@ -2508,7 +2515,7 @@ void showZoneMeter(){
 
 void zoneFlash(){
     if(flashTimer == flashTimerMax){
-        if(previousPalette != nullptr)
+
             delete []previousPalette;
         previousPalette = new COLOR [512];
         savePalette(previousPalette);
@@ -2756,7 +2763,7 @@ void GameScene::setupCredits(){
     std::advance(index,creditLastRead++);
 
     std::string text = *index;
-    std::size_t pos = text.find(" ");
+    std::size_t pos = text.find(' ');
 
     if(pos != std::string::npos){
         std::string part1 = text.substr(0, pos);
@@ -2770,8 +2777,8 @@ void GameScene::setupCredits(){
 
     creditSprites[2].setText("akouzoukos");
 
-    for(int i = 0; i < 3; i++){
-        creditSprites[i].setPriority(3);
+    for(auto & creditSprite : creditSprites){
+        creditSprite.setPriority(3);
     }
 
     #ifdef GBA
@@ -2815,7 +2822,7 @@ void GameScene::refreshCredits(){
         creditLastRead++;
     }
 
-    std::size_t pos = text.find(" ");
+    std::size_t pos = text.find(' ');
 
     if(pos != std::string::npos){
         std::string part1 = text.substr(0, pos);
@@ -3150,7 +3157,7 @@ void GameScene::update(){
         }else if(replaying){
             replaying = false;
             path.clear();
-            path.push_back("Play");
+            path.emplace_back("Play");
             clearText();
             buildBG(3, 0, 27, 0, 1, true);
             sceneSwitcher(modeToString(previousGameOptions->mode));
@@ -3175,7 +3182,7 @@ void GameScene::update(){
         game->update();
     }
 
-    if(handleMultiplayer(1)){
+    if(handleMultiplayer(true)){
         return;
     }
 
@@ -3187,6 +3194,9 @@ void GameScene::update(){
         handleBotGame();
     }else if(enableBot && !replaying){
         testBot->run();
+#ifdef GBA
+        multiplayerLink->sync();
+#endif
     }
 
     if(creditRefresh && !game->clearLock)
@@ -3260,7 +3270,6 @@ void GameScene::update(){
         if(!(playAgain && multiplayer)){
             return;
         }else{
-            playAgain = false;
             counted = false;
         }
     }
@@ -3278,6 +3287,10 @@ void GameScene::update(){
         addGameStats();
         paused = true;
         startGame();
+        if (multiplayer) {
+            paused = false;
+            return;
+        }
         changeScene(new GameScene());
         return;
     }

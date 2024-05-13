@@ -469,8 +469,8 @@ void generateTiles(){
         for(int j = 0; j < 8; j++)
             n += (i + (i == 5)) << (j*4);
 
-        for(int j = 0; j < 8; j++)
-            t->data[j] = n;
+        for(u32 & j : t->data)
+            j = n;
 
         loadTiles(0, 100+i, t, 1);
     }
@@ -478,8 +478,8 @@ void generateTiles(){
     delete t;
 
     customSkin = new TILE();
-    for (int j = 0; j < 8; j++) {
-        customSkin->data[j] = 0;
+    for (u32 & j : customSkin->data) {
+        j = 0;
     }
 }
 

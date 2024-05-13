@@ -11,7 +11,7 @@
 using namespace BlockEngine;
 
 static void screenShake();
-void setClearEffect();
+
 
 void GradientEditorScene::init(){
     toggleBG(0, true);
@@ -182,7 +182,7 @@ void GradientEditorScene::draw(){
     showSprites(128);
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
-    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+    auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
     sprite_unhide(cursorSprite,0);
     sprite_enable_affine(cursorSprite, 10, true);
@@ -236,7 +236,7 @@ void GradientEditorScene::drawText(){
 }
 
 void GradientEditorScene::update(){
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     setGradient(c);
@@ -388,8 +388,8 @@ void GradientEditorScene::deinit(){
     resetSmallText();
     clearText();
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for (auto & wordSprite : wordSprites)
+        delete wordSprite;
 }
 
 bool GradientElement::action(){
@@ -445,7 +445,7 @@ void GraphicsScene::init(){
         sprite_hide(arrowSprites[i]);
     }
 
-    if(name() != ""){
+    if(!name().empty()){
         bool found = false;
         int count = 0;
         auto it = path.begin();
@@ -503,7 +503,7 @@ void GraphicsScene::init(){
     enableFumen = true;
     fumenString = "v115@fgY4Aeo0Ae4wAeItAeYpAeolAe4hKeAgHfg4DAeoHA?eYLAeIPAe4SAeoWAeQaQ4WaKeAAAchAAA8QeAAA";
 
-    if(game != nullptr)
+    
         delete game;
 
     game = new Game(NO_MODE,bigMode);
@@ -570,7 +570,7 @@ void GraphicsScene::draw(){
         const int endX = 30-4;
 
         int offset = (sinLut(cursorFloat) * 2) >> 12;
-        FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+        auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
         int verticalOffset = 0;
         if(moving){
@@ -617,14 +617,14 @@ void GraphicsScene::draw(){
 
             if(counter == selection){ //draw sprite cursor
                 currentOption = option->getLabel();
-                for(int i = 0; i < 2; i++){
-                    sprite_unhide(cursorSprites[i],0);
-                    sprite_enable_affine(cursorSprites[i], 10, true);
-                    sprite_set_size(cursorSprites[i], scale, 10);
+                for(auto & cursorSprite : cursorSprites){
+                    sprite_unhide(cursorSprite,0);
+                    sprite_enable_affine(cursorSprite, 10, true);
+                    sprite_set_size(cursorSprite, scale, 10);
 
                     int x = startX - ((8) + offset + 4) - 4;
 
-                    sprite_set_pos(cursorSprites[i], x, y - 5);
+                    sprite_set_pos(cursorSprite, x, y - 5);
                 }
             }
 
@@ -683,7 +683,7 @@ void GraphicsScene::draw(){
     if(refreshText){
         scrollText = getDescription(currentOption);
         clearSpriteTiles(672 + 64, 144, 1);
-        if(scrollText != ""){
+        if(!scrollText.empty()){
             scrollTextLength = getVariableWidth(scrollText);
 
             endDelay = 0;
@@ -705,7 +705,7 @@ void GraphicsScene::draw(){
 }
 
 void GraphicsScene::update(){
-    canDraw = 1;
+    canDraw = true;
     key_poll();
     gradient(1);
 
@@ -795,7 +795,7 @@ bool GraphicsScene::control(){
         previousElement = name();
         previousSelection = selection;
 
-        if(path.size())
+        if(!path.empty())
             path.pop_back();
 
         changeScene(previousScene(),Transitions::FADE);
@@ -854,8 +854,8 @@ bool GraphicsScene::control(){
                 labels[index]->hide();
             }
 
-            for(int i = 0; i < 2; i++)
-                sprite_hide(cursorSprites[i]);
+            for(auto & cursorSprite : cursorSprites)
+                sprite_hide(cursorSprite);
 
             int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
             for(int i = 0; i < pathCount; i++)
@@ -1010,14 +1010,14 @@ void GraphicsScene::deinit(){
     gradient(false);
     spriteVOffset = 0;
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for (auto & wordSprite : wordSprites)
+        delete wordSprite;
 
-    for (int i = 0; i < 7; i++)
-        delete labels[i];
+    for (auto & label : labels)
+        delete label;
 
-    for (int i = 0; i < 3; i++)
-        delete scrollingText[i];
+    for (auto & i : scrollingText)
+        delete i;
 
     disableLayerWindow(1);
     disableLayerWindow(2);
@@ -1050,7 +1050,7 @@ void screenShake() {
 
     }else if(savefile->settings.screenShakeType == 1){
         shake = fx2int(shakeBuff);
-        const FIXED deccel = float2fx(0.768);
+        const auto deccel = float2fx(0.768);
         if(shakeBuff){
 
             shakeBuff = fxmul(shakeBuff,deccel);

@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <cstring>
 #include "achievementStructure.h"
+#ifdef GBA
+#include "util/random.h"
+#endif
 
 class SaveChange{
 public:
@@ -22,10 +25,10 @@ public:
     }
 };
 
-void setDefaultKeys();
+
 void resetSkins(Save * save);
 void setDefaults(Save * save, int depth);
-void setDefaultGraphics(Save * save, int depth);
+
 void applySaveChanges(u8* newSave, u8* oldSave,  int newSize);
 void convertScores(Save *save);
 
@@ -37,7 +40,8 @@ const SaveChange saveChanges[] = {
 int changeLength = 3;
 
 void loadSave() {
-    delete savefile;
+
+        delete savefile;
 
     savefile = new Save();
     loadSavefile();
@@ -146,9 +150,12 @@ void loadSave() {
         sum += dump[i];
     sqran(sum);
 
-    savefile->seed = qran();
 #ifdef GBA
+    randSetSeed(sum);
+    savefile->seed = (int)randNext();
     status.update(&savefile->settings);
+#else
+    savefile->seed = qran();
 #endif
     saveSavefile();
 }
@@ -251,10 +258,10 @@ void setDefaultHandling(Save *save){
 }
 
 void resetSkins(Save *save){
-    for(int i = 0; i < MAX_CUSTOM_SKINS; i++){
-        memcpy16_fast(&save->customSkins[i].board,sprite1tiles_bin,sprite1tiles_bin_size/2);
-        memcpy16_fast(&save->customSkins[i].smallBoard,mini[0],sprite1tiles_bin_size/2);
-        save->customSkins[i].changed = false;
+    for(auto & customSkin : save->customSkins){
+        memcpy16_fast(&customSkin.board,sprite1tiles_bin,sprite1tiles_bin_size/2);
+        memcpy16_fast(&customSkin.smallBoard,mini[0],sprite1tiles_bin_size/2);
+        customSkin.changed = false;
     }
 }
 
@@ -279,8 +286,8 @@ void setDefaults(Save *save, int depth){
     }
 
     if(depth < 2){
-        for (int i = 0; i < 10; i++)
-            save->settings.songList[i] = true;
+        for (bool & i : save->settings.songList)
+            i = true;
 
         memset32_fast(savefile->boards.ultra, 0, sizeof(EntryBoard) * 3 / 4);
     }
@@ -327,7 +334,7 @@ void setDefaults(Save *save, int depth){
         save->settings.irs = true;
         save->settings.ihs = true;
         save->settings.initialType = 1;
-        save->settings.resetHoldToggle = 0;
+        save->settings.resetHoldToggle = false;
 
         //check if select is already bound - if not, bind it to zone activation
         int* keys = (int*) &save->settings.keys;
@@ -420,8 +427,8 @@ void setDefaults(Save *save, int depth){
 
     setDefaultGraphics(save, depth);
 
-    for(int i = 0; i < 5; i++){
-        saveToProfile(&save->settings.profiles[i],&save->settings);
+    for(auto & profile : save->settings.profiles){
+        saveToProfile(&profile,&save->settings);
     }
 }
 
@@ -526,7 +533,7 @@ void setDefaultGraphics(Save *save, int depth){
 }
 
 void convertScores(Save *save){
-    OldScoreboards *oldBoards = (OldScoreboards *) &save->boards;
+    auto *oldBoards = (OldScoreboards *) &save->boards;
 
     ModeBoards newBoards;
 
@@ -555,11 +562,11 @@ void convertScores(Save *save){
         }
     }
 
-    EntryBoard *b = (EntryBoard *) &newBoards;
+    auto *b = (EntryBoard *) &newBoards;
 
     for(int i = 0; i < 33; i++){
-        for(int j = 0; j < 5; j++){
-            b->entries[j].pro = false;
+        for(auto & entrie : b->entries){
+            entrie.pro = false;
         }
         b++;
     }

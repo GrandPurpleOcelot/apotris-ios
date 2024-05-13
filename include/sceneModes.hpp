@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "scene.hpp"
 
 class PlayOptionScene : public OptionListScene{
@@ -20,7 +22,7 @@ class PlayOptionScene : public OptionListScene{
 
     WordSprite startSprite = WordSprite(0, 20, 150);
 
-    std::string currentElement = "";
+    std::string currentElement;
 
     virtual bool getIfTime(){return false;};
     virtual bool getIfGrade(){return false;};
@@ -31,12 +33,12 @@ class PlayOptionScene : public OptionListScene{
     void setOptions();
     void resetScoreboard();
 
-    void init();
-    bool control();
-    void draw();
-    void update();
+    void init() override;
+    bool control() override;
+    void draw() override;
+    void update() override;
 
-    Scene* previousScene(){return new ModeListScene();};
+    Scene* previousScene() override{return new ModeListScene();};
 };
 
 class LevelSelectorElement : public Element{
@@ -101,7 +103,7 @@ class StringSelectorElement : public Element{
         std::list<std::string> optionList;
         std::string label;
 
-        virtual int getValue() override {return value;};
+        int getValue() override {return value;};
 
         std::string getLabel() override {return label;};
 
@@ -145,15 +147,15 @@ class StringSelectorElement : public Element{
             return *it;
         }
 
-        StringSelectorElement(std::list<std::string> list){
-            optionList = list;
+        explicit StringSelectorElement(std::list<std::string> list){
+            optionList = std::move(list);
             options = optionList.size();
         }
 
         StringSelectorElement(std::string newLabel, std::list<std::string> list){
-            optionList = list;
+            optionList = std::move(list);
             options = optionList.size();
-            label = newLabel;
+            label = std::move(newLabel);
         }
 
 };
@@ -165,7 +167,7 @@ class IntSelectorElement : public Element{
         std::list<int> optionList;
         std::string label;
 
-        virtual int getValue() override {
+        int getValue() override {
             if(value > (int) optionList.size())
                 return 0;
 
@@ -217,21 +219,21 @@ class IntSelectorElement : public Element{
             return std::to_string(*it);
         }
 
-        IntSelectorElement(std::list<int> list){
-            optionList = list;
+        explicit IntSelectorElement(std::list<int> list){
+            optionList = std::move(list);
             options = optionList.size();
         }
 
         IntSelectorElement(std::string newLabel, std::list<int> list){
-            optionList = list;
+            optionList = std::move(list);
             options = optionList.size();
-            label = newLabel;
+            label = std::move(newLabel);
         }
 
         IntSelectorElement(std::string newLabel, std::list<int> list, int _value){
-            optionList = list;
+            optionList = std::move(list);
             options = optionList.size();
-            label = newLabel;
+            label = std::move(newLabel);
             value = _value;
         }
 };
@@ -295,15 +297,15 @@ class TupleSelectorElement : public Element{
             return std::get<1>(*it);
         }
 
-        TupleSelectorElement(std::list<std::tuple<int,std::string>> list){
-            optionList = list;
+        explicit TupleSelectorElement(std::list<std::tuple<int,std::string>> list){
+            optionList = std::move(list);
             options = optionList.size();
         }
 
         TupleSelectorElement(std::string newLabel, std::list<std::tuple<int,std::string>> list){
-            optionList = list;
+            optionList = std::move(list);
             options = optionList.size();
-            label = newLabel;
+            label = std::move(newLabel);
         }
 
 };
@@ -575,20 +577,26 @@ class TrainingScene : public PlayOptionScene{
 class MultBattleScene : public PlayOptionScene{
     public:
 
-    BlockEngine::Modes getMode(){return BlockEngine::BATTLE;};
+    BlockEngine::Modes getMode() override{return BlockEngine::BATTLE;};
 
-    std::list<Element*> getElementList(){
+    std::list<Element*> getElementList() override{
         return {
         };
     };
 
-    void init();
-    bool control();
-    void update();
-    void deinit();
-    void draw();
+    void init() override;
+    bool control() override;
+    void update() override;
+    void deinit() override;
+    void draw() override;
 
-    std::string name(){return "2P Battle";};
+    std::string name() override{return "Multi Battle";};
+
+    void showReadyPlayers();
+    void handleConnectionDisplay();
+    void handleReadyStatus();
+
+    void hideReadyPlayers();
 #ifdef GBA
 private:
     interrupt_vector rumbleHandler = nullptr;

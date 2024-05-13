@@ -1,5 +1,4 @@
 #pragma once
-#include "def.h"
 
 #ifdef GBA
 
@@ -17,7 +16,7 @@ inline bool logInitMgba(void)
     return REG_MGBA_ENABLE == 0x1DEA;
 }
 
-static void logOutputMgba(u8 level, const char *message)
+inline void logOutputMgba(u8 level, const char *message)
 {
     for (int i = 0; message[i] && i < 256; i++)
     {
@@ -25,6 +24,13 @@ static void logOutputMgba(u8 level, const char *message)
     }
 
     REG_MGBA_FLAGS = (level - 1) | 0x100;
+}
+
+static void logMgba(char *buffer) {
+    #ifdef NO_DIAGNOSE
+    return;
+    #endif
+    logOutputMgba(3, buffer);
 }
 
 static inline void log(int n){
@@ -42,7 +48,7 @@ static inline void log(std::string str){
     return;
     #endif
 
-    logOutputMgba(4, str.c_str());
+    logOutputMgba(3, str.c_str());
 }
 
 #endif

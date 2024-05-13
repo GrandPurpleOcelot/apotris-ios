@@ -31,6 +31,7 @@ nanotime_step_data stepper;
 
 SDL_Window* window;
 SDL_Renderer * renderer;
+SDL_GameController* controller;
 
 bool render = true;
 
@@ -58,6 +59,13 @@ int resizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData
 
     resizeWindow(screenWidth, screenHeight);
     return 0;
+}
+
+bool initController(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData) {
+    if(SDL_NumJoysticks() > 0){
+        controller = SDL_GameControllerOpen(0);
+    }
+    return true;
 }
 
 void windowInit(){
@@ -96,6 +104,10 @@ void windowInit(){
     nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,nullptr,false,resizeCallback);
+
+    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+
+    emscripten_set_gamepadconnected_callback(nullptr, false, reinterpret_cast<em_gamepad_callback_func>(initController));
 }
 
 void key_poll(){
@@ -134,6 +146,22 @@ void key_poll(){
             break;
         case SDL_KEYUP:
             key = event.key.keysym.sym;
+            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+            found = (it != currentlyPressed.end());
+            if(found)
+                currentlyPressed.remove(key);
+            break;
+        case SDL_JOYBUTTONDOWN:
+        case SDL_CONTROLLERBUTTONDOWN:
+            key = event.jbutton.button;
+            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+            found = (it != currentlyPressed.end());
+            if(!found)
+                currentlyPressed.push_back(key);
+            break;
+        case SDL_JOYBUTTONUP:
+        case SDL_CONTROLLERBUTTONUP:
+            key = event.jbutton.button;
             it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
             found = (it != currentlyPressed.end());
             if(found)

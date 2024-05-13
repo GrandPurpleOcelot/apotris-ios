@@ -9,6 +9,8 @@
 
 #include "Tilengine.h"
 #include <cstring>
+#include <chrono>
+#include <random>
 
 #if defined(PC)
 
@@ -205,12 +207,15 @@ INLINE void memset32_fast(void* dest, int word, int wCount){
     memset32(dest, word, wCount);
 }
 
+static std::mt19937 mt_engine = std::mt19937(std::chrono::system_clock::now().time_since_epoch().count());
+
 INLINE int qran(){
-    return rand();
+    std::uniform_int_distribution<int> dist(0, RAND_MAX);
+    return dist(mt_engine);
 }
 
 INLINE void sqran(int seed){
-    srand(seed);
+    mt_engine.seed(seed);
 }
 
 INLINE COLOR RGB15(int red, int green, int blue){

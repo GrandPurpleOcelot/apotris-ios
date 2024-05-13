@@ -20,7 +20,7 @@ void QRScene::init(){
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 
-    if(name() != ""){
+    if(!name().empty()){
         bool found = false;
         int count = 0;
         auto it = path.begin();
@@ -107,7 +107,7 @@ bool QRScene::control(){
         sfx(SFX_MENUCANCEL);
         previousElement = name();
 
-        if(path.size())
+        if(!path.empty())
             path.pop_back();
 
         changeScene(previousScene(),Transitions::FADE);
@@ -117,7 +117,7 @@ bool QRScene::control(){
 }
 
 void QRScene::update(){
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     control();
@@ -135,7 +135,7 @@ void QRScene::deinit(){
 
     clearText();
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for(auto & wordSprite : wordSprites)
+        delete wordSprite;
 }
 #endif

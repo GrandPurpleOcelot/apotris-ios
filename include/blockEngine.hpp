@@ -114,7 +114,7 @@ namespace BlockEngine
 
     extern const uint16_t connectedConversion[24];
     extern const uint16_t connectedFix[3][24];
-    extern int* getShape(int piece,int rotation,int rotationSystem);
+    extern int* getShape(int n,int rotation,int rotationSystem);
 
     enum Modes{
         NO_MODE,
@@ -497,7 +497,7 @@ namespace BlockEngine
         void deathGarbage();
         void toggleBigMode();
 
-        int bigBag[35];
+        int bigBag[35]{};
 
         float speedCounter = 0;
 
@@ -558,7 +558,7 @@ namespace BlockEngine
         bool fromLockHold = false;
         bool fromLockRotate = false;
 
-        int pieceDrought[7];
+        int pieceDrought[7]{};
         bool delaySoftDrop = true;
 
         bool ihs = false;
@@ -623,10 +623,10 @@ namespace BlockEngine
 
         int lengthX = 10;
         int lengthY = 40;
-        int board[40][10];
+        int board[40][10]{};
 
-        uint16_t bitboard[40];
-        int columnHeights[10];
+        uint16_t bitboard[40]{};
+        int columnHeights[10]{};
 
         Pawn pawn = Pawn(0, 0);
         int held = -1;
@@ -635,7 +635,7 @@ namespace BlockEngine
         int level = 0;
         unsigned int score = 0;
         int comboCounter = -1;
-        bool lineClearArray[40];
+        bool lineClearArray[40]{};
         bool clearLock = false;
         int lost = 0;
         int gameMode;
@@ -693,7 +693,7 @@ namespace BlockEngine
         int maxLockTimer = 30;
         int lockTimer = maxLockTimer;
 
-        uint16_t disappearTimers[40][10];
+        uint16_t disappearTimers[40][10]{};
         int disappearing = 0;
 
         float creditGrade = 0;
@@ -813,7 +813,7 @@ namespace BlockEngine
 
         void stopThinking();
 
-        void executeMove(Move move);
+        void executeMove(const Move& move) const;
 
         Bot(){}
         Bot(Game* _game){

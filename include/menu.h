@@ -158,3 +158,5 @@ public:
     }
 };
 
+std::string nameInput(int);
+

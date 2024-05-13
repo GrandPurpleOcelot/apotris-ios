@@ -1,8 +1,8 @@
 project('Apotris',
         'c', 'cpp',
         version : '4.0.0',
-        license : 'GPL3', meson_version : '>=0.60.0',
-        default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=false'])
+        license : 'AGPL3', meson_version : '>=1.3.0',
+        default_options : ['buildtype=debugoptimized', 'cpp_std=c++20', 'default_library=static', 'warning_level=0', 'b_lto=false'])
 
 
 # The name of your project.
@@ -52,6 +52,7 @@ sources = files(
     src_dir / 'screenAudio.cpp',
     src_dir / 'screenControls.cpp',
     src_dir / 'screenCredits.cpp',
+    src_dir / 'screenException.cpp',
     src_dir / 'screenGraphics.cpp',
     src_dir / 'screenHandling.cpp',
     src_dir / 'screenLinks.cpp',
@@ -69,34 +70,35 @@ sources = files(
 subdir(data_dir)
 
 # Common build file references
-
 icon_file = files('sprites/favicon32.bmp')
 effect_locations_file = 'effect_locations.bin'
 
 # Set up recommended compiler and linker flags for GBA before loading any other projects
 if host_machine.system() == 'gba'
     subdir('meson/toolchain')
-    add_project_arguments('-DLINK_WIRELESS_USE_SEND_RECEIVE_LATCH=1', language : 'cpp')
+    #add_project_arguments('-DLINK_WIRELESS_USE_SEND_RECEIVE_LATCH=1', language : 'cpp')
+    add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language : 'cpp')
+    add_project_arguments('-frtti', language : 'cpp')
     if get_option('emu_detect')
         add_project_arguments('-DEMU_DETECT', language : 'cpp')
     endif
 endif
 
 if host_machine.system() == 'windows'
-    add_global_arguments('-DWIN32', language : ['c', 'cpp'])
-    add_global_arguments('-mwin32', language : ['c', 'cpp'])
+  add_global_arguments('-DWIN32', language : ['c', 'cpp'])
+  add_global_arguments('-mwin32', language : ['c', 'cpp'])
 elif host_machine.system() == 'emscripten'
-    add_global_arguments('-pthread', language : ['cpp', 'c'])
-    add_global_arguments('-fno-stack-protector', language : ['cpp', 'c'])
-    add_global_arguments('-U_FORTIFY_SOURCE', language : ['cpp', 'c'])
-elif host_machine.system() == 'darwin'
-    add_global_arguments('-mmacosx-version-min=10.15', language : ['cpp', 'c'])
+  add_global_arguments('-pthread', language : ['cpp', 'c'])
+  add_global_arguments('-fno-stack-protector', language : ['cpp', 'c'])
+  add_global_arguments('-U_FORTIFY_SOURCE', language : ['cpp', 'c'])
 endif
 
 build_type = get_option('buildtype')
 # Don't use mGBA logging in release build types, only debug and friends
 if build_type.startswith('release') or build_type.startswith('minsize')
   add_project_arguments('-DNO_DIAGNOSE', language : ['c', 'cpp'])
+elif build_type.startswith('debug')
+  add_project_arguments('-DHSM_DEBUG=1', language : ['c', 'cpp'])
 endif
 
 # Various helper libraries, subprojects, and scripts common to all builds
@@ -137,22 +139,20 @@ if host_machine.system() != 'gba'
     # Windows, macOS, and Linux #
     #############################
 
-    # Bring in required audio assets to copy to build output
-
-    # All the dependencies should be static to work around various issues or platform specific behavior
-    opus = dependency('opus', static : true, fallback : ['opus', 'opus_dep'])
-    ogg = dependency('ogg', static : true, fallback : ['ogg', 'libogg_dep'])
+    json = dependency('nlohmann_json', fallback : ['nlohmann_json', 'nlohmann_json_dep'])
+    opus = dependency('opus', fallback : ['opus', 'opus_dep'])
+    ogg = dependency('ogg', fallback : ['ogg', 'libogg_dep'])
     if host_machine.system() == 'emscripten' or host_machine.system() == 'horizon'
         # Other required dependencies
-        openmpt = dependency('openmpt', static : true, default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
-        tilengine = dependency('Tilengine', static : true, default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
-        sdl2_dep = dependency('sdl2', static : true, default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
+        openmpt = dependency('openmpt', default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
+        tilengine = dependency('Tilengine', default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+        sdl2_dep = dependency('SDL2', default_options : ['default_library=static', 'test=false'], fallback : ['sdl2', 'sdl2_dep'])
         if host_machine.system() == 'horizon'
-            sdl_mixer = dependency('SDL2_mixer', static : true, default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+            sdl_mixer = dependency('SDL2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         else
-            sdl_mixer = dependency('sdl2_mixer', static : true, default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
+            sdl_mixer = dependency('SDL2_mixer', default_options : ['default_library=static'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
         endif
-        soloud = dependency('SoLoud', static : true, default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+        soloud = dependency('SoLoud', default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
     else
         # Other required dependencies
         openmpt = dependency('openmpt', static : true, default_options : ['default_library=static'], fallback : ['openmpt', 'openmpt_dep'])
@@ -174,6 +174,7 @@ if host_machine.system() != 'gba'
 
     dependencies = [
         dependency('threads'),
+        json,
         ogg,
         openmpt,
         sdl_mixer,
@@ -184,6 +185,14 @@ if host_machine.system() != 'gba'
         # dependency('gl'),
         # dependency('glew'),
     ]
+    if host_machine.system() != 'emscripten'
+        datachannel = dependency('libdatachannel', fallback : ['libdatachannel', 'libdatachannel_dep'])
+        dependencies += datachannel
+    else
+        cmake = import('cmake')
+        datachannel = cmake.subproject('datachannel-wasm')
+        dependencies += datachannel.dependency('datachannel-wasm')
+    endif
 
     # Define non-GBA specific preprocessor guards
     if host_machine.system() == 'horizon'
@@ -268,6 +277,7 @@ if host_machine.system() != 'gba'
         link_args += '-mmacosx-version-min=10.15'
     endif
 
+
     # The final Apotris compile target
     if host_machine.system() == 'emscripten'
         binary = executable(
@@ -278,15 +288,16 @@ if host_machine.system() != 'gba'
             name_suffix : name_suffix,
             link_args : link_args,
             win_subsystem: 'windows',
+            install_rpath: 'lib'
         )
     elif host_machine.system() == 'horizon'
-        icon_file = files('dist' / 'Apotris-switch.jpg')
         binary = executable(
             name,
             generated_files + sources,
             include_directories : includes,
             dependencies : dependencies,
             link_args : link_args,
+            install_rpath: 'lib'
         )
         nro = custom_target(
             'Build romfs and final NRO for Apotris on Nintendo Switch',
@@ -305,7 +316,7 @@ if host_machine.system() != 'gba'
             dependencies : dependencies,
             link_args : link_args,
             win_subsystem : 'windows',
-            install : true
+            install_rpath: 'lib'
         )
         if host_machine.system() == 'darwin'
             install_data('dist' / 'Apotris.icns', install_dir : 'Contents/Resources')
@@ -334,6 +345,7 @@ else
     dependencies = [
         rt_dep,
         dependency('libseven'),
+        dependency('libutil'),
         dependency('libsavgba'),
         dependency('libtonc'),
         dependency('agbabi'),
@@ -393,7 +405,7 @@ else
         'soundbank',
         output : [soundbank_bin, soundbank_header, effect_locations_file, 'audio.gbfs'],
         command : [
-            py3, buildSoundbank, 'default', mmutil, gbfs, sound_effects,soundbank_files,
+            py3, buildSoundbank, 'default', mmutil, gbfs, sound_effects, soundbank_files,
         ],
         depend_files : soundbank_files,
     )
@@ -417,18 +429,6 @@ else
 
         generated_files += bin2s_target
     endforeach
-
-    # # Use gbfs to create archive to append to ROM with sound data
-    # audio_target = custom_target(
-    #     'audio and effect bank',
-    #     output : 'audio.gbfs',
-    #     command : [
-    #         gbfs, 'audio.gbfs', soundbank_bin, effect_locations_file,
-    #     ],
-    #     depend_files : [soundbank_bin, effect_locations_file],
-    #     depends : soundbank_target,
-    # )
-    # generated_files += audio_target
 
     # Required for minrt
     link_args = ['-specs=nosys.specs']

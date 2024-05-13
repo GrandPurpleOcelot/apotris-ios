@@ -28,4 +28,8 @@ void interrupt_unmask() {
     irqUnmask();
 }
 
+void interrupt_mask() {
+    irqMask();
+}
+
 #endif

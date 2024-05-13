@@ -1,0 +1,153 @@
+/**
+ This file is part of the Apotris multiplayer server implementation.
+ Copyright (C) 2024 Isaac Aronson
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+// Constants
+const HOST_NAME = Deno.env.get('HOST_NAME') || '0.0.0.0';
+const SERVER_PORT = Deno.env.get('PORT') ?? 8088;
+
+const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
+const rooms: Map<string, string[]> = new Map<string, string[]>();
+
+const respond = (
+  code: number,
+  data: string,
+  contentType = 'text/plain',
+) => {
+  return new Response(data, {
+    status: code,
+    headers: {
+      'Content-Type': contentType,
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
+};
+
+const handler = (request: Request): Response => {
+  console.info(`${request.method} :: ${request.url}`);
+
+  const upgradeHeader = request.headers.get('Upgrade');
+  if (upgradeHeader?.toLowerCase() != 'websocket') {
+    return respond(404, 'Not Found');
+  }
+
+  const { socket, response } = Deno.upgradeWebSocket(request);
+  const clientID = new URL(request.url).pathname.split('/')[1];
+
+  console.info(`WS Upgrade :: ${request.url}`);
+
+  socket.addEventListener('open', (_websocketRequest) => {
+    clients.set(clientID, socket);
+    console.info(`Client connected :: ${clientID}`);
+
+    // Try to match the client with an existing room
+    let roomID;
+    for (const [id, room] of rooms.entries()) {
+      if (room.length < 2) {
+        room.push(clientID);
+        roomID = id;
+        break;
+      }
+    }
+
+    // If no room is available, create a new one
+    if (!roomID) {
+      roomID = `room-${Math.floor(Math.random() * 100000)}`;
+      rooms.set(roomID, [clientID]);
+    }
+
+    // If the room is full, send match messages to both clients
+    const room = rooms.get(roomID);
+    if (room?.length === 2) {
+      const [client1, client2] = room;
+      clients.get(client2)?.send(JSON.stringify({ type: 'match', id: client1, iter: 0 }));
+      clients.get(client2)?.send(JSON.stringify({ type: 'match', id: client2, iter: 1 }));
+      clients.get(client1)?.send(JSON.stringify({ type: 'match', id: client1, iter: 0 }));
+      clients.get(client1)?.send(JSON.stringify({ type: 'match', id: client2, iter: 1 }));
+      console.log('Room connected!');
+    } else {
+      // If the room is not full, send an iter message with 0
+      socket.send(JSON.stringify({ type: 'match', id: clientID, iter: 0 }));
+      console.log('Room pending');
+    }
+  });
+
+  socket.addEventListener('message', (websocketMessage) => {
+    if (typeof websocketMessage.data != 'string') return;
+
+    console.info(`Client ${clientID} :: << :: ${websocketMessage.data}`);
+
+    try {
+      const message = JSON.parse(websocketMessage.data);
+
+      const destinationID = message.id;
+      const destination = clients.get(destinationID);
+
+      if (!destination) {
+        console.error(`Client not found :: ${destinationID}`);
+        return;
+      }
+
+      message.id = clientID;
+
+      const data = JSON.stringify(message);
+
+      console.info(`Client ${destinationID} :: >> :: ${data}`);
+      destination.send(data);
+    } catch (error) {
+      console.error(`Invalid JSON :: ${error}`);
+    }
+  });
+
+  socket.addEventListener('close', () => {
+    clients.delete(clientID);
+
+    // Remove the client from their room
+    for (const [id, room] of rooms.entries()) {
+      const index = room.indexOf(clientID);
+      if (index !== -1) {
+        room.splice(index, 1);
+
+        // If the room is empty, remove it
+        if (room.length === 0) {
+          rooms.delete(id);
+        } else {
+          // Send a close message to the other client in the room
+          const otherClient = room[0];
+          clients.get(otherClient)?.send(JSON.stringify({ type: 'close', id: clientID }));
+        }
+
+        break;
+      }
+    }
+
+    console.info(`Client disconnected :: ${clientID}`);
+  });
+
+  return response;
+};
+
+const shutdown = () => {
+  Deno.exit();
+};
+// Graceful shutdown of network clients
+Deno.addSignalListener('SIGINT', shutdown);
+Deno.addSignalListener('SIGTERM', shutdown);
+
+Deno.serve({
+  hostname: HOST_NAME,
+  port: Number(SERVER_PORT),
+  handler,
+});

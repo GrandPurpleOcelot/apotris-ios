@@ -1,12 +1,13 @@
-#include <iostream>
 #include <algorithm>
+#include <cmath>
+#include <iostream>
 #include <string>
 #include <tuple>
-#include <math.h>
 
 #include "tetromino.hpp"
 #include "blockEngine.hpp"
 #include "logging.h"
+#include "def.h"
 #include <posprintf.h>
 
 using namespace BlockEngine;
@@ -458,8 +459,6 @@ void Game::hardDrop() {
         place();
 
     score += diff * 2;
-
-    return;
 }
 
 void Game::update() {
@@ -2140,7 +2139,7 @@ void Game::activateZone(int dir){
     if(!dir)
         return;
 
-    replay.push_back(Timestamp(timer, 8,dir));
+    replay.emplace_back(timer, 8,dir);
 
     #ifndef NO_DIAGNOSE
     zoneCharge = 32;
@@ -2308,7 +2307,7 @@ void Game::liftKeys(){
     for(int i = 0; i < 3; i++)
         rotates[0] = false;
 
-    holding = 0;
+    holding = false;
     left = 0;
     right = 0;
     down = 0;
@@ -2498,8 +2497,8 @@ Game::Game(int gm, int sd, bool big){
     }
 
     if(enableFumen && enableFumenQueue){
-        for(int i = 0; i < 5; i++)
-            queue.push_back(fumenQueue[i]);
+        for(unsigned char i : fumenQueue)
+            queue.push_back(i);
     }
 
     pawn = Pawn(0,0);
@@ -2568,9 +2567,9 @@ Game::Game(int gm, int sd, bool big){
         replayElligible = false;
     }
 
-    for (int i = 0; i < 40; i++) {
+    for (auto & disappearTimer : disappearTimers) {
         for (int j = 0; j < 10; j++)
-            disappearTimers[i][j] = 0;
+            disappearTimer[j] = 0;
     }
 }
 

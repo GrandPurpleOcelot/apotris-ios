@@ -914,7 +914,7 @@ class GradientEditorScene : public Scene{
             maxSelection++;
     }
 
-    void drawText();
+    static void drawText();
 
     void draw();
     void update();

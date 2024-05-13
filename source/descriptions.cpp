@@ -1,6 +1,6 @@
 #include "scene.hpp"
 
-std::string getDescription(std::string element){
+std::string getDescription(const std::string& element){
 
 // MODES ---------------------------------------------------------------------------------
     if(element == "Marathon"){
@@ -36,7 +36,7 @@ std::string getDescription(std::string element){
     }else if(element == "Zen"){
         return "The goal is to relax...";
 
-    }else if(element == "2P Battle"){
+    }else if(element == "Multi Battle"){
         return "Battle your friends.";
 
     }else if(element == "CPU Battle"){
@@ -149,7 +149,7 @@ std::string getDescription(std::string element){
     return "";
 }
 
-std::string getDescription(std::string mode, std::string element,std::string option){
+std::string getDescription(const std::string& mode, const std::string& element,const std::string& option){
     if(mode == "Marathon"){
         if(element == "Type"){
             if(option == "Normal"){

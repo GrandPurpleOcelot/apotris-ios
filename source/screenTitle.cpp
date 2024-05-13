@@ -24,8 +24,8 @@
 #include "detectEmulators.h"
 #endif
 
-std::string timeToStringHours(int frames);
-void initFallingBlocks();
+
+
 void checkCustomSkins();
 
 WordSprite* wordSprites[MAX_WORD_SPRITES];
@@ -58,7 +58,7 @@ Skin previousSkins[MAX_CUSTOM_SKINS];
 bool bigMode = false;
 
 const std::list<std::string> menuOptions = {"Play","Settings","Stats","Links","Skin Editor","Credits"};
-const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","Death","Zen","2P Battle","CPU Battle","Training"};
+const std::list<std::string> gameOptions = {"Marathon","Sprint","Dig","Ultra","Blitz","Combo","Survival","Classic","Master","Death","Zen","Multi Battle","CPU Battle","Training"};
 const std::list<std::string> settingsOptions = {"Graphics","Audio","Controls","Handling","Gameplay","Saving"};
 
 // const int secretCombo[11] = {KEY_UP,KEY_UP,KEY_DOWN,KEY_DOWN,KEY_LEFT,KEY_RIGHT,KEY_LEFT,KEY_RIGHT,KEY_B,KEY_A,KEY_START};
@@ -204,7 +204,7 @@ std::string timeToStringHours(int frames) {
 
     posprintf(res,"%02d:%02d",hours,minutes);
 
-    std::string result = "";
+    std::string result;
 
     result = res;
 
@@ -255,7 +255,7 @@ void TitleScene::init(){
     wordSprites[0].setText("Press Any");
     wordSprites[1].setText("Button");
 
-    versionText.setText("v4.0.2");
+    versionText.setText("v4.1.0a");
 
     nameText.setText("akouzoukos");
 
@@ -297,7 +297,7 @@ bool TitleScene::control(){
 }
 
 void TitleScene::update(){
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     if(control()){
@@ -380,7 +380,7 @@ void ConfirmSaveScene::draw(){
     fallingBlocks();
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
-    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+    auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
     const int y = 104;
 
@@ -401,7 +401,7 @@ void ConfirmSaveScene::draw(){
 }
 
 void ConfirmSaveScene::update(){
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     cursorFloat += 6;
@@ -607,10 +607,10 @@ void initFallingBlocks(){
 }
 
 void checkCustomSkins(){
-    for(int i = 0; i < MAX_CUSTOM_SKINS; i++){
+    for(auto & customSkin : savefile->customSkins){
         bool changed = false;
 
-        int *skin = (int *) &savefile->customSkins[i].board;
+        int *skin = (int *) &customSkin.board;
         int *defaultSkin = (int *) sprite1tiles_bin;
 
         int sum = 0;
@@ -625,7 +625,7 @@ void checkCustomSkins(){
             defaultSkin++;
         }
 
-        skin = (int *) &savefile->customSkins[i].smallBoard;
+        skin = (int *) &customSkin.smallBoard;
         defaultSkin = (int *) mini[0];
 
         for(int count = (sizeof(TILE)) / 4; count; count--){
@@ -639,6 +639,6 @@ void checkCustomSkins(){
         }
 
         //only set to changed if the skin is non-empty
-        savefile->customSkins[i].changed = changed && sum;
+        customSkin.changed = changed && sum;
     }
 }

@@ -1,6 +1,7 @@
 #include "def.h"
 #include "rumble.h"
 #include "scene.hpp"
+#include "sceneModes.hpp"
 #include "tetromino.hpp"
 // #include "soundbank.h"
 #include "blockEngine.hpp"
@@ -16,13 +17,13 @@
 #endif
 
 #include "qrcodegen.h"
+#include "multiplayerClasses.h"
 
 using namespace BlockEngine;
 
 void endAnimation();
 void showScore();
 int onRecord();
-std::string nameInput(int);
 void qrScene();
 
 void saveReplay();
@@ -88,7 +89,7 @@ void GameScene::endScreen(){
     int fractional = pps & 0xff;
     for(int i = 0; i < 2; i++){
         fractional *= 10;
-        ppsStr += '0' + (fractional >> 8);
+        ppsStr += std::to_string('0' + (fractional >> 8));
         fractional &= 0xff;
     }
 
@@ -164,7 +165,7 @@ void GameScene::endScreen(){
             case 4: placeString = "5th"; break;
         }
     }else if(game->gameMode == BATTLE){
-        switch(rank - 1){
+        switch(rank){
             case 0: placeString = "1st"; break;
             case 1: placeString = "2nd"; break;
             case 2: placeString = "3rd"; break;
@@ -173,37 +174,44 @@ void GameScene::endScreen(){
         }
     }
 
-    if(placeString != ""){
+    if(!placeString.empty()){
         placeString += " Place";
         naprint(placeString, 15 * 8 - getVariableWidth(placeString) / 2, 5 * 8);
     }
 
     MenuKeys k = savefile->settings.menuKeys;
 
+    bool shownOptions = false;
     while (closed()) {
-        if(handleMultiplayer(0)){
+        if(handleMultiplayer(false)){
             return;
         }
 
         vsync();
         key_poll();
 
-        showScore();
+        if (!multiplayerLink->stateMachine.IsInState<MultiplayerStates::Playing>()) {
+            if (!shownOptions) {
+                showEndScreenOptions();
+                shownOptions = true;
+            }
+            showScore();
 
-        cursorFloat += 6;
-        if(cursorFloat >= 512)
-            cursorFloat = 0;
-        int offset = (sinLut(cursorFloat) * 2) >> 12;
-        FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+            cursorFloat += 6;
+            if (cursorFloat >= 512)
+                cursorFloat = 0;
+            int offset = (sinLut(cursorFloat) * 2) >> 12;
+            auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
-        sprite_unhide(cursorSprite,0);
-        sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 0);
-        sprite_enable_affine(cursorSprite, 6, true);
-        sprite_set_size(cursorSprite, scale , 6);
+            sprite_unhide(cursorSprite, 0);
+            sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 0);
+            sprite_enable_affine(cursorSprite, 6, true);
+            sprite_set_size(cursorSprite, scale, 6);
 
-        int x = 240/2 - ((20) + offset + 4) - 16;
+            int x = 240 / 2 - ((20) + offset + 4) - 16;
 
-        sprite_set_pos(cursorSprite, x, ((optionsHeight + selection * 3) * 8) - 5);
+            sprite_set_pos(cursorSprite, x, ((optionsHeight + selection * 3) * 8) - 5);
+        }
 
         int counter = 0;
 
@@ -221,8 +229,6 @@ void GameScene::endScreen(){
         wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1 + !multiplayer));
 
         if (playAgain && multiplayer) {
-            startMultiplayerGame(nextSeed);
-            changeScene(new GameScene());
             break;
         }
 
@@ -236,22 +242,10 @@ void GameScene::endScreen(){
                     changeScene(new GameScene());
                     break;
                 } else {
-                    if (connected == 1) {
-                        sfx(SFX_MENUCONFIRM);
+                    if (multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersAwaitReady>()) {
                         // Mark that we are ready
-                        playAgainMutex->updatePlayerReady(currentPlayerId, true);
-                        if (!playAgainMutex->checkAllReady()) {
-#ifdef GBA
-                            nextSeed = (u16) qran() % 0x1FFE;
-                            linkConnection->send((1 << 13) + nextSeed);
-#endif
-                        } else {
-#ifdef GBA
-                            linkConnection->send((1 << 13) + 0x1FFF);
-#endif
-                            multiplayerStart = true;
-                            playAgainMutex->clear();
-                        }
+                        sfx(SFX_MENUCONFIRM);
+                        multiplayerLink->readyUp();
                     } else {
                         sfx(SFX_MENUCANCEL);
                     }
@@ -260,10 +254,7 @@ void GameScene::endScreen(){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
                 buildBG(3, 0, 27, 0, 1, true);
-#ifdef GBA
-                if (linkConnection->isActive())
-                    linkConnection->deactivate();
-#endif
+                multiplayerLink->deactivate(true);
                 multiplayer = false;
                 changeScene(new MainMenuScene, Transitions::FADE);
                 return;
@@ -271,7 +262,7 @@ void GameScene::endScreen(){
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
                 path.clear();
-                path.push_back("Play");
+                path.emplace_back("Play");
                 clearText();
                 buildBG(3, 0, 27, 0, 1, true);
                 sceneSwitcher(modeToString(previousGameOptions->mode));
@@ -326,7 +317,6 @@ void GameScene::endScreen(){
 
     buildBG(3, 0, 27, 0, 1, true);
     enableBlend(prevBld);
-    return;
 }
 
 void endAnimation() {
@@ -357,6 +347,7 @@ void endAnimation() {
     sfx(SFX_END);
 
     for (int i = 0; i < 40; i++) {
+        multiplayerLink->sync();
         closed();
         vsync();
         drawGrid();
@@ -373,6 +364,7 @@ void endAnimation() {
 
     int counter = 0;
     while (!floatingList.empty() && closed()) {
+        multiplayerLink->sync();
         vsync();
         showClearText();
 
@@ -470,7 +462,7 @@ void showScore(){
     }
 }
 
-void GameScene::showStats(bool moreStats, std::string time, std::string pps, bool end) {
+void GameScene::showStats(bool moreStats, const std::string& time, const std::string& pps, bool end) const {
     if(!moreStats){
         aprints("Press " + getStringFromKey(savefile->settings.menuKeys.special1), 0, 0, 2);
         aprints("for Stats", 0, 7, 2);
@@ -564,8 +556,8 @@ int GameScene::pauseMenu(){
     clearText();
     setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
+    for(auto & wordSprite : wordSprites)
+        wordSprite.hide();
 
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
@@ -604,7 +596,7 @@ int GameScene::pauseMenu(){
     int fractional = pps & 0xff;
     for(int i = 0; i < 2; i++){
         fractional *= 10;
-        ppsStr += '0' + (fractional >> 8);
+        ppsStr += std::to_string('0' + (fractional >> 8));
         fractional &= 0xff;
     }
 
@@ -779,7 +771,7 @@ int GameScene::pauseMenu(){
         if(cursorFloat >= 512)
             cursorFloat = 0;
         int offset = (sinLut(cursorFloat) * 2) >> 12;
-        FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+        auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
         for(int i = 0; i < 2; i++){
             sprite_unhide(cursorSprites[i],0);
@@ -854,11 +846,11 @@ int GameScene::pauseMenu(){
 
     enableBlend(prevBld);
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
+    for(auto & wordSprite : wordSprites)
+        wordSprite.hide();
 
-    for(int i = 0; i < 2; i++)
-        sprite_hide(cursorSprites[i]);
+    for(auto & cursorSprite : cursorSprites)
+        sprite_hide(cursorSprite);
 
     drawFrame(0);
     if(game->zoneTimer)
@@ -1034,7 +1026,7 @@ void GameScene::showModeText(){
                 str = modeOptionStrings[game->gameMode-1][0];
         }
 
-        if(str != ""){
+        if(!str.empty()){
             naprintColor(str,width - 4 - getVariableWidth(str), counter * 8, 14);
             counter++;
         }
@@ -1056,11 +1048,11 @@ void GameScene::showModeText(){
                 str = "A-Type";
         }
 
-        if(str != ""){
+        if(!str.empty()){
             naprintColor(str,width - 4 - getVariableWidth(str), counter * 8, 14);
             counter++;
         }
-        if(str2 != ""){
+        if(!str2.empty()){
             naprintColor(str2,width - 4 - getVariableWidth(str2), counter * 8, 14);
             counter++;
         }
@@ -1123,7 +1115,7 @@ void saveReplay(){
         return;
     }
 
-    if(test != nullptr)
+
         delete test;
 
     test = new Replay();
@@ -1375,8 +1367,8 @@ int GameScene::endScreenSetup(){
     clearSmallText();
     setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
+    for(auto & wordSprite : wordSprites)
+        wordSprite.hide();
 
     if(!ended)
         endAnimation();
@@ -1400,6 +1392,15 @@ int GameScene::endScreenSetup(){
         record = onRecord();
     }
 
+#ifdef GBA
+    if (multiplayer && !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>())
+#endif
+        showEndScreenOptions();
+
+    return record;
+}
+
+void GameScene::showEndScreenOptions() {
     const int optionsHeight = 11;
 
     int counter = 0;
@@ -1407,7 +1408,7 @@ int GameScene::endScreenSetup(){
     wordSprites[1].setText("Play");
     wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[2].setText("Again");
-    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
+    wordSprites[2].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
 
     counter += 3;
 
@@ -1415,7 +1416,7 @@ int GameScene::endScreenSetup(){
         wordSprites[3].setText("Change");
         wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 14);
         wordSprites[4].setText("Options");
-        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
+        wordSprites[4].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
 
         counter += 3;
     }else{
@@ -1425,25 +1426,95 @@ int GameScene::endScreenSetup(){
     wordSprites[5].setText("Main");
     wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[6].setText("Menu");
-    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
+    wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
 
     showModeText();
-    return record;
 }
 
 void GameScene::showReadyPlayers(){
-    int readyPlayers = playAgainMutex->getReadyCount();
+    int readyCount = multiplayerLink->getReadyCount();
+    unsigned int playerCount = multiplayerLink->playingPlayerCount;
+    if (playerCount > 0) {
+        std::string readyText = std::to_string(readyCount) + "/" + std::to_string(playerCount);
 
-    std::string readyText = std::to_string(readyPlayers) + "/" + std::to_string(initialPlayerCount);
+        wordSprites[8].setText(readyText);
 
-    wordSprites[8].setText(readyText);
-    wordSprites[8].show(236 - wordSprites[8].width, 160 - 12 - 8, 14);
+        wordSprites[8].show(236 - wordSprites[8].width, 160 - 12 - 8, 14);
+    }
 
-    if(playAgainMutex->checkCurrentReady()){
+    if(multiplayerLink->players[multiplayerLink->universal->currentPlayerId()].ready
+        && !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
         wordSprites[7].setText("Ready!");
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
-    }else{
+    }else if (multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersAwaitReady>()) {
         wordSprites[7].setText("Not Ready");
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else if(multiplayerLink->stateMachine.IsInState<MultiplayerStates::Playing>()) {
+        wordSprites[7].setText("Starting!");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else if(multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
+        wordSprites[7].setText("Waiting...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else if(multiplayerLink->stateMachine.IsInState<MultiplayerStates::Won>()) {
+        wordSprites[7].setText("Won!");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else if (multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersPresent>()) {
+        wordSprites[7].setText("Syncing...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else if (multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersSeeding>()) {
+        wordSprites[7].setText("Seeding...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else if(multiplayerLink->stateMachine.IsInState<MultiplayerStates::Activated>()) {
+        wordSprites[7].setText("Reconnecting...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    }else{
+        wordSprites[7].setText("Connecting...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     }
+}
+void MultBattleScene::showReadyPlayers(){
+    int readyCount = multiplayerLink->getReadyCount();
+    unsigned int playerCount = multiplayerLink->playingPlayerCount;
+    if (playerCount > 0) {
+        std::string readyText = std::to_string(readyCount) + "/" + std::to_string(playerCount);
+
+        wordSprites[8]->setText(readyText);
+
+        wordSprites[8]->show(236 - wordSprites[8]->width, 160 - 12 - 8, 14);
+    }
+
+    if(multiplayerLink->players[multiplayerLink->universal->currentPlayerId()].ready
+       && !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
+        wordSprites[7]->setText("Ready!");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }else if (multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersAwaitReady>()) {
+        wordSprites[7]->setText("Not Ready");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }else if(multiplayerLink->stateMachine.IsInState<MultiplayerStates::Playing>()) {
+        wordSprites[7]->setText("Starting!");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }else if(multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
+        wordSprites[7]->setText("Waiting...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }else if(multiplayerLink->stateMachine.IsInState<MultiplayerStates::Won>()) {
+        wordSprites[7]->setText("Won!");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }else if (multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersPresent>()) {
+        wordSprites[7]->setText("Syncing...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }else if (multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersSeeding>()) {
+        wordSprites[7]->setText("Seeding...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }else if(multiplayerLink->stateMachine.IsInState<MultiplayerStates::Activated>()) {
+        wordSprites[7]->setText("Reconnecting...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }else{
+        wordSprites[7]->setText("Connecting...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }
+}
+
+void MultBattleScene::hideReadyPlayers(){
+    wordSprites[7]->hide();
+    wordSprites[8]->hide();
 }

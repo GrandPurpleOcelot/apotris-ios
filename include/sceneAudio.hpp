@@ -229,7 +229,7 @@ class SongElement : public Element{
             sfx(SFX_MENUMOVE);
         }
 
-        void select();
+        void select() const;
 
         SongElement(int m, int i){
             menu = m;

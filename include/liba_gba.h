@@ -1,7 +1,9 @@
 #pragma once
+#include <cstdint>
 #include <string>
-#include <stdint.h>
+#include <map>
 #include <tonc.h>
+#include <posprintf.h>
 #include "interrupt.h"
 #include "mm_types.h"
 #include "audio_files.h"
@@ -69,7 +71,11 @@ extern OBJ_AFFINE* obj_aff_buffer;
 extern mm_word myEventHandler(mm_word msg, mm_word param);
 
 #define blendInfo REG_BLDCNT
+#define SAVE_32K_END 0x7FFF
+#define SAVE_64K_END 0xFFFF
 
+void disableVolatileInterrupts(bool setDispCnt);
+void enableVolatileInterrupts(bool setDispCnt);
 
 IWRAM_CODE void memcpy16_fast(void* dest, const void* src, int hwCount);
 IWRAM_CODE void memcpy32_fast(void* dest, const void* src, int wCount);
@@ -81,5 +87,7 @@ extern std::map<int,std::string> keyToString;
 
 #define UNBOUND 0
 
+void setUpLinkUniversal(bool);
+unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait);
 extern void toggleSpriteSorting(bool state);
-void setUpLinkUniversal(bool detectEmus);
+extern void setUpPresentException(std::string);

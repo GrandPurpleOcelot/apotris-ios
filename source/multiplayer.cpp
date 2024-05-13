@@ -1,7 +1,5 @@
 #include "def.h"
 
-int initialPlayerCount = 0;
-
 #ifdef GBA
 #include "LinkUniversal.hpp"
 #endif
@@ -17,59 +15,34 @@ int initialPlayerCount = 0;
 using namespace BlockEngine;
 
 void drawEnemyBoard();
-u8 weightedRandomPlayerSelection();
-u8 getInitialId(u8 realId);
+int weightedRandomPlayerSelection();
 
 u8 enemyBoard[4][20][10];
-u32 enemyPower[4] = { 1, 1, 1, 1 };
 u8 attackAnimationTimers[4];
 
-const int animationMax = 15;
-
 u32 ownPower = 1;
-u8 currentPlayerId = -1;
-std::queue<u16> sendQueue;
-
-PlayerStateMutex* playAgainMutex = new PlayerStateMutex();
 
 class BoardUpdate{
 public:
     int row = 0;
-    int playerId = 0;
+    RemotePlayerId playerId;
 
-    BoardUpdate(int r, int id){
+    BoardUpdate(int r, RemotePlayerId playerId) : playerId(playerId) {
         row = r;
-        playerId = id;
     }
 };
 
 std::vector<BoardUpdate> enemyBoardUpdates;
 
-std::map<u8, bool> loseIndex = {
-    { 0, false },
-    { 1, false },
-    { 2, false },
-    { 3, false },
-    { 4, false }
-};
-
 OBJ_ATTR* enemyBoardSprite;
 
 bool multiplayerStart = false;
 int rank = 0;
-int connected = 0;
 int currentScanHeight = 0;
 
 Game *botGame;
 int botIncomingHeight = 0;
 
-const int boardTile = 512 - 32 * 3 - 64 - 8;
-
-#define PLAY_AGAIN 1
-#define CHANGE_STATE 2
-#define SEND_ATTACK 3
-#define ACK_ATTACK 4
-#define SEND_ROW 5
 #define ENCODE(x) ((x) << 13)
 
 void clearEnemyBoard() {
@@ -80,52 +53,25 @@ void clearEnemyBoard() {
         timer = 0;
 }
 
-void sendGameUpdates() {
-    #ifdef GBA
-    // Process up to three sends per frame
-    int sentCounter = 3;
-    while (!sendQueue.empty() && --sentCounter) {
-        u16 payload = sendQueue.front();
-        bool sent = false;
-
-        if (linkConnection->getMode() == LinkUniversal::LINK_CABLE) {
-            linkConnection->send(payload);
-            sent = true;
-        }
-        else if (linkConnection->linkWireless->send(payload))
-            sent = true;
-
-        if(sent)
-            sendQueue.pop();
-    }
-
-    #endif
-}
-
 // returns true if we should terminate the game
 int GameScene::handleMultiplayer(bool duringGame) {
-    #ifdef GBA
     if (!multiplayer)
         return 0;
 
     // Update remote state and fetch incoming data
-    linkConnection->sync();
-    u8 currentPlayerCount = linkConnection->playerCount();
-    currentPlayerId = linkConnection->currentPlayerId();
+    bool playersPresent = multiplayerLink->sync();
 
     // Exit early for a later update if bad state (e.g. some player disconnects)
-    if (!linkConnection->isConnected() || currentPlayerCount < initialPlayerCount) {
+    if (!playersPresent) {
         // If reconnect returns false, we got a connection back with all players
         if (reconnect()) {
             // Get potential new playerId
-            linkConnection->sync();
-            u8 newPlayerId = linkConnection->currentPlayerId();
+            multiplayerLink->sync();
             // Send out power and ID or lose state to map to new if changed
             u32 power = ownPower;
             if (game->lost)
-                power = 1023;
-            sendQueue.push(ENCODE(CHANGE_STATE) + power);
-            currentPlayerId = newPlayerId;
+                power = 0; // we lost
+            multiplayerLink->send(UPDATE_STATE + POWER_LEVEL + power);
             return 0;
         } else {
             return 1;
@@ -134,117 +80,110 @@ int GameScene::handleMultiplayer(bool duringGame) {
 
     // Game start
     if (multiplayerStart) {
-        multiplayerStart = false;
-        loseIndex = {{0, false},
-                     {1, false},
-                     {2, false},
-                     {3, false},
-                     {4, false}};
-        for (auto &i: enemyPower)
-            i = 1;
-        playAgain = true;
-        ended = false;
-        clearEnemyBoard();
-        rank = 0;
-        ownPower = 1;
         return 0;
     }
 
-    // Handle remote player updates
-    for (int remotePlayerId = 0; remotePlayerId < initialPlayerCount; remotePlayerId++) {
-        // Skip self
-        if (remotePlayerId == currentPlayerId)
-            continue;
-
-        // Process remote player's packets
-        while (linkConnection->canRead(remotePlayerId))
-            ProcessMultiplayerPacket(linkConnection->read(remotePlayerId), RemotePlayerId(remotePlayerId));
-
-        if (game->lost) {
-            if (duringGame) {
-                sendQueue.push((u16) ENCODE(CHANGE_STATE) + 1023);
-                updateRank();
-            }
+    if (!game->lost) {
+        // Attacks take priority over block state
+        if (!game->attackQueue.empty()) {
+            // Grab next attack
+            BlockEngine::Garbage atck = game->attackQueue.front();
+            // Pop it out of pending attack queue
+            game->attackQueue.pop_front();
+            // Encode and send out attack
+            u8 targetId = weightedRandomPlayerSelection();
+            multiplayerLink->send((u16) (ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
+            ownPower += atck.amount;
         } else {
-            // Attacks take priority over block state
-            if (!game->attackQueue.empty()) {
-                // Grab next attack
-                BlockEngine::Garbage atck = game->attackQueue.front();
-                // Pop it out of pending attack queue
-                game->attackQueue.pop_front();
-                // Encode and send out attack
-                u8 targetId = getInitialId(weightedRandomPlayerSelection());
-                sendQueue.push((u16) (ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
-                ownPower += atck.amount;
-            } else {
-                // Rotate over the 20 rows
-                if (currentScanHeight < 19)
-                    currentScanHeight++;
-                else
-                    currentScanHeight = 0;
+            if (duringGame) {
+                int rowsToSend = 1;
+                u16 packet;
+                bool sent;
+                // Note that board updates do not use the send queue as they are best-effort
+                do {
+                    // Rotate over the 20 rows
+                    if (currentScanHeight < 19)
+                        currentScanHeight++;
+                    else
+                        currentScanHeight = 0;
 
-                // Store row as each bit on or off for the presence of each block
-                u16 row_bitfield = 0;
-                for (int i = 0; i < 10; i++)
-                    if (game->board[currentScanHeight + 20][i])
-                        row_bitfield += 1 << i;
+                    // Store row as each bit on or off for the presence of each block
+                    u16 row_bitfield = 0;
+                    for (int i = 0; i < 10; i++)
+                        if (game->board[currentScanHeight + 20][i])
+                            row_bitfield += 1 << i;
 
-                if (duringGame)
-                    // Note that board updates do not use the send queue as they are best-effort
-                    linkConnection->send(
-                            (u16) (ENCODE(SEND_ROW) + ((currentScanHeight & 0x1f) << 10) + (row_bitfield & 0x3ff)));
+                    packet = (u16) (ENCODE(SEND_ROW) + ((currentScanHeight & 0x1f) << 10) + (row_bitfield & 0x3ff));
+                    sent = multiplayerLink->universal->send(packet);
+
+                } while (rowsToSend-- && sent); // avoid flooding
             }
         }
     }
 
-    sendGameUpdates();
     drawEnemyBoard();
-    #endif
 
     return 0;
 }
 
-u8 weightedRandomPlayerSelection() {
-#ifdef GBA
+int weightedRandomPlayerSelection() {
+    auto loseIndex = multiplayerLink->players;
     // Skip 2P mode
-    if (linkConnection->playerCount() == 2)
+    if (multiplayerLink->playingPlayerCount == 2) {
+        if (0 == multiplayerLink->universal->currentPlayerId()) {
+            return 1; // choose the other player if current player is selected.
+        }
         return 0;
-
-    //TODO: The rest of this function appears to be subtly broken at runtime, hence 3+ player mode being disabled
+    }
 
     // Calculate the total attack power
     u32 totalAttackPower = 0;
-    for (int i = 0; i < initialPlayerCount; ++i) {
-        if (loseIndex[i]) continue;
-        totalAttackPower += enemyPower[i];
+    for (int i = 0; i < multiplayerLink->playingPlayerCount; ++i) {
+        if (i == multiplayerLink->universal->currentPlayerId()) continue; // check if player is current one
+        auto id = RemotePlayerId(i);
+        if (loseIndex[id.id].over) continue;
+        totalAttackPower += multiplayerLink->enemyPower[id.index];
     }
 
     // Pick randomly if no power
-    if (!totalAttackPower)
-        return qran() % initialPlayerCount;
+    if (!totalAttackPower) {
+        u8 randomPlayer = static_cast<u8>(qran() % multiplayerLink->playingPlayerCount);
+        while(randomPlayer == multiplayerLink->universal->currentPlayerId() && loseIndex[randomPlayer].over) {
+            // get another random value if it equals the current player's id or they lost
+            randomPlayer = static_cast<u8>(qran() % multiplayerLink->playingPlayerCount);
+        }
+        return randomPlayer;
+    }
 
     // Generate a random number between 0 and totalAttackPower
     u32 r = qran() % totalAttackPower;
 
     // Determine which player is selected
     u32 accumulatedPower = 0;
-    for (int i = 0; i < initialPlayerCount; ++i) {
-        if (loseIndex[i]) continue;
-        accumulatedPower += enemyPower[i];
-        if (r < accumulatedPower)
+    for (int i = 0; i < multiplayerLink->playingPlayerCount; ++i) {
+        if(i == multiplayerLink->universal->currentPlayerId()) continue; // check if player is current one
+        auto id = RemotePlayerId(i);
+        if (loseIndex[id.id].over) continue;
+        accumulatedPower += multiplayerLink->enemyPower[id.index];
+        if (r < accumulatedPower) {
             return i; // Return the player ID
+        }
     }
 
     // This point should never be reached if the enemyBoard is not empty
-#endif
-    return -1; // Return an invalid player ID
+    // Try to find an alternative player than current one
+    for(int i = 0; i < multiplayerLink->playingPlayerCount; ++i) {
+        if (i != multiplayerLink->universal->currentPlayerId() && loseIndex[i].over == false) {
+            return i;
+        }
+    }
+
+    return -1; // Return an invalid player ID if no other player is found
 }
 
 void acknowledgeGarbage(BlockEngine::Game *sourceGame, BlockEngine::Garbage garbage) {
     if (multiplayer){
-        #ifdef GBA
-        sendQueue.push(ENCODE(ACK_ATTACK) + (garbage.id << 4) + garbage.amount);
-        #endif
+        multiplayerLink->send(ENCODE(ACK_ATTACK) + (garbage.id << 4) + garbage.amount);
     }else{
         if(sourceGame == botGame){
             attackAnimationTimers[0] = animationMax * garbage.amount;
@@ -252,104 +191,34 @@ void acknowledgeGarbage(BlockEngine::Game *sourceGame, BlockEngine::Garbage garb
     }
 }
 
-void GameScene::updateRank() {
-    rank = 0;
-    for (int playerId = 0; playerId < initialPlayerCount; playerId++)
-        if (!loseIndex[playerId])
-            rank++;
-}
-
-// Never returns own ID
-u8 getInitialId(u8 realId) {
-    if (realId >= currentPlayerId) {
-        realId += 1;
-    }
-    return realId;
-}
-
-// Function to process multiplayer packets
-void GameScene::ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId) {
-    // Extract the command from the upper 3 bits of the data
-    int command = data >> 13;
-    // Extract the value from the lower 13 bits of the data
-    int value = data & 0x1FFF;
-
-    // If the command is 1, restart the game with a new seed
-    if (command == PLAY_AGAIN) {
-        if (value == 0x1FFF){
-            multiplayerStart = true;
-            playAgainMutex->clear();
-        } else {
-            playAgainMutex->updatePlayerReady(remotePlayerId.id, true);
-            nextSeed = value;
-        }
-    }
-    // Command 2 means special updates
-    else if (command == CHANGE_STATE)
-        // If the value is 0x123, an opponent has lost
-    {
-        const u8 remotePlayerIndex = remotePlayerId.getIndex().index;
-        if (value == 1023) {
-            loseIndex[remotePlayerIndex] = true;
-            if (game->lost)
-                return;
-            updateRank();
-            if(rank == 1)
-                game->setWin();
-        }
-        // Otherwise the value is player power level, and we were in a reconnect state, so update
-        else
-            enemyPower[remotePlayerIndex] = value;
-    }
-    // If the command is between 3 and 7, process the game update
-    else if (command >= SEND_ATTACK && command <= 7)
-        ProcessGameUpdate(command, value, remotePlayerId);
-}
-
-// Function to process game updates
-void GameScene::ProcessGameUpdate(int command, int value, RemotePlayerId remotePlayerId) {
-    const u8 remotePlayerIndex = remotePlayerId.getIndex().index;
-    // If the command is 3, receive an attack
-    if (command == SEND_ATTACK) {
-        int targetId = (value >> 4) & 0xFF;
-        int attackValue = value & 0xF;
-        // Record this attack to judge relative multiplayer rank
-        enemyPower[remotePlayerIndex] += attackValue;
-        // Add the attack to the garbage queue if it's for us
-        if (targetId == currentPlayerId)
-            game->addToGarbageQueue(targetId, value & 0xF);
-    }
-    else if (command == ACK_ATTACK) {
-        // The player just had garbage placed on their board
-        //int garbageSenderPlayerId = (value >> 4) & 0xFF;
-        int attackValue = value & 0xf;
-        attackAnimationTimers[remotePlayerIndex] = animationMax * attackValue;
-    }
-    // If the command is between 5 and 7, update the enemy board
-    else
-        UpdateEnemyBoard(command, value, remotePlayerId);
-}
-
 // Function to update the enemy board
-void GameScene::UpdateEnemyBoard(int command, int value, RemotePlayerId remotePlayerId) {
+void GameScene::UpdateEnemyBoard(int command, int value, u8 linkPlayerId) {
+    auto remotePlayerId = RemotePlayerId(linkPlayerId);
     // Calculate the base height based on the command
     int baseHeight = (command - 5) * 8;
     // Calculate the row to be updated
     int row = (value >> 10) + baseHeight;
     // If the row is within the board's height
     if (row < 20) {
-        auto id = remotePlayerId.getIndex().index;
         // Loop through each column in the row
         for (int j = 0; j < 10; j++)
             // Update the cell in the enemy board based on the value
-            enemyBoard[id][row][j] = (value >> j) & 0x1;
+            enemyBoard[remotePlayerId.index][row][j] = (value >> j) & 0x1;
 
-        enemyBoardUpdates.emplace_back(row,id);
+        enemyBoardUpdates.emplace_back(row,remotePlayerId);
     }
 }
 
 void startMultiplayerGame(int seed) {
     clearSpriteTiles(boardTile, 2,4);
+    clearText();
+    printf("I am player ID: %u\n", linkUniversal->currentPlayerId());
+#ifndef WEB
+    clearSmallText();
+#else
+    if (playAgain)
+        clearSmallText();
+#endif
 
     for (int i = 0; i < 20; i++)
         for (int j = 0; j < 10; j++)
@@ -357,7 +226,7 @@ void startMultiplayerGame(int seed) {
                 k[i][j] = 0;
 
     delete game;
-    game = new Game(BATTLE, seed & 0x1fff,false);
+    game = new Game(BATTLE, seed & (SEND_SEED - 1),false);
 
     if(previousGameOptions == nullptr)
         previousGameOptions = new BlockEngine::Options();
@@ -365,25 +234,35 @@ void startMultiplayerGame(int seed) {
     game->setOptions(*previousGameOptions);
     game->setTuning(getTuning());
     game->setLevel(1);
-    game->setGoal(100);
+    game->setGoal(250);
     multiplayer = true;
     clearEnemyBoard();
+    game->won = false;
 
     nextSeed = 0;
+    multiplayerStart = false;
+    botThinkingSpeed = 8 + multiplayerLink->universal->currentPlayerId();
+    for (auto &i: multiplayerLink->enemyPower)
+        i = 1;
+    ended = false;
+    rank = 0;
+    ownPower = 1;
+    delete testBot;
+    if (enableBot) {
+        testBot = new BlockEngine::Bot(game);
+    }
 }
 
 void drawEnemyBoard() {
-    if(game->won || game->lost){
+    if(!multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>() && (game->won || game->lost)){
         return;
     }
 
     bool zoom = false;
     if(multiplayer){
-        #ifdef GBA
-        if(linkConnection->isConnected() && linkConnection->playerCount() <= 2){
+        if(multiplayerLink->playingPlayerCount <= 2){
             zoom = true;
         }
-        #endif
     }else{
         zoom = true;
     }
@@ -407,11 +286,7 @@ void drawEnemyBoard() {
 
     int count = 1;
     if(multiplayer){
-        #ifdef GBA
-        if(linkConnection->isConnected()){
-            count = linkConnection->playerCount() - 1;
-        }
-        #endif
+        count = multiplayerLink->playingPlayerCount - 1;
     }
 
     for(int i = 0; i < count; i++){
@@ -430,18 +305,38 @@ void drawEnemyBoard() {
             attackAnimationTimers[i]--;
     }
 
+    std::map<u8, bool> lost;
+    for (auto i = 0; i < multiplayerLink->playingPlayerCount; i++) {
+        if (i == multiplayerLink->universal->currentPlayerId())
+            continue;
+        auto id = RemotePlayerId(i);
+        if (multiplayerLink->players[i].over) {
+            const int offsetX = (id.index % 2) * (10 + margin);
+            const int offsetY = (id.index / 2) * (20 + margin);
+            for (int j = 0; j < 10; j++) {
+                for (int yy = 0; yy < 20; yy++) {
+                    auto yyy = yy + offsetY;
+                    auto color = 2 + savefile->settings.lightMode;
+                    const int xx = j + offsetX;
+                    setSpritePixel(boardTile, xx / 8, yyy / 8, 8, xx % 8, yyy % 8, color);
+                }
+            }
+        }
+    }
+
     for(auto const& update : enemyBoardUpdates){
-        const int offsetX = (update.playerId % 2) * (10 + margin);
-        const int offsetY = (update.playerId / 2) * (20 + margin);
+        const int offsetX = (update.playerId.index % 2) * (10 + margin);
+        const int offsetY = (update.playerId.index / 2) * (20 + margin);
 
         const int yy = update.row + offsetY;
 
         for (int j = 0; j < 10; j++) {
             const int xx = j + offsetX;
 
-            if (enemyBoard[update.playerId][update.row][j])
-                setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8,
-                               ((enemyBoard[update.playerId][update.row][j]) + 1 + savefile->settings.lightMode));
+            if (enemyBoard[update.playerId.index][update.row][j]) {
+                auto color = (enemyBoard[update.playerId.index][update.row][j]) + 1 + savefile->settings.lightMode;
+                setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8, color);
+            }
             else
                 setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8, 0);
         }
@@ -470,11 +365,11 @@ void handleBotGame(){
         game->clearAttack(atck.id);
     }
 
-    const int id = 0;
+    const auto id = RemotePlayerId(1);
 
     for(int i = 0; i < 20; i++){
         for(int j = 0; j < 10; j++){
-            enemyBoard[id][i][j] = (botGame->board[i+20][j] > 0) * 1;
+            enemyBoard[id.index][i][j] = (botGame->board[i+20][j] > 0) * 1;
         }
     }
 
@@ -495,17 +390,16 @@ void handleBotGame(){
 
 //returns true on reconnect
 bool GameScene::reconnect(){
-    #ifdef GBA
     pauseSong();
     game->liftKeys();
 
     resetSmallText();
     clearText();
+    int prevBld = blendInfo;
 
     for(auto & wordSprite : wordSprites)
         wordSprite.hide();
 
-    int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
     setTiles(27,0,32*32,tileBuild(34, false, false, 0));
     buildBG(3, 0, 27, 0, 0, 0);
@@ -553,9 +447,20 @@ bool GameScene::reconnect(){
 
     std::string exit = "Exit";
 
-    while(linkConnection->playerCount() != initialPlayerCount && closed()){
+    while(!multiplayerLink->sync() && closed()){
         vsync();
         key_poll();
+
+        if (!multiplayerLink->active) {
+            multiplayer = false;
+            enableBlend(prevBld);
+            playSongRandom(0);
+            buildBG(3, 0, 27, 0, 1, true);
+#ifdef GBA
+            setUpPresentException("Another player has quit the game.");
+#endif
+            return false;
+        }
 
         if(timer == 120){
             naprint(exit, 120 - getVariableWidth(exit) / 2, 144);
@@ -564,8 +469,7 @@ bool GameScene::reconnect(){
         if(timer >= 120){
             if(key_hit(k.confirm)){
                 multiplayer = false;
-                linkConnection->deactivate();
-                connected = -1;
+                multiplayerLink->deactivate(true);
 
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
@@ -593,7 +497,6 @@ bool GameScene::reconnect(){
         }
 
         showSprites(128);
-        linkConnection->sync();
         timer++;
     }
 
@@ -626,8 +529,6 @@ bool GameScene::reconnect(){
     }
 
     resumeSong();
-
-    #endif
 
     return true;
 }

@@ -103,7 +103,7 @@ public:
 #define SHOW_FINESSE 1
 #define SAVE_TAG 0x51
 
-#define ENABLE_FLASH_SAVE 1
+#define ENABLE_ROM_SAVE 1
 
 extern void sfx(int);
 extern void gameLoop();
@@ -198,8 +198,8 @@ extern bool getSongState(int group, int index);
 extern void toggleSong(int group, int index, bool state);
 extern void checkSongs();
 
-extern int countClears(u16 *board, int lengthX, int lengthY, int startY);
-extern IWRAM_CODE BlockEngine::Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int startY);
+extern int countClears(const u16 *board, int lengthX, int lengthY, int startY);
+extern IWRAM_CODE BlockEngine::Values evaluate(u16 *board, const int *columnHeights, int lengthX, int lengthY, int startY);
 extern int findBestDrop(int ii,int jj, BlockEngine::Game * game, std::list<BlockEngine::Move> &moves, BlockEngine::Weights weights);
 
 extern BlockEngine::Game *game;
@@ -234,15 +234,12 @@ extern bool canDraw;
 extern int gameSeconds;
 
 extern bool playAgain;
-class PlayerStateMutex;
-extern PlayerStateMutex* playAgainMutex;
 
 // extern bool resumeJourney;
 // extern bool journeyLevelUp;
 // extern bool journeySaveExists;
 // extern BlockEngine::Game* journeySave;
 
-extern int connected;
 extern bool multiplayerStart;
 
 extern int initialLevel;
@@ -253,7 +250,6 @@ extern OBJ_ATTR * queueFrameSprites[3];
 
 extern BlockEngine::Bot *testBot;
 extern u8 enemyBoard[4][20][10];
-extern u8 currentPlayerId;
 
 extern int mode;
 
@@ -336,6 +332,25 @@ class Function{
     public:
         void (BlockEngine::Game::*gameFunction)(int);
 };
+
+struct Packet {
+#ifdef GBA
+    u8 playerId;
+    u16 packet;
+    Packet(u8 pId, u16 msg) {
+        playerId = pId;
+        packet = msg;
+    }
+#else
+    u8 playerId;
+    u16 packet;
+    Packet(u8 pId, u16 msg) {
+        playerId = pId;
+        packet = msg;
+    }
+#endif
+};
+
 
 struct StatusData;
 extern StatusData status;

@@ -2,9 +2,6 @@
 
 #include "scene.hpp"
 #include "flashSaves.h"
-#ifdef GBA
-#include "gba_flash.h"
-#endif
 
 class SaveTypeElement : public Element{
     public:
@@ -51,11 +48,11 @@ public:
 
 #ifdef GBA
 
-        if(flashInfo.size == FLASH_SIZE_64KB || sramInfo.size == 0xFFFF)
+        if(flashInfo.size == FLASH_SIZE_64KB || sramInfo.size == SAVE_64K_END)
             result = "64KB";
         else if(flashInfo.size == FLASH_SIZE_128KB)
             result = "128KB";
-        else if (sramInfo.size == 0x7FFF)
+        else if (sramInfo.size == SAVE_32K_END)
             result = "32KB";
         else
             result = std::to_string(sizeof(Save)) + "B";

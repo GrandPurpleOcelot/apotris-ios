@@ -42,8 +42,7 @@ void changeScene(Scene *newScene, Transitions transition){
     if(previousPalette != nullptr)
         loadPalette(0, 0, previousPalette, 512);
 
-    if(scene != nullptr)
-        delete scene;
+    delete scene;
 
     scene = newScene;
     scene->init();
@@ -70,7 +69,7 @@ void changeScene(Scene *newScene){
 
 void fadeToBlack(){
 
-    if(previousPalette != nullptr)
+
         delete []previousPalette;
     previousPalette = new COLOR [512];
     savePalette(previousPalette);
@@ -90,7 +89,7 @@ void fadeToBlack(){
 void fadeFromBlack(){
     int timer=FADE_LENGTH;
 
-    if(previousPalette != nullptr)
+
         delete []previousPalette;
     previousPalette = new COLOR [512];
     savePalette(previousPalette);
@@ -103,14 +102,14 @@ void fadeFromBlack(){
     color_fade_palette(0, 1, &previousPalette[1], color, 511, timer * 8);
 
     while(closed() && timer >= 0){
-        canDraw=1;
+        canDraw=true;
         vsync();
         color_fade_palette(0, 1, &previousPalette[1], color, 511, timer * 8);
         timer--;
     }
 }
 
-void sceneSwitcher(std::string str){
+void sceneSwitcher(const std::string& str){
     if(str == "Play"){
         changeScene(new ModeListScene(),Transitions::FADE);
     }else if(str == "Settings"){
@@ -176,7 +175,7 @@ void sceneSwitcher(std::string str){
     }else if(str == "Zen"){
         changeScene(new ZenScene(),Transitions::FADE);
 #endif
-    }else if(str == "2P Battle"){
+    }else if(str == "Multi Battle"){
 #ifdef GBA
         if (emulatorPrompted) {
             changeScene(new MultBattleScene(),Transitions::FADE);

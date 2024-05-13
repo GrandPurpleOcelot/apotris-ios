@@ -141,6 +141,20 @@ void key_poll(){
                 refreshWindowSize();
             }
             break;
+        case SDL_JOYBUTTONDOWN:
+            key = event.jbutton.button;
+            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+            found = (it != currentlyPressed.end());
+            if(!found)
+                currentlyPressed.push_back(key);
+            break;
+        case SDL_JOYBUTTONUP:
+            key = event.jbutton.button;
+            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+            found = (it != currentlyPressed.end());
+            if(found)
+                currentlyPressed.remove(key);
+            break;
         case SDL_QUIT:
             quit();
             break;

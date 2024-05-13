@@ -17,7 +17,7 @@ void SimpleListScene::init(){
 
     int index = -1;
     int counter = 0;
-    for(auto option : optionList){
+    for(const auto& option : optionList){
         if(option == previousElement){
             index = counter;
             break;
@@ -138,7 +138,7 @@ void SimpleListScene::draw(){
     const int space = 1;
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
-    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+    auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
     int verticalOffset = 0;
     if(moving){
@@ -211,7 +211,7 @@ void SimpleListScene::draw(){
     if(refreshText){
         scrollText = getDescription(currentOption);
         clearSpriteTiles(672, 144, 1);
-        if(scrollText != ""){
+        if(!scrollText.empty()){
             scrollTextLength = getVariableWidth(scrollText);
 
             const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
@@ -228,8 +228,8 @@ void SimpleListScene::draw(){
             }
             #endif
         }else{
-            for(int i = 0; i < 2; i++){
-                sprite_hide(scrollSideSprites[i]);
+            for(auto & scrollSideSprite : scrollSideSprites){
+                sprite_hide(scrollSideSprite);
             }
         }
     }
@@ -259,7 +259,7 @@ bool SimpleListScene::control(){
         previousElement = name();
         previousSelection = selection;
 
-        if(path.size())
+        if(!path.empty())
             path.pop_back();
 
         changeScene(previousScene(),Transitions::FADE);
@@ -350,7 +350,7 @@ bool SimpleListScene::control(){
 }
 
 void SimpleListScene::update(){
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     cursorFloat += 6;
@@ -408,11 +408,11 @@ void SimpleListScene::deinit(){
 
     clearText();
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for(auto & wordSprite : wordSprites)
+        delete wordSprite;
 
-    for(int i = 0; i < 3; i++)
-        delete scrollingText[i];
+    for(auto & i : scrollingText)
+        delete i;
 }
 
 Scene* ModeListScene::previousScene(){
@@ -486,7 +486,7 @@ void OptionListScene::init(){
 
     enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
 
-    if(name() != ""){
+    if(!name().empty()){
         bool found = false;
         int count = 0;
         auto it = path.begin();
@@ -526,7 +526,7 @@ void OptionListScene::draw(){
     const int endX = 30-4;
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
-    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+    auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
     int verticalOffset = 0;
     if(moving){
@@ -623,7 +623,7 @@ void OptionListScene::draw(){
     if(refreshText){
         scrollText = getDescription(currentOption);
         clearSpriteTiles(672, 144, 1);
-        if(scrollText != ""){
+        if(!scrollText.empty()){
             scrollTextLength = getVariableWidth(scrollText);
 
             endDelay = 0;
@@ -640,8 +640,8 @@ void OptionListScene::draw(){
         }else{
             scrollingText[0]->setTextSlow(scrollText);
 
-            for(int i = 0; i < 2; i++){
-                sprite_hide(scrollSideSprites[i]);
+            for(auto & scrollSideSprite : scrollSideSprites){
+                sprite_hide(scrollSideSprite);
             }
         }
     }
@@ -660,7 +660,7 @@ bool OptionListScene::control(){
         previousElement = name();
         previousSelection = selection;
 
-        if(path.size())
+        if(!path.empty())
             path.pop_back();
 
         changeScene(previousScene(),Transitions::FADE);
@@ -833,7 +833,7 @@ bool OptionListScene::control(){
 }
 
 void OptionListScene::update(){
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     toggleBG(3,true);
@@ -903,14 +903,14 @@ void OptionListScene::deinit(){
         it++;
     }
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for(auto & wordSprite : wordSprites)
+        delete wordSprite;
 
-    for(int i = 0; i < 7; i++)
-        delete labels[i];
+    for(auto & label : labels)
+        delete label;
 
-    for(int i = 0; i < 3; i++)
-        delete scrollingText[i];
+    for(auto & i : scrollingText)
+        delete i;
 }
 
 void OptionListScene::showPath(){

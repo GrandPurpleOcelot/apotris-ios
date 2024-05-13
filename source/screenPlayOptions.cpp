@@ -2,18 +2,15 @@
 #include "sprites.h"
 #include "logging.h"
 #include "sceneModes.hpp"
+#include "multiplayerClasses.h"
 #ifdef GBA
-#include "LinkCableMultiboot.hpp"
-#include "sendMultiboot.h"
 #include "detectEmulators.h"
-
+#else
+#include "LinkWebRTC.hpp"
 #endif
 #include <cstring>
 
-static int lastPlayerCount = -1;
-static bool sentReady = false;
-#define PLAYER_READY 2
-#define GAME_START 3
+bool lostConnection = true;
 
 void PlayOptionScene::init(){
     loadSpriteTiles(620,&sprite49tiles_bin,1,1);
@@ -48,7 +45,7 @@ bool PlayOptionScene::control(){
             previousElement = name();
             previousSelection = selection;
 
-            if(path.size())
+            if(!path.empty())
                 path.pop_back();
 
             changeScene(previousScene(),Transitions::FADE);
@@ -317,7 +314,7 @@ void PlayOptionScene::draw(){
     const int endX = 30-4;
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
-    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+    auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
     int verticalOffset = 0;
     if(moving){
@@ -394,8 +391,8 @@ void PlayOptionScene::draw(){
         for(int i = elementMax + 2; i < 9; i++)
             wordSprites[i]->hide();
 
-        for(int i = 0; i < 5; i++)
-            sprite_hide(proSprites[i]);
+        for(auto & proSprite : proSprites)
+            sprite_hide(proSprite);
     }else{
         if(board != nullptr){
             for(int i = 0; i < 5; i++){
@@ -407,7 +404,7 @@ void PlayOptionScene::draw(){
                 labels[i]->setText(buff);
                 labels[i]->show(startX,y,15);
 
-                std::string str = "";
+                std::string str;
                 if(getIfGrade() && board->entries[i].value > 0){
                     if(name() == "Master"){
                         str += GameInfo::masterGrades[board->entries[i].grade];
@@ -471,8 +468,8 @@ void PlayOptionScene::draw(){
             }
         }
 
-        for(int i = 0; i < 2; i++){
-            sprite_hide(scrollSideSprites[i]);
+        for(auto & scrollSideSprite : scrollSideSprites){
+            sprite_hide(scrollSideSprite);
         }
     }else{
         startSprite.hide();
@@ -499,10 +496,10 @@ void PlayOptionScene::draw(){
         setOptions();
         std::string next = getDescription(name(),currentElement,currentOption);
 
-        if(next == "" || next != scrollText){
+        if(next.empty() || next != scrollText){
             scrollText = next;
             clearSpriteTiles(672, 144, 1);
-            if(scrollText != ""){
+            if(!scrollText.empty()){
                 scrollTextLength = getVariableWidth(scrollText);
 
                 const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
@@ -521,8 +518,8 @@ void PlayOptionScene::draw(){
             }else{
                 scrollingText[0]->setTextSlow(scrollText);
 
-                for(int i = 0; i < 2; i++){
-                    sprite_hide(scrollSideSprites[i]);
+                for(auto & scrollSideSprite : scrollSideSprites){
+                    sprite_hide(scrollSideSprite);
                 }
             }
         }
@@ -595,6 +592,7 @@ void ClassicScene::update(){
 
 #endif
 
+int lastState = 0;
 void MultBattleScene::init(){
     PlayOptionScene::init();
 
@@ -604,22 +602,24 @@ void MultBattleScene::init(){
     // Secret feature: hold L on real hardware to force cable mode
     if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba()))
         // mGBA only supports cable, so set it to speed up initial multiplayer sync
-        linkConnection->setProtocol(LinkUniversal::CABLE);
+        multiplayerLink->universal->setProtocol(LinkUniversal::CABLE);
     else if (inaccurateEmulator)
         // gpSP only does wireless
-        linkConnection->setProtocol(LinkUniversal::WIRELESS_AUTO);
+        multiplayerLink->universal->setProtocol(LinkUniversal::WIRELESS_AUTO);
     else
         // This undoes the hold L override if exiting and returning to this screen
-        linkConnection->setProtocol(LinkUniversal::AUTODETECT);
+        multiplayerLink->universal->setProtocol(LinkUniversal::AUTODETECT);
 
     if (!inaccurateEmulator) {
         rumbleHandler = interrupt_get_handler(INTR_SERIAL);
         interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     }
 
-    linkConnection->activate();
+    multiplayerLink->activate();
 
     #endif
+
+    lastState = 0;
 
     clearSpriteTiles(672, 144, 1);
 }
@@ -627,162 +627,110 @@ void MultBattleScene::init(){
 void MultBattleScene::draw(){
     fallingBlocks();
 
-    if (connected < 1) {
-        aprint("Waiting for", 7, 7);
-        aprint("Link Adapter", 9, 9);
-        aprint("connection...", 11, 11);
-    } else {
-        aprint("Connected!", 10, 6);
-    }
+    handleConnectionDisplay();
 
     showSprites(128);
+}
+
+
+void MultBattleScene::handleConnectionDisplay(){
+    int state;
+    if (multiplayerLink->players[multiplayerLink->universal->currentPlayerId()].ready)
+        state = 1;
+    else if (multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersAwaitReady>())
+        state = 2;
+    else
+        state = 3;
+
+    if (multiplayerLink->universal->isConnected())
+        showReadyPlayers();
+    else
+        hideReadyPlayers();
+
+    if (lastState == state) return;
+
+    clearText();
+    lastState = state;
+    switch (state) {
+        case 1:
+        case 2:
+            aprint("Connected!", 10, 8);
+            if (state == 1)
+                aprint("                    ", 6, 15);
+            else
+                aprint("Press A to ready up!", 6, 15);
+            aprint("Waiting for all players...", 4, 10);
+            refreshText = true;
+            break;
+        default:
+            aprint("Waiting for connection...", 5, 9);
+            refreshText = true;
+            break;
+    }
+
 }
 
 bool MultBattleScene::control(){
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(k.cancel)){
+    if(key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
-        if(!onScore || options == 0){
+        if (!onScore || options == 0) {
             previousElement = name();
             previousSelection = selection;
 
-            if(path.size())
+            if (!path.empty())
                 path.pop_back();
 
-            changeScene(previousScene(),Transitions::FADE);
+            changeScene(previousScene(), Transitions::FADE);
 
-            #ifdef GBA
-            linkConnection->deactivate();
-            #endif
+            multiplayerLink->deactivate(false);
 
             return true;
-        }else{
+        } else {
             onScore = false;
             refreshText = true;
             movingDirection = -1;
             listStart = 0;
         }
 
+    } else if ((multiplayerLink->stateMachine.IsInState<MultiplayerStates::PlayersAwaitReady>())
+            && !multiplayerLink->players[multiplayerLink->universal->currentPlayerId()].ready
+            && (key_hit(k.confirm) || key_hit(k.pause))) {
+        sfx(SFX_MENUCONFIRM);
+        multiplayerLink->readyUp();
     }
 
     return false;
 }
 
-bool multibootSent = false;
-
 void MultBattleScene::update(){
     PlayOptionScene::update();
 
-    #ifdef GBA
+    if (!multiplayerLink->active)
+        return;
 
-    #ifndef MULTIBOOT
-    /*if (!multibootSent) {
-        auto result = sendMultiboot();
-        if (result == LinkCableMultiboot::SUCCESS)
-            multibootSent = true;
-        else
-            switch (result) {
-                case LinkCableMultiboot::INVALID_SIZE:
-                    aprint("Invalid size", 0, 0);
-                    break;
-                case LinkCableMultiboot::CANCELED:
-                    aprint("Canceled", 0, 0);
-                    break;
-                case LinkCableMultiboot::FAILURE_DURING_HANDSHAKE:
-                    aprint("Handshake failure", 0, 0);
-                    break;
-                case LinkCableMultiboot::FAILURE_DURING_TRANSFER:
-                    aprint("Transfer failure", 0, 0);
-                    break;
-                default:
-                    break;
-            }
-    }*/
-    #endif
-
-    linkConnection->sync();
-    // Store state of all player IDs
-    u8 currentPlayerId = linkConnection->currentPlayerId();
-    u8 currentPlayerCount = linkConnection->playerCount();
-    if (lastPlayerCount < 0 || currentPlayerCount == 0)
-        lastPlayerCount = currentPlayerCount;
-
-    if (linkConnection->isConnected()) {
-        initialPlayerCount = linkConnection->playerCount();
-        // For player 1 to inform other players to start game
-        if(multiplayerStart){
-            multiplayerStart = false;
-            linkConnection->send(GAME_START);
-            startMultiplayerGame(nextSeed);
-            gameLoop();
-            return;
+    if (multiplayerLink->sync()) {
+        if (lostConnection) {
+            if (multiplayerLink->active)
+                sfx(SFX_SECRET);
+            lostConnection = false;
         }
-
-        MenuKeys k = savefile->settings.menuKeys;
-
-        // Poll all remotes for data
-        for (int remotePlayerId = 0; remotePlayerId < currentPlayerCount; remotePlayerId++)
-            while(remotePlayerId != currentPlayerId && linkConnection->canRead(remotePlayerId)) {
-                u16 msg = linkConnection->read(remotePlayerId);
-                // Any ready event means we're ready too
-                if (msg == PLAYER_READY) {
-                    if (connected < 1) {
-                        refreshText = true;
-                        clearText();
-                    }
-                    connected = 1;
-                // Messages from player 0 (1st) can start game and set seed
-                } else if (remotePlayerId == 0) {
-                    if (msg > 100)
-                        nextSeed = msg - 100;
-                    else if (msg == GAME_START) {
-                        // For clients (e.g. not player 1) to start games
-                        startMultiplayerGame(nextSeed);
-                        gameLoop();
-                        return;
-                    }
-                }
-            }
-
-        // At this point we're set up and processed incoming messages, so we wait for the players to be ready
-        if (currentPlayerId != 0) {
-            aprint("Waiting", 12, 13);
-            aprint("for host...", 12, 14);
-        } else {
-            // Inform new players we're all ready and what the seed is
-            if (lastPlayerCount != currentPlayerCount) {
-                lastPlayerCount = currentPlayerCount;
-                linkConnection->send(PLAYER_READY);
-            }
-            aprint("Press Start", 10, 13);
-        }
-
-        // Await start signal and otherwise re-transmit ready signal
-        if (key_hit(k.pause) && currentPlayerId == 0) {
-            nextSeed = (u16)qran() & 0x1fff;
-            multiplayerStart = true;
-            linkConnection->send(nextSeed + 100);
-        } else {
-            linkConnection->send(PLAYER_READY);
-        }
-
-        aprint("             ", 0, 19);
     } else {
-        if (connected > -1) {
+        if (!lostConnection) {
             refreshText = true;
             clearText();
+            lastState = 0;
+            //TODO: Should go into commitPlayerCount
         }
-        connected = -1;
+        lostConnection = true;
     }
-
-    #endif
 }
 
 void MultBattleScene::deinit(){
     PlayOptionScene::deinit();
 #ifdef GBA
-    linkConnection->deactivate();
+    multiplayerLink->deactivate(false);
     if (!inaccurateEmulator) {
         if (rumbleHandler)
             interrupt_set_handler(INTR_SERIAL, rumbleHandler);
@@ -833,7 +781,7 @@ void PlayOptionScene::resetScoreboard(){
             }
 
             int offset = (sinLut(cursorFloat) * 2) >> 12;
-            FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+            auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
             for( int i = 0; i < 2; i++){
                 sprite_unhide(cursorSprites[i],0);

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "def.h"
-#include "multiplayerClasses.h"
 #include "blockEngine.hpp"
 #ifdef GBA
 #include "LinkUniversal.hpp"
@@ -11,10 +10,11 @@
 #include <tuple>
 #include <map>
 #include <algorithm>
+#include <utility>
 
 extern int previousSelection;
 
-extern void sceneSwitcher(std::string str);
+extern void sceneSwitcher(const std::string& str);
 extern const std::list<std::string> menuOptions;
 extern const std::list<std::string> gameOptions;
 extern const std::list<std::string> settingsOptions;
@@ -25,8 +25,8 @@ static const int READY = 0xC0DE;
 
 static const int START = 0xBEEF;
 
-extern std::string getDescription(std::string element);
-extern std::string getDescription(std::string mode, std::string element, std::string option);
+extern std::string getDescription(const std::string& element);
+extern std::string getDescription(const std::string& mode, const std::string& element, const std::string& option);
 
 class Scene{
 public:
@@ -51,7 +51,6 @@ class GameScene : public Scene{
     void init();
     void deinit();
 
-    WordSprite wordSprites[MAX_WORD_SPRITES];
     WordSprite creditSprites[3];
 
     void countdown();
@@ -61,16 +60,15 @@ class GameScene : public Scene{
     void showComboStreak();
     int pauseMenu();
     void endScreen();
-    void showModeText();
-    void showStats(bool, std::string, std::string, bool);
+    static void showModeText();
+    void showStats(bool, const std::string&, const std::string&, bool) const;
     void setupCredits();
     void showCredits();
     void refreshCredits();
-    void checkSounds();
+    static void checkSounds();
     bool reconnect();
     int handleMultiplayer(bool duringGame);
     int endScreenSetup();
-    void showReadyPlayers();
 
     bool counted = false;
 
@@ -82,13 +80,15 @@ class GameScene : public Scene{
         deinit();
     };
 
-    static void ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId);
+    void showReadyPlayers();
 
-    static void ProcessGameUpdate(int command, int value, RemotePlayerId remotePlayerId);
+public:
 
-    static void UpdateEnemyBoard(int command, int value, RemotePlayerId remotePlayerId);
+    static void UpdateEnemyBoard(int command, int value, u8 linkPlayerId);
 
-    static void updateRank() ;
+    WordSprite wordSprites[MAX_WORD_SPRITES];
+
+    void showEndScreenOptions();
 };
 
 class TitleScene : public Scene{
@@ -435,6 +435,30 @@ class LinksScene : public SimpleListScene{
     std::string name(){return "Links";};
 };
 
+class MultiplayerExceptionScene : public Scene{
+private:
+    std::string what;
+    const std::string name = "Multi error";
+public:
+
+    WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+    explicit MultiplayerExceptionScene(std::string error) {
+        what = std::move(error);
+    }
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene(){return new MainMenuScene();};
+
+    ~MultiplayerExceptionScene(){
+        deinit();
+    };
+};
+
 class QRScene : public Scene{
     public:
 
@@ -579,3 +603,5 @@ extern void changeScene(Scene * newScene);
 extern void changeScene(Scene * newScene,Transitions transition);
 
 extern int rank;
+extern u8 attackAnimationTimers[4];
+const int animationMax = 15;

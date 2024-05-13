@@ -17,6 +17,8 @@
 #include "flashSaves.h"
 
 #include <posprintf.h>
+#include <streambuf>
+#include <utility>
 #include "rumble.h"
 
 #include "classic1tiles_bin.h"
@@ -31,12 +33,12 @@
 
 #include "font1tiles_bin.h"
 #include "font2tiles_bin.h"
+#include "multiplayerClasses.h"
 
 using namespace BlockEngine;
 
 [[maybe_unused]] const std::string save_type = "SRAM_Vnnn";
-int getClassicPalette();
-void setPawnPalette(int dest, int n, int blend);
+
 void genWidths();
 
 OBJ_ATTR obj_buffer[128];
@@ -57,7 +59,7 @@ bool canDraw = false;
 
 int profileResults[10];
 
-void addToResults(int input, int index);
+
 
 Save* savefile = nullptr;
 
@@ -173,7 +175,7 @@ void initialize(){
     checkSongs();
 }
 
-int main(void) {
+int main() {
     platformInit();
 
     loadSave();
@@ -192,7 +194,7 @@ int main(void) {
 }
 
 #ifdef PC
-int WinMain(void){
+int WinMain(){
     main();
     return 0;
 }
@@ -211,7 +213,7 @@ std::string timeToString(int frames, bool small) {
     else
         posprintf(res,"%02d:%02d",minutes,seconds);
 
-    std::string result = "";
+    std::string result;
 
     result = res;
 
@@ -260,9 +262,9 @@ void reset() {
     setMosaic(0, 0);
 
     //reset glow
-    for (int i = 0; i < 20; i++)
+    for (auto & i : glow)
         for (int j = 0; j < 10; j++)
-            glow[i][j] = 0;
+            i[j] = 0;
 
     int g = savefile->settings.backgroundGradient;
 
@@ -281,7 +283,7 @@ void reset() {
 
 std::string nameInput(int place) {
 
-    std::string result = savefile->latestName;
+    std::string result = place == -1 ? "         " : savefile->latestName;
     int cursor = 0;
 
     for (int i = 0; i < (int)result.size(); i++) {
@@ -318,10 +320,14 @@ std::string nameInput(int place) {
     while (closed()) {
         vsync();
 
-        if (place == 0 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ))
+        if (place != -1 && (place == 0 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ)))
             aprint("New Record", 10, 5);
 
-        aprint("Name: ", 11, nameHeight - 2);
+        if (place == -1) {
+            aprint("Player ID: ", 11, nameHeight - 2);
+        }else {
+            aprint("Name: ", 11, nameHeight - 2);
+        }
 
         aprint("DONE", 14, 16);
 
@@ -476,8 +482,10 @@ std::string nameInput(int place) {
                 sfx(SFX_MENUCANCEL);
             }
         }
-        updateFluid();
-        drawGrid();
+        if (place != -1) {
+            updateFluid();
+            drawGrid();
+        }
 
         if(onDone){
             const int offset = (sinLut(cursorFloat) * 2) >> 12;
@@ -509,6 +517,10 @@ std::string nameInput(int place) {
         sprite_hide(cursorSprites[i]);
 
     clearText();
+
+    if (place == -1) {
+        return result;
+    }
 
     if (result.size() >= 8)
         result = result.substr(0, 8);
@@ -931,7 +943,7 @@ void setDefaultGradient(){
     int div = SCREEN_HEIGHT/8;
     int n = (savefile->settings.colors < 2)?savefile->settings.colors:0;
 
-    COLOR * src = (COLOR *) &palette[n];
+    auto * src = (COLOR *) &palette[n];
 
     for(int i = 0; i < SCREEN_HEIGHT; i++){
         color_fade((COLOR *) &gradientTable[i],src,GRADIENT_COLOR,1,((SCREEN_HEIGHT-1-i) / div) * 2 + 16);
@@ -961,9 +973,11 @@ void gradient(int state){
 }
 
 void startGame(BlockEngine::Options options,int seed){
-    delete game;
-    game = new Game(options.mode,seed,options.bigMode);
-    game->setOptions(options);
+    if (!multiplayer) {
+        delete game;
+        game = new Game(options.mode, seed, options.bigMode);
+        game->setOptions(options);
+    }
 
     savefile->stats.gamesStarted++;
 
@@ -1009,7 +1023,7 @@ void startBotGame(int seed){
 
     delete botGame;
 
-    botGame = new Game(BATTLE,seed & 0x1fff,false);
+    botGame = new Game(BATTLE,seed & (SEND_SEED - 1),false);
     botGame->setOptions(*previousGameOptions);
     botGame->setGoal(100);
     botGame->setLevel(1);
@@ -1140,8 +1154,8 @@ void genWidths(){
 
         int found = 0;
         for(int x = 7; x >= 0; x--){
-            for(int y = 0; y < 8; y++){
-                if((t->data[y] >> (4 * x)) & 0xf){
+            for(unsigned int y : t->data){
+                if((y >> (4 * x)) & 0xf){
                     output[i][1] = x;
                     found = 1;
                 }
@@ -1159,8 +1173,8 @@ void genWidths(){
 
         int found = 0;
         for(int x = 0; x < 8; x++){
-            for(int y = 0; y < 8; y++){
-                if((t->data[y] >> (4 * x)) & 0xf){
+            for(unsigned int y : t->data){
+                if((y >> (4 * x)) & 0xf){
                     output[i][0] = x;
                     found = 1;
                 }

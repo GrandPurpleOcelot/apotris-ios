@@ -7,7 +7,7 @@ bool SongListElement::action(){
     return true;
 }
 
-void SongElement::select(){
+void SongElement::select() const{
     playSong(menu, index);
 }
 
@@ -20,7 +20,7 @@ void SongListScene::init(){
         std::advance(it,1);
     }while((*it)->getCurrentOption() == "\n");
 
-    SongElement * song = (SongElement *) *it;
+    auto * song = (SongElement *) *it;
 
     song->select();
 }
@@ -34,7 +34,7 @@ bool SongListScene::control(){
         auto it = elementList.begin();
         std::advance(it,selection);
 
-        SongElement * song = (SongElement *) *it;
+        auto * song = (SongElement *) *it;
 
         song->select();
     }

@@ -11,9 +11,9 @@ int botStepMax = 10;
 
 using namespace BlockEngine;
 
-void showTestBoard(u16 * testBoard);
+void showTestBoard(const u16 * testBoard);
 
-INLINE bool bitGet(u16 *bitboard,int x, int y){
+INLINE bool bitGet(const u16 *bitboard,int x, int y){
     return (bitboard[y] >> x) & 0b1;
 }
 
@@ -44,7 +44,7 @@ INLINE int countTransitions(u16 a){
     return countBits((a >> 1) ^ a);
 }
 
-IWRAM_CODE Values evaluate(u16 *board, int *columnHeights, int lengthX, int lengthY, int startY){
+IWRAM_CODE Values evaluate(u16 *board, const int *columnHeights, int lengthX, int lengthY, int startY){
     int start = max(1,startY-1);
 
     int rowTrans = 0;
@@ -112,7 +112,7 @@ IWRAM_CODE Values evaluate(u16 *board, int *columnHeights, int lengthX, int leng
     return result;
 }
 
-int countClears(u16 *board, int lengthX, int lengthY , int startY){//row
+int countClears(const u16 *board, int lengthX, int lengthY , int startY){//row
     int clears = 0;
     if(startY < 0)
         startY = 0;
@@ -135,7 +135,7 @@ void Bot::run(){
 
         if(thinkingI == -6){
             if(checking == 0 && exploring == 0){
-                if(testGame != nullptr)
+                
                     delete testGame;
                 testGame = new Game(game);
 
@@ -206,12 +206,10 @@ void Bot::stopThinking(){
 
         current = moves.front();
 
-        if(testGame != nullptr)
-            delete testGame;
+        delete testGame;
         testGame = new Game(game);
 
         moves.clear();
-
         return;
     }
 
@@ -232,7 +230,7 @@ void Bot::stopThinking(){
         // else
         //     log("no better move found");
 
-        if(testGame != nullptr)
+        
             delete testGame;
         testGame = new Game(game);
     }else{
@@ -259,7 +257,7 @@ void Bot::stopThinking(){
 
             // reset testGame to current game to prepare to execute the next move. Only necessary the second time since testGame
             // is the same as current game initially
-            if(testGame != nullptr)
+            
                 delete testGame;
             testGame = new Game(game);
         }
@@ -273,7 +271,7 @@ void Bot::stopThinking(){
     moves.clear();
 }
 
-void Bot::executeMove(Move move){
+void Bot::executeMove(const Move& move) const{
     if(testGame->pawn.current != move.piece){
         if(testGame->held == move.piece || testGame->queue.front() == move.piece){
             testGame->hold(1);
@@ -281,14 +279,15 @@ void Bot::executeMove(Move move){
         }
     }
 
+    int step = 0;
     if(testGame->pawn.rotation != move.rotation){
-        while(testGame->pawn.rotation != move.rotation){
+        while(testGame->pawn.rotation != move.rotation && step++ < botStepMax){
             testGame->rotateCW(1);
             testGame->rotateCW(0);
         }
     }
 
-    int step = 0;
+    step = 0;
     int botStepMax = 20;
     int dx = 0;
     if(dx > move.dx){
@@ -334,15 +333,16 @@ void Bot::move(){
         return;
     }
 
+    int step = 0;
     if(game->pawn.rotation != current.rotation){
-        while(game->pawn.rotation != current.rotation){
+        while(game->pawn.rotation != current.rotation && step++ < botStepMax){
             game->rotateCW(1);
             game->rotateCW(0);
             // rotation++;
         }
     }
 
-    int step = 0;
+    step = 0;
     if(dx > current.dx){
         while(dx != current.dx && step++ < botStepMax){
             game->keyLeft(1);
@@ -482,7 +482,7 @@ int findBestDrop(int ii,int jj, Game * game, std::list<Move> &moves, Weights wei
     return 1;
 }
 
-void showTestBoard(u16 * testBoard){
+void showTestBoard(const u16 * testBoard){
     log("testboard: ");
     for(int i = 0; i < 20; i++){
         std::string str;

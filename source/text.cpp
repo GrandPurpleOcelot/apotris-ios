@@ -1,8 +1,9 @@
 #include "def.h"
-#include <string>
 #include "logging.h"
 #include "platform.hpp"
 #include <posprintf.h>
+#include <string>
+#include <utility>
 
 #include "font1tiles_bin.h"
 
@@ -11,13 +12,13 @@ const int allocateStart = 124;
 
 class TextArea{
 public:
-		int tileId;
-		int startX;
-		int startY;
-		int endX;
-		int endY;
+		int tileId{};
+		int startX{};
+		int startY{};
+		int endX{};
+		int endY{};
 
-		TextArea(){}
+		TextArea()= default;
 		TextArea(int tid,int sx, int sy, int ex, int ey){
 			tileId = tid;
 
@@ -31,7 +32,7 @@ public:
 TextArea *textArea = nullptr;
 
 void aprint(std::string str, int x, int y){
-	aprintColor(str, x, y, 0);
+	aprintColor(std::move(str), x, y, 0);
 }
 
 void aprintSprite(std::string str, int tile){
@@ -81,7 +82,7 @@ void clearText(){
 }
 
 void setSmallTextArea(int tid, int startX,int startY,int endX,int endY){
-	if(textArea != nullptr)
+	
 		delete textArea;
 
 	textArea = new TextArea(tid,startX,startY,endX,endY);
@@ -120,17 +121,17 @@ IWRAM_CODE void aprints(std::string str, int x, int y, int colorIndex){//x and y
     //text is drawn on the next line if w is greater than text area width
 	int w = 0;
 
-	for(int i = 0; i < (int) str.length(); i++){
-		if(str[i] == '\n'){
+	for(char i : str){
+		if(i == '\n'){
 			w = 0;
 			y += 8;
 			continue;
-		}else if(str[i] == ' '){
+		}else if(i == ' '){
 			w += 4;
 			continue;
 		}
 
-		u16 character = font3x5[str[i]-32];
+		u16 character = font3x5[i-32];
 
         //least significant byte determines if the character should be
         //drawn 1 pixel down (for characters like q g j)
@@ -156,17 +157,17 @@ IWRAM_CODE void aprintsSprite(std::string str, int x, int y, int tileId){//x and
     //text is drawn on the next line if w is greater than text area width
 	int w = 0;
 
-	for(int i = 0; i < (int) str.length(); i++){
-		if(str[i] == '\n'){
+	for(char i : str){
+		if(i == '\n'){
 			w = 0;
 			y += 8;
 			continue;
-		}else if(str[i] == ' '){
+		}else if(i == ' '){
 			w += 4;
 			continue;
 		}
 
-		u16 character = font3x5[str[i]-32];
+		u16 character = font3x5[i-32];
 
         //least significant byte determines if the character should be
         //drawn 1 pixel down (for characters like q g j)
@@ -309,9 +310,9 @@ const int spaceWidth = 6;
 
 int getVariableWidth(std::string str){
 	int widthCount = 0;
-	for(int i = 0; i < (int) str.size(); i++){
-		if(str[i]-32){
-			widthCount += ((fontWidths[str[i]-32][1]) + fontGap);
+	for(char i : str){
+		if(i-32){
+			widthCount += ((fontWidths[i-32][1]) + fontGap);
 		} else
 			widthCount += spaceWidth;
 	}
@@ -321,7 +322,7 @@ int getVariableWidth(std::string str){
 
 
 void naprint(std::string str, int x, int y){
-	naprintColor(str,x,y,15);
+	naprintColor(std::move(str),x,y,15);
 }
 
 void naprintColor(std::string str, int x, int y, int palette){
@@ -390,7 +391,7 @@ void naprintColor(std::string str, int x, int y, int palette){
 }
 
 void naprintSprite(std::string str, int tile){
-	naprintSpriteOffset(str, tile, 0);
+	naprintSpriteOffset(std::move(str), tile, 0);
 }
 
 IWRAM_CODE void naprintSpriteOffset(std::string str, int tile, int col){

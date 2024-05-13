@@ -152,13 +152,13 @@ void CreditsScene::draw(){
     for(auto option = creditsText.begin(); option != creditsText.end(); ++option){
         if(counter < listStart){
             counter++;
-            if(*option == "")
+            if((*option).empty())
                 gaps++;
 
             continue;
         }
 
-        if(*option == ""){
+        if((*option).empty()){
             height += space;
             continue;
         }
@@ -211,7 +211,7 @@ bool CreditsScene::control(){
 }
 
 void CreditsScene::update(){
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     if(delay < delayMax){
@@ -244,8 +244,8 @@ void CreditsScene::deinit(){
 
     clearText();
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for(auto & wordSprite : wordSprites)
+        delete wordSprite;
 
     buildBG(0, 2, 29, 0, 0, true);
 }

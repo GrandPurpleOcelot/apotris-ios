@@ -4,7 +4,9 @@
  */
 
 #ifdef GBA
+
 #include "detectEmulators.h"
+#include <tonc_video.h>
 
 EWRAM_DATA static int _ewram_static_data = 0xFF;
 
