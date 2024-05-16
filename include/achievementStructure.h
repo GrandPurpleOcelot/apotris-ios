@@ -19,6 +19,9 @@ struct StatusData {
     [[maybe_unused]] BlockEngine::Options *Options;
     [[maybe_unused]] int gradeIndex;
     [[maybe_unused]] std::string gradeString;
+    [[maybe_unused]] int *ZoneCharge = nullptr;
+    [[maybe_unused]] int *ZoneLines = nullptr;
+    [[maybe_unused]] int *ZoneTimer = nullptr;
 
     // Methods for updating
     void update(Settings* settings) {
@@ -41,6 +44,9 @@ struct StatusData {
             Stats = &game->statTracker;
             ElapsedTime = &game->inGameTimer;
             LinesSent = &game->linesSent;
+            ZoneCharge = &game->zoneCharge;
+            ZoneLines = &game->zonedLines;
+            ZoneTimer = &game->zoneTimer;
         }
         Paused = &paused;
         BigMode = &bigMode;
