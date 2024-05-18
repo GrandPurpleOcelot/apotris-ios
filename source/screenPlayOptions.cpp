@@ -622,6 +622,7 @@ void MultBattleScene::init(){
     lastState = 0;
 
     clearSpriteTiles(672, 144, 1);
+    resetSmallText();
 }
 
 void MultBattleScene::draw(){
@@ -654,17 +655,15 @@ void MultBattleScene::handleConnectionDisplay(){
     switch (state) {
         case 1:
         case 2:
-            aprint("Connected!", 10, 8);
+            naprint("Connected!", 10 * 8, 8 * 8);
             if (state == 1)
-                aprint("                    ", 6, 15);
+                naprint("                    ", 6 * 8, 15 * 8);
             else
-                aprint("Press A to ready up!", 6, 15);
-            aprint("Waiting for all players...", 4, 10);
-            refreshText = true;
+                naprint("Press A to ready up!", 6 * 8, 15 * 8);
+            naprint("Waiting for all players...", 4 * 8, 10 * 8);
             break;
         default:
-            aprint("Waiting for connection...", 5, 9);
-            refreshText = true;
+            naprint("Waiting for connection...", 5 * 8, 9 * 8);
             break;
     }
 
