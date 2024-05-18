@@ -3,13 +3,17 @@
 #define ENABLE_BOT 0
 
 #include "platform.hpp"
+
 #ifdef GBA
+
 #include "LinkUniversal.hpp"
 #include "def.h"
 #include "scene.hpp"
+
 #else
 #include "LinkWebRTC.hpp"
 #endif
+
 #include <memory>
 #include <queue>
 #include <optional>
@@ -41,24 +45,28 @@ using namespace hsm;
 const int boardTile = 512 - 32 * 3 - 64 - 8;
 
 void updateRank();
+
 extern void clearEnemyBoard();
 
-class RemotePlayerId{
+class RemotePlayerId {
 public:
     u8 id;
     u8 index;
+
     explicit RemotePlayerId(u8 playerId);
 };
 
-class Command{
+class Command {
 public:
     int command;
     int value;
     RemotePlayerId playerId;
+
     Command(RemotePlayerId playerId, u16 packet) : playerId(playerId) {
         command = packet >> 13;
         value = packet & 0x1FFF;
     }
+
     void execute() const;
 };
 
@@ -69,40 +77,47 @@ public:
     bool ready = false;
     bool over = false;
     bool reconnected = false;
+
     explicit Player(u8 lId) {
         linkId = lId;
     }
+
     explicit Player() {
         linkId = -1;
     }
 };
 
-class MultiplayerLink{
+class MultiplayerLink {
 private:
     bool allOverB = false;
+
     bool allSeeded(u8 playerCount) {
         if (playerCount <= 1 || players.size() <= 1) return false;
         return std::all_of(players.begin(), players.end(),
-                           [](std::pair<const unsigned char, Player> i) {return i.second.seeded;});
+                           [](std::pair<const unsigned char, Player> i) { return i.second.seeded; });
     }
+
     bool allOver(u8 playerCount) {
         if (playerCount <= 1 || players.size() <= 1) return false;
         if (playerCount > players.size())
             return allOverB;
         return std::all_of(players.begin(), players.end(),
-                           [](std::pair<const unsigned char, Player> i) {return i.second.over;});
+                           [](std::pair<const unsigned char, Player> i) { return i.second.over; });
     }
+
     bool allConnected(u8 playerCount) {
         if (playerCount <= 1 || players.size() <= 1) return false;
         return std::all_of(players.begin(), players.end(),
-                           [](std::pair<const unsigned char, Player> i) {return i.second.reconnected;});
+                           [](std::pair<const unsigned char, Player> i) { return i.second.reconnected; });
     }
+
     void markAllOver(u8 playerCount) {
         allOverB = true;
     }
+
     friend struct MultiplayerStates;
 public:
-    LinkUniversal* universal;
+    LinkUniversal *universal;
     std::map<u8, Player> players;
     StateMachine stateMachine;
     std::queue<u16> sendQueue;
@@ -115,7 +130,7 @@ public:
 
     u32 enemyPower[4] = {1, 1, 1, 1};
 
-    explicit MultiplayerLink(LinkUniversal* universal){
+    explicit MultiplayerLink(LinkUniversal *universal) {
         this->universal = universal;
     }
 
@@ -138,7 +153,7 @@ public:
     }
 
     void resetPlayers() {
-        for (auto i : players) {
+        for (auto i: players) {
             players[i.first] = Player(i.first);
         }
     }
@@ -146,20 +161,23 @@ public:
     void readyUp() {
         players[universal->currentPlayerId()].ready = true;
     }
+
     int getReadyCount() {
         int over = 0;
-        for (auto & it : players)
+        for (auto &it: players)
             over += it.second.ready;
         return over;
     }
 
     void purgeQueues();
+
     void deactivate(bool sendBye);
+
     void activate();
 
     [[nodiscard]] std::queue<Packet> readPackets() const {
         std::queue<Packet> queue;
-        for (auto player : players) {
+        for (auto player: players) {
             int i = player.first;
             while (universal->canRead(i))
                 queue.emplace(i, universal->read(i));
@@ -182,35 +200,48 @@ public:
 };
 
 struct MultiplayerStates {
+    
     struct Deactivated : StateWithOwner<MultiplayerLink> {
+
         void OnEnter() override {
-            if (Owner().universal->isActive())
+            if (Owner().universal->isActive()) {
                 Owner().universal->deactivate();
+            }
         }
+
         Transition GetTransition() override {
-            if (!Owner().active)
+            if (!Owner().active) {
                 return NoTransition();
-            else
+            } else {
                 return SiblingTransition<Activated>();
+            }
         }
     };
+
     struct Activated : StateWithOwner<MultiplayerLink> {
+
         void OnEnter() override {
-            if (!Owner().universal->isActive())
+            if (!Owner().universal->isActive()) {
                 Owner().universal->activate();
+            }
             Update();
         }
+
         void Update() override {
             Owner().universal->sync();
         }
+
         Transition GetTransition() override {
             if (!Owner().universal->isConnected()
-                || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount))
+                || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount)) {
                 return InnerEntryTransition<ConnectionInitializing>();
+            }
             return InnerEntryTransition<PlayersPresent>();
         }
     };
+
     struct ConnectionInitializing : StateWithOwner<MultiplayerLink> {
+
         void OnEnter() override {
 #ifndef GBA
             if (!Owner().playing) {
@@ -220,113 +251,127 @@ struct MultiplayerStates {
             Owner().players.clear();
 #endif
         }
+
         Transition GetTransition() override {
             if (!Owner().universal->isConnected()
-                || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount))
+                || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount)) {
                 return NoTransition();
-            else
+            } else {
                 return SiblingTransition<PlayersPresent>();
+            }
         }
+
     };
+
     struct PlayersPresent : StateWithOwner<MultiplayerLink> {
         unsigned int seenPlayerCount = 0;
+
         void OnEnter() override {
             seenPlayerCount = Owner().universal->playerCount();
 #ifdef GBA
-            for (int i = 0; i < Owner().universal->playerCount(); i++)
+            for (int i = 0; i < Owner().universal->playerCount(); i++) {
                 Owner().initPlayer(i);
+            }
 #endif
         }
+
         Transition GetTransition() override {
             if (Owner().playing) {
-                if (Owner().playingPlayerCount > Owner().universal->playerCount())
+                if (Owner().playingPlayerCount > Owner().universal->playerCount()) {
                     return SiblingTransition<ConnectionInitializing>();
-                else if (Owner().playingPlayerCount <= Owner().universal->playerCount())
+                } else if (Owner().playingPlayerCount <= Owner().universal->playerCount()) {
                     return InnerEntryTransition<PlayersReconnecting>();
-            }
-            else if (seenPlayerCount != Owner().universal->playerCount())
+                }
+            } else if (seenPlayerCount != Owner().universal->playerCount()) {
                 return SiblingTransition<ConnectionInitializing>();
+            }
             return InnerEntryTransition<PlayersSeeding>();
         }
     };
+
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
+
         void OnEnter() override {
             if (Owner().universal->currentPlayerId() && nextSeed) {
                 Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
                 return;
             }
-            if (Owner().universal->currentPlayerId()) return;
+
+            if (Owner().universal->currentPlayerId())
+                return;
+
             if (!nextSeed)
                 nextSeed = qran() % (SEND_SEED - 1);
+
             Owner().players[Owner().universal->currentPlayerId()].seeded = true;
             Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
         }
+
         void Update() override {
-            std::queue<Packet> queue = Owner().readPackets();
-            while (!queue.empty()){
-                Packet packet = queue.front();
-                queue.pop();
-                if ((packet.packet >> 13) != 2) continue;
-                if (packet.packet & SEND_SEED) {
-                    if (Owner().universal->currentPlayerId()) {
-                        if (!packet.playerId) {
-                            nextSeed = packet.packet & (SEND_SEED - 1);
-                        }
-                        else if (nextSeed && ((packet.packet & (SEND_SEED - 1)) != nextSeed))
-                            continue; // bad seed??
-                        Owner().players[packet.playerId].seeded = true;
-                    } else {
-                        if ((packet.packet & (SEND_SEED - 1)) == nextSeed)
+            auto process_queue = [this](std::queue<Packet> &queue) {
+                while (!queue.empty()) {
+                    Packet packet = queue.front();
+                    queue.pop();
+
+                    if ((packet.packet >> 13) != 2)
+                        continue;
+
+                    if (packet.packet & SEND_SEED) {
+                        if (Owner().universal->currentPlayerId()) {
+                            if (!packet.playerId) {
+                                nextSeed = packet.packet & (SEND_SEED - 1);
+                            } else if (nextSeed && ((packet.packet & (SEND_SEED - 1)) != nextSeed))
+                                continue; // bad seed??
                             Owner().players[packet.playerId].seeded = true;
+                        } else {
+                            if ((packet.packet & (SEND_SEED - 1)) == nextSeed)
+                                Owner().players[packet.playerId].seeded = true;
+                        }
                     }
                 }
-            }
-            while (!Owner().seedQueue.empty()){
-                Packet packet = Owner().seedQueue.front();
-                Owner().seedQueue.pop();
-                if ((packet.packet >> 13) != 2) continue;
-                if (packet.packet & SEND_SEED) {
-                    if (Owner().universal->currentPlayerId()) {
-                        if (!packet.playerId) {
-                            nextSeed = packet.packet & (SEND_SEED - 1);
-                        }
-                        else if (nextSeed && ((packet.packet & (SEND_SEED - 1)) != nextSeed))
-                            continue; // bad seed??
-                        Owner().players[packet.playerId].seeded = true;
-                    } else {
-                        if ((packet.packet & (SEND_SEED - 1)) == nextSeed)
-                            Owner().players[packet.playerId].seeded = true;
-                    }
-                }
-            }
+            };
+            std::queue<Packet> readQueue = Owner().readPackets();
+            process_queue(readQueue);
+
+            std::queue<Packet> seedQueue = Owner().seedQueue;
+            process_queue(seedQueue);
+
             if (nextSeed) {
                 Owner().players[Owner().universal->currentPlayerId()].seeded = true;
                 Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
             }
         }
+
         Transition GetTransition() override {
             if (Owner().allSeeded(Owner().universal->playerCount()))
                 return SiblingTransition<PlayersSeeded>();
             return NoTransition();
         }
     };
+
     struct PlayersSeeded : StateWithOwner<MultiplayerLink> {
+
         void OnEnter() override {
             Owner().playingPlayerCount = Owner().universal->playerCount();
         }
+
         Transition GetTransition() override {
-            if(!Owner().playing)
+            if (!Owner().playing) {
                 return SiblingTransition<PlayersAwaitReady>();
-            else
+            } else {
                 return NoTransition();
+            }
         }
     };
+
     struct PlayersAwaitReady : StateWithOwner<MultiplayerLink> {
         bool sentReady = false;
         int readyTimeout = 120;
+
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
-            while (!queue.empty()){
+
+            while (!queue.empty()) {
                 Packet packet = queue.front();
                 queue.pop();
                 auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
@@ -357,19 +402,24 @@ struct MultiplayerStates {
                 Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
             }
         }
+
         void OnExit() override {
             if (!sentReady && Owner().players[Owner().universal->currentPlayerId()].ready)
                 Owner().send(UPDATE_STATE + LETS_PLAY);
         }
+
         Transition GetTransition() override {
-            if (Owner().allReady(Owner().playingPlayerCount))
+            if (Owner().allReady(Owner().playingPlayerCount)) {
                 return SiblingTransition<Playing>();
-            else
+            } else {
                 return NoTransition();
+            }
         }
     };
+
     struct Playing : StateWithOwner<MultiplayerLink> {
         int echoCounter = 0;
+
         void OnEnter() override {
             bool wasPlaying = Owner().playing;
             if (!wasPlaying) {
@@ -379,12 +429,15 @@ struct MultiplayerStates {
                 changeScene(new GameScene());
             }
         }
+
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
-            while (!queue.empty()){
+            while (!queue.empty()) {
                 Packet packet = queue.front();
                 queue.pop();
+
                 auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
+
                 if (command.command == 2) {
                     if (command.value == I_LOST)
                         Owner().players[command.playerId.id].over = true;
@@ -404,28 +457,35 @@ struct MultiplayerStates {
                 } else
                     command.execute();
             }
+
             if (echoCounter++ % 10 == 0)
                 Owner().send(UPDATE_STATE + WELCOME_BACK);
+
             int lostCount = 0;
-            for (auto i : Owner().players)
+            for (auto i: Owner().players)
                 if (i.second.over)
                     lostCount += 1;
             if (lostCount == Owner().playingPlayerCount - 1)
                 game->won = true;
         }
+
         Transition GetTransition() override {
-            if (game->lost)
+            if (game->lost) {
                 return SiblingTransition<Lost>();
-            else if (game->won)
+            } else if (game->won) {
                 return SiblingTransition<Won>();
+            }
             return NoTransition();
         }
     };
+
     struct Won : StateWithOwner<MultiplayerLink> {
+
         void OnEnter() override {
             Owner().send(UPDATE_STATE + I_WON);
             updateRank();
         }
+
         Transition GetTransition() override {
             Owner().playing = false;
             Owner().resetPlayers();
@@ -433,23 +493,26 @@ struct MultiplayerStates {
             return SiblingTransition<GameOver>();
         }
     };
+
     struct Lost : StateWithOwner<MultiplayerLink> {
         unsigned int echoCounter = 0;
+
         void OnEnter() override {
             Owner().send(UPDATE_STATE + I_LOST);
             updateRank();
             Owner().players[Owner().universal->currentPlayerId()].over = true;
         }
+
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
-            while (!queue.empty()){
+            while (!queue.empty()) {
                 Packet packet = queue.front();
                 queue.pop();
                 auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
                 if (command.command == 2) {
-                    if (command.value == I_LOST)
+                    if (command.value == I_LOST) {
                         Owner().players[command.playerId.id].over = true;
-                    else if (command.value == I_WON) {
+                    } else if (command.value == I_WON) {
                         Owner().markAllOver(Owner().playingPlayerCount);
                     } else if (command.value == BYE) {
                         u32 newPlayerCount = Owner().playingPlayerCount - 1;
@@ -472,6 +535,7 @@ struct MultiplayerStates {
                 }
             }
         }
+
         Transition GetTransition() override {
             if (!Owner().allOver(Owner().playingPlayerCount)) return NoTransition();
             Owner().playing = false;
@@ -480,69 +544,90 @@ struct MultiplayerStates {
             return SiblingTransition<GameOver>();
         }
     };
+
     struct GameOver : StateWithOwner<MultiplayerLink> {
         unsigned int echoCounter = 0;
+
         void OnEnter() override {
             Owner().players[Owner().universal->currentPlayerId()].over = true;
             Owner().send(UPDATE_STATE + GAME_OVER);
             Owner().send(UPDATE_STATE + I_LOST);
         }
+
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
-            while (!queue.empty()){
+
+            while (!queue.empty()) {
                 Packet packet = queue.front();
                 queue.pop();
+
                 auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
-                if (command.command != 2) continue;
-                if (command.value == GAME_OVER)
+                if (command.command != 2) {
+                    continue;
+                }
+                if (command.value == GAME_OVER) {
                     Owner().players[command.playerId.id].over = true;
-                else if (command.value & SEND_SEED)
+                } else if (command.value & SEND_SEED) {
                     Owner().seedQueue.emplace(command.playerId.id,
                                               (command.command << 13) + command.value);
+                }
             }
+
             if (echoCounter++ % 10 == 0) {
                 Owner().send(UPDATE_STATE + GAME_OVER);
                 Owner().send(UPDATE_STATE + I_LOST);
                 Owner().send(UPDATE_STATE + WELCOME_BACK);
             }
         }
+
         void OnExit() override {
             Owner().send(UPDATE_STATE + GAME_OVER);
             Owner().resetPlayers();
             Owner().playing = false;
             Owner().playingPlayerCount = 0;
         }
+
         Transition GetTransition() override {
-            if (Owner().allOver(Owner().playingPlayerCount))
+            if (Owner().allOver(Owner().playingPlayerCount)) {
                 return SiblingTransition<PlayersSeeding>();
-            else
-                return NoTransition();
+            }
+            return NoTransition();
         }
     };
+
     struct PlayersReconnecting : StateWithOwner<MultiplayerLink> {
+
         void OnEnter() override {
             Owner().send(UPDATE_STATE + WELCOME_BACK);
         }
+
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
-            while (!queue.empty()){
+
+            while (!queue.empty()) {
                 Packet packet = queue.front();
                 queue.pop();
+
                 auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
-                if (command.command != 2) continue;
+
+                if (command.command != 2)
+                    continue;
+
                 if (command.value == WELCOME_BACK) {
                     Owner().players[command.playerId.id].reconnected = true;
                     Owner().players[Owner().universal->currentPlayerId()].reconnected = true;
                 }
             }
+
             Owner().send(UPDATE_STATE + WELCOME_BACK);
         }
+
         Transition GetTransition() override {
-            if (Owner().allConnected(Owner().universal->playerCount()))
+            if (Owner().allConnected(Owner().universal->playerCount())) {
                 return SiblingTransition<Playing>();
-            else
-                return NoTransition();
+            }
+            return NoTransition();
         }
     };
 };
-extern MultiplayerLink* multiplayerLink;
+extern MultiplayerLink *multiplayerLink;
