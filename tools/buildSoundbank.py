@@ -56,7 +56,10 @@ else:
 print(files)
 # run mmutil
 if platform.system() == 'Linux':
-    command = f"/bin/sh -c \"{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}\""
+    if platform.machine() == 'arm64' or platform.machine() == 'aarch64':
+        command = f"/bin/sh -c \"./tools/ape.aarch64 {mmutil} {files} -o{soundbank_binary} -h{mmutil_header}\""
+    else:
+        command = f"/bin/sh -c \"./tools/ape.x86_64 {mmutil} {files} -o{soundbank_binary} -h{mmutil_header}\""
     os.system(command)
 else:
     command = f"{mmutil} {files} -o{soundbank_binary} -h{mmutil_header}"
