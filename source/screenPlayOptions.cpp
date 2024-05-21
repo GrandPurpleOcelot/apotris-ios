@@ -599,13 +599,13 @@ void MultBattleScene::init(){
     PlayOptionScene::init();
 
     #ifdef GBA
-    // Need to do this again to set timeout values
-    setUpLinkUniversal(true);
 
     key_poll();
     // Check for mGBA and gpSP (but don't check if it would crash the emu)
 #ifdef EMU_DETECT
     const bool inaccurateEmulator = detect_inaccurate_emulator();
+    // Need to do this again to set timeout values
+    setUpLinkUniversal(true);
 #else
     const bool inaccurateEmulator = false;
 #endif
