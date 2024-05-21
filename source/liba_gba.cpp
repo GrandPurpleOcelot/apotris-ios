@@ -32,6 +32,7 @@ bool sortSprites = false;
 int musicVolume = 0;
 
 bool disableHBlank = true;
+bool disableDMA = true;
 
 Songs songs;
 
@@ -481,7 +482,7 @@ void sfxRate(int sound, float rate){
 }
 
 void stopDMA(){
-    REG_DMA0CNT &= ~(1 << 0x1f);
+    disableDMA = true;
 }
 
 void setMosaic(int sx, int sy){
@@ -504,6 +505,10 @@ IWRAM_CODE void onVBlank() {
     if (disableHBlank) {
         interrupt_disable(INTR_HBLANK);
         disableHBlank = false;
+    }
+    if (disableDMA) {
+        REG_DMA0CNT &= ~(1 << 0x1f);
+        disableDMA = false;
     }
     if(gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
