@@ -164,6 +164,9 @@ void testSaveMedia() {
 }
 
 void platformInit(){
+    // Guard against EZ Flash and Everdrive jumping to the ROM at some random vsync interval and breaking maxmod
+    while (REG_VCOUNT != 160);
+    while (REG_VCOUNT != 161);
 
     testSaveMedia();
 
