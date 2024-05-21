@@ -604,7 +604,11 @@ void MultBattleScene::init(){
 
     key_poll();
     // Check for mGBA and gpSP (but don't check if it would crash the emu)
+#ifdef EMU_DETECT
     const bool inaccurateEmulator = detect_inaccurate_emulator();
+#else
+    const bool inaccurateEmulator = false;
+#endif
     // Secret feature: hold L on real hardware to force cable mode
     if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba()))
         // mGBA only supports cable, so set it to speed up initial multiplayer sync

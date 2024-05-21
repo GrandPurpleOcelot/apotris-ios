@@ -1,1 +1,2 @@
 option('portmaster', type : 'boolean', value: false)
+option('emu_detect', type : 'boolean', value: false)
