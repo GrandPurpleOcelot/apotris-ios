@@ -128,10 +128,6 @@ void testSaveMedia() {
     const int testRegion = 0x7FFF;
     const int testMirror = 0xFFFF;
     flashInfo.size = 0;
-    if (detect_inaccurate_emulator()) {
-        sramInfo.size = testRegion;
-        return;
-    }
     int err;
     // Test SRAM
     err = sram_write(testRegion, (u8 *) "S", 1);
