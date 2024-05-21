@@ -373,6 +373,7 @@ else
     gbfs = gba_tools.get_variable('gbfs_executable')
     gbafix = find_program('gbafix-py', required : true)
     makerom = find_program('makerom', required : true)
+    makebase = files('tools/makeBase.py')
     subproject('mmutil')
     mmutil = find_program('mmutil')
 
@@ -486,7 +487,7 @@ else
         name + '-base',
         input : elf,
         output : name + '-base.gba',
-        command : [makerom, '@INPUT@', '@OUTPUT@'])
+        command : [py3, makebase, makerom, '@INPUT@', '@OUTPUT@', gbafix])
 
     # The final GBA ROM with audio
     rom = custom_target(
