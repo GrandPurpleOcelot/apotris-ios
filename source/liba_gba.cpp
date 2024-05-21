@@ -31,6 +31,8 @@ u8 * soundbank = nullptr;
 bool sortSprites = false;
 int musicVolume = 0;
 
+bool disableHBlank = true;
+
 Songs songs;
 
 void onHBlank() {
@@ -186,7 +188,6 @@ void platformInit(){
     interrupt_set_handler(INTR_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
 
     // interrupt_add(INTR_HBLANK, onHBlank);
-    interrupt_disable(INTR_HBLANK);
 
     loadAudio();
 
@@ -497,6 +498,10 @@ IWRAM_CODE void onVBlank() {
     mmVBlank();
     LINK_UNIVERSAL_ISR_VBLANK();
 
+    if (disableHBlank) {
+        interrupt_disable(INTR_HBLANK);
+        disableHBlank = false;
+    }
     if(gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
 
@@ -609,7 +614,7 @@ void toggleHBlank(bool state){
         interrupt_set_handler(INTR_HBLANK, onHBlank);
         interrupt_enable(INTR_HBLANK);
     }else{
-        interrupt_disable(INTR_HBLANK);
+        disableHBlank = true;
     }
 }
 

@@ -10,6 +10,7 @@
 #ifdef GBA
 #include "LinkUniversal.hpp"
 extern LinkUniversal* linkConnection;
+extern bool disableHBlank;
 #endif
 extern int initialPlayerCount;
 
