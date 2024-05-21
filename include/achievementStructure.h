@@ -22,6 +22,21 @@ struct StatusData {
     [[maybe_unused]] int *ZoneCharge = nullptr;
     [[maybe_unused]] int *ZoneLines = nullptr;
     [[maybe_unused]] int *ZoneTimer = nullptr;
+    // Requested data
+    [[maybe_unused]] int *GameLevel = nullptr;
+    [[maybe_unused]] int *LinesCleared = nullptr;
+    [[maybe_unused]] int *FinesseFaults = nullptr;
+    [[maybe_unused]] int *FinesseStreak = nullptr;
+    [[maybe_unused]] int *StackHeight = nullptr;
+    [[maybe_unused]] int *GarbageHeight = nullptr;
+    [[maybe_unused]] int *ActivePiece = nullptr;
+    [[maybe_unused]] int *Held = nullptr;
+    [[maybe_unused]] int *PawnX = nullptr;
+    [[maybe_unused]] int *PawnY = nullptr;
+    [[maybe_unused]] int *PawnType = nullptr;
+    [[maybe_unused]] int *PawnCurrent = nullptr;
+    [[maybe_unused]] int *PawnRotation = nullptr;
+    
 
     // Methods for updating
     void update(Settings* settings) {
@@ -47,6 +62,19 @@ struct StatusData {
             ZoneCharge = &game->zoneCharge;
             ZoneLines = &game->zonedLines;
             ZoneTimer = &game->zoneTimer;
+            GameLevel = &game->level;
+            LinesCleared = &game->linesCleared;
+            FinesseFaults = &game->finesseFaults;
+            FinesseStreak = &game->finesseStreak;
+            StackHeight = &game->stackHeight;
+            GarbageHeight = &game->garbageHeight;
+            ActivePiece = &game->activePiece;
+            Held = &game->held;
+            PawnX = &game->pawn.x;
+            PawnY = &game->pawn.y;
+            PawnType = &game->pawn.type;
+            PawnCurrent = &game->pawn.current;
+            PawnRotation = &game->pawn.rotation;
         }
         Paused = &paused;
         BigMode = &bigMode;
