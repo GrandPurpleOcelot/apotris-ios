@@ -302,11 +302,26 @@ void GameScene::endScreen(){
             showReadyPlayers();
         }
 
-        showSprites(128);
-
         updateGrid();
         updateFluid();
         drawGrid();
+
+        int counter = 0;
+
+        wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 0));
+        wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 0));
+        counter += 3;
+
+        if(!multiplayer){
+            wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 1));
+            wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1));
+            counter += 3;
+        }
+
+        wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 1 + !multiplayer));
+        wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1 + !multiplayer));
+
+        showSprites(128);
     }
 
     buildBG(3, 0, 27, 0, 1, true);
@@ -1388,17 +1403,17 @@ int GameScene::endScreenSetup(){
     int counter = 0;
 
     wordSprites[1].setText("Play");
-    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[2].setText("Again");
-    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
 
     counter += 3;
 
     if(!multiplayer){
         wordSprites[3].setText("Change");
-        wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 15);
+        wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 14);
         wordSprites[4].setText("Options");
-        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
 
         counter += 3;
     }else{
@@ -1406,9 +1421,9 @@ int GameScene::endScreenSetup(){
     }
 
     wordSprites[5].setText("Main");
-    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[6].setText("Menu");
-    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
 
     showModeText();
     return record;
