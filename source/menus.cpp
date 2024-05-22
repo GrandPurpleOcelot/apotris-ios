@@ -205,6 +205,21 @@ void GameScene::endScreen(){
 
         sprite_set_pos(cursorSprite, x, ((optionsHeight + selection * 3) * 8) - 5);
 
+        int counter = 0;
+
+        wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 0));
+        wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 0));
+        counter += 3;
+
+        if(!multiplayer){
+            wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 1));
+            wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1));
+            counter += 3;
+        }
+
+        wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 1 + !multiplayer));
+        wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1 + !multiplayer));
+
         if (playAgain && multiplayer) {
             startMultiplayerGame(nextSeed);
             changeScene(new GameScene());
@@ -305,21 +320,6 @@ void GameScene::endScreen(){
         updateGrid();
         updateFluid();
         drawGrid();
-
-        int counter = 0;
-
-        wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 0));
-        wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 0));
-        counter += 3;
-
-        if(!multiplayer){
-            wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 1));
-            wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1));
-            counter += 3;
-        }
-
-        wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 1 + !multiplayer));
-        wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1 + !multiplayer));
 
         showSprites(128);
     }
