@@ -95,7 +95,7 @@ endif
 
 build_type = get_option('buildtype')
 # Don't use mGBA logging in release build types, only debug and friends
-if build_type.startswith('release')
+if build_type.startswith('release') or build_type.startswith('minsize')
   add_project_arguments('-DNO_DIAGNOSE', language : ['c', 'cpp'])
 endif
 
