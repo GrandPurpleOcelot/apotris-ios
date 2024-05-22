@@ -1265,14 +1265,17 @@ void GameScene::showText() {
 
         if (gm == MASTER) {
             str = GameInfo::masterGrades[game->grade + game->coolCount];
+
             status.gradeString = str;
             status.gradeIndex = game->grade + game->coolCount;
         } else if (gm == DEATH) {
-            str = GameInfo::deathGrades[game->level / 100 - game->regretCount];
-            status.gradeString = str;
-            status.gradeIndex = game->level / 100 - game->regretCount;
-        }
+            const int index = game->level / 100 - game->regretCount;
 
+            str = GameInfo::deathGrades[index];
+
+            status.gradeString = str;
+            status.gradeIndex = index;
+        }
 
         wordSprites[1].setText(str);
         wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8,15);
