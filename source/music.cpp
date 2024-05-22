@@ -29,7 +29,7 @@ void playSong(int menuId, int songId) {
     currentlyPlayingSong = songId;
 
     setMusicVolume(512 * ((float)savefile->settings.volume / 10));
-    startSong(song,(!savefile->settings.cycleSongs));
+    startSong(song,(savefile->settings.cycleSongs == 0));
 }
 
 void playSongRandom(int menuId) {
@@ -51,7 +51,10 @@ void playSongRandom(int menuId) {
 
     do{
         index = qran() % max;
-    }while(getSongState(menuId, index) && count++ < 1000);
+    }while(
+        (getSongState(menuId, index) || index == currentlyPlayingSong) &&
+        count++ < 1000
+    );
 
     if(count >= 1000)
         return;

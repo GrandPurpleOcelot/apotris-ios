@@ -54,7 +54,11 @@ mm_word myEventHandler(mm_word msg, mm_word param){
     if(msg == MMCB_SONGMESSAGE)
         return 0;
 
-    playNextSong();
+    if(savefile->settings.cycleSongs == 1){//CYCLE
+        playNextSong();
+    }else if(savefile->settings.cycleSongs == 2){//SHUFFLE
+        playSongRandom(currentMenu);
+    }
 
     return 0;
 }
