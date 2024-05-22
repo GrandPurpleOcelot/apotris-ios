@@ -341,19 +341,26 @@ void ConfirmSaveScene::init(){
     clearSprites(128);
     showSprites(128);
 
+    clearSpriteTiles(256, 12 * 2, 1);
+    for (int i = 0; i < 2; i++)
+        wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
+
     clearTilemap(29);
     naprint("Save changes?", 64 , 56);
 
-    naprint("SAVE", 48, 104);
-    naprint("DON'T SAVE", 120, 104);
+    wordSprites[0].setText("SAVE");
+    wordSprites[0].show(48,104,14);
+
+    wordSprites[1].setText("DON'T SAVE");
+    wordSprites[1].show(120,104,14);
 
     //backgroundGrid
     setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
     setTiles(27,0,32*32, tileBuild(34, false, false, 0));
 
-    lengths[0] = getVariableWidth("SAVE");
-    lengths[1] = getVariableWidth("DON'T SAVE");
+    lengths[0] = wordSprites[0].width;
+    lengths[1] = wordSprites[1].width;
 
     pos[0] = 48 + lengths[0] / 2;
     pos[1] = 120 + lengths[1] / 2;
@@ -386,6 +393,9 @@ void ConfirmSaveScene::draw(){
 
         sprite_set_pos(cursorSprites[i], x, y - 5);
     }
+
+    wordSprites[0].show(48,104,14 + (cancel == 0));
+    wordSprites[1].show(120,104,14 + (cancel == 1));
 
     showSprites(128);
 }
@@ -444,19 +454,26 @@ void ConfirmEmuScene::init(){
     clearSprites(128);
     showSprites(128);
 
+    clearSpriteTiles(256, 12 * 2, 1);
+    for (int i = 0; i < 2; i++)
+        wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
+
     clearTilemap(29);
     naprint("Are you on an emulator?", 40, 56);
 
-    naprint("I AM", 48, 104);
-    naprint("I AM NOT", 120, 104);
+    wordSprites[0].setText("I AM");
+    wordSprites[0].show(48,104,14);
+
+    wordSprites[1].setText("I AM NOT");
+    wordSprites[1].show(120,104,14);
 
     //backgroundGrid
     setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
     setTiles(27,0,32*32, tileBuild(34, false, false, 0));
 
-    lengths[0] = getVariableWidth("I AM");
-    lengths[1] = getVariableWidth("I AM NOT");
+    lengths[0] = wordSprites[0].width;
+    lengths[1] = wordSprites[1].width;
 
     pos[0] = 48 + lengths[0] / 2;
     pos[1] = 120 + lengths[1] / 2;
@@ -515,6 +532,9 @@ void ConfirmEmuScene::draw(){
 
         sprite_set_pos(cursorSprites[i], x, y - 5);
     }
+
+    wordSprites[0].show(48,104,14 + (cancel == 0));
+    wordSprites[1].show(120,104,14 + (cancel == 1));
 
     showSprites(128);
 }
