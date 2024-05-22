@@ -319,6 +319,7 @@ int selector(){
     int das = 0;
     const int arr = 4;
     const int dasMax = 20;
+    int cursorFloat = 0;
 
     int selection = 0;
     const int options = 2;
@@ -340,6 +341,16 @@ int selector(){
         sprite_unhide(sprite,0);
     }
 
+    OBJ_ATTR * cursorSprites[2];
+
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+    for(int i = 0; i < 2; i++){
+        cursorSprites[i] = &obj_buffer[7 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_hide(cursorSprites[i]);
+    }
+
     showSprites(32);
 
     MenuKeys k = savefile->settings.menuKeys;
@@ -349,18 +360,37 @@ int selector(){
         key_poll();
 
         aprintColor(" C1   C2   C3   C4   C5 ",3, slotHeight, 1);
-        aprint("C" + std::to_string(skinIndex+1),4 + skinIndex*5,slotHeight);
-
-        aprint(" BACK ",12,16);
 
         if(selection == 0){
-            int x = 3 + skinIndex*5;
-            aprint("[",x,slotHeight);
-            aprint("]",x+3,slotHeight);
+            aprint("C" + std::to_string(skinIndex+1),4 + skinIndex*5,slotHeight);
+        }
 
+        aprintColor(" BACK ",12,16, (selection != options - 1));
+
+        int offset = (sinLut(cursorFloat) * 2) >> 12;
+        FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+        int y = 0;
+        int startX = 0;
+        int len = 0;
+
+        if(selection == 0){
+            y = slotHeight * 8;
+            startX = ((3 + skinIndex * 5) + 2) * 8;
+            len = 13;
         }else if(selection == options-1){
-            aprint("[",12,16);
-            aprint("]",17,16);
+            y = 16 * 8;
+            startX = (15) * 8;
+            len = 4 * 8;
+        }
+
+        for(int i = 0; i < 2; i++){
+            sprite_unhide(cursorSprites[i],0);
+            sprite_enable_affine(cursorSprites[i], i, true);
+            sprite_set_size(cursorSprites[i], scale , i);
+
+            const int x = startX - ((len + 8) / 2 + offset + 4) * ((i)?-1:1) - 8;
+
+            sprite_set_pos(cursorSprites[i], x, y - 5);
         }
 
         if(key_hit(k.confirm) || key_hit(k.pause)){
@@ -419,6 +449,12 @@ int selector(){
             sfx(SFX_MENUCANCEL);
             return 1;
         }
+
+        cursorFloat += 6;
+        if(cursorFloat >= 512)
+            cursorFloat = 0;
+
+        showSprites(32);
     }
 
     return 0;
