@@ -14,4 +14,7 @@ WINDOWS:
     After any changes, run 'WINDOWS_build.bat' to add them to the ROM.
 
 LINUX:
-    Python is required to build songs. After any changes, run 'LINUX_build.sh' to add them to the ROM.
+    Python is required to build songs. After any changes, run 'LINUX_or_MAC_build.sh' to add them to the ROM.
+
+MAC:
+    Run the LINUX_or_MAC_build.sh to add any changes to the ROM.
