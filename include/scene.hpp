@@ -319,6 +319,8 @@ class ConfirmSaveScene : public Scene{
 
     int cursorFloat = 0;
 
+    WordSprite wordSprites[2];
+
     OBJ_ATTR * cursorSprites[2];
 
     int lengths[2];
@@ -340,6 +342,8 @@ public:
     bool cancel = true;
 
     int cursorFloat = 0;
+
+    WordSprite wordSprites[2];
 
     OBJ_ATTR * cursorSprites[2];
 

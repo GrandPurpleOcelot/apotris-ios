@@ -205,6 +205,21 @@ void GameScene::endScreen(){
 
         sprite_set_pos(cursorSprite, x, ((optionsHeight + selection * 3) * 8) - 5);
 
+        int counter = 0;
+
+        wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 0));
+        wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 0));
+        counter += 3;
+
+        if(!multiplayer){
+            wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 1));
+            wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1));
+            counter += 3;
+        }
+
+        wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14 + (selection == 1 + !multiplayer));
+        wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 14 + (selection == 1 + !multiplayer));
+
         if (playAgain && multiplayer) {
             startMultiplayerGame(nextSeed);
             changeScene(new GameScene());
@@ -302,11 +317,11 @@ void GameScene::endScreen(){
             showReadyPlayers();
         }
 
-        showSprites(128);
-
         updateGrid();
         updateFluid();
         drawGrid();
+
+        showSprites(128);
     }
 
     buildBG(3, 0, 27, 0, 1, true);
@@ -638,40 +653,33 @@ int GameScene::pauseMenu(){
         vsync();
         key_poll();
 
-        // aprint("PAUSE!", 12, 4);
         wordSprites[0].setText("PAUSE!");
         wordSprites[0].show(15 * 8 - wordSprites[0].width / 2, 4 * 8, 15);
 
+        optionsCounter = 0;
+
+        auto showOption = [this,&optionsCounter,optionsHeight,selection](std::string str){
+            wordSprites[1 + optionsCounter].setText(str);
+            wordSprites[1 + optionsCounter].show(
+                15 * 8 - wordSprites[1 + optionsCounter].width / 2,
+                (optionsHeight + optionsCounter * 2) * 8,
+                15 - !(selection == optionsCounter)
+            );
+            optionsCounter++;
+        };
+
         if (!onStates) {
-            optionsCounter = 0;
-            // aprint("Resume", 12, optionsHeight + optionsCounter++ * 2);
-            wordSprites[1 + optionsCounter].setText("Resume");
-            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
-            optionsCounter++;
 
-            // aprint("Restart", 12, optionsHeight + optionsCounter++ * 2);
-            wordSprites[1 + optionsCounter].setText("Restart");
-            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
-            optionsCounter++;
+            showOption("Resume");
+            showOption("Restart");
 
-            if(game->gameMode == TRAINING){
-                // aprint("Saves", 12, optionsHeight + optionsCounter++ * 2);
-                wordSprites[1 + optionsCounter].setText("Saves");
-                wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
-                optionsCounter++;
-            }
+            if(game->gameMode == TRAINING)
+                showOption("Saves");
 
-            if(showSleep){
-                // aprint("Sleep", 12, optionsHeight + optionsCounter++ * 2);
-                wordSprites[1 + optionsCounter].setText("Sleep");
-                wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
-                optionsCounter++;
-            }
+            if(showSleep)
+                showOption("Sleep");
 
-            // aprint("Quit", 12, optionsHeight + optionsCounter++ * 2);
-            wordSprites[1 + optionsCounter].setText("Quit");
-            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
-            optionsCounter++;
+            showOption("Quit");
 
             if (key_hit(k.confirm)) {
                 int n = selection;
@@ -717,18 +725,10 @@ int GameScene::pauseMenu(){
             }
         } else {
             optionsCounter = 0;
-            // aprintColor("Load", 12, optionsHeight + optionsCounter++ * 2, !(saveExists));
-            // aprint("Save", 12, optionsHeight + optionsCounter++ * 2);
-            // aprint("Back", 12, optionsHeight + optionsCounter++ * 2);
-            wordSprites[1 + optionsCounter].setText("Load");
-            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15 - !(saveExists));
-            optionsCounter++;
-            wordSprites[1 + optionsCounter].setText("Save");
-            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
-            optionsCounter++;
-            wordSprites[1 + optionsCounter].setText("Back");
-            wordSprites[1 + optionsCounter].show(15 * 8 - wordSprites[1 + optionsCounter].width / 2, (optionsHeight + optionsCounter * 2) * 8, 15);
-            optionsCounter++;
+
+            showOption("Load");
+            showOption("Save");
+            showOption("Back");
 
             for (int i = optionsCounter + 1; i < 6; i++)
                 wordSprites[i].hide();
@@ -1403,17 +1403,17 @@ int GameScene::endScreenSetup(){
     int counter = 0;
 
     wordSprites[1].setText("Play");
-    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[2].setText("Again");
-    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+    wordSprites[2].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
 
     counter += 3;
 
     if(!multiplayer){
         wordSprites[3].setText("Change");
-        wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 15);
+        wordSprites[3].show(12 * 8, (optionsHeight + counter) * 8, 14);
         wordSprites[4].setText("Options");
-        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+        wordSprites[4].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
 
         counter += 3;
     }else{
@@ -1421,9 +1421,9 @@ int GameScene::endScreenSetup(){
     }
 
     wordSprites[5].setText("Main");
-    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 15);
+    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[6].setText("Menu");
-    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 15);
+    wordSprites[6].show(14 * 8, (optionsHeight + counter+1) * 8, 14);
 
     showModeText();
     return record;
