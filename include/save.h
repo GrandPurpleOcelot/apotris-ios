@@ -119,7 +119,7 @@ typedef struct Settings{
     bool noDiagonals;
     int maxQueue;
     int colors;
-    bool cycleSongs;
+    int cycleSongs;
     int dropProtectionFrames;
     bool abHold;
 

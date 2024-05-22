@@ -290,7 +290,7 @@ void setDefaults(Save *save, int depth){
         save->settings.sfxVolume = 10;
         save->settings.directionalDas = true;
         save->settings.noDiagonals = false;
-        save->settings.cycleSongs = true;
+        save->settings.cycleSongs = 1; // CYCLE
         save->settings.dropProtectionFrames = 8;
         save->settings.abHold = true;
         save->settings.resetHoldType = false;

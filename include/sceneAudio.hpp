@@ -119,16 +119,42 @@ class PlaybackElement : public Element{
         }
 
         std::string getCursor(std::string text) override {
-            return "[" + text + "]";
+            std::string result;
+
+            if(savefile->settings.cycleSongs > 0)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.cycleSongs < 2)
+                result += ">";
+
+            return result;
         }
 
         void action(int dir) override{
-            savefile->settings.cycleSongs = !savefile->settings.cycleSongs;
-            sfx(SFX_MENUMOVE);
+            if(dir > 0){
+                if(savefile->settings.cycleSongs < 2){
+                    savefile->settings.cycleSongs++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.cycleSongs > 0){
+                    savefile->settings.cycleSongs--;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
         }
 
         std::string getCurrentOption() override {
-            return (savefile->settings.cycleSongs) ? "CYCLE" : "LOOP";
+            switch(savefile->settings.cycleSongs){
+                case 0: return "LOOP";
+                case 1: return "CYCLE";
+                case 2: return "SHUFFLE";
+                default: return "";
+            }
         }
 };
 
@@ -248,7 +274,7 @@ class AudioOptionScene : public OptionListScene{
 
 class SongListScene : public OptionListScene{
     public:
-        bool previous = false;
+        int previous = 0;
         std::string name(){return "Song List";};
 
         std::list<Element*> getElementList() {
@@ -283,7 +309,7 @@ class SongListScene : public OptionListScene{
         SongListScene(){
             previous = savefile->settings.cycleSongs;
 
-            savefile->settings.cycleSongs = false;
+            savefile->settings.cycleSongs = 0;//LOOP
         }
 
         ~SongListScene(){
