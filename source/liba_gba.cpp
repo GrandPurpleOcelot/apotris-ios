@@ -31,6 +31,9 @@ u8 * soundbank = nullptr;
 bool sortSprites = false;
 int musicVolume = 0;
 
+bool disableHBlank = true;
+bool disableDMA = true;
+
 Songs songs;
 
 void onHBlank() {
@@ -128,10 +131,6 @@ void testSaveMedia() {
     const int testRegion = 0x7FFF;
     const int testMirror = 0xFFFF;
     flashInfo.size = 0;
-    if (detect_inaccurate_emulator()) {
-        sramInfo.size = testRegion;
-        return;
-    }
     int err;
     // Test SRAM
     err = sram_write(testRegion, (u8 *) "S", 1);
@@ -166,6 +165,9 @@ void testSaveMedia() {
 }
 
 void platformInit(){
+    // Guard against EZ Flash and Everdrive jumping to the ROM at some random vsync interval and breaking maxmod
+    while (REG_VCOUNT != 160);
+    while (REG_VCOUNT != 161);
 
     testSaveMedia();
 
@@ -190,7 +192,6 @@ void platformInit(){
     interrupt_set_handler(INTR_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
 
     // interrupt_add(INTR_HBLANK, onHBlank);
-    interrupt_disable(INTR_HBLANK);
 
     loadAudio();
 
@@ -481,7 +482,7 @@ void sfxRate(int sound, float rate){
 }
 
 void stopDMA(){
-    REG_DMA0CNT &= ~(1 << 0x1f);
+    disableDMA = true;
 }
 
 void setMosaic(int sx, int sy){
@@ -501,6 +502,14 @@ IWRAM_CODE void onVBlank() {
     mmVBlank();
     LINK_UNIVERSAL_ISR_VBLANK();
 
+    if (disableHBlank) {
+        interrupt_disable(INTR_HBLANK);
+        disableHBlank = false;
+    }
+    if (disableDMA) {
+        REG_DMA0CNT &= ~(1 << 0x1f);
+        disableDMA = false;
+    }
     if(gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
 
@@ -613,7 +622,7 @@ void toggleHBlank(bool state){
         interrupt_set_handler(INTR_HBLANK, onHBlank);
         interrupt_enable(INTR_HBLANK);
     }else{
-        interrupt_disable(INTR_HBLANK);
+        disableHBlank = true;
     }
 }
 

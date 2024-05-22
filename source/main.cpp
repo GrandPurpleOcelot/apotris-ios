@@ -835,6 +835,7 @@ Tuning getTuning(){
 
 void setGradient(int color){
     stopDMA();
+    vsync();
 
     int div = 20;
 
@@ -912,10 +913,12 @@ void gradient(int state){
         stopDMA();
         gradientEnabled = false;
         toggleHBlank(true);
+        vsync();
     }else{
         stopDMA();
         gradientEnabled = false;
         toggleHBlank(false);
+        vsync();
     }
 }
 
