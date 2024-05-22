@@ -303,6 +303,14 @@ std::string nameInput(int place) {
 
     bool onDone = false;
 
+    int cursorFloat = 0;
+    OBJ_ATTR * cursorSprites[2];
+
+    for(int i = 0; i < 2; i++)
+        cursorSprites[i] = &obj_buffer[1 + i];
+
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+
     showSprites(128);
 
     MenuKeys k = savefile->settings.menuKeys;
@@ -457,11 +465,7 @@ std::string nameInput(int place) {
                 onDone = true;
                 sfx(SFX_MENUCONFIRM);
             }
-
-            aprint(" ", 12, 16);
         } else {
-            aprint(">", 12, 16);
-
             if (key_hit(k.confirm) || key_hit(k.pause)) {
                 sfx(SFX_MENUCONFIRM);
                 break;
@@ -474,7 +478,35 @@ std::string nameInput(int place) {
         }
         updateFluid();
         drawGrid();
+
+        if(onDone){
+            const int offset = (sinLut(cursorFloat) * 2) >> 12;
+            const FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+            for(int i = 0; i < 2; i++){
+                sprite_unhide(cursorSprites[i],0);
+                sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
+                sprite_enable_affine(cursorSprites[i], 12, true);
+                sprite_set_size(cursorSprites[i], scale, 12);
+
+                const int x = (16 * 8) - ((32 + 8) / 2 + offset + 4) * ((i)?-1:1) - 10;
+
+                sprite_set_pos(cursorSprites[i], x, 16 * 8 - 5);
+            }
+        }else{
+            for(int i = 0; i < 2; i++)
+                sprite_hide(cursorSprites[i]);
+        }
+
+        showSprites(128);
+
+        cursorFloat += 6;
+        if(cursorFloat >= 512)
+            cursorFloat = 0;
     }
+
+    for(int i = 0; i < 2; i++)
+        sprite_hide(cursorSprites[i]);
 
     clearText();
 
