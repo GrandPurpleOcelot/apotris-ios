@@ -24,8 +24,6 @@
   <integer>4</integer>
   <key>IFMinorVersion</key>
   <integer>0</integer>
-  <key>LSApplicationCategoryType</key>
-  <string>public.app-category.games</string>
   <key>LSMinimumSystemVersion</key>
   <string>10.15.0</string>
   <key>NSHighResolutionCapable</key>
