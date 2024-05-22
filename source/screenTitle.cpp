@@ -20,6 +20,9 @@
 #include "sceneHandling.hpp"
 #include "sceneModes.hpp"
 #include "sceneStats.hpp"
+#ifdef GBA
+#include "detectEmulators.h"
+#endif
 
 std::string timeToStringHours(int frames);
 void initFallingBlocks();
@@ -435,6 +438,102 @@ bool ConfirmSaveScene::control(){
     }
 
     return false;
+}
+
+void ConfirmEmuScene::init(){
+    clearSprites(128);
+    showSprites(128);
+
+    clearTilemap(29);
+    naprint("Are you on an emulator?", 40, 56);
+
+    naprint("I AM", 48, 104);
+    naprint("I AM NOT", 120, 104);
+
+    //backgroundGrid
+    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+
+    setTiles(27,0,32*32, tileBuild(34, false, false, 0));
+
+    lengths[0] = getVariableWidth("I AM");
+    lengths[1] = getVariableWidth("I AM NOT");
+
+    pos[0] = 48 + lengths[0] / 2;
+    pos[1] = 120 + lengths[1] / 2;
+
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+    for(int i = 0; i < 2; i++){
+        cursorSprites[i] = &obj_buffer[1 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_hide(cursorSprites[i]);
+    }
+
+    enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
+}
+
+bool ConfirmEmuScene::control(){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.left) || key_hit(k.right)){
+        cancel = !cancel;
+        sfx(SFX_MENUMOVE);
+    }
+
+    if(key_hit(k.confirm)){
+        sfx(SFX_MENUCONFIRM);
+#ifdef GBA
+        if (!cancel) {
+            inaccurateEmulator = detect_inaccurate_emulator();
+        }
+        setUpLinkUniversal(!cancel);
+        emulatorPrompted = true;
+#endif
+        changeScene(new MultBattleScene(),Transitions::FADE);
+    }else if(key_hit(k.cancel)){
+        sfx(SFX_MENUCANCEL);
+        changeScene(new MainMenuScene(),Transitions::FADE);
+    }
+
+    return false;
+}
+
+void ConfirmEmuScene::draw(){
+    fallingBlocks();
+
+    int offset = (sinLut(cursorFloat) * 2) >> 12;
+    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+    const int y = 104;
+
+    for(int i = 0; i < 2; i++){
+        sprite_unhide(cursorSprites[i],0);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_set_size(cursorSprites[i], scale , i);
+
+        int x = pos[cancel] - ((lengths[cancel] + 8) / 2 + offset + 4) * ((i)?-1:1) - 8;
+
+        sprite_set_pos(cursorSprites[i], x, y - 5);
+    }
+
+    showSprites(128);
+}
+
+void ConfirmEmuScene::update(){
+    canDraw = true;
+    key_poll();
+
+    cursorFloat += 6;
+    if(cursorFloat >= 512)
+        cursorFloat = 0;
+
+    control();
+}
+
+void ConfirmEmuScene::deinit(){
+    clearText();
+    clearSmallText();
+    resetSmallText();
 }
 
 void MainMenuScene::init(){
