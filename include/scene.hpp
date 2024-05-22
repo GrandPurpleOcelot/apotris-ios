@@ -333,6 +333,28 @@ class ConfirmSaveScene : public Scene{
     Scene* previousScene(){return new MainMenuScene();};
 };
 
+class ConfirmEmuScene : public Scene{
+public:
+    int timer = 0;
+
+    bool cancel = true;
+
+    int cursorFloat = 0;
+
+    OBJ_ATTR * cursorSprites[2];
+
+    int lengths[2];
+
+    int pos[2];
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene(){return new MainMenuScene();};
+};
+
 class SettingsScene : public SimpleListScene{
     public:
         Scene* previousScene(){

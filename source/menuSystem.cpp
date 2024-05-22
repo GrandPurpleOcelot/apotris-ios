@@ -176,7 +176,15 @@ void sceneSwitcher(std::string str){
         changeScene(new ZenScene(),Transitions::FADE);
 #endif
     }else if(str == "2P Battle"){
+#ifdef GBA
+        if (emulatorPrompted) {
+            changeScene(new MultBattleScene(),Transitions::FADE);
+        } else {
+            changeScene(new ConfirmEmuScene(), Transitions::FADE);
+        }
+#else
         changeScene(new MultBattleScene(),Transitions::FADE);
+#endif
 #ifndef MULTIBOOT
     }else if(str == "CPU Battle" || str == "Battle"){
         changeScene(new CPUBattleScene(),Transitions::FADE);

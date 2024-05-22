@@ -34,6 +34,9 @@ int musicVolume = 0;
 bool disableHBlank = true;
 bool disableDMA = true;
 
+bool inaccurateEmulator = false;
+bool emulatorPrompted = false;
+
 Songs songs;
 
 void onHBlank() {
