@@ -10,6 +10,7 @@
 #endif
 
 #include "logging.h"
+#include "achievementStructure.h"
 
 #include "text.h"
 
@@ -79,6 +80,11 @@ Scene * scene = nullptr;
 bool gradientEnabled = false;
 
 Options *previousGameOptions = nullptr;
+
+#ifdef GBA
+__attribute((section(".ewram.status")))
+#endif
+StatusData status{};
 
 #ifdef GBA
 u16 gradientTable[192 + 1];
@@ -817,20 +823,23 @@ void buildMini(TILE * customSkin){
     }
 }
 
-Tuning getTuning(){
+Tuning getTuning(Save *save){
     Tuning t = {
-        t.das = savefile->settings.das,
-        t.arr = savefile->settings.arr,
-        t.sfr = savefile->settings.sfr,
-        t.dropProtection = savefile->settings.dropProtectionFrames,
-        t.directionalDas = savefile->settings.directionalDas,
-        t.delaySoftDrop = savefile->settings.delaySoftDrop,
-        t.ihs = savefile->settings.ihs,
-        t.irs = savefile->settings.irs,
-        t.initialType = savefile->settings.initialType,
+            t.das = save->settings.das,
+            t.arr = save->settings.arr,
+            t.sfr = save->settings.sfr,
+            t.dropProtection = save->settings.dropProtectionFrames,
+            t.directionalDas = save->settings.directionalDas,
+            t.delaySoftDrop = save->settings.delaySoftDrop,
+            t.ihs = save->settings.ihs,
+            t.irs = save->settings.irs,
+            t.initialType = save->settings.initialType,
     };
 
     return t;
+}
+Tuning getTuning(){
+    return getTuning(savefile);
 }
 
 void setGradient(int color){
@@ -923,15 +932,13 @@ void gradient(int state){
 }
 
 void startGame(BlockEngine::Options options,int seed){
-    if(game != nullptr)
-        delete game;
+    delete game;
     game = new Game(options.mode,seed,options.bigMode);
     game->setOptions(options);
 
     savefile->stats.gamesStarted++;
 
-    if(previousGameOptions != nullptr)
-        delete previousGameOptions;
+    delete previousGameOptions;
     previousGameOptions = new Options();
 
     *previousGameOptions = options;
@@ -948,6 +955,9 @@ void startGame(BlockEngine::Options options,int seed){
     if(options.mode == BlockEngine::ZEN){
         game->score = savefile->boards.zen;
     }
+
+    status.startGame();
+    status.Options = previousGameOptions;
 }
 
 void startGame(int seed){
@@ -968,8 +978,7 @@ void startBotGame(int seed){
     startMultiplayerGame(seed);
     multiplayer = false;
 
-    if(botGame != nullptr)
-        delete botGame;
+    delete botGame;
 
     botGame = new Game(BATTLE,seed & 0x1fff,false);
     botGame->setOptions(*previousGameOptions);
@@ -981,6 +990,9 @@ void startBotGame(int seed){
     testBot = new Bot(botGame);
 
     clearText();
+
+    status.startGame();
+    status.Options = previousGameOptions;
 }
 
 void setPawnPalette(int dest, int n, int blend){

@@ -16,6 +16,7 @@
 #include <posprintf.h>
 #include "scene.hpp"
 #include "sceneHandling.hpp"
+#include "achievementStructure.h"
 
 using namespace BlockEngine;
 
@@ -1243,7 +1244,6 @@ void GameScene::showText() {
         if (gm != ULTRA && gm != ZEN) {
             wordSprites[2].setText("Level");
             wordSprites[2].show(9 * 8 - wordSprites[2].width, 14 * 8,15);
-
             wordSprites[3].setTextNum(game->level);
             wordSprites[3].show(9 * 8 - wordSprites[3].width, 15 * 8,15);
         }
@@ -1265,8 +1265,16 @@ void GameScene::showText() {
 
         if (gm == MASTER) {
             str = GameInfo::masterGrades[game->grade + game->coolCount];
+
+            status.gradeString = str;
+            status.gradeIndex = game->grade + game->coolCount;
         } else if (gm == DEATH) {
-            str = GameInfo::deathGrades[game->level / 100 - game->regretCount];
+            const int index = game->level / 100 - game->regretCount;
+
+            str = GameInfo::deathGrades[index];
+
+            status.gradeString = str;
+            status.gradeIndex = index;
         }
 
         wordSprites[1].setText(str);

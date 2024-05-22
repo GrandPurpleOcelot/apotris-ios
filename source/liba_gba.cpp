@@ -16,6 +16,7 @@
 #include "detectEmulators.h"
 #include "gba_sram.h"
 #include "gba_flash.h"
+#include "achievementStructure.h"
 
 // #include <string>
 // #include "scene.hpp"
@@ -611,6 +612,7 @@ void saveSavefile(){
         if (ENABLE_FLASH_SAVE)
             save_sram_flash();
     }
+    status.update(&savefile->settings);
 }
 
 void mirrorPalettes(int index, int count){

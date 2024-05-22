@@ -8,6 +8,7 @@
 /* #include "soundbank.h" */
 #include <posprintf.h>
 #include <map>
+#include <memory>
 
 static inline void setTile(int sbb, int x, int y, uint32_t value){
     se_mem[sbb][y * 32 + x] = value & 0xffff;
@@ -82,4 +83,3 @@ extern std::map<int,std::string> keyToString;
 
 extern void toggleSpriteSorting(bool state);
 void setUpLinkUniversal(bool detectEmus);
-
