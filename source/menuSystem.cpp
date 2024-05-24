@@ -23,6 +23,7 @@ void fadeFromBlack();
 
 void changeScene(Scene *newScene, Transitions transition){
     gradient(0);
+    vsync();
     setLightMode();
 
     switch(transition){

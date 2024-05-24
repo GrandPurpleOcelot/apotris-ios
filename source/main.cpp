@@ -953,12 +953,10 @@ void gradient(int state){
         stopDMA();
         gradientEnabled = false;
         toggleHBlank(true);
-        vsync();
     }else{
         stopDMA();
         gradientEnabled = false;
         toggleHBlank(false);
-        vsync();
     }
 }
 
