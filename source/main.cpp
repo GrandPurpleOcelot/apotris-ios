@@ -876,7 +876,6 @@ Tuning getTuning(){
 
 void setGradient(int color){
     stopDMA();
-    vsync();
 
     int div = 20;
 
