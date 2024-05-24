@@ -419,8 +419,9 @@ void sleep() {
     int display_value = REG_DISPCNT;
 
     bool prevGradient = gradientEnabled;
-    interrupt_disable(INTR_VBLANK);
     gradient(false);
+    vsync();
+    interrupt_disable(INTR_VBLANK);
 
     int stat_value = REG_SNDSTAT;
     int dsc_value = REG_SNDDSCNT;
