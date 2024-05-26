@@ -190,9 +190,13 @@ void platformInit(){
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER3);
     interrupt_enable(INTR_TIMER2);
+
+    #ifndef NO_DIAGNOSE
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
     interrupt_set_handler(INTR_KEYPAD, onKeyInterrupt);
     interrupt_enable(INTR_KEYPAD);
+    #endif
+
     interrupt_set_handler(INTR_VBLANK, onVBlank);
 
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
@@ -419,9 +423,8 @@ void sleep() {
     int display_value = REG_DISPCNT;
 
     bool prevGradient = gradientEnabled;
-    gradient(false);
-    vsync();
     interrupt_disable(INTR_VBLANK);
+    gradient(0);
 
     int stat_value = REG_SNDSTAT;
     int dsc_value = REG_SNDDSCNT;
@@ -442,6 +445,8 @@ void sleep() {
     interrupt_disable(INTR_SERIAL);
 
     REG_P1CNT = 0b1100001100000100;
+    interrupt_enable(INTR_KEYPAD);
+    interrupt_set_handler(INTR_KEYPAD, nullptr);
 
     Stop();
 
@@ -459,7 +464,7 @@ void sleep() {
     interrupt_enable(INTR_VBLANK);
 
     if(prevGradient)
-        gradient(true);
+        gradient(1);
 }
 
 void sfx(int s){
@@ -515,13 +520,14 @@ IWRAM_CODE void onVBlank() {
         interrupt_disable(INTR_HBLANK);
         disableHBlank = false;
     }
+
     if (disableDMA) {
         REG_DMA0CNT &= ~(1 << 0x1f);
         disableDMA = false;
     }
+
     if(gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
-
 
     if (canDraw) {
         canDraw = false;

@@ -255,7 +255,7 @@ void TitleScene::init(){
     wordSprites[0].setText("Press Any");
     wordSprites[1].setText("Button");
 
-    versionText.setText("v4.0.1");
+    versionText.setText("v4.0.2");
 
     nameText.setText("akouzoukos");
 

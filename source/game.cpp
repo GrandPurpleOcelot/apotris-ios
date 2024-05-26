@@ -405,7 +405,7 @@ void GameScene::checkSounds() {
 
     if (game->sounds.zone == 1) {
         clearText();
-        gradient(false);
+        gradient(0);
 
         holdingSave = true;
 
@@ -418,7 +418,6 @@ void GameScene::checkSounds() {
         setPalette();
         setClearEffect();
         showBackground(0);
-
 
         flashTimer = flashTimerMax;
         zoneFlash();
@@ -1542,6 +1541,7 @@ void GameScene::countdown() {
     showPawn();
     showShadow();
     showSpawn();
+    showZoneMeter();
 
     showSprites(128);
 
@@ -2512,7 +2512,7 @@ void zoneFlash(){
             delete []previousPalette;
         previousPalette = new COLOR [512];
         savePalette(previousPalette);
-        // memcpy32_fast(&previousPalette[0], pal_bg_mem, 256);
+        previousPalette[0] = 0x5ad6 * savefile->settings.lightMode;
     }
 
     flashTimer--;
