@@ -589,6 +589,8 @@ class MultBattleScene : public PlayOptionScene{
     void draw();
 
     std::string name(){return "2P Battle";};
+private:
+    interrupt_vector rumbleHandler = nullptr;
 };
 
 #ifndef MULTIBOOT
