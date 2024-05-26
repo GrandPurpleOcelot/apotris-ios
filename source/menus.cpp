@@ -529,7 +529,7 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps, boo
         else if(savefile->settings.aspectRatio == 1)
             aprints("PCs: " + std::to_string(game->statTracker.perfectClears), 0, 7*counter++, 2);
 
-        aprints("Max Streak: " + std::to_string(game->statTracker.maxStreak+1), 0, 7*counter++, 2);
+        aprints("Max Streak: " + std::to_string(game->statTracker.maxStreak), 0, 7*counter++, 2);
         aprints("Max Combo: " + std::to_string(game->statTracker.maxCombo), 0, 7*counter++, 2);
         aprints("Times Held: " + std::to_string(game->statTracker.holds), 0, 7*counter++, 2);
     }
