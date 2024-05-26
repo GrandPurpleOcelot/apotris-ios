@@ -932,7 +932,7 @@ int onRecord() {
         place = saveRecord(savefile->boards.ultra[mode], game->score, -1);
 
     } else if (game->gameMode == BLITZ) {
-        place = saveRecord(savefile->boards.blitz[mode], game->score, -1);
+        place = saveRecord(savefile->boards.blitz[0], game->score, -1);
 
     } else if (game->gameMode == COMBO) {
         place = saveRecord(savefile->boards.combo, game->statTracker.maxCombo, -1);
