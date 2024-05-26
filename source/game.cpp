@@ -2411,7 +2411,7 @@ void showSpeedMeter(int fill){
     setPaletteColor(16 + 13, 2, 0x001f, 1);
     setPaletteColor(16 + 13, 3, 0x4a52, 1);
 
-    clearSpriteTiles(256, 4, 1);
+    clearSpriteTiles(256 + 3, 4, 1);
 
     if(fill > maxLength)
         fill = maxLength;
@@ -2420,16 +2420,16 @@ void showSpeedMeter(int fill){
     for(int x = 0; x < maxLength+1; x++){
         int shift = (x%8);
         if(x < maxLength){
-            setSpritePixel(256, x / 8, 0, 4, shift, 0, (1 + (x < fill)));
+            setSpritePixel(256 + 3, x / 8, 0, 4, shift, 0, (1 + (x < fill)));
             if(x > 0)
-                setSpritePixel(256, x / 8, 0, 4, shift, 1, 3);
+                setSpritePixel(256 + 3, x / 8, 0, 4, shift, 1, 3);
         }else{
-            setSpritePixel(256, x / 8, 0, 4, shift, 1, 3);
+            setSpritePixel(256 + 3, x / 8, 0, 4, shift, 1, 3);
         }
     }
 
     sprite_unhide(sprite, 0);
-    sprite_set_attr(sprite, ShapeWide, 1, 256, 13, 0);
+    sprite_set_attr(sprite, ShapeWide, 1, 256 + 3, 13, 0);
     sprite_set_pos(sprite,9 * 8 - 22, 139);
 }
 
@@ -2841,7 +2841,6 @@ void showFullMeter(){
         if(fullMeterTimer < fullMeterAnimationLength){
             fullMeterTimer = 0;
             loadSpriteTiles(256+3, meterTiles[0], 4, 4);
-            // memcpy32_fast(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
         }
         return;
     }
@@ -2849,14 +2848,12 @@ void showFullMeter(){
     if(--fullMeterTimer <= 0){
         fullMeterTimer = fullMeterTimerMax;
         loadSpriteTiles(256+3, meterTiles[0], 4, 4);
-        // memcpy32_fast(&tile_mem[4][256+3],meterTiles[0],meter1_tiles_bin_size/4);
         return;
     }
 
     if(fullMeterTimer < fullMeterAnimationLength){
     int n = 2 - (fullMeterTimer/(fullMeterAnimationLength/3));
         loadSpriteTiles(256+3, meterTiles[n+1], 4, 4);
-        // memcpy32_fast(&tile_mem[4][256+3],meterTiles[n+1],meter1_tiles_bin_size/4);
     }
 }
 

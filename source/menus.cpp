@@ -529,7 +529,7 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps, boo
         else if(savefile->settings.aspectRatio == 1)
             aprints("PCs: " + std::to_string(game->statTracker.perfectClears), 0, 7*counter++, 2);
 
-        aprints("Max Streak: " + std::to_string(game->statTracker.maxStreak+1), 0, 7*counter++, 2);
+        aprints("Max Streak: " + std::to_string(game->statTracker.maxStreak), 0, 7*counter++, 2);
         aprints("Max Combo: " + std::to_string(game->statTracker.maxCombo), 0, 7*counter++, 2);
         aprints("Times Held: " + std::to_string(game->statTracker.holds), 0, 7*counter++, 2);
     }
@@ -932,7 +932,7 @@ int onRecord() {
         place = saveRecord(savefile->boards.ultra[mode], game->score, -1);
 
     } else if (game->gameMode == BLITZ) {
-        place = saveRecord(savefile->boards.blitz[mode], game->score, -1);
+        place = saveRecord(savefile->boards.blitz[0], game->score, -1);
 
     } else if (game->gameMode == COMBO) {
         place = saveRecord(savefile->boards.combo, game->statTracker.maxCombo, -1);
@@ -1366,6 +1366,8 @@ void addGameStats(){
 
     if(game->gameMode == ZEN){
         savefile->boards.zen = game->score;
+
+        saveSavefile();
     }
 }
 
