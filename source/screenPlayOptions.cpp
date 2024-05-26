@@ -613,6 +613,7 @@ void MultBattleScene::init(){
         linkConnection->setProtocol(LinkUniversal::AUTODETECT);
 
     if (!inaccurateEmulator) {
+        rumbleHandler = interrupt_get_handler(INTR_SERIAL);
         interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     }
 
@@ -782,6 +783,10 @@ void MultBattleScene::deinit(){
     PlayOptionScene::deinit();
 #ifdef GBA
     linkConnection->deactivate();
+    if (!inaccurateEmulator) {
+        if (rumbleHandler)
+            interrupt_set_handler(INTR_SERIAL, rumbleHandler);
+    }
 #endif
 }
 
