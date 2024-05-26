@@ -1541,6 +1541,7 @@ void GameScene::countdown() {
     showPawn();
     showShadow();
     showSpawn();
+    showZoneMeter();
 
     showSprites(128);
 
