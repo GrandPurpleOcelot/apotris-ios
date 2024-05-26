@@ -36,7 +36,7 @@ void PlayOptionScene::init(){
 bool PlayOptionScene::control(){
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(onScore && key_is_down(k.special1) && key_is_down(k.special2) && key_is_down(k.special3)){
+    if((onScore || getMode() == BlockEngine::ZEN) && key_is_down(k.special1) && key_is_down(k.special2) && key_is_down(k.special3)){
         resetScoreboard();
         refreshText = true;
         return false;
