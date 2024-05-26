@@ -589,8 +589,10 @@ class MultBattleScene : public PlayOptionScene{
     void draw();
 
     std::string name(){return "2P Battle";};
+#ifdef GBA
 private:
     interrupt_vector rumbleHandler = nullptr;
+#endif
 };
 
 #ifndef MULTIBOOT
