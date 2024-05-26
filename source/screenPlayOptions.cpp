@@ -612,6 +612,10 @@ void MultBattleScene::init(){
         // This undoes the hold L override if exiting and returning to this screen
         linkConnection->setProtocol(LinkUniversal::AUTODETECT);
 
+    if (!inaccurateEmulator) {
+        interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    }
+
     linkConnection->activate();
 
     #endif
