@@ -41,7 +41,12 @@ for ext in "${extensions[@]}"; do
     # Check if any files with the current extension exist
     if ls *"$ext" &>/dev/null; then
         for file in *"$ext"; do
-            if ! ../$APE ../tools/countchan.exe "$file"; then
+            if [[ $(uname) == "Darwin" ]]; then
+                COUNT_APE=$APE
+            else
+                COUNT_APE=../$APE
+            fi
+            if ! $COUNT_APE ../tools/countchan.exe "$file"; then
                 echo "Error counting channels for $file"
                 #exit 1
             fi
