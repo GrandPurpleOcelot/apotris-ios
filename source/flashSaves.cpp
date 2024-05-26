@@ -313,9 +313,10 @@ void save_sram_flash()
     if(isLinked)
 		linkConnection->deactivate();
 
+    int prev = gradientEnabled;
+    gradient(false);
+    vsync();
     interrupt_disable(INTR_VBLANK);
-	int prev = gradientEnabled;
-	gradient(false);
     int stat_value = REG_SNDSTAT;
     int dsc_value = REG_SNDDSCNT;
     int dmg_value = REG_SNDDMGCNT;
