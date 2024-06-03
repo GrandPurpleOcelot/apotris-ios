@@ -3,10 +3,8 @@ FROM devkitpro/devkitarm:20240511 AS devkitpro
 # ----------------------------------------------------------
 FROM bitnami/minideb:bookworm
 
-ENV DEBIAN_FRONTEND="noninteractive"
-
 # Install apt-available deps
-RUN apt-get update \
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
   && apt-get install -y --no-install-recommends \
     python3 ash zsh vim build-essential git make curl meson zstd wget sudo ca-certificates \
     libsdl2-mixer-dev libopus-dev libvorbis-dev \
