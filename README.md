@@ -37,6 +37,27 @@ meson setup build-linux && meson compile -C build-linux
 # Built executables are now in the Docker environment's apotris/build-*/ folders
 ```
 
+OR use mount the repo as a volume:
+
+```bash
+# Clone the repo locally (add --config core.autocrlf=false if you are on Windows)
+git clone --recursive https://gitea.com/akouzoukos/apotris.git 
+# Build the image
+docker build -t apotris-builder . 
+# Run the image with the project directory mounted
+docker run -it -v ${PWD}/:/root/apotris apotris-builder bash
+
+cd apotris
+# GBA
+meson setup --cross-file=meson/gba.ini build-gba && meson compile -C build-gba
+# Windows
+meson setup --cross-file=meson/mingw.ini build-windows && meson compile -C build-windows
+# Linux
+meson setup build-linux && meson compile -C build-linux
+
+# Built executables are now in the local environment's apotris/build-*/ folders
+```
+
 ## Meson build
 
 ### Overview of requirements for most systems
