@@ -16,7 +16,7 @@ First, [install Docker](https://docs.docker.com/get-docker/) for your system. Th
 
 ```bash
 # Download and log in to the Apotris builder docker image
-docker run -it docker.io/library/akouzoukos/apotris bash
+docker run -it docker.io/akouzoukos/apotris bash
 # OR Optional: build the image yourself
 docker build -t apotris-builder . && docker run -it apotris-builder bash
 # You are now in the docker image environment, use Ctrl+D or "exit" command to return to main OS
