@@ -42,7 +42,7 @@ RUN tar xf meson-1.4.0.tar.gz && cd meson-1.4.0 && python3 setup.py install
 
 # Install latest emscripten compiler
 WORKDIR /root
-RUN git clone https://github.com/emscripten-core/emsdk.git
+RUN git clone --depth 1 --branch 3.1.61 https://github.com/emscripten-core/emsdk.git
 WORKDIR emsdk
 RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bash_profile && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bashrc
 
@@ -50,22 +50,12 @@ RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/ems
 WORKDIR /root
 
 # Install DevKitPro
-#RUN dkp-pacman -Syu --noconfirm switch-dev switch-portlibs
 COPY --from=devkitpro /opt/devkitpro /opt/devkitpro
 
-#RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
-RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile
-RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
-
-RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bash_profile
-RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bashrc
-
-RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bash_profile
-RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bashrc
-
-RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bash_profile
-RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bashrc
-
+ENV DEVKITPRO="/opt/devkitpro"
+ENV DEVKITARM="$DEVKITPRO/devkitARM"
+ENV DEVKITA64="$DEVKITPRO/devkitA64"
+ENV PATH="$PATH:/$DEVKITPRO/tools/bin/"
 
 # fix linux SDL2 xrandr dependency issue
 RUN sudo apt remove --purge libsdl2-dev -y
