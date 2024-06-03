@@ -1,4 +1,7 @@
-FROM ubuntu:23.10
+FROM devkitpro/devkitarm:20240511 AS devkitpro
+
+# ----------------------------------------------------------
+FROM bitnami/minideb:bookworm
 
 # Install apt-available deps
 RUN DEBIAN_FRONTEND=noninteractive \
@@ -42,9 +45,9 @@ RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/ems
 WORKDIR /root
 
 # Install DevKitPro
-ADD tools/install_devkit_pro_pacman.bash .
-RUN chmod +x ./install_devkit_pro_pacman.bash && ./install_devkit_pro_pacman.bash
-RUN dkp-pacman -Syu --noconfirm switch-dev switch-portlibs
+#RUN dkp-pacman -Syu --noconfirm switch-dev switch-portlibs
+COPY --from=devkitpro /opt/devkitpro /opt/devkitpro
+
 #RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
 RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile && echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
 RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bash_profile
