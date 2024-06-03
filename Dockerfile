@@ -12,7 +12,8 @@ RUN DEBIAN_FRONTEND=noninteractive \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
     libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
-    libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev mingw-w64 directx-headers-dev
+    libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev mingw-w64 \
+  && apt-get install -y --fix-missing directx-headers-dev
 
 # Download and extract toolchain based on arch
 RUN /bin/bash -c 'set -ex && \
@@ -49,13 +50,18 @@ WORKDIR /root
 COPY --from=devkitpro /opt/devkitpro /opt/devkitpro
 
 #RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
-RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile && echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
-RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bash_profile
+RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile
+RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
+
 RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bash_profile
-RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bash_profile
-RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bashrc
 RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bashrc
+
+RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bash_profile
 RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bashrc
+
+RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bash_profile
+RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bashrc
+
 
 # fix linux SDL2 xrandr dependency issue
 RUN sudo apt remove --purge libsdl2-dev -y
