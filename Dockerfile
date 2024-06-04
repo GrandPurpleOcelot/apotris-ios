@@ -7,16 +7,15 @@ FROM ubuntu:23.10
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
   && apt-get install -y --no-install-recommends \
-    python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates \
+    python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates zip \
     libsdl2-mixer-dev libopus-dev libvorbis-dev \
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
     libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
     libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev mingw-w64 \
-  && apt-get install -y --fix-missing directx-headers-dev
-# cleanup to savesome space
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y --fix-missing directx-headers-dev \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Download and extract toolchain based on arch
 RUN /bin/bash -c 'set -ex && \
