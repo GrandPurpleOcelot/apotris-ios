@@ -1,7 +1,7 @@
 FROM devkitpro/devkitarm:20240511 AS devkitpro
 
 # ----------------------------------------------------------
-FROM bitnami/minideb:bookworm
+FROM ubuntu:23.10
 
 # Install apt-available deps
 RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
