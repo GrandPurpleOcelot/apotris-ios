@@ -4,7 +4,8 @@ FROM devkitpro/devkitarm:20240511 AS devkitpro
 FROM ubuntu:23.10
 
 # Install apt-available deps
-RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive \
+  apt-get update \
   && apt-get install -y --no-install-recommends \
     python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates \
     libsdl2-mixer-dev libopus-dev libvorbis-dev \
