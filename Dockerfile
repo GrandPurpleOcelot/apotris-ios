@@ -1,7 +1,8 @@
-FROM devkitpro/devkitarm:20240511 AS devkitpro
+FROM docker.io/devkitpro/devkita64:20240604 AS devkita64
 
-# ----------------------------------------------------------
-FROM ubuntu:23.10
+FROM docker.io/akouzoukos/gbadev:latest AS devkitarm
+
+FROM docker.io/library/ubuntu:23.10
 
 # Install apt-available deps
 RUN DEBIAN_FRONTEND=noninteractive \
@@ -48,7 +49,8 @@ RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/ems
 WORKDIR /root
 
 # Install DevKitPro
-COPY --from=devkitpro /opt/devkitpro /opt/devkitpro
+COPY --from=devkita64 /opt/devkitpro /opt/devkitpro
+COPY --from=devkitarm /opt/devkitpro /opt/devkitpro
 
 ENV DEVKITPRO="/opt/devkitpro"
 ENV DEVKITARM="$DEVKITPRO/devkitARM"
