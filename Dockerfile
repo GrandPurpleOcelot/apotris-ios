@@ -6,7 +6,7 @@ FROM bitnami/minideb:bookworm
 # Install apt-available deps
 RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
   && apt-get install -y --no-install-recommends \
-    python3 ash zsh vim build-essential git make curl meson zstd wget sudo ca-certificates \
+    python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates \
     libsdl2-mixer-dev libopus-dev libvorbis-dev \
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \

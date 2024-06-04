@@ -45,9 +45,8 @@ git clone --recursive https://gitea.com/akouzoukos/apotris.git
 # Build the image
 docker build -t apotris-builder . 
 # Run the image with the project directory mounted
-docker run -it -v ${PWD}/:/root/apotris apotris-builder bash
+docker run -it -v ${PWD}/:/root/apotris -w /root/apotris apotris-builder bash
 
-cd apotris
 # GBA
 meson setup --cross-file=meson/gba.ini build-gba && meson compile -C build-gba
 # Windows
