@@ -42,6 +42,8 @@ OR use mount the repo as a volume:
 ```bash
 # Clone the repo locally (add --config core.autocrlf=false if you are on Windows)
 git clone --recursive https://gitea.com/akouzoukos/apotris.git 
+# Enter source dir
+cd apotris 
 # Build the image
 docker build -t apotris-builder . 
 # Run the image with the project directory mounted
@@ -53,7 +55,6 @@ meson setup --cross-file=meson/gba.ini build-gba && meson compile -C build-gba
 meson setup --cross-file=meson/mingw.ini build-windows && meson compile -C build-windows
 # Linux
 meson setup build-linux && meson compile -C build-linux
-
 # Built executables are now in the local environment's apotris/build-*/ folders
 ```
 
