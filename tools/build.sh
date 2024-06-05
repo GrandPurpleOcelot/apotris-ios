@@ -20,7 +20,7 @@ ninja -C build-switch
 # Web
 meson setup --reconfigure --cross-file=meson/emscripten.ini -Db_lto=false --buildtype=release build-web && \
 ninja -C build-web || true && \
-/usr/lib/emscripten/emcc -c /usr/lib/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src/effect_position.c -o /usr/lib/emscripten/cache/ports-builds/sdl2_mixer/src/effect_position.c.o -g -sSTRICT -Werror -O2 -I/usr/lib/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0 -sUSE_SDL=2 -O2 -DMUSIC_WAV -sUSE_VORBIS -DMUSIC_OGG -I/usr/lib/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/include -I/usr/lib/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src -I/usr/lib/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src/codecs && \
+/root/emsdk/upstream/emscripten/emcc -c /root/emsdk/upstream/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src/effects_internal.c -o /root/emsdk/upstream/emscripten/cache/ports-builds/sdl2_mixer/src/effects_internal.c.o -g -sSTRICT -Werror -O2 -I/root/emsdk/upstream/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0 -sUSE_SDL=2 -O2 -DMUSIC_WAV -sUSE_VORBIS -DMUSIC_OGG -I/root/emsdk/upstream/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/include -I/root/emsdk/upstream/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src -I/root/emsdk/upstream/emscripten/cache/ports/sdl2_mixer/SDL_mixer-release-2.8.0/src/codecs
 ninja -C build-web
 
 # GBArunner2
