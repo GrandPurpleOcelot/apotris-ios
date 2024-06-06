@@ -199,8 +199,18 @@ public:
 #endif
 };
 
+/**
+ * Contains the various outer and inner states that power the multiplayer state machine for networking.
+ * Outer states:
+ * - Deactivated
+ * - Activated
+ */
 struct MultiplayerStates {
-    
+
+    /**
+     * When state is entered, will disable underlying network or wireless hardware automatically.
+     * Is the default state when the state machine is not initialized.
+     */
     struct Deactivated : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
@@ -218,6 +228,10 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * This state manages an active network or GBA wireless connection and calls to the underlying polling mechanism.
+     * It awaits the presence of players and will set its own inner states. PlayersPresent is the entry to the inner chain.
+     */
     struct Activated : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
@@ -231,6 +245,8 @@ struct MultiplayerStates {
             Owner().universal->sync();
         }
 
+        // Defaults to connection initializing on first entry and when a player disconnects during a live game.
+        // Otherwise, proceeds to PlayersPresent and attempts to seed, etc.
         Transition GetTransition() override {
             if (!Owner().universal->isConnected()
                 || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount)) {
@@ -240,6 +256,10 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * This state captures resetting and/or persisting player connection data for existing or new games before connection
+     * and during reconnection.
+     */
     struct ConnectionInitializing : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
@@ -252,6 +272,7 @@ struct MultiplayerStates {
 #endif
         }
 
+        // Waits for correct player count or any connection before marking remote players as "present"
         Transition GetTransition() override {
             if (!Owner().universal->isConnected()
                 || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount)) {
@@ -263,6 +284,10 @@ struct MultiplayerStates {
 
     };
 
+    /**
+     * Handles the unique case of 3+P where only some players are present after disconnect during a live game.
+     * Also handles resetting player ready states before a game has started when a disconnect occurs.
+     */
     struct PlayersPresent : StateWithOwner<MultiplayerLink> {
         unsigned int seenPlayerCount = 0;
 
@@ -289,6 +314,11 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * Represents the state where some but not all players are synchronized on the host-chosen seed.
+     * On entry, the host rolls a seed and transmits it to players. All players await seed messages to confirm synchronization
+     * before proceeding, so each client will have the same random state.
+     */
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
@@ -349,6 +379,11 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * When all players are seeded, we set the playingPlayerCount here, but only if not already in-game.
+     * This is how the player count gets determined without confusion before the ready up stage.
+     * Relies on the reset operations from earlier stages in the chain.
+     */
     struct PlayersSeeded : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
@@ -364,6 +399,9 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * Players send out and await ready-up messages from others in this state, gated by a confirm button in the UI.
+     */
     struct PlayersAwaitReady : StateWithOwner<MultiplayerLink> {
         bool sentReady = false;
         int readyTimeout = 120;
@@ -417,6 +455,10 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * The game logic itself, which parses packets of all types into Command classes that have effects when execute()'d
+     * It will transition into Won or Lost states depending on flags set by game logic elsewhere in the application.
+     */
     struct Playing : StateWithOwner<MultiplayerLink> {
         int echoCounter = 0;
 
@@ -479,6 +521,9 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * When a player has won, they announce it to the network and proceed to the GameOver state.
+     */
     struct Won : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
@@ -494,6 +539,10 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * When a player has lost, they continuously announce it to the network and proceed to the GameOver state when
+     * hearing another player has won. This state still parses remote board updates.
+     */
     struct Lost : StateWithOwner<MultiplayerLink> {
         unsigned int echoCounter = 0;
 
@@ -545,6 +594,10 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * The GameOver state is a temporary state. It exists to announce to any straggling players that are still in-game
+     * (perhaps due to dropped network traffic) that the game is considered over and they must reset to re-seed.
+     */
     struct GameOver : StateWithOwner<MultiplayerLink> {
         unsigned int echoCounter = 0;
 
@@ -595,6 +648,9 @@ struct MultiplayerStates {
         }
     };
 
+    /**
+     * When one or more players disconnect(s) from the network, all players wait for each other to echo "welcome back".
+     */
     struct PlayersReconnecting : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {

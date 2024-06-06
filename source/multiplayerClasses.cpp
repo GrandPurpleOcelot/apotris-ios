@@ -38,7 +38,7 @@ bool MultiplayerLink::sync() {
             if (stateMachine.IsInState<MultiplayerStates::PlayersSeeded>()
                     || stateMachine.IsInState<MultiplayerStates::Playing>()
                     || stateMachine.IsInState<MultiplayerStates::Lost>())
-                setUpPresentException("Send queue exceeded safe limit.");
+                exceptionReason = "Send queue exceeded safe limit.";
             else
                 clearQueue(sendQueue);
         }
@@ -46,7 +46,7 @@ bool MultiplayerLink::sync() {
             if (stateMachine.IsInState<MultiplayerStates::PlayersSeeded>()
                 || stateMachine.IsInState<MultiplayerStates::Playing>()
                 || stateMachine.IsInState<MultiplayerStates::Lost>())
-            setUpPresentException("Seed queue exceeded safe limit.");
+            exceptionReason = "Seed queue exceeded safe limit.";
             else
                 clearQueue(seedQueue);
         }
@@ -142,7 +142,7 @@ void MultiplayerLink::purgeQueues() {
 void MultiplayerLink::UpdateStateMachine() {
     if (!stateMachine.IsInitialized()) {
         stateMachine.SetDebugTraceLevel(hsm::TraceLevel::Diagnostic);
-        stateMachine.Initialize<MultiplayerStates::Activated>(this);
+        stateMachine.Initialize<MultiplayerStates::Deactivated>(this);
     }
     stateMachine.ProcessStateTransitions();
     stateMachine.UpdateStates();
@@ -188,6 +188,9 @@ void clearPlayers() {
     multiplayerLink->players.clear();
 }
 
+/**
+ * Only used in non-GBA multiplayer scenarios because the GBA hardware manages players for us
+ */
 void removePlayer(u8 pId) {
 #ifndef GBA
     multiplayerLink->removePlayer(pId);

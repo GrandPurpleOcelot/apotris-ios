@@ -306,4 +306,6 @@ extern u16 gradientTable[SCREEN_HEIGHT + 1];
 
 extern void setSpriteMaskRegion(int shift);
 
+void setUpPresentException(std::string error);
+
 #define UNBOUND -2

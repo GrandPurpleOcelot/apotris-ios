@@ -25,6 +25,7 @@ void loadAudio();
 void onKeyInterrupt();
 
 MultiplayerLink* multiplayerLink = nullptr;
+std::string exceptionReason;
 
 int spriteVOffset = 0;
 
@@ -36,7 +37,6 @@ int musicVolume = 0;
 bool disableHBlank = true;
 bool disableDMA = true;
 
-bool inaccurateEmulator = false;
 bool emulatorPrompted = false;
 
 Songs songs;

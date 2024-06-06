@@ -212,13 +212,8 @@ void GameScene::UpdateEnemyBoard(int command, int value, u8 linkPlayerId) {
 void startMultiplayerGame(int seed) {
     clearSpriteTiles(boardTile, 2,4);
     clearText();
-    printf("I am player ID: %u\n", linkUniversal->currentPlayerId());
-#ifndef WEB
-    clearSmallText();
-#else
     if (playAgain)
         clearSmallText();
-#endif
 
     for (int i = 0; i < 20; i++)
         for (int j = 0; j < 10; j++)
@@ -456,9 +451,7 @@ bool GameScene::reconnect(){
             enableBlend(prevBld);
             playSongRandom(0);
             buildBG(3, 0, 27, 0, 1, true);
-#ifdef GBA
-            setUpPresentException("Another player has quit the game.");
-#endif
+            exceptionReason = "Another player has quit the game.";
             return false;
         }
 
@@ -486,6 +479,7 @@ bool GameScene::reconnect(){
             FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
 
             for (int i = 0; i < 2; i++) {
+                sprite_unhide(cursorSprites[i], 0);
                 sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 0);
                 sprite_enable_affine(cursorSprites[i], i, true);
                 sprite_set_size(cursorSprites[i], scale, i);

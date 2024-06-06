@@ -187,7 +187,14 @@ int main() {
     //start screen animation
     while(closed()){
         vsync();
-        scene->update();
+        // This is here to be thread safe on PC
+        if (!exceptionReason.empty()) {
+            const std::string localReason = exceptionReason;
+            exceptionReason = "";
+            setUpPresentException(localReason);
+        }
+        else
+            scene->update();
     }
 
     deinitialize();
@@ -322,9 +329,13 @@ std::string nameInput(int place) {
 
         if (place != -1 && (place == 0 && game->gameMode != BATTLE && (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ)))
             aprint("New Record", 10, 5);
+        else if (place == -1) {
+            aprint("Pick a unique room to", 5, 5);
+            aprint("join/create", 7, 6);
+        }
 
         if (place == -1) {
-            aprint("Player ID: ", 11, nameHeight - 2);
+            aprint("Room pass: ", 11, nameHeight - 2);
         }else {
             aprint("Name: ", 11, nameHeight - 2);
         }

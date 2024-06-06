@@ -20,6 +20,8 @@
 
 LinkUniversal* linkUniversal = nullptr;
 MultiplayerLink* multiplayerLink = nullptr;
+std::string roomId;
+std::string exceptionReason;
 
 static int offsetx = (SCREEN_WIDTH - 240)/2;
 static int offsety = (SCREEN_HEIGHT - 160)/2;
@@ -920,6 +922,11 @@ void setSpriteMaskRegion(int shift){
     const int bot = offsety + shift;
 
     TLN_SetSpritesMaskRegion(top,bot);
+}
+
+void setUpPresentException(std::string error) {
+    multiplayerLink->deactivate(true);
+    changeScene(new MultiplayerExceptionScene(std::move(error)));
 }
 
 #endif

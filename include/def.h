@@ -351,6 +351,11 @@ struct Packet {
 #endif
 };
 
+#ifndef GBA
+extern std::string roomId;
+#endif
+extern std::string exceptionReason;
+
 
 struct StatusData;
 extern StatusData status;

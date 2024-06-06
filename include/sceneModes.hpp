@@ -577,6 +577,7 @@ class TrainingScene : public PlayOptionScene{
 class MultBattleScene : public PlayOptionScene{
     public:
 
+
     BlockEngine::Modes getMode() override{return BlockEngine::BATTLE;};
 
     std::list<Element*> getElementList() override{
@@ -597,9 +598,16 @@ class MultBattleScene : public PlayOptionScene{
     void handleReadyStatus();
 
     void hideReadyPlayers();
+
+
 #ifdef GBA
 private:
     interrupt_vector rumbleHandler = nullptr;
+#else
+    bool matchMake = false;
+
+    explicit MultBattleScene();
+    explicit MultBattleScene(std::string roomId);
 #endif
 };
 

@@ -3353,6 +3353,7 @@ void GameScene::deinit(){
 
     resetSmallText();
     clearText();
+    playAgain = false;
 }
 
 void updateFluid(){

@@ -18,6 +18,8 @@
 const HOST_NAME = Deno.env.get('HOST_NAME') || '0.0.0.0';
 const SERVER_PORT = Deno.env.get('PORT') ?? 8088;
 
+const MAX_PLAYERS = 5;
+
 const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
 const rooms: Map<string, string[]> = new Map<string, string[]>();
 
@@ -44,7 +46,9 @@ const handler = (request: Request): Response => {
   }
 
   const { socket, response } = Deno.upgradeWebSocket(request);
-  const clientID = new URL(request.url).pathname.split('/')[1];
+  const url = new URL(request.url);
+  const clientID = url.pathname.split('/')[1];
+  const requestedRoomID = url.pathname.split('/')[2];
 
   console.info(`WS Upgrade :: ${request.url}`);
 
@@ -54,28 +58,51 @@ const handler = (request: Request): Response => {
 
     // Try to match the client with an existing room
     let roomID;
-    for (const [id, room] of rooms.entries()) {
-      if (room.length < 2) {
-        room.push(clientID);
-        roomID = id;
-        break;
+    if (requestedRoomID === 'match') {
+      for (const [id, room] of rooms.entries()) {
+        if (room.length < 2) {
+          room.push(clientID);
+          roomID = id;
+          break;
+        }
+      }
+    } else {
+      for (const [id, room] of rooms.entries()) {
+        if (room.length >= MAX_PLAYERS) {
+          socket.send(JSON.stringify({ type: 'full', id : 'tryagain' }));
+          return;
+        }
+        if (id.toLowerCase() === requestedRoomID.toLowerCase()) {
+          room.push(clientID);
+          roomID = id.toLowerCase();
+          break;
+        }
       }
     }
 
     // If no room is available, create a new one
-    if (!roomID) {
+    if (!roomID && requestedRoomID != 'match') {
+      roomID = `${requestedRoomID.toLowerCase()}`;
+      rooms.set(roomID, [clientID]);
+    } else if (!roomID) {
       roomID = `room-${Math.floor(Math.random() * 100000)}`;
       rooms.set(roomID, [clientID]);
     }
 
     // If the room is full, send match messages to both clients
-    const room = rooms.get(roomID);
-    if (room?.length === 2) {
-      const [client1, client2] = room;
-      clients.get(client2)?.send(JSON.stringify({ type: 'match', id: client1, iter: 0 }));
-      clients.get(client2)?.send(JSON.stringify({ type: 'match', id: client2, iter: 1 }));
-      clients.get(client1)?.send(JSON.stringify({ type: 'match', id: client1, iter: 0 }));
-      clients.get(client1)?.send(JSON.stringify({ type: 'match', id: client2, iter: 1 }));
+    const room = rooms.get(roomID) ?? [];
+    if (room.length > 1) {
+      room.forEach((clientID, index) => {
+        // Send the client's own id and iter
+        clients.get(clientID)?.send(JSON.stringify({ type: 'match', id: clientID, iter: index }));
+
+        // Send the other clients' ids and iters
+        room.forEach((otherClientID, otherIndex) => {
+          if (clientID !== otherClientID) {
+            clients.get(clientID)?.send(JSON.stringify({ type: 'match', id: otherClientID, iter: otherIndex }));
+          }
+        });
+      });
       console.log('Room connected!');
     } else {
       // If the room is not full, send an iter message with 0

@@ -9,6 +9,7 @@
 #include "LinkWebRTC.hpp"
 #endif
 #include <cstring>
+#include <utility>
 
 bool lostConnection = true;
 
@@ -615,9 +616,9 @@ void MultBattleScene::init(){
         interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     }
 
-    multiplayerLink->activate();
-
     #endif
+
+    multiplayerLink->active = true;
 
     lastState = 0;
 
@@ -728,6 +729,7 @@ void MultBattleScene::update(){
 
 void MultBattleScene::deinit(){
     PlayOptionScene::deinit();
+    playAgain = false;
 #ifdef GBA
     multiplayerLink->deactivate(false);
     if (!inaccurateEmulator) {
@@ -735,6 +737,14 @@ void MultBattleScene::deinit(){
             interrupt_set_handler(INTR_SERIAL, rumbleHandler);
     }
 #endif
+}
+
+MultBattleScene::MultBattleScene() {
+    this->matchMake = true;
+}
+
+MultBattleScene::MultBattleScene(std::string room) {
+    roomId = std::move(room);
 }
 
 void PlayOptionScene::resetScoreboard(){
@@ -847,3 +857,115 @@ void PlayOptionScene::resetScoreboard(){
 
     showPath();
 }
+
+void MatchMakingScene::init(){
+    clearSprites(128);
+    showSprites(128);
+
+    clearSpriteTiles(256, 12 * 2, 1);
+    for (int i = 0; i < 2; i++)
+        wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
+
+    clearTilemap(29);
+    naprint("Who do you want to play with?", 40, 56);
+
+    wordSprites[0].setText("FRIENDS");
+    wordSprites[0].show(48,104,14);
+
+    wordSprites[1].setText("RANDOMS");
+    wordSprites[1].show(120,104,14);
+
+    //backgroundGrid
+    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+
+    setTiles(27,0,32*32, tileBuild(34, false, false, 0));
+
+    lengths[0] = wordSprites[0].width;
+    lengths[1] = wordSprites[1].width;
+
+    pos[0] = 48 + lengths[0] / 2;
+    pos[1] = 120 + lengths[1] / 2;
+
+    loadSpriteTiles(16*7, blockSprite, 1, 1);
+    for(int i = 0; i < 2; i++){
+        cursorSprites[i] = &obj_buffer[1 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_hide(cursorSprites[i]);
+    }
+
+    enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
+}
+
+bool MatchMakingScene::control(){
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if(key_hit(k.left) || key_hit(k.right)){
+        playRandoms = !playRandoms;
+        sfx(SFX_MENUMOVE);
+    }
+
+    if(key_hit(k.confirm)){
+        sfx(SFX_MENUCONFIRM);
+        if (!playRandoms) {
+            clearText();
+            clearSmallText();
+            hideSprites = true;
+            roomId = nameInput(-1);
+            changeScene(new MultBattleScene(roomId),Transitions::FADE);
+        }
+        changeScene(new MultBattleScene(),Transitions::FADE);
+    }else if(key_hit(k.cancel)){
+        sfx(SFX_MENUCANCEL);
+        changeScene(new MainMenuScene(),Transitions::FADE);
+    }
+
+    return false;
+}
+
+void MatchMakingScene::draw(){
+    fallingBlocks();
+
+    int offset = (sinLut(cursorFloat) * 2) >> 12;
+    FIXED scale = float2fx((1.0 - ((float) 0.1 * offset)));
+
+    const int y = 104;
+
+    for(int i = 0; i < 2; i++){
+        sprite_unhide(cursorSprites[i],0);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_set_size(cursorSprites[i], scale , i);
+
+        int x = pos[playRandoms] - ((lengths[playRandoms] + 8) / 2 + offset + 4) * ((i) ? -1 : 1) - 8;
+
+        sprite_set_pos(cursorSprites[i], x, y - 5);
+    }
+
+    if (!hideSprites) {
+        wordSprites[0].show(48, 104, 14 + (playRandoms == 0));
+        wordSprites[1].show(120, 104, 14 + (playRandoms == 1));
+    } else {
+        wordSprites[0].hide();
+        wordSprites[1].hide();
+    }
+
+    showSprites(128);
+}
+
+void MatchMakingScene::update(){
+    canDraw = true;
+    key_poll();
+
+    cursorFloat += 6;
+    if(cursorFloat >= 512)
+        cursorFloat = 0;
+
+    control();
+}
+
+void MatchMakingScene::deinit(){
+    clearText();
+    clearSmallText();
+    resetSmallText();
+}
+

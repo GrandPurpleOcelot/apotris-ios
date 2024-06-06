@@ -359,6 +359,34 @@ public:
     Scene* previousScene(){return new MainMenuScene();};
 };
 
+class MatchMakingScene : public Scene{
+public:
+    int timer = 0;
+
+    bool playRandoms = true;
+
+    int cursorFloat = 0;
+
+    WordSprite wordSprites[2];
+
+    OBJ_ATTR * cursorSprites[2];
+
+    int lengths[2];
+
+    int pos[2];
+
+    std::string room;
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene(){return new MainMenuScene();};
+    bool hideSprites;
+};
+
+
 class SettingsScene : public SimpleListScene{
     public:
         Scene* previousScene(){

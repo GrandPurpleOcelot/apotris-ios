@@ -83,7 +83,7 @@ void clearText(){
 
 void setSmallTextArea(int tid, int startX,int startY,int endX,int endY){
 	
-		delete textArea;
+    delete textArea;
 
 	textArea = new TextArea(tid,startX,startY,endX,endY);
 

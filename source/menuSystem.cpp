@@ -183,7 +183,7 @@ void sceneSwitcher(const std::string& str){
             changeScene(new ConfirmEmuScene(), Transitions::FADE);
         }
 #else
-        changeScene(new MultBattleScene(),Transitions::FADE);
+        changeScene(new MatchMakingScene(),Transitions::FADE);
 #endif
 #ifndef MULTIBOOT
     }else if(str == "CPU Battle" || str == "Battle"){

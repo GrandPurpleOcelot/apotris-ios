@@ -2,6 +2,7 @@
 #include "def.h"
 #include <queue>
 #include <future>
+#include <algorithm>
 #include "rtc/rtc.hpp"
 #include <nlohmann/json.hpp>
 
@@ -29,6 +30,7 @@ class LinkUniversal {
     static constexpr char ANSWER[] = "answer";
     static constexpr char MATCH[] = "match";
     static constexpr char CLOSE[] = "close";
+    static constexpr char FULL[] = "full";
     static constexpr char CANDIDATE[] = "candidate";
     static constexpr char MID[] = "mid";
     static constexpr char ITER[] = "iter";
@@ -116,7 +118,7 @@ public:
 #endif
                 int pId = playerStringToId[id];
                 removePlayer(pId);
-                readQueues.erase(id);
+                //readQueues.erase(id);
                 playerIdToString.erase(pId);
                 playerStringToId.erase(id);
             }
@@ -129,10 +131,13 @@ public:
                 pc->setRemoteDescription(rtc::Description(message[DESCRIPTION], type));
             else if (type == CANDIDATE)
                 pc->addRemoteCandidate(rtc::Candidate(message[CANDIDATE], message[MID]));
+            else if (type == FULL)
+                exceptionReason = "Room is full";
         });
     }
     void activate() {
         if (active) return;
+        active = true;
         initWebSocketConfig();
 
 #ifndef WEB
@@ -158,7 +163,8 @@ public:
         });
 #endif
 
-        const std::string url = "wss://signaling.pingas.org/" + localId;
+        std::string url = "wss://signaling.pingas.org/" + localId + (!roomId.empty() ? "/" + roomId : "/match");
+        url.erase(remove(url.begin(), url.end(), ' '), url.end());
 
         std::cout << "WebSocket URL is " << url << std::endl;
         ws->open(url);
@@ -167,7 +173,6 @@ public:
         std::cout << "Waiting for signaling to be connected..." << std::endl;
         wsFuture.get();
 #endif
-        active = true;
     }
 
     void makeOffer(std::shared_ptr<rtc::PeerConnection> pc, const std::string& remoteId) {
@@ -280,6 +285,7 @@ public:
         playerStringToId.clear();
         playerIdToString.clear();
         ws->close();
+        localId = randomId(10);
     }
 
     bool sync() const {
