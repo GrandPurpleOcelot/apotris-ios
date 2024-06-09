@@ -1034,6 +1034,11 @@ void showQueue(bool offsetSpriteIndex) {
 }
 
 bool GameScene::control() {
+    if (multiplayerStart) {
+        multiplayerStart = false;
+        changeScene(new GameScene());
+        return true;
+    }
     if (paused || !counted)
         return false;
 
@@ -1559,7 +1564,7 @@ void GameScene::countdown() {
 
     paused = true;
 
-    while (closed() && timer++ < timerMax - 1) {
+    while (closed() && timer++ < timerMax - 1 && !multiplayerStart) {
         canDraw = true;
         vsync();
         key_poll();

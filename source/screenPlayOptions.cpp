@@ -671,6 +671,11 @@ void MultBattleScene::handleConnectionDisplay(){
 }
 
 bool MultBattleScene::control(){
+    if (multiplayerStart) {
+        multiplayerStart = false;
+        changeScene(new GameScene(), Transitions::FADE);
+        return true;
+    }
     MenuKeys k = savefile->settings.menuKeys;
 
     if(key_hit(k.cancel)) {
@@ -739,6 +744,7 @@ void MultBattleScene::deinit(){
 #endif
 }
 
+#ifndef GBA
 MultBattleScene::MultBattleScene() {
     this->matchMake = true;
 }
@@ -746,6 +752,7 @@ MultBattleScene::MultBattleScene() {
 MultBattleScene::MultBattleScene(std::string room) {
     roomId = std::move(room);
 }
+#endif
 
 void PlayOptionScene::resetScoreboard(){
     vsync();
@@ -911,10 +918,20 @@ bool MatchMakingScene::control(){
             clearText();
             clearSmallText();
             hideSprites = true;
+#ifdef GBA
+            changeScene(new MultBattleScene(),Transitions::FADE);
+#else
             roomId = nameInput(-1);
             changeScene(new MultBattleScene(roomId),Transitions::FADE);
+#endif
+        } else {
+#ifdef GBA
+            changeScene(new MultBattleScene(),Transitions::FADE);
+#else
+            roomId = "";
+            changeScene(new MultBattleScene(), Transitions::FADE);
+#endif
         }
-        changeScene(new MultBattleScene(),Transitions::FADE);
     }else if(key_hit(k.cancel)){
         sfx(SFX_MENUCANCEL);
         changeScene(new MainMenuScene(),Transitions::FADE);

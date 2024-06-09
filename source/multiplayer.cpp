@@ -78,10 +78,8 @@ int GameScene::handleMultiplayer(bool duringGame) {
         }
     }
 
-    // Game start
-    if (multiplayerStart) {
+    if (multiplayerStart)
         return 0;
-    }
 
     if (!game->lost) {
         // Attacks take priority over block state
@@ -235,7 +233,7 @@ void startMultiplayerGame(int seed) {
     game->won = false;
 
     nextSeed = 0;
-    multiplayerStart = false;
+    multiplayerStart = true;
     botThinkingSpeed = 8 + multiplayerLink->universal->currentPlayerId();
     for (auto &i: multiplayerLink->enemyPower)
         i = 1;

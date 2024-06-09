@@ -226,6 +226,7 @@ extern std::list<PlaceEffect> placeEffectList;
 extern s16 glow[20][10];
 
 extern int nextSeed;
+extern int lastSeed;
 
 extern int push;
 #define pushMax 4

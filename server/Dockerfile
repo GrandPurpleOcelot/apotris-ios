@@ -1,9 +1,9 @@
 FROM denoland/deno AS builder
 WORKDIR /app
 
-COPY . .
-
 RUN apt update && apt install unzip
+
+COPY . .
 RUN deno task prepare
 
 FROM debian:stable-slim

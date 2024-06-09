@@ -2,6 +2,8 @@
 #include "scene.hpp"
 #include <stdexcept>
 
+int lastSeed = 0;
+
 template<typename T>
 void clearQueue(std::queue<T>& q) {
     std::queue<T> empty;

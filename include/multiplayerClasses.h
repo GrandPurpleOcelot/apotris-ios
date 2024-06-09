@@ -248,6 +248,8 @@ struct MultiplayerStates {
         // Defaults to connection initializing on first entry and when a player disconnects during a live game.
         // Otherwise, proceeds to PlayersPresent and attempts to seed, etc.
         Transition GetTransition() override {
+            if (!Owner().universal->isActive())
+                return SiblingTransition<Deactivated>();
             if (!Owner().universal->isConnected()
                 || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount)) {
                 return InnerEntryTransition<ConnectionInitializing>();
@@ -300,6 +302,12 @@ struct MultiplayerStates {
 #endif
         }
 
+#ifndef GBA
+        void Update() override {
+            seenPlayerCount = Owner().universal->playerCount();
+        }
+#endif
+
         Transition GetTransition() override {
             if (Owner().playing) {
                 if (Owner().playingPlayerCount > Owner().universal->playerCount()) {
@@ -322,6 +330,7 @@ struct MultiplayerStates {
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
+#ifdef GBA
             if (Owner().universal->currentPlayerId() && nextSeed) {
                 Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
                 return;
@@ -335,6 +344,7 @@ struct MultiplayerStates {
 
             Owner().players[Owner().universal->currentPlayerId()].seeded = true;
             Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
+#endif
         }
 
         void Update() override {
@@ -343,21 +353,34 @@ struct MultiplayerStates {
                     Packet packet = queue.front();
                     queue.pop();
 
-                    if ((packet.packet >> 13) != 2)
+                    auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
+                    if (command.command != 2)
                         continue;
 
-                    if (packet.packet & SEND_SEED) {
+                    if (command.value == BYE) {
+                        u32 newPlayerCount = Owner().playingPlayerCount - 1;
+#ifndef GBA
+                        removePlayer(packet.playerId);
+#endif
+                        clearEnemyBoard();
+                        Owner().universal->activate();
+                        Owner().universal->sync();
+                        Owner().playingPlayerCount = newPlayerCount;
+#ifdef GBA
+                    } else if (packet.packet & SEND_SEED) {
                         if (Owner().universal->currentPlayerId()) {
                             if (!packet.playerId) {
                                 nextSeed = packet.packet & (SEND_SEED - 1);
                             } else if (nextSeed && ((packet.packet & (SEND_SEED - 1)) != nextSeed))
-                                continue; // bad seed??
+                                nextSeed = packet.packet & (SEND_SEED - 1); // bad seed??
                             Owner().players[packet.playerId].seeded = true;
                         } else {
                             if ((packet.packet & (SEND_SEED - 1)) == nextSeed)
                                 Owner().players[packet.playerId].seeded = true;
                         }
+#endif
                     }
+
                 }
             };
             std::queue<Packet> readQueue = Owner().readPackets();
@@ -368,12 +391,16 @@ struct MultiplayerStates {
 
             if (nextSeed) {
                 Owner().players[Owner().universal->currentPlayerId()].seeded = true;
+#ifdef GBA
                 Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
+#endif
             }
         }
 
         Transition GetTransition() override {
+#ifdef GBA
             if (Owner().allSeeded(Owner().universal->playerCount()))
+#endif
                 return SiblingTransition<PlayersSeeded>();
             return NoTransition();
         }
@@ -436,8 +463,10 @@ struct MultiplayerStates {
             if (!sentReady && Owner().players[Owner().universal->currentPlayerId()].ready) {
                 sentReady = true;
                 Owner().send(UPDATE_STATE + LETS_PLAY);
+#ifdef GBA
                 // Help stragglers catch up (I hope I hope I hope)
                 Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
+#endif
             }
         }
 
@@ -468,7 +497,6 @@ struct MultiplayerStates {
                 Owner().playing = true;
                 playAgain = Owner().playAgain;
                 startMultiplayerGame(nextSeed);
-                changeScene(new GameScene());
             }
         }
 
@@ -572,9 +600,12 @@ struct MultiplayerStates {
                         Owner().universal->activate();
                         Owner().universal->sync();
                         Owner().playingPlayerCount = newPlayerCount;
-                    } else if (command.value & SEND_SEED)
+                    }
+#ifdef GBA
+                    else if (command.value & SEND_SEED)
                         Owner().seedQueue.emplace(command.playerId.id,
                                                   (command.command << 13) + command.value);
+#endif
                 } else if (command.command >= SEND_ROW) {
                     command.execute();
                 }
@@ -620,10 +651,13 @@ struct MultiplayerStates {
                 }
                 if (command.value == GAME_OVER) {
                     Owner().players[command.playerId.id].over = true;
-                } else if (command.value & SEND_SEED) {
+                }
+#ifdef GBA
+                else if (command.value & SEND_SEED) {
                     Owner().seedQueue.emplace(command.playerId.id,
                                               (command.command << 13) + command.value);
                 }
+#endif
             }
 
             if (echoCounter++ % 10 == 0) {
@@ -638,6 +672,10 @@ struct MultiplayerStates {
             Owner().resetPlayers();
             Owner().playing = false;
             Owner().playingPlayerCount = 0;
+#ifndef GBA
+            lastSeed += 1;
+            nextSeed = lastSeed;
+#endif
         }
 
         Transition GetTransition() override {

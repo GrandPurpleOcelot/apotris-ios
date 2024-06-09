@@ -37,6 +37,7 @@ int musicVolume = 0;
 bool disableHBlank = true;
 bool disableDMA = true;
 
+bool inaccurateEmulator = false;
 bool emulatorPrompted = false;
 
 Songs songs;
@@ -234,7 +235,7 @@ void platformInit(){
 }
 
 void setUpLinkUniversal(bool detectEmus) {
-    const bool inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
+    inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
     const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
     const u32 wirelessInterval = 50; // No reason to go lower

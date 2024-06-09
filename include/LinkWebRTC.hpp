@@ -30,6 +30,7 @@ class LinkUniversal {
     static constexpr char ANSWER[] = "answer";
     static constexpr char MATCH[] = "match";
     static constexpr char CLOSE[] = "close";
+    static constexpr char SEED[] = "seed";
     static constexpr char FULL[] = "full";
     static constexpr char CANDIDATE[] = "candidate";
     static constexpr char MID[] = "mid";
@@ -82,8 +83,13 @@ public:
             if (message.find(ID) == message.end() || message.find(TYPE) == message.end())
                 return;
 
-            std::string id = message[ID];
             std::string type = message[TYPE];
+            std::string id = message[ID];
+            if (type == SEED) {
+                nextSeed = stoi(id);
+                lastSeed = nextSeed;
+                return;
+            }
             if (type == MATCH) {
                 int iter = message[ITER];
                 int remotePlayerId = iter;
@@ -103,13 +109,13 @@ public:
                 }
                 if (id == localId)
                     return;
+            } else if (type == SEED) {
             }
             auto pc = getOrCreatePeerConnection(id, type);
 
             if (type == CLOSE) {
                 if (dataChannelMap.find(id) != dataChannelMap.end())
                     dataChannelMap[id]->close();
-                readQueues.erase(id);
                 dataChannelMap.erase(id);
                 peerConnectionMap.erase(id);
 #ifndef WEB
@@ -118,7 +124,6 @@ public:
 #endif
                 int pId = playerStringToId[id];
                 removePlayer(pId);
-                //readQueues.erase(id);
                 playerIdToString.erase(pId);
                 playerStringToId.erase(id);
             }
@@ -212,11 +217,6 @@ public:
 
         dataChannel->onClosed([this, peerId]() {
             std::cout << "DataChannel from " << peerId << " closed" << std::endl;
-            dataChannelMap.erase(peerId);
-            int pId = playerStringToId[peerId];
-            removePlayer(pId);
-            playerIdToString.erase(pId);
-            playerStringToId.erase(peerId);
         });
 
         dataChannel->onMessage([this, peerId](auto data) {
@@ -276,11 +276,13 @@ public:
     void deactivate() {
         if (!active) return;
         active = false;
+        send(2 << 13); // BYE
         dataChannelMap.clear();
 #ifndef WEB
         for (auto & it : peerConnectionMap)
             it.second->close();
 #endif
+        readQueues.clear();
         peerConnectionMap.clear();
         playerStringToId.clear();
         playerIdToString.clear();
@@ -288,7 +290,7 @@ public:
         localId = randomId(10);
     }
 
-    bool sync() const {
+    [[nodiscard]] bool sync() const {
         return isConnected();
     }
 
@@ -306,26 +308,36 @@ public:
     }
 
     bool send(u16 packet) {
-        for (auto & it : dataChannelMap) {
-            if (!it.second->isOpen()) {
-                std::cout << "DataChannel to " << it.first << " appears closed!";
-                return false;
+        try {
+            for (auto &it: dataChannelMap) {
+                if (!it.second->isOpen()) {
+                    std::cout << "DataChannel to " << it.first << " appears closed!";
+                    return false;
+                }
+                if (!it.second->send(reinterpret_cast<const std::byte *>(&packet), sizeof(u16)))
+                    return false;
             }
-            if (!it.second->send(reinterpret_cast<const std::byte *>(&packet), sizeof(u16)))
-                return false;
+            return true;
+        } catch (std::exception &e) {
+            printf("%s", e.what());
+            return true;
         }
-        return true;
     }
     bool send(std::string msg) {
-        for (auto & it : dataChannelMap) {
-            if (!it.second->isOpen()) {
-                std::cout << "DataChannel to " << it.first << " appears closed!";
-                return false;
+        try {
+            for (auto &it: dataChannelMap) {
+                if (!it.second->isOpen()) {
+                    std::cout << "DataChannel to " << it.first << " appears closed!";
+                    return false;
+                }
+                if (!it.second->send(msg))
+                    return false;
             }
-            if (!it.second->send(msg))
-                return false;
+            return true;
+        } catch (std::exception &e) {
+            printf("%s", e.what());
+            return true;
         }
-        return true;
     }
 
     [[nodiscard]] bool isConnected() const {

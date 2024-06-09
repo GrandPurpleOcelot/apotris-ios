@@ -37,6 +37,10 @@ const respond = (
   });
 };
 
+const getRandomInt = (min: number, max: number) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
 const handler = (request: Request): Response => {
   console.info(`${request.method} :: ${request.url}`);
 
@@ -69,7 +73,7 @@ const handler = (request: Request): Response => {
     } else {
       for (const [id, room] of rooms.entries()) {
         if (room.length >= MAX_PLAYERS) {
-          socket.send(JSON.stringify({ type: 'full', id : 'tryagain' }));
+          socket.send(JSON.stringify({ type: 'full', id: 'tryagain' }));
           return;
         }
         if (id.toLowerCase() === requestedRoomID.toLowerCase()) {
@@ -92,6 +96,7 @@ const handler = (request: Request): Response => {
     // If the room is full, send match messages to both clients
     const room = rooms.get(roomID) ?? [];
     if (room.length > 1) {
+      const seed = getRandomInt(1, 2000000000);
       room.forEach((clientID, index) => {
         // Send the client's own id and iter
         clients.get(clientID)?.send(JSON.stringify({ type: 'match', id: clientID, iter: index }));
@@ -102,6 +107,10 @@ const handler = (request: Request): Response => {
             clients.get(clientID)?.send(JSON.stringify({ type: 'match', id: otherClientID, iter: otherIndex }));
           }
         });
+
+        // Send the shared seed
+        clients.get(clientID)?.send(JSON.stringify({ type: 'seed', id: seed.toString() }));
+        console.info(`Sent ${clientID} a seed value of ${seed}`);
       });
       console.log('Room connected!');
     } else {
@@ -145,15 +154,18 @@ const handler = (request: Request): Response => {
     for (const [id, room] of rooms.entries()) {
       const index = room.indexOf(clientID);
       if (index !== -1) {
-        room.splice(index, 1);
+        delete room[index];
 
         // If the room is empty, remove it
         if (room.length === 0) {
           rooms.delete(id);
         } else {
-          // Send a close message to the other client in the room
-          const otherClient = room[0];
-          clients.get(otherClient)?.send(JSON.stringify({ type: 'close', id: clientID }));
+          rooms.set(id, Array.from(room.filter((value) => value)));
+          // Send a close message to the other clients in the room
+          for (const client of rooms.get(id) ?? []) {
+            clients.get(client)?.send(JSON.stringify({ type: 'close', id: clientID }));
+            console.info(`Client ${client} heard that ${clientID} quit`);
+          }
         }
 
         break;
