@@ -1,15 +1,22 @@
-FROM ubuntu:23.10
+FROM docker.io/devkitpro/devkita64:20240604 AS devkita64
+
+FROM docker.io/akouzoukos/gbadev:latest AS devkitarm
+
+FROM docker.io/library/ubuntu:23.10
 
 # Install apt-available deps
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
-  && apt-get install -y python3 ash zsh vim build-essential git make curl meson zstd wget sudo\
-    libsdl2-mixer-dev libopus-dev libvorbis-dev\
+  && apt-get install -y --no-install-recommends \
+    python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates zip \
+    libsdl2-mixer-dev libopus-dev libvorbis-dev \
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
     libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
-    libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev mingw-w64 directx-headers-dev
+    libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev mingw-w64 \
+  && apt-get install -y --fix-missing directx-headers-dev \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Download and extract toolchain based on arch
 RUN /bin/bash -c 'set -ex && \
@@ -34,7 +41,7 @@ RUN tar xf meson-1.4.0.tar.gz && cd meson-1.4.0 && python3 setup.py install
 
 # Install latest emscripten compiler
 WORKDIR /root
-RUN git clone https://github.com/emscripten-core/emsdk.git
+RUN git clone --depth 1 --branch 3.1.61 https://github.com/emscripten-core/emsdk.git
 WORKDIR emsdk
 RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bash_profile && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bashrc
 
@@ -42,17 +49,13 @@ RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/ems
 WORKDIR /root
 
 # Install DevKitPro
-ADD tools/install_devkit_pro_pacman.bash .
-RUN chmod +x ./install_devkit_pro_pacman.bash && ./install_devkit_pro_pacman.bash
-RUN dkp-pacman -Syu --noconfirm switch-dev switch-portlibs
-#RUN echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bash_profile && echo "export PKG_CONFIG_PATH=/opt/devkitpro/portlibs/switch/lib/pkgconfig" >> $HOME/.bashrc
-RUN echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bash_profile && echo "export PATH=$PATH:/opt/devkitpro/tools/bin/" >> $HOME/.bashrc
-RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bash_profile
-RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bash_profile
-RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bash_profile
-RUN echo "export DEVKITPRO=/opt/devkitpro" >> $HOME/.bashrc
-RUN echo "export DEVKITARM=/opt/devkitpro/devkitARM" >> $HOME/.bashrc
-RUN echo "export DEVKITA64=/opt/devkitpro/devkitA64" >> $HOME/.bashrc
+COPY --from=devkita64 /opt/devkitpro /opt/devkitpro
+COPY --from=devkitarm /opt/devkitpro /opt/devkitpro
+
+ENV DEVKITPRO="/opt/devkitpro"
+ENV DEVKITARM="$DEVKITPRO/devkitARM"
+ENV DEVKITA64="$DEVKITPRO/devkitA64"
+ENV PATH="$PATH:/$DEVKITPRO/tools/bin/"
 
 # fix linux SDL2 xrandr dependency issue
 RUN sudo apt remove --purge libsdl2-dev -y
