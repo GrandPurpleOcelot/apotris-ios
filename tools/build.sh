@@ -2,8 +2,8 @@
 meson setup --reconfigure --cross-file=meson/gba.ini -Db_lto=true -Db_lto_mode=thin --buildtype=release build-gba && \
 ninja -C build-gba Apotris-pocket.gba
 
-# Linux
-meson setup -Db_lto=true -Db_lto_mode=thin --reconfigure build-linux && \
+# Linux (native, actually)
+meson setup -Db_lto=true -Db_lto_mode=thin --reconfigure --buildtype=release build-linux && \
 meson compile -C build-linux && \
 strip build-linux/Apotris
 
