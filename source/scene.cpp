@@ -893,6 +893,8 @@ void OptionListScene::deinit(){
     clearSpriteTiles(256, 256, 1);
 
     clearText();
+    clearSmallText();
+    resetSmallText();
 
     auto it = elementList.begin();
 
