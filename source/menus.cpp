@@ -941,7 +941,7 @@ int onRecord() {
         place = saveRecord(savefile->boards.survival[mode], gameSeconds, -1);
 
     } else if (game->gameMode == CLASSIC) {
-        place = saveRecord(savefile->boards.classic[subMode], gameSeconds, -1);
+        place = saveRecord(savefile->boards.classic[subMode], game->score, -1);
 
     } else if (game->gameMode == MASTER) {
         int grade = game->grade + game->coolCount + (int) game->creditGrade;
