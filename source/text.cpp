@@ -94,7 +94,8 @@ void setSmallTextArea(int tid, int startX,int startY,int endX,int endY){
 }
 
 void clearSmallText(){
-	clearTiles(2, textArea->tileId, (textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY));
+    if (textArea == nullptr) return;
+    clearTiles(2, textArea->tileId, (textArea->endX-textArea->startX+1)*(textArea->endY-textArea->startY));
 }
 
 void resetSmallText(){
