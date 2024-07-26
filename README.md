@@ -223,4 +223,11 @@ meson setup -Dportmaster=true build-pm
 meson compile -C build-pm
 ```
 
+For some platforms (namely the TrimUI Smart Pro or other devices with specifically a Cortex A-53) you'll need to add the native-file argument to bring in some patches for hardware bugs.
+
+```bash
+meson setup --native-file=meson/portmaster.ini -Dportmaster=true build-pm
+meson compile -C build-pm
+```
+
 **Note:** on typical Intel/AMD machines this can take a *long* time.
