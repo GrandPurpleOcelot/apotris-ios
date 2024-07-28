@@ -223,23 +223,24 @@ void setUpLinkUniversal(bool detectEmus) {
     const bool inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
     const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
-    const u32 interval = 50;
-    const u32 wirelessRemoteTimeout = calculateRemoteTimeout(interval, wirelessRemoteTimeoutFrames);
+    const u32 wirelessInterval = 50; // No reason to go lower
+    const u32 wiredInterval = 300; // 150 usually works but some devices needed 300...
+    const u32 wirelessRemoteTimeout = calculateRemoteTimeout(wirelessInterval, wirelessRemoteTimeoutFrames);
     delete linkUniversal;
     linkUniversal = new LinkUniversal(LinkUniversal::WIRELESS_AUTO,
                       "Apotris",
                       (LinkUniversal::CableOptions){
-                              .baudRate = LinkCable::BAUD_RATE_3,
+                              .baudRate = LinkCable::BAUD_RATE_1,
                               .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
                               .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
-                              .interval = interval * 3,
+                              .interval = wiredInterval,
                               .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
                       (LinkUniversal::WirelessOptions){
                               .retransmission = true,
                               .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
                               .timeout = wirelessTimeout,
                               .remoteTimeout = wirelessRemoteTimeout,
-                              .interval = interval,
+                              .interval = wirelessInterval,
                               .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
                               .asyncACKTimerId = 2});
     linkConnection = linkUniversal;
