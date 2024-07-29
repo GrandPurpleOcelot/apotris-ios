@@ -230,7 +230,7 @@ void setUpLinkUniversal(bool detectEmus) {
     linkUniversal = new LinkUniversal(LinkUniversal::WIRELESS_AUTO,
                       "Apotris",
                       (LinkUniversal::CableOptions){
-                              .baudRate = LinkCable::BAUD_RATE_1,
+                              .baudRate = LinkCable::BAUD_RATE_3, // Baud 3 is required for enough b/w to send garbage
                               .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
                               .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
                               .interval = wiredInterval,
