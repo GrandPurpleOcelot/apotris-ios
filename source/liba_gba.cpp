@@ -167,7 +167,9 @@ void testSaveMedia() {
     }
 
     // Test Flash
-    err = flash_init(FLASH_SIZE_AUTO);
+    err = flash_init(FLASH_SIZE_AUTO); // catches some but not all flash chips
+    if (err) err = flash_init(FLASH_SIZE_64KB); // try smaller first for safety, some 128KiB will trip this one
+    if (err) err = flash_init(FLASH_SIZE_128KB); // last resort detection, may actually be a 64KiB chip!
     if (err) return; // EEPROM or no save media, no luck
     flashInfo = gFlashInfo;
 }
