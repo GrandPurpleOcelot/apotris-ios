@@ -9,6 +9,22 @@ set -u
 # Set -o pipefail to make pipelines fail if any command fails
 set -o pipefail
 
+# Function to check for python3 and provide installation instructions
+check_python3() {
+    if ! command -v python3 &> /dev/null; then
+        echo "Python 3 is not installed."
+        if [[ $(uname) == "Darwin" ]]; then
+            echo "Please install it from https://www.python.org/downloads/ or use https://brew.sh/ for advanced users."
+        else
+            echo "Please install it from your package manager (e.g., 'sudo apt install python3' on Debian-based systems)."
+        fi
+        exit 1
+    fi
+}
+
+# Call the function to check for python3
+check_python3
+
 # Get machine hardware name (aarch64, x86_64)
 machine_hw_name=$(uname -m)
 
