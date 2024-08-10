@@ -225,7 +225,7 @@ void setUpLinkUniversal(bool detectEmus) {
     const bool inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
     const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
-    const u32 wirelessInterval = 50; // No reason to go lower
+    const u32 wirelessInterval = 150; // 50 usually works but some devices needed 150...
     const u32 wiredInterval = 300; // 150 usually works but some devices needed 300...
     const u32 wirelessRemoteTimeout = calculateRemoteTimeout(wirelessInterval, wirelessRemoteTimeoutFrames);
     delete linkUniversal;
