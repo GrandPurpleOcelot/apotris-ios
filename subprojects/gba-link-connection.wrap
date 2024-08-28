@@ -1,6 +1,6 @@
 [wrap-git]
 url = https://github.com/rodri042/gba-link-connection
-revision = v6.1.1
+revision = v7.0.0
 patch_directory = gba-link-connection
 
 [provide]

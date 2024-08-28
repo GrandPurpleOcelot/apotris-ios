@@ -191,7 +191,6 @@ void platformInit(){
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER3);
-    interrupt_enable(INTR_TIMER2);
 
     #ifndef NO_DIAGNOSE
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
@@ -203,7 +202,6 @@ void platformInit(){
 
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
-    interrupt_set_handler(INTR_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
 
     // interrupt_add(INTR_HBLANK, onHBlank);
 
@@ -224,27 +222,22 @@ void platformInit(){
 void setUpLinkUniversal(bool detectEmus) {
     const bool inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
-    const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
     const u32 wirelessInterval = 50; // No reason to go lower
     const u32 wiredInterval = 300; // 150 usually works but some devices needed 300...
-    const u32 wirelessRemoteTimeout = calculateRemoteTimeout(wirelessInterval, wirelessRemoteTimeoutFrames);
     delete linkUniversal;
     linkUniversal = new LinkUniversal(LinkUniversal::WIRELESS_AUTO,
                       "Apotris",
                       (LinkUniversal::CableOptions){
                               .baudRate = LinkCable::BAUD_RATE_3, // Baud 3 is required for enough b/w to send garbage
                               .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
-                              .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
                               .interval = wiredInterval,
                               .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
                       (LinkUniversal::WirelessOptions){
                               .retransmission = true,
                               .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
                               .timeout = wirelessTimeout,
-                              .remoteTimeout = wirelessRemoteTimeout,
                               .interval = wirelessInterval,
-                              .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID,
-                              .asyncACKTimerId = 2});
+                              .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID});
     linkConnection = linkUniversal;
 }
 
