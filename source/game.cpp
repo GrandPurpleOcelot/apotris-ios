@@ -3242,7 +3242,7 @@ void GameScene::update(){
     //TODO:
     #ifdef GBA
     rumble_update();
-    if(rumbleTimer > 0){
+    if(!(demo || replaying) && rumbleTimer > 0){
         rumbleTimer--;
 
         rumble_set_state(rumble_start);
