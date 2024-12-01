@@ -388,4 +388,13 @@ std::string stringFromKey(uint32_t key){
     return SDL_GetKeyName(key);
 }
 
+void setFullscreen(bool state){
+    fullscreen = state;
+    if(!fullscreen){
+        SDL_SetWindowFullscreen(window, 0);
+    }else{
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
+}
+
 #endif
