@@ -3307,6 +3307,10 @@ void GameScene::update(){
         showCredits();
     }
 
+    if(demo && game->timer > 60 * 60 * 60){
+        changeScene(new TitleScene(),Transitions::FADE);
+    }
+
     if(flashTimer){
         zoneFlash();
     }
