@@ -31,6 +31,8 @@ extern void windowInit();
 
 extern void key_poll();
 
+extern void setFullscreen(bool);
+
 extern uint32_t key_is_down(uint32_t);
 extern uint32_t key_hit(uint32_t);
 extern uint32_t key_released(uint32_t);

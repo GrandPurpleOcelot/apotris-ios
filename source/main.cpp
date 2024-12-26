@@ -123,6 +123,10 @@ const std::list<std::string> menuControlOptions = {
 void initialize(){
     initRumble();
 
+    #ifdef PC
+    setFullscreen(savefile != nullptr && savefile->settings.fullscreen);
+    #endif
+
     toggleSprites(true);
 
     buildBG(0, 2, 29, 0, 0, true);

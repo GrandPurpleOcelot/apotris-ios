@@ -113,15 +113,6 @@ void key_poll(){
         switch( event.type ){
         case SDL_KEYDOWN:
             key = event.key.keysym.sym;
-            if(key == SDLK_F11){
-                if(fullscreen){
-                    SDL_SetWindowFullscreen(window, 0);
-                }else{
-                    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-                }
-                fullscreen = !fullscreen;
-                break;
-            }
 
             it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
             found = (it != currentlyPressed.end());
@@ -411,6 +402,15 @@ void quit(){
 
 std::string stringFromKey(uint32_t key){
     return SDL_GetKeyName(key);
+}
+
+void setFullscreen(bool state){
+    fullscreen = state;
+    if(!fullscreen){
+        SDL_SetWindowFullscreen(window, 0);
+    }else{
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
 }
 
 #endif

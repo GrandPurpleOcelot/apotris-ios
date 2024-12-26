@@ -124,15 +124,49 @@ class FPSElement : public Element{
                 return "OFF";
         }
 };
+
+#ifdef PC
+class FullscreenElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Fullscreen";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.fullscreen = !savefile->settings.fullscreen;
+            sfx(SFX_MENUCONFIRM);
+
+            setFullscreen(savefile->settings.fullscreen);
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.fullscreen)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
+#endif
+
 class WindowOptionScene : public OptionListScene{
     public:
     std::string name(){return "Video";};
         std::list<Element*> getElementList(){
-            return {
-                new IntegerScaleElement(),
-                new ScaleElement(),
-                new FPSElement(),
-            };
+            std::list<Element*> list;
+
+            #ifdef PC
+            list.push_back(new FullscreenElement);
+            #endif
+
+            list.push_back(new IntegerScaleElement());
+            list.push_back(new ScaleElement());
+            list.push_back(new FPSElement());
+
+            return list;
         };
 
     Scene* previousScene(){return new SettingsScene();};
