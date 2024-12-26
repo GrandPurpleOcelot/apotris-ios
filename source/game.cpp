@@ -3307,8 +3307,9 @@ void GameScene::update(){
         showCredits();
     }
 
-    if(demo && game->timer > 60 * 60 * 60){
+    if(demo && game->timer > 60 * 60 * 60 * 3){
         changeScene(new TitleScene(),Transitions::FADE);
+        return;
     }
 
     if(flashTimer){
