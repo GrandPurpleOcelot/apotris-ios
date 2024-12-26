@@ -3242,7 +3242,7 @@ void GameScene::update(){
     //TODO:
     #ifdef GBA
     rumble_update();
-    if(rumbleTimer > 0){
+    if(!(demo || replaying) && rumbleTimer > 0){
         rumbleTimer--;
 
         rumble_set_state(rumble_start);
@@ -3305,6 +3305,11 @@ void GameScene::update(){
 
     if((game->gameMode == MASTER || game->gameMode == DEATH) && game->eventTimer){
         showCredits();
+    }
+
+    if(demo && game->timer > 60 * 60 * 60 * 3){
+        changeScene(new TitleScene(),Transitions::FADE);
+        return;
     }
 
     if(flashTimer){

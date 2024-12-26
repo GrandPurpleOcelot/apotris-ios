@@ -965,7 +965,8 @@ void startGame(BlockEngine::Options options,int seed){
     game = new Game(options.mode,seed,options.bigMode);
     game->setOptions(options);
 
-    savefile->stats.gamesStarted++;
+    if(!demo)
+        savefile->stats.gamesStarted++;
 
     delete previousGameOptions;
     previousGameOptions = new Options();
