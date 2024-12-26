@@ -36,6 +36,7 @@ float fps = 0;
 
 SDL_Window* window;
 SDL_Renderer * renderer;
+SDL_Texture* texture;
 SDL_GameController* controller;
 
 bool fullscreen = false;
@@ -214,7 +215,8 @@ void updateWindow(uint8_t* framebuffer){
     const int in_width = 512;
     const int in_height = 512;
 
-    SDL_Surface *img = SDL_CreateRGBSurfaceFrom(
+    // Create the SDL_Surface from the framebuffer
+    SDL_Surface* img = SDL_CreateRGBSurfaceFrom(
         framebuffer,
         in_width,
         in_height,
@@ -226,46 +228,68 @@ void updateWindow(uint8_t* framebuffer){
         0xff000000
     );
 
-    #ifndef GL
+    if (img == NULL){
+        printf("Failed to create SDL_Surface: %s\n", SDL_GetError());
+        return;
+    }
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
+    // Create the streaming texture once
+    if (texture == NULL){
+        texture = SDL_CreateTexture(
+            renderer,
+            SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            in_width,
+            in_height
+        );
+        if (texture == NULL){
+            printf("Failed to create texture: %s\n", SDL_GetError());
+            SDL_FreeSurface(img);
+            return;
+        }
+    }
 
-    SDL_FreeSurface(img);
+    // Lock the texture to update its pixel data
+    void* pixels;
+    int pitch;
+    if (SDL_LockTexture(texture, NULL, &pixels, &pitch) != 0){
+        printf("Failed to lock texture: %s\n", SDL_GetError());
+        SDL_FreeSurface(img);
+        return;
+    }
 
+    // Copy the surface's pixel data into the streaming texture
+    for (int y = 0; y < in_height; y++){
+        memcpy(
+            (uint8_t*)pixels + y * pitch,       // Destination pointer
+            (uint8_t*)img->pixels + y * img->pitch, // Source pointer
+            in_width * 4                        // Row size in bytes
+        );
+    }
+
+    SDL_UnlockTexture(texture);
+    SDL_FreeSurface(img); // Free the surface after use
+
+    // Clear the renderer
     SDL_RenderClear(renderer);
 
-    SDL_Rect rect = {
-        0,
-        0,
-        in_width,
-        in_height,
-    };
-
+    // Define source and destination rectangles
+    SDL_Rect src_rect = { 0, 0, in_width, in_height };
     const int w = in_width * windowScale;
     const int h = in_height * windowScale;
-
     SDL_Rect dest_rect = {
-        -(w - screenWidth)/2,
-        -(h - screenHeight)/2,
+        -(w - screenWidth) / 2,
+        -(h - screenHeight) / 2,
         w,
-        h,
+        h
     };
 
-    if(render){
-        SDL_RenderCopy(renderer,texture,&rect,&dest_rect);
+    // Copy the updated texture to the renderer
+    if (render){
+        SDL_RenderCopy(renderer, texture, &src_rect, &dest_rect);
     }
 
     SDL_RenderPresent(renderer);
-
-    SDL_DestroyTexture(texture);
-
-    #else
-    if(render){
-        drawWithShaders(window, img, false);
-    }
-
-    SDL_FreeSurface(img);
-    #endif
 
     // Cap FPS
     nanotime_step(&stepper);
@@ -377,6 +401,7 @@ void saveSavefile(){
 }
 
 void quit(){
+    SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
