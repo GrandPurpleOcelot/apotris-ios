@@ -127,7 +127,7 @@ void initialize(){
     setFullscreen(savefile != nullptr && savefile->settings.fullscreen);
 
     if(savefile->settings.shaders != 0){
-        shaderInit();
+        shaderInit(savefile->settings.shaders);
     }
     #endif
 

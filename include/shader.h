@@ -1,8 +1,12 @@
 #include <SDL.h>
+#include <vector>
+#include <string>
 
-extern void initShaders(SDL_Window *window);
+extern void initShaders(SDL_Window *window,int index);
 
 extern void drawWithShaders(SDL_Window * window, SDL_Surface *img, bool shadersEnabled);
+
+extern std::vector<std::string> findShaders();
 
 extern void freeShaders();
 

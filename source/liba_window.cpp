@@ -416,8 +416,8 @@ void setFullscreen(bool state){
     }
 }
 
-void shaderInit(){
-    initShaders(window);
+void shaderInit(int index){
+    initShaders(window,index);
 }
 
 void shaderDeinit(){

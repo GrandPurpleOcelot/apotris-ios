@@ -4,6 +4,7 @@
 
 #ifdef PC
 #include "liba_pc.h"
+#include "shader.h"
 #endif
 
 class IntegerScaleElement : public Element{
@@ -153,20 +154,54 @@ class FullscreenElement : public Element{
 
 class ShaderElement : public Element{
     public:
+
+        const std::vector<std::string> shaders = findShaders();
+        const int min = 0;
+        const int max = shaders.size();
+
         std::string getLabel() override {
             return "Shaders";
         }
 
         std::string getCursor(std::string text) override {
-            return "[" + text + "]";
+            std::string result;
+
+            if(savefile->settings.shaders > min)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.shaders < max)
+                result += ">";
+
+            return result;
         }
 
         void action(int dir) override{
-            savefile->settings.shaders = !savefile->settings.shaders;
-            sfx(SFX_MENUCONFIRM);
+            if(dir > 0){
+                if(savefile->settings.shaders < max){
+                    savefile->settings.shaders++;
+
+                    if(savefile->settings.shaders > max)
+                        savefile->settings.shaders = max;
+
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.shaders > min){
+                    savefile->settings.shaders--;
+
+                    if(savefile->settings.shaders < min)
+                        savefile->settings.shaders = min;
+
+                    sfx(SFX_MENUMOVE);
+                }
+            }
 
             if(savefile->settings.shaders){
-                shaderInit();
+                shaderInit(savefile->settings.shaders);
                 refreshWindowSize();
             }else{
                 shaderDeinit();
@@ -175,7 +210,7 @@ class ShaderElement : public Element{
 
         std::string getCurrentOption() override {
             if(savefile->settings.shaders)
-                return "ON";
+                return std::to_string(savefile->settings.shaders);
             else
                 return "OFF";
         }

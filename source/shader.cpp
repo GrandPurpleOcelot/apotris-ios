@@ -6,10 +6,17 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <dirent.h>
+#include <cstdio>
+#include "logging.h"
+
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <vector>
+
+std::string shaderPath = "";
 
 int width = 0;
 int height = 0;
@@ -62,10 +69,17 @@ uint loadShaderFromFile(std::string path, int type){
     return shader;
 }
 
-uint getShader(){
-    std::string shaderPath = "assets/shaders/crt-lottes.glsl";
-    uint vertexShader = loadShaderFromFile(shaderPath, GL_VERTEX_SHADER);
-    uint fragmentShader = loadShaderFromFile(shaderPath, GL_FRAGMENT_SHADER);
+uint getShader(int index){
+    std::vector<std::string> shaders = findShaders();
+
+    if(index <= 0 || index > (int) shaders.size()){
+        index = 1;
+    }
+
+    std::string shaderFile = shaders.at(index - 1);
+
+    uint vertexShader = loadShaderFromFile(shaderFile, GL_VERTEX_SHADER);
+    uint fragmentShader = loadShaderFromFile(shaderFile, GL_FRAGMENT_SHADER);
 
     uint program = glCreateProgram();
     glAttachShader(program, vertexShader);
@@ -87,7 +101,7 @@ uint getShader(){
 
 bool inited = false;
 
-void initShaders(SDL_Window *window){
+void initShaders(SDL_Window *window, int index){
     if(!inited){
         inited = true;
         glewInit();
@@ -97,7 +111,7 @@ void initShaders(SDL_Window *window){
 
     glViewport(0, 0, width, height);
 
-    shaderProgram = getShader();
+    shaderProgram = getShader(index);
 
     int res_out = glGetUniformLocation(shaderProgram,"OutputSize");
     glUniform2f(res_out,(float)width,(float)height);
@@ -205,5 +219,32 @@ void refreshShaderResolution(int w, int h, float s){
 
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+}
+
+static bool hasSuffix(const std::string& s, const std::string& suffix){
+    return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
+}
+
+std::vector<std::string> findShaders(){
+    std::string path = shaderPath + "assets/shaders";
+
+    DIR *dir = opendir(path.c_str());
+    if(!dir){
+        log("couldn't open dir");
+        return {};
+    }
+
+    std::vector<std::string> shaderPaths;
+
+    dirent *entry;
+    while((entry = readdir(dir)) != nullptr){
+        if(hasSuffix(entry->d_name, ".glsl")){
+            shaderPaths.push_back(path + "/" + entry->d_name);
+        }
+    }
+
+    closedir(dir);
+
+    return shaderPaths;
 }
 #endif

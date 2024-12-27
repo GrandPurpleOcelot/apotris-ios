@@ -32,7 +32,7 @@ extern void windowInit();
 extern void key_poll();
 
 extern void setFullscreen(bool);
-extern void shaderInit();
+extern void shaderInit(int);
 extern void shaderDeinit();
 
 extern uint32_t key_is_down(uint32_t);
