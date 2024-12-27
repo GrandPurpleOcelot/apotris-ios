@@ -4,12 +4,39 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     container: niceluigi/apotris:latest
+    env:
+      DEVKITPRO_PATH: /opt/devkitpro
+
     steps:
-    - uses: actions/checkout@v3
-    #- run: PATH="/opt/devkitpro/devkitARM/bin/:$PATH" meson setup --reconfigure --cross-file=meson/gba.ini -Db_lto=true -Db_lto_mode=thin --buildtype=minsize build-gr2 && ninja -C build-gr2
-    - run: PATH=$PATH:/opt/devkitpro/tools/bin/ meson setup --reconfigure --cross-file=meson/switch.ini -Db_lto=false --buildtype=release build-switch && ninja -C build-switch
-    - run: meson setup --cross-file=meson/gba.ini build-gba && meson compile -C build-gba
-    - run: meson setup build-linux && meson compile -C build-linux
-    - run: meson setup --cross-file=meson/mingw.ini build-windows && meson compile -C build-windows
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Build for Game Boy Advance
+      # Note: This step intentionally uses the default PATH without devkitpro
+      run: |
+        meson setup --cross-file=meson/gba.ini build-gba
+        meson compile -C build-gba
+
+    - name: Build for Nintendo Switch
+      env:
+        PATH: /usr/bin:/bin:${{ env.DEVKITPRO_PATH }}/tools/bin/:${{ env.PATH }}
+      run: |
+        meson setup --reconfigure --cross-file=meson/switch.ini -Db_lto=false --buildtype=release build-switch
+        ninja -C build-switch
+
+    - name: Build for Linux x86_64
+      run: |
+        meson setup build-linux
+        meson compile -C build-linux
+
+    - name: Build for Windows x86_64
+      run: |
+        meson setup --cross-file=meson/mingw.ini build-win64
+        meson compile -C build-win64
+
+    - name: Build for Windows x86
+      run: |
+        meson setup --cross-file=meson/mingw32.ini build-win32
+        meson compile -C build-win32
+
