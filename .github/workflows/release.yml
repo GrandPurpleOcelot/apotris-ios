@@ -8,7 +8,7 @@ jobs:
     container: niceluigi/apotris:latest
     steps:
     - uses: actions/checkout@v3
-    - run: PATH="/opt/devkitpro/devkitARM/bin/:$PATH" meson setup --reconfigure --cross-file=meson/gba.ini -Db_lto=true -Db_lto_mode=thin --buildtype=minsize build-gr2 && ninja -C build-gr2
+    #- run: PATH="/opt/devkitpro/devkitARM/bin/:$PATH" meson setup --reconfigure --cross-file=meson/gba.ini -Db_lto=true -Db_lto_mode=thin --buildtype=minsize build-gr2 && ninja -C build-gr2
     - run: PATH=$PATH:/opt/devkitpro/tools/bin/ meson setup --reconfigure --cross-file=meson/switch.ini -Db_lto=false --buildtype=release build-switch && ninja -C build-switch
     - run: meson setup --cross-file=meson/gba.ini build-gba && meson compile -C build-gba
     - run: meson setup build-linux && meson compile -C build-linux
