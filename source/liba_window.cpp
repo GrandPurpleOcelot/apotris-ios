@@ -9,9 +9,7 @@
 
 #include "def.h"
 
-#ifdef GL
 #include "shader.h"
-#endif
 
 #include "nanotime.h"
 
@@ -79,10 +77,7 @@ void windowInit(){
     if(SDL_NumJoysticks() > 0){
         controller = SDL_GameControllerOpen(0);
     }
-
-    #ifdef GL
-    initShaders(window);
-    #endif
+    // SDL_ShowCursor(SDL_DISABLE);
 
     refreshWindowSize();
 
@@ -224,63 +219,70 @@ void updateWindow(uint8_t* framebuffer){
         return;
     }
 
-    // Create the streaming texture once
-    if (texture == NULL){
-        texture = SDL_CreateTexture(
-            renderer,
-            SDL_PIXELFORMAT_ARGB8888,
-            SDL_TEXTUREACCESS_STREAMING,
-            in_width,
-            in_height
-        );
+    if(savefile->settings.shaders == 0){
+        // Create the streaming texture once
         if (texture == NULL){
-            printf("Failed to create texture: %s\n", SDL_GetError());
+            texture = SDL_CreateTexture(
+                renderer,
+                SDL_PIXELFORMAT_ABGR8888,
+                SDL_TEXTUREACCESS_STREAMING,
+                in_width,
+                in_height
+            );
+            if (texture == NULL){
+                printf("Failed to create texture: %s\n", SDL_GetError());
+                SDL_FreeSurface(img);
+                return;
+            }
+        }
+
+        // Lock the texture to update its pixel data
+        void* pixels;
+        int pitch;
+        if (SDL_LockTexture(texture, NULL, &pixels, &pitch) != 0){
+            printf("Failed to lock texture: %s\n", SDL_GetError());
             SDL_FreeSurface(img);
             return;
         }
+
+        // Copy the surface's pixel data into the streaming texture
+        for (int y = 0; y < in_height; y++){
+            memcpy(
+                (uint8_t*)pixels + y * pitch,       // Destination pointer
+                (uint8_t*)img->pixels + y * img->pitch, // Source pointer
+                in_width * 4                        // Row size in bytes
+            );
+        }
+
+        SDL_UnlockTexture(texture);
+
+        // Clear the renderer
+        SDL_RenderClear(renderer);
+
+        // Define source and destination rectangles
+        SDL_Rect src_rect = { 0, 0, in_width, in_height };
+        const int w = in_width * windowScale;
+        const int h = in_height * windowScale;
+        SDL_Rect dest_rect = {
+            -(w - screenWidth) / 2,
+            -(h - screenHeight) / 2,
+            w,
+            h
+        };
+
+        // Copy the updated texture to the renderer
+        if (render){
+            SDL_RenderCopy(renderer, texture, &src_rect, &dest_rect);
+        }
+
+        SDL_RenderPresent(renderer);
+    }else{
+        if(render){
+            drawWithShaders(window,img,true);
+        }
     }
 
-    // Lock the texture to update its pixel data
-    void* pixels;
-    int pitch;
-    if (SDL_LockTexture(texture, NULL, &pixels, &pitch) != 0){
-        printf("Failed to lock texture: %s\n", SDL_GetError());
-        SDL_FreeSurface(img);
-        return;
-    }
-
-    // Copy the surface's pixel data into the streaming texture
-    for (int y = 0; y < in_height; y++){
-        memcpy(
-            (uint8_t*)pixels + y * pitch,       // Destination pointer
-            (uint8_t*)img->pixels + y * img->pitch, // Source pointer
-            in_width * 4                        // Row size in bytes
-        );
-    }
-
-    SDL_UnlockTexture(texture);
-    SDL_FreeSurface(img); // Free the surface after use
-
-    // Clear the renderer
-    SDL_RenderClear(renderer);
-
-    // Define source and destination rectangles
-    SDL_Rect src_rect = { 0, 0, in_width, in_height };
-    const int w = in_width * windowScale;
-    const int h = in_height * windowScale;
-    SDL_Rect dest_rect = {
-        -(w - screenWidth) / 2,
-        -(h - screenHeight) / 2,
-        w,
-        h
-    };
-
-    // Copy the updated texture to the renderer
-    if (render){
-        SDL_RenderCopy(renderer, texture, &src_rect, &dest_rect);
-    }
-
-    SDL_RenderPresent(renderer);
+    SDL_FreeSurface(img);
 
     // Cap FPS
     nanotime_step(&stepper);
@@ -329,12 +331,13 @@ void refreshWindowSize(){
     if(rowEnd > SCREEN_HEIGHT)
         rowEnd = SCREEN_HEIGHT;
 
-    if(savefile != nullptr)
+    if(savefile != nullptr){
         setGradient(savefile->settings.backgroundGradient);
 
-    #ifdef GL
-    refreshShaderResolution(screenWidth, screenHeight,windowScale);
-    #endif
+        if (savefile->settings.shaders != 0) {
+            refreshShaderResolution(screenWidth, screenHeight, windowScale);
+        }
+    }
 }
 
 bool closed(){
@@ -413,4 +416,11 @@ void setFullscreen(bool state){
     }
 }
 
+void shaderInit(){
+    initShaders(window);
+}
+
+void shaderDeinit(){
+    freeShaders();
+}
 #endif

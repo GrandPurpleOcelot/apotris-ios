@@ -12,7 +12,7 @@
 #define _TILENGINE_H
 
 #ifndef TLN_EXCLUDE_WINDOW
-#include "SDL2/SDL.h"
+#include "SDL.h"
 #endif
 
 /**

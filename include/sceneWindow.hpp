@@ -150,6 +150,36 @@ class FullscreenElement : public Element{
                 return "OFF";
         }
 };
+
+class ShaderElement : public Element{
+    public:
+        std::string getLabel() override {
+            return "Shaders";
+        }
+
+        std::string getCursor(std::string text) override {
+            return "[" + text + "]";
+        }
+
+        void action(int dir) override{
+            savefile->settings.shaders = !savefile->settings.shaders;
+            sfx(SFX_MENUCONFIRM);
+
+            if(savefile->settings.shaders){
+                shaderInit();
+                refreshWindowSize();
+            }else{
+                shaderDeinit();
+            }
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.shaders)
+                return "ON";
+            else
+                return "OFF";
+        }
+};
 #endif
 
 class WindowOptionScene : public OptionListScene{
@@ -165,6 +195,10 @@ class WindowOptionScene : public OptionListScene{
             list.push_back(new IntegerScaleElement());
             list.push_back(new ScaleElement());
             list.push_back(new FPSElement());
+
+            #ifdef PC
+            list.push_back(new ShaderElement());
+            #endif
 
             return list;
         };

@@ -181,8 +181,8 @@ if host_machine.system() != 'gba'
         tilengine,
         sdl2_dep,
         soloud,
-        # dependency('gl'),
-        # dependency('glew'),
+        dependency('gl'),
+        dependency('glew'),
     ]
 
     # Define non-GBA specific preprocessor guards
@@ -197,7 +197,7 @@ if host_machine.system() != 'gba'
     endif
 
     add_project_arguments('-DTE', language : ['c', 'cpp'])
-    # add_project_arguments('-DGL', language : ['c', 'cpp'])
+    add_project_arguments('-DGL', language : ['c', 'cpp'])
 
     generated_files = []
     # Assemble bin2s targets

@@ -125,6 +125,10 @@ void initialize(){
 
     #ifdef PC
     setFullscreen(savefile != nullptr && savefile->settings.fullscreen);
+
+    if(savefile->settings.shaders != 0){
+        shaderInit();
+    }
     #endif
 
     toggleSprites(true);

@@ -2,7 +2,7 @@
 #include "shader.h"
 
 #include <GL/glew.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL_opengl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -15,7 +15,9 @@ int width = 0;
 int height = 0;
 float scale = 0;
 
-uint vbo,ebo,vao,texture,shaderProgram;
+uint vbo,ebo,vao,shaderTexture,shaderProgram;
+
+SDL_GLContext shaderContext;
 
 float vertices[] = {
      1.0f,  1.0f, 0.0f, 1.0f, 0.0f,  // top right
@@ -61,7 +63,7 @@ uint loadShaderFromFile(std::string path, int type){
 }
 
 uint getShader(){
-    std::string shaderPath = "assets/shaders/crt/shaders/crt-lottes.glsl";
+    std::string shaderPath = "assets/shaders/crt-lottes.glsl";
     uint vertexShader = loadShaderFromFile(shaderPath, GL_VERTEX_SHADER);
     uint fragmentShader = loadShaderFromFile(shaderPath, GL_FRAGMENT_SHADER);
 
@@ -83,10 +85,15 @@ uint getShader(){
     return program;
 }
 
-void initShaders(SDL_Window *window){
-    SDL_GLContext context = SDL_GL_CreateContext(window);
+bool inited = false;
 
-    glewInit();
+void initShaders(SDL_Window *window){
+    if(!inited){
+        inited = true;
+        glewInit();
+    }
+
+    shaderContext = SDL_GL_CreateContext(window);
 
     glViewport(0, 0, width, height);
 
@@ -101,7 +108,7 @@ void initShaders(SDL_Window *window){
     int res_tex = glGetUniformLocation(shaderProgram,"TextureSize");
     glUniform2f(res_tex,(float)512,(float)512);
 
-    // glUseProgram(shaderProgram);
+    glUseProgram(shaderProgram);
 
     glGenBuffers(1,&vbo);
     glGenBuffers(1, &ebo);
@@ -127,21 +134,22 @@ void initShaders(SDL_Window *window){
     unsigned int transformLoc = glGetUniformLocation(shaderProgram, "MVPMatrix");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(def));
 
-    glGenTextures(1, &texture);
+    glGenTextures(1, &shaderTexture);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, shaderTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void drawWithShaders(SDL_Window * window, SDL_Surface *img,bool shadersEnabled){
+
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, shaderTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
 
     if(shadersEnabled){
@@ -158,7 +166,10 @@ void freeShaders(){
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
-    glDeleteTextures(1,&texture);
+    glDeleteTextures(1,&shaderTexture);
+    glDeleteProgram(shaderProgram);
+
+    SDL_GL_DeleteContext(shaderContext);
 }
 
 void refreshShaderResolution(int w, int h, float s){
