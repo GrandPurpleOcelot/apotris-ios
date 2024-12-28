@@ -1,7 +1,12 @@
 #ifdef GL
 #include "shader.h"
 
-#include <GL/glew.h>
+#ifdef PC
+#include <glad/gl.h>
+#elif defined(PORTMASTER)
+#include <glad/gles.h>
+#endif
+
 #include <SDL_opengl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -78,6 +83,8 @@ uint getShader(int index){
 
     std::string shaderFile = shaders.at(index - 1);
 
+    log("loading shader: " + shaderFile);
+
     uint vertexShader = loadShaderFromFile(shaderFile, GL_VERTEX_SHADER);
     uint fragmentShader = loadShaderFromFile(shaderFile, GL_FRAGMENT_SHADER);
 
@@ -104,7 +111,9 @@ bool inited = false;
 void initShaders(SDL_Window *window, int index){
     if(!inited){
         inited = true;
-        glewInit();
+
+        int version = gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress);
+        printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));;
     }
 
     shaderContext = SDL_GL_CreateContext(window);

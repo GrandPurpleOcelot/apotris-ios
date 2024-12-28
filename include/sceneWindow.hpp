@@ -2,7 +2,7 @@
 
 #include "scene.hpp"
 
-#ifdef PC
+#if defined(PC) || defined(PORTMASTER)
 #include "liba_pc.h"
 #include "shader.h"
 #endif
@@ -151,7 +151,10 @@ class FullscreenElement : public Element{
                 return "OFF";
         }
 };
+#endif
 
+
+#if defined(PC) || defined(PORTMASTER)
 class ShaderElement : public Element{
     public:
 
@@ -231,7 +234,7 @@ class WindowOptionScene : public OptionListScene{
             list.push_back(new ScaleElement());
             list.push_back(new FPSElement());
 
-            #ifdef PC
+            #if defined(PC) || defined(PORTMASTER)
             list.push_back(new ShaderElement());
             #endif
 

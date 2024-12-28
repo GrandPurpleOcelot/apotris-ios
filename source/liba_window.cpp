@@ -52,17 +52,9 @@ nanotime_step_data stepper;
 
 void windowInit(){
     // Initialize SDL
-
     window = nullptr;
 
     SDL_Init(SDL_INIT_VIDEO);
-
-    #ifdef PORTMASTER
-    SDL_DisplayMode DM;
-    SDL_GetCurrentDisplayMode(0, &DM);
-    screenWidth = DM.w;
-    screenHeight = DM.h;
-    #endif
 
     window = SDL_CreateWindow(
         "Apotris PC",
@@ -77,7 +69,15 @@ void windowInit(){
     if(SDL_NumJoysticks() > 0){
         controller = SDL_GameControllerOpen(0);
     }
-    // SDL_ShowCursor(SDL_DISABLE);
+
+    SDL_ShowCursor(SDL_DISABLE);
+    // int version = gladLoadGL(glfwGetProcAddress);
+    // if (version == 0) {
+    //     std::cout << "Failed to initialize OpenGL context" << std::endl;
+    //     return -1;
+    // }else{
+    //     std::cout << "initialized GL!" << std::endl;
+    // }
 
     refreshWindowSize();
 
