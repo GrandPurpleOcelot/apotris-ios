@@ -64,6 +64,7 @@ sources = files(
     src_dir / 'nanotime.c',
     src_dir / 'shader.cpp',
     src_dir / 'gl.c',
+    src_dir / 'gles2.c',
 )
 
 # Bring in binary/data files

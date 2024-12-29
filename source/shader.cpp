@@ -3,11 +3,12 @@
 
 #ifdef PC
 #include <glad/gl.h>
+#include <SDL_opengl.h>
 #elif defined(PORTMASTER)
-#include <glad/gles.h>
+#include <glad/gles2.h>
+#include <SDL_opengles2.h>
 #endif
 
-#include <SDL_opengl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -42,8 +43,28 @@ uint indices[] = {  // note that we start from 0!
     1, 2, 3    // second triangle
 };
 
+std::string translateLine(std::string in){
+
+    std::size_t pos = in.find("out vec4");
+
+    if(pos != std::string::npos)
+        in.replace(pos, 8, "out highp vec4");
+
+    // pos = in.find("attribute");
+
+    // if(pos != std::string::npos)
+    //     in.replace(pos, 9, "in");
+
+    return in;
+}
+
 uint loadShaderFromFile(std::string path, int type){
-    std::string add = "#version 330 core\n\n";
+    std::string add = "";
+
+    #if defined(PORTMASTER)
+    add +="#version 300 es\n\n";
+    #endif
+
     if(type == GL_VERTEX_SHADER){
         add += "#define VERTEX\n\n";
     }else if(type == GL_FRAGMENT_SHADER){
@@ -51,12 +72,20 @@ uint loadShaderFromFile(std::string path, int type){
     }
 
     std::ifstream t(path);
-    std::stringstream buffer;
-    buffer << t.rdbuf();
+    std::stringstream buffer_in;
 
-    std::string str = add + buffer.str();
+    buffer_in << t.rdbuf();
 
-    // std::cout << str << std::endl;
+    std::string buffer_out;
+
+    std::string line;
+    while(getline(buffer_in,line)){
+        if(line.find("pragma") == std::string::npos){
+            buffer_out += translateLine(line) + "\n";
+        }
+    }
+
+    std::string str = add + buffer_out;
 
     uint shader = glCreateShader(type);
     glShaderSource(shader, 1, (const char* const *) &str, NULL);
@@ -112,7 +141,12 @@ void initShaders(SDL_Window *window, int index){
     if(!inited){
         inited = true;
 
+        #ifdef PC
         int version = gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress);
+        #else
+        int version = gladLoadGLES2((GLADloadfunc) SDL_GL_GetProcAddress);
+        #endif
+
         printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));;
     }
 
@@ -123,13 +157,16 @@ void initShaders(SDL_Window *window, int index){
     shaderProgram = getShader(index);
 
     int res_out = glGetUniformLocation(shaderProgram,"OutputSize");
+    if(res_out == -1) log("ERROR: OutputSize");
     glUniform2f(res_out,(float)width,(float)height);
 
     int res_in = glGetUniformLocation(shaderProgram,"InputSize");
+    if(res_in == -1) log("ERROR: InputSize");
     glUniform2f(res_in,(float)width,(float)height);
 
     int res_tex = glGetUniformLocation(shaderProgram,"TextureSize");
-    glUniform2f(res_tex,(float)512,(float)512);
+    if(res_tex == -1) log("ERROR: TextureSize");
+    glUniform2f(res_tex,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
 
     glUseProgram(shaderProgram);
 
@@ -146,15 +183,18 @@ void initShaders(SDL_Window *window, int index){
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     int position = glGetAttribLocation(shaderProgram,"VertexCoord");
+    if(position == -1) log("ERROR: position");
     glVertexAttribPointer(position,3,GL_FLOAT,GL_FALSE,5*sizeof(float),(void*)0);
     glEnableVertexAttribArray(position);
 
     int texCoord = glGetAttribLocation(shaderProgram,"TexCoord");
+    if(texCoord == -1) log("ERROR: texcoord");
     glVertexAttribPointer(texCoord,2,GL_FLOAT,GL_FALSE,5*sizeof(float),(void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(texCoord);
 
     glm::mat4 def = glm::mat4();
     unsigned int transformLoc = glGetUniformLocation(shaderProgram, "MVPMatrix");
+    if(transformLoc == -1) log("ERROR: MVP");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(def));
 
     glGenTextures(1, &shaderTexture);
@@ -173,7 +213,7 @@ void drawWithShaders(SDL_Window * window, SDL_Surface *img,bool shadersEnabled){
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, shaderTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
 
     if(shadersEnabled){
         glUseProgram(shaderProgram);
@@ -206,13 +246,13 @@ void refreshShaderResolution(int w, int h, float s){
     glUniform2f(res_out,(float)width,(float)height);
 
     int res_in = glGetUniformLocation(shaderProgram,"InputSize");
-    glUniform2f(res_in,(float)512,(float)512);
+    glUniform2f(res_in,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
 
     int res_tex = glGetUniformLocation(shaderProgram,"TextureSize");
-    glUniform2f(res_tex,(float)512,(float)512);
+    glUniform2f(res_tex,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
 
-    float offsetX = (1.0 - ((width / scale) / 512)) / 2;
-    float offsetY = (1.0 - ((height / scale) / 512)) / 2;
+    float offsetX = (1.0 - ((width / scale) / SCREEN_WIDTH)) / 2;
+    float offsetY = (1.0 - ((height / scale) / SCREEN_HEIGHT)) / 2;
 
     vertices[0*5 + 3] = 1.0 - offsetX;//top right
     vertices[0*5 + 4] = offsetY;

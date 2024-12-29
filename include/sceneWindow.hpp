@@ -5,6 +5,8 @@
 #if defined(PC) || defined(PORTMASTER)
 #include "liba_pc.h"
 #include "shader.h"
+#include <string>
+#include <sstream>
 #endif
 
 class IntegerScaleElement : public Element{
@@ -212,10 +214,25 @@ class ShaderElement : public Element{
         }
 
         std::string getCurrentOption() override {
-            if(savefile->settings.shaders)
-                return std::to_string(savefile->settings.shaders);
-            else
+            if(savefile->settings.shaders){
+                std::stringstream shaderPath;
+                shaderPath << shaders.at(savefile->settings.shaders-1);
+
+                std::string name;
+
+                while(getline(shaderPath, name,'/'));
+
+                return remove_extension(name);
+            }else{
                 return "OFF";
+            }
+        }
+
+    private:
+        std::string remove_extension(const std::string& filename) {
+            size_t lastdot = filename.find_last_of(".");
+            if (lastdot == std::string::npos) return filename;
+            return filename.substr(0, lastdot);
         }
 };
 #endif

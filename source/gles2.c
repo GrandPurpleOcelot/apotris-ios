@@ -1,6 +1,7 @@
 /**
  * SPDX-License-Identifier: (WTFPL OR CC0-1.0) AND Apache-2.0
  */
+#ifdef PORTMASTER
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -689,4 +690,5 @@ int gladLoadGLES2( GLADloadfunc load) {
 
 #ifdef __cplusplus
 }
+#endif
 #endif
