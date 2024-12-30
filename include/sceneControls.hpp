@@ -257,12 +257,29 @@ class RebindElement : public Element{
                 //     continue;
                 // }
 
+                #elif defined(PC)
+                u32 key = key_first();
+
+                if(key != KEY_FULL - 1){
+                    setKey(keys[index],key);
+
+                    for(int j = 0; j < max; j++){
+                        if(j == index)
+                            continue;
+
+                        unbindDuplicateKey(keys[j],key);
+                    }
+
+                    sfx(SFX_MENUCONFIRM);
+                    exit = true;
+                    continue;
+                }
+
                 #else
                 u32 key = key_first();
 
                 if(key != KEY_FULL - 1){
                     keys[index] = key;
-
 
                     for(int j = 0; j < max; j++){
                         if(j == index)
@@ -350,6 +367,7 @@ class ControlOptionScene : public OptionListScene{
 
         #elif defined(PC) || defined(WEB)
 
+        list.push_back(new RumbleElement());
         list.push_back(new LabelElement("Menu:"));
 
         counter = 0;

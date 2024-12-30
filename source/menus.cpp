@@ -349,10 +349,7 @@ void endAnimation() {
     enableLayerWindow(1, 0, 0, 240, 160, false);
     enableLayerWindow(2, 0, 0, 240, 160, false);
 
-    //TODO::
-    #ifdef GBA
-    rumble_set_state(RumbleState(rumble_stop));
-    #endif
+    rumbleStop();
 
     sfx(SFX_END);
 
@@ -589,9 +586,7 @@ int GameScene::pauseMenu(){
 
     showSprites(128);
 
-    #ifdef GBA
-    rumble_set_state(rumble_stop);
-    #endif
+    rumbleStop();
 
     //calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);

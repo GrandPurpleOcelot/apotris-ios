@@ -527,9 +527,7 @@ bool GameScene::reconnect(){
 
     showSprites(128);
 
-    #ifdef GBA
-    rumble_set_state(rumble_stop);
-    #endif
+    rumbleStop();
 
     int cursorFloat = 0;
     OBJ_ATTR * cursorSprites[2];

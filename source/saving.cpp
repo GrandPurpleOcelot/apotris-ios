@@ -158,15 +158,15 @@ Keys getDefaultGameKeys(){
 
     #if defined(PC) || defined(WEB)
     k = {
-        .moveLeft = SDLK_LEFT,
-        .moveRight = SDLK_RIGHT,
-        .rotateCCW = SDLK_z,
-        .rotateCW = SDLK_UP,
-        .rotate180 = SDLK_a,
-        .softDrop = SDLK_DOWN,
-        .hardDrop = SDLK_SPACE,
-        .hold = SDLK_c,
-        .zone = SDLK_s,
+        .moveLeft = (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) | packKey(SDLK_LEFT),
+        .moveRight = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(SDLK_RIGHT),
+        .rotateCCW = (SDL_CONTROLLER_BUTTON_A << 16) | packKey(SDLK_z),
+        .rotateCW = (SDL_CONTROLLER_BUTTON_B << 16) | packKey(SDLK_UP),
+        .rotate180 = (SDL_CONTROLLER_BUTTON_Y << 16) | packKey(SDLK_a),
+        .softDrop = (SDL_CONTROLLER_BUTTON_DPAD_DOWN << 16) | packKey(SDLK_DOWN),
+        .hardDrop = (SDL_CONTROLLER_BUTTON_DPAD_UP << 16) | packKey(SDLK_SPACE),
+        .hold = (SDL_CONTROLLER_BUTTON_RIGHTSHOULDER << 16) | packKey(SDLK_c),
+        .zone = (SDL_CONTROLLER_BUTTON_LEFTSHOULDER << 16) | packKey(SDLK_s),
     };
 
     return k;

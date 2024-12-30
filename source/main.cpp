@@ -245,10 +245,7 @@ void reset() {
     placeEffectList.clear();
     rumbleTimer = 0;
 
-    //TODO:
-    #ifdef GBA
-    rumble_set_state(RumbleState(rumble_stop));
-    #endif
+    rumbleStop();
 
     resetZonePalette();
 
@@ -335,7 +332,13 @@ std::string nameInput(int place) {
         aprint(result, 13, nameHeight);
 
         if (!onDone) {
-            #if defined(GBA) || defined(SWITCH) || defined(PORTMASTER)
+            char curr = result.at(cursor);
+
+            #if defined (PC)
+            if(lastInputType == InputType::KEYBOARD)
+                goto keyboard;
+            #endif
+
             if (key_hit(k.confirm) || key_hit(k.right)) {
                 cursor++;
                 if (cursor > 7) {
@@ -360,7 +363,6 @@ std::string nameInput(int place) {
                 sfx(SFX_MENUMOVE);
             }
 
-            char curr = result.at(cursor);
             if (key_hit(k.up)) {
                 if (curr == 'A')
                     result[cursor] = ' ';
@@ -411,11 +413,15 @@ std::string nameInput(int place) {
                     aprint("_", 13 + cursor, nameHeight);
             }
 
-            #elif defined(PC) || defined(WEB)
+            #if defined(PC) || defined(WEB)
+keyboard:
 
             u32 key = key_first();
 
             char character = getStringFromKey(key)[0];
+
+            if(lastInputType == InputType::CONTROLLER)
+                goto end;
 
             if(cursor > 0 && ((key == SDLK_BACKSPACE) || (das == maxDas && arr == 0))){
                 if(cursor < 7 || result[cursor] == ' '){
@@ -464,6 +470,7 @@ std::string nameInput(int place) {
             }
 
             #endif
+end:
 
             if (key_hit(k.pause)) {
                 onDone = true;
