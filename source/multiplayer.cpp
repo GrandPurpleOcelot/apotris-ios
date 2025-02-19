@@ -88,11 +88,11 @@ void sendGameUpdates() {
         u16 payload = sendQueue.front();
         bool sent = false;
 
-        if (linkConnection->getMode() == LinkUniversal::LINK_CABLE) {
+        if (linkConnection->getMode() == LinkUniversal::Mode::LINK_CABLE) {
             linkConnection->send(payload);
             sent = true;
         }
-        else if (linkConnection->linkWireless->send(payload))
+        else if (linkConnection->getLinkWireless()->send(payload))
             sent = true;
 
         if(sent)

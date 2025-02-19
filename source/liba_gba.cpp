@@ -225,14 +225,15 @@ void setUpLinkUniversal(bool detectEmus) {
     const u32 wirelessInterval = 50; // No reason to go lower
     const u32 wiredInterval = 300; // 150 usually works but some devices needed 300...
     delete linkUniversal;
-    linkUniversal = new LinkUniversal(LinkUniversal::WIRELESS_AUTO,
+    linkUniversal = new LinkUniversal(LinkUniversal::Protocol::WIRELESS_AUTO,
                       "Apotris",
                       (LinkUniversal::CableOptions){
-                              .baudRate = LinkCable::BAUD_RATE_3, // Baud 3 is required for enough b/w to send garbage
+                              .baudRate = LinkCable::BaudRate::BAUD_RATE_3, // Baud 3 is required for enough b/w to send garbage
                               .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
                               .interval = wiredInterval,
                               .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
                       (LinkUniversal::WirelessOptions){
+                              .forwarding = true,
                               .retransmission = true,
                               .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
                               .timeout = wirelessTimeout,
