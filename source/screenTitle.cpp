@@ -432,7 +432,6 @@ bool ConfirmSaveScene::control(){
             setSkin();
             setPalette();
             setGradient(savefile->settings.backgroundGradient);
-
         }else{
             savefile->settings.menuKeys = menuKeys;
 
@@ -440,6 +439,10 @@ bool ConfirmSaveScene::control(){
 
             saveSavefile();
         }
+
+        #ifdef PC
+        setFullscreen(savefile->settings.fullscreen);
+        #endif
 
         changeScene(new MainMenuScene(),Transitions::FADE);
     }else if(key_hit(k.cancel)){

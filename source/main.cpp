@@ -123,6 +123,10 @@ const std::list<std::string> menuControlOptions = {
 void initialize(){
     initRumble();
 
+    #ifdef PC
+    setFullscreen(savefile != nullptr && savefile->settings.fullscreen);
+    #endif
+
     toggleSprites(true);
 
     buildBG(0, 2, 29, 0, 0, true);
@@ -965,7 +969,8 @@ void startGame(BlockEngine::Options options,int seed){
     game = new Game(options.mode,seed,options.bigMode);
     game->setOptions(options);
 
-    savefile->stats.gamesStarted++;
+    if(!demo)
+        savefile->stats.gamesStarted++;
 
     delete previousGameOptions;
     previousGameOptions = new Options();

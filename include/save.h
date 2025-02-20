@@ -166,8 +166,9 @@ typedef struct Settings{
     bool showSpawn;
     bool showFPS;
     int bootlegOverrideType;
+    int fullscreen;
 
-    int placeHolder[31];
+    int placeHolder[30];
 
 }ALIGN(4) Settings;
 
