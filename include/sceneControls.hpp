@@ -360,14 +360,15 @@ class ControlOptionScene : public OptionListScene{
         for(auto it = controlOptions.begin(); it != controlOptions.end(); ++it)
             list.push_back(new RebindElement((int *) &savefile->settings.keys,1,counter++,*it,9));
 
-        #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER)
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
-        list.push_back(new RumbleElement());
 
-        #elif defined(PC) || defined(WEB)
-
+        #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC)
         list.push_back(new RumbleElement());
+        #endif
+
+        #if defined(PC) || defined(WEB)
+
         list.push_back(new LabelElement("Menu:"));
 
         counter = 0;
