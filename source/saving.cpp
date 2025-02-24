@@ -45,7 +45,41 @@ void loadSave() {
     const int pmSettings = 540;
     const int pmSave = 3876;
 
-    if (savefile->newGame >= 0x4e && savefile->newGame <= 0x50) {
+    if (savefile->newGame >= 0x50 && savefile->newGame <= 0x51) {
+        #if defined(PC) || defined(WEB)
+
+        Keys keys = savefile->settings.keys;
+
+        savefile->settings.keys = {
+            .moveLeft = (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) | packKey(keys.moveLeft),
+            .moveRight = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(keys.moveRight),
+            .rotateCCW = (SDL_CONTROLLER_BUTTON_A << 16) | packKey(keys.rotateCCW),
+            .rotateCW = (SDL_CONTROLLER_BUTTON_B << 16) | packKey(keys.rotateCW),
+            .rotate180 = (SDL_CONTROLLER_BUTTON_Y << 16) | packKey(keys.rotate180),
+            .softDrop = (SDL_CONTROLLER_BUTTON_DPAD_DOWN << 16) | packKey(keys.softDrop),
+            .hardDrop = (SDL_CONTROLLER_BUTTON_DPAD_UP << 16) | packKey(keys.hardDrop),
+            .hold = (SDL_CONTROLLER_BUTTON_RIGHTSHOULDER << 16) | packKey(keys.hold),
+            .zone = (SDL_CONTROLLER_BUTTON_LEFTSHOULDER << 16) | packKey(keys.zone),
+        };
+
+        MenuKeys menu = savefile->settings.menuKeys;
+
+        savefile->settings.menuKeys = {
+            .up = (SDL_CONTROLLER_BUTTON_DPAD_UP << 16) | packKey(menu.up),
+            .down = (SDL_CONTROLLER_BUTTON_DPAD_DOWN << 16) | packKey(menu.down),
+            .left = (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) | packKey(menu.left),
+            .right = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(menu.right),
+            .confirm = (SDL_CONTROLLER_BUTTON_A << 16) | packKey(menu.confirm),
+            .cancel = (SDL_CONTROLLER_BUTTON_B << 16) | packKey(menu.cancel),
+            .pause = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(menu.pause),
+            .reset = packKey(menu.reset),
+            .special1 = (SDL_CONTROLLER_BUTTON_LEFTSHOULDER << 16) | packKey(menu.special1),
+            .special2 = (SDL_CONTROLLER_BUTTON_RIGHTSHOULDER << 16) | packKey(menu.special2),
+            .special3 = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(menu.special3),
+        };
+
+        #endif
+    } else if (savefile->newGame >= 0x4e && savefile->newGame <= 0x50) {
         //purposefully empty
     }else if (savefile->newGame >= 0x4b && savefile->newGame <= 0x4d) {
         int size = 0;
