@@ -210,6 +210,8 @@ class SongElement : public Element{
         int index = 0;
 
         std::string getLabel() override {
+            if(index < 0)
+                return "(empty)";
             return "Track " + std::to_string(index+1);
         }
 
@@ -218,6 +220,8 @@ class SongElement : public Element{
         }
 
         std::string getCurrentOption() override {
+            if(index < 0)
+                return "-";
             if(!getSongState(menu, index))
                 return "ON";
             else
@@ -225,6 +229,8 @@ class SongElement : public Element{
         }
 
         void action(int dir) override {
+            if(index < 0)
+                return;
             toggleSong(menu, index, !getSongState(menu, index));
             sfx(SFX_MENUMOVE);
         }
@@ -285,11 +291,17 @@ class SongListScene : public OptionListScene{
             for(int i = 0; i < (int) songs.menu.size(); i++){
                 list.push_back(new SongElement(0,i));
             }
+            if(songs.menu.size() == 0){
+                list.push_back(new SongElement(0,-1));
+            }
 
             list.push_back(new LabelElement("In-Game:"));
 
                 for(int i = 0; i < (int) songs.game.size(); i++){
                 list.push_back(new SongElement(1,i));
+            }
+            if(songs.game.size() == 0){
+                list.push_back(new SongElement(1,-1));
             }
 
             return list;
