@@ -3091,15 +3091,15 @@ void setRandomGraphics(Save* save) {
 
     if (save->settings.shadow != 4) {
         do {
-            save->settings.shadow = qran() % (MAX_SHADOWS - 1);
+            save->settings.shadow = qran() % (MAX_SHADOWS);
         } while (save->settings.shadow == 4);
     }
 
-    save->settings.colors = qran() % (MAX_COLORS - 1);
+    save->settings.colors = qran() % (MAX_COLORS);
     save->settings.backgroundGradient =
         (RGB15(qran() % 31, qran() % 31, qran() % 31) << 16) +
         RGB15(qran() % 31, qran() % 31, qran() % 31);
-    save->settings.frameBackground = qran() % (MAX_FRAME_BACKGROUNDS - 1);
+    save->settings.frameBackground = qran() % (MAX_FRAME_BACKGROUNDS);
 
     save->settings.backgroundType = ((qran() % 10) > 3);
 
@@ -3113,7 +3113,7 @@ void setRandomGraphics(Save* save) {
     int skin = 0;
     int count = 0;
     do {
-        skin = qran() % (MAX_SKINS - 1 + MAX_CUSTOM_SKINS) - MAX_CUSTOM_SKINS;
+        skin = qran() % (MAX_SKINS + MAX_CUSTOM_SKINS) - MAX_CUSTOM_SKINS;
     } while (skin < 0 && !save->customSkins[(skin + 1) * -1].changed &&
              count++ < 20);
 
@@ -3124,7 +3124,7 @@ void setRandomGraphics(Save* save) {
 
     int grid = 0;
     do {
-        grid = qran() % (MAX_BACKGROUNDS - 1);
+        grid = qran() % (MAX_BACKGROUNDS);
     } while ((skin == 9 || skin == 10) && (grid == 0 || grid == 2));
 
     save->settings.backgroundGrid = grid;
