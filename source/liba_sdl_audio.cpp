@@ -2,14 +2,14 @@
 
 #if defined(PC) || defined(PORTMASTER) || defined(WEB) || defined(SWITCH)
 
+#include <cstdio>
+#include <dirent.h>
 #include <fstream>
 #include <iostream>
-#include <dirent.h>
-#include <cstdio>
 
 #include "soloud.h"
-#include "soloud_wav.h"
 #include "soloud_openmpt.h"
+#include "soloud_wav.h"
 
 #include "def.h"
 
@@ -18,7 +18,7 @@ SoLoud::Queue musicQueue;
 
 SoLoud::Wav soundEffects[SFX_COUNT];
 
-SoLoud::Openmpt *musicArray;
+SoLoud::Openmpt* musicArray;
 
 SoLoud::handle currentSongHandle;
 
@@ -31,15 +31,16 @@ bool looping = false;
 
 Songs songs;
 
-bool hasSuffix(const std::string& s, const std::string& suffix){
-    return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
+bool hasSuffix(const std::string& s, const std::string& suffix) {
+    return (s.size() >= suffix.size()) &&
+           equal(suffix.rbegin(), suffix.rend(), s.rbegin());
 }
 
-void loadAudio(std::string pathPrefix){
+void loadAudio(std::string pathPrefix) {
     gSoloud.init();
 
-    for(int i = 0; i < SFX_COUNT; i++){
-        std::string str = pathPrefix + (std::string) SoundEffectPaths[i];
+    for (int i = 0; i < SFX_COUNT; i++) {
+        std::string str = pathPrefix + (std::string)SoundEffectPaths[i];
 
         soundEffects[i].load(str.c_str());
     }
@@ -48,25 +49,27 @@ void loadAudio(std::string pathPrefix){
 
     std::string path = pathPrefix + "assets";
 
-    DIR *dir = opendir(path.c_str());
-    if(!dir){
+    DIR* dir = opendir(path.c_str());
+    if (!dir) {
         log("couldn't open dir");
         return;
     }
 
-    dirent *entry;
+    dirent* entry;
     std::vector<std::string> songPaths;
-    while((entry = readdir(dir)) != nullptr){
-        if(hasSuffix(entry->d_name, ".it") || hasSuffix(entry->d_name, ".mod") || hasSuffix(entry->d_name, ".xm")){
+    while ((entry = readdir(dir)) != nullptr) {
+        if (hasSuffix(entry->d_name, ".it") ||
+            hasSuffix(entry->d_name, ".mod") ||
+            hasSuffix(entry->d_name, ".xm")) {
             songPaths.push_back(entry->d_name);
         }
     }
 
     closedir(dir);
 
-    sort(songPaths.begin(),songPaths.end());
+    sort(songPaths.begin(), songPaths.end());
 
-    for(auto str : songPaths){
+    for (auto str : songPaths) {
         if (str.find("MENU_") != std::string::npos) {
             songList.push_back(path + "/" + str);
             songs.menu.push_back(counter++);
@@ -78,50 +81,55 @@ void loadAudio(std::string pathPrefix){
 
     musicArray = new SoLoud::Openmpt[counter];
 
-    for(int i = 0; i < counter; i++){
+    for (int i = 0; i < counter; i++) {
         SoLoud::result loaded = musicArray[i].load(songList.at(i).c_str());
-        if(loaded != SoLoud::SO_NO_ERROR){
-            log("couldn't load: " + songList.at(i) + " " + std::to_string(loaded));
+        if (loaded != SoLoud::SO_NO_ERROR) {
+            log("couldn't load: " + songList.at(i) + " " +
+                std::to_string(loaded));
         }
     }
 }
 
-void freeAudio(){
-    delete [] musicArray;
+void freeAudio() {
+    delete[] musicArray;
     gSoloud.deinit();
 }
 
-void songEndHandler(){
-    if(musicVolume == 0)
+void songEndHandler() {
+    if (musicVolume == 0)
         return;
 
-    if(currentSong != -1 && !musicQueue.isCurrentlyPlaying(musicArray[currentSong])){
-        if(savefile->settings.cycleSongs == 1){//CYCLE
+    if (currentSong != -1 &&
+        !musicQueue.isCurrentlyPlaying(musicArray[currentSong])) {
+        if (savefile->settings.cycleSongs == 1) { // CYCLE
             playNextSong();
-        }else if(savefile->settings.cycleSongs == 2){//SHUFFLE
+        } else if (savefile->settings.cycleSongs == 2) { // SHUFFLE
             playSongRandom(currentMenu);
         }
     }
 }
 
-void sfx(int n){
+void sfx(int n) {
     soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
     gSoloud.play(soundEffects[n]);
 }
 
-void startSong(int song,bool loop){
+void startSong(int song, bool loop) {
     log(song);
     // if(song == currentSong && !musicArray[currentSong].hasEnded())
-    if(song == currentSong && !gSoloud.getPause(currentSongHandle) && (currentSong != -1 && musicQueue.isCurrentlyPlaying(musicArray[currentSong])))
+    if (song == currentSong && !gSoloud.getPause(currentSongHandle) &&
+        (currentSong != -1 &&
+         musicQueue.isCurrentlyPlaying(musicArray[currentSong])))
         return;
 
-    if(currentSong != -1 && musicQueue.isCurrentlyPlaying(musicArray[currentSong])){
+    if (currentSong != -1 &&
+        musicQueue.isCurrentlyPlaying(musicArray[currentSong])) {
         // musicArray[currentSong].stop();
         musicQueue.stop();
         musicQueue.skip();
     }
 
-    if(musicVolume > 0){
+    if (musicVolume > 0) {
         musicQueue.setParams(44100, 2);
         currentSongHandle = gSoloud.play(musicQueue);
         musicArray[song].setLooping(loop);
@@ -131,15 +139,15 @@ void startSong(int song,bool loop){
     currentSong = song;
     looping = loop;
 
-    gSoloud.setVolume(currentSongHandle,musicVolume);
+    gSoloud.setVolume(currentSongHandle, musicVolume);
 
     // float speed = gSoloud.getRelativePlaySpeed(currentSongHandle);
 
     // gSoloud.setRelativePlaySpeed(currentSongHandle, speed * 0.5f);
 }
 
-void stopSong(){
-    if(currentSong == -1)
+void stopSong() {
+    if (currentSong == -1)
         return;
 
     musicQueue.stop();
@@ -149,17 +157,15 @@ void stopSong(){
     currentSong = -1;
 }
 
-void resumeSong(){
-    gSoloud.setPause(currentSongHandle,0);
-}
+void resumeSong() { gSoloud.setPause(currentSongHandle, 0); }
 
-void setMusicVolume(int volume){
+void setMusicVolume(int volume) {
     musicVolume = volume / (512.0 / 2);
 
-    gSoloud.setVolume(currentSongHandle,musicVolume);
+    gSoloud.setVolume(currentSongHandle, musicVolume);
 }
 
-void setMusicTempo(int tempo){
+void setMusicTempo(int tempo) {
     float nt = tempo / 1024.0;
 
     log(std::to_string(nt));
@@ -167,14 +173,12 @@ void setMusicTempo(int tempo){
     gSoloud.setRelativePlaySpeed(currentSongHandle, tempo / 1024.0);
 }
 
-void sfxRate(int n, float rate){
+void sfxRate(int n, float rate) {
     soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
     int s = gSoloud.play(soundEffects[n]);
-    gSoloud.setRelativePlaySpeed(s,rate);
+    gSoloud.setRelativePlaySpeed(s, rate);
 }
 
-void pauseSong(){
-    gSoloud.setPause(currentSongHandle,1);
-}
+void pauseSong() { gSoloud.setPause(currentSongHandle, 1); }
 
 #endif

@@ -35,4 +35,4 @@ void interrupt_unmask(void);
 }
 #endif
 
-#endif  // INTERRUPT_H
+#endif // INTERRUPT_H

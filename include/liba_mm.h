@@ -2,8 +2,8 @@
 
 #include <cinttypes>
 
-#include "liba_pc.h"
 #include "audio_files.h"
+#include "liba_pc.h"
 #include <map>
 
 #include "SDL/SDL.h"
@@ -42,13 +42,13 @@ extern void refreshWindowSize();
 extern bool closed();
 
 extern void sfx(int);
-extern void startSong(int,bool);
+extern void startSong(int, bool);
 extern void stopSong();
 extern void resumeSong();
 extern void setMusicVolume(int);
 extern void setMusicTempo(int);
 extern void toggleRendering(bool);
-extern void sfxRate(int,float);
+extern void sfxRate(int, float);
 
 extern void pauseSong();
 
@@ -64,4 +64,4 @@ extern uint32_t key_first();
 extern int rowStart;
 extern int rowEnd;
 
-extern std::map<int,std::string> keyToString;
+extern std::map<int, std::string> keyToString;

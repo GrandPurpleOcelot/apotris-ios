@@ -7,21 +7,21 @@ int currentlyPlayingSong = -1;
 void playSong(int menuId, int songId) {
     int song = 0;
 
-    std::list<int> *songList;
+    std::list<int>* songList;
 
     if (menuId == 0) {
         songList = &songs.menu;
     } else if (menuId == 1) {
         songList = &songs.game;
-    } else{
+    } else {
         return;
     }
 
-    if(songId > (int) songList->size())
+    if (songId > (int)songList->size())
         return;
 
     auto it = songList->begin();
-    std::advance(it,songId);
+    std::advance(it, songId);
 
     song = *it;
 
@@ -29,7 +29,7 @@ void playSong(int menuId, int songId) {
     currentlyPlayingSong = songId;
 
     setMusicVolume(512 * ((float)savefile->settings.volume / 10));
-    startSong(song,(savefile->settings.cycleSongs == 0));
+    startSong(song, (savefile->settings.cycleSongs == 0));
 }
 
 void playSongRandom(int menuId) {
@@ -49,14 +49,12 @@ void playSongRandom(int menuId) {
     int index = 0;
     int count = 0;
 
-    do{
+    do {
         index = qran() % max;
-    }while(
-        (getSongState(menuId, index) || index == currentlyPlayingSong) &&
-        count++ < 1000
-    );
+    } while ((getSongState(menuId, index) || index == currentlyPlayingSong) &&
+             count++ < 1000);
 
-    if(count >= 1000)
+    if (count >= 1000)
         return;
 
     songId = index;
@@ -67,7 +65,7 @@ void playSongRandom(int menuId) {
     playSong(menuId, songId);
 }
 
-void playNextSong(){
+void playNextSong() {
     int songId = -1;
     int max = 0;
 
@@ -84,15 +82,15 @@ void playNextSong(){
     if (max <= 0)
         return;
 
-    int index = std::max(currentlyPlayingSong,0);
+    int index = std::max(currentlyPlayingSong, 0);
     int count = 0;
 
-    do{
-        if(++index >= max)
+    do {
+        if (++index >= max)
             index = 0;
-    }while(getSongState(menuId, index) && count++ < 1000);
+    } while (getSongState(menuId, index) && count++ < 1000);
 
-    if(count >= 1000)
+    if (count >= 1000)
         return;
 
     songId = index;
@@ -103,48 +101,48 @@ void playNextSong(){
     playSong(menuId, songId);
 }
 
-void toggleSong(int group, int index, bool state){
-    int *list = nullptr;
+void toggleSong(int group, int index, bool state) {
+    int* list = nullptr;
 
-    if(group == 0){//MENU
+    if (group == 0) { // MENU
         list = savefile->settings.songDisabling.menuBits;
-    }else if(group == 1){//IN-GAME
+    } else if (group == 1) { // IN-GAME
         list = savefile->settings.songDisabling.gameBits;
     }
 
-    if(!list)
+    if (!list)
         return;
 
-    if(state)
-        list[index/32] |= 1 << (index % 32);
+    if (state)
+        list[index / 32] |= 1 << (index % 32);
     else
-        list[index/32] &= ~(1 << (index % 32));
+        list[index / 32] &= ~(1 << (index % 32));
 }
 
-bool getSongState(int group, int index){
-    int *list = nullptr;
+bool getSongState(int group, int index) {
+    int* list = nullptr;
 
-    if(group == 0){//MENU
+    if (group == 0) { // MENU
         list = savefile->settings.songDisabling.menuBits;
-    }else if(group == 1){//IN-GAME
+    } else if (group == 1) { // IN-GAME
         list = savefile->settings.songDisabling.gameBits;
     }
 
-    if(!list)
+    if (!list)
         return true;
 
-    return (list[index/32] >> (index % 32)) & 1;
+    return (list[index / 32] >> (index % 32)) & 1;
 }
 
-void checkSongs(){
-    SongDisabling * set = &savefile->settings.songDisabling;
+void checkSongs() {
+    SongDisabling* set = &savefile->settings.songDisabling;
 
-    if((u8) songs.menu.size() != set->menu ||
-       (u8) songs.game.size() != set->game){
+    if ((u8)songs.menu.size() != set->menu ||
+        (u8)songs.game.size() != set->game) {
         memset32_fast(set->gameBits, 0, 4);
         memset32_fast(set->menuBits, 0, 4);
 
-        set->menu = (u8) songs.menu.size();
-        set->game = (u8) songs.game.size();
+        set->menu = (u8)songs.menu.size();
+        set->game = (u8)songs.game.size();
     }
 }

@@ -1,11 +1,9 @@
 #include "multiplayerClasses.h"
 
-RemotePlayerId::RemotePlayerId(u8 playerId) {
-    id = playerId;
-}
+RemotePlayerId::RemotePlayerId(u8 playerId) { id = playerId; }
 
 u8 getEnemyIndex(u8 id) {
-    if(id > currentPlayerId)
+    if (id > currentPlayerId)
         id -= 1;
     return id;
 }
@@ -23,9 +21,7 @@ RemotePlayerId RemotePlayerIndex::getOriginalId() const {
     return RemotePlayerId(originalId);
 }
 
-void PlayerStateMutex::clear() {
-    this->locks.clear();
-}
+void PlayerStateMutex::clear() { this->locks.clear(); }
 
 void PlayerStateMutex::updatePlayerReady(u8 remotePlayerId, bool readyState) {
     this->locks[remotePlayerId] = readyState;

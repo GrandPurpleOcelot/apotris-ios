@@ -7,8 +7,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    bool ram_overclock();
-    bool detect_inaccurate_emulator();
+bool ram_overclock();
+bool detect_inaccurate_emulator();
 
 #ifdef __cplusplus
 }

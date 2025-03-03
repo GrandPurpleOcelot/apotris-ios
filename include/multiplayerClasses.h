@@ -1,19 +1,19 @@
 #pragma once
 
-#include <memory>
 #include "def.h"
+#include <memory>
 
 class RemotePlayerId;
 class RemotePlayerIndex;
 
-class RemotePlayerId{
+class RemotePlayerId {
 public:
     u8 id;
     explicit RemotePlayerId(u8 playerId);
     [[nodiscard]] RemotePlayerIndex getIndex() const;
 };
 
-class RemotePlayerIndex{
+class RemotePlayerIndex {
 public:
     u8 index;
     u8 originalId;
@@ -21,7 +21,7 @@ public:
     [[nodiscard]] RemotePlayerId getOriginalId() const;
 };
 
-class PlayerStateMutex{
+class PlayerStateMutex {
 public:
     std::map<u8, bool> locks;
     void clear();
@@ -30,4 +30,3 @@ public:
     bool checkAllReady();
     bool checkCurrentReady();
 };
-

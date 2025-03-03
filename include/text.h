@@ -11,7 +11,8 @@ extern void aprintf(int, int, int);
 extern void aprints(std::string, int, int, int);
 extern void aprintsSprite(std::string, int, int, int);
 
-extern void setSmallTextArea(int tid, int startX,int startY,int endX,int endY);
+extern void setSmallTextArea(int tid, int startX, int startY, int endX,
+                             int endY);
 extern void clearSmallText();
 extern void resetSmallText();
 extern void clearText();

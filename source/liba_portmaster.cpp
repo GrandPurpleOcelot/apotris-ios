@@ -1,27 +1,27 @@
 #ifdef PORTMASTER
 
 #include "liba_portmaster.h"
-#include <list>
+#include <cstdio>
+#include <dirent.h>
 #include <fstream>
 #include <iostream>
-#include <dirent.h>
-#include <cstdio>
+#include <list>
 
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "def.h"
 #include "shader.h"
 
 #include "nanotime.h"
 
-#define RUMBLE_OFF    1000000
-#define RUMBLE_STRONG  100000
-#define RUMBLE_MEDIUM  400000
+#define RUMBLE_OFF 1000000
+#define RUMBLE_STRONG 100000
+#define RUMBLE_MEDIUM 400000
 
 static int fd = -1;
 
@@ -48,7 +48,7 @@ uint32_t frame_time = 0;
 float fps = 0;
 
 SDL_Window* window;
-SDL_Renderer * renderer;
+SDL_Renderer* renderer;
 SDL_GameController* controller;
 SDL_Texture* texture;
 
@@ -63,7 +63,7 @@ float windowScale = 3;
 
 nanotime_step_data stepper;
 
-void windowInit(){
+void windowInit() {
     // Initialize SDL
     window = NULL;
 
@@ -78,17 +78,14 @@ void windowInit(){
     screenWidth = DM.w;
     screenHeight = DM.h;
 
-    window = SDL_CreateWindow(
-        "Apotris PortMaster",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        screenWidth, screenHeight,
-        SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
-        );
+    window = SDL_CreateWindow("Apotris PortMaster", SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight,
+                              SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 
     renderer = SDL_CreateRenderer(window, -1, 0);
 
     SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-    if(SDL_NumJoysticks() > 0){
+    if (SDL_NumJoysticks() > 0) {
         controller = SDL_GameControllerOpen(0);
     }
 
@@ -96,17 +93,18 @@ void windowInit(){
 
     loadAudio("");
 
-    nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
+    nanotime_step_init(&stepper, (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
+                       nanotime_now_max(), nanotime_now, nanotime_sleep);
 }
 
-void key_poll(){
+void key_poll() {
     previousKeys = currentKeys;
     currentKeys.clear();
 
     SDL_Event event;
 
-    while( SDL_PollEvent( &event ) ){
-        switch( event.type ){
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
         case SDL_QUIT:
             quit();
             break;
@@ -115,9 +113,10 @@ void key_poll(){
         }
     }
 
-    if(controller && SDL_GameControllerGetAttached(controller)){
-        for(int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++){
-            if(SDL_GameControllerGetButton(controller,static_cast<SDL_GameControllerButton>(i))){
+    if (controller && SDL_GameControllerGetAttached(controller)) {
+        for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++) {
+            if (SDL_GameControllerGetButton(
+                    controller, static_cast<SDL_GameControllerButton>(i))) {
                 currentKeys.push_back(i);
             }
         }
@@ -126,57 +125,57 @@ void key_poll(){
     // currentKeys = currentlyPressed;
 }
 
-uint32_t key_is_down(uint32_t key){
-    if(key == KEY_FULL)
+uint32_t key_is_down(uint32_t key) {
+    if (key == KEY_FULL)
         return (!currentKeys.empty());
 
     auto it = currentKeys.begin();
 
-    it = std::find(currentKeys.begin(),currentKeys.end(),key);
+    it = std::find(currentKeys.begin(), currentKeys.end(), key);
 
     return (it != currentKeys.end());
 }
 
-uint32_t key_hit(uint32_t key){
-    if(key == KEY_FULL)
+uint32_t key_hit(uint32_t key) {
+    if (key == KEY_FULL)
         return (previousKeys.empty() && !currentKeys.empty());
 
     auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(),previousKeys.end(),key);
+    it = std::find(previousKeys.begin(), previousKeys.end(), key);
     bool prev = (it != previousKeys.end());
 
     it = currentKeys.begin();
-    it = std::find(currentKeys.begin(),currentKeys.end(),key);
+    it = std::find(currentKeys.begin(), currentKeys.end(), key);
     bool curr = (it != currentKeys.end());
 
     return (!prev && curr);
 }
 
-uint32_t key_released(uint32_t key){
-    if(key == KEY_FULL)
+uint32_t key_released(uint32_t key) {
+    if (key == KEY_FULL)
         return (!previousKeys.empty() && currentKeys.empty());
 
     auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(),previousKeys.end(),key);
+    it = std::find(previousKeys.begin(), previousKeys.end(), key);
     bool prev = (it != previousKeys.end());
 
     it = currentKeys.begin();
-    it = std::find(currentKeys.begin(),currentKeys.end(),key);
+    it = std::find(currentKeys.begin(), currentKeys.end(), key);
     bool curr = (it != currentKeys.end());
 
     return (prev && !curr);
 }
 
-uint32_t key_first(){
-    if(currentKeys.empty())
+uint32_t key_first() {
+    if (currentKeys.empty())
         return KEY_FULL - 1;
 
-    for(auto key : currentKeys){
+    for (auto key : currentKeys) {
         auto it = previousKeys.begin();
-        it = std::find(previousKeys.begin(),previousKeys.end(),key);
+        it = std::find(previousKeys.begin(), previousKeys.end(), key);
         bool prev = (it != previousKeys.end());
 
-        if(!prev){
+        if (!prev) {
             return key;
         }
     }
@@ -184,40 +183,28 @@ uint32_t key_first(){
     return KEY_FULL - 1;
 }
 
-void updateWindow(uint8_t* framebuffer){
+void updateWindow(uint8_t* framebuffer) {
     const int in_width = SCREEN_WIDTH;
     const int in_height = SCREEN_HEIGHT;
 
     // Create the SDL_Surface from the framebuffer
     SDL_Surface* img = SDL_CreateRGBSurfaceFrom(
-        framebuffer,
-        in_width,
-        in_height,
-        32,
-        in_width * 4,
-        0x0000ff,
-        0x00ff00,
-        0xff0000,
-        0xff000000
-    );
+        framebuffer, in_width, in_height, 32, in_width * 4, 0x0000ff, 0x00ff00,
+        0xff0000, 0xff000000);
 
-    if (img == NULL){
+    if (img == NULL) {
         printf("Failed to create SDL_Surface: %s\n", SDL_GetError());
         return;
     }
 
-    if(!savefile->settings.shaders){
+    if (!savefile->settings.shaders) {
 
         // Create the streaming texture once
-        if (texture == NULL){
-            texture = SDL_CreateTexture(
-                renderer,
-                SDL_PIXELFORMAT_ABGR8888,
-                SDL_TEXTUREACCESS_STREAMING,
-                in_width,
-                in_height
-            );
-            if (texture == NULL){
+        if (texture == NULL) {
+            texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888,
+                                        SDL_TEXTUREACCESS_STREAMING, in_width,
+                                        in_height);
+            if (texture == NULL) {
                 printf("Failed to create texture: %s\n", SDL_GetError());
                 SDL_FreeSurface(img);
                 return;
@@ -227,18 +214,17 @@ void updateWindow(uint8_t* framebuffer){
         // Lock the texture to update its pixel data
         void* pixels;
         int pitch;
-        if (SDL_LockTexture(texture, NULL, &pixels, &pitch) != 0){
+        if (SDL_LockTexture(texture, NULL, &pixels, &pitch) != 0) {
             printf("Failed to lock texture: %s\n", SDL_GetError());
             SDL_FreeSurface(img);
             return;
         }
 
         // Copy the surface's pixel data into the streaming texture
-        for (int y = 0; y < in_height; y++){
-            memcpy(
-                (uint8_t*)pixels + y * pitch,       // Destination pointer
-                (uint8_t*)img->pixels + y * img->pitch, // Source pointer
-                in_width * 4                        // Row size in bytes
+        for (int y = 0; y < in_height; y++) {
+            memcpy((uint8_t*)pixels + y * pitch, // Destination pointer
+                   (uint8_t*)img->pixels + y * img->pitch, // Source pointer
+                   in_width * 4                            // Row size in bytes
             );
         }
 
@@ -248,25 +234,21 @@ void updateWindow(uint8_t* framebuffer){
         SDL_RenderClear(renderer);
 
         // Define source and destination rectangles
-        SDL_Rect src_rect = { 0, 0, in_width, in_height };
+        SDL_Rect src_rect = {0, 0, in_width, in_height};
         const int w = in_width * windowScale;
         const int h = in_height * windowScale;
-        SDL_Rect dest_rect = {
-            -(w - screenWidth) / 2,
-            -(h - screenHeight) / 2,
-            w,
-            h
-        };
+        SDL_Rect dest_rect = {-(w - screenWidth) / 2, -(h - screenHeight) / 2,
+                              w, h};
 
         // Copy the updated texture to the renderer
-        if (render){
+        if (render) {
             SDL_RenderCopy(renderer, texture, &src_rect, &dest_rect);
         }
 
         SDL_RenderPresent(renderer);
-    }else{
-        if(render){
-            drawWithShaders(window,img,true);
+    } else {
+        if (render) {
+            drawWithShaders(window, img, true);
         }
     }
     SDL_FreeSurface(img); // Free the surface after use
@@ -276,10 +258,13 @@ void updateWindow(uint8_t* framebuffer){
 
     Uint64 end = SDL_GetPerformanceCounter();
 
-    float elapsedMS = (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
+    float elapsedMS =
+        (end - frame_start) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
 
-    if(elapsedMS > 100){
-        nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
+    if (elapsedMS > 100) {
+        nanotime_step_init(&stepper,
+                           (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
+                           nanotime_now_max(), nanotime_now, nanotime_sleep);
     }
 
     fps = 1000.0f / elapsedMS;
@@ -287,39 +272,40 @@ void updateWindow(uint8_t* framebuffer){
     frame_start = SDL_GetPerformanceCounter();
 }
 
-void refreshWindowSize(){
-    if(savefile != nullptr){
-        if(savefile->settings.zoom > -1){
-            windowScale = 1 + (float) savefile->settings.zoom / 10;
-        }else{
-            if(savefile->settings.integerScale){
+void refreshWindowSize() {
+    if (savefile != nullptr) {
+        if (savefile->settings.zoom > -1) {
+            windowScale = 1 + (float)savefile->settings.zoom / 10;
+        } else {
+            if (savefile->settings.integerScale) {
                 windowScale = (int)windowScale;
 
-                while (windowScale > 0 && screenHeight / windowScale > 160 * 2) {
+                while (windowScale > 0 &&
+                       screenHeight / windowScale > 160 * 2) {
                     windowScale++;
                 }
                 while (windowScale > 1 && screenHeight / windowScale < 160) {
                     windowScale--;
                 }
-            }else{
+            } else {
                 windowScale = screenHeight / 200.0;
             }
         }
     }
 
-    if(windowScale <= 0)
+    if (windowScale <= 0)
         return;
 
-    rowStart = (SCREEN_HEIGHT - (screenHeight/windowScale))/2;
-    rowEnd = (SCREEN_HEIGHT + (screenHeight/windowScale))/2;
+    rowStart = (SCREEN_HEIGHT - (screenHeight / windowScale)) / 2;
+    rowEnd = (SCREEN_HEIGHT + (screenHeight / windowScale)) / 2;
 
-    if(rowStart < 0)
+    if (rowStart < 0)
         rowStart = 0;
 
-    if(rowEnd > SCREEN_HEIGHT)
+    if (rowEnd > SCREEN_HEIGHT)
         rowEnd = SCREEN_HEIGHT;
 
-    if(savefile != nullptr){
+    if (savefile != nullptr) {
         setGradient(savefile->settings.backgroundGradient);
         if (savefile->settings.shaders != 0) {
             refreshShaderResolution(screenWidth, screenHeight, windowScale);
@@ -327,17 +313,15 @@ void refreshWindowSize(){
     }
 }
 
-bool closed(){
+bool closed() {
     songEndHandler();
 
     return true;
 }
 
-void toggleRendering(bool r){
-    render = r;
-}
+void toggleRendering(bool r) { render = r; }
 
-void initRumble(){
+void initRumble() {
     signal(SIGINT, cleanup_handler);
     signal(SIGTERM, cleanup_handler);
 
@@ -345,7 +329,7 @@ void initRumble(){
     if (fd < 0) {
         log("couldn't open rumble file 0");
         fd = open("/sys/class/pwm/pwmchip1/pwm0/duty_cycle", O_WRONLY);
-        if(fd < 0){
+        if (fd < 0) {
             log("couldn't open rumble file");
             fprintf(stderr, "Failed to open PWM: %s\n", strerror(errno));
             return;
@@ -354,18 +338,18 @@ void initRumble(){
     return;
 };
 
-void loadSavefile(){
+void loadSavefile() {
 
-    std::ifstream input("Apotris.sav",std::ios::binary | std::ios::in);
+    std::ifstream input("Apotris.sav", std::ios::binary | std::ios::in);
 
-    if(savefile == nullptr)
+    if (savefile == nullptr)
         savefile = new Save();
 
-    char * src = (char * ) savefile;
+    char* src = (char*)savefile;
 
-    input.read(src,sizeof(Save));
+    input.read(src, sizeof(Save));
 
-    if(!input){
+    if (!input) {
         log("Error when trying to load save.");
         return;
     }
@@ -373,11 +357,11 @@ void loadSavefile(){
     input.close();
 }
 
-void saveSavefile(){
+void saveSavefile() {
 
-    std::ofstream output("Apotris.sav",std::ios::binary | std::ios::out);
+    std::ofstream output("Apotris.sav", std::ios::binary | std::ios::out);
 
-    char * dst = (char * ) savefile;
+    char* dst = (char*)savefile;
 
     const int saveSize = 1 << 15;
 
@@ -388,7 +372,7 @@ void saveSavefile(){
 
     output.write(temp, saveSize);
 
-    if(!output){
+    if (!output) {
         log("Error when trying to write save.");
         return;
     }
@@ -396,30 +380,26 @@ void saveSavefile(){
     output.close();
 }
 
-void rumbleStart(){
-    set_rumble(RUMBLE_STRONG);
-}
+void rumbleStart() { set_rumble(RUMBLE_STRONG); }
 
-void rumbleStop(){
-    set_rumble(RUMBLE_OFF);
-}
+void rumbleStop() { set_rumble(RUMBLE_OFF); }
 
-std::map<int,std::string> keyToString = {
-{SDL_CONTROLLER_BUTTON_A,"A"},
-{SDL_CONTROLLER_BUTTON_B,"B"},
-{SDL_CONTROLLER_BUTTON_X,"X"},
-{SDL_CONTROLLER_BUTTON_Y,"Y"},
-{SDL_CONTROLLER_BUTTON_BACK,"Select"},
-{SDL_CONTROLLER_BUTTON_START,"Start"},
-{SDL_CONTROLLER_BUTTON_DPAD_LEFT,"Left"},
-{SDL_CONTROLLER_BUTTON_DPAD_UP,"Up"},
-{SDL_CONTROLLER_BUTTON_DPAD_RIGHT,"Right"},
-{SDL_CONTROLLER_BUTTON_DPAD_DOWN,"Down"},
-{SDL_CONTROLLER_BUTTON_LEFTSHOULDER,"L"},
-{SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,"R"},
+std::map<int, std::string> keyToString = {
+    {SDL_CONTROLLER_BUTTON_A, "A"},
+    {SDL_CONTROLLER_BUTTON_B, "B"},
+    {SDL_CONTROLLER_BUTTON_X, "X"},
+    {SDL_CONTROLLER_BUTTON_Y, "Y"},
+    {SDL_CONTROLLER_BUTTON_BACK, "Select"},
+    {SDL_CONTROLLER_BUTTON_START, "Start"},
+    {SDL_CONTROLLER_BUTTON_DPAD_LEFT, "Left"},
+    {SDL_CONTROLLER_BUTTON_DPAD_UP, "Up"},
+    {SDL_CONTROLLER_BUTTON_DPAD_RIGHT, "Right"},
+    {SDL_CONTROLLER_BUTTON_DPAD_DOWN, "Down"},
+    {SDL_CONTROLLER_BUTTON_LEFTSHOULDER, "L"},
+    {SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, "R"},
 };
 
-//rumble signal handler
+// rumble signal handler
 void cleanup_handler(int signum) {
     if (fd >= 0) {
         char str[16];
@@ -431,7 +411,8 @@ void cleanup_handler(int signum) {
 }
 
 int set_rumble(int strength) {
-    if (fd < 0) return -1;
+    if (fd < 0)
+        return -1;
 
     char str[16];
     snprintf(str, sizeof(str), "%d", strength);
@@ -443,8 +424,8 @@ int set_rumble(int strength) {
     return 0;
 }
 
-void quit(){
-    //shutdown rumble
+void quit() {
+    // shutdown rumble
     if (fd >= 0) {
         char str[16];
         snprintf(str, sizeof(str), "%d", RUMBLE_OFF);
@@ -461,11 +442,7 @@ void quit(){
     exit(0);
 }
 
-void shaderInit(int index){
-    initShaders(window,index);
-}
+void shaderInit(int index) { initShaders(window, index); }
 
-void shaderDeinit(){
-    freeShaders();
-}
+void shaderDeinit() { freeShaders(); }
 #endif
