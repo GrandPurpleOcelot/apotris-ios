@@ -106,7 +106,6 @@ padbin = tools.get_variable('padbin_executable')
 bin2s = files('tools/bin2s.py')
 call_bin2s = files('tools/callBin2S.py')
 if host_machine.system() == 'horizon'
-    build_romfs = find_program('build_romfs')
     elf2nro = find_program('elf2nro')
     nacptool = find_program('nacptool')
     call_build_rom = files('tools/switchMakeNRO.py')
@@ -289,12 +288,7 @@ if host_machine.system() != 'gba'
             link_args : link_args,
         )
         nro = custom_target(
-            'Build romfs and final NRO for Apotris on Nintendo Switch',
-            output : 'Apotris.nro',
-            command : [
-                py3, call_build_rom, build_romfs, meson.current_build_dir() / 'assets', elf2nro, nacptool, icon_file, binary
-            ],
-            depends : binary,
+            'Build romfs and final NRO for Apotris on Nintendo Switch' depends : binary,
             build_by_default : true,
         )
     else
