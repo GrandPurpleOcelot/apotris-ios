@@ -786,7 +786,7 @@ void showPawn() {
         blend += max(16 - (game->lockTimer * 16) / game->maxLockTimer, 0);
 
     if (!game->zoneTimer) {
-        setPawnPalette(11, n, blend);
+        setPawnPalette(11, n, blend, false);
     }
 
     if (!game->pawn.big) {
@@ -838,6 +838,7 @@ void showShadow() {
     u8* shadowTexture;
 
     bool bld = false;
+    bool flip = false;
     switch (savefile->settings.shadow) {
     case 0:
         shadowTexture = (u8*)sprite2tiles_bin;
@@ -859,6 +860,15 @@ void showShadow() {
     case 4:
         sprite_hide(pawnShadow);
         return;
+    case 7:
+        if (savefile->settings.skin < 7 || savefile->settings.skin > 8)
+            shadowTexture = blockSprite;
+        else
+            shadowTexture = (u8*)
+                classicTiles[savefile->settings.skin - 7][game->activePiece];
+        bld = true;
+        flip = true;
+        break;
     default:
         shadowTexture = (u8*)sprite2tiles_bin;
         break;
@@ -896,7 +906,7 @@ void showShadow() {
     int n = game->activePiece;
 
     if (!game->zoneTimer) {
-        setPawnPalette(10, n, 14 * bld);
+        setPawnPalette(10, n, 14 * bld, flip);
     }
 
     if (!game->pawn.big) {
@@ -906,7 +916,9 @@ void showShadow() {
         }
 
         sprite_set_attr(pawnShadow, ShapeSquare, 2,
-                        16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
+                        16 * (8 - (savefile->settings.shadow == 3 ||
+                                   savefile->settings.shadow == 7)),
+                        10, 2);
         sprite_set_pos(pawnShadow,
                        (10 + game->pawn.x) * 8 +
                            push * savefile->settings.shake,
@@ -918,7 +930,9 @@ void showShadow() {
             return;
         }
         sprite_set_attr(pawnShadow, ShapeSquare, 2,
-                        16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
+                        16 * (8 - (savefile->settings.shadow == 3 ||
+                                   savefile->settings.shadow == 7)),
+                        10, 2);
         sprite_enable_mosaic(pawnShadow);
         sprite_enable_affine(pawnShadow, 30, true);
         sprite_set_size(pawnShadow, 1 << 7, 30);
