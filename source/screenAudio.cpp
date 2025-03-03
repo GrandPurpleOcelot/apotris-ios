@@ -8,6 +8,8 @@ bool SongListElement::action(){
 }
 
 void SongElement::select(){
+    if(index < 0)
+        return;
     playSong(menu, index);
 }
 
