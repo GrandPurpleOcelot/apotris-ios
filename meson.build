@@ -290,7 +290,12 @@ if host_machine.system() != 'gba'
             link_args : link_args,
         )
         nro = custom_target(
-            'Build romfs and final NRO for Apotris on Nintendo Switch' depends : binary,
+            'Build romfs and final NRO for Apotris on Nintendo Switch',
+            output : 'Apotris.nro',
+            command : [
+                py3, call_build_rom, elf2nro, nacptool, icon_file, binary
+            ],
+            depends : binary,
             build_by_default : true,
         )
     else
