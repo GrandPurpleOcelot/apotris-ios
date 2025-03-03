@@ -564,6 +564,9 @@ void MainMenuScene::init(){
     SimpleListScene::init();
 
     #if defined(PC) || defined(WEB)
+    if(lastInputType == InputType::CONTROLLER)
+        return;
+
     int offset = 0;
     if(savefile->settings.aspectRatio == 1){
         offset = (240 - 214) / 2;
@@ -589,6 +592,7 @@ void MainMenuScene::init(){
     aprints(move,1 + offset,18,2);
     aprints(confirm,30 * 8 - confirm.size() * 4 - offset,11,2);
     aprints(cancel,30 * 8 - cancel.size() * 4 - offset,18,2);
+
     #endif
 
     #ifdef GBA

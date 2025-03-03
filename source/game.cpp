@@ -3239,17 +3239,16 @@ void GameScene::update(){
         updateText();
     }
 
-    //TODO:
     #ifdef GBA
     rumble_update();
+    #endif
     if(!(demo || replaying) && rumbleTimer > 0){
         rumbleTimer--;
 
-        rumble_set_state(rumble_start);
+        rumbleStart();
     }else{
-        rumble_set_state(rumble_hard_stop);
+        rumbleStop();
     }
-    #endif
 
     if((game->won || game->lost) && !(flashTimer || eventPauseTimer)){
         paused = true;

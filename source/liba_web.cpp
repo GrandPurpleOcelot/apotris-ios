@@ -12,6 +12,8 @@
 
 void resizeWindow(int width, int height);
 
+void handleAnalogInput(int axis, int value);
+
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
 
@@ -32,6 +34,9 @@ nanotime_step_data stepper;
 SDL_Window* window;
 SDL_Renderer * renderer;
 SDL_Texture* texture;
+SDL_GameController* controller;
+
+int controllerCount = 0;
 
 bool render = true;
 
@@ -43,7 +48,22 @@ float fps = 0;
 int screenWidth = 1280;
 int screenHeight = 720;
 
+InputType lastInputType = InputType::KEYBOARD;
+
 float windowScale = 4;
+
+#define DEADZONE 12000
+
+int KEY_A = (SDL_CONTROLLER_BUTTON_A << 16) | packKey(SDLK_RETURN);
+int KEY_B = (SDL_CONTROLLER_BUTTON_B << 16) | packKey(SDLK_BACKSPACE);
+int KEY_L = (SDL_CONTROLLER_BUTTON_LEFTSHOULDER << 16) | packKey(SDLK_1);
+int KEY_R = (SDL_CONTROLLER_BUTTON_RIGHTSHOULDER << 16) | packKey(SDLK_2);
+int KEY_UP = (SDL_CONTROLLER_BUTTON_DPAD_UP << 16) | packKey(SDLK_w);
+int KEY_DOWN = (SDL_CONTROLLER_BUTTON_DPAD_DOWN << 16) | packKey(SDLK_s);
+int KEY_LEFT = (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) | packKey(SDLK_a);
+int KEY_RIGHT = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(SDLK_d);
+int KEY_SELECT = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(SDLK_3);
+int KEY_START = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(SDLK_ESCAPE);
 
 EM_JS(int, getWindowWidth, (), {
   return window.innerWidth;
@@ -53,12 +73,12 @@ EM_JS(int, getWindowHeight, (), {
   return window.innerHeight;
 });
 
-int resizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData){
+bool resizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData){
     screenWidth = getWindowWidth();
     screenHeight = getWindowHeight();
 
     resizeWindow(screenWidth, screenHeight);
-    return 0;
+    return false;
 }
 
 void windowInit(){
@@ -92,11 +112,35 @@ void windowInit(){
     renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
+    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    if(SDL_NumJoysticks() > 0){
+        controller = SDL_GameControllerOpen(0);
+        controllerCount = SDL_NumJoysticks();
+    }
+
     loadAudio("");
 
     nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW,nullptr,false,resizeCallback);
+}
+
+void pressKey(int key, InputType type){
+    lastInputType = type;
+
+    auto it = currentlyPressed.begin();
+    it = std::find(currentlyPressed.begin(), currentlyPressed.end(), key);
+    if (it == currentlyPressed.end())
+        currentlyPressed.push_back(key);
+}
+
+void unpressKey(int key, InputType type){
+    lastInputType = type;
+
+    auto it = currentlyPressed.begin();
+    it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
+    if(it != currentlyPressed.end())
+        currentlyPressed.remove(key);
 }
 
 void key_poll(){
@@ -128,17 +172,22 @@ void key_poll(){
                 break;
             }
 
-            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
-            found = (it != currentlyPressed.end());
-            if(!found)
-                currentlyPressed.push_back(key);
+            pressKey(key,InputType::KEYBOARD);
+            break;
+        case SDL_CONTROLLERBUTTONDOWN:
+            key = event.cbutton.button;
+            pressKey(key,InputType::CONTROLLER);
             break;
         case SDL_KEYUP:
             key = event.key.keysym.sym;
-            it = std::find(currentlyPressed.begin(),currentlyPressed.end(),key);
-            found = (it != currentlyPressed.end());
-            if(found)
-                currentlyPressed.remove(key);
+            unpressKey(key, InputType::KEYBOARD);
+            break;
+        case SDL_CONTROLLERBUTTONUP:
+            key = event.cbutton.button;
+            unpressKey(key, InputType::CONTROLLER);
+            break;
+        case SDL_CONTROLLERAXISMOTION:
+            handleAnalogInput(event.caxis.axis,event.caxis.value);
             break;
         case SDL_QUIT:
             quit();
@@ -151,22 +200,32 @@ void key_poll(){
     currentKeys = currentlyPressed;
 }
 
+int splitKey(uint32_t key){
+    if(lastInputType == InputType::KEYBOARD){
+        return unpackKey(key & 0xffff);
+    }else{
+        return (key & 0xffff0000) >> 16;
+    }
+}
+
 uint32_t key_is_down(uint32_t key){
     if(key == KEY_FULL)
         return (!currentKeys.empty());
+
+    key = splitKey(key);
 
     auto it = currentKeys.begin();
 
     it = std::find(currentKeys.begin(),currentKeys.end(),key);
 
     return (it != currentKeys.end());
-
-    return 0;
 }
 
 uint32_t key_hit(uint32_t key){
     if(key == KEY_FULL)
-        return (previousKeys.empty() && !currentKeys.empty())? currentKeys.front() : 0;
+        return (previousKeys.empty() && !currentKeys.empty());
+
+    key = splitKey(key);
 
     auto it = previousKeys.begin();
     it = std::find(previousKeys.begin(),previousKeys.end(),key);
@@ -177,13 +236,13 @@ uint32_t key_hit(uint32_t key){
     bool curr = (it != currentKeys.end());
 
     return (!prev && curr);
-
-    return 0;
 }
 
 uint32_t key_released(uint32_t key){
     if(key == KEY_FULL)
         return (!previousKeys.empty() && currentKeys.empty());
+
+    key = splitKey(key);
 
     auto it = previousKeys.begin();
     it = std::find(previousKeys.begin(),previousKeys.end(),key);
@@ -194,8 +253,6 @@ uint32_t key_released(uint32_t key){
     bool curr = (it != currentKeys.end());
 
     return (prev && !curr);
-
-    return 0;
 }
 
 uint32_t key_first(){
@@ -309,6 +366,17 @@ void updateWindow(uint8_t* framebuffer){
     fps = 1000.0f / elapsedMS;
 
     frame_start = SDL_GetPerformanceCounter();
+
+    //handle controller hotplug
+    if(SDL_NumJoysticks() != controllerCount){
+        if(controllerCount == 0){
+            controller = SDL_GameControllerOpen(0);
+        }else if(SDL_NumJoysticks() == 0){
+            SDL_GameControllerClose(controller);
+        }
+
+        controllerCount = SDL_NumJoysticks();
+    }
 }
 
 void refreshWindowSize(){
@@ -434,11 +502,95 @@ void resizeWindow(int width, int height){
 }
 
 std::string stringFromKey(uint32_t key){
-    return SDL_GetKeyName(key);
+    if(lastInputType == InputType::KEYBOARD){
+        key = unpackKey(key & 0xffff);
+
+        if(key == 0xffff)
+            return "";
+
+        return SDL_GetKeyName(key);
+    }else{
+        return keyToString[key >> 16];
+    }
 }
 
 void toggleRendering(bool r){
     render = r;
 }
 
+std::map<int,std::string> keyToString = {
+{SDL_CONTROLLER_BUTTON_A,"A"},
+{SDL_CONTROLLER_BUTTON_B,"B"},
+{SDL_CONTROLLER_BUTTON_X,"X"},
+{SDL_CONTROLLER_BUTTON_Y,"Y"},
+{SDL_CONTROLLER_BUTTON_BACK,"Select"},
+{SDL_CONTROLLER_BUTTON_START,"Start"},
+{SDL_CONTROLLER_BUTTON_DPAD_LEFT,"Left"},
+{SDL_CONTROLLER_BUTTON_DPAD_UP,"Up"},
+{SDL_CONTROLLER_BUTTON_DPAD_RIGHT,"Right"},
+{SDL_CONTROLLER_BUTTON_DPAD_DOWN,"Down"},
+{SDL_CONTROLLER_BUTTON_LEFTSHOULDER,"LB"},
+{SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,"RB"},
+{SDL_CONTROLLER_BUTTON_LEFTSTICK,"LS"},
+{SDL_CONTROLLER_BUTTON_RIGHTSTICK,"RS"},
+{(1 << 14) | (0 << 5) | (0),"Left +X"},
+{(1 << 14) | (1 << 5) | (0),"Left -X"},
+{(1 << 14) | (0 << 5) | (1),"Left +Y"},
+{(1 << 14) | (1 << 5) | (1),"Left -Y"},
+{(1 << 14) | (0 << 5) | (2),"Right +X"},
+{(1 << 14) | (1 << 5) | (2),"Right -X"},
+{(1 << 14) | (0 << 5) | (3),"Right +Y"},
+{(1 << 14) | (1 << 5) | (3),"Right -Y"},
+{(1 << 14) | (0 << 5) | (4),"LT"},
+{(1 << 14) | (0 << 5) | (5),"RT"},
+{0xffff,""},
+};
+
+void setKey(int& dest,uint32_t key){
+    if(lastInputType == InputType::KEYBOARD){
+        dest = (dest & 0xffff0000) | packKey(key);
+    }else{
+        dest = (dest & 0xffff) | (key << 16);
+    }
+}
+
+void unbindDuplicateKey(int& dest,uint32_t key){
+    if(lastInputType == InputType::KEYBOARD){
+        if((dest & 0xffff) == (key & 0xffff))
+            dest = (dest & 0xffff0000) | 0xfffe;
+    }else{
+        if((dest >> 16) == key)
+            dest = (dest & 0xffff) | (0xfffe << 16);
+    }
+}
+
+void rumbleStart(){
+    if(lastInputType != InputType::CONTROLLER)
+        return;
+
+    SDL_GameControllerRumble(controller,0xffff,0xffff,100);
+}
+
+void rumbleStop(){
+    SDL_GameControllerRumble(controller,0,0,1);
+}
+
+void handleAnalogInput(int axis, int value){
+    lastInputType = InputType::CONTROLLER;
+
+    int key = 0;
+
+    key |= (axis & 0xf) | (1 << 14);
+
+    if(value > DEADZONE){
+        pressKey((key),InputType::CONTROLLER);
+        unpressKey((key) | (1 << 5),InputType::CONTROLLER);
+    }else if(value < -DEADZONE){
+        pressKey((key) | (1 << 5),InputType::CONTROLLER);
+        unpressKey((key),InputType::CONTROLLER);
+    }else{
+        unpressKey((key),InputType::CONTROLLER);
+        unpressKey((key) | (1 << 5),InputType::CONTROLLER);
+    }
+}
 #endif

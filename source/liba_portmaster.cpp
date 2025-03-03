@@ -7,10 +7,26 @@
 #include <dirent.h>
 #include <cstdio>
 
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <signal.h>
+
 #include "def.h"
 #include "shader.h"
 
 #include "nanotime.h"
+
+#define RUMBLE_OFF    1000000
+#define RUMBLE_STRONG  100000
+#define RUMBLE_MEDIUM  400000
+
+static int fd = -1;
+
+void cleanup_handler(int signum);
+int set_rumble(int strength);
 
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
@@ -321,7 +337,22 @@ void toggleRendering(bool r){
     render = r;
 }
 
-void initRumble(){};
+void initRumble(){
+    signal(SIGINT, cleanup_handler);
+    signal(SIGTERM, cleanup_handler);
+
+    fd = open("/sys/class/pwm/pwmchip0/pwm0/duty_cycle", O_WRONLY);
+    if (fd < 0) {
+        log("couldn't open rumble file 0");
+        fd = open("/sys/class/pwm/pwmchip1/pwm0/duty_cycle", O_WRONLY);
+        if(fd < 0){
+            log("couldn't open rumble file");
+            fprintf(stderr, "Failed to open PWM: %s\n", strerror(errno));
+            return;
+        }
+    }
+    return;
+};
 
 void loadSavefile(){
 
@@ -365,6 +396,14 @@ void saveSavefile(){
     output.close();
 }
 
+void rumbleStart(){
+    set_rumble(RUMBLE_STRONG);
+}
+
+void rumbleStop(){
+    set_rumble(RUMBLE_OFF);
+}
+
 std::map<int,std::string> keyToString = {
 {SDL_CONTROLLER_BUTTON_A,"A"},
 {SDL_CONTROLLER_BUTTON_B,"B"},
@@ -380,7 +419,40 @@ std::map<int,std::string> keyToString = {
 {SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,"R"},
 };
 
+//rumble signal handler
+void cleanup_handler(int signum) {
+    if (fd >= 0) {
+        char str[16];
+        snprintf(str, sizeof(str), "%d", RUMBLE_OFF);
+        write(fd, str, strlen(str));
+        close(fd);
+    }
+    exit(signum);
+}
+
+int set_rumble(int strength) {
+    if (fd < 0) return -1;
+
+    char str[16];
+    snprintf(str, sizeof(str), "%d", strength);
+
+    if (write(fd, str, strlen(str)) < 0) {
+        fprintf(stderr, "Failed to set rumble: %s\n", strerror(errno));
+        return -1;
+    }
+    return 0;
+}
+
 void quit(){
+    //shutdown rumble
+    if (fd >= 0) {
+        char str[16];
+        snprintf(str, sizeof(str), "%d", RUMBLE_OFF);
+        write(fd, str, strlen(str));
+        close(fd);
+        fd = -1;
+    }
+
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

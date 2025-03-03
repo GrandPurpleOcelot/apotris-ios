@@ -60,7 +60,7 @@ void windowInit(){
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_JoystickOpen(0);
 
-    loadAudio("romfs:/");
+    loadAudio("");
 
     nanotime_step_init(&stepper, (uint64_t) (NANOTIME_NSEC_PER_SEC / FPS_TARGET), nanotime_now_max(),nanotime_now,nanotime_sleep);
 }

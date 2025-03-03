@@ -88,11 +88,11 @@ void sendGameUpdates() {
         u16 payload = sendQueue.front();
         bool sent = false;
 
-        if (linkConnection->getMode() == LinkUniversal::LINK_CABLE) {
+        if (linkConnection->getMode() == LinkUniversal::Mode::LINK_CABLE) {
             linkConnection->send(payload);
             sent = true;
         }
-        else if (linkConnection->linkWireless->send(payload))
+        else if (linkConnection->getLinkWireless()->send(payload))
             sent = true;
 
         if(sent)
@@ -527,9 +527,7 @@ bool GameScene::reconnect(){
 
     showSprites(128);
 
-    #ifdef GBA
-    rumble_set_state(rumble_stop);
-    #endif
+    rumbleStop();
 
     int cursorFloat = 0;
     OBJ_ATTR * cursorSprites[2];

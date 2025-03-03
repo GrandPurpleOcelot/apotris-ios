@@ -604,13 +604,13 @@ void MultBattleScene::init(){
     // Secret feature: hold L on real hardware to force cable mode
     if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba()))
         // mGBA only supports cable, so set it to speed up initial multiplayer sync
-        linkConnection->setProtocol(LinkUniversal::CABLE);
+        linkConnection->setProtocol(LinkUniversal::Protocol::CABLE);
     else if (inaccurateEmulator)
         // gpSP only does wireless
-        linkConnection->setProtocol(LinkUniversal::WIRELESS_AUTO);
+        linkConnection->setProtocol(LinkUniversal::Protocol::WIRELESS_AUTO);
     else
         // This undoes the hold L override if exiting and returning to this screen
-        linkConnection->setProtocol(LinkUniversal::AUTODETECT);
+        linkConnection->setProtocol(LinkUniversal::Protocol::AUTODETECT);
 
     if (!inaccurateEmulator) {
         rumbleHandler = interrupt_get_handler(INTR_SERIAL);
