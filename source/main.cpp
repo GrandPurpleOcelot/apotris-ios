@@ -125,6 +125,13 @@ void initialize(){
 
     #ifdef PC
     setFullscreen(savefile != nullptr && savefile->settings.fullscreen);
+
+    #endif
+
+    #if defined(PC) || defined(PORTMASTER)
+    if(savefile->settings.shaders != 0){
+        shaderInit(savefile->settings.shaders);
+    }
     #endif
 
     toggleSprites(true);

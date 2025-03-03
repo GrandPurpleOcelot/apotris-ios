@@ -2,8 +2,11 @@
 
 #include "scene.hpp"
 
-#ifdef PC
+#if defined(PC) || defined(PORTMASTER)
 #include "liba_pc.h"
+#include "shader.h"
+#include <string>
+#include <sstream>
 #endif
 
 class IntegerScaleElement : public Element{
@@ -152,6 +155,88 @@ class FullscreenElement : public Element{
 };
 #endif
 
+
+#if defined(PC) || defined(PORTMASTER)
+class ShaderElement : public Element{
+    public:
+
+        const std::vector<std::string> shaders = findShaders();
+        const int min = 0;
+        const int max = shaders.size();
+
+        std::string getLabel() override {
+            return "Shaders";
+        }
+
+        std::string getCursor(std::string text) override {
+            std::string result;
+
+            if(savefile->settings.shaders > min)
+                result += "<";
+            else
+                result += " ";
+
+            result += text;
+
+            if(savefile->settings.shaders < max)
+                result += ">";
+
+            return result;
+        }
+
+        void action(int dir) override{
+            if(dir > 0){
+                if(savefile->settings.shaders < max){
+                    savefile->settings.shaders++;
+
+                    if(savefile->settings.shaders > max)
+                        savefile->settings.shaders = max;
+
+                    sfx(SFX_MENUMOVE);
+                }
+            }else{
+                if(savefile->settings.shaders > min){
+                    savefile->settings.shaders--;
+
+                    if(savefile->settings.shaders < min)
+                        savefile->settings.shaders = min;
+
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+
+            if(savefile->settings.shaders){
+                shaderInit(savefile->settings.shaders);
+                refreshWindowSize();
+            }else{
+                shaderDeinit();
+            }
+        }
+
+        std::string getCurrentOption() override {
+            if(savefile->settings.shaders){
+                std::stringstream shaderPath;
+                shaderPath << shaders.at(savefile->settings.shaders-1);
+
+                std::string name;
+
+                while(getline(shaderPath, name,'/'));
+
+                return remove_extension(name);
+            }else{
+                return "OFF";
+            }
+        }
+
+    private:
+        std::string remove_extension(const std::string& filename) {
+            size_t lastdot = filename.find_last_of(".");
+            if (lastdot == std::string::npos) return filename;
+            return filename.substr(0, lastdot);
+        }
+};
+#endif
+
 class WindowOptionScene : public OptionListScene{
     public:
     std::string name(){return "Video";};
@@ -165,6 +250,10 @@ class WindowOptionScene : public OptionListScene{
             list.push_back(new IntegerScaleElement());
             list.push_back(new ScaleElement());
             list.push_back(new FPSElement());
+
+            #if defined(PC) || defined(PORTMASTER)
+            list.push_back(new ShaderElement());
+            #endif
 
             return list;
         };

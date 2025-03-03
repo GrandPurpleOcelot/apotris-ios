@@ -38,6 +38,8 @@ extern void sfxRate(int,float);
 extern void pauseSong();
 
 extern void windowInit();
+extern void shaderInit(int);
+extern void shaderDeinit();
 
 extern void key_poll();
 

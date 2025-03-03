@@ -416,6 +416,7 @@ void setDefaults(Save *save, int depth){
         save->settings.autosave = 1;
         save->settings.showFPS = false;
         save->settings.fullscreen = false;
+        save->settings.shaders = false;
 
         save->stats.maxLevel = 0;
         save->stats.totalLines = 0;

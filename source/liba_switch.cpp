@@ -186,7 +186,7 @@ void updateWindow(uint8_t* framebuffer){
     if (texture == NULL){
         texture = SDL_CreateTexture(
             renderer,
-            SDL_PIXELFORMAT_ARGB8888,
+            SDL_PIXELFORMAT_ABGR8888,
             SDL_TEXTUREACCESS_STREAMING,
             in_width,
             in_height

@@ -63,6 +63,8 @@ sources = files(
     src_dir / 'text.cpp',
     src_dir / 'nanotime.c',
     src_dir / 'shader.cpp',
+    src_dir / 'gl.c',
+    src_dir / 'gles2.c',
 )
 
 # Bring in binary/data files
@@ -180,8 +182,6 @@ if host_machine.system() != 'gba'
         tilengine,
         sdl2_dep,
         soloud,
-        # dependency('gl'),
-        # dependency('glew'),
     ]
 
     # Define non-GBA specific preprocessor guards
@@ -189,14 +189,16 @@ if host_machine.system() != 'gba'
         add_project_arguments('-DSWITCH', language : ['cpp', 'c'])
     elif get_option('portmaster')
         add_project_arguments('-DPORTMASTER', language : ['cpp', 'c'])
+        dependencies += dependency('glesv2')
     elif host_machine.system() != 'emscripten'
         add_project_arguments('-DPC', language : ['cpp', 'c'])
+        dependencies += dependency('gl')
     else
         add_project_arguments('-DWEB', language : ['cpp', 'c'])
     endif
 
     add_project_arguments('-DTE', language : ['c', 'cpp'])
-    # add_project_arguments('-DGL', language : ['c', 'cpp'])
+    add_project_arguments('-DGL', language : ['c', 'cpp'])
 
     generated_files = []
     # Assemble bin2s targets

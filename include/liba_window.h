@@ -7,6 +7,7 @@
 
 #include "SDL.h"
 #include "SDL_mixer.h"
+#include "glad/gl.h"
 #include "SDL_gamecontroller.h"
 
 #include <map>
@@ -33,6 +34,8 @@ extern void windowInit();
 extern void key_poll();
 
 extern void setFullscreen(bool);
+extern void shaderInit(int);
+extern void shaderDeinit();
 
 extern uint32_t key_is_down(uint32_t);
 extern uint32_t key_hit(uint32_t);
