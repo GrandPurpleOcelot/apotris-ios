@@ -2,7 +2,7 @@ FROM docker.io/devkitpro/devkita64:20240604 AS devkita64
 
 FROM docker.io/akouzoukos/gbadev:latest AS devkitarm
 
-FROM docker.io/library/ubuntu:23.10
+FROM docker.io/library/ubuntu:24.04
 
 # Install apt-available deps
 RUN DEBIAN_FRONTEND=noninteractive \
