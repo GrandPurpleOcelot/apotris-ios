@@ -329,6 +329,10 @@ void saveSavefile() {
     output.close();
 }
 
+void rumbleStart() {}
+
+void rumbleStop() {}
+
 std::map<int, std::string> keyToString = {
     {0, "A"},        {1, "B"},       {2, "X"},       {3, "Y"},
     {6, "L"},        {7, "R"},       {8, "ZL"},      {9, "ZR"},

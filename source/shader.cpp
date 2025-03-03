@@ -2,8 +2,6 @@
 #include "shader.h"
 
 #ifdef PC
-#include <SDL_opengl.h>
-#include <glad/gl.h>
 #elif defined(PORTMASTER)
 #include <SDL_opengles2.h>
 #include <glad/gles2.h>
