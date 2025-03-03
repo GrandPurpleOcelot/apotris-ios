@@ -1,16 +1,16 @@
 #pragma once
 
+#include "blockEngine.hpp"
 #include "def.h"
 #include "multiplayerClasses.h"
-#include "blockEngine.hpp"
 #ifdef GBA
 #include "LinkUniversal.hpp"
 #endif
+#include <algorithm>
 #include <list>
+#include <map>
 #include <string>
 #include <tuple>
-#include <map>
-#include <algorithm>
 
 extern int previousSelection;
 
@@ -26,25 +26,26 @@ static const int READY = 0xC0DE;
 static const int START = 0xBEEF;
 
 extern std::string getDescription(std::string element);
-extern std::string getDescription(std::string mode, std::string element, std::string option);
+extern std::string getDescription(std::string mode, std::string element,
+                                  std::string option);
 
-class Scene{
+class Scene {
 public:
-        virtual void draw() = 0;
-        virtual void update() = 0;
-        virtual bool control() = 0;
-        virtual void init() = 0;
-        virtual void deinit() = 0;
-        virtual Scene* previousScene() = 0;
+    virtual void draw() = 0;
+    virtual void update() = 0;
+    virtual bool control() = 0;
+    virtual void init() = 0;
+    virtual void deinit() = 0;
+    virtual Scene* previousScene() = 0;
 
     Scene(){};
 
     virtual ~Scene(){};
 };
 
-extern Scene * scene;
+extern Scene* scene;
 
-class GameScene : public Scene{
+class GameScene : public Scene {
     void draw();
     void update();
     bool control();
@@ -76,28 +77,29 @@ class GameScene : public Scene{
 
     int timesPaused = 0;
 
-    Scene* previousScene(){return NULL;};
+    Scene* previousScene() { return NULL; };
 
-    ~GameScene(){
-        deinit();
-    };
+    ~GameScene() { deinit(); };
 
-    static void ProcessMultiplayerPacket(u16 data, RemotePlayerId remotePlayerId);
+    static void ProcessMultiplayerPacket(u16 data,
+                                         RemotePlayerId remotePlayerId);
 
-    static void ProcessGameUpdate(int command, int value, RemotePlayerId remotePlayerId);
+    static void ProcessGameUpdate(int command, int value,
+                                  RemotePlayerId remotePlayerId);
 
-    static void UpdateEnemyBoard(int command, int value, RemotePlayerId remotePlayerId);
+    static void UpdateEnemyBoard(int command, int value,
+                                 RemotePlayerId remotePlayerId);
 
-    static void updateRank() ;
+    static void updateRank();
 };
 
-class TitleScene : public Scene{
+class TitleScene : public Scene {
     WordSprite wordSprites[MAX_WORD_SPRITES];
 
-    WordSprite versionText = WordSprite(0,20,2);
-    WordSprite nameText = WordSprite(0,23,2 + 12);
+    WordSprite versionText = WordSprite(0, 20, 2);
+    WordSprite nameText = WordSprite(0, 23, 2 + 12);
 
-    OBJ_ATTR * cursorSprites[2];
+    OBJ_ATTR* cursorSprites[2];
 
     int flashTimer = 0;
     const int flashMax = 48;
@@ -112,15 +114,13 @@ class TitleScene : public Scene{
     bool control();
     void init();
     void deinit();
-    Scene* previousScene(){return NULL;};
+    Scene* previousScene() { return NULL; };
 
-    ~TitleScene(){
-        deinit();
-    };
+    ~TitleScene() { deinit(); };
 };
 
-class SimpleListScene : public Scene{
-    public:
+class SimpleListScene : public Scene {
+public:
     int maxDas = 16;
     int dasHor = 0;
     int dasVer = 0;
@@ -133,10 +133,10 @@ class SimpleListScene : public Scene{
     int movingTimer = 0;
     int movingDirection = 0;
 
-    virtual std::list<std::string> getOptionList(){return menuOptions;};
+    virtual std::list<std::string> getOptionList() { return menuOptions; };
     std::list<std::string> optionList;
 
-    virtual std::string name(){return "";};
+    virtual std::string name() { return ""; };
 
     std::string currentOption = "";
     std::string scrollText = "";
@@ -157,11 +157,11 @@ class SimpleListScene : public Scene{
     int selection = 0;
     WordSprite* wordSprites[MAX_WORD_SPRITES];
 
-    OBJ_ATTR * cursorSprites[2];
+    OBJ_ATTR* cursorSprites[2];
 
-    OBJ_ATTR * arrowSprites[2];
+    OBJ_ATTR* arrowSprites[2];
 
-    OBJ_ATTR * scrollSideSprites[2];
+    OBJ_ATTR* scrollSideSprites[2];
 
     int cursorFloat = 0;
 
@@ -177,69 +177,65 @@ class SimpleListScene : public Scene{
     bool control();
     void init();
     void deinit();
-    Scene* previousScene(){return NULL;};
+    Scene* previousScene() { return NULL; };
 
-    ~SimpleListScene(){
-        deinit();
-    };
-
+    ~SimpleListScene() { deinit(); };
 };
 
-class MainMenuScene: public SimpleListScene{
-    public:
+class MainMenuScene : public SimpleListScene {
+public:
     void init();
     void deinit();
 
     Scene* previousScene();
-    std::list<std::string> getOptionList(){
+    std::list<std::string> getOptionList() {
         std::list<std::string> result = menuOptions;
 
-        #if !(defined(GBA) || defined(WEB))
+#if !(defined(GBA) || defined(WEB))
 
         result.push_back("Quit");
 
-        #endif
+#endif
 
         return result;
     };
-    std::string name(){return "";};
+    std::string name() { return ""; };
 };
 
-class ModeListScene: public SimpleListScene{
-    public:
+class ModeListScene : public SimpleListScene {
+public:
     Scene* previousScene();
 
-    std::list<std::string> getOptionList(){
+    std::list<std::string> getOptionList() {
         std::list<std::string> l = gameOptions;
 
-        #if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH)
+#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH)
         l.remove("2P Battle");
-        #endif
+#endif
 
         return l;
     };
-    std::string name(){return "Play";};
+    std::string name() { return "Play"; };
 };
 
-class Element{
-    public:
+class Element {
+public:
+    int value = 0;
 
-        int value = 0;
+    virtual std::string getLabel() { return ""; };
+    virtual std::string getCursor(std::string text) { return ""; };
+    virtual void action(int dir) {};
+    virtual bool action() { return false; };
+    virtual int getValue() { return 0; };
+    virtual std::string getCurrentOption() { return ""; };
 
-        virtual std::string getLabel(){return "";};
-        virtual std::string getCursor(std::string text){return "";};
-        virtual void action(int dir){};
-        virtual bool action(){return false;};
-        virtual int getValue(){return 0;};
-        virtual std::string getCurrentOption(){return "";};
+    Element() {}
 
-        Element(){}
-
-        virtual ~Element(){}
+    virtual ~Element() {}
 };
 
-class OptionListScene : public Scene{
-    public:
+class OptionListScene : public Scene {
+public:
     int maxDas = 16;
     int dasHor = 0;
     int dasVer = 0;
@@ -278,13 +274,13 @@ class OptionListScene : public Scene{
 
     WordSprite* labels[7];
 
-    WordSprite cursorText = WordSprite(0,20,2);
+    WordSprite cursorText = WordSprite(0, 20, 2);
 
-    OBJ_ATTR * cursorSprites[2];
+    OBJ_ATTR* cursorSprites[2];
 
-    OBJ_ATTR * arrowSprites[2];
+    OBJ_ATTR* arrowSprites[2];
 
-    OBJ_ATTR * scrollSideSprites[2];
+    OBJ_ATTR* scrollSideSprites[2];
 
     int cursorFloat = 0;
 
@@ -303,39 +299,12 @@ class OptionListScene : public Scene{
     bool control();
     void init();
     void deinit();
-    virtual Scene* previousScene(){return NULL;};
+    virtual Scene* previousScene() { return NULL; };
 
-    ~OptionListScene(){
-        deinit();
-    };
+    ~OptionListScene() { deinit(); };
 };
 
-class ConfirmSaveScene : public Scene{
-    public:
-
-    int timer = 0;
-
-    bool cancel = true;
-
-    int cursorFloat = 0;
-
-    WordSprite wordSprites[2];
-
-    OBJ_ATTR * cursorSprites[2];
-
-    int lengths[2];
-
-    int pos[2];
-
-    void draw();
-    void update();
-    bool control();
-    void init();
-    void deinit(){};
-    Scene* previousScene(){return new MainMenuScene();};
-};
-
-class ConfirmEmuScene : public Scene{
+class ConfirmSaveScene : public Scene {
 public:
     int timer = 0;
 
@@ -345,7 +314,31 @@ public:
 
     WordSprite wordSprites[2];
 
-    OBJ_ATTR * cursorSprites[2];
+    OBJ_ATTR* cursorSprites[2];
+
+    int lengths[2];
+
+    int pos[2];
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit() {};
+    Scene* previousScene() { return new MainMenuScene(); };
+};
+
+class ConfirmEmuScene : public Scene {
+public:
+    int timer = 0;
+
+    bool cancel = true;
+
+    int cursorFloat = 0;
+
+    WordSprite wordSprites[2];
+
+    OBJ_ATTR* cursorSprites[2];
 
     int lengths[2];
 
@@ -356,40 +349,39 @@ public:
     bool control();
     void init();
     void deinit();
-    Scene* previousScene(){return new MainMenuScene();};
+    Scene* previousScene() { return new MainMenuScene(); };
 };
 
-class SettingsScene : public SimpleListScene{
-    public:
-        Scene* previousScene(){
-            if(settingsChanged())
-                return new ConfirmSaveScene();
-            else
-                return new MainMenuScene();
-        };
+class SettingsScene : public SimpleListScene {
+public:
+    Scene* previousScene() {
+        if (settingsChanged())
+            return new ConfirmSaveScene();
+        else
+            return new MainMenuScene();
+    };
 
-        std::list<std::string> getOptionList(){
-            std::list<std::string> result = settingsOptions;
+    std::list<std::string> getOptionList() {
+        std::list<std::string> result = settingsOptions;
 
-            #ifndef GBA
-            result.push_front("Video");
-            #endif
+#ifndef GBA
+        result.push_front("Video");
+#endif
 
-            return result;
-        };
+        return result;
+    };
 
-        std::string name(){return "Settings";};
+    std::string name() { return "Settings"; };
 };
 
 #ifndef MULTIBOOT
 
-class CreditsScene : public Scene{
-    public:
-
-    virtual std::list<std::string> getOptionList(){return menuOptions;};
+class CreditsScene : public Scene {
+public:
+    virtual std::list<std::string> getOptionList() { return menuOptions; };
     std::list<std::string> optionList;
 
-    std::string name(){return "Credits";};
+    std::string name() { return "Credits"; };
 
     WordSprite* wordSprites[MAX_WORD_SPRITES];
 
@@ -409,21 +401,18 @@ class CreditsScene : public Scene{
     bool control();
     void init();
     void deinit();
-    Scene* previousScene(){return new MainMenuScene();};
+    Scene* previousScene() { return new MainMenuScene(); };
 
-    ~CreditsScene(){
-        deinit();
-    };
-
+    ~CreditsScene() { deinit(); };
 };
 
-class LinksScene : public SimpleListScene{
+class LinksScene : public SimpleListScene {
 
-    public:
+public:
     // void init();
-    Scene* previousScene(){return new MainMenuScene();};
+    Scene* previousScene() { return new MainMenuScene(); };
 
-    std::list<std::string> getOptionList(){
+    std::list<std::string> getOptionList() {
         return {
             "Website",
             "Wiki",
@@ -432,19 +421,18 @@ class LinksScene : public SimpleListScene{
         };
     };
 
-    std::string name(){return "Links";};
+    std::string name() { return "Links"; };
 };
 
-class QRScene : public Scene{
-    public:
-
+class QRScene : public Scene {
+public:
     virtual u8* getData() = 0;
 
     virtual std::string name() = 0;
 
     virtual std::string getLink() = 0;
 
-    OBJ_ATTR * qr;
+    OBJ_ATTR* qr;
 
     int qrX = 0;
     int qrY = 0;
@@ -456,30 +444,22 @@ class QRScene : public Scene{
     bool control();
     void init();
     void deinit();
-    Scene* previousScene(){return new LinksScene();};
+    Scene* previousScene() { return new LinksScene(); };
 
-    ~QRScene(){
-        deinit();
-    };
+    ~QRScene() { deinit(); };
 };
 
 #include "site_qr_bin.h"
 
-class WebsiteLinkScene : public QRScene{
+class WebsiteLinkScene : public QRScene {
 public:
-    std::string name() override {
-        return "Website";
-    }
+    std::string name() override { return "Website"; }
 
-    u8* getData() override {
-        return (u8*) site_qr_bin;
-    }
+    u8* getData() override { return (u8*)site_qr_bin; }
 
-    std::string getLink() override {
-        return "https://apotris.com";
-    }
+    std::string getLink() override { return "https://apotris.com"; }
 
-    WebsiteLinkScene(){
+    WebsiteLinkScene() {
         qrX = 29;
         qrY = 29;
     }
@@ -487,21 +467,15 @@ public:
 
 #include "wiki_qr_bin.h"
 
-class WikiLinkScene : public QRScene{
+class WikiLinkScene : public QRScene {
 public:
-    std::string name() override {
-        return "Wiki";
-    }
+    std::string name() override { return "Wiki"; }
 
-    u8* getData() override {
-        return (u8*) wiki_qr_bin;
-    }
+    u8* getData() override { return (u8*)wiki_qr_bin; }
 
-    std::string getLink() override {
-        return "https://apotris.com/wiki";
-    }
+    std::string getLink() override { return "https://apotris.com/wiki"; }
 
-    WikiLinkScene(){
+    WikiLinkScene() {
         qrX = 29;
         qrY = 29;
     }
@@ -509,21 +483,15 @@ public:
 
 #include "paypal_qr_bin.h"
 
-class DonateLinkScene : public QRScene{
+class DonateLinkScene : public QRScene {
 public:
-    std::string name() override {
-        return "Donate";
-    }
+    std::string name() override { return "Donate"; }
 
-    u8* getData() override {
-        return (u8*) paypal_qr_bin;
-    }
+    u8* getData() override { return (u8*)paypal_qr_bin; }
 
-    std::string getLink() override {
-        return "https://apotris.com/donate";
-    }
+    std::string getLink() override { return "https://apotris.com/donate"; }
 
-    DonateLinkScene(){
+    DonateLinkScene() {
         qrX = 29;
         qrY = 29;
     }
@@ -531,21 +499,15 @@ public:
 
 #include "discord_qr_bin.h"
 
-class DiscordLinkScene : public QRScene{
+class DiscordLinkScene : public QRScene {
 public:
-    std::string name() override {
-        return "Discord";
-    }
+    std::string name() override { return "Discord"; }
 
-    u8* getData() override {
-        return (u8*) discord_qr_bin;
-    }
+    u8* getData() override { return (u8*)discord_qr_bin; }
 
-    std::string getLink() override {
-        return "https://apotris.com/discord";
-    }
+    std::string getLink() override { return "https://apotris.com/discord"; }
 
-    DiscordLinkScene(){
+    DiscordLinkScene() {
         qrX = 33;
         qrY = 33;
     }
@@ -553,29 +515,20 @@ public:
 
 #endif
 
-class LabelElement : public Element{
+class LabelElement : public Element {
     std::string label;
-    public:
-        std::string getLabel() override {
-            return label;
-        }
 
-        std::string getCurrentOption() override {
-            return "\n";
-        }
+public:
+    std::string getLabel() override { return label; }
 
-        LabelElement(std::string l){
-            label = l;
-        }
+    std::string getCurrentOption() override { return "\n"; }
+
+    LabelElement(std::string l) { label = l; }
 };
 
-enum class Transitions{
-    INSTANT,
-    FADE,
-    SCANLINE
-};
+enum class Transitions { INSTANT, FADE, SCANLINE };
 
-extern void changeScene(Scene * newScene);
-extern void changeScene(Scene * newScene,Transitions transition);
+extern void changeScene(Scene* newScene);
+extern void changeScene(Scene* newScene, Transitions transition);
 
 extern int rank;

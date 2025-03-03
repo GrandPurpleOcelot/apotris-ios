@@ -1,31 +1,32 @@
+#include "logging.h"
 #include "scene.hpp"
 #include "sprites.h"
-#include "logging.h"
 
 #include "site_qr_bin.h"
 #ifndef MULTIBOOT
-void QRScene::init(){
+void QRScene::init() {
     resetSmallText();
     clearText();
 
     clearSprites(128);
 
-    //backgroundGrid
-    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+    // backgroundGrid
+    setTiles(26, 0, 32 * 32,
+             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
-    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i] = new WordSprite(i,64 + i * 5, 256 + i * 20, true);
+        wordSprites[i] = new WordSprite(i, 64 + i * 5, 256 + i * 20, true);
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 
-    if(name() != ""){
+    if (name() != "") {
         bool found = false;
         int count = 0;
         auto it = path.begin();
-        while(it != path.end()){
-            if(*it == name()){
+        while (it != path.end()) {
+            if (*it == name()) {
                 found = true;
                 break;
             }
@@ -33,12 +34,12 @@ void QRScene::init(){
             it++;
         }
 
-        if(found){
+        if (found) {
             log(count);
-            int n = path.size() - (count+1);
-            for(int i = 0; i < n; i++)
+            int n = path.size() - (count + 1);
+            for (int i = 0; i < n; i++)
                 path.pop_back();
-        }else{
+        } else {
             path.push_back(name());
         }
     }
@@ -46,8 +47,8 @@ void QRScene::init(){
     std::string p;
     int i = 0;
     auto it = path.begin();
-    while(it != path.end()){
-        if(i != 0)
+    while (it != path.end()) {
+        if (i != 0)
             p += " > ";
 
         p += *it;
@@ -63,8 +64,8 @@ void QRScene::init(){
 
     wordSprites[wordIndex]->setText(p);
 
-    for(int i = 0; i < count; i++)
-        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+    for (int i = 0; i < count; i++)
+        wordSprites[wordIndex + i]->show(i * 12 * 8 + 4, 4, 14);
 
     qr = &obj_buffer[0];
 
@@ -72,17 +73,17 @@ void QRScene::init(){
 
     clearSpriteTiles(qrTile, 8, 8);
 
-    sprite_unhide(qr,0);
+    sprite_unhide(qr, 0);
     sprite_set_attr(qr, ShapeSquare, 3, qrTile, 0, 1);
     sprite_enable_affine(qr, 8, true);
     sprite_set_size(qr, 1 << 7, 8);
-    sprite_set_pos(qr,120 - qrX, 80 - 16);
+    sprite_set_pos(qr, 120 - qrX, 80 - 16);
 
-    u16 * src = (u16 *) getData();
+    u16* src = (u16*)getData();
 
-    for(int i = 0; i < qrY; i++){
-        for(int j = 0; j < qrX; j++){
-            int color = (src[i * qrX + j] != 0)? 7 : 6;
+    for (int i = 0; i < qrY; i++) {
+        for (int j = 0; j < qrX; j++) {
+            int color = (src[i * qrX + j] != 0) ? 7 : 6;
             setSpritePixel(qrTile, j / 8, i / 8, 8, j % 8, i % 8, color);
         }
     }
@@ -92,38 +93,38 @@ void QRScene::init(){
     naprint(link, 15 * 8 - getVariableWidth(link) / 2, 5 * 8);
 }
 
-void QRScene::draw(){
+void QRScene::draw() {
     fallingBlocks();
-    toggleBG(3,true);
+    toggleBG(3, true);
 
     showSprites(128);
 }
 
-bool QRScene::control(){
+bool QRScene::control() {
 
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(k.cancel)){
+    if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
         previousElement = name();
 
-        if(path.size())
+        if (path.size())
             path.pop_back();
 
-        changeScene(previousScene(),Transitions::FADE);
+        changeScene(previousScene(), Transitions::FADE);
     }
 
     return false;
 }
 
-void QRScene::update(){
+void QRScene::update() {
     canDraw = 1;
     key_poll();
 
     control();
 }
 
-void QRScene::deinit(){
+void QRScene::deinit() {
     clearSprites(128);
     showSprites(128);
 
@@ -135,7 +136,7 @@ void QRScene::deinit(){
 
     clearText();
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
         delete wordSprites[i];
 }
 #endif

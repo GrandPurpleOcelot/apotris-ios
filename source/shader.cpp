@@ -2,24 +2,24 @@
 #include "shader.h"
 
 #ifdef PC
-#include <glad/gl.h>
 #include <SDL_opengl.h>
+#include <glad/gl.h>
 #elif defined(PORTMASTER)
-#include <glad/gles2.h>
 #include <SDL_opengles2.h>
+#include <glad/gles2.h>
 #endif
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <dirent.h>
-#include <cstdio>
 #include "logging.h"
+#include <cstdio>
+#include <dirent.h>
 
-#include <string>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <vector>
 
 std::string shaderPath = "";
@@ -28,26 +28,27 @@ int width = 0;
 int height = 0;
 float scale = 0;
 
-uint vbo,ebo,vao,shaderTexture,shaderProgram;
+uint vbo, ebo, vao, shaderTexture, shaderProgram;
 
 SDL_GLContext shaderContext;
 
 float vertices[] = {
-     1.0f,  1.0f, 0.0f, 1.0f, 0.0f,  // top right
-     1.0f, -1.0f, 0.0f, 1.0f, 1.0f, // bottom right
+    1.0f,  1.0f,  0.0f, 1.0f, 0.0f, // top right
+    1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, // bottom right
     -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, // bottom left
-    -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, // top left
+    -1.0f, 1.0f,  0.0f, 0.0f, 0.0f, // top left
 };
-uint indices[] = {  // note that we start from 0!
-    0, 1, 3,   // first triangle
-    1, 2, 3    // second triangle
+uint indices[] = {
+    // note that we start from 0!
+    0, 1, 3, // first triangle
+    1, 2, 3  // second triangle
 };
 
-std::string translateLine(std::string in){
+std::string translateLine(std::string in) {
 
     std::size_t pos = in.find("out vec4");
 
-    if(pos != std::string::npos)
+    if (pos != std::string::npos)
         in.replace(pos, 8, "out highp vec4");
 
     // pos = in.find("attribute");
@@ -58,16 +59,16 @@ std::string translateLine(std::string in){
     return in;
 }
 
-uint loadShaderFromFile(std::string path, int type){
+uint loadShaderFromFile(std::string path, int type) {
     std::string add = "";
 
-    #if defined(PORTMASTER)
-    add +="#version 300 es\n\n";
-    #endif
+#if defined(PORTMASTER)
+    add += "#version 300 es\n\n";
+#endif
 
-    if(type == GL_VERTEX_SHADER){
+    if (type == GL_VERTEX_SHADER) {
         add += "#define VERTEX\n\n";
-    }else if(type == GL_FRAGMENT_SHADER){
+    } else if (type == GL_FRAGMENT_SHADER) {
         add += "#define FRAGMENT\n\n";
     }
 
@@ -79,8 +80,8 @@ uint loadShaderFromFile(std::string path, int type){
     std::string buffer_out;
 
     std::string line;
-    while(getline(buffer_in,line)){
-        if(line.find("pragma") == std::string::npos){
+    while (getline(buffer_in, line)) {
+        if (line.find("pragma") == std::string::npos) {
             buffer_out += translateLine(line) + "\n";
         }
     }
@@ -88,25 +89,26 @@ uint loadShaderFromFile(std::string path, int type){
     std::string str = add + buffer_out;
 
     uint shader = glCreateShader(type);
-    glShaderSource(shader, 1, (const char* const *) &str, NULL);
+    glShaderSource(shader, 1, (const char* const*)&str, NULL);
     glCompileShader(shader);
 
-    int  success;
+    int success;
     char infoLog[512];
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-    if(!success){
+    if (!success) {
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
     }
 
     return shader;
 }
 
-uint getShader(int index){
+uint getShader(int index) {
     std::vector<std::string> shaders = findShaders();
 
-    if(index <= 0 || index > (int) shaders.size()){
+    if (index <= 0 || index > (int)shaders.size()) {
         index = 1;
     }
 
@@ -128,7 +130,7 @@ uint getShader(int index){
     int success;
     char infoLog[512];
     glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if(!success) {
+    if (!success) {
         glGetProgramInfoLog(program, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::LINKING_FAILED\n" << infoLog << std::endl;
     }
@@ -137,17 +139,19 @@ uint getShader(int index){
 
 bool inited = false;
 
-void initShaders(SDL_Window *window, int index){
-    if(!inited){
+void initShaders(SDL_Window* window, int index) {
+    if (!inited) {
         inited = true;
 
-        #ifdef PC
-        int version = gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress);
-        #else
-        int version = gladLoadGLES2((GLADloadfunc) SDL_GL_GetProcAddress);
-        #endif
+#ifdef PC
+        int version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
+#else
+        int version = gladLoadGLES2((GLADloadfunc)SDL_GL_GetProcAddress);
+#endif
 
-        printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));;
+        printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version),
+               GLAD_VERSION_MINOR(version));
+        ;
     }
 
     shaderContext = SDL_GL_CreateContext(window);
@@ -156,45 +160,55 @@ void initShaders(SDL_Window *window, int index){
 
     shaderProgram = getShader(index);
 
-    int res_out = glGetUniformLocation(shaderProgram,"OutputSize");
-    if(res_out == -1) log("ERROR: OutputSize");
-    glUniform2f(res_out,(float)width,(float)height);
+    int res_out = glGetUniformLocation(shaderProgram, "OutputSize");
+    if (res_out == -1)
+        log("ERROR: OutputSize");
+    glUniform2f(res_out, (float)width, (float)height);
 
-    int res_in = glGetUniformLocation(shaderProgram,"InputSize");
-    if(res_in == -1) log("ERROR: InputSize");
-    glUniform2f(res_in,(float)width,(float)height);
+    int res_in = glGetUniformLocation(shaderProgram, "InputSize");
+    if (res_in == -1)
+        log("ERROR: InputSize");
+    glUniform2f(res_in, (float)width, (float)height);
 
-    int res_tex = glGetUniformLocation(shaderProgram,"TextureSize");
-    if(res_tex == -1) log("ERROR: TextureSize");
-    glUniform2f(res_tex,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
+    int res_tex = glGetUniformLocation(shaderProgram, "TextureSize");
+    if (res_tex == -1)
+        log("ERROR: TextureSize");
+    glUniform2f(res_tex, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
 
     glUseProgram(shaderProgram);
 
-    glGenBuffers(1,&vbo);
+    glGenBuffers(1, &vbo);
     glGenBuffers(1, &ebo);
     glGenVertexArrays(1, &vao);
 
     glBindVertexArray(vao);
 
-    glBindBuffer(GL_ARRAY_BUFFER,vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                 GL_STATIC_DRAW);
 
-    int position = glGetAttribLocation(shaderProgram,"VertexCoord");
-    if(position == -1) log("ERROR: position");
-    glVertexAttribPointer(position,3,GL_FLOAT,GL_FALSE,5*sizeof(float),(void*)0);
+    int position = glGetAttribLocation(shaderProgram, "VertexCoord");
+    if (position == -1)
+        log("ERROR: position");
+    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                          (void*)0);
     glEnableVertexAttribArray(position);
 
-    int texCoord = glGetAttribLocation(shaderProgram,"TexCoord");
-    if(texCoord == -1) log("ERROR: texcoord");
-    glVertexAttribPointer(texCoord,2,GL_FLOAT,GL_FALSE,5*sizeof(float),(void*)(3 * sizeof(float)));
+    int texCoord = glGetAttribLocation(shaderProgram, "TexCoord");
+    if (texCoord == -1)
+        log("ERROR: texcoord");
+    glVertexAttribPointer(texCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                          (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(texCoord);
 
     glm::mat4 def = glm::mat4();
-    unsigned int transformLoc = glGetUniformLocation(shaderProgram, "MVPMatrix");
-    if(transformLoc == -1) log("ERROR: MVP");
+    unsigned int transformLoc =
+        glGetUniformLocation(shaderProgram, "MVPMatrix");
+    if (transformLoc == -1)
+        log("ERROR: MVP");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(def));
 
     glGenTextures(1, &shaderTexture);
@@ -206,88 +220,91 @@ void initShaders(SDL_Window *window, int index){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void drawWithShaders(SDL_Window * window, SDL_Surface *img,bool shadersEnabled){
+void drawWithShaders(SDL_Window* window, SDL_Surface* img,
+                     bool shadersEnabled) {
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, shaderTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
 
-    if(shadersEnabled){
+    if (shadersEnabled) {
         glUseProgram(shaderProgram);
     }
 
     glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     SDL_GL_SwapWindow(window);
 }
 
-void freeShaders(){
+void freeShaders() {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
-    glDeleteTextures(1,&shaderTexture);
+    glDeleteTextures(1, &shaderTexture);
     glDeleteProgram(shaderProgram);
 
     SDL_GL_DeleteContext(shaderContext);
 }
 
-void refreshShaderResolution(int w, int h, float s){
+void refreshShaderResolution(int w, int h, float s) {
     width = w;
     height = h;
     scale = s;
 
     glViewport(0, 0, width, height);
 
-    int res_out = glGetUniformLocation(shaderProgram,"OutputSize");
-    glUniform2f(res_out,(float)width,(float)height);
+    int res_out = glGetUniformLocation(shaderProgram, "OutputSize");
+    glUniform2f(res_out, (float)width, (float)height);
 
-    int res_in = glGetUniformLocation(shaderProgram,"InputSize");
-    glUniform2f(res_in,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
+    int res_in = glGetUniformLocation(shaderProgram, "InputSize");
+    glUniform2f(res_in, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
 
-    int res_tex = glGetUniformLocation(shaderProgram,"TextureSize");
-    glUniform2f(res_tex,(float)SCREEN_WIDTH,(float)SCREEN_HEIGHT);
+    int res_tex = glGetUniformLocation(shaderProgram, "TextureSize");
+    glUniform2f(res_tex, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
 
     float offsetX = (1.0 - ((width / scale) / SCREEN_WIDTH)) / 2;
     float offsetY = (1.0 - ((height / scale) / SCREEN_HEIGHT)) / 2;
 
-    vertices[0*5 + 3] = 1.0 - offsetX;//top right
-    vertices[0*5 + 4] = offsetY;
+    vertices[0 * 5 + 3] = 1.0 - offsetX; // top right
+    vertices[0 * 5 + 4] = offsetY;
 
-    vertices[1*5 + 3] = 1.0 - offsetX;//bottom right
-    vertices[1*5 + 4] = 1.0 - offsetY;
+    vertices[1 * 5 + 3] = 1.0 - offsetX; // bottom right
+    vertices[1 * 5 + 4] = 1.0 - offsetY;
 
-    vertices[2*5 + 3] = offsetX;//bottom left
-    vertices[2*5 + 4] = 1.0 - offsetY;
+    vertices[2 * 5 + 3] = offsetX; // bottom left
+    vertices[2 * 5 + 4] = 1.0 - offsetY;
 
-    vertices[3*5 + 3] = offsetX;//top left
-    vertices[3*5 + 4] = offsetY;
+    vertices[3 * 5 + 3] = offsetX; // top left
+    vertices[3 * 5 + 4] = offsetY;
 
-    glBindBuffer(GL_ARRAY_BUFFER,vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 }
 
-static bool hasSuffix(const std::string& s, const std::string& suffix){
-    return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
+static bool hasSuffix(const std::string& s, const std::string& suffix) {
+    return (s.size() >= suffix.size()) &&
+           equal(suffix.rbegin(), suffix.rend(), s.rbegin());
 }
 
-std::vector<std::string> findShaders(){
+std::vector<std::string> findShaders() {
     std::string path = shaderPath + "assets/shaders";
 
-    DIR *dir = opendir(path.c_str());
-    if(!dir){
+    DIR* dir = opendir(path.c_str());
+    if (!dir) {
         log("couldn't open dir");
         return {};
     }
 
     std::vector<std::string> shaderPaths;
 
-    dirent *entry;
-    while((entry = readdir(dir)) != nullptr){
-        if(hasSuffix(entry->d_name, ".glsl")){
+    dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (hasSuffix(entry->d_name, ".glsl")) {
             shaderPaths.push_back(path + "/" + entry->d_name);
         }
     }

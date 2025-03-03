@@ -2,13 +2,13 @@
 
 #include <cinttypes>
 
-#include "liba_pc.h"
 #include "audio_files.h"
+#include "liba_pc.h"
 
 #include "SDL.h"
+#include "SDL_gamecontroller.h"
 #include "SDL_mixer.h"
 #include "glad/gl.h"
-#include "SDL_gamecontroller.h"
 
 #include <map>
 
@@ -42,27 +42,24 @@ extern uint32_t key_hit(uint32_t);
 extern uint32_t key_released(uint32_t);
 extern uint32_t key_first();
 
-extern void setKey(int&,uint32_t);
-extern void unbindDuplicateKey(int&,uint32_t);
+extern void setKey(int&, uint32_t);
+extern void unbindDuplicateKey(int&, uint32_t);
 
 extern int rowStart;
 extern int rowEnd;
 
-extern std::map<int,std::string> keyToString;
+extern std::map<int, std::string> keyToString;
 
 std::string stringFromKey(uint32_t key);
 
-enum class InputType{
-    KEYBOARD,
-    CONTROLLER
-};
+enum class InputType { KEYBOARD, CONTROLLER };
 
 extern InputType lastInputType;
 
-INLINE u16 packKey(SDL_Keycode key){
+INLINE u16 packKey(SDL_Keycode key) {
     return (key & 0xfff) | (((key & 0xf0000000) >> 16));
 }
 
-INLINE SDL_Keycode unpackKey(u16 key){
-    return (SDL_Keycode) (key & 0xfff) | (((key & 0xf000) << 16));
+INLINE SDL_Keycode unpackKey(u16 key) {
+    return (SDL_Keycode)(key & 0xfff) | (((key & 0xf000) << 16));
 }

@@ -1,22 +1,22 @@
 #include "platform.hpp"
 
 #ifdef GBA
-#include "logging.h"
-#include "LinkUniversal.hpp"
 #include "LinkCableMultiboot.hpp"
+#include "LinkUniversal.hpp"
+#include "achievementStructure.h"
+#include "aeabi.h"
+#include "agbabi.h"
+#include "detectEmulators.h"
+#include "flashSaves.h"
+#include "gba_flash.h"
+#include "gba_sram.h"
+#include "gbfs.h"
+#include "gbp_logo.hpp"
+#include "logging.h"
 #include "maxmod.h"
 #include "rumble.h"
-#include "gbp_logo.hpp"
-#include "text.h"
-#include "flashSaves.h"
 #include "scene.hpp"
-#include "gbfs.h"
-#include "agbabi.h"
-#include "aeabi.h"
-#include "detectEmulators.h"
-#include "gba_sram.h"
-#include "gba_flash.h"
-#include "achievementStructure.h"
+#include "text.h"
 
 // #include <string>
 // #include "scene.hpp"
@@ -27,7 +27,7 @@ void onKeyInterrupt();
 
 int spriteVOffset = 0;
 
-u8 * soundbank = nullptr;
+u8* soundbank = nullptr;
 
 bool sortSprites = false;
 int musicVolume = 0;
@@ -41,7 +41,7 @@ bool emulatorPrompted = false;
 Songs songs;
 
 void onHBlank() {
-    if(REG_VCOUNT < 160)
+    if (REG_VCOUNT < 160)
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
@@ -50,72 +50,72 @@ LinkUniversal* linkConnection;
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
-mm_word myEventHandler(mm_word msg, mm_word param){
-    if(msg == MMCB_SONGMESSAGE)
+mm_word myEventHandler(mm_word msg, mm_word param) {
+    if (msg == MMCB_SONGMESSAGE)
         return 0;
 
-    if(savefile->settings.cycleSongs == 1){//CYCLE
+    if (savefile->settings.cycleSongs == 1) { // CYCLE
         playNextSong();
-    }else if(savefile->settings.cycleSongs == 2){//SHUFFLE
+    } else if (savefile->settings.cycleSongs == 2) { // SHUFFLE
         playSongRandom(currentMenu);
     }
 
     return 0;
 }
 
-void toggleBG(int layer, bool state){
-    if(state){
+void toggleBG(int layer, bool state) {
+    if (state) {
         REG_DISPCNT |= ((1 << layer) << 8);
-    }else{
+    } else {
         REG_DISPCNT &= ~((1 << layer) << 8);
     }
 }
 
-void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos){
+void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos) {
 
-    *(vu16*) (REG_BASE + 0x0008 + 0x0002 * layer) = BG_CBB(cbb) | BG_SBB(sbb) | BG_SIZE(size) | BG_PRIO(prio) | BG_MOSAIC * mos;
+    *(vu16*)(REG_BASE + 0x0008 + 0x0002 * layer) =
+        BG_CBB(cbb) | BG_SBB(sbb) | BG_SIZE(size) | BG_PRIO(prio) |
+        BG_MOSAIC * mos;
 }
 
-void toggleSprites(bool state){
-    if(state){
+void toggleSprites(bool state) {
+    if (state) {
         REG_DISPCNT |= DCNT_OBJ;
-    }else{
+    } else {
         REG_DISPCNT &= ~DCNT_OBJ;
     }
 }
 
-void vsync(){
-    VBlankIntrWait();
-}
+void vsync() { VBlankIntrWait(); }
 
-void showSprites(int count){
-    if(sortSprites){
-        int counters[4] = {0,0,0,0};
+void showSprites(int count) {
+    if (sortSprites) {
+        int counters[4] = {0, 0, 0, 0};
 
         int positions[count];
 
-        for(int i = 0; i < count; i++){
+        for (int i = 0; i < count; i++) {
             const int priority = (obj_buffer[i].attr2 >> 0xa) & 0b11;
             positions[i] = counters[priority]++ + (priority << 8);
         }
 
-        int offsets[4] = {0,0,0,0};
+        int offsets[4] = {0, 0, 0, 0};
 
-        for(int i = 0; i < 4; i++){
-            for(int j = 0; j < i; j++){
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < i; j++) {
                 offsets[i] += counters[j];
             }
         }
 
-        for(int i = 0; i < count; i++){
+        for (int i = 0; i < count; i++) {
             const int priority = positions[i] >> 8;
             const int position = positions[i] & 0xff;
             const int offset = offsets[priority];
 
             oam_mem[offset + position] = obj_buffer[i];
         }
-    }else{
-        oam_copy(oam_mem,obj_buffer,count);
+    } else {
+        oam_copy(oam_mem, obj_buffer, count);
     }
 
     obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
@@ -124,7 +124,8 @@ void showSprites(int count){
 unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait) {
     // Calculate the duration of one transfer in milliseconds
     float transferDurationMs = (float)interval * 61.04f / 1000.0f;
-    // Calculate the total duration for the specified number of frames in milliseconds
+    // Calculate the total duration for the specified number of frames in
+    // milliseconds
     float totalDurationMs = (float)framesToWait * 16.67f;
     // Calculate how many transfers can occur in the total duration
     u32 transfers = (u32)((float)totalDurationMs / transferDurationMs);
@@ -141,24 +142,24 @@ void testSaveMedia() {
     flashInfo.size = 0;
     int err;
     // Test SRAM
-    err = sram_write(testRegion, (u8 *) "S", 1);
+    err = sram_write(testRegion, (u8*)"S", 1);
     if (!err) {
         // Is SRAM
         char a = '\0';
         // Write to mirror region and read lower mirror half
-        __agbabi_memcpy1(sram_mem + testMirror, (u8 *) "R", 1);
-        __agbabi_memcpy1((u8 *)(&a), sram_mem + testRegion, 1);
+        __agbabi_memcpy1(sram_mem + testMirror, (u8*)"R", 1);
+        __agbabi_memcpy1((u8*)(&a), sram_mem + testRegion, 1);
         // See if it was overwritten (mirrored) or persisted
         switch (a) {
-            case 'R':
-                sramInfo.size = testRegion;
-                break;
-            case 'S':
-                sramInfo.size = testMirror;
-                break;
-            default:
-                sramInfo.size = testRegion;
-                break;
+        case 'R':
+            sramInfo.size = testRegion;
+            break;
+        case 'S':
+            sramInfo.size = testMirror;
+            break;
+        default:
+            sramInfo.size = testRegion;
+            break;
         }
         // Detect bootlegs
         if (ENABLE_FLASH_SAVE)
@@ -168,22 +169,30 @@ void testSaveMedia() {
 
     // Test Flash
     err = flash_init(FLASH_SIZE_AUTO); // catches some but not all flash chips
-    if (err) err = flash_init(FLASH_SIZE_64KB); // try smaller first for safety, some 128KiB will trip this one
-    if (err) err = flash_init(FLASH_SIZE_128KB); // last resort detection, may actually be a 64KiB chip!
-    if (err) return; // EEPROM or no save media, no luck
+    if (err)
+        err = flash_init(FLASH_SIZE_64KB); // try smaller first for safety, some
+                                           // 128KiB will trip this one
+    if (err)
+        err = flash_init(FLASH_SIZE_128KB); // last resort detection, may
+                                            // actually be a 64KiB chip!
+    if (err)
+        return; // EEPROM or no save media, no luck
     flashInfo = gFlashInfo;
 }
 
-void platformInit(){
-    // Guard against EZ Flash and Everdrive jumping to the ROM at some random vsync interval and breaking maxmod
-    while (REG_VCOUNT != 160);
-    while (REG_VCOUNT != 161);
+void platformInit() {
+    // Guard against EZ Flash and Everdrive jumping to the ROM at some random
+    // vsync interval and breaking maxmod
+    while (REG_VCOUNT != 160)
+        ;
+    while (REG_VCOUNT != 161)
+        ;
 
     testSaveMedia();
 
-    #ifndef NO_DIAGNOSE
+#ifndef NO_DIAGNOSE
     logInitMgba();
-    #endif
+#endif
 
     interrupt_init();
     interrupt_unmask();
@@ -192,11 +201,11 @@ void platformInit(){
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER3);
 
-    #ifndef NO_DIAGNOSE
+#ifndef NO_DIAGNOSE
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
     interrupt_set_handler(INTR_KEYPAD, onKeyInterrupt);
     interrupt_enable(INTR_KEYPAD);
-    #endif
+#endif
 
     interrupt_set_handler(INTR_VBLANK, onVBlank);
 
@@ -220,34 +229,36 @@ void platformInit(){
 }
 
 void setUpLinkUniversal(bool detectEmus) {
-    const bool inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
+    const bool inaccurateEmulator =
+        detectEmus ? detect_inaccurate_emulator() : true;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
-    const u32 wirelessInterval = 150; // 50 usually works but some devices needed 150...
-    const u32 wiredInterval = 300; // 150 usually works but some devices needed 300...
+    const u32 wirelessInterval =
+        150; // 50 usually works but some devices needed 150...
+    const u32 wiredInterval =
+        300; // 150 usually works but some devices needed 300...
     delete linkUniversal;
-    linkUniversal = new LinkUniversal(LinkUniversal::Protocol::WIRELESS_AUTO,
-                      "Apotris",
-                      (LinkUniversal::CableOptions){
-                              .baudRate = LinkCable::BaudRate::BAUD_RATE_3, // Baud 3 is required for enough b/w to send garbage
-                              .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
-                              .interval = wiredInterval,
-                              .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
-                      (LinkUniversal::WirelessOptions){
-                              .forwarding = true,
-                              .retransmission = true,
-                              .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
-                              .timeout = wirelessTimeout,
-                              .interval = wirelessInterval,
-                              .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID});
+    linkUniversal = new LinkUniversal(
+        LinkUniversal::Protocol::WIRELESS_AUTO, "Apotris",
+        (LinkUniversal::CableOptions){
+            .baudRate =
+                LinkCable::BaudRate::BAUD_RATE_3, // Baud 3 is required for
+                                                  // enough b/w to send garbage
+            .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
+            .interval = wiredInterval,
+            .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
+        (LinkUniversal::WirelessOptions){
+            .forwarding = true,
+            .retransmission = true,
+            .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
+            .timeout = wirelessTimeout,
+            .interval = wirelessInterval,
+            .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID});
     linkConnection = linkUniversal;
 }
 
-void deinitialize(){
-}
+void deinitialize() {}
 
-bool closed(){
-    return true;
-}
+bool closed() { return true; }
 
 IWRAM_CODE void memcpy16_fast(void* dest, const void* src, int hwCount) {
     __agbabi_memcpy2(dest, src, hwCount * 2);
@@ -261,61 +272,59 @@ IWRAM_CODE void memset32_fast(void* dest, int word, int wCount) {
     __aeabi_memset4(dest, wCount * 4, word);
 }
 
-void loadPalette(int palette, int index, const void *src, int count){
-    memcpy16_fast(&pal_bg_mem[16*palette + index], src, count);
+void loadPalette(int palette, int index, const void* src, int count) {
+    memcpy16_fast(&pal_bg_mem[16 * palette + index], src, count);
 }
 
-void loadTiles(int tileset, int index, const void *src, int count){
-    memcpy32_fast(&tile_mem[tileset][index], src,count*8);
+void loadTiles(int tileset, int index, const void* src, int count) {
+    memcpy32_fast(&tile_mem[tileset][index], src, count * 8);
 }
 
-void loadTilemap(int tilemap, int index, const void *src, int count){
-    u16 * dst = (u16 * ) &se_mem[tilemap];
+void loadTilemap(int tilemap, int index, const void* src, int count) {
+    u16* dst = (u16*)&se_mem[tilemap];
     memcpy16_fast(&dst[index], src, count);
 }
 
-void clearTilemap(int tilemap){
-    memset16(&se_mem[tilemap], 0,32*32);
+void clearTilemap(int tilemap) { memset16(&se_mem[tilemap], 0, 32 * 32); }
+
+void clearSpriteTiles(int index, int lengthX, int lengthY) {
+    memset32_fast(&tile_mem[4][index], 0, lengthX * lengthY * 8);
 }
 
-void clearSpriteTiles(int index, int lengthX, int lengthY){
-    memset32_fast(&tile_mem[4][index],0,lengthX*lengthY*8);
+void clearSpriteTile(int index, int tx, int ty, int width) {
+    memset32_fast(&tile_mem[4][index + ty * width + tx], 0, 8);
 }
 
-void clearSpriteTile(int index, int tx, int ty, int width){
-    memset32_fast(&tile_mem[4][index + ty * width + tx],0,8);
+void loadSpriteTiles(int index, const void* src, int lengthX, int lengthY) {
+    memcpy32_fast(&tile_mem[4][index], src, lengthX * lengthY * 8);
 }
 
-void loadSpriteTiles(int index, const void *src, int lengthX, int lengthY){
-    memcpy32_fast(&tile_mem[4][index], src,lengthX * lengthY * 8);
+void loadSpriteTilesPartial(int index, const void* src, int tx, int ty,
+                            int lengthX, int lengthY, int rowLength) {
+    memcpy32_fast(&tile_mem[4][index + ty * rowLength + tx], src,
+                  lengthX * lengthY * 8);
 }
 
-void loadSpriteTilesPartial(int index, const void *src, int tx, int ty, int lengthX, int lengthY, int rowLength){
-    memcpy32_fast(&tile_mem[4][index + ty * rowLength + tx], src,lengthX * lengthY * 8);
+void setPaletteColor(int palette, int index, u16 color, int count) {
+    memset16(&pal_bg_mem[palette * 16 + index], color, count);
 }
 
-void setPaletteColor(int palette, int index, u16 color, int count){
-    memset16(&pal_bg_mem[palette * 16 + index],color,count);
+void sprite_hide(OBJ_ATTR* sprite) { obj_hide(sprite); }
+
+void sprite_unhide(OBJ_ATTR* sprite, int mode) { obj_unhide(sprite, mode); }
+
+void sprite_set_pos(OBJ_ATTR* sprite, int x, int y) {
+    obj_set_pos(sprite, x, y);
 }
 
-void sprite_hide(OBJ_ATTR * sprite){
-    obj_hide(sprite);
+void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start,
+                     int palette, int priority) {
+    obj_set_attr(sprite, ATTR0_SHAPE(shape), ATTR1_SIZE(size),
+                 ATTR2_BUILD(tile_start, palette, priority));
 }
 
-void sprite_unhide(OBJ_ATTR * sprite, int mode){
-    obj_unhide(sprite,mode);
-}
-
-void sprite_set_pos(OBJ_ATTR * sprite, int x, int y){
-    obj_set_pos(sprite,x,y);
-}
-
-void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start, int palette, int priority){
-    obj_set_attr(sprite, ATTR0_SHAPE(shape), ATTR1_SIZE(size), ATTR2_BUILD(tile_start, palette, priority));
-}
-
-void setLayerScroll(int layer, int x, int y){
-    switch(layer){
+void setLayerScroll(int layer, int x, int y) {
+    switch (layer) {
     case 0:
         REG_BG0HOFS = x;
         REG_BG0VOFS = y;
@@ -332,45 +341,48 @@ void setLayerScroll(int layer, int x, int y){
         REG_BG3HOFS = x;
         REG_BG3VOFS = y;
         break;
-
     }
 }
 
-void enableLayerBlend(int layer){
-    REG_BLDCNT = (1 << 6) + (1 << 0xb) + (1<<layer);
+void enableLayerBlend(int layer) {
+    REG_BLDCNT = (1 << 6) + (1 << 0xb) + (1 << layer);
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(15);
 
     // TLN_SetLayerBlendMode(2,BLEND_ADD,0);
 }
 
-void color_fade_palette(int palette, int index, const COLOR *src, COLOR color, int count, u32 alpha){
-    clr_fade(src,color,&pal_bg_mem[palette*16+index],count,alpha);
+void color_fade_palette(int palette, int index, const COLOR* src, COLOR color,
+                        int count, u32 alpha) {
+    clr_fade(src, color, &pal_bg_mem[palette * 16 + index], count, alpha);
 }
 
-void color_fade(COLOR * dst, const COLOR * src, COLOR color, int count, u32 alpha){
-    clr_fade(src,color,dst,count,alpha);
+void color_fade(COLOR* dst, const COLOR* src, COLOR color, int count,
+                u32 alpha) {
+    clr_fade(src, color, dst, count, alpha);
 }
 
-void color_adj_brightness(int palette, int index, const COLOR * src, u32 count, FIXED alpha){
-    clr_adj_brightness(&pal_bg_mem[palette*16+index], src, count, alpha);
+void color_adj_brightness(int palette, int index, const COLOR* src, u32 count,
+                          FIXED alpha) {
+    clr_adj_brightness(&pal_bg_mem[palette * 16 + index], src, count, alpha);
 }
 
-void color_adj_MEM(COLOR * dst, const COLOR * src, u32 count, u32 alpha){
+void color_adj_MEM(COLOR* dst, const COLOR* src, u32 count, u32 alpha) {
     clr_adj_brightness(dst, src, count, alpha);
 }
 
-void color_blend(COLOR *dst, const COLOR *srca, const COLOR *srcb, int nclrs, u32 alpha) {
-    clr_blend(srca,srcb,dst,nclrs,alpha);
+void color_blend(COLOR* dst, const COLOR* srca, const COLOR* srcb, int nclrs,
+                 u32 alpha) {
+    clr_blend(srca, srcb, dst, nclrs, alpha);
 }
 
-void addColorToPalette(int palette, int index, COLOR color, int count){
-    for(int i = 0; i < count; i++){
+void addColorToPalette(int palette, int index, COLOR color, int count) {
+    for (int i = 0; i < count; i++) {
         pal_bg_mem[palette * 16 + index + i] += color;
     }
 }
 
-void initRumble(){
-    if(!savefile->settings.rumble)
+void initRumble() {
+    if (!savefile->settings.rumble)
         return;
 
     rumbleInitialized = true;
@@ -391,17 +403,18 @@ void initRumble(){
     }
 }
 
-bool unlock_gbp(){
+bool unlock_gbp() {
     bool gbp_detected = false;
 
-    memcpy16_fast((u16*)0x6008000, gbp_logo_pixels, (sizeof gbp_logo_pixels)/2);
-    memcpy16_fast((u16*)0x6000000, gbp_logo_tiles, (sizeof gbp_logo_tiles)/2);
-    memcpy16_fast(pal_bg_mem, gbp_logo_palette, (sizeof gbp_logo_palette)/2);
+    memcpy16_fast((u16*)0x6008000, gbp_logo_pixels,
+                  (sizeof gbp_logo_pixels) / 2);
+    memcpy16_fast((u16*)0x6000000, gbp_logo_tiles, (sizeof gbp_logo_tiles) / 2);
+    memcpy16_fast(pal_bg_mem, gbp_logo_palette, (sizeof gbp_logo_palette) / 2);
 
     static volatile u16* keys = (volatile u16*)0x04000130;
 
-    for(int i = 0; i < 120; i++){
-        if(*keys==0x030f){
+    for (int i = 0; i < 120; i++) {
+        if (*keys == 0x030f) {
             gbp_detected = true;
         }
         VBlankIntrWait();
@@ -434,7 +447,7 @@ void sleep() {
 
     bool isLinked = linkConnection->isActive();
 
-    if(isLinked)
+    if (isLinked)
         linkConnection->deactivate();
 
     interrupt_disable(INTR_TIMER3);
@@ -452,7 +465,7 @@ void sleep() {
     REG_SNDDSCNT = dsc_value;
     REG_SNDDMGCNT = dmg_value;
 
-    if(isLinked)
+    if (isLinked)
         linkConnection->activate();
 
     interrupt_enable(INTR_TIMER3);
@@ -460,52 +473,46 @@ void sleep() {
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_VBLANK);
 
-    if(prevGradient)
+    if (prevGradient)
         gradient(1);
 }
 
-void sfx(int s){
+void sfx(int s) {
 
     int id = SoundEffectIds[s];
 
-    if(id == -1)
+    if (id == -1)
         return;
 
     mm_sfxhand h = mmEffect(id);
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
 }
 
-void sfxRate(int sound, float rate){
+void sfxRate(int sound, float rate) {
     int id = SoundEffectIds[sound];
 
-    if(id == -1)
+    if (id == -1)
         return;
 
     mm_sound_effect s = {
-        {(mm_word) id},
+        {(mm_word)id},
         (mm_hword)((rate) * (1 << 10)),
         0,
-        (u8)(255 * (float) savefile->settings.sfxVolume / 10),
+        (u8)(255 * (float)savefile->settings.sfxVolume / 10),
         128,
     };
 
     mmEffectEx(&s);
 }
 
-void stopDMA(){
-    disableDMA = true;
-}
+void stopDMA() { disableDMA = true; }
 
-void setMosaic(int sx, int sy){
-    REG_MOSAIC = MOS_BUILD(sx,sy,sx,sy);
-}
+void setMosaic(int sx, int sy) { REG_MOSAIC = MOS_BUILD(sx, sy, sx, sy); }
 
-void clearSprites(int count){
-    oam_init(obj_buffer, count);
-}
+void clearSprites(int count) { oam_init(obj_buffer, count); }
 
-void clearTiles(int tileset, int index, int count){
-    memset32_fast(&tile_mem[tileset][index],0,8 * count);
+void clearTiles(int tileset, int index, int count) {
+    memset32_fast(&tile_mem[tileset][index], 0, 8 * count);
 }
 
 IWRAM_CODE void onVBlank() {
@@ -523,7 +530,7 @@ IWRAM_CODE void onVBlank() {
         disableDMA = false;
     }
 
-    if(gradientEnabled)
+    if (gradientEnabled)
         DMA_TRANSFER(&pal_bg_mem[0], gradientTable, 1, 0, DMA_HDMA);
 
     if (canDraw) {
@@ -536,87 +543,75 @@ IWRAM_CODE void onVBlank() {
     mmFrame();
 }
 
-void sprite_enable_affine(OBJ_ATTR * sprite,int affineId, bool doubleSize){
+void sprite_enable_affine(OBJ_ATTR* sprite, int affineId, bool doubleSize) {
     sprite->attr0 |= ATTR0_AFF + doubleSize * ATTR0_AFF_DBL_BIT;
     sprite->attr1 |= ATTR1_AFF_ID(affineId);
 }
 
-void sprite_enable_mosaic(OBJ_ATTR * sprite){
-    sprite->attr0 |= ATTR0_MOSAIC;
-}
+void sprite_enable_mosaic(OBJ_ATTR* sprite) { sprite->attr0 |= ATTR0_MOSAIC; }
 
-void sprite_set_id(OBJ_ATTR * sprite, int id){
-    sprite = &obj_buffer[id];
-}
+void sprite_set_id(OBJ_ATTR* sprite, int id) { sprite = &obj_buffer[id]; }
 
-void sprite_set_size(OBJ_ATTR * sprite, FIXED size, int aff_id){
+void sprite_set_size(OBJ_ATTR* sprite, FIXED size, int aff_id) {
     obj_aff_identity(&obj_aff_buffer[aff_id]);
     obj_aff_scale(&obj_aff_buffer[aff_id], size, size);
 }
 
-void sprite_rotscale(OBJ_ATTR * sprite, FIXED sizex, FIXED sizey, int angle , int aff_id){
+void sprite_rotscale(OBJ_ATTR* sprite, FIXED sizex, FIXED sizey, int angle,
+                     int aff_id) {
     obj_aff_identity(&obj_aff_buffer[aff_id]);
     obj_aff_rotscale(&obj_aff_buffer[aff_id], sizex, sizey, angle);
 }
 
-void setMusicTempo(int tempo){
-    mmSetModuleTempo(tempo);
-}
+void setMusicTempo(int tempo) { mmSetModuleTempo(tempo); }
 
-void setMusicVolume(int volume){
+void setMusicVolume(int volume) {
     musicVolume = volume;
     mmSetModuleVolume(volume);
 }
 
-void startSong(int song, bool loop){
+void startSong(int song, bool loop) {
     int n = song;
 
-    if(n < 0)
+    if (n < 0)
         return;
 
-    mmStart(n, (!loop)? MM_PLAY_ONCE:MM_PLAY_LOOP);
+    mmStart(n, (!loop) ? MM_PLAY_ONCE : MM_PLAY_LOOP);
     mmSetModuleVolume(musicVolume);
 }
 
-void stopSong(){
-    mmStop();
-}
+void stopSong() { mmStop(); }
 
-void setTiles(int tilemap, int index, int count, u32 tile){
-    u16 * dst = (u16 * ) &se_mem[tilemap];
+void setTiles(int tilemap, int index, int count, u32 tile) {
+    u16* dst = (u16*)&se_mem[tilemap];
     memset16(&dst[index], tile, count);
 }
 
-void pauseSong(){
-    mmPause();
+void pauseSong() { mmPause(); }
+
+void resumeSong() { mmResume(); }
+
+void clearTilemapEntries(int tilemap, int index, int count) {
+    u16* dst = (u16*)&se_mem[tilemap];
+
+    memset16(&dst[index], 0, count);
 }
 
-void resumeSong(){
-    mmResume();
-}
-
-void clearTilemapEntries(int tilemap, int index, int count){
-    u16 * dst = (u16*) &se_mem[tilemap];
-
-    memset16(&dst[index],0,count);
-}
-
-void loadSavefile(){
+void loadSavefile() {
     delete savefile;
 
     savefile = new Save();
 
     if (flashInfo.size != 0) {
-        flash_read(0, (u8 *) savefile, sizeof(Save));
+        flash_read(0, (u8*)savefile, sizeof(Save));
     } else {
-        __agbabi_memcpy1((u8 *) savefile, sram_mem, sizeof(Save));
+        __agbabi_memcpy1((u8*)savefile, sram_mem, sizeof(Save));
     }
-
 }
 
-void saveSavefile(){
+void saveSavefile() {
     if (flashInfo.size != 0) {
-        flash_write(0, (u8 *) savefile, sizeof(Save));
+        flash_write(0, (u8*)savefile, sizeof(Save));
     } else {
         __agbabi_memcpy1(sram_mem, savefile, sizeof(Save));
 
@@ -626,35 +621,29 @@ void saveSavefile(){
     status.update(&savefile->settings);
 }
 
-void mirrorPalettes(int index, int count){
-    memcpy16_fast(&pal_bg_mem[index],&pal_obj_mem[index],(8 * 16));
+void mirrorPalettes(int index, int count) {
+    memcpy16_fast(&pal_bg_mem[index], &pal_obj_mem[index], (8 * 16));
 }
 
-void toggleHBlank(bool state){
-    if(state){
+void toggleHBlank(bool state) {
+    if (state) {
         interrupt_set_handler(INTR_HBLANK, onHBlank);
         interrupt_enable(INTR_HBLANK);
-    }else{
+    } else {
         disableHBlank = true;
     }
 }
 
-void savePalette(COLOR * dst){
-    memcpy32_fast(dst, pal_bg_mem, 256);
-}
+void savePalette(COLOR* dst) { memcpy32_fast(dst, pal_bg_mem, 256); }
 
-void enableBlend(int info){
-    REG_BLDCNT = info;
-}
+void enableBlend(int info) { REG_BLDCNT = info; }
 
-void sprite_enable_blend(OBJ_ATTR * sprite){
-    sprite->attr0 |= ATTR0_BLEND;
-}
+void sprite_enable_blend(OBJ_ATTR* sprite) { sprite->attr0 |= ATTR0_BLEND; }
 
 int prevDispCnt = 0;
 
-void toggleRendering(bool state){
-    if(state){
+void toggleRendering(bool state) {
+    if (state) {
         REG_DISPCNT = prevDispCnt;
     } else {
         prevDispCnt = REG_DISPCNT;
@@ -662,35 +651,37 @@ void toggleRendering(bool state){
     }
 }
 
-void sprite_enable_flip(OBJ_ATTR *sprite, bool flipX, bool flipY){
+void sprite_enable_flip(OBJ_ATTR* sprite, bool flipX, bool flipY) {
     sprite->attr1 |= flipX << 0xc;
     sprite->attr1 |= flipY << 0xd;
 }
 
-void quit(){}
+void quit() {}
 
-void findSoundbank(){
-    const GBFS_FILE * gbfsFile = find_first_gbfs_file(reinterpret_cast<const void *>(AGB_ROM));
-    const void * myFile = gbfs_get_obj(gbfsFile, "soundbank.bin", NULL);
+void findSoundbank() {
+    const GBFS_FILE* gbfsFile =
+        find_first_gbfs_file(reinterpret_cast<const void*>(AGB_ROM));
+    const void* myFile = gbfs_get_obj(gbfsFile, "soundbank.bin", NULL);
 
-    if(myFile == NULL){
+    if (myFile == NULL) {
         log("couldn't find soundbank.bin");
         return;
     }
 
     log("found soundbank.bin");
 
-    soundbank = (u8*) myFile;
+    soundbank = (u8*)myFile;
 }
 
-void buildEffectLocations(){
+void buildEffectLocations() {
 
-    const GBFS_FILE * gbfsFile = find_first_gbfs_file(reinterpret_cast<const void *>(AGB_ROM));
-    const void * myFile = gbfs_get_obj(gbfsFile, "effect_locations.bin", NULL);
+    const GBFS_FILE* gbfsFile =
+        find_first_gbfs_file(reinterpret_cast<const void*>(AGB_ROM));
+    const void* myFile = gbfs_get_obj(gbfsFile, "effect_locations.bin", NULL);
 
-    u32 * file = (u32*) myFile;
+    u32* file = (u32*)myFile;
 
-    if(file[0] != 0x51){
+    if (file[0] != 0x51) {
         log("couldn't find effect location file");
         return;
     }
@@ -700,54 +691,47 @@ void buildEffectLocations(){
     file++;
 
     int count = *file++;
-    for(int i = 0; i < count; i++){
+    for (int i = 0; i < count; i++) {
         SoundEffectIds[i] = *file++;
     }
 
     count = *file++;
     log("found " + std::to_string(count) + " menu songs");
-    for(int i = 0; i < count; i++){
+    for (int i = 0; i < count; i++) {
         songs.menu.push_back(*file++);
     }
 
     count = *file++;
     log("found " + std::to_string(count) + " game songs");
-    for(int i = 0; i < count; i++){
+    for (int i = 0; i < count; i++) {
         songs.game.push_back(*file++);
     }
 }
 
-void loadAudio(){
+void loadAudio() {
     log("Trying to load from appended files...");
 
     findSoundbank();
     buildEffectLocations();
 }
 
-void enableLayerWindow(int layer, int x1, int y1, int x2, int y2, bool invert){}
-
-void disableLayerWindow(int layer){}
-
-std::map<int,std::string> keyToString = {
-    {KEY_LEFT,"Left"},
-    {KEY_RIGHT,"Right"},
-    {KEY_UP,"Up"},
-    {KEY_DOWN,"Down"},
-    {KEY_A,"A"},
-    {KEY_B,"B"},
-    {KEY_L,"L"},
-    {KEY_R,"R"},
-    {KEY_START,"Start"},
-    {KEY_SELECT,"Select"},
-};
-
-void refreshWindowSize(){}
-
-void toggleSpriteSorting(bool state){
-    sortSprites = state;
+void enableLayerWindow(int layer, int x1, int y1, int x2, int y2, bool invert) {
 }
 
-IWRAM_CODE void onKeyInterrupt(){
+void disableLayerWindow(int layer) {}
+
+std::map<int, std::string> keyToString = {
+    {KEY_LEFT, "Left"},     {KEY_RIGHT, "Right"}, {KEY_UP, "Up"},
+    {KEY_DOWN, "Down"},     {KEY_A, "A"},         {KEY_B, "B"},
+    {KEY_L, "L"},           {KEY_R, "R"},         {KEY_START, "Start"},
+    {KEY_SELECT, "Select"},
+};
+
+void refreshWindowSize() {}
+
+void toggleSpriteSorting(bool state) { sortSprites = state; }
+
+IWRAM_CODE void onKeyInterrupt() {
     // Soft reset on bootleg carts will destroy the save
     if (bootleg_type)
         return;

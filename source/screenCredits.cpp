@@ -1,7 +1,7 @@
 
+#include "logging.h"
 #include "scene.hpp"
 #include "sprites.h"
-#include "logging.h"
 
 #ifndef MULTIBOOT
 
@@ -111,37 +111,38 @@ std::list<std::string> creditsText = {
     " - you ;)",
 };
 
-void CreditsScene::init(){
+void CreditsScene::init() {
     resetSmallText();
     clearText();
     clearSprites(128);
 
-    //backgroundGrid
-    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+    // backgroundGrid
+    setTiles(26, 0, 32 * 32,
+             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
-    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
 
-    #ifdef TE
-    //letterbox on pc
+#ifdef TE
+    // letterbox on pc
     buildBG(0, 0, 29, 0, 0, true);
     TILE tile;
-    memset32_fast(&tile,0xeeeeeeee,8);
+    memset32_fast(&tile, 0xeeeeeeee, 8);
     loadTiles(0, 50, &tile, 1);
 
-    setTiles(29, 20 * 64, 44 * 64,50);
-    #endif
+    setTiles(29, 20 * 64, 44 * 64, 50);
+#endif
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++){
-        wordSprites[i] = new WordSprite(i,64 + i * 5, 256 + i * 20, true);
+    for (int i = 0; i < MAX_WORD_SPRITES; i++) {
+        wordSprites[i] = new WordSprite(i, 64 + i * 5, 256 + i * 20, true);
         wordSprites[i]->setPriority(1);
     }
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 }
 
-void CreditsScene::draw(){
+void CreditsScene::draw() {
     fallingBlocks();
-    toggleBG(3,true);
+    toggleBG(3, true);
 
     int startX = 30;
     int counter = 0;
@@ -149,39 +150,40 @@ void CreditsScene::draw(){
     int i = 0;
     int gaps = 0;
 
-    for(auto option = creditsText.begin(); option != creditsText.end(); ++option){
-        if(counter < listStart){
+    for (auto option = creditsText.begin(); option != creditsText.end();
+         ++option) {
+        if (counter < listStart) {
             counter++;
-            if(*option == "")
+            if (*option == "")
                 gaps++;
 
             continue;
         }
 
-        if(*option == ""){
+        if (*option == "") {
             height += space;
             continue;
         }
 
-        if(i >= maxShow)
+        if (i >= maxShow)
             break;
 
-        int index = (i + listStart-gaps) % maxShow;
+        int index = (i + listStart - gaps) % maxShow;
 
         wordSprites[index]->setText(*option);
 
         int y = height - scrollOffset;
 
-        if(y > SCREEN_HEIGHT)
+        if (y > SCREEN_HEIGHT)
             break;
 
-        wordSprites[index]->show(startX,height - scrollOffset,15);
+        wordSprites[index]->show(startX, height - scrollOffset, 15);
 
         i++;
         height += space;
     }
 
-    for(int j = i; j < maxShow; j++){
+    for (int j = i; j < maxShow; j++) {
         int index = (j + listStart - gaps) % maxShow;
 
         wordSprites[index]->hide();
@@ -190,49 +192,49 @@ void CreditsScene::draw(){
     showSprites(128);
 }
 
-bool CreditsScene::control(){
+bool CreditsScene::control() {
 
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(k.cancel)){
+    if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
         previousElement = name();
 
-        changeScene(previousScene(),Transitions::FADE);
-    }else if(key_is_down(k.confirm)){
+        changeScene(previousScene(), Transitions::FADE);
+    } else if (key_is_down(k.confirm)) {
         scrollTimerMax = 1;
-    }else if(key_is_down(KEY_FULL)){
+    } else if (key_is_down(KEY_FULL)) {
         scrollTimerMax = 0xffff;
-    }else{
+    } else {
         scrollTimerMax = 4;
     }
 
     return false;
 }
 
-void CreditsScene::update(){
+void CreditsScene::update() {
     canDraw = 1;
     key_poll();
 
-    if(delay < delayMax){
+    if (delay < delayMax) {
         delay++;
-    }else if(scrollTimer++ >= scrollTimerMax){
+    } else if (scrollTimer++ >= scrollTimerMax) {
         scrollTimer = 0;
-        if(++scrollOffset >= space){
+        if (++scrollOffset >= space) {
             scrollOffset = 0;
             listStart++;
         }
     }
 
-    if(listStart > creditsText.size()){
-        changeScene(previousScene(),Transitions::FADE);
+    if (listStart > creditsText.size()) {
+        changeScene(previousScene(), Transitions::FADE);
         return;
     }
 
     control();
 }
 
-void CreditsScene::deinit(){
+void CreditsScene::deinit() {
     clearSprites(128);
     showSprites(128);
 
@@ -244,7 +246,7 @@ void CreditsScene::deinit(){
 
     clearText();
 
-    for(int i = 0; i < MAX_WORD_SPRITES; i++)
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
         delete wordSprites[i];
 
     buildBG(0, 2, 29, 0, 0, true);

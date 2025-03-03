@@ -1,42 +1,42 @@
-#include "sceneAudio.hpp"
 #include "logging.h"
+#include "sceneAudio.hpp"
 
-bool SongListElement::action(){
+bool SongListElement::action() {
     sfx(SFX_MENUCONFIRM);
     changeScene(new SongListScene(), Transitions::FADE);
     return true;
 }
 
-void SongElement::select(){
-    if(index < 0)
+void SongElement::select() {
+    if (index < 0)
         return;
     playSong(menu, index);
 }
 
-void SongListScene::init(){
+void SongListScene::init() {
     OptionListScene::init();
 
     auto it = elementList.begin();
 
-    do{
-        std::advance(it,1);
-    }while((*it)->getCurrentOption() == "\n");
+    do {
+        std::advance(it, 1);
+    } while ((*it)->getCurrentOption() == "\n");
 
-    SongElement * song = (SongElement *) *it;
+    SongElement* song = (SongElement*)*it;
 
     song->select();
 }
 
-bool SongListScene::control(){
+bool SongListScene::control() {
     int previous = selection;
-    if(OptionListScene::control())
+    if (OptionListScene::control())
         return true;
 
-    if(selection != previous){
+    if (selection != previous) {
         auto it = elementList.begin();
-        std::advance(it,selection);
+        std::advance(it, selection);
 
-        SongElement * song = (SongElement *) *it;
+        SongElement* song = (SongElement*)*it;
 
         song->select();
     }

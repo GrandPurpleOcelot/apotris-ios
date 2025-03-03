@@ -1,15 +1,15 @@
 #include "sceneControls.hpp"
 
-bool ControlOptionScene::control(){
+bool ControlOptionScene::control() {
     OptionListScene::control();
 
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(k.special3)){
+    if (key_hit(k.special3)) {
         auto it = elementList.begin();
-        std::advance(it,selection);
+        std::advance(it, selection);
 
-        RebindElement* el = (RebindElement*) *it;
+        RebindElement* el = (RebindElement*)*it;
 
         el->reset();
 
