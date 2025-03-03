@@ -85,7 +85,7 @@ public:
 
 #define TRAINING_MESSAGE_MAX 300
 #define MAX_SKINS 15
-#define MAX_SHADOWS 7
+#define MAX_SHADOWS 8
 #define MAX_BACKGROUNDS 8
 #define MAX_COLORS 7
 #define MAX_CLEAR_EFFECTS 4
@@ -155,7 +155,7 @@ extern std::string timeToString(int frames, bool small);
 extern std::string timeToStringHours(int frames);
 extern void setDefaultGraphics(Save* save, int depth);
 extern void setRandomGraphics(Save* save);
-extern void setPawnPalette(int dest, int n, int blend);
+extern void setPawnPalette(int dest, int n, int blend, bool flip);
 
 extern void startGame(BlockEngine::Options options, int seed);
 extern void startGame(int seed);

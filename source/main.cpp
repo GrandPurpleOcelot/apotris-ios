@@ -36,7 +36,6 @@ using namespace BlockEngine;
 
 [[maybe_unused]] const std::string save_type = "SRAM_Vnnn";
 int getClassicPalette();
-void setPawnPalette(int dest, int n, int blend);
 void genWidths();
 
 OBJ_ATTR obj_buffer[128];
@@ -1066,10 +1065,10 @@ void startBotGame(int seed) {
     status.Options = previousGameOptions;
 }
 
-void setPawnPalette(int dest, int n, int blend) {
+void setPawnPalette(int dest, int n, int blend, bool flip) {
     dest += 16;
 
-    if (savefile->settings.lightMode) {
+    if (savefile->settings.lightMode != flip) {
         if (savefile->settings.colors == 2)
             color_fade_palette(dest, 0, (COLOR*)classic_pal_bin, 0x0000, 5,
                                blend);
