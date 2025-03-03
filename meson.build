@@ -189,16 +189,19 @@ if host_machine.system() != 'gba'
         add_project_arguments('-DSWITCH', language : ['cpp', 'c'])
     elif get_option('portmaster')
         add_project_arguments('-DPORTMASTER', language : ['cpp', 'c'])
+        add_project_arguments('-DGL', language : ['c', 'cpp'])
+
         dependencies += dependency('glesv2')
     elif host_machine.system() != 'emscripten'
         add_project_arguments('-DPC', language : ['cpp', 'c'])
+        add_project_arguments('-DGL', language : ['c', 'cpp'])
+
         dependencies += dependency('gl')
     else
         add_project_arguments('-DWEB', language : ['cpp', 'c'])
     endif
 
     add_project_arguments('-DTE', language : ['c', 'cpp'])
-    add_project_arguments('-DGL', language : ['c', 'cpp'])
 
     generated_files = []
     # Assemble bin2s targets
