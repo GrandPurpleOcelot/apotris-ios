@@ -747,4 +747,8 @@ IWRAM_CODE void onKeyInterrupt() {
     REG_TM3D = 0;
     SoftReset();
 }
+
+void rumbleStart() { rumble_set_state(rumble_start); }
+
+void rumbleStop() { rumble_set_state(rumble_hard_stop); }
 #endif
