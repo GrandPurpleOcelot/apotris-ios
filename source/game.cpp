@@ -9,7 +9,9 @@
 #include <string>
 #include <tuple>
 
-#include "rumble.h"
+#ifdef GBA
+#include <rumble.h>
+#endif // GBA
 
 #include "achievementStructure.h"
 #include "classic_pal_bin.h"
