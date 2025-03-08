@@ -143,6 +143,10 @@ void CreditsScene::init() {
 void CreditsScene::draw() {
     fallingBlocks();
     toggleBG(3, true);
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     int startX = 30;
     int counter = 0;
@@ -250,6 +254,11 @@ void CreditsScene::deinit() {
         delete wordSprites[i];
 
     buildBG(0, 2, 29, 0, 0, true);
+
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
 }
 
 #endif

@@ -96,6 +96,10 @@ void QRScene::init() {
 void QRScene::draw() {
     fallingBlocks();
     toggleBG(3, true);
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     showSprites(128);
 }
@@ -138,5 +142,10 @@ void QRScene::deinit() {
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         delete wordSprites[i];
+
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
 }
 #endif
