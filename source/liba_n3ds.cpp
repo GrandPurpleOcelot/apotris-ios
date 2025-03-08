@@ -926,11 +926,16 @@ void showFPS() {
         dbg::show_fps(average);
 #endif
 
+        // HACK: Save and restore fill screen state (for credits letterboxing)
+        const bool fillScreen = tng::bg_screenblock_fill_screen_p[29];
+
         char buff[8];
         snprintf(buff, 8, "%.2f", average);
 
         const int width = 30 - 2 * (savefile->settings.aspectRatio == 1);
         aprintColor(buff, width - 5, 0, 1);
+
+        tng::bg_screenblock_fill_screen_p[29] = fillScreen;
     }
 }
 

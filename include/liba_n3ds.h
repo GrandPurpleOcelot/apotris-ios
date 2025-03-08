@@ -405,4 +405,8 @@ enum class ScaleMode : u8 {
     NUM_ENTRIES,
 };
 
+inline void setSbbFillScreen(int sbb) {
+    tng::bg_screenblock_fill_screen_p[sbb] = true;
+}
+
 } /* namespace n3ds */

@@ -132,6 +132,18 @@ void CreditsScene::init() {
     setTiles(29, 20 * 64, 44 * 64, 50);
 #endif
 
+#ifdef N3DS
+    // letterbox on N3DS
+    TILE tile;
+    memset32_fast(&tile, 0xeeeeeeee, 8);
+    int allocTile = textAllocateTile();
+    loadTiles(2, allocTile, &tile, 1);
+    setTiles(29, 20 * 32, 12 * 32, tileBuild(allocTile, false, false, 0));
+
+    // Force letterbox to fill horizontally (FPS counter also repeated)
+    n3ds::setSbbFillScreen(29);
+#endif
+
     for (int i = 0; i < MAX_WORD_SPRITES; i++) {
         wordSprites[i] = new WordSprite(i, 64 + i * 5, 256 + i * 20, true);
         wordSprites[i]->setPriority(1);
