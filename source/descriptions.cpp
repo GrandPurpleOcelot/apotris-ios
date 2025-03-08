@@ -159,6 +159,23 @@ std::string getDescription(std::string element) {
     } else if (element == "Autosave") {
         return "How often the game saves automatically (doesn't save while in "
                "a round).";
+
+#ifdef N3DS
+        // 3DS-specific scaling options:
+    } else if (element == "1x") {
+        return "Pixel-perfect display centered on the screen.";
+
+    } else if (element == "1.5x smooth") {
+        return "Fit height with linear filtering.";
+
+    } else if (element == "1.5x sharp") {
+        return "Sharper linear filtering with 2x prescale.";
+
+    } else if (element == "1.5x ultra") {
+        return "Use double the horizontal pixels for crisp output; "
+               "vertically same as \"1.5x sharp\". "
+               "Old 2DS not supported.";
+#endif
     }
 
     return "";

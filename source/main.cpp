@@ -964,7 +964,7 @@ void setDefaultGradient() {
                   defaultGradient_bin_size / 2);
 #endif
 
-#ifdef PC
+#if defined(PC) || defined(N3DS)
 
     int div = SCREEN_HEIGHT / 8;
     int n = (savefile->settings.colors < 2) ? savefile->settings.colors : 0;
@@ -1132,7 +1132,7 @@ void setPawnPalette(int dest, int n, int blend, bool flip) {
 }
 
 std::string getStringFromKey(int key) {
-#if defined(GBA)
+#if defined(GBA) || defined(N3DS)
 
     std::string result;
 
@@ -1140,13 +1140,13 @@ std::string getStringFromKey(int key) {
         result = keyToString[key];
     } else {
 
-        int k = key;
+        u32 k = key;
 
         int counter = 0;
         do {
             if (k & (1 << counter)) {
                 result += keyToString[1 << counter] + " ";
-                k -= 1 << counter;
+                k &= ~(1 << counter);
             }
 
             counter++;

@@ -147,7 +147,19 @@ typedef struct Settings {
     int goalLine;
     int rotationSystem;
     int zoom;
+#ifdef N3DS
+    union {
+        struct {
+            u8 n3dsMainScreenIsTop;
+            n3ds::ScaleMode n3dsScaleMode;
+            u8 _n3dsPlaceholder1;
+            u8 _n3dsPlaceholder2;
+        };
+        int _n3dsDisplayOptionValue;
+    };
+#else
     int integerScale;
+#endif
     int peek;
     int moveSfx;
     int pauseCountdown;
@@ -166,7 +178,11 @@ typedef struct Settings {
     bool showSpawn;
     bool showFPS;
     int bootlegOverrideType;
+#ifdef N3DS
+    int _n3dsPlaceholder3;
+#else
     int fullscreen;
+#endif
     int shaders;
 
     int placeHolder[29];

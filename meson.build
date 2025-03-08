@@ -96,6 +96,45 @@ elif host_machine.system() == 'darwin'
 endif
 
 build_type = get_option('buildtype')
+
+if host_machine.system() == 'n3ds'
+
+    # Avoid issue with breaking stdlib synchronization
+    # (https://github.com/devkitPro/gcc/issues/5)
+    add_global_arguments([
+        '-D_GLIBCXX_GTHREAD_USE_WEAK=1',
+    ], language: ['cpp'])
+
+    if build_type == 'release' or build_type == 'minsize'
+        add_global_arguments(['-ffunction-sections','-fdata-sections'], language : ['c', 'cpp'])
+        add_global_link_arguments(['-Wl,--gc-sections'], language : ['c', 'cpp'])
+    endif
+
+    enable_debug_ui = get_option('debug_ui')
+    if enable_debug_ui
+        add_global_arguments([
+            '-DImTextureID=void*',
+            '-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=1',
+            '-DIMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS=1',
+        ], language: ['cpp'])
+        add_project_arguments('-DDEBUG_UI', language : ['c', 'cpp'])
+    else
+        add_project_arguments(['-DNO_DIAGNOSE', '-DNDEBUG'], language : ['c', 'cpp'])
+    endif
+
+    enable_profiling = get_option('profiling')
+    if enable_profiling
+        add_global_arguments([
+            '-DTRACY_ENABLE',
+            '-DTRACY_DELAYED_INIT',
+            '-DTRACY_MANUAL_LIFETIME',
+            '-DTRACY_NO_FRAME_IMAGE',
+            '-DTRACY_SYMBOL_OFFLINE_RESOLVE',
+        ], language: ['cpp'])
+    endif
+
+endif
+
 # Don't use mGBA logging in release build types, only debug and friends
 if build_type.startswith('release') or build_type.startswith('minsize')
   add_project_arguments('-DNO_DIAGNOSE', language : ['c', 'cpp'])
@@ -133,7 +172,7 @@ add_project_arguments('-Wno-unused', language : ['c', 'cpp'])
 
 subdir('assets')
 
-if host_machine.system() != 'gba'
+if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
     #############################
     # Windows, macOS, and Linux #
     #############################
@@ -322,6 +361,140 @@ if host_machine.system() != 'gba'
             install_subdir('license', install_dir : '.')
         endif
     endif
+elif host_machine.system() == 'n3ds'
+    #####################
+    # Nintendo 3DS port #
+    #####################
+
+    sources += files(
+        src_dir / 'liba_n3ds.cpp',
+        src_dir / 'n3ds/audio.cpp',
+        src_dir / 'n3ds/renderer.cpp',
+    )
+
+    # Enable all 3DS-specific code
+    add_project_arguments('-DN3DS', language : ['c', 'cpp'])
+
+    dependencies = []
+
+    # System libraries
+    compiler = meson.get_compiler('c')
+    if build_type == 'debug'
+        dependencies += compiler.find_library('citro3dd')
+    else
+        dependencies += compiler.find_library('citro3d')
+    endif
+
+    if enable_debug_ui
+        tilengine = dependency('Tilengine', static : true, default_options : ['default_library=static'], fallback : ['Tilengine', 'tilengine_dep'])
+        dependencies += tilengine
+
+        subdir('source/n3ds/imgui')
+        dependencies += imgui_3ds_dep
+        dependencies += imgui_dep
+    endif
+
+    libxmp = dependency('libxmp', static : true)
+    dependencies += libxmp
+
+    if enable_profiling
+        tracy = dependency('tracy', static : true, default_options : ['default_library=static']) #, fallback : ['Tilengine', 'tilengine_dep'])
+        dependencies += tracy
+    endif
+
+    generated_files = []
+
+    # Assemble bin2s targets
+    foreach binfile : binary_files
+        filename = fs.name(binfile).split('.')[0]
+        output_o = '@0@.bin.o'.format(fs.name(filename))
+        output_h = '@0@_bin.h'.format(fs.name(filename))
+        output_s = '@0@_bin.s'.format(fs.name(filename))
+
+        bin2s_target = custom_target(
+            'bin2s_' + fs.name(binfile),
+            output : [output_s, output_h],
+            command : [
+                py3, call_bin2s, bin2s, binfile, output_h, output_s, 'gba', xxd
+            ],
+            depend_files : binfile,
+        )
+
+        generated_files += bin2s_target
+    endforeach
+
+    vshader_shbin = custom_target(
+        input : [
+            src_dir / 'n3ds/vshader_sprite.v.pica',
+            src_dir / 'n3ds/vshader_bg.v.pica',
+            src_dir / 'n3ds/vshader_gradient.v.pica',
+            src_dir / 'n3ds/vshader_bg_mosaic_tex.v.pica',
+            src_dir / 'n3ds/vshader_simple_tex.v.pica',
+        ],
+        output : 'n3ds_vshader.shbin',
+        command : [
+            'picasso',
+            '-o', '@OUTPUT@',
+            '@INPUT@',
+        ],
+    )
+    vshader_shbin_bin2s = custom_target(
+        'n3ds_vshader_bin2s',
+        input : vshader_shbin,
+        output : ['n3ds_vshader.shbin.s', 'n3ds_vshader.shbin.h'],
+        command : [
+            py3, call_bin2s, bin2s, '@INPUT@', '@OUTPUT1@', '@OUTPUT0@', 'gba', xxd
+        ],
+    )
+
+    generated_files += [
+        vshader_shbin_bin2s,
+    ]
+
+    link_args = []
+
+    elf = executable(
+        name,
+        generated_files + sources,
+        include_directories : includes,
+        dependencies : dependencies,
+        link_args : link_args,
+        name_suffix : 'elf',
+    )
+
+    smdh = custom_target(
+        input : [
+            src_dir / 'n3ds/icon_48.png',
+            # src_dir / 'n3ds/icon_24.png',
+        ],
+        output : name + '.smdh',
+        command : [
+            'smdhtool',
+            '--create',
+            name,
+            'Apotris multiplatform block stacking game',
+            'akouzoukos, 3DS port by Alvin',
+            '@INPUT0@',
+            '@OUTPUT@',
+            # '@INPUT1@'
+        ],
+    )
+
+    rom_3dsx = custom_target(
+        output : name + '.3dsx',
+        input : [elf, smdh],
+        command : [
+            '3dsxtool',
+            '@INPUT0@',
+            '@OUTPUT@',
+            '--smdh=@INPUT1@',
+            #'--romfs=./romfs',
+        ],
+        build_by_default : true,
+    )
+
+    alias_target('3dsx', rom_3dsx)
+
 else
     ##########################################
     # GameBoy-Advance-specific configuration #

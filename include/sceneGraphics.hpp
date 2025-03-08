@@ -648,14 +648,22 @@ public:
     }
 
     void action(int dir) override {
+#ifdef N3DS
+        n3ds::savedAspectRatio = !n3ds::savedAspectRatio;
+#else
         savefile->settings.aspectRatio = !savefile->settings.aspectRatio;
+#endif
         clearText();
 
         sfx(SFX_MENUCONFIRM);
     }
 
     std::string getCurrentOption() override {
+#ifdef N3DS
+        if (n3ds::savedAspectRatio == 0)
+#else
         if (savefile->settings.aspectRatio == 0)
+#endif
             return "3:2";
         else
             return "4:3";
@@ -763,7 +771,7 @@ class GraphicsScene : public Scene {
         l.push_back(new ClearStyleElement());
         l.push_back(new ClearDirectionElement());
 
-#ifdef GBA
+#if defined(GBA) || defined(N3DS)
         l.push_back(new PlaceEffectElement());
 #endif
 

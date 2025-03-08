@@ -527,7 +527,7 @@ void PlayOptionScene::draw() {
                 scrollDelay = 0;
                 scrollingText[0]->setTextSlow(scrollText);
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
                 for (int i = 0; i < 2; i++) {
                     sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
                     sprite_set_pos(scrollSideSprites[i],
