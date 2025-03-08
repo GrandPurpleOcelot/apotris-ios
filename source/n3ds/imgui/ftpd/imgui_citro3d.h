@@ -1,10 +1,3 @@
-// ftpd is a server implementation based on the following:
-// - RFC  959 (https://tools.ietf.org/html/rfc959)
-// - RFC 3659 (https://tools.ietf.org/html/rfc3659)
-// - suggested implementation details from https://cr.yp.to/ftp/filesystem.html
-// - Deflate transmission mode for FTP
-//   (https://tools.ietf.org/html/draft-preston-ftpext-deflate-04)
-//
 // The MIT License (MIT)
 //
 // Copyright (C) 2024 Michael Theall
@@ -29,7 +22,6 @@
 
 #pragma once
 
-#ifndef CLASSIC
 #include <citro3d.h>
 
 struct ImDrawList;
@@ -56,4 +48,3 @@ void render (C3D_RenderTarget *topLeft_, C3D_RenderTarget *topRight_, C3D_Render
 void setZ (ImDrawList const *drawList_, ImDrawCmd const *drawCmd_);
 }
 }
-#endif

@@ -1,10 +1,3 @@
-// ftpd is a server implementation based on the following:
-// - RFC  959 (https://tools.ietf.org/html/rfc959)
-// - RFC 3659 (https://tools.ietf.org/html/rfc3659)
-// - suggested implementation details from https://cr.yp.to/ftp/filesystem.html
-// - Deflate transmission mode for FTP
-//   (https://tools.ietf.org/html/draft-preston-ftpext-deflate-04)
-//
 // The MIT License (MIT)
 //
 // Copyright (C) 2024 Michael Theall
@@ -27,12 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CLASSIC
 #include "imgui_citro3d.h"
 
 #include <citro3d.h>
 
-#include "vshader_shbin.h"
+#include "imgui_vshader_shbin.h"
+
+#undef ImTextureID
+#define ImTextureID C3D_Tex *
 
 #include <imgui.h>
 
@@ -181,8 +176,8 @@ void imgui::citro3d::init ()
 
 	// load vertex shader
 	s_vsh = DVLB_ParseFile (
-	    const_cast<std::uint32_t *> (reinterpret_cast<std::uint32_t const *> (vshader_shbin)),
-	    vshader_shbin_size);
+	    const_cast<std::uint32_t *> (reinterpret_cast<std::uint32_t const *> (imgui_vshader_shbin)),
+	    imgui_vshader_shbin_size);
 
 	// initialize vertex shader program
 	shaderProgramInit (&s_program);
@@ -330,6 +325,7 @@ void imgui::citro3d::init ()
 	// initialize font atlas
 	auto const atlas = ImGui::GetIO ().Fonts;
 	atlas->Clear ();
+	atlas->Flags           = ImFontAtlasFlags_NoMouseCursors | ImFontAtlasFlags_NoBakedLines;
 	atlas->TexWidth        = glyphInfo->sheetWidth;
 	atlas->TexHeight       = glyphInfo->sheetHeight * glyphInfo->nSheets;
 	atlas->TexUvScale      = ImVec2 (1.0f / atlas->TexWidth, 1.0f / atlas->TexHeight);
@@ -355,7 +351,7 @@ void imgui::citro3d::init ()
 	config.FontBuilderFlags     = 0;
 	config.RasterizerMultiply   = 1.0f;
 	config.EllipsisChar         = 0x2026;
-	std::memset (config.Name, 0, sizeof (config.Name));
+	std::strcpy (config.Name, "system");
 
 	// create font
 	auto const imFont = IM_NEW (ImFont);
@@ -448,31 +444,49 @@ void imgui::citro3d::render (C3D_RenderTarget *const topLeft_,
 	if (width <= 0 || height <= 0)
 		return;
 
+	const bool hasTop         = topLeft_ || topRight_;
+	const bool hasBottom      = bottom_;
+	const bool hasBothScreens = hasTop && hasBottom;
+
 	// initialize projection matrices
-	Mtx_OrthoTilt (&s_projTop,
-	    0.0f,
-	    drawData->DisplaySize.x,
-	    drawData->DisplaySize.y * 0.5f,
-	    0.0f,
-	    -1.0f,
-	    1.0f,
-	    false);
-	Mtx_OrthoTilt (&s_projBottom,
-	    drawData->DisplaySize.x * 0.1f,
-	    drawData->DisplaySize.x * 0.9f,
-	    drawData->DisplaySize.y,
-	    drawData->DisplaySize.y * 0.5f,
-	    -1.0f,
-	    1.0f,
-	    false);
+	if (hasBothScreens)
+	{
+		Mtx_OrthoTilt (&s_projTop,
+		    0.0f,
+		    drawData->DisplaySize.x,
+		    drawData->DisplaySize.y * 0.5f,
+		    0.0f,
+		    -1.0f,
+		    1.0f,
+		    false);
+		Mtx_OrthoTilt (&s_projBottom,
+		    drawData->DisplaySize.x * 0.1f,
+		    drawData->DisplaySize.x * 0.9f,
+		    drawData->DisplaySize.y,
+		    drawData->DisplaySize.y * 0.5f,
+		    -1.0f,
+		    1.0f,
+		    false);
+	}
+	else
+	{
+		Mtx_OrthoTilt (hasTop ? &s_projTop : &s_projBottom,
+		    0.0f,
+		    drawData->DisplaySize.x,
+		    drawData->DisplaySize.y,
+		    0.0f,
+		    -1.0f,
+		    1.0f,
+		    false);
+	}
 
 	// check if we need to grow vertex data buffer
 	if (s_vtxSize < static_cast<std::size_t> (drawData->TotalVtxCount))
 	{
 		linearFree (s_vtxData);
 
-		// add 10% to avoid growing many frames in a row
-		s_vtxSize = drawData->TotalVtxCount * 1.1f;
+		// add 12,5% to avoid growing many frames in a row
+		s_vtxSize = drawData->TotalVtxCount + drawData->TotalVtxCount / 8;
 		s_vtxData = reinterpret_cast<ImDrawVert *> (linearAlloc (sizeof (ImDrawVert) * s_vtxSize));
 		assert (s_vtxData);
 	}
@@ -480,8 +494,10 @@ void imgui::citro3d::render (C3D_RenderTarget *const topLeft_,
 	// check if we need to grow index data buffer
 	if (s_idxSize < static_cast<std::size_t> (drawData->TotalIdxCount))
 	{
-		// add 10% to avoid growing many frames in a row
-		s_idxSize = drawData->TotalIdxCount * 1.1f;
+		linearFree (s_idxData);
+
+		// add 12,5% to avoid growing many frames in a row
+		s_idxSize = drawData->TotalIdxCount + drawData->TotalIdxCount / 8;
 		s_idxData = reinterpret_cast<ImDrawIdx *> (linearAlloc (sizeof (ImDrawIdx) * s_idxSize));
 		assert (s_idxData);
 	}
@@ -528,8 +544,10 @@ void imgui::citro3d::render (C3D_RenderTarget *const topLeft_,
 		if (!target)
 			continue;
 
-		// clear frame/depth buffers
-		C3D_RenderTargetClear (target, C3D_CLEAR_ALL, CLEAR_COLOR, 0);
+		float widthScale =
+		    (double)(hasTop ? GSP_SCREEN_HEIGHT_TOP : GSP_SCREEN_HEIGHT_BOTTOM) / width;
+		float heightScale =
+		    (double)(hasBothScreens ? GSP_SCREEN_WIDTH * 2 : GSP_SCREEN_WIDTH) / height;
 
 		if (target == topLeft_)
 			s_slider = slider;
@@ -591,7 +609,7 @@ void imgui::citro3d::render (C3D_RenderTarget *const topLeft_,
 					if (clip.w > height)
 						clip.z = height;
 
-					if (screen == GFX_TOP)
+					if (hasBothScreens && screen == GFX_TOP)
 					{
 						// check if clip starts on bottom screen
 						if (clip.y > height * 0.5f)
@@ -599,11 +617,15 @@ void imgui::citro3d::render (C3D_RenderTarget *const topLeft_,
 
 						// convert from framebuffer space to screen space (3DS screen rotation)
 						auto const x1 =
-						    std::clamp<unsigned> (height * 0.5f - clip.w, 0, height * 0.5f);
-						auto const y1 = std::clamp<unsigned> (width - clip.z, 0, width);
+						    std::clamp<unsigned> (height * 0.5f - clip.w, 0, height * 0.5f) *
+						    heightScale;
+						auto const y1 =
+						    std::clamp<unsigned> (width - clip.z, 0, width) * widthScale;
 						auto const x2 =
-						    std::clamp<unsigned> (height * 0.5f - clip.y, 0, height * 0.5f);
-						auto const y2 = std::clamp<unsigned> (width - clip.x, 0, width);
+						    std::clamp<unsigned> (height * 0.5f - clip.y, 0, height * 0.5f) *
+						    heightScale;
+						auto const y2 =
+						    std::clamp<unsigned> (width - clip.x, 0, width) * widthScale;
 
 						// check if scissor needs to be updated
 						if (s_boundScissor[0] != x1 || s_boundScissor[1] != y1 ||
@@ -616,7 +638,7 @@ void imgui::citro3d::render (C3D_RenderTarget *const topLeft_,
 							C3D_SetScissor (GPU_SCISSOR_NORMAL, x1, y1, x2, y2);
 						}
 					}
-					else
+					else if (hasBothScreens && screen == GFX_BOTTOM)
 					{
 						// check if clip ends on top screen
 						if (clip.w < height * 0.5f)
@@ -632,12 +654,39 @@ void imgui::citro3d::render (C3D_RenderTarget *const topLeft_,
 
 						// convert from framebuffer space to screen space
 						// (3DS screen rotation + bottom screen offset)
-						auto const x1 = std::clamp<unsigned> (height - clip.w, 0, height * 0.5f);
+						auto const x1 =
+						    std::clamp<unsigned> (height - clip.w, 0, height * 0.5f) * heightScale;
 						auto const y1 =
-						    std::clamp<unsigned> (width * 0.9f - clip.z, 0, width * 0.8f);
-						auto const x2 = std::clamp<unsigned> (height - clip.y, 0, height * 0.5f);
+						    std::clamp<unsigned> (width * 0.9f - clip.z, 0, width * 0.8f) *
+						    widthScale;
+						auto const x2 =
+						    std::clamp<unsigned> (height - clip.y, 0, height * 0.5f) * heightScale;
 						auto const y2 =
-						    std::clamp<unsigned> (width * 0.9f - clip.x, 0, width * 0.8f);
+						    std::clamp<unsigned> (width * 0.9f - clip.x, 0, width * 0.8f) *
+						    widthScale;
+
+						// check if scissor needs to be updated
+						if (s_boundScissor[0] != x1 || s_boundScissor[1] != y1 ||
+						    s_boundScissor[2] != x2 || s_boundScissor[3] != y2)
+						{
+							s_boundScissor[0] = x1;
+							s_boundScissor[1] = y1;
+							s_boundScissor[2] = x2;
+							s_boundScissor[3] = y2;
+							C3D_SetScissor (GPU_SCISSOR_NORMAL, x1, y1, x2, y2);
+						}
+					}
+					else
+					{
+						// convert from framebuffer space to screen space (3DS screen rotation)
+						auto const x1 =
+						    std::clamp<unsigned> (height - clip.w, 0, height) * heightScale;
+						auto const y1 =
+						    std::clamp<unsigned> (width - clip.z, 0, width) * widthScale;
+						auto const x2 =
+						    std::clamp<unsigned> (height - clip.y, 0, height) * heightScale;
+						auto const y2 =
+						    std::clamp<unsigned> (width - clip.x, 0, width) * widthScale;
 
 						// check if scissor needs to be updated
 						if (s_boundScissor[0] != x1 || s_boundScissor[1] != y1 ||
@@ -787,4 +836,3 @@ void imgui::citro3d::setZ (ImDrawList const *const drawList_, ImDrawCmd const *c
 
 	C3D_FVUnifSet (GPU_VERTEX_SHADER, s_zLocation, s_slider * s_z, 0.0f, 0.0f, 0.0f);
 }
-#endif

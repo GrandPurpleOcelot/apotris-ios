@@ -1,10 +1,3 @@
-// ftpd is a server implementation based on the following:
-// - RFC  959 (https://tools.ietf.org/html/rfc959)
-// - RFC 3659 (https://tools.ietf.org/html/rfc3659)
-// - suggested implementation details from https://cr.yp.to/ftp/filesystem.html
-// - Deflate transmission mode for FTP
-//   (https://tools.ietf.org/html/draft-preston-ftpext-deflate-04)
-//
 // The MIT License (MIT)
 //
 // Copyright (C) 2020 Michael Theall
@@ -29,7 +22,6 @@
 
 #pragma once
 
-#ifndef CLASSIC
 namespace imgui
 {
 namespace ctru
@@ -38,7 +30,8 @@ namespace ctru
 bool init ();
 
 /// \brief Prepare 3ds for a new frame
-void newFrame ();
+void newFrame (bool topScreen = true, bool bottomScreen = true, bool enableGamepad = true);
+
+void beforeRender ();
 }
 }
-#endif

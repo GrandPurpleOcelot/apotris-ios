@@ -58,8 +58,10 @@
 
 #pragma once
 
+#include <inttypes.h>
 #include <stdio.h>      // sprintf, scanf
 #include <stdint.h>     // uint8_t, etc.
+#include <imgui.h>
 
 #if defined(_MSC_VER) || defined(_UCRT)
 #define _PRISizeT   "I"
@@ -271,10 +273,10 @@ struct MemoryEditor
         if (DataEditingAddr != (size_t)-1)
         {
             // Move cursor but only apply on next frame so scrolling with be synchronized (because currently we can't change the scrolling while the window is being rendered)
-            if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) && (ptrdiff_t)DataEditingAddr >= (ptrdiff_t)Cols)                 { data_editing_addr_next = DataEditingAddr - Cols; }
-            else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) && (ptrdiff_t)DataEditingAddr < (ptrdiff_t)mem_size - Cols){ data_editing_addr_next = DataEditingAddr + Cols; }
-            else if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && (ptrdiff_t)DataEditingAddr > (ptrdiff_t)0)              { data_editing_addr_next = DataEditingAddr - 1; }
-            else if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) && (ptrdiff_t)DataEditingAddr < (ptrdiff_t)mem_size - 1)  { data_editing_addr_next = DataEditingAddr + 1; }
+            if ((ImGui::IsKeyPressed(ImGuiKey_UpArrow) || ImGui::IsKeyPressed(ImGuiKey_GamepadDpadUp)) && (ptrdiff_t)DataEditingAddr >= (ptrdiff_t)Cols)                 { data_editing_addr_next = DataEditingAddr - Cols; }
+            else if ((ImGui::IsKeyPressed(ImGuiKey_DownArrow) || ImGui::IsKeyPressed(ImGuiKey_GamepadDpadDown)) && (ptrdiff_t)DataEditingAddr < (ptrdiff_t)mem_size - Cols){ data_editing_addr_next = DataEditingAddr + Cols; }
+            else if ((ImGui::IsKeyPressed(ImGuiKey_LeftArrow) || ImGui::IsKeyPressed(ImGuiKey_GamepadDpadLeft)) && (ptrdiff_t)DataEditingAddr > (ptrdiff_t)0)              { data_editing_addr_next = DataEditingAddr - 1; }
+            else if ((ImGui::IsKeyPressed(ImGuiKey_RightArrow) || ImGui::IsKeyPressed(ImGuiKey_GamepadDpadRight)) && (ptrdiff_t)DataEditingAddr < (ptrdiff_t)mem_size - 1)  { data_editing_addr_next = DataEditingAddr + 1; }
         }
 
         // Draw vertical separator
@@ -767,16 +769,16 @@ struct MemoryEditor
         {
             int32_t data = 0;
             EndiannessCopy(&data, buf, size);
-            if (data_format == DataFormat_Dec) { ImSnprintf(out_buf, out_buf_size, "%d", data); return; }
-            if (data_format == DataFormat_Hex) { ImSnprintf(out_buf, out_buf_size, "0x%08x", data); return; }
+            if (data_format == DataFormat_Dec) { ImSnprintf(out_buf, out_buf_size, "%" PRId32, data); return; }
+            if (data_format == DataFormat_Hex) { ImSnprintf(out_buf, out_buf_size, "0x%08" PRIx32, data); return; }
             break;
         }
         case ImGuiDataType_U32:
         {
             uint32_t data = 0;
             EndiannessCopy(&data, buf, size);
-            if (data_format == DataFormat_Dec) { ImSnprintf(out_buf, out_buf_size, "%u", data); return; }
-            if (data_format == DataFormat_Hex) { ImSnprintf(out_buf, out_buf_size, "0x%08x", data); return; }
+            if (data_format == DataFormat_Dec) { ImSnprintf(out_buf, out_buf_size, "%" PRIu32, data); return; }
+            if (data_format == DataFormat_Hex) { ImSnprintf(out_buf, out_buf_size, "0x%08" PRIx32, data); return; }
             break;
         }
         case ImGuiDataType_S64:
