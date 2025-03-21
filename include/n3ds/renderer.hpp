@@ -45,6 +45,8 @@ using BgCharblockTileset = ImageTile[BG_CHARBLOCK_TILESET_TILE_COUNT];
 using BgCharblockAll = BgCharblockTileset[BG_CHARBLOCK_TILESET_COUNT];
 extern BgCharblockAll& bg_charblocks;
 
+extern bool* const bg_screenblock_fill_screen_p;
+
 constexpr size_t BG_LAYERS_COUNT = 4;
 
 } /* namespace tng */

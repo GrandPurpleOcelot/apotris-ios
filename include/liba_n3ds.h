@@ -165,6 +165,8 @@ INLINE void setTile(int sbb, int x, int y, u32 value) {
         0x1000 * t.palette + 0x400 * t.flipx + 0x800 * t.flipy + t.index;
     tng::bg_screenblocks[sbb][((y < 0) ? (y + 32) : y) * 32 + x] = gbaTile;
 
+    tng::bg_screenblock_fill_screen_p[sbb] = false;
+
 #ifdef DEBUG_UI
     setTileTLN(sbb, x, y, value);
 #endif

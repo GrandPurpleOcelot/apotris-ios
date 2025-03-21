@@ -129,6 +129,9 @@ BgCharblockAll& bg_charblocks = *(BgCharblockAll*)&bg_storage;
 static_assert(sizeof(bg_screenblocks) == sizeof(bg_storage));
 static_assert(sizeof(bg_charblocks) == sizeof(bg_storage));
 
+std::array<bool, std::extent_v<BgScreenblockAll>> bg_screenblock_fill_screen{};
+bool* const bg_screenblock_fill_screen_p = bg_screenblock_fill_screen.data();
+
 } /* namespace tng */
 
 using tng::LayerInfo;
@@ -584,10 +587,12 @@ class BGMosaicRender {
                                                      init_tex(), init_tex()};
     std::array<C3D_FrameBuf, tng::BG_LAYERS_COUNT> m_tex_fb;
 
-    // TODO: worth allocating on VRAM?
+    // Vertex array of quads (4 vertices) shared by all layers.
+    // #0: Normal layer (240px wide)
+    // #1: Layer filling whole screen (400px wide wraparound)
     ctru::linear::ptr<BgMosaicTexVertexConst[]> m_vbo_data_const{
         ctru::linear::make_ptr_nothrow_for_overwrite<BgMosaicTexVertexConst[]>(
-            4 * 4)};
+            4 * 2)};
 
     static inline c3d::Tex init_tex() {
         // This texture has to be on VRAM, because for whatever reason
@@ -657,13 +662,28 @@ inline void BGMosaicRender::init_bg_mosaic_vbo() {
     };
 
     size_t vi = 0;
-    for (size_t layer_idx = 0; layer_idx < tng::BG_LAYERS_COUNT; layer_idx++) {
+
+    // #0: Normal layer (240px wide)
+    {
         const s16 x = 0;
         const s16 y = BG_MOSAIC_Y_OFFSET;
         constexpr s16 w = 240;
         constexpr s16 h = 240;
         constexpr float u0 = 0;
         constexpr float u1 = 240.0f / BG_MOSAIC_TEX_W;
+        constexpr float v0 = 0;
+        constexpr float v1 = -240.f / BG_MOSAIC_TEX_H;
+        vi += add_quad(&m_vbo_data_const[vi], x, y, w, h, u0, u1, v0, v1);
+    }
+
+    // #1: Layer filling whole screen (400px wide wraparound)
+    {
+        const s16 x = (240 - 400) / 2;
+        const s16 y = BG_MOSAIC_Y_OFFSET;
+        constexpr s16 w = 400;
+        constexpr s16 h = 240;
+        constexpr float u0 = (240.f - 400.f) * .5f / BG_MOSAIC_TEX_W;
+        constexpr float u1 = ((240.f - 400.f) * .5f + 400.f) / BG_MOSAIC_TEX_W;
         constexpr float v0 = 0;
         constexpr float v1 = -240.f / BG_MOSAIC_TEX_H;
         vi += add_quad(&m_vbo_data_const[vi], x, y, w, h, u0, u1, v0, v1);
@@ -1769,7 +1789,8 @@ inline void cr::BGMosaicRender::draw_tex(size_t layer_idx) noexcept {
 
     C3D_TexBind(0, m_tex[layer_idx].get());
 
-    C3D_DrawArrays(GPU_TRIANGLE_FAN, layer_idx * 4, 4);
+    const size_t idx = tng::bg_screenblock_fill_screen[li.sbb] ? 1 : 0;
+    C3D_DrawArrays(GPU_TRIANGLE_FAN, idx * 4, 4);
 
     if (window.enabled) {
         C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
@@ -2558,6 +2579,10 @@ void RendererN3ds::imgui_debug_1(DebugOptions& debug_opt,
                                     tng::BG_SCREENBLOCK_TILEMAP_TILE_COUNT * 2);
                             s_show_mem_edit = true;
                         }
+                        ImGui::SameLine();
+                        bool fillScreen =
+                            tng::bg_screenblock_fill_screen[l.sbb];
+                        ImGui::Checkbox("fill screen", &fillScreen);
                         ImGui::AlignTextToFramePadding();
                         ImGui::Text("cbb: %d", l.cbb);
                         ImGui::SameLine();
@@ -3152,6 +3177,8 @@ void loadTilemap(int tilemap, int index, const void* src, int count) {
     u16* dst = tng::bg_screenblocks[tilemap];
     memcpy16_fast(&dst[index], src, count);
 
+    tng::bg_screenblock_fill_screen[tilemap] = false;
+
 #ifdef DEBUG_UI
     u16* source = (u16*)src;
 
@@ -3164,6 +3191,8 @@ void loadTilemap(int tilemap, int index, const void* src, int count) {
 
 void clearTilemap(int tilemap) {
     memset16(tng::bg_screenblocks[tilemap], 0, 32 * 32);
+
+    tng::bg_screenblock_fill_screen[tilemap] = false;
 
 #ifdef DEBUG_UI
     for (int i = 0; i < TILEMAP_SIZE; i++) {
@@ -3400,6 +3429,12 @@ void enableBlend(int info) {
 void setTiles(int tilemap, int index, int count, u32 value) {
     u16* dst = tng::bg_screenblocks[tilemap];
     memset16(&dst[index], value, count);
+
+    if (count == 32 * 32) {
+        tng::bg_screenblock_fill_screen[tilemap] = true;
+    } else {
+        tng::bg_screenblock_fill_screen[tilemap] = false;
+    }
 
 #ifdef DEBUG_UI
     if (count == 32 * 32)
@@ -3741,6 +3776,8 @@ void clearTiles(int tileset, int index, int count) {
 void clearTilemapEntries(int tilemap, int index, int count) {
     u16* dst = tng::bg_screenblocks[tilemap];
     memset16(&dst[index], 0, count);
+
+    tng::bg_screenblock_fill_screen[tilemap] = false;
 
 #ifdef DEBUG_UI
     // log(std::to_string(index) + " " + std::to_string(count));
