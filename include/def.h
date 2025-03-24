@@ -110,6 +110,7 @@ extern void songListMenu();
 extern void showTitleSprites();
 extern void setLightMode();
 extern void setSkin();
+extern void setSkin(int rotation);
 extern void setDefaultKeys();
 extern void setClearEffect();
 
@@ -337,3 +338,14 @@ public:
 
 struct StatusData;
 extern StatusData status;
+
+typedef struct HSV_COLOR {
+    int hue = 0;
+    float saturation = 0;
+    float value = 0;
+} HSV_COLOR;
+
+COLOR hsv2rgb(int h, float s, float v);
+COLOR hsv2rgb(HSV_COLOR hsv);
+
+HSV_COLOR rgb2hsv(int r, int g, int b);

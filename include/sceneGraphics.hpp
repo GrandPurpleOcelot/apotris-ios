@@ -841,9 +841,12 @@ class GraphicsScene : public Scene {
 };
 
 class GradientEditorScene : public Scene {
-    int color[3];
+    int color1[3];
 
     int color2[3];
+
+    HSV_COLOR hsv1;
+    HSV_COLOR hsv2;
 
     int selection = 0;
     int colorSelection = 0;
@@ -851,6 +854,8 @@ class GradientEditorScene : public Scene {
     int maxSelection = 3;
 
     bool onValues = false;
+
+    bool hsvMode = false;
 
     int das = 0;
 
@@ -873,6 +878,34 @@ class GradientEditorScene : public Scene {
 
         if (savefile->settings.backgroundType == 1)
             maxSelection++;
+    }
+
+    void set(int dir) {
+        HSV_COLOR* hsv = (!colorSelection) ? &hsv1 : &hsv2;
+
+        switch (selection) {
+        case 0:
+            hsv->hue += dir;
+            if (hsv->hue < 0)
+                hsv->hue = 359;
+            if (hsv->hue > 359)
+                hsv->hue = 0;
+            break;
+        case 1:
+            hsv->saturation += ((float)dir) / 100.f;
+            if (hsv->saturation < 0)
+                hsv->saturation = 0;
+            if (hsv->saturation > 1)
+                hsv->saturation = 1;
+            break;
+        case 2:
+            hsv->value += ((float)dir) / 100.f;
+            if (hsv->value < 0)
+                hsv->value = 0;
+            if (hsv->value > 1)
+                hsv->value = 1;
+            break;
+        }
     }
 
     void drawText();

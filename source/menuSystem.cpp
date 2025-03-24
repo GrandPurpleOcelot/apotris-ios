@@ -3,6 +3,7 @@
 #include "menu.h"
 #include "scene.hpp"
 #include "sceneAudio.hpp"
+#include "sceneColorEditor.hpp"
 #include "sceneControls.hpp"
 #include "sceneGameplay.hpp"
 #include "sceneGraphics.hpp"
@@ -135,6 +136,10 @@ void sceneSwitcher(std::string str) {
         menuKeys = savefile->settings.menuKeys;
 
         changeScene(new EditorScene(), Transitions::FADE);
+    } else if (str == "Color Editor") {
+        previousSettings = savefile->settings;
+
+        changeScene(new ColorSelectorScene(), Transitions::FADE);
     } else if (str == "Credits") {
         changeScene(new CreditsScene(), Transitions::FADE);
 #endif

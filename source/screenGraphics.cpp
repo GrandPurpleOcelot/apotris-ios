@@ -20,7 +20,7 @@ void GradientEditorScene::init() {
     toggleBG(3, false);
 
     for (int i = 0; i < 3; i++) {
-        color[i] = (savefile->settings.backgroundGradient >> (5 * i)) & 0x1f;
+        color1[i] = (savefile->settings.backgroundGradient >> (5 * i)) & 0x1f;
     }
 
     for (int i = 0; i < 3; i++) {
@@ -55,6 +55,7 @@ void GradientEditorScene::init() {
         sprite_hide(colorSprites[i]);
     }
 
+    // color sprite colors
     setPaletteColor(16 + 0, 15, RGB15(31, 0, 0), 1);
     setPaletteColor(16 + 1, 15, RGB15(0, 31, 0), 1);
     setPaletteColor(16 + 2, 15, RGB15(5, 5, 31), 1);
@@ -74,9 +75,25 @@ void GradientEditorScene::draw() {
             int x = 19 + (i - 1) * space;
 
             char buff[8];
-            posprintf(buff, "%02d", color[i]);
 
-            aprintColor(buff, x, height, !onValues);
+            if (hsvMode) {
+                switch (i) {
+                case 0:
+                    posprintf(buff, "H%02d", hsv1.hue);
+                    break;
+                case 1:
+                    posprintf(buff, " S%02d", (int)hsv1.saturation * 100);
+                    break;
+                case 2:
+                    posprintf(buff, " V%02d", (int)hsv1.value * 100);
+                    break;
+                }
+
+            } else {
+                posprintf(buff, "%02d", color1[i]);
+            }
+
+            aprintColor(buff, x - hsvMode, height, !onValues);
 
             if (i == colorSelection && onValues) {
                 setTile(29, x, height - 1, tileBuild(tile, false, false, 15));
@@ -90,10 +107,17 @@ void GradientEditorScene::draw() {
                 aprint("  ", x, height + 1);
             }
 
-            c += color[i] << (5 * i);
-
-            sprite_unhide(colorSprites[i], 0);
+            if (!hsvMode) {
+                sprite_unhide(colorSprites[i], 0);
+                c += color1[i] << (5 * i);
+            } else {
+                sprite_hide(colorSprites[i]);
+            }
             sprite_set_pos(colorSprites[i], x * 8 - 9, height * 8);
+        }
+
+        if (hsvMode) {
+            c = hsv2rgb(hsv1);
         }
 
         for (int i = 0; i < 3; i++)
@@ -106,7 +130,7 @@ void GradientEditorScene::draw() {
             int x = 19 + (i - 1) * space;
 
             char buff[8];
-            posprintf(buff, "%02d", color[i]);
+            posprintf(buff, "%02d", color1[i]);
 
             aprintColor(buff, x, height, !(selection == 1 && onValues));
 
@@ -122,7 +146,7 @@ void GradientEditorScene::draw() {
                 aprint("  ", x, height + 1);
             }
 
-            c += color[i] << (5 * i);
+            c += color1[i] << (5 * i);
 
             sprite_unhide(colorSprites[i], 0);
             sprite_set_pos(colorSprites[i], x * 8 - 9, height * 8);
@@ -237,6 +261,16 @@ void GradientEditorScene::drawText() {
     std::string s = "Press " + keyString + " to Exit";
     aprints(s, 30 * 8 - 4 * s.size() - offset, 10, 2);
 
+    std::string colorModeString =
+        getStringFromKey(savefile->settings.menuKeys.special1);
+
+    std::transform(colorModeString.begin(), colorModeString.end(),
+                   colorModeString.begin(), ::toupper);
+
+    std::string colorMode =
+        "Press " + colorModeString + " for " + ((!hsvMode) ? "HSV" : "RGB");
+    aprints(colorMode, 30 * 8 - 4 * colorMode.size() - offset, 0, 2);
+
     naprint("Type:", 3 * 8, 3 * 8);
 
     if (savefile->settings.backgroundType == 0) {
@@ -272,13 +306,25 @@ bool GradientEditorScene::control() {
         sfx(SFX_MENUCONFIRM);
 
         for (int i = 0; i < 3; i++) {
-            color[i] = qran() % 31;
+            color1[i] = qran() % 31;
             color2[i] = qran() % 31;
         }
 
         savefile->settings.backgroundType = ((qran() % 10) > 3);
         drawText();
         setMaxSelection();
+    }
+
+    if (key_hit(k.special1)) {
+        hsvMode = !hsvMode;
+
+        if (hsvMode) {
+            hsv1 = rgb2hsv(color1[0], color1[1], color1[2]);
+            hsv2 = rgb2hsv(color2[0], color2[1], color2[2]);
+        }
+
+        sfx(SFX_MENUCONFIRM);
+        drawText();
     }
 
     if (!onValues) {
@@ -350,44 +396,72 @@ bool GradientEditorScene::control() {
             sfx(SFX_MENUMOVE);
         }
 
-        int* arr;
-        if (selection == 1)
-            arr = (int*)color;
-        else
-            arr = (int*)color2;
+        if (!hsvMode) {
+            int* arr;
+            if (selection == 1)
+                arr = (int*)color1;
+            else
+                arr = (int*)color2;
 
-        if (key_hit(k.up)) {
-            if (arr[colorSelection] < 31)
-                arr[colorSelection]++;
-            sfx(SFX_SHIFT2);
-        }
+            if (key_hit(k.up)) {
+                if (arr[colorSelection] < 31)
+                    arr[colorSelection]++;
+                sfx(SFX_SHIFT2);
+            }
 
-        if (key_hit(k.down)) {
-            if (arr[colorSelection] > 0)
-                arr[colorSelection]--;
-            sfx(SFX_SHIFT2);
-        }
+            if (key_hit(k.down)) {
+                if (arr[colorSelection] > 0)
+                    arr[colorSelection]--;
+                sfx(SFX_SHIFT2);
+            }
 
-        if (key_is_down(k.up) || key_is_down(k.down)) {
-            das++;
+            if (key_is_down(k.up) || key_is_down(k.down)) {
+                das++;
 
-            if (das == dasMax) {
-                das -= arrMax;
-
-                if (key_is_down(k.up)) {
-                    if (arr[colorSelection] < 31) {
-                        arr[colorSelection]++;
-                        sfx(SFX_SHIFT2);
+                if (das < dasMax) {
+                    das++;
+                } else {
+                    if (key_is_down(k.up)) {
+                        if (arr[colorSelection] < 31) {
+                            arr[colorSelection]++;
+                            sfx(SFX_SHIFT2);
+                        }
+                    } else if (key_is_down(k.down)) {
+                        if (arr[colorSelection] > 0) {
+                            arr[colorSelection]--;
+                            sfx(SFX_SHIFT2);
+                        }
                     }
-                } else if (key_is_down(k.down)) {
-                    if (arr[colorSelection] > 0) {
-                        arr[colorSelection]--;
-                        sfx(SFX_SHIFT2);
-                    }
+                    das -= arrMax;
                 }
+            } else {
+                das = 0;
             }
         } else {
-            das = 0;
+            if (key_hit(k.up)) {
+                set(-1);
+                sfx(SFX_SHIFT2);
+            }
+
+            if (key_hit(k.down)) {
+                set(+1);
+                sfx(SFX_SHIFT2);
+            }
+
+            if (key_is_down(k.up) || key_is_down(k.down)) {
+                if (das < dasMax) {
+                    das++;
+                } else {
+                    int dir = (key_is_down(k.up) ? -1 : 1);
+
+                    set(dir);
+                    sfx(SFX_SHIFT2);
+
+                    das -= arrMax;
+                }
+            } else {
+                das = 0;
+            }
         }
     }
 

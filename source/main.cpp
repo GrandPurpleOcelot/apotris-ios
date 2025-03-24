@@ -1,8 +1,10 @@
 #include <string>
 
 #include "blockEngine.hpp"
+#include "cmath"
 #include "def.h"
 #include "platform.hpp"
+#include "sceneGraphics.hpp"
 #include "sprites.h"
 
 #ifdef GBA
@@ -31,6 +33,8 @@
 
 #include "font1tiles_bin.h"
 #include "font2tiles_bin.h"
+
+#include "sceneColorEditor.hpp"
 
 using namespace BlockEngine;
 
@@ -528,7 +532,9 @@ std::string nameInput(int place) {
     return result;
 }
 
-void setSkin() {
+void setSkin() { setSkin(0); }
+
+void setSkin(int rotation) {
 
     switch (savefile->settings.skin) {
     case 0:
@@ -641,7 +647,7 @@ void setSkin() {
         else
             n = game->rotationSystem;
 
-        board = getShape(i, 0, n);
+        board = getShape(i, rotation, n);
 
         int iy = 16 * i;
         for (int j = 0; j < 4; j++) {
@@ -1233,4 +1239,98 @@ void genWidths() {
             str = "";
         }
     }
+}
+COLOR hsv2rgb(HSV_COLOR hsv) {
+    return hsv2rgb(hsv.hue, hsv.saturation, hsv.value);
+}
+
+COLOR hsv2rgb(int hue, float saturation, float value) {
+    if (saturation == 0.0f) { // Achromatic (gray)
+        const int gray = (int)(value * 31);
+
+        return RGB15_SAFE(gray, gray, gray);
+    }
+
+    hue = hue % 360;
+    float h_prime = hue / 60.0f;
+    int i = (int)(h_prime);
+    float f = h_prime - i; // fractional part of h_prime
+    float p = value * (1 - saturation);
+    float q = value * (1 - saturation * f);
+    float t = value * (1 - saturation * (1 - f));
+
+    float r = 0, g = 0, b = 0;
+
+    switch (i) {
+    case 0:
+        r = value;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = value;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = value;
+        b = t;
+        break;
+    case 3:
+        r = p;
+        g = q;
+        b = value;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = value;
+        break;
+    case 5:
+        r = value;
+        g = p;
+        b = q;
+        break;
+    }
+
+    return RGB15_SAFE((int)(r * 31), (int)(g * 31), (int)(b * 31));
+}
+
+HSV_COLOR rgb2hsv(int r, int g, int b) {
+    // Normalize RGB values to the range [0, 1]
+    float r_norm = r / 31.0f;
+    float g_norm = g / 31.0f;
+    float b_norm = b / 31.0f;
+
+    float c_max = std::max({r_norm, g_norm, b_norm});
+    float c_min = std::min({r_norm, g_norm, b_norm});
+    float delta = c_max - c_min;
+
+    float h = 0, s = 0, v = c_max;
+
+    if (delta == 0) {
+        h = 0; // Hue is undefined for achromatic colors (black, white, grays)
+    } else {
+        if (c_max == r_norm) {
+            h = 60 * (fmod(((g_norm - b_norm) / delta), 6));
+        } else if (c_max == g_norm) {
+            h = 60 * (((b_norm - r_norm) / delta) + 2);
+        } else if (c_max == b_norm) {
+            h = 60 * (((r_norm - g_norm) / delta) + 4);
+        }
+    }
+
+    if (c_max == 0) {
+        s = 0; // Saturation is 0 when color is black
+    } else {
+        s = delta / c_max;
+    }
+
+    // Ensure hue is non-negative
+    if (h < 0) {
+        h += 360;
+    }
+
+    return HSV_COLOR{(int)h, s, v};
 }

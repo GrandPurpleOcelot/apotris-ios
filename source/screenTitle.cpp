@@ -57,8 +57,9 @@ Skin previousSkins[MAX_CUSTOM_SKINS];
 
 bool bigMode = false;
 
-const std::list<std::string> menuOptions = {"Play",  "Settings",    "Stats",
-                                            "Links", "Skin Editor", "Credits"};
+const std::list<std::string> menuOptions = {
+    "Play",        "Settings",     "Stats",  "Links",
+    "Skin Editor", "Color Editor", "Credits"};
 const std::list<std::string> gameOptions = {
     "Marathon", "Sprint",    "Dig",        "Ultra",   "Blitz",
     "Combo",    "Survival",  "Classic",    "Master",  "Death",
