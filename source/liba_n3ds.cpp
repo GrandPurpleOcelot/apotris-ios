@@ -1092,6 +1092,106 @@ int savedAspectRatio{};
 
 bool wasAppPaused{};
 
+static inline SwkbdCallbackResult nameInputCallback(void* user,
+                                                    const char** ppMessage,
+                                                    const char* text,
+                                                    size_t textlen) {
+    for (size_t i = 0; i < textlen; i++) {
+        if (text[i] == ' ') {
+            continue;
+        }
+        if (text[i] >= 'A' && text[i] <= 'Z') {
+            continue;
+        }
+        if (text[i] >= 'a' && text[i] <= 'z') {
+            continue;
+        }
+        *ppMessage = "Name can only include\nalphabets and spaces.";
+        return SWKBD_CALLBACK_CONTINUE;
+    }
+    return SWKBD_CALLBACK_OK;
+}
+
+bool keyboardNameInput(std::string* result, size_t length) {
+    if (!savefile->settings.n3dsMainScreenIsTop) {
+        // Copy the bottom screen to the top:
+        bool wasWide = gfxIsWide();
+        gfxSetWide(false);
+
+        // Fill bottom screen with black
+        u16 botW, botH;
+        u8* bot = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, &botW, &botH);
+        C3D_SyncMemoryFill((u32*)bot, 0, (u32*)(bot + botW * botH * 3),
+                           GX_FILL_24BIT_DEPTH | GX_FILL_TRIGGER, nullptr, 0,
+                           nullptr, 0);
+
+        // Swap bottom screen buffers and get the last framebuffer
+        gspWaitForVBlank1();
+        gfxScreenSwapBuffers(GFX_BOTTOM, false);
+        bot = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, &botW, &botH);
+
+        u16 topW, topH;
+        u8* top = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &topW, &topH);
+        top += (400 - 320) / 2 * 240 * 3;
+        C3D_SyncTextureCopy((u32*)bot, GX_BUFFER_DIM(240 * 3 / 16, 0),
+                            (u32*)top, GX_BUFFER_DIM(240 * 3 / 16, 0),
+                            240 * 320 * 3, GX_TRANSFER_RAW_COPY(1));
+        gfxScreenSwapBuffers(GFX_TOP, false);
+        gfxSetWide(wasWide);
+    }
+
+    SwkbdState kbd;
+    std::vector<char> inputBuffer(length + 1);
+
+    std::string orig;
+    auto pos = result->find_last_not_of(' ');
+    if (pos != std::string::npos) {
+        orig.assign(result->data(), pos + 1);
+    }
+
+    swkbdInit(&kbd, SWKBD_TYPE_QWERTY, 2, length);
+    swkbdSetButton(&kbd, SWKBD_BUTTON_LEFT, "Cancel", false);
+    swkbdSetButton(&kbd, SWKBD_BUTTON_RIGHT, "OK", true);
+    swkbdSetInitialText(&kbd, orig.c_str());
+    swkbdSetHintText(&kbd, "Your Name");
+    swkbdSetFeatures(&kbd, 0);
+    swkbdSetValidation(&kbd, SWKBD_NOTEMPTY_NOTBLANK,
+                       SWKBD_FILTER_AT | SWKBD_FILTER_PERCENT |
+                           SWKBD_FILTER_BACKSLASH | SWKBD_FILTER_CALLBACK,
+                       0);
+    swkbdSetFilterCallback(&kbd, nameInputCallback, nullptr);
+
+    auto const button =
+        swkbdInputText(&kbd, inputBuffer.data(), inputBuffer.size());
+    if (button != SWKBD_BUTTON_RIGHT) {
+        return false;
+    }
+
+    size_t i;
+    for (i = 0; i < length; i++) {
+        if (!inputBuffer[i]) {
+            break;
+        }
+        if (inputBuffer[i] >= 'A' && inputBuffer[i] <= 'Z') {
+            continue;
+        }
+        if (inputBuffer[i] >= 'a' && inputBuffer[i] <= 'z') {
+            inputBuffer[i] += 'A' - 'a';
+            continue;
+        }
+        inputBuffer[i] = ' ';
+    }
+
+    for (; i < length; i++) {
+        inputBuffer[i] = ' ';
+    }
+
+    inputBuffer[length] = '\0';
+
+    result->assign(inputBuffer.data());
+    return true;
+}
+
 } /* namespace n3ds */
 
 #endif

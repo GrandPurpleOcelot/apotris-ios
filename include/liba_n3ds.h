@@ -409,4 +409,6 @@ inline void setSbbFillScreen(int sbb) {
     tng::bg_screenblock_fill_screen_p[sbb] = true;
 }
 
+bool keyboardNameInput(std::string* result, size_t length);
+
 } /* namespace n3ds */

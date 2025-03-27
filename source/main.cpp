@@ -303,17 +303,24 @@ std::string nameInput(int place) {
 
     showSprites(128);
 
+    if (place == 0 && game->gameMode != BATTLE &&
+        (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ))
+        aprint("New Record", 10, 5);
+
+    aprint("Name: ", 11, nameHeight - 2);
+
     MenuKeys k = savefile->settings.menuKeys;
+
+#if defined(N3DS)
+    resetSmallText();
+    setSmallTextArea(110, 0, 17, 30, 20);
+
+    // Show keyboard immediately if name is empty
+    bool requestKeyboard = (result.find_last_not_of(' ') == std::string::npos);
+#endif
 
     while (closed()) {
         vsync();
-
-        if (place == 0 && game->gameMode != BATTLE &&
-            (game->won || game->gameMode == MARATHON ||
-             game->gameMode >= BLITZ))
-            aprint("New Record", 10, 5);
-
-        aprint("Name: ", 11, nameHeight - 2);
 
         aprint("DONE", 14, 16);
 
@@ -321,6 +328,29 @@ std::string nameInput(int place) {
 
         aprintClearArea(13, nameHeight, 10, 1);
         aprint(result, 13, nameHeight);
+
+#if defined(N3DS)
+        {
+            std::string s = "Press " + getStringFromKey(k.special3) +
+                            " to use on-screen keyboard";
+            aprints(s, (30 * 8 - 4 * s.size()) / 2, 8, 2);
+        }
+
+        requestKeyboard =
+            requestKeyboard ||
+            (key_hit(k.special3) && !(key_is_down(KEY_FULL) & (~k.special3)));
+
+        if (requestKeyboard) {
+            requestKeyboard = false;
+            sfx(SFX_MENUMOVE);
+            if (n3ds::keyboardNameInput(&result, 8)) {
+                result.resize(8, ' ');
+                cursor = max(min(result.find_last_not_of(' ') + 1, 7), 0);
+                onDone = true;
+                sfx(SFX_MENUCONFIRM);
+            }
+        }
+#endif
 
         if (!onDone) {
             char curr = result.at(cursor);
