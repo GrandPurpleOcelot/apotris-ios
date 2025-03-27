@@ -908,7 +908,7 @@ s16 sinLut(int angle) {
 uint8_t customBlend(uint8_t a, uint8_t b) { return (a + b + b + b + b) / 5; }
 
 void showFPS() {
-    if (true || savefile->settings.showFPS) {
+    if (savefile->settings.showFPS) {
         if (fpsHistory.size() > 9) {
             fpsHistory.pop_front();
         }
