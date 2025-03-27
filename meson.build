@@ -462,6 +462,14 @@ elif host_machine.system() == 'n3ds'
         name_suffix : 'elf',
     )
 
+    smdh_name = name
+    if enable_debug_ui
+        smdh_name += ' (debug)'
+    endif
+    if enable_profiling
+        smdh_name += ' (profiling)'
+    endif
+
     smdh = custom_target(
         input : [
             src_dir / 'n3ds/icon_48.png',
@@ -471,7 +479,7 @@ elif host_machine.system() == 'n3ds'
         command : [
             'smdhtool',
             '--create',
-            name,
+            smdh_name,
             'Apotris multiplatform block stacking game',
             'akouzoukos, 3DS port by Alvin',
             '@INPUT0@',
