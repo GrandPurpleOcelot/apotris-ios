@@ -231,3 +231,25 @@ meson compile -C build-pm
 ```
 
 **Note:** on typical Intel/AMD machines this can take a *long* time.
+
+
+### Nintendo 3DS
+
+Compiling the 3DS build requires you to install the devkitARM toolchain from devkitPro. You can refer to the [3DBrew](https://www.3dbrew.org/wiki/Setting_up_Development_Environment) and [devkitPro](https://devkitpro.org/wiki/Getting_Started) guides to set it up. Following the guide, you should install all packages in the package group `3ds-dev` using `pacman` (or `dkp-pacman`).
+
+You will also need to install the library `libxmp` using `pacman` (or `dkp-pacman`):
+
+```bash
+pacman -S 3ds-libxmp
+```
+
+To perform the cross build:
+
+```bash
+meson setup --cross-file=meson/n3ds.ini build-n3ds
+meson compile -C build-n3ds
+```
+
+The build output file can be found as `build-n3ds/Apotris.3dsx`.
+
+To run the build, the audio assets must be placed on the SD card under `/3ds/Apotris/assets/` beforehand.
