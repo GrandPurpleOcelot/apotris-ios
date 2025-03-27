@@ -116,12 +116,6 @@ void GameScene::endScreen() {
         }
     }
 
-    savefile->stats.gamesCompleted++;
-    if (game->lost)
-        savefile->stats.gamesLost++;
-
-    addGameStats();
-
     showStats(showingStats, totalTime, ppsStr, true);
 
     if (!replaying) {
@@ -1485,6 +1479,14 @@ int GameScene::endScreenSetup() {
     resetZonePalette();
 
     showScore();
+
+    if (!replaying) {
+        savefile->stats.gamesCompleted++;
+        if (game->lost)
+            savefile->stats.gamesLost++;
+
+        addGameStats();
+    }
 
     int record = -1;
     if (multiplayer) {
