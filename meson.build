@@ -1,6 +1,6 @@
 project('Apotris',
         'c', 'cpp',
-        version : '4.0.0',
+        version : '4.0.2',
         license : 'GPL3', meson_version : '>=0.60.0',
         default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=false'])
 
@@ -470,6 +470,9 @@ elif host_machine.system() == 'n3ds'
         smdh_name += ' (profiling)'
     endif
 
+    smdh_longname = 'Apotris multiplatform block stacking game'
+    smdh_author = 'akouzoukos, 3DS port by Alvin'
+
     smdh = custom_target(
         input : [
             src_dir / 'n3ds/icon_48.png',
@@ -480,8 +483,8 @@ elif host_machine.system() == 'n3ds'
             'smdhtool',
             '--create',
             smdh_name,
-            'Apotris multiplatform block stacking game',
-            'akouzoukos, 3DS port by Alvin',
+            smdh_longname,
+            smdh_author,
             '@INPUT0@',
             '@OUTPUT@',
             # '@INPUT1@'
@@ -502,6 +505,64 @@ elif host_machine.system() == 'n3ds'
     )
 
     alias_target('3dsx', rom_3dsx)
+
+    cia_banner = custom_target(
+        output : 'cia.bnr',
+        input : [
+            src_dir / 'n3ds/banner_image.png',
+            src_dir / '../assets/levelUP.wav',
+        ],
+        command : [
+            'bannertool',
+            'makebanner',
+            '--image', '@INPUT0@',
+            '--audio', '@INPUT1@',
+            '--output', '@OUTPUT@',
+        ],
+    )
+
+    cia_smdh = custom_target(
+        output : 'cia.smdh',
+        input : [
+            src_dir / 'n3ds/icon_48.png',
+        ],
+        command : [
+            'bannertool',
+            'makesmdh',
+            '--shorttitle', smdh_name,
+            '--longtitle', smdh_longname,
+            '--publisher', smdh_author,
+            '--icon', '@INPUT0@',
+            '--output', '@OUTPUT@',
+            '--flags', 'visible,recordusage,savedata',
+        ],
+    )
+
+    version_array = meson.project_version().split('.')
+
+    rom_cia = custom_target(
+        output : name + '.cia',
+        input : [
+            src_dir / 'n3ds/cia.rsf',
+            elf,
+            cia_smdh,
+            cia_banner,
+        ],
+        command : [
+            'makerom',
+            '-rsf', '@INPUT0@',
+            '-f', 'cia',
+            '-o', '@OUTPUT@',
+            '-elf', '@INPUT1@',
+            '-icon', '@INPUT2@',
+            '-banner', '@INPUT3@',
+            '-major', version_array[0],
+            '-minor', version_array[1],
+            '-micro', version_array[2],
+        ],
+    )
+
+    alias_target('cia', rom_cia)
 
 else
     ##########################################

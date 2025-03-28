@@ -253,3 +253,19 @@ meson compile -C build-n3ds
 The build output file can be found as `build-n3ds/Apotris.3dsx`.
 
 To run the build, the audio assets must be placed on the SD card under `/3ds/Apotris/assets/` beforehand.
+
+#### Building a CIA file
+
+Normally, there is no reason to use a CIA file. Especially if you are developing and debugging code, the 3dsx file can be easily loaded using `3dslink` which also allows you to see stdout and stderr output with its server.
+
+To build the CIA, you will need to install [`bannertool`](https://github.com/Epicpkmn11/bannertool) and [`makerom`](https://github.com/3DSGuy/Project_CTR/tree/master/makerom) manually and have them available on the `PATH` environment variable while building.
+
+```bash
+meson compile -C build-n3ds cia
+```
+
+**Metadata**:
+
+* Unique ID: `0xA9715`
+* Title ID: `000400000A971500`
+* Product Code: `CTR-H-APTR`
