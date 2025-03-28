@@ -492,6 +492,8 @@ void ColorEditorScene::deinit() {
 
     clearText();
     clearSmallText();
+
+    delete[] paletteBeforeReset;
 }
 
 void ColorEditorScene::calculate() {
