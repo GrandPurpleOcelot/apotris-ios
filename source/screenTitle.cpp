@@ -2,6 +2,8 @@
 #include "def.h"
 #include "flashSaves.h"
 #include "menu.h"
+#include "sceneColorEditor.hpp"
+#include "skinEditor.hpp"
 #include "sprite41tiles_bin.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -52,8 +54,8 @@ int previousOptionMax = 0;
 
 // std::list<int> keyHistory;
 
-Settings previousSettings;
 Skin previousSkins[MAX_CUSTOM_SKINS];
+std::unique_ptr<Settings> previousSettings = nullptr;
 
 bool bigMode = false;
 
@@ -438,10 +440,25 @@ bool ConfirmSaveScene::control() {
         sfx(SFX_MENUCONFIRM);
 
         if (cancel) {
-            savefile->settings = previousSettings;
 
-            for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
-                savefile->customSkins[i] = previousSkins[i];
+            switch (type) {
+            case 0:
+                if (previousSettings != nullptr)
+                    savefile->settings = *previousSettings;
+                break;
+            case 1:
+                for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
+                    savefile->customSkins[i] = previousSkins[i];
+                break;
+            case 2:
+                if (previousSettings != nullptr)
+                    savefile->settings = *previousSettings;
+
+                if (previousPalette != nullptr)
+                    memcpy16(savefile->customPalettes, previousPalette,
+                             3 * 7 * 3);
+                break;
+            }
 
             setMusicVolume(512 * ((float)savefile->settings.volume / 10));
             setSkin();
@@ -460,9 +477,24 @@ bool ConfirmSaveScene::control() {
 #endif
 
         changeScene(new MainMenuScene(), Transitions::FADE);
+
+        return true;
     } else if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
-        changeScene(new SettingsScene(), Transitions::FADE);
+
+        switch (type) {
+        case 0:
+            changeScene(new SettingsScene(), Transitions::FADE);
+            break;
+        case 1:
+            changeScene(new EditorScene(), Transitions::FADE);
+            break;
+        case 2:
+            changeScene(new ColorSelectorScene(), Transitions::FADE);
+            break;
+        }
+
+        return true;
     }
 
     return false;

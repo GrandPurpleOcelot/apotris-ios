@@ -320,11 +320,16 @@ public:
 
     int pos[2];
 
+    int type = 0; // 0 for settings, 1 for skin editor, 2 for color editor
+
     void draw();
     void update();
     bool control();
     void init();
     void deinit() {};
+
+    ConfirmSaveScene(int type) { this->type = type; }
+
     Scene* previousScene() { return new MainMenuScene(); };
 };
 
@@ -356,7 +361,7 @@ class SettingsScene : public SimpleListScene {
 public:
     Scene* previousScene() {
         if (settingsChanged())
-            return new ConfirmSaveScene();
+            return new ConfirmSaveScene(0);
         else
             return new MainMenuScene();
     };

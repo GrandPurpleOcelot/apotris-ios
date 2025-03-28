@@ -17,10 +17,10 @@
 
 #define FADE_LENGTH 4
 
-static COLOR* previousPalette = nullptr;
-
 void fadeToBlack();
 void fadeFromBlack();
+
+static COLOR* preTransitionPalette = nullptr;
 
 void changeScene(Scene* newScene, Transitions transition) {
     gradient(0);
@@ -40,8 +40,8 @@ void changeScene(Scene* newScene, Transitions transition) {
     }
 
     toggleRendering(false);
-    if (previousPalette != nullptr)
-        loadPalette(0, 0, previousPalette, 512);
+    if (preTransitionPalette != nullptr)
+        loadPalette(0, 0, preTransitionPalette, 512);
 
     if (scene != nullptr)
         delete scene;
@@ -71,10 +71,10 @@ void changeScene(Scene* newScene) {
 
 void fadeToBlack() {
 
-    if (previousPalette != nullptr)
-        delete[] previousPalette;
-    previousPalette = new COLOR[512];
-    savePalette(previousPalette);
+    if (preTransitionPalette != nullptr)
+        delete[] preTransitionPalette;
+    preTransitionPalette = new COLOR[512];
+    savePalette(preTransitionPalette);
 
     int color = 0;
 
@@ -84,29 +84,31 @@ void fadeToBlack() {
     int timer = 0;
     while (closed() && timer++ < FADE_LENGTH) {
         vsync();
-        color_fade_palette(0, 1, &previousPalette[1], color, 511, timer * 8);
+        color_fade_palette(0, 1, &preTransitionPalette[1], color, 511,
+                           timer * 8);
     }
 }
 
 void fadeFromBlack() {
     int timer = FADE_LENGTH;
 
-    if (previousPalette != nullptr)
-        delete[] previousPalette;
-    previousPalette = new COLOR[512];
-    savePalette(previousPalette);
+    if (preTransitionPalette != nullptr)
+        delete[] preTransitionPalette;
+    preTransitionPalette = new COLOR[512];
+    savePalette(preTransitionPalette);
 
     int color = 0;
 
     if (savefile->settings.lightMode)
         color = 0x5ad6;
 
-    color_fade_palette(0, 1, &previousPalette[1], color, 511, timer * 8);
+    color_fade_palette(0, 1, &preTransitionPalette[1], color, 511, timer * 8);
 
     while (closed() && timer >= 0) {
         canDraw = 1;
         vsync();
-        color_fade_palette(0, 1, &previousPalette[1], color, 511, timer * 8);
+        color_fade_palette(0, 1, &preTransitionPalette[1], color, 511,
+                           timer * 8);
         timer--;
     }
 }
@@ -115,7 +117,7 @@ void sceneSwitcher(std::string str) {
     if (str == "Play") {
         changeScene(new ModeListScene(), Transitions::FADE);
     } else if (str == "Settings") {
-        previousSettings = savefile->settings;
+        setPreviousSettings(savefile->settings);
         menuKeys = savefile->settings.menuKeys;
 
         for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
@@ -130,14 +132,23 @@ void sceneSwitcher(std::string str) {
     } else if (str == "Links") {
         changeScene(new LinksScene(), Transitions::FADE);
     } else if (str == "Skin Editor") {
-        previousSettings = savefile->settings;
+        setPreviousSettings(savefile->settings);
         for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
             previousSkins[i] = savefile->customSkins[i];
+
         menuKeys = savefile->settings.menuKeys;
 
         changeScene(new EditorScene(), Transitions::FADE);
     } else if (str == "Color Editor") {
-        previousSettings = savefile->settings;
+        setPreviousSettings(savefile->settings);
+
+        if (previousPalette != nullptr)
+            delete[] previousPalette;
+        previousPalette = new COLOR[3 * 7 * 3];
+
+        memcpy16(previousPalette, savefile->customPalettes, 3 * 7 * 3);
+
+        menuKeys = savefile->settings.menuKeys;
 
         changeScene(new ColorSelectorScene(), Transitions::FADE);
     } else if (str == "Credits") {
@@ -296,4 +307,11 @@ void WordSprite::setup(int _id, int _index, int _tiles, bool _big) {
     for (int i = 0; i < 3 * (1 + big) - big; i++) {
         sprites[i] = &obj_buffer[startIndex + i];
     }
+}
+
+void setPreviousSettings(Settings settings) {
+    if (previousSettings == nullptr)
+        previousSettings = std::make_unique<Settings>();
+
+    *previousSettings = settings;
 }

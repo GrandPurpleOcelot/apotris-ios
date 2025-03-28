@@ -740,13 +740,22 @@ void diagnose() {
 }
 
 void setPalette() {
-    int n = (savefile->settings.colors < 2) ? savefile->settings.colors : 0;
+    int n = (savefile->settings.colors < 2 && savefile->settings.colors >= 0)
+                ? savefile->settings.colors
+                : 0;
 
     for (int i = 0; i < 16; i++) {
-
         if (i < 8 && savefile->settings.colors < 2) {
             loadPalette(i, 0, &palette[n][i * 16], 8);
             loadPalette(i + 16, 0, &palette[n][i * 16], 8);
+
+            if (i < 7 && savefile->settings.colors < 0) {
+                int customIndex = -(savefile->settings.colors + 1);
+                loadPalette(i, 1, savefile->customPalettes[customIndex][i], 3);
+                loadPalette(i + 16, 1, savefile->customPalettes[customIndex][i],
+                            3);
+            }
+
         } else if (i < 8) {
             loadPalette(i, 4, &palette[n][i * 16 + 4], 4);
             loadPalette(i + 16, 4, &palette[n][i * 16 + 4], 4);
@@ -769,11 +778,11 @@ void setPalette() {
         loadPalette(8, 0, &palette[n][color * 16], 16);
         loadPalette(8 + 16, 0, &palette[n][color * 16], 16);
 
-        int n = getClassicPalette();
+        int classic = getClassicPalette();
 
         for (int i = 0; i < 8; i++) {
-            loadPalette(i, 1, &nesPalette[n][0], 4);
-            loadPalette(i + 16, 1, &nesPalette[n][0], 4);
+            loadPalette(i, 1, &nesPalette[classic][0], 4);
+            loadPalette(i + 16, 1, &nesPalette[classic][0], 4);
         }
 
     } else if (savefile->settings.colors == 4) {
@@ -789,14 +798,6 @@ void setPalette() {
             setPaletteColor(i + 16, 1, c, 4);
         }
 
-        // if(!savefile->settings.lightMode){
-        //     setPaletteColor(7, 0, 0x7fff, 2);
-        //     setPaletteColor(7+16, 0, 0x7fff, 2);
-        // }else{
-        //     setPaletteColor(7, 0, 0x0421, 2);
-        //     setPaletteColor(7+16, 0, 0x0421, 2);
-        // }
-
     } else if (savefile->settings.colors == 5) {
         for (int i = 0; i < 8; i++) {
             loadPalette(i, 1, &arsPalette[0][i], 4);
@@ -811,21 +812,35 @@ void setPalette() {
             loadPalette(i, 1, &arsPalette[1][i], 4);
             loadPalette(i + 16, 1, &arsPalette[1][i], 4);
         }
+
         // set frame color
         loadPalette(8, 0, &palette[1][color * 16], 16);
         loadPalette(8 + 16, 0, &palette[1][color * 16], 16);
     } else {
+        const int index = clamp(savefile->settings.colors, 0, 3);
+
         // set frame color
-        loadPalette(8, 0, &palette[n][color * 16], 16);
-        loadPalette(8 + 16, 0, &palette[n][color * 16], 16);
+        loadPalette(8, 0, &palette[index][color * 16], 16);
+        loadPalette(8 + 16, 0, &palette[index][color * 16], 16);
+
+        // needs base case to fill all of the colors
+        if (savefile->settings.colors < 0) {
+            COLOR* src =
+                savefile
+                    ->customPalettes[-(savefile->settings.colors + 1)][color];
+
+            // set frame color
+            loadPalette(8, 1, src, 3);
+            loadPalette(8 + 16, 1, src, 3);
+        }
     }
 
     setLightMode();
 
     if (savefile->settings.effects == 2) {
         for (int i = 0; i < 16; i++) {
-            int color = (savefile->settings.lightMode) ? 29 - i : i;
-            setPaletteColor(i, 5, RGB15(color, color, color), 1);
+            int value = (savefile->settings.lightMode) ? 29 - i : i;
+            setPaletteColor(i, 5, RGB15(value, value, value), 1);
         }
     }
 
@@ -1075,11 +1090,11 @@ void setPawnPalette(int dest, int n, int blend, bool flip) {
     dest += 16;
 
     if (savefile->settings.lightMode != flip) {
-        if (savefile->settings.colors == 2)
+        if (savefile->settings.colors == 2) {
             color_fade_palette(dest, 0, (COLOR*)classic_pal_bin, 0x0000, 5,
                                blend);
-        else if (savefile->settings.colors == 3) {
-            int n = getClassicPalette();
+        } else if (savefile->settings.colors == 3) {
+            n = getClassicPalette();
             color_fade_palette(dest, 1, &nesPalette[n][0], 0x0000, 4, blend);
         } else if (savefile->settings.colors == 4) {
             COLOR c;
@@ -1099,10 +1114,20 @@ void setPawnPalette(int dest, int n, int blend, bool flip) {
         } else if (savefile->settings.colors == 6) {
             color_fade_palette(dest, 1, (COLOR*)&arsPalette[1][n], 0x0000, 4,
                                blend);
-        } else
+        } else {
+            const int index =
+                savefile->settings.colors >= 0 ? savefile->settings.colors : 0;
+
+            color_fade_palette(dest, 0, (COLOR*)&palette[index][n * 16], 0x0000,
+                               5, blend);
+        }
+
+        if (savefile->settings.colors < 0) {
             color_fade_palette(
-                dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16],
-                0x0000, 5, blend);
+                dest, 1,
+                savefile->customPalettes[-(savefile->settings.colors + 1)][n],
+                0x0000, 3, blend);
+        }
     } else {
         if (dest == 11 + 16)
             blend = int2fx(blend) >> 5;
@@ -1130,10 +1155,20 @@ void setPawnPalette(int dest, int n, int blend, bool flip) {
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[0][n], 4, blend);
         } else if (savefile->settings.colors == 6) {
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[1][n], 4, blend);
-        } else
+        } else {
+            const int index =
+                savefile->settings.colors >= 0 ? savefile->settings.colors : 0;
+
+            color_adj_brightness(dest, 0, (COLOR*)&palette[index][n * 16], 5,
+                                 blend);
+        }
+
+        if (savefile->settings.colors < 0) {
             color_adj_brightness(
-                dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16], 5,
-                blend);
+                dest, 1,
+                savefile->customPalettes[-(savefile->settings.colors + 1)][n],
+                3, blend);
+        }
     }
 }
 

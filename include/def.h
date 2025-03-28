@@ -5,6 +5,7 @@
 #include "platform.hpp"
 #include "save.h"
 #include "text.h"
+#include <memory>
 
 #define glowDuration 12
 #ifdef GBA
@@ -181,6 +182,8 @@ extern void updateFluid();
 
 extern void addGameStats();
 
+extern void setPreviousSettings(Settings settings);
+
 extern std::string modeToString(BlockEngine::Modes mode);
 
 extern std::string getStringFromKey(int key);
@@ -306,8 +309,9 @@ extern int previous[22][12];
 
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
 
-extern Settings previousSettings;
+extern std::unique_ptr<Settings> previousSettings;
 extern Skin previousSkins[MAX_CUSTOM_SKINS];
+extern COLOR* previousPalette;
 
 extern std::list<std::string> path;
 extern std::string previousElement;

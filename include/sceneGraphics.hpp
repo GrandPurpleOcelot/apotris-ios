@@ -280,7 +280,7 @@ public:
     std::string getCursor(std::string text) override {
         std::string result;
 
-        if (savefile->settings.colors > 0)
+        if (savefile->settings.colors > -(MAX_CUSTOM_PALETTES))
             result += "<";
         else
             result += " ";
@@ -300,7 +300,7 @@ public:
                 sfx(SFX_MENUMOVE);
             }
         } else {
-            if (savefile->settings.colors > 0) {
+            if (savefile->settings.colors > -(MAX_CUSTOM_PALETTES)) {
                 savefile->settings.colors--;
                 sfx(SFX_MENUMOVE);
             }
@@ -310,7 +310,11 @@ public:
     }
 
     std::string getCurrentOption() override {
-        return std::to_string(savefile->settings.colors + 1);
+        if (savefile->settings.colors >= 0) {
+            return std::to_string(savefile->settings.colors + 1);
+        } else {
+            return "C" + std::to_string(-(savefile->settings.colors));
+        }
     }
 };
 
@@ -881,29 +885,36 @@ class GradientEditorScene : public Scene {
     }
 
     void set(int dir) {
-        HSV_COLOR* hsv = (!colorSelection) ? &hsv1 : &hsv2;
+        HSV_COLOR* hsv = (selection - 1) ? &hsv2 : &hsv1;
 
-        switch (selection) {
+        bool res = false;
+        switch (colorSelection) {
         case 0:
             hsv->hue += dir;
             if (hsv->hue < 0)
                 hsv->hue = 359;
-            if (hsv->hue > 359)
+            else if (hsv->hue > 359)
                 hsv->hue = 0;
+            else
+                res = true;
             break;
         case 1:
             hsv->saturation += ((float)dir) / 100.f;
             if (hsv->saturation < 0)
                 hsv->saturation = 0;
-            if (hsv->saturation > 1)
+            else if (hsv->saturation > 1)
                 hsv->saturation = 1;
+            else
+                res = true;
             break;
         case 2:
             hsv->value += ((float)dir) / 100.f;
             if (hsv->value < 0)
                 hsv->value = 0;
-            if (hsv->value > 1)
+            else if (hsv->value > 1)
                 hsv->value = 1;
+            else
+                res = true;
             break;
         }
     }

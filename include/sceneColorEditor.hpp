@@ -5,6 +5,21 @@
 
 class ColorSelectorScene : public Scene {
 private:
+    int das = 0;
+    const int arr = 4;
+    const int dasMax = 20;
+    int cursorFloat = 0;
+
+    int selection = 0;
+    const int options = 2;
+
+    const int slotHeight = 9;
+    OBJ_ATTR* cursorSprites[2];
+
+    int paletteIndex = 0;
+
+    void leave();
+
 public:
     void draw();
     void update();
@@ -32,17 +47,28 @@ private:
     int cursorX = 0;
     int cursorY = 0;
 
+    int cursorFloat = 0;
+
     const int dasMax = 10;
     const int arrMax = 2;
 
     HSV_COLOR hsv;
     bool hsvMode = false;
     int color1[3] = {0, 0, 0};
-    int c = 0;
     OBJ_ATTR* colorSprites[3];
+    OBJ_ATTR* cursorSprites[2];
     int cursorTimer = 0;
+    int paletteIndex = 0;
+
+    COLOR* paletteBeforeReset = nullptr;
 
     const int colorSelectorHeight = 2;
+
+    int resetTimer = 0;
+    const int resetTimerMax = 60;
+    bool reset = false;
+
+    int resetIndex = 0;
 
     bool set(int dir) {
         bool res = false;
@@ -96,6 +122,6 @@ public:
 
     Scene* previousScene() { return new ColorSelectorScene(); };
 
-    ColorEditorScene() {}
+    ColorEditorScene(int paletteIndex) { this->paletteIndex = paletteIndex; }
     ~ColorEditorScene() { deinit(); }
 };

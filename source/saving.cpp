@@ -486,6 +486,16 @@ void setDefaults(Save* save, int depth) {
         strncpy(savefile->endTag, "SAVE_END", 9);
     }
 
+    if (depth < 8) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 7; j++) {
+                memcpy16(&save->customPalettes[i][j], &palette[1][j * 16 + 1],
+                         3);
+            }
+            loadPalette(i + 16, 0, palette, 3);
+        }
+    }
+
     setDefaultGraphics(save, depth);
 
     for (int i = 0; i < 5; i++) {

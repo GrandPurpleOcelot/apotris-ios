@@ -79,13 +79,13 @@ void GradientEditorScene::draw() {
             if (hsvMode) {
                 switch (i) {
                 case 0:
-                    posprintf(buff, "H%02d", hsv1.hue);
+                    posprintf(buff, "H%03d", hsv1.hue);
                     break;
                 case 1:
-                    posprintf(buff, " S%02d", (int)hsv1.saturation * 100);
+                    posprintf(buff, "S%03d", (int)(hsv1.saturation * 100));
                     break;
                 case 2:
-                    posprintf(buff, " V%02d", (int)hsv1.value * 100);
+                    posprintf(buff, "V%03d", (int)(hsv1.value * 100));
                     break;
                 }
 
@@ -130,9 +130,25 @@ void GradientEditorScene::draw() {
             int x = 19 + (i - 1) * space;
 
             char buff[8];
-            posprintf(buff, "%02d", color1[i]);
+            if (hsvMode) {
+                switch (i) {
+                case 0:
+                    posprintf(buff, "H%03d", hsv1.hue);
+                    break;
+                case 1:
+                    posprintf(buff, "S%03d", (int)(hsv1.saturation * 100));
+                    break;
+                case 2:
+                    posprintf(buff, "V%03d", (int)(hsv1.value * 100));
+                    break;
+                }
 
-            aprintColor(buff, x, height, !(selection == 1 && onValues));
+            } else {
+                posprintf(buff, "%02d", color1[i]);
+            }
+
+            aprintColor(buff, x - hsvMode, height,
+                        !(selection == 1 && onValues));
 
             if (i == colorSelection && onValues && selection == 1) {
                 setTile(29, x, height - 1, tileBuild(tile, false, false, 15));
@@ -146,9 +162,13 @@ void GradientEditorScene::draw() {
                 aprint("  ", x, height + 1);
             }
 
-            c += color1[i] << (5 * i);
+            if (!hsvMode) {
+                c += color1[i] << (5 * i);
+                sprite_unhide(colorSprites[i], 0);
+            } else {
+                sprite_hide(colorSprites[i]);
+            }
 
-            sprite_unhide(colorSprites[i], 0);
             sprite_set_pos(colorSprites[i], x * 8 - 9, height * 8);
         }
 
@@ -158,9 +178,25 @@ void GradientEditorScene::draw() {
             int x = 19 + (i - 1) * space;
 
             char buff[8];
-            posprintf(buff, "%02d", color2[i]);
+            if (hsvMode) {
+                switch (i) {
+                case 0:
+                    posprintf(buff, "H%03d", hsv2.hue);
+                    break;
+                case 1:
+                    posprintf(buff, "S%03d", (int)(hsv2.saturation * 100));
+                    break;
+                case 2:
+                    posprintf(buff, "V%03d", (int)(hsv2.value * 100));
+                    break;
+                }
 
-            aprintColor(buff, x, height, !(selection == 2 && onValues));
+            } else {
+                posprintf(buff, "%02d", color2[i]);
+            }
+
+            aprintColor(buff, x - hsvMode, height,
+                        !(selection == 2 && onValues));
 
             if (i == colorSelection && onValues && selection == 2) {
                 setTile(29, x, height - 1, tileBuild(tile, false, false, 15));
@@ -174,10 +210,17 @@ void GradientEditorScene::draw() {
                 aprint("  ", x, height + 1);
             }
 
-            c += color2[i] << (5 * i + 16);
-
-            sprite_unhide(colorSprites[i + 3], 0);
+            if (!hsvMode) {
+                c += color2[i] << (5 * i + 16);
+                sprite_unhide(colorSprites[i + 3], 0);
+            } else {
+                sprite_hide(colorSprites[i + 3]);
+            }
             sprite_set_pos(colorSprites[i + 3], x * 8 - 9, height * 8);
+        }
+
+        if (hsvMode) {
+            c = hsv2rgb(hsv1) + (hsv2rgb(hsv2) << 16);
         }
     }
 
@@ -439,12 +482,12 @@ bool GradientEditorScene::control() {
             }
         } else {
             if (key_hit(k.up)) {
-                set(-1);
+                set(+1);
                 sfx(SFX_SHIFT2);
             }
 
             if (key_hit(k.down)) {
-                set(+1);
+                set(-1);
                 sfx(SFX_SHIFT2);
             }
 
@@ -452,12 +495,12 @@ bool GradientEditorScene::control() {
                 if (das < dasMax) {
                     das++;
                 } else {
-                    int dir = (key_is_down(k.up) ? -1 : 1);
+                    int dir = (key_is_down(k.down) ? -1 : 1);
 
-                    set(dir);
+                    set(dir * (1 + 2 * (colorSelection == 0)));
                     sfx(SFX_SHIFT2);
 
-                    das -= arrMax;
+                    das -= arrMax / 2;
                 }
             } else {
                 das = 0;
