@@ -63,7 +63,7 @@ void GradientEditorScene::init() {
 
 void GradientEditorScene::draw() {
 
-    const int space = 4;
+    const int space = 4 + hsvMode;
     const int height = 11;
 
     c = 0;
