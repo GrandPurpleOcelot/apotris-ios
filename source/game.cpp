@@ -2580,7 +2580,7 @@ void showPlaceEffect() {
         sprite_unhide(it->sprite, ATTR0_AFF_DBL);
         sprite_set_attr(it->sprite, ShapeWide, 3, tileStart + 32 * i,
                         (game->zoneTimer != 0) ? 11 : it->piece,
-                        3 - (it->rotating != 0));
+                        it->rotating ? 0 : 3);
         sprite_enable_affine(it->sprite, 7 + i, doubleSize);
         sprite_set_pos(it->sprite, x, y);
         sprite_rotscale(it->sprite, ((flip) ? -1 : 1) << 8, 1 << 8,
