@@ -313,7 +313,7 @@ std::string nameInput(int place) {
 
 #if defined(N3DS)
     resetSmallText();
-    setSmallTextArea(110, 0, 17, 30, 20);
+    setSmallTextArea(220, 0, 17, 30, 20);
 
     // Show keyboard immediately if name is empty
     bool requestKeyboard = (result.find_last_not_of(' ') == std::string::npos);
@@ -545,6 +545,11 @@ std::string nameInput(int place) {
         sprite_hide(cursorSprites[i]);
 
     clearText();
+
+#if defined(N3DS)
+    resetSmallText();
+    aprintClearArea(0, 17, 30 + 1, 20);
+#endif
 
     if (result.size() >= 8)
         result = result.substr(0, 8);
