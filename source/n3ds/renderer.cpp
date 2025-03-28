@@ -2661,9 +2661,11 @@ void RendererN3ds::imgui_debug_1(DebugOptions& debug_opt,
                         const int tx = std::min(std::max((int)mouse.x - 1, 0),
                                                 (int)cr::BG_MOSAIC_TEX_W) /
                                        8;
-                        const int ty = std::min(std::max((int)mouse.y - 1, 0),
-                                                (int)cr::BG_MOSAIC_TEX_H) /
-                                       8;
+                        // BG texture is shifted up by 40px
+                        const int ty = (std::min(std::max((int)mouse.y - 1, 0),
+                                                 (int)cr::BG_MOSAIC_TEX_H) +
+                                        256 - 40) %
+                                       256 / 8;
                         const LayerInfo& li = layerInfo[s_cur_bg];
                         const tng::BgScreenblockTilemap& screenblock =
                             tng::bg_screenblocks[li.sbb];
@@ -2683,7 +2685,8 @@ void RendererN3ds::imgui_debug_1(DebugOptions& debug_opt,
                                     flip_h ? " flipH" : "",
                                     flip_v ? " flipV" : "");
                         ImGui::EndTooltip();
-                        ImVec2 tileTl = topleft + ImVec2(tx, ty) * 8;
+                        ImVec2 tileTl =
+                            topleft + ImVec2(tx, (ty + (40 / 8)) % 32) * 8;
                         ImGui::GetWindowDrawList()->AddRect(
                             tileTl, tileTl + ImVec2{10, 10},
                             IM_COL32(0, 255, 0, 255));
