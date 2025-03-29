@@ -281,16 +281,18 @@ void Game::rotate(int dir, int on) {
             return;
         }
 
-        for (int i = 0; i < 3; i++) {
+        bool TFloorKick = (pawn.current == PIECE_T && r == 2);
+
+        for (int i = 0; i < 3 + TFloorKick; i++) {
             dx = 0;
             dy = 0;
 
-            if (i == 1 && pawn.current == PIECE_T && r == 2) {
-                dy = -1;
-            } else if (i == 1)
+            if (i == 1)
                 dx = 1;
             else if (i == 2)
                 dx = -1;
+            else if (i == 3)
+                dy = -1;
 
             if (checkRotation(dx, dy, r)) {
                 rotatePlace(dir, dx, dy, r);
