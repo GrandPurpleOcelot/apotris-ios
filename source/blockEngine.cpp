@@ -129,7 +129,7 @@ int Game::getNbr(int x, int y, int ex, int sy, int ey) {
 void Game::rotateCW(int dir) {
     rotates[0] = dir;
 
-    replay.emplace_back(timer, 2, dir);
+    replay.emplace_back(timer + eventTimer, 2, dir);
 
     rotate(1, dir);
 }
@@ -137,7 +137,7 @@ void Game::rotateCW(int dir) {
 void Game::rotateCCW(int dir) {
     rotates[1] = dir;
 
-    replay.emplace_back(timer, 3, dir);
+    replay.emplace_back(timer + eventTimer, 3, dir);
 
     rotate(-1, dir);
 }
@@ -148,7 +148,7 @@ void Game::rotateTwice(int dir) {
 
     rotates[2] = dir;
 
-    replay.emplace_back(timer, 4, dir);
+    replay.emplace_back(timer + eventTimer, 4, dir);
 
     rotate(2, dir);
 }
@@ -625,6 +625,7 @@ void Game::update() {
             pawn.y++;
             if (rotationSystem == ARS)
                 lockTimer = maxLockTimer;
+
             lastMoveRotation = false;
         } else if (rotationSystem == NRS) {
             place();
@@ -1513,7 +1514,7 @@ void Game::fillQueue(int count) {
 void Game::hold(int dir) {
     holding = dir;
 
-    replay.emplace_back(timer, 5, dir);
+    replay.emplace_back(timer + eventTimer, 5, dir);
 
     if ((clearLock || entryDelay) && gameMode != CLASSIC) {
         // holding = dir;
@@ -1597,7 +1598,7 @@ void Game::lockCheck() {
 }
 
 void Game::keyLeft(int dir) {
-    replay.emplace_back(timer, 0, dir);
+    replay.emplace_back(timer + eventTimer, 0, dir);
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         left = dir;
@@ -1627,7 +1628,7 @@ void Game::keyLeft(int dir) {
 }
 
 void Game::keyRight(int dir) {
-    replay.emplace_back(timer, 1, dir);
+    replay.emplace_back(timer + eventTimer, 1, dir);
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         right = dir;
@@ -1656,7 +1657,7 @@ void Game::keyRight(int dir) {
 }
 
 void Game::keyDown(int dir) {
-    replay.emplace_back(timer, 6, dir);
+    replay.emplace_back(timer + eventTimer, 6, dir);
     if (clearLock || eventLock || entryDelay) {
         if (!(entryDelay && rotationSystem == NRS))
             down = dir;
@@ -1824,7 +1825,7 @@ void Game::generateGarbage(int height, int localMode) {
 }
 
 void Game::keyDrop(int dir) {
-    replay.emplace_back(timer, 7, dir);
+    replay.emplace_back(timer + eventTimer, 7, dir);
 
     if (dir == 0 && (gameMode == MASTER || gameMode == DEATH))
         dropping = false;
