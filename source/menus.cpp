@@ -724,9 +724,9 @@ int GameScene::pauseMenu() {
 
             if (key_hit(k.confirm)) {
                 int n = selection;
-                if (!showSleep && selection >= 2)
-                    n++;
                 if (!(game->gameMode == TRAINING) && selection >= 2)
+                    n++;
+                if (!showSleep && n >= 3)
                     n++;
 
                 if (n == 0) {
