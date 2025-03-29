@@ -9,6 +9,90 @@
 #include <string>
 #endif
 
+#ifdef N3DS
+
+class MainScreenElement : public Element {
+public:
+    std::string getLabel() override { return "Main Screen"; }
+
+    std::string getCursor(std::string text) override {
+        return "<" + text + ">";
+    }
+
+    void action(int dir) override {
+        savefile->settings.n3dsMainScreenIsTop =
+            !savefile->settings.n3dsMainScreenIsTop;
+        sfx(SFX_MENUCONFIRM);
+    }
+
+    std::string getCurrentOption() override {
+        if (savefile->settings.n3dsMainScreenIsTop)
+            return "Top";
+        else
+            return "Bottom";
+    }
+};
+
+class ScaleSelectElement : public Element {
+    const n3ds::ScaleMode scale;
+
+public:
+    ScaleSelectElement(n3ds::ScaleMode scale) : scale{scale} {}
+
+    std::string getLabel() override {
+        switch (scale) {
+        case n3ds::ScaleMode::UNSCALED:
+            return "1x";
+        case n3ds::ScaleMode::SCALED_LINEAR:
+            return "1.5x smooth";
+        case n3ds::ScaleMode::SCALED_SHARP:
+            return "1.5x sharp";
+        case n3ds::ScaleMode::SCALED_ULTRA:
+            return "1.5x ultra";
+        case n3ds::ScaleMode::NUM_ENTRIES:
+        default:
+            return "?";
+        }
+    }
+
+    std::string getCursor(std::string text) override {
+        if (savefile->settings.n3dsScaleMode == scale) {
+            return ">" + text + "<";
+        } else if (scale == n3ds::ScaleMode::SCALED_ULTRA &&
+                   !n3ds::wideModeSupported) {
+            return " " + text + " ";
+        } else {
+            return "[" + text + "]";
+        }
+    }
+
+    bool action() override {
+        if (savefile->settings.n3dsScaleMode != scale) {
+            if (scale == n3ds::ScaleMode::SCALED_ULTRA &&
+                !n3ds::wideModeSupported) {
+                sfx(SFX_INVALID);
+            } else {
+                savefile->settings.n3dsScaleMode = scale;
+                sfx(SFX_MENUCONFIRM);
+            }
+        }
+        return false;
+    }
+
+    std::string getCurrentOption() override {
+        if (savefile->settings.n3dsScaleMode == scale) {
+            return "In use";
+        } else if (scale == n3ds::ScaleMode::SCALED_ULTRA &&
+                   !n3ds::wideModeSupported) {
+            return "-";
+        } else {
+            return ">";
+        }
+    }
+};
+
+#else /* N3DS */
+
 class IntegerScaleElement : public Element {
 public:
     std::string getLabel() override { return "Integer Scale"; }
@@ -98,6 +182,8 @@ public:
         }
     }
 };
+
+#endif /* N3DS */
 
 class FPSElement : public Element {
 public:
@@ -239,8 +325,18 @@ public:
         list.push_back(new FullscreenElement);
 #endif
 
+#ifdef N3DS
+        list.push_back(new MainScreenElement());
+        list.push_back(new LabelElement("Scaling mode:"));
+        list.push_back(new ScaleSelectElement(n3ds::ScaleMode::UNSCALED));
+        list.push_back(new ScaleSelectElement(n3ds::ScaleMode::SCALED_LINEAR));
+        list.push_back(new ScaleSelectElement(n3ds::ScaleMode::SCALED_SHARP));
+        list.push_back(new ScaleSelectElement(n3ds::ScaleMode::SCALED_ULTRA));
+        list.push_back(new LabelElement("Diagnostics:"));
+#else
         list.push_back(new IntegerScaleElement());
         list.push_back(new ScaleElement());
+#endif
         list.push_back(new FPSElement());
 
 #if defined(PC) || defined(PORTMASTER)
@@ -249,6 +345,23 @@ public:
 
         return list;
     };
+
+#ifdef N3DS
+private:
+    int previousAspectRatio = savefile->settings.aspectRatio;
+
+public:
+    void draw() {
+        if (previousAspectRatio != savefile->settings.aspectRatio) {
+            previousAspectRatio = savefile->settings.aspectRatio;
+            // HACK: Redraw the path to make it match the aspect ratio.
+            showPath();
+            // Clear the FPS text region:
+            aprintClearArea(30 - 5 - 2, 0, 5 + 2, 1);
+        }
+        OptionListScene::draw();
+    }
+#endif
 
     Scene* previousScene() { return new SettingsScene(); };
 };

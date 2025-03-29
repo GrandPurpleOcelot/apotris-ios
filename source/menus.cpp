@@ -1466,7 +1466,6 @@ void addGameStats() {
 
 int GameScene::endScreenSetup() {
     clearSmallText();
-    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
@@ -1492,6 +1491,8 @@ int GameScene::endScreenSetup() {
     } else {
         record = onRecord();
     }
+
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     const int optionsHeight = 11;
 

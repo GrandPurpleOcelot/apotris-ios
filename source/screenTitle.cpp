@@ -277,6 +277,10 @@ void TitleScene::init() {
 
 void TitleScene::draw() {
     fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
     showTitleSprites();
     showSprites(128);
 
@@ -345,6 +349,11 @@ void TitleScene::deinit() {
     clearSpriteTiles(256, 256, 1);
 
     clearText();
+
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
 }
 
 Scene* MainMenuScene::previousScene() { return new TitleScene(); }
@@ -391,6 +400,10 @@ void ConfirmSaveScene::init() {
 
 void ConfirmSaveScene::draw() {
     fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
     FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
@@ -535,6 +548,10 @@ bool ConfirmEmuScene::control() {
 
 void ConfirmEmuScene::draw() {
     fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
     FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));

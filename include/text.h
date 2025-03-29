@@ -25,3 +25,5 @@ extern void naprintColor(std::string str, int x, int y, int palette);
 
 extern void naprintSprite(std::string str, int tile);
 extern void naprintSpriteOffset(std::string str, int tile, int col);
+
+extern int textAllocateTile();

@@ -139,6 +139,10 @@ void SimpleListScene::init() {
 void SimpleListScene::draw() {
     fallingBlocks();
     toggleBG(3, true);
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     const int space = 1;
 
@@ -232,7 +236,7 @@ void SimpleListScene::draw() {
             scrollDelay = 0;
             scrollingText[0]->setTextSlow(scrollText);
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
             for (int i = 0; i < 2; i++) {
                 sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
                 sprite_set_pos(scrollSideSprites[i],
@@ -430,6 +434,11 @@ void SimpleListScene::deinit() {
 
     for (int i = 0; i < 3; i++)
         delete scrollingText[i];
+
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
 }
 
 Scene* ModeListScene::previousScene() { return new MainMenuScene(); }
@@ -553,9 +562,19 @@ void OptionListScene::draw() {
         int temp =
             lerp((movingDirection) * (space + 1) * 8, 0, 64 * movingTimer);
         verticalOffset = lerp(temp, 0, 64 * movingTimer);
+#ifdef N3DS
+        // Scroll falling blocks to top of screen when in 1x scale:
+        setLayerScroll(2, 0, -verticalOffset + 40);
+#else
         setLayerScroll(2, 0, -verticalOffset);
+#endif
     } else {
+#ifdef N3DS
+        // Scroll falling blocks to top of screen when in 1x scale:
+        setLayerScroll(2, 0, 40);
+#else
         setLayerScroll(2, 0, 0);
+#endif
     }
 
     int i = 0;       // drawing index, starts at listStart
@@ -656,7 +675,7 @@ void OptionListScene::draw() {
             scrollDelay = 0;
             scrollingText[0]->setTextSlow(scrollText);
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
             for (int i = 0; i < 2; i++) {
                 sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
                 sprite_set_pos(scrollSideSprites[i],
@@ -943,6 +962,11 @@ void OptionListScene::deinit() {
 
     for (int i = 0; i < 3; i++)
         delete scrollingText[i];
+
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
 }
 
 void OptionListScene::showPath() {

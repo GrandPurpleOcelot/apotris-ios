@@ -1178,7 +1178,14 @@ bool GameScene::control() {
         return true;
     }
 
-    if (key_hit(m.pause) && !multiplayer && !eventPauseTimer && !flashTimer) {
+#ifdef N3DS
+    const bool shouldPause =
+        (!demo && !replaying && !handlingTest && n3ds::wasAppPaused) ||
+        key_hit(m.pause);
+#else
+    const bool shouldPause = key_hit(m.pause);
+#endif
+    if (shouldPause && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
         paused = true;
         pauseSong();
@@ -1763,7 +1770,7 @@ void screenShake() {
     enableLayerWindow(1, 0, shake, 240, 160 + shake, false);
     enableLayerWindow(2, 0, shake, 240, 160 + shake, false);
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
     setSpriteMaskRegion(shake);
 #endif
 
@@ -1825,7 +1832,7 @@ void drawFrame(int layer) {
             }
         }
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
 
         if (!game->zoneTimer) {
             setTile(l, 20, 20,
@@ -2853,7 +2860,7 @@ void frameSnow(int layer) {
         setTile(l, 9, i, tileBuild(46, false, false, 0));
         setTile(l, 20, i, tileBuild(46, true, false, 0));
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
 
         setTile(l, 20, 20,
                 tileBuild(29, true, true, 0)); // right bottom frame corner
@@ -3237,7 +3244,7 @@ void GameScene::init() {
     // for(int i = 0; i < 1024; i++)
     //     loadSpriteTiles(i, &d, 1, 1);
 
-#if defined(TE)
+#if defined(TE) || defined(N3DS)
     buildBG(2, 0, 25, 0, 0, true);
 #endif
 
@@ -3561,7 +3568,7 @@ void GameScene::deinit() {
 
     setSkin();
 
-#if defined(TE)
+#if defined(TE) || defined(N3DS)
     buildBG(2, 0, 25, 0, 2, true);
 #endif
 

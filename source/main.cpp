@@ -303,17 +303,24 @@ std::string nameInput(int place) {
 
     showSprites(128);
 
+    if (place == 0 && game->gameMode != BATTLE &&
+        (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ))
+        aprint("New Record", 10, 5);
+
+    aprint("Name: ", 11, nameHeight - 2);
+
     MenuKeys k = savefile->settings.menuKeys;
+
+#if defined(N3DS)
+    resetSmallText();
+    setSmallTextArea(220, 0, 17, 30, 20);
+
+    // Show keyboard immediately if name is empty
+    bool requestKeyboard = (result.find_last_not_of(' ') == std::string::npos);
+#endif
 
     while (closed()) {
         vsync();
-
-        if (place == 0 && game->gameMode != BATTLE &&
-            (game->won || game->gameMode == MARATHON ||
-             game->gameMode >= BLITZ))
-            aprint("New Record", 10, 5);
-
-        aprint("Name: ", 11, nameHeight - 2);
 
         aprint("DONE", 14, 16);
 
@@ -321,6 +328,29 @@ std::string nameInput(int place) {
 
         aprintClearArea(13, nameHeight, 10, 1);
         aprint(result, 13, nameHeight);
+
+#if defined(N3DS)
+        {
+            std::string s = "Press " + getStringFromKey(k.special3) +
+                            " to use on-screen keyboard";
+            aprints(s, (30 * 8 - 4 * s.size()) / 2, 8, 2);
+        }
+
+        requestKeyboard =
+            requestKeyboard ||
+            (key_hit(k.special3) && !(key_is_down(KEY_FULL) & (~k.special3)));
+
+        if (requestKeyboard) {
+            requestKeyboard = false;
+            sfx(SFX_MENUMOVE);
+            if (n3ds::keyboardNameInput(&result, 8)) {
+                result.resize(8, ' ');
+                cursor = max(min(result.find_last_not_of(' ') + 1, 7), 0);
+                onDone = true;
+                sfx(SFX_MENUCONFIRM);
+            }
+        }
+#endif
 
         if (!onDone) {
             char curr = result.at(cursor);
@@ -515,6 +545,11 @@ std::string nameInput(int place) {
         sprite_hide(cursorSprites[i]);
 
     clearText();
+
+#if defined(N3DS)
+    resetSmallText();
+    aprintClearArea(0, 17, 30 + 1, 20);
+#endif
 
     if (result.size() >= 8)
         result = result.substr(0, 8);
@@ -964,7 +999,7 @@ void setDefaultGradient() {
                   defaultGradient_bin_size / 2);
 #endif
 
-#ifdef PC
+#if defined(PC) || defined(N3DS)
 
     int div = SCREEN_HEIGHT / 8;
     int n = (savefile->settings.colors < 2) ? savefile->settings.colors : 0;
@@ -1132,7 +1167,7 @@ void setPawnPalette(int dest, int n, int blend, bool flip) {
 }
 
 std::string getStringFromKey(int key) {
-#if defined(GBA)
+#if defined(GBA) || defined(N3DS)
 
     std::string result;
 
@@ -1140,13 +1175,13 @@ std::string getStringFromKey(int key) {
         result = keyToString[key];
     } else {
 
-        int k = key;
+        u32 k = key;
 
         int counter = 0;
         do {
             if (k & (1 << counter)) {
                 result += keyToString[1 << counter] + " ";
-                k -= 1 << counter;
+                k &= ~(1 << counter);
             }
 
             counter++;

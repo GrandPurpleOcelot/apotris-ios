@@ -323,9 +323,19 @@ void PlayOptionScene::draw() {
         int temp =
             lerp((movingDirection) * (space + 1) * 8, 0, 64 * movingTimer);
         verticalOffset = lerp(temp, 0, 64 * movingTimer);
+#ifdef N3DS
+        // Scroll falling blocks to top of screen when in 1x scale:
+        setLayerScroll(2, 0, -verticalOffset + 40);
+#else
         setLayerScroll(2, 0, -verticalOffset);
+#endif
     } else {
+#ifdef N3DS
+        // Scroll falling blocks to top of screen when in 1x scale:
+        setLayerScroll(2, 0, 40);
+#else
         setLayerScroll(2, 0, 0);
+#endif
     }
 
     EntryBoard* board = getBoard(subMode, goal);
@@ -527,7 +537,7 @@ void PlayOptionScene::draw() {
                 scrollDelay = 0;
                 scrollingText[0]->setTextSlow(scrollText);
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
                 for (int i = 0; i < 2; i++) {
                     sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
                     sprite_set_pos(scrollSideSprites[i],
@@ -649,6 +659,10 @@ void MultBattleScene::init() {
 
 void MultBattleScene::draw() {
     fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     if (connected < 1) {
         aprint("Waiting for", 7, 7);
@@ -841,6 +855,10 @@ void PlayOptionScene::resetScoreboard() {
         key_poll();
 
         fallingBlocks();
+#ifdef N3DS
+        // Scroll falling blocks to top of screen when in 1x scale:
+        setLayerScroll(2, 0, 40);
+#endif
 
         if (timer < 200) {
             timer++;

@@ -52,7 +52,7 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef GBA
+#if !defined(GBA) && !defined(N3DS)
 
 #define NANOTIME_IMPLEMENTATION
 #include "nanotime.h"

@@ -174,20 +174,20 @@ public:
                 //     continue;
                 // }
 
-#if defined(GBA)
+#if defined(GBA) || defined(N3DS)
 
-            u16 key = key_hit(KEY_FULL);
+            u32 key = key_hit(KEY_FULL);
 
             if (key != 0) {
                 std::list<int> currentKeys;
 
-                int temp = key;
+                u32 temp = key;
 
                 int counter = 0;
                 do {
                     if (temp & (1 << counter)) {
                         currentKeys.push_back(1 << counter);
-                        temp -= 1 << counter;
+                        temp &= ~(1 << counter);
                     }
 
                     counter++;
@@ -196,12 +196,12 @@ public:
                 for (int i = 0; i < max; i++) {
                     foundKeys.clear();
 
-                    int k = keys[i];
+                    u32 k = keys[i];
                     counter = 0;
                     do {
                         if (k & (1 << counter)) {
                             foundKeys.push_back(1 << counter);
-                            k -= 1 << counter;
+                            k &= ~(1 << counter);
                         }
 
                         counter++;
@@ -294,7 +294,11 @@ public:
     std::string getCurrentOption() override {
         if (reading) {
             return "...";
+#ifdef N3DS
+        } else if (keys[index] == UNBOUND) {
+#else
         } else if (keys[index] < 0) {
+#endif
             return "";
         }
 

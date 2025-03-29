@@ -2,6 +2,8 @@
 
 #include <list>
 
+#define PLATFORM_N3DS 6
+
 #ifdef GBA
 
 #include "liba_gba.h"
@@ -46,6 +48,13 @@
 #define PLATFORM 5
 #include "liba_portmaster.h"
 #include "liba_sdl_audio.hpp"
+
+#endif
+
+#ifdef N3DS
+
+#define PLATFORM PLATFORM_N3DS
+#include "liba_n3ds.h"
 
 #endif
 

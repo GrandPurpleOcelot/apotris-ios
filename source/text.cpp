@@ -372,3 +372,5 @@ IWRAM_CODE void naprintSpriteOffset(std::string str, int tile, int col) {
         cursor += fontWidths[character][1] + fontGap;
     }
 }
+
+int textAllocateTile() { return allocateStart + (allocatedTiles++); }

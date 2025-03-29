@@ -72,6 +72,12 @@ std::list<std::string> creditsText = {
     "",
     " - nanotime",
     "",
+    " - libctru (N3DS)",
+    "",
+    " - Citro3D (N3DS)",
+    "",
+    " - libxmp (N3DS)",
+    "",
     "",
     "",
     "Code Contributors:",
@@ -95,6 +101,9 @@ std::list<std::string> creditsText = {
     " - Linux Makefile",
     "   improvements",
     "  by abouvier",
+    "",
+    " - N3DS port",
+    "  by Alvin",
     "",
     "",
     "",
@@ -132,6 +141,18 @@ void CreditsScene::init() {
     setTiles(29, 20 * 64, 44 * 64, 50);
 #endif
 
+#ifdef N3DS
+    // letterbox on N3DS
+    TILE tile;
+    memset32_fast(&tile, 0xeeeeeeee, 8);
+    int allocTile = textAllocateTile();
+    loadTiles(2, allocTile, &tile, 1);
+    setTiles(29, 20 * 32, 12 * 32, tileBuild(allocTile, false, false, 0));
+
+    // Force letterbox to fill horizontally (FPS counter also repeated)
+    n3ds::setSbbFillScreen(29);
+#endif
+
     for (int i = 0; i < MAX_WORD_SPRITES; i++) {
         wordSprites[i] = new WordSprite(i, 64 + i * 5, 256 + i * 20, true);
         wordSprites[i]->setPriority(1);
@@ -143,6 +164,10 @@ void CreditsScene::init() {
 void CreditsScene::draw() {
     fallingBlocks();
     toggleBG(3, true);
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     int startX = 30;
     int counter = 0;
@@ -250,6 +275,11 @@ void CreditsScene::deinit() {
         delete wordSprites[i];
 
     buildBG(0, 2, 29, 0, 0, true);
+
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
 }
 
 #endif

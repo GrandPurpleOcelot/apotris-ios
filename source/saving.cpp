@@ -192,10 +192,24 @@ void loadSave() {
     }
 
     if (savefile->platform != PLATFORM) {
+        auto oldPlatform = savefile->platform;
         savefile->platform = PLATFORM;
 
         savefile->settings.menuKeys = getDefaultMenuKeys();
         savefile->settings.keys = getDefaultGameKeys();
+
+#ifdef N3DS
+        savefile->settings.n3dsMainScreenIsTop = true;
+        savefile->settings.n3dsScaleMode = n3ds::ScaleMode::SCALED_SHARP;
+        savefile->settings._n3dsPlaceholder1 = 0;
+        savefile->settings._n3dsPlaceholder2 = 0;
+        savefile->settings._n3dsPlaceholder3 = 0;
+#else
+        if (oldPlatform == PLATFORM_N3DS) {
+            savefile->settings.integerScale = true;
+            savefile->settings.fullscreen = false;
+        }
+#endif
     }
 
     u8* dump = (u8*)savefile;
@@ -245,7 +259,7 @@ Keys getDefaultGameKeys() {
         .zone = KEY_SELECT,
     };
 
-#ifdef GBA
+#if defined(GBA) || defined(N3DS)
     k.hold |= KEY_L;
 #endif
 
@@ -438,7 +452,14 @@ void setDefaults(Save* save, int depth) {
         save->settings.rotationSystem = BlockEngine::SRS;
         save->settings.randomizer = BlockEngine::BAG_7;
         save->settings.zoom = -1;
+#ifdef N3DS
+        save->settings.n3dsMainScreenIsTop = true;
+        save->settings.n3dsScaleMode = n3ds::ScaleMode::SCALED_SHARP;
+        save->settings._n3dsPlaceholder1 = 0;
+        save->settings._n3dsPlaceholder2 = 0;
+#else
         save->settings.integerScale = true;
+#endif
         save->settings.peek = true;
         save->settings.moveSfx = 2;
         save->settings.pauseCountdown = 1;
@@ -447,7 +468,11 @@ void setDefaults(Save* save, int depth) {
         save->settings.journey = false;
         save->settings.autosave = 1;
         save->settings.showFPS = false;
+#ifdef N3DS
+        save->settings._n3dsPlaceholder3 = 0;
+#else
         save->settings.fullscreen = false;
+#endif
         save->settings.shaders = false;
 
         save->stats.maxLevel = 0;
@@ -582,6 +607,9 @@ void setDefaultGraphics(Save* save, int depth) {
     if (depth < 7) {
         save->settings.frameBackground = 1;
         save->settings.backgroundType = 1;
+#ifdef N3DS
+        n3ds::savedAspectRatio = 0;
+#endif
         save->settings.aspectRatio = 0;
         save->settings.clearText = 2;
 
@@ -667,7 +695,11 @@ void profileToSave(GraphicsOptions* profile, Settings* settings) {
     settings->placeEffect = profile->placeEffect;
     settings->frameBackground = profile->frameBackground;
     settings->backgroundType = profile->backgroundType;
+#ifdef N3DS
+    n3ds::savedAspectRatio = profile->aspectRatio;
+#else
     settings->aspectRatio = profile->aspectRatio;
+#endif
     settings->screenShakeType = profile->screenShakeType;
     settings->clearDirection = profile->clearDirection;
 }
@@ -689,7 +721,11 @@ void saveToProfile(GraphicsOptions* profile, Settings* settings) {
     profile->placeEffect = settings->placeEffect;
     profile->frameBackground = settings->frameBackground;
     profile->backgroundType = settings->backgroundType;
+#ifdef N3DS
+    profile->aspectRatio = n3ds::savedAspectRatio;
+#else
     profile->aspectRatio = settings->aspectRatio;
+#endif
     profile->screenShakeType = settings->screenShakeType;
     profile->clearDirection = settings->clearDirection;
 }
