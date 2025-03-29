@@ -241,9 +241,9 @@ public:
     }
 };
 
-class SongListElement : public Element {
+class TrackListElement : public Element {
 public:
-    std::string getLabel() override { return "Song List"; }
+    std::string getLabel() override { return "Track List"; }
 
     std::string getCursor(std::string text) override {
         return "[" + text + "]";
@@ -262,17 +262,17 @@ public:
         return {
             new MusicVolumeElement(), new SFXVolumeElement(),
             new AnnouncerElement(),   new PlaybackElement(),
-            new MoveSfxElement(),     new SongListElement(),
+            new MoveSfxElement(),     new TrackListElement(),
         };
     };
 
     Scene* previousScene() { return new SettingsScene(); };
 };
 
-class SongListScene : public OptionListScene {
+class TrackListScene : public OptionListScene {
 public:
     int previous = 0;
-    std::string name() { return "Song List"; };
+    std::string name() { return "Track List"; };
 
     std::list<Element*> getElementList() {
         std::list<Element*> list;
@@ -309,11 +309,11 @@ public:
 
     Scene* previousScene() { return new AudioOptionScene(); };
 
-    SongListScene() {
+    TrackListScene() {
         previous = savefile->settings.cycleSongs;
 
         savefile->settings.cycleSongs = 0; // LOOP
     }
 
-    ~SongListScene() { deinit(); }
+    ~TrackListScene() { deinit(); }
 };

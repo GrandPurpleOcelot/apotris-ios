@@ -74,6 +74,7 @@ class GameScene : public Scene {
     void showReadyPlayers();
 
     bool counted = false;
+    bool skipSong = false;
 
     int timesPaused = 0;
 
