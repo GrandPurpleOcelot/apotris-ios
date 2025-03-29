@@ -1,6 +1,6 @@
 FROM docker.io/devkitpro/devkita64:20240604 AS devkita64
 
-FROM docker.io/akouzoukos/gbadev:latest AS devkitarm
+FROM docker.io/devkitpro/devkitarm:latest AS devkitarm
 
 FROM docker.io/library/ubuntu:24.04
 
@@ -8,7 +8,7 @@ FROM docker.io/library/ubuntu:24.04
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
   && apt-get install -y --no-install-recommends \
-    python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates zip \
+    python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates zip unzip \
     libsdl2-mixer-dev libopus-dev libvorbis-dev nodejs \
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
@@ -41,7 +41,7 @@ RUN tar xf meson-1.4.0.tar.gz && cd meson-1.4.0 && python3 setup.py install
 
 # Install latest emscripten compiler
 WORKDIR /root
-RUN git clone --depth 1 --branch 3.1.61 https://github.com/emscripten-core/emsdk.git
+RUN git clone --depth 1 --branch 4.0.5 https://github.com/emscripten-core/emsdk.git
 WORKDIR emsdk
 RUN ./emsdk install latest && ./emsdk activate latest && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bash_profile && echo 'source "/root/emsdk/emsdk_env.sh"' >> $HOME/.bashrc
 
@@ -59,3 +59,25 @@ ENV PATH="$PATH:/$DEVKITPRO/tools/bin/"
 
 # fix linux SDL2 xrandr dependency issue
 RUN sudo apt remove --purge libsdl2-dev -y
+
+# download bannertool
+ARG BANNERTOOL_URL=https://github.com/diasurgical/bannertool/releases/download/1.2.0/bannertool.zip
+ARG BANNERTOOL_ZIP_FILE=/tmp/bannertool.zip
+ARG BANNERTOOL_INSTALL_PATH=/usr/local/bin/bannertool
+
+RUN wget -O ${BANNERTOOL_ZIP_FILE} ${BANNERTOOL_URL} && \
+    unzip ${BANNERTOOL_ZIP_FILE} -d /tmp && \
+    mv /tmp/linux-x86_64/bannertool ${BANNERTOOL_INSTALL_PATH} && \
+    chmod +x ${BANNERTOOL_INSTALL_PATH} && \
+    rm ${BANNERTOOL_ZIP_FILE}
+
+# download makerom
+ARG MAKEROM_URL=https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.18.3/makerom-v0.18.3-ubuntu_x86_64.zip
+ARG MAKEROM_ZIP_FILE=/tmp/makerom.zip
+ARG MAKEROM_INSTALL_PATH=/usr/local/bin/makerom
+
+RUN wget -O ${MAKEROM_ZIP_FILE} ${MAKEROM_URL} && \
+    unzip ${MAKEROM_ZIP_FILE} -d /tmp && \
+    mv /tmp/makerom ${MAKEROM_INSTALL_PATH} && \
+    chmod +x ${MAKEROM_INSTALL_PATH} && \
+    rm ${MAKEROM_ZIP_FILE}

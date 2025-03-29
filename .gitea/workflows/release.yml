@@ -1,0 +1,59 @@
+name: CI
+on: [push]
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }} for ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    container: akouzoukos/apotris:latest
+    strategy:
+      matrix:
+        include:
+          # - target: gba
+          #   platform: Game Boy Advance
+          #   cross_file: meson/gba.ini
+          #   build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
+          # - target: switch
+          #   platform: Nintendo Switch
+          #   cross_file: meson/switch.ini
+          #   build_flags: --reconfigure -Db_lto=false --buildtype=release
+          #   env:
+          #     PATH: /usr/bin:/bin:/opt/devkitpro/tools/bin:$PATH
+          # - target: linux
+          #   platform: x86_64
+          #   build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
+          # - target: win64
+          #   platform: MinGW x86_64
+          #   cross_file: meson/mingw.ini
+          #   build_flags: --reconfigure -Db_lto=false --buildtype=release
+          - target: n3ds
+            platform: 3DS
+            cross_file: meson/n3ds.ini
+            build_flags: --reconfigure --buildtype=release
+          # - target: web
+          #   platform: HTML5+JS
+          #   cross_file: meson/emscripten.ini
+          #   build_flags: --reconfigure -Db_lto=false --buildtype=release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Build for ${{ matrix.target }}
+        shell: bash
+        env: ${{ matrix.env }}
+        run: |
+          # Configure build
+          if [[ "${{ matrix.target }}" == "web" ]]; then
+            source "/root/emsdk/emsdk_env.sh"
+            meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} build-web
+            meson compile -C build-web
+          elif [[ "${{ matrix.target }}" == "n3ds" ]]; then
+            meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} build-n3ds
+            meson compile -C build-n3ds 3dsx cia
+          else
+            cross_file_arg=""
+            if [[ -n "${{ matrix.cross_file }}" ]]; then
+              cross_file_arg="--cross-file=${{ matrix.cross_file }}"
+            fi
+            meson setup ${{ matrix.build_flags }} $cross_file_arg build-${{ matrix.target }}
+            meson compile -C build-${{ matrix.target }}
+          fi
