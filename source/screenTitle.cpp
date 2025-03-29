@@ -232,7 +232,7 @@ bool settingsChanged() {
     temp.menuKeys = menuKeys;
 
     int* v1 = (int*)&temp;
-    int* v2 = (int*)&previousSettings;
+    int* v2 = (int*)&*previousSettings;
 
     for (int i = 0; i < (int)sizeof(Settings) / 4; i++) {
         if (v1[i] != v2[i])

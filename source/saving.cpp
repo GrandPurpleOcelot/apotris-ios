@@ -166,6 +166,9 @@ void loadSave() {
         delete temp;
 
         switch (savefile->newGame) {
+        case 0x51:
+            setDefaults(savefile, 7);
+            break;
         case 0x50:
             setDefaults(savefile, 6);
             break;

@@ -416,7 +416,7 @@ bool ColorEditorScene::control() {
                 refresh = true;
                 calculate();
 
-                if (set(-1))
+                if (set(+1))
                     sfx(SFX_SHIFT2);
             }
 
@@ -424,7 +424,7 @@ bool ColorEditorScene::control() {
                 refresh = true;
                 calculate();
 
-                if (set(+1))
+                if (set(-1))
                     sfx(SFX_SHIFT2);
             }
 
