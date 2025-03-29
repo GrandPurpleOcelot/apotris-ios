@@ -358,8 +358,10 @@ bool Game::moveLeft() {
         return true;
     } else {
         pushDir = -1;
-        if (gameMode == CLASSIC)
+        if (gameMode == CLASSIC) {
             das = maxDas;
+            arrCounter = 0;
+        }
         return false;
     }
 }
@@ -382,8 +384,10 @@ bool Game::moveRight() {
         return true;
     } else {
         pushDir = 1;
-        if (gameMode == CLASSIC)
+        if (gameMode == CLASSIC) {
             das = maxDas;
+            arrCounter = 0;
+        }
         return false;
     }
 }
@@ -1605,14 +1609,15 @@ void Game::keyLeft(int dir) {
         return;
     }
 
+    bool moved = false;
     if (left == 0 && dir)
-        moveLeft();
+        moved = moveLeft();
     left = dir;
 
     previousKey = -1;
     dropLockTimer = 0;
 
-    if (gameMode == CLASSIC && dir) {
+    if (gameMode == CLASSIC && dir && moved) {
         das = 0;
         arrCounter = 0;
     }
@@ -1635,14 +1640,15 @@ void Game::keyRight(int dir) {
         return;
     }
 
+    bool moved = false;
     if (right == 0 && dir)
-        moveRight();
+        moved = moveRight();
     right = dir;
 
     previousKey = 1;
     dropLockTimer = 0;
 
-    if (gameMode == CLASSIC && dir) {
+    if (gameMode == CLASSIC && dir && moved) {
         das = 0;
         arrCounter = 0;
     }
