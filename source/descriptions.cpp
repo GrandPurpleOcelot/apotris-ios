@@ -62,8 +62,8 @@ std::string getDescription(std::string element) {
         return "Play a sound affect when you move the falling piece. Initial "
                "only plays a sound for the start of the movement.";
 
-    } else if (element == "Song List") {
-        return "Enable/Disable songs.";
+    } else if (element == "Track List") {
+        return "Enable/Disable tracks.";
 
         // CONTROL
         // -------------------------------------------------------------------------------

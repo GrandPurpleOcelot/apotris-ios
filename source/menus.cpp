@@ -502,6 +502,15 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps,
                 aprints("Replay", 0, 21, 1);
                 aprints("not available", 0, 28, 1);
             }
+        } else if (game->gameMode != TRAINING) {
+            std::string keyString =
+                getStringFromKey(savefile->settings.menuKeys.special3);
+
+            std::transform(keyString.begin(), keyString.end(),
+                           keyString.begin(), ::toupper);
+
+            aprints("Press " + keyString, 0, 21, 2);
+            aprints("to Skip Track", 0, 28, 2);
         }
 
         return;
@@ -792,7 +801,8 @@ int GameScene::pauseMenu() {
                             testBot = new Bot(game);
                         }
 
-                        aprint("Loaded!", 22, 18);
+                        aprint("Loaded!",
+                               22 - (savefile->settings.aspectRatio == 1), 18);
                         sfx(SFX_MENUCONFIRM);
                     } else {
                         sfx(SFX_MENUCANCEL);
@@ -803,7 +813,8 @@ int GameScene::pauseMenu() {
                     quickSave = new Game(game);
                     saveExists = true;
 
-                    aprint(" Saved!", 22, 18);
+                    aprint(" Saved!",
+                           22 - (savefile->settings.aspectRatio == 1), 18);
                     sfx(SFX_MENUCONFIRM);
                 } else if (selection == 2) {
                     sfx(SFX_MENUCONFIRM);
@@ -843,7 +854,17 @@ int GameScene::pauseMenu() {
         }
 
         if (key_hit(k.special3)) {
+#ifndef NO_DIAGNOSE
             qrScene();
+#endif
+            if (game->gameMode != TRAINING) {
+                skipSong = true;
+                std::string trackSkip = "Track Skipped!";
+                naprint(trackSkip,
+                        ((savefile->settings.aspectRatio) ? (240 - 13) : 240) -
+                            getVariableWidth(trackSkip),
+                        18 * 8);
+            }
         }
 
         if (key_hit(k.cancel)) {
