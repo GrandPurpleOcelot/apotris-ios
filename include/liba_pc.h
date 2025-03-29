@@ -273,6 +273,7 @@ INLINE u32 bf_clamp(int x, uint len) {
     return x;
 }
 
+// [min,max)
 INLINE int clamp(int x, int min, int max) {
     return (x >= max) ? (max - 1) : ((x < min) ? min : x);
 }

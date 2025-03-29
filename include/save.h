@@ -222,6 +222,8 @@ typedef struct Skin {
 
 #define MAX_CUSTOM_SKINS 5
 
+#define MAX_CUSTOM_PALETTES 3
+
 typedef struct SaveEntry {
     char name[9];
     bool pro;
@@ -284,6 +286,9 @@ public:
     Skin customSkins[MAX_CUSTOM_SKINS];
 
     u8 platform;
+
+    COLOR customPalettes[MAX_CUSTOM_PALETTES][7][3];
+
     char endTag[9] = "SAVE_END";
 } ALIGN(4);
 

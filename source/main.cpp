@@ -1,8 +1,10 @@
 #include <string>
 
 #include "blockEngine.hpp"
+#include "cmath"
 #include "def.h"
 #include "platform.hpp"
+#include "sceneGraphics.hpp"
 #include "sprites.h"
 
 #ifdef GBA
@@ -31,6 +33,8 @@
 
 #include "font1tiles_bin.h"
 #include "font2tiles_bin.h"
+
+#include "sceneColorEditor.hpp"
 
 using namespace BlockEngine;
 
@@ -563,7 +567,9 @@ std::string nameInput(int place) {
     return result;
 }
 
-void setSkin() {
+void setSkin() { setSkin(0); }
+
+void setSkin(int rotation) {
 
     switch (savefile->settings.skin) {
     case 0:
@@ -676,7 +682,7 @@ void setSkin() {
         else
             n = game->rotationSystem;
 
-        board = getShape(i, 0, n);
+        board = getShape(i, rotation, n);
 
         int iy = 16 * i;
         for (int j = 0; j < 4; j++) {
@@ -769,13 +775,22 @@ void diagnose() {
 }
 
 void setPalette() {
-    int n = (savefile->settings.colors < 2) ? savefile->settings.colors : 0;
+    int n = (savefile->settings.colors < 2 && savefile->settings.colors >= 0)
+                ? savefile->settings.colors
+                : 0;
 
     for (int i = 0; i < 16; i++) {
-
         if (i < 8 && savefile->settings.colors < 2) {
             loadPalette(i, 0, &palette[n][i * 16], 8);
             loadPalette(i + 16, 0, &palette[n][i * 16], 8);
+
+            if (i < 7 && savefile->settings.colors < 0) {
+                int customIndex = -(savefile->settings.colors + 1);
+                loadPalette(i, 1, savefile->customPalettes[customIndex][i], 3);
+                loadPalette(i + 16, 1, savefile->customPalettes[customIndex][i],
+                            3);
+            }
+
         } else if (i < 8) {
             loadPalette(i, 4, &palette[n][i * 16 + 4], 4);
             loadPalette(i + 16, 4, &palette[n][i * 16 + 4], 4);
@@ -798,11 +813,11 @@ void setPalette() {
         loadPalette(8, 0, &palette[n][color * 16], 16);
         loadPalette(8 + 16, 0, &palette[n][color * 16], 16);
 
-        int n = getClassicPalette();
+        int classic = getClassicPalette();
 
         for (int i = 0; i < 8; i++) {
-            loadPalette(i, 1, &nesPalette[n][0], 4);
-            loadPalette(i + 16, 1, &nesPalette[n][0], 4);
+            loadPalette(i, 1, &nesPalette[classic][0], 4);
+            loadPalette(i + 16, 1, &nesPalette[classic][0], 4);
         }
 
     } else if (savefile->settings.colors == 4) {
@@ -818,14 +833,6 @@ void setPalette() {
             setPaletteColor(i + 16, 1, c, 4);
         }
 
-        // if(!savefile->settings.lightMode){
-        //     setPaletteColor(7, 0, 0x7fff, 2);
-        //     setPaletteColor(7+16, 0, 0x7fff, 2);
-        // }else{
-        //     setPaletteColor(7, 0, 0x0421, 2);
-        //     setPaletteColor(7+16, 0, 0x0421, 2);
-        // }
-
     } else if (savefile->settings.colors == 5) {
         for (int i = 0; i < 8; i++) {
             loadPalette(i, 1, &arsPalette[0][i], 4);
@@ -840,21 +847,35 @@ void setPalette() {
             loadPalette(i, 1, &arsPalette[1][i], 4);
             loadPalette(i + 16, 1, &arsPalette[1][i], 4);
         }
+
         // set frame color
         loadPalette(8, 0, &palette[1][color * 16], 16);
         loadPalette(8 + 16, 0, &palette[1][color * 16], 16);
     } else {
+        const int index = clamp(savefile->settings.colors, 0, 3);
+
         // set frame color
-        loadPalette(8, 0, &palette[n][color * 16], 16);
-        loadPalette(8 + 16, 0, &palette[n][color * 16], 16);
+        loadPalette(8, 0, &palette[index][color * 16], 16);
+        loadPalette(8 + 16, 0, &palette[index][color * 16], 16);
+
+        // needs base case to fill all of the colors
+        if (savefile->settings.colors < 0) {
+            COLOR* src =
+                savefile
+                    ->customPalettes[-(savefile->settings.colors + 1)][color];
+
+            // set frame color
+            loadPalette(8, 1, src, 3);
+            loadPalette(8 + 16, 1, src, 3);
+        }
     }
 
     setLightMode();
 
     if (savefile->settings.effects == 2) {
         for (int i = 0; i < 16; i++) {
-            int color = (savefile->settings.lightMode) ? 29 - i : i;
-            setPaletteColor(i, 5, RGB15(color, color, color), 1);
+            int value = (savefile->settings.lightMode) ? 29 - i : i;
+            setPaletteColor(i, 5, RGB15(value, value, value), 1);
         }
     }
 
@@ -1104,11 +1125,11 @@ void setPawnPalette(int dest, int n, int blend, bool flip) {
     dest += 16;
 
     if (savefile->settings.lightMode != flip) {
-        if (savefile->settings.colors == 2)
+        if (savefile->settings.colors == 2) {
             color_fade_palette(dest, 0, (COLOR*)classic_pal_bin, 0x0000, 5,
                                blend);
-        else if (savefile->settings.colors == 3) {
-            int n = getClassicPalette();
+        } else if (savefile->settings.colors == 3) {
+            n = getClassicPalette();
             color_fade_palette(dest, 1, &nesPalette[n][0], 0x0000, 4, blend);
         } else if (savefile->settings.colors == 4) {
             COLOR c;
@@ -1128,10 +1149,20 @@ void setPawnPalette(int dest, int n, int blend, bool flip) {
         } else if (savefile->settings.colors == 6) {
             color_fade_palette(dest, 1, (COLOR*)&arsPalette[1][n], 0x0000, 4,
                                blend);
-        } else
+        } else {
+            const int index =
+                savefile->settings.colors >= 0 ? savefile->settings.colors : 0;
+
+            color_fade_palette(dest, 0, (COLOR*)&palette[index][n * 16], 0x0000,
+                               5, blend);
+        }
+
+        if (savefile->settings.colors < 0) {
             color_fade_palette(
-                dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16],
-                0x0000, 5, blend);
+                dest, 1,
+                savefile->customPalettes[-(savefile->settings.colors + 1)][n],
+                0x0000, 3, blend);
+        }
     } else {
         if (dest == 11 + 16)
             blend = int2fx(blend) >> 5;
@@ -1159,10 +1190,20 @@ void setPawnPalette(int dest, int n, int blend, bool flip) {
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[0][n], 4, blend);
         } else if (savefile->settings.colors == 6) {
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[1][n], 4, blend);
-        } else
+        } else {
+            const int index =
+                savefile->settings.colors >= 0 ? savefile->settings.colors : 0;
+
+            color_adj_brightness(dest, 0, (COLOR*)&palette[index][n * 16], 5,
+                                 blend);
+        }
+
+        if (savefile->settings.colors < 0) {
             color_adj_brightness(
-                dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16], 5,
-                blend);
+                dest, 1,
+                savefile->customPalettes[-(savefile->settings.colors + 1)][n],
+                3, blend);
+        }
     }
 }
 
@@ -1268,4 +1309,98 @@ void genWidths() {
             str = "";
         }
     }
+}
+COLOR hsv2rgb(HSV_COLOR hsv) {
+    return hsv2rgb(hsv.hue, hsv.saturation, hsv.value);
+}
+
+COLOR hsv2rgb(int hue, float saturation, float value) {
+    if (saturation == 0.0f) { // Achromatic (gray)
+        const int gray = (int)(value * 31);
+
+        return RGB15_SAFE(gray, gray, gray);
+    }
+
+    hue = hue % 360;
+    float h_prime = hue / 60.0f;
+    int i = (int)(h_prime);
+    float f = h_prime - i; // fractional part of h_prime
+    float p = value * (1 - saturation);
+    float q = value * (1 - saturation * f);
+    float t = value * (1 - saturation * (1 - f));
+
+    float r = 0, g = 0, b = 0;
+
+    switch (i) {
+    case 0:
+        r = value;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = value;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = value;
+        b = t;
+        break;
+    case 3:
+        r = p;
+        g = q;
+        b = value;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = value;
+        break;
+    case 5:
+        r = value;
+        g = p;
+        b = q;
+        break;
+    }
+
+    return RGB15_SAFE((int)(r * 31), (int)(g * 31), (int)(b * 31));
+}
+
+HSV_COLOR rgb2hsv(int r, int g, int b) {
+    // Normalize RGB values to the range [0, 1]
+    float r_norm = r / 31.0f;
+    float g_norm = g / 31.0f;
+    float b_norm = b / 31.0f;
+
+    float c_max = std::max({r_norm, g_norm, b_norm});
+    float c_min = std::min({r_norm, g_norm, b_norm});
+    float delta = c_max - c_min;
+
+    float h = 0, s = 0, v = c_max;
+
+    if (delta == 0) {
+        h = 0; // Hue is undefined for achromatic colors (black, white, grays)
+    } else {
+        if (c_max == r_norm) {
+            h = 60 * (fmod(((g_norm - b_norm) / delta), 6));
+        } else if (c_max == g_norm) {
+            h = 60 * (((b_norm - r_norm) / delta) + 2);
+        } else if (c_max == b_norm) {
+            h = 60 * (((r_norm - g_norm) / delta) + 4);
+        }
+    }
+
+    if (c_max == 0) {
+        s = 0; // Saturation is 0 when color is black
+    } else {
+        s = delta / c_max;
+    }
+
+    // Ensure hue is non-negative
+    if (h < 0) {
+        h += 360;
+    }
+
+    return HSV_COLOR{(int)h, s, v};
 }

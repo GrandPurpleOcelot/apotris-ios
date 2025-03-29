@@ -5,6 +5,7 @@
 #include "platform.hpp"
 #include "save.h"
 #include "text.h"
+#include <memory>
 
 #define glowDuration 12
 #ifdef GBA
@@ -110,6 +111,7 @@ extern void songListMenu();
 extern void showTitleSprites();
 extern void setLightMode();
 extern void setSkin();
+extern void setSkin(int rotation);
 extern void setDefaultKeys();
 extern void setClearEffect();
 
@@ -179,6 +181,8 @@ extern void updateGrid();
 extern void updateFluid();
 
 extern void addGameStats();
+
+extern void setPreviousSettings(Settings settings);
 
 extern std::string modeToString(BlockEngine::Modes mode);
 
@@ -305,8 +309,9 @@ extern int previous[22][12];
 
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
 
-extern Settings previousSettings;
+extern std::unique_ptr<Settings> previousSettings;
 extern Skin previousSkins[MAX_CUSTOM_SKINS];
+extern COLOR* previousPalette;
 
 extern std::list<std::string> path;
 extern std::string previousElement;
@@ -337,3 +342,14 @@ public:
 
 struct StatusData;
 extern StatusData status;
+
+typedef struct HSV_COLOR {
+    int hue = 0;
+    float saturation = 0;
+    float value = 0;
+} HSV_COLOR;
+
+COLOR hsv2rgb(int h, float s, float v);
+COLOR hsv2rgb(HSV_COLOR hsv);
+
+HSV_COLOR rgb2hsv(int r, int g, int b);

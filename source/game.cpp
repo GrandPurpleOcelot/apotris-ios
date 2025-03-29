@@ -2,7 +2,6 @@
 #include "def.h"
 #include "logging.h"
 #include "menu.h"
-#include "meter1_tiles_bin.h"
 #include "sprites.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -14,8 +13,6 @@
 #endif // GBA
 
 #include "achievementStructure.h"
-#include "classic_pal_bin.h"
-#include "logging.h"
 #include "scene.hpp"
 #include "sceneHandling.hpp"
 #include <posprintf.h>
@@ -419,7 +416,7 @@ void GameScene::checkSounds() {
         holdingSave = true;
 
         if (!savefile->settings.journey)
-            previousSettings = savefile->settings;
+            setPreviousSettings(savefile->settings);
 
         savefile->settings.colors = 4;
         savefile->settings.palette = 7;
@@ -454,7 +451,8 @@ void GameScene::checkSounds() {
 
         sfx(SFX_ZONESTART);
     } else if (game->sounds.zone == 2) {
-        savefile->settings.lightMode = !previousSettings.lightMode;
+        if (previousSettings != nullptr)
+            savefile->settings.lightMode = !previousSettings->lightMode;
 
         setPalette();
         if (savefile->settings.lightMode) {
@@ -485,8 +483,11 @@ void GameScene::checkSounds() {
         savefile->settings.edges = false;
         refreshSkin = true;
     } else if (game->sounds.bone == -1) {
-        savefile->settings.skin = previousSettings.skin;
-        savefile->settings.edges = previousSettings.edges;
+        if (previousSettings != nullptr) {
+            savefile->settings.skin = previousSettings->skin;
+            savefile->settings.edges = previousSettings->edges;
+        }
+
         refreshSkin = true;
     }
 
@@ -2769,7 +2770,9 @@ void resetZonePalette() {
 
     holdingSave = false;
 
-    savefile->settings = previousSettings;
+    if (previousSettings != nullptr)
+        savefile->settings = *previousSettings;
+
     setPalette();
     setClearEffect();
 
@@ -3250,7 +3253,7 @@ void GameScene::init() {
 
     reset();
 
-    previousSettings = savefile->settings;
+    setPreviousSettings(savefile->settings);
 
     // hold frame tiles
     loadSpriteTiles(512, sprite6tiles_bin, 4, 4);
@@ -3555,7 +3558,8 @@ void GameScene::update() {
 void GameScene::deinit() {
     gradient(0);
 
-    savefile->settings = previousSettings;
+    if (previousSettings != nullptr)
+        savefile->settings = *previousSettings;
 
     setPalette();
 
