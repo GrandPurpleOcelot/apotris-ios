@@ -1500,6 +1500,12 @@ int GameScene::endScreenSetup() {
 
     showScore();
 
+    if (savefile->settings.skin >= 1000 && previousSettings != nullptr) {
+        savefile->settings.skin = previousSettings->skin;
+        savefile->settings.edges = previousSettings->edges;
+        setSkin();
+    }
+
     if (!replaying) {
         savefile->stats.gamesCompleted++;
         if (game->lost)
