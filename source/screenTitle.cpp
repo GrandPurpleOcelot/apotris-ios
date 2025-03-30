@@ -271,7 +271,7 @@ void TitleScene::init() {
     wordSprites[0].setText("Press Any");
     wordSprites[1].setText("Button");
 
-    versionText.setText("v4.0.2");
+    versionText.setText("v" APOTRIS_VERSION);
 
     nameText.setText("akouzoukos");
 

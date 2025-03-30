@@ -11,9 +11,10 @@ def main():
     nacptool_path = sys.argv[2]
     icon_path = sys.argv[3]
     output_binary = sys.argv[4]
+    version = sys.argv[5]
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        args = [nacptool_path, "--create", "Apotris", "akouzoukos", "v4.0.2", os.path.join(temp_dir, 'control.nacp')]
+        args = [nacptool_path, "--create", "Apotris", "akouzoukos", "v" + version, os.path.join(temp_dir, 'control.nacp')]
         return_code = subprocess.run(args)
 
         if return_code.returncode != 0:
