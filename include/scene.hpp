@@ -328,11 +328,13 @@ public:
     void update();
     bool control();
     void init();
-    void deinit() {};
+    void deinit();
 
     ConfirmSaveScene(int type) { this->type = type; }
 
     Scene* previousScene() { return new MainMenuScene(); };
+
+    ~ConfirmSaveScene() { deinit(); };
 };
 
 class ConfirmEmuScene : public Scene {
