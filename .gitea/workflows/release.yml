@@ -206,7 +206,7 @@ jobs:
     name: Deploy to Discord
     needs: package # Still depends on package finishing
     runs-on: ubuntu-latest
-    if: always() # Still runs regardless of package status
+    if: always() && github.ref == 'refs/heads/main'
     steps:
       - name: Download packaged distributions artifact
         uses: actions/download-artifact@v3
@@ -247,14 +247,14 @@ jobs:
           for file in "${files[@]}"; do
             echo "Sending $file to Discord..."
             # Construct the message content
-            message_content="📦 Apotris Artifact: \`$file\` (Commit: ${COMMIT_SHA_SHORT::7})"
+            message_content=""
 
             # Use curl to send multipart/form-data
             # -F sends form data parts
             # payload_json contains the regular message content/embeds
             # file1=@<filename> attaches the file (Discord reads keys like file1, file2...)
             curl -X POST \
-                 -F "payload_json={\"content\":\"$message_content\"}" \
+                 -F "payload_json={\"content\":\"$message_content\", \"username\":\"Automatic Builds\", \"avatar_url\":\"https://apotrisstorage.blob.core.windows.net/assets/icon.png\"}" \
                  -F "file1=@\"$file\"" \
                  "$DISCORD_WEBHOOK_URL"
 
