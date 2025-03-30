@@ -513,6 +513,13 @@ bool ConfirmSaveScene::control() {
     return false;
 }
 
+void ConfirmSaveScene::deinit() {
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
+}
+
 void ConfirmEmuScene::init() {
     clearSprites(128);
     showSprites(128);
