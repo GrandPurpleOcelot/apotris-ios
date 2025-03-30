@@ -1,5 +1,7 @@
 #pragma once
 
+#include "version.h"
+
 #include "blockEngine.hpp"
 #include "menu.h"
 #include "platform.hpp"

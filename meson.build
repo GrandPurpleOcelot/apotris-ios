@@ -68,6 +68,15 @@ sources = files(
     src_dir / 'gles2.c',
 )
 
+# Generate version header
+configure_file(
+    input : 'include/version.h.in',
+    output : 'version.h',
+    configuration : {
+        'version': meson.project_version(),
+    },
+)
+
 # Bring in binary/data files
 subdir(data_dir)
 
@@ -336,7 +345,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             'Build romfs and final NRO for Apotris on Nintendo Switch',
             output : 'Apotris.nro',
             command : [
-                py3, call_build_rom, elf2nro, nacptool, icon_file, binary
+                py3, call_build_rom, elf2nro, nacptool, icon_file, binary, meson.project_version()
             ],
             depends : binary,
             build_by_default : true,
