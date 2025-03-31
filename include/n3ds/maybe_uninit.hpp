@@ -11,8 +11,8 @@ template <typename T> class MaybeUninit {
     union Storage {
         T value;
 
-        constexpr Storage() {};
-        ~Storage() {};
+        constexpr Storage(){};
+        ~Storage(){};
     };
     Storage storage;
 #ifndef NDEBUG
