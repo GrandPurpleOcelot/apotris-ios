@@ -600,6 +600,7 @@ void sfxRate(int n, float playback_rate) {
             fprintf(stderr,
                     " No free channel left for sfx %d, replacing channel %d\n",
                     n, *use_ch_it);
+            ndspChnWaveBufClear(*use_ch_it);
         }
         int use_ch = *use_ch_it;
         sfx_use_order.splice(sfx_use_order.cend(), sfx_use_order, use_ch_it);
