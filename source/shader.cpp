@@ -138,6 +138,8 @@ uint getShader(int index) {
 bool inited = false;
 
 void initShaders(SDL_Window* window, int index) {
+    shaderContext = SDL_GL_CreateContext(window);
+
     if (!inited) {
         inited = true;
 
@@ -151,8 +153,6 @@ void initShaders(SDL_Window* window, int index) {
                GLAD_VERSION_MINOR(version));
         ;
     }
-
-    shaderContext = SDL_GL_CreateContext(window);
 
     glViewport(0, 0, width, height);
 
