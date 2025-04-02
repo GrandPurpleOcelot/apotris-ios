@@ -88,6 +88,7 @@ cd build-n3ds && \
 mkdir -p 3ds/Apotris/ && \
 cp -r assets 3ds/Apotris/ && \
 rm -f 3ds/Apotris/assets/meson.build 3ds/Apotris/assets/favicon32.bmp && \
+rm -rf 3ds/Apotris/assets/shaders && \
 cp -r ../license-n3ds 3ds/Apotris/license && \
 cp Apotris.3dsx 3ds/Apotris/ && \
 cp Apotris.cia 3ds/Apotris/ && \
