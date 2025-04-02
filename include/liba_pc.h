@@ -294,3 +294,13 @@ extern u16 gradientTable[SCREEN_HEIGHT + 1];
 extern void setSpriteMaskRegion(int shift);
 
 #define UNBOUND -2
+
+enum class ShaderStatus {
+    NOT_INITED,
+    NO_GL,
+    NO_SHADER_FILES,
+    SHADER_FILE_ERROR,
+    OK,
+};
+
+extern ShaderStatus shaderStatus;

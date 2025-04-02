@@ -56,6 +56,8 @@ InputType lastInputType = InputType::KEYBOARD;
 
 nanotime_step_data stepper;
 
+ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
+
 #define DEADZONE 12000
 
 int KEY_A = (SDL_CONTROLLER_BUTTON_A << 16) | packKey(SDLK_RETURN);
@@ -264,7 +266,7 @@ void updateWindow(uint8_t* framebuffer) {
         return;
     }
 
-    if (savefile->settings.shaders == 0) {
+    if (shaderStatus != ShaderStatus::OK || savefile->settings.shaders == 0) {
         // Create the streaming texture once
         if (texture == NULL) {
             texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888,
