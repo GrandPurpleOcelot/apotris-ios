@@ -13,6 +13,7 @@ src_dir = 'source'
 inc_dir = 'include'
 data_dir = 'data'
 audio_dir = 'assets'
+shaders_dir = 'assets/shaders'
 
 # Include directories
 includes = [
@@ -182,6 +183,7 @@ add_project_arguments('-Wno-shadow', language : ['c', 'cpp'])
 add_project_arguments('-Wno-unused', language : ['c', 'cpp'])
 
 subdir('assets')
+subdir('assets/shaders')
 
 if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
     #############################
@@ -369,6 +371,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             install_subdir('license', install_dir : 'Contents/Resources')
         else
             install_subdir(audio_dir, install_dir : '.')
+            install_subdir(shaders_dir, install_dir : '.')
             install_subdir('license', install_dir : '.')
         endif
     endif
