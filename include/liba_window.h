@@ -45,6 +45,8 @@ extern uint32_t key_first();
 extern void setKey(int&, uint32_t);
 extern void unbindDuplicateKey(int&, uint32_t);
 
+extern int splitKey(uint32_t key);
+
 extern int rowStart;
 extern int rowEnd;
 

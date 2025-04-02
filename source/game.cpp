@@ -29,7 +29,7 @@ void drawGrid();
 void progressBar(int layer);
 void showBar(int, int, int, int, int);
 void showBestMove();
-bool checkDiagonal(int);
+bool checkDiagonal(uint32_t);
 void showSpeedMeter(int);
 void hideMinos();
 void disappear();
@@ -2414,10 +2414,18 @@ void showBestMove() {
     }
 }
 
-bool checkDiagonal(int key) {
+bool checkDiagonal(uint32_t key) {
     if ((!savefile->settings.diagonalType || game->rotationSystem == NRS) &&
         game->rotationSystem != ARS)
         return false;
+
+#if PC
+    return (
+        (splitKey(key) == splitKey(KEY_DOWN) ||
+         splitKey(key) == splitKey(KEY_UP)) &&
+        (key_is_down(splitKey(KEY_LEFT)) || key_is_down(splitKey(KEY_RIGHT))));
+#endif // PC
+
     return ((key == (KEY_DOWN) || key == (KEY_UP)) &&
             (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)));
 }
@@ -3097,14 +3105,22 @@ const Function gameFunctions[9] = {
 
 Function getActionFromKey(int key) {
     int* keys = (int*)&savefile->settings.keys;
-
     int k = 0;
     for (int i = 0; i < 9; i++) {
+#ifndef PC
         if (keys[i] == key) {
             k = i;
             break;
         }
+#else
+        if (splitKey(keys[i]) == (splitKey(key))) {
+            k = i;
+            break;
+        }
+#endif // PC
     }
+
+    std::string text = std::to_string(key) + " " + std::to_string(k);
 
     return gameFunctions[k];
 }
