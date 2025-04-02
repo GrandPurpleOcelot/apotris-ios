@@ -1,6 +1,9 @@
 shader_files = files(
     'crt-lottes.glsl',
     'crt-pi.glsl',
+    'retro-v2.glsl',
+    'sameboy-lcd.glsl',
+    'zfast_lcd.glsl',
 )
 
 fs = import('fs')
