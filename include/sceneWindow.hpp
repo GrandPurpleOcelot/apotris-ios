@@ -245,6 +245,9 @@ public:
     std::string getLabel() override { return "Shaders"; }
 
     std::string getCursor(std::string text) override {
+        if (savefile->settings.shaders != 0 && shaderStatus != ShaderStatus::OK)
+            return "<" + text;
+
         std::string result;
 
         if (savefile->settings.shaders > min)
@@ -261,6 +264,12 @@ public:
     }
 
     void action(int dir) override {
+        if (dir > 0 && savefile->settings.shaders != 0 &&
+            shaderStatus != ShaderStatus::OK) {
+            sfx(SFX_MENUCANCEL);
+            return;
+        }
+
         if (dir > 0) {
             if (savefile->settings.shaders < max) {
                 savefile->settings.shaders++;
@@ -290,6 +299,21 @@ public:
     }
 
     std::string getCurrentOption() override {
+        if (savefile->settings.shaders != 0) {
+            switch (shaderStatus) {
+            case ShaderStatus::NOT_INITED:
+                break;
+            case ShaderStatus::NO_GL:
+                return "NO GL";
+            case ShaderStatus::NO_SHADER_FILES:
+                return "NONE";
+            case ShaderStatus::SHADER_FILE_ERROR:
+                return "ERROR";
+            case ShaderStatus::OK:
+                break;
+            }
+        }
+
         if (savefile->settings.shaders) {
             std::stringstream shaderPath;
             shaderPath << shaders.at(savefile->settings.shaders - 1);
@@ -354,7 +378,8 @@ public:
     void draw() {
         if (previousAspectRatio != savefile->settings.aspectRatio) {
             previousAspectRatio = savefile->settings.aspectRatio;
-            // HACK: Redraw the path to make it match the aspect ratio.
+            // HACK: Redraw the path to make it match the aspect
+            // ratio.
             showPath();
             // Clear the FPS text region:
             aprintClearArea(30 - 5 - 2, 0, 5 + 2, 1);

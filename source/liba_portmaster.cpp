@@ -63,6 +63,8 @@ float windowScale = 3;
 
 nanotime_step_data stepper;
 
+ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
+
 void windowInit() {
     // Initialize SDL
     window = NULL;
@@ -197,8 +199,7 @@ void updateWindow(uint8_t* framebuffer) {
         return;
     }
 
-    if (!savefile->settings.shaders) {
-
+    if (shaderStatus != ShaderStatus::OK || savefile->settings.shaders == 0) {
         // Create the streaming texture once
         if (texture == NULL) {
             texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888,

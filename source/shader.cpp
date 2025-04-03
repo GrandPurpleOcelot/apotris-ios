@@ -20,8 +20,6 @@
 #include <string>
 #include <vector>
 
-std::string shaderPath = "";
-
 int width = 0;
 int height = 0;
 float scale = 0;
@@ -36,6 +34,7 @@ float vertices[] = {
     -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, // bottom left
     -1.0f, 1.0f,  0.0f, 0.0f, 0.0f, // top left
 };
+
 uint indices[] = {
     // note that we start from 0!
     0, 1, 3, // first triangle
@@ -103,11 +102,14 @@ uint loadShaderFromFile(std::string path, int type) {
     return shader;
 }
 
-uint getShader(int index) {
+int getShader(int index) {
     std::vector<std::string> shaders = findShaders();
 
+    if (shaders.size() == 0)
+        return -2;
+
     if (index <= 0 || index > (int)shaders.size()) {
-        index = 1;
+        return -1;
     }
 
     std::string shaderFile = shaders.at(index - 1);
@@ -135,12 +137,10 @@ uint getShader(int index) {
     return program;
 }
 
-bool inited = false;
-
 void initShaders(SDL_Window* window, int index) {
-    if (!inited) {
-        inited = true;
+    shaderContext = SDL_GL_CreateContext(window);
 
+    if (shaderStatus == ShaderStatus::NOT_INITED) {
 #ifdef PC
         int version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
 #else
@@ -150,27 +150,45 @@ void initShaders(SDL_Window* window, int index) {
         printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version),
                GLAD_VERSION_MINOR(version));
         ;
-    }
 
-    shaderContext = SDL_GL_CreateContext(window);
+        if (version == 0) {
+            shaderStatus = ShaderStatus::NO_GL;
+            return;
+        }
+    }
 
     glViewport(0, 0, width, height);
 
     shaderProgram = getShader(index);
 
+    if (shaderProgram < 0) {
+        shaderStatus = ShaderStatus::NO_SHADER_FILES;
+        return;
+    }
+
     int res_out = glGetUniformLocation(shaderProgram, "OutputSize");
-    if (res_out == -1)
+    if (res_out == -1) {
         log("ERROR: OutputSize");
+        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+    }
+
     glUniform2f(res_out, (float)width, (float)height);
 
     int res_in = glGetUniformLocation(shaderProgram, "InputSize");
-    if (res_in == -1)
+    if (res_in == -1) {
+
         log("ERROR: InputSize");
+        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+    }
+
     glUniform2f(res_in, (float)width, (float)height);
 
     int res_tex = glGetUniformLocation(shaderProgram, "TextureSize");
-    if (res_tex == -1)
+    if (res_tex == -1) {
         log("ERROR: TextureSize");
+        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+    }
+
     glUniform2f(res_tex, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
 
     glUseProgram(shaderProgram);
@@ -178,6 +196,7 @@ void initShaders(SDL_Window* window, int index) {
     glGenBuffers(1, &vbo);
     glGenBuffers(1, &ebo);
     glGenVertexArrays(1, &vao);
+    glGenTextures(1, &shaderTexture);
 
     glBindVertexArray(vao);
 
@@ -189,15 +208,21 @@ void initShaders(SDL_Window* window, int index) {
                  GL_STATIC_DRAW);
 
     int position = glGetAttribLocation(shaderProgram, "VertexCoord");
-    if (position == -1)
+    if (position == -1) {
         log("ERROR: position");
+        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+    }
+
     glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                           (void*)0);
     glEnableVertexAttribArray(position);
 
     int texCoord = glGetAttribLocation(shaderProgram, "TexCoord");
-    if (texCoord == -1)
+    if (texCoord == -1) {
         log("ERROR: texcoord");
+        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+    }
+
     glVertexAttribPointer(texCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                           (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(texCoord);
@@ -205,17 +230,24 @@ void initShaders(SDL_Window* window, int index) {
     glm::mat4 def = glm::mat4();
     unsigned int transformLoc =
         glGetUniformLocation(shaderProgram, "MVPMatrix");
-    if (transformLoc == -1)
+    if (transformLoc == -1) {
         log("ERROR: MVP");
+        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+    }
+
+    // if (shaderStatus == ShaderStatus::SHADER_FILE_ERROR)
+    //     return;
+
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(def));
 
-    glGenTextures(1, &shaderTexture);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, shaderTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    shaderStatus = ShaderStatus::OK;
 }
 
 void drawWithShaders(SDL_Window* window, SDL_Surface* img,
@@ -240,13 +272,20 @@ void drawWithShaders(SDL_Window* window, SDL_Surface* img,
 }
 
 void freeShaders() {
+    if (shaderStatus == ShaderStatus::NOT_INITED)
+        return;
+    SDL_GL_DeleteContext(shaderContext);
+
+    shaderStatus = ShaderStatus::NOT_INITED;
+    if ((int)shaderStatus <= (int)ShaderStatus::NO_SHADER_FILES) {
+        return;
+    }
+
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
     glDeleteTextures(1, &shaderTexture);
     glDeleteProgram(shaderProgram);
-
-    SDL_GL_DeleteContext(shaderContext);
 }
 
 void refreshShaderResolution(int w, int h, float s) {
@@ -290,9 +329,9 @@ static bool hasSuffix(const std::string& s, const std::string& suffix) {
 }
 
 std::vector<std::string> findShaders() {
-    std::string path = shaderPath + "assets/shaders";
+    std::string shaderPath = "assets/shaders";
 
-    DIR* dir = opendir(path.c_str());
+    DIR* dir = opendir(shaderPath.c_str());
     if (!dir) {
         log("couldn't open dir");
         return {};
@@ -303,7 +342,7 @@ std::vector<std::string> findShaders() {
     dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         if (hasSuffix(entry->d_name, ".glsl")) {
-            shaderPaths.push_back(path + "/" + entry->d_name);
+            shaderPaths.push_back(shaderPath + "/" + entry->d_name);
         }
     }
 
