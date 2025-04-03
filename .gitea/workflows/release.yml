@@ -226,8 +226,8 @@ jobs:
           path: Apotris-*.zip # Upload all zip files now in the root
 
   deploy:
-    name: Deploy to Discord
-    needs: package # Still depends on package finishing
+    name: Deploy to Blob Storage & Notify Discord
+    needs: package # Depends on package finishing
     runs-on: ubuntu-latest
     if: always() && github.ref == 'refs/heads/main'
     steps:
@@ -235,76 +235,157 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packaged-distributions # Download the artifact collection
-        # Optional: Allow continuing if artifact download fails or is empty
-        continue-on-error: true
+        continue-on-error: true # Allow continuing if download fails
 
       - name: Check for zip files
         id: check_files
         run: |
-          # Check if any .zip files exist in the current directory
-          if ls *.zip > /dev/null 2>&1; then
+          # Ensure glob expands to nothing if no match
+          shopt -s nullglob
+          files=(*.zip)
+          if [ ${#files[@]} -gt 0 ]; then
             echo "files_exist=true" >> $GITHUB_OUTPUT
+            echo "Found ${#files[@]} zip file(s)."
+            ls -l *.zip # List files for logging
           else
             echo "files_exist=false" >> $GITHUB_OUTPUT
+            echo "No zip files found after download."
           fi
 
-      - name: Send Individual Zip Files to Discord
+      - name: Install Azure CLI
         if: steps.check_files.outputs.files_exist == 'true'
-        env:
-          # Pass the webhook URL as an environment variable for curl
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          COMMIT_SHA_SHORT: ${{ github.sha }} # Get commit sha
+        run: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Define Upload Variables
+        if: steps.check_files.outputs.files_exist == 'true'
+        id: vars
         run: |
-          # Ensure glob expands to nothing if no match, prevents errors
+          echo "UPLOAD_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          echo "COMMIT_HASH_SHORT=${{ github.sha::7 }}" >> $GITHUB_OUTPUT
+          echo "BLOB_FOLDER=$(date +'%Y-%m-%d')-${{ github.sha::7 }}" >> $GITHUB_OUTPUT
+          echo "Generated blob folder: $(date +'%Y-%m-%d')-${{ github.sha::7 }}"
+
+      - name: Upload Zip Files to Azure Blob Storage
+        if: steps.check_files.outputs.files_exist == 'true'
+        id: upload
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          AZURE_STORAGE_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
+          AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+          BLOB_FOLDER: ${{ steps.vars.outputs.BLOB_FOLDER }}
+        run: |
           shopt -s nullglob
-          files=(*.zip) # Create array of zip files
+          files=(*.zip)
+          uploaded_urls="" # Initialize empty string for URLs
 
           if [ ${#files[@]} -eq 0 ]; then
-            echo "No zip files found to send."
-            exit 0 # Exit cleanly, shouldn't happen if 'if' condition is working
+            echo "No zip files found to upload."
+            exit 0
           fi
 
-          echo "Found ${#files[@]} zip file(s) to send."
+          echo "Uploading files to container '$AZURE_STORAGE_CONTAINER_NAME' in folder '$BLOB_FOLDER'..."
 
-          # Loop through each zip file found
           for file in "${files[@]}"; do
-            echo "Sending $file to Discord..."
-            # Construct the message content
-            message_content=""
+            blob_name="$BLOB_FOLDER/$file"
+            echo "Uploading $file as $blob_name..."
+            az storage blob upload \
+              --account-name "$AZURE_STORAGE_ACCOUNT_NAME" \
+              --container-name "$AZURE_STORAGE_CONTAINER_NAME" \
+              --name "$blob_name" \
+              --file "$file" \
+              --connection-string "$AZURE_STORAGE_CONNECTION_STRING" \
+              --overwrite true
 
-            # Use curl to send multipart/form-data
-            # -F sends form data parts
-            # payload_json contains the regular message content/embeds
-            # file1=@<filename> attaches the file (Discord reads keys like file1, file2...)
-            curl -X POST \
-                 -F "payload_json={\"content\":\"$message_content\", \"username\":\"Automatic Builds\", \"avatar_url\":\"https://apotrisstorage.blob.core.windows.net/assets/icon.png\"}" \
-                 -F "file1=@\"$file\"" \
-                 "$DISCORD_WEBHOOK_URL"
-
-            # Check curl exit code (optional but recommended)
             if [ $? -ne 0 ]; then
-              echo "Error sending $file via curl."
-              # Decide if you want to continue or fail the step
-              # exit 1 # Fail the step on first error
-            else
-              echo "$file sent successfully."
+              echo "::error::Failed to upload $file"
+              # Decide if you want to continue or fail:
+              # exit 1 # Fail immediately
+              continue # Continue uploading others
             fi
-            # Optional: Add a small delay between messages if needed
-            # sleep 1
+
+            # Get the URL of the uploaded blob
+            # Note: Ensure the container has public access configured if needed,
+            # or use SAS tokens for temporary access. This gets the standard URL.
+            blob_url=$(az storage blob url \
+              --account-name "$AZURE_STORAGE_ACCOUNT_NAME" \
+              --container-name "$AZURE_STORAGE_CONTAINER_NAME" \
+              --name "$blob_name" \
+              --connection-string "$AZURE_STORAGE_CONNECTION_STRING" \
+              --output tsv)
+
+             if [ $? -eq 0 ] && [ -n "$blob_url" ]; then
+               echo "Successfully uploaded $file to $blob_url"
+               # Append URL and filename with a newline for the Discord message
+               uploaded_urls="$uploaded_urls- [$file]($blob_url)\n"
+             else
+               echo "::warning::Could not retrieve URL for $blob_name"
+               uploaded_urls="$uploaded_urls- $file (Upload succeeded, URL retrieval failed)\n"
+             fi
+             # Optional: Add a small delay if needed
+             # sleep 1
           done
 
-      - name: Notify Build Failed (No Zips)
-        if: steps.check_files.outputs.files_exist == 'false'
+          # Set the output for the next step, escaping newlines for multiline string
+          echo "uploaded_urls<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$uploaded_urls" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Send Links to Discord
+        if: steps.check_files.outputs.files_exist == 'true' && steps.upload.outputs.uploaded_urls != ''
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          COMMIT_SHA_SHORT: ${{ github.sha }}
+          COMMIT_HASH_SHORT: ${{ steps.vars.outputs.COMMIT_HASH_SHORT }}
+          UPLOAD_DATE: ${{ steps.vars.outputs.UPLOAD_DATE }}
+          UPLOADED_URLS: ${{ steps.upload.outputs.uploaded_urls }}
         run: |
-          echo "No zip files found. Sending failure notification."
-          # Use curl to send a simple JSON message (no file attachment)
+          # Construct the main message body with the list of URLs
+          message_content="✅ Apotris builds for commit \`${COMMIT_HASH_SHORT}\` uploaded on ${UPLOAD_DATE}:\n${UPLOADED_URLS}"
+
+          # Ensure the message isn't too long for Discord (max 2000 chars)
+          # This is a basic check; more robust truncation might be needed
+          if [ ${#message_content} -gt 1900 ]; then
+            message_content="${message_content:0:1900}...\n(Message truncated)"
+          fi
+
+          # Escape JSON special characters in the message content (simple approach)
+          escaped_content=$(echo "$message_content" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+
+          # Construct the JSON payload
+          json_payload="{\"content\":\"$escaped_content\", \"username\":\"Automatic Builds\", \"avatar_url\":\"https://apotrisstorage.blob.core.windows.net/assets/icon.png\"}"
+
+          echo "Sending notification to Discord..."
+          # Use curl to send the JSON payload
           curl -H "Content-Type: application/json" -X POST \
-               -d "{\"content\":\"❌ Apotris build process completed (Commit: ${COMMIT_SHA_SHORT::7}), but no packages were successfully created.\"}" \
+               -d "$json_payload" \
+               "$DISCORD_WEBHOOK_URL"
+
+          if [ $? -ne 0 ]; then
+             echo "::error::Error sending success notification via curl."
+             # exit 1 # Optionally fail
+          else
+             echo "Success notification sent."
+          fi
+
+      - name: Notify Build Failed or No Zips Found
+        # Trigger if files didn't exist OR if they existed but the upload step produced no URLs (e.g., all uploads failed)
+        if: steps.check_files.outputs.files_exist == 'false' || (steps.check_files.outputs.files_exist == 'true' && steps.upload.outputs.uploaded_urls == '')
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.INFO_WEBHOOK_URL }}
+          COMMIT_HASH_SHORT: ${{ github.sha::7 }} # Use github.sha directly here as steps.vars might not run
+        run: |
+          failure_reason="No packages were successfully created or uploaded."
+          if [ "${{ steps.check_files.outputs.files_exist }}" == 'false' ]; then
+            failure_reason="Build process completed, but no packages were found to upload."
+          elif [ "${{ steps.upload.outputs.uploaded_urls }}" == '' ]; then
+            failure_reason="Build process completed and packages were found, but all uploads failed or URL retrieval failed."
+          fi
+
+          echo "$failure_reason Sending failure notification."
+          # Use curl to send a simple JSON message
+          curl -H "Content-Type: application/json" -X POST \
+               -d "{\"content\":\"❌ Apotris build process (Commit: ${COMMIT_HASH_SHORT}) failed: ${failure_reason}\", \"username\":\"Automatic Builds\", \"avatar_url\":\"https://apotrisstorage.blob.core.windows.net/assets/icon.png\"}" \
                "$DISCORD_WEBHOOK_URL"
           if [ $? -ne 0 ]; then
-             echo "Error sending failure notification via curl."
+             echo "::error::Error sending failure notification via curl."
              # exit 1 # Optionally fail
           fi
