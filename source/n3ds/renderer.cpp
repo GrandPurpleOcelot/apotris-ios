@@ -1067,14 +1067,18 @@ void renderer_imgui_debug_1(DebugOptions& debug_opt,
 }
 #endif
 
-#include "n3ds_vshader.shbin.h"
+#include "n3ds_shader.dvle.h"
+#include "n3ds_shader.shbin.h"
 
 inline RendererN3ds::ShaderInit::ShaderInit() noexcept
-    : m_shader_binary{(const u32*)n3ds_vshader_shbin, n3ds_vshader_shbin_size},
-      m_program_sprite{m_shader_binary, 0}, m_program_bg{m_shader_binary, 1},
-      m_program_bg_mosaic_tex{m_shader_binary, 3},
-      m_program_gradient{m_shader_binary, 2},
-      m_program_simple_tex{m_shader_binary, 4} {
+    : m_shader_binary{(const u32*)n3ds_shader_shbin, n3ds_shader_shbin_size},
+      m_program_sprite{m_shader_binary, N3DS_SHADER_DVLE_SHADER_SPRITE_V},
+      m_program_bg{m_shader_binary, N3DS_SHADER_DVLE_SHADER_BG_V},
+      m_program_bg_mosaic_tex{m_shader_binary,
+                              N3DS_SHADER_DVLE_SHADER_BG_MOSAIC_TEX_V},
+      m_program_gradient{m_shader_binary, N3DS_SHADER_DVLE_SHADER_GRADIENT_V},
+      m_program_simple_tex{m_shader_binary,
+                           N3DS_SHADER_DVLE_SHADER_SIMPLE_TEX_V} {
 
     // Get the location of the uniforms
     cr::uLoc_projection =
