@@ -445,6 +445,7 @@ elif host_machine.system() == 'n3ds'
         input : [
             src_dir / 'n3ds/shader_sprite.v.pica',
             src_dir / 'n3ds/shader_bg.v.pica',
+            src_dir / 'n3ds/shader_bg.g.pica',
             src_dir / 'n3ds/shader_gradient.v.pica',
             src_dir / 'n3ds/shader_bg_mosaic_tex.v.pica',
             src_dir / 'n3ds/shader_simple_tex.v.pica',

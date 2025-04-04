@@ -398,11 +398,7 @@ struct BgVertexConst {
     struct VertXY {
         s16 x;
         s16 y;
-    } pos; // x, y positioned by the tile corners
-    struct VertUV {
-        s8 u;
-        s8 v;
-    } uv; // Texture UV simply using 0, 1 (-1 for y) with top-left corner origin
+    } pos; // x, y top-left corner
 };
 
 struct BgVertexVar {
@@ -415,9 +411,7 @@ struct BgVertexVar {
     } flip;
 };
 
-constexpr size_t BG_LAYER_VERTEX_COUNT =
-    BG_NUM_TILES_W * BG_NUM_TILES_H * 2 * 3;
-constexpr size_t BG_VERTEX_COUNT = BG_LAYER_VERTEX_COUNT * tng::BG_LAYERS_COUNT;
+constexpr size_t BG_LAYER_TILES_COUNT = BG_NUM_TILES_W * BG_NUM_TILES_H;
 
 using CharKey = s32;
 constexpr CharKey CHARKEY_NULL = -1;
@@ -441,6 +435,7 @@ class BGRender {
     BGRender& operator=(BGRender&&) = delete;
 
     ctru::shader::Program m_program;
+    int m_uLoc_gsh_projection;
 
     C3D_AttrInfo m_attr_info;
     C3D_BufInfo m_buf_info;
@@ -455,13 +450,12 @@ class BGRender {
         init_char_sheet_tex(), init_char_sheet_tex(), init_char_sheet_tex(),
         init_char_sheet_tex()};
 
-    // TODO: worth allocating on VRAM?
     ctru::linear::ptr<BgVertexConst[]> m_vbo_data_const{
         ctru::linear::make_ptr_nothrow_for_overwrite<BgVertexConst[]>(
-            BG_VERTEX_COUNT)};
+            BG_LAYER_TILES_COUNT * tng::BG_LAYERS_COUNT)};
     ctru::linear::ptr<BgVertexVar[]> m_vbo_data_var{
         ctru::linear::make_ptr_nothrow_for_overwrite<BgVertexVar[]>(
-            BG_VERTEX_COUNT)};
+            BG_LAYER_TILES_COUNT * tng::BG_LAYERS_COUNT)};
 
     static inline c3d::Tex init_char_sheet_tex() {
         c3d::Tex tex{BG_NUM_TILES_W * 8, BG_NUM_TILES_H * 8, GPU_RGBA5551};
@@ -480,7 +474,9 @@ class BGRender {
 
 public:
     explicit inline BGRender(ctru::shader::Program program) noexcept
-        : m_program{std::move(program)} {
+        : m_program{std::move(program)},
+          m_uLoc_gsh_projection{
+              shaderInstanceGetUniformLocation(m_program.gsh(), "projection")} {
         for (auto& slot : m_char_slot_arrays) {
             slot.fill(CHARKEY_NULL);
         }
@@ -496,6 +492,8 @@ public:
         return m_char_slot_arrays[layer][slot];
     }
 
+    constexpr int uLoc_gsh_projection() const { return m_uLoc_gsh_projection; }
+
     void prep_charsheet() noexcept;
     void prep_vbo() noexcept;
     void draw_bg(int layer_idx, bool drawing_mosaic_tex) noexcept;
@@ -508,27 +506,11 @@ inline void BGRender::init_bg_vbo() {
 
     // Configure attributes for use with the vertex shader
     AttrInfo_Init(&m_attr_info);
-    AttrInfo_AddLoader(&m_attr_info, 0, GPU_SHORT, 2); // v0=pos
-    AttrInfo_AddLoader(&m_attr_info, 1, GPU_BYTE, 2);  // v1=uv
-    AttrInfo_AddLoader(&m_attr_info, 2, GPU_SHORT, 1); // v2=char_slot
-    AttrInfo_AddLoader(&m_attr_info, 3, GPU_BYTE, 2);  // v3=flip(x/y)
+    AttrInfo_AddLoader(&m_attr_info, 0, GPU_SHORT, 2); // v0=pos_topleft
+    AttrInfo_AddLoader(&m_attr_info, 1, GPU_SHORT, 1); // v1=char_slot
+    AttrInfo_AddLoader(&m_attr_info, 2, GPU_BYTE, 2);  // v2=flip(x/y)
     AttrInfo_AddFixed(&m_attr_info,
-                      4); // v4=layer_props (xy = layer top-left)
-
-    const auto add_quad_bg = [](BgVertexConst* vbo, s16 x, s16 y, s16 w, s16 h,
-                                s8 u0, s8 u1, s8 v0, s8 v1) -> size_t {
-        const s16 l = x;
-        const s16 t = y;
-        const s16 r = x + w;
-        const s16 b = y + h;
-        vbo[0] = {{l, t}, {u0, v0}};
-        vbo[1] = {{l, b}, {u0, v1}};
-        vbo[2] = {{r, b}, {u1, v1}};
-        vbo[3] = {{l, t}, {u0, v0}};
-        vbo[4] = {{r, b}, {u1, v1}};
-        vbo[5] = {{r, t}, {u1, v0}};
-        return 6;
-    };
+                      3); // v3=layer_props (xy = layer top-left)
 
     size_t vi = 0;
     for (size_t layer_idx = 0; layer_idx < tng::BG_LAYERS_COUNT; layer_idx++) {
@@ -536,24 +518,18 @@ inline void BGRender::init_bg_vbo() {
             for (size_t i = 0; i < BG_NUM_TILES_W; i++) {
                 const s16 x = i * 8;
                 const s16 y = j * 8;
-                constexpr s16 w = 8;
-                constexpr s16 h = 8;
-                constexpr s8 u0 = 0;
-                constexpr s8 u1 = 1;
-                constexpr s8 v0 = 0;
-                constexpr s8 v1 = -1;
-                vi += add_quad_bg(&m_vbo_data_const[vi], x, y, w, h, u0, u1, v0,
-                                  v1);
+                m_vbo_data_const[vi] = {{x, y}};
+                vi += 1;
             }
         }
     }
 
     // Configure buffers
     BufInfo_Init(&m_buf_info);
-    BufInfo_Add(&m_buf_info, m_vbo_data_const.get(), sizeof(BgVertexConst), 2,
-                0x10);
+    BufInfo_Add(&m_buf_info, m_vbo_data_const.get(), sizeof(BgVertexConst), 1,
+                0x0);
     BufInfo_Add(&m_buf_info, m_vbo_data_var.get(), sizeof(BgVertexVar), 2,
-                0x32);
+                0x21);
 }
 
 constexpr size_t BG_MOSAIC_TEX_W = 256;
@@ -631,7 +607,8 @@ public:
         return m_tex[layer];
     }
 
-    inline void make_current_target(size_t layer) noexcept;
+    inline void make_current_target(size_t layer,
+                                    int uLoc_gsh_projection) noexcept;
 
     inline void draw_tex(size_t layer) noexcept;
 };
@@ -1073,7 +1050,8 @@ void renderer_imgui_debug_1(DebugOptions& debug_opt,
 inline RendererN3ds::ShaderInit::ShaderInit() noexcept
     : m_shader_binary{(const u32*)n3ds_shader_shbin, n3ds_shader_shbin_size},
       m_program_sprite{m_shader_binary, N3DS_SHADER_DVLE_SHADER_SPRITE_V},
-      m_program_bg{m_shader_binary, N3DS_SHADER_DVLE_SHADER_BG_V},
+      m_program_bg{m_shader_binary, N3DS_SHADER_DVLE_SHADER_BG_V,
+                   N3DS_SHADER_DVLE_SHADER_BG_G, 3},
       m_program_bg_mosaic_tex{m_shader_binary,
                               N3DS_SHADER_DVLE_SHADER_BG_MOSAIC_TEX_V},
       m_program_gradient{m_shader_binary, N3DS_SHADER_DVLE_SHADER_GRADIENT_V},
@@ -1087,13 +1065,17 @@ inline RendererN3ds::ShaderInit::ShaderInit() noexcept
 #ifndef NDEBUG
     // The location of the same uniform across multiple vertex shaders of a
     // binary should be identical.
+    // Geometry shader does not share this however, so m_program_bg is not
+    // checked.
     for (ctru::shader::Program* program :
-         {&m_program_bg, &m_program_bg_mosaic_tex, &m_program_gradient,
+         {&m_program_bg_mosaic_tex, &m_program_gradient,
           &m_program_simple_tex}) {
-        if (shaderInstanceGetUniformLocation(program->vsh(), "projection") !=
-            cr::uLoc_projection) {
-            fprintf(stderr, "Shader uniform not identical.\n");
-            svcBreak(USERBREAK_ASSERT);
+        s8 loc = shaderInstanceGetUniformLocation(program->vsh(), "projection");
+        if (loc != cr::uLoc_projection) {
+            fprintf(stderr,
+                    "Shader uniform not identical. Expected %d, got %d\n",
+                    cr::uLoc_projection, loc);
+            abort();
         }
     }
 #endif
@@ -1467,19 +1449,7 @@ void cr::BGRender::prep_vbo() noexcept {
     ZoneScopedN("BGRender::prep_vbo");
 #endif
 
-    const auto add_quad_bg = [](cr::BgVertexVar* vbo, s16 char_slot,
-                                bool flip_x, bool flip_y) -> size_t {
-        cr::BgVertexVar attr = {char_slot, {flip_x, flip_y}};
-        vbo[0] = attr;
-        vbo[1] = attr;
-        vbo[2] = attr;
-        vbo[3] = attr;
-        vbo[4] = attr;
-        vbo[5] = attr;
-        return 6;
-    };
-
-    size_t vi = 0;
+    cr::BgVertexVar *vi_ptr = m_vbo_data_var.get();
     for (size_t layer_idx = 0; layer_idx < tng::BG_LAYERS_COUNT; layer_idx++) {
 #ifdef TRACY_ENABLE
         ZoneScopedN("BGRender::prep_vbo layer");
@@ -1511,8 +1481,9 @@ void cr::BGRender::prep_vbo() noexcept {
                     abort();
                 }
 
-                const int slot = it->second;
-                vi += add_quad_bg(&m_vbo_data_var[vi], slot, flip_h, flip_v);
+                const s16 slot = (s16)it->second;
+                *vi_ptr = {slot, {flip_h, flip_v}};
+                vi_ptr++;
             }
         }
     }
@@ -1636,12 +1607,12 @@ inline void cr::BGRender::draw_bg(int layer_idx,
     }
 
     // xy = layer top-left
-    C3D_FixedAttribSet(4, li.scroll_x, li.scroll_y, 0.0, 0.0);
+    C3D_FixedAttribSet(3, li.scroll_x, li.scroll_y, 0.0, 0.0);
 
     C3D_TexBind(0, m_char_sheet_tex[layer_idx].get());
 
-    C3D_DrawArrays(GPU_TRIANGLES, layer_idx * cr::BG_LAYER_VERTEX_COUNT,
-                   cr::BG_LAYER_VERTEX_COUNT);
+    C3D_DrawArrays(GPU_GEOMETRY_PRIM, layer_idx * cr::BG_LAYER_TILES_COUNT,
+                   cr::BG_LAYER_TILES_COUNT);
 
     if (!drawing_mosaic_tex && window.enabled) {
         C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
@@ -1721,13 +1692,16 @@ void RendererN3ds::render_bg_mosaic_tex() noexcept {
         ZoneValue(layer_idx);
 #endif
 
-        m_bg_mosaic_render.make_current_target(layer_idx);
+        m_bg_mosaic_render.make_current_target(
+            layer_idx, m_bg_render.uLoc_gsh_projection());
 
         m_bg_render.draw_bg(layer_idx, true);
     }
 }
 
-inline void cr::BGMosaicRender::make_current_target(size_t layer) noexcept {
+inline void
+cr::BGMosaicRender::make_current_target(size_t layer,
+                                        int uLoc_gsh_projection) noexcept {
     const LayerInfo& li = layerInfo[layer];
 
     C3D_FrameBuf& fb = m_tex_fb[layer];
@@ -1751,7 +1725,7 @@ inline void cr::BGMosaicRender::make_current_target(size_t layer) noexcept {
               base_offset + cr::BG_MOSAIC_Y_OFFSET, 0.0, 256.0, true);
 
     // Update the uniforms
-    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, cr::uLoc_projection, &projection);
+    C3D_FVUnifMtx4x4(GPU_GEOMETRY_SHADER, uLoc_gsh_projection, &projection);
 }
 
 inline void cr::BGMosaicRender::draw_tex(size_t layer_idx) noexcept {
