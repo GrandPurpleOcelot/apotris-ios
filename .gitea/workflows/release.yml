@@ -83,7 +83,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Keep for git hash
+          fetch-depth: 1 # Keep for git hash
 
       - name: Install packaging tools
         run: apt-get update && apt-get install -y zip git # Ensure zip and git are present
@@ -231,6 +231,11 @@ jobs:
     runs-on: ubuntu-latest
     if: always() && github.ref == 'refs/heads/main'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1 # Keep for git hash
+
       - name: Download packaged distributions artifact
         uses: actions/download-artifact@v3
         with:
@@ -260,10 +265,11 @@ jobs:
         if: steps.check_files.outputs.files_exist == 'true'
         id: vars
         run: |
+          short_hash=$(git rev-parse --short HEAD)
           echo "UPLOAD_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-          echo "COMMIT_HASH_SHORT=${{ github.sha::7 }}" >> $GITHUB_OUTPUT
-          echo "BLOB_FOLDER=$(date +'%Y-%m-%d')-${{ github.sha::7 }}" >> $GITHUB_OUTPUT
-          echo "Generated blob folder: $(date +'%Y-%m-%d')-${{ github.sha::7 }}"
+          echo "COMMIT_HASH_SHORT=$short_hash" >> $GITHUB_OUTPUT
+          echo "BLOB_FOLDER=$(date +'%Y-%m-%d')-$short_hash" >> $GITHUB_OUTPUT
+          echo "Generated blob folder: $BLOB_FOLDER"
 
       - name: Upload Zip Files to Azure Blob Storage
         if: steps.check_files.outputs.files_exist == 'true'
