@@ -81,7 +81,7 @@ cd ..
 cp tools/README_SWITCH.txt build-switch/README.txt
 cd build-switch && \
 cp -r ../license . && \
-zip $nsw README.txt Apotris.nro license/* && \
+zip $nsw README.txt Apotris.nro license/* assets/* -x assets/meson.build && \
 cd ..
 
 cd build-n3ds && \

@@ -152,7 +152,6 @@ void EditorScene::deinit() {
     clearTilemap(26);
     clearTilemap(27);
 
-    gradient(true);
     setLayerScroll(3, 0, 0);
 
     clearTiles(2, 110, 400);
