@@ -3,7 +3,6 @@
 
 #ifdef PC
 #elif defined(PORTMASTER)
-#include <SDL_opengles2.h>
 #include <glad/gles2.h>
 #endif
 
