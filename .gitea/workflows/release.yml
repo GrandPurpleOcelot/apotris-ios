@@ -24,10 +24,11 @@ jobs:
             env:
               PATH: /usr/bin:/bin:/opt/devkitpro/tools/bin:$PATH
             package_name_suffix: Switch
-            package_files: "README.txt Apotris.nro license/*" # Files inside build-switch
+            package_files: "README.txt Apotris.nro assets/* license/*" # Files inside build-switch
             readme_src: tools/README_SWITCH.txt
             runs-on: ubuntu-latest
             container: akouzoukos/apotris:latest
+            exclude_package_files: "assets/meson.build" # Exclude meson build file in assets
           - target: linux-arm64 # Use a distinct target name
             platform: aarch64 # Platform architecture
             runs-on: arm64 # Specific runner label
