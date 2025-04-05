@@ -666,6 +666,7 @@ int GameScene::pauseMenu() {
     bool shown = false;
 
     bool showSleep = false;
+    bool skipped = false;
 
     bool count = true;
 
@@ -859,11 +860,16 @@ int GameScene::pauseMenu() {
 #endif
             if (game->gameMode != TRAINING) {
                 skipSong = true;
-                std::string trackSkip = "Track Skipped!";
-                naprint(trackSkip,
+                sfx(SFX_MENUCONFIRM);
+                if (!skipped) {
+                    skipped = true;
+                    std::string trackSkip = "Track Skipped!";
+                    naprint(
+                        trackSkip,
                         ((savefile->settings.aspectRatio) ? (240 - 13) : 240) -
                             getVariableWidth(trackSkip),
                         18 * 8);
+                }
             }
         }
 
