@@ -91,13 +91,6 @@ void windowInit() {
     }
 
     SDL_ShowCursor(SDL_DISABLE);
-    // int version = gladLoadGL(glfwGetProcAddress);
-    // if (version == 0) {
-    //     std::cout << "Failed to initialize OpenGL context" << std::endl;
-    //     return -1;
-    // }else{
-    //     std::cout << "initialized GL!" << std::endl;
-    // }
 
     refreshWindowSize();
 
