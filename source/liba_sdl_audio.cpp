@@ -60,6 +60,8 @@ void loadAudio(std::string pathPrefix) {
     while ((entry = readdir(dir)) != nullptr) {
         if (hasSuffix(entry->d_name, ".it") ||
             hasSuffix(entry->d_name, ".mod") ||
+            hasSuffix(entry->d_name, ".s3m") ||
+            hasSuffix(entry->d_name, ".S3M") ||
             hasSuffix(entry->d_name, ".xm")) {
             songPaths.push_back(entry->d_name);
         }
@@ -115,8 +117,6 @@ void sfx(int n) {
 }
 
 void startSong(int song, bool loop) {
-    log(song);
-    // if(song == currentSong && !musicArray[currentSong].hasEnded())
     if (song == currentSong && !gSoloud.getPause(currentSongHandle) &&
         (currentSong != -1 &&
          musicQueue.isCurrentlyPlaying(musicArray[currentSong])))
@@ -124,7 +124,6 @@ void startSong(int song, bool loop) {
 
     if (currentSong != -1 &&
         musicQueue.isCurrentlyPlaying(musicArray[currentSong])) {
-        // musicArray[currentSong].stop();
         musicQueue.stop();
         musicQueue.skip();
     }
@@ -140,10 +139,6 @@ void startSong(int song, bool loop) {
     looping = loop;
 
     gSoloud.setVolume(currentSongHandle, musicVolume);
-
-    // float speed = gSoloud.getRelativePlaySpeed(currentSongHandle);
-
-    // gSoloud.setRelativePlaySpeed(currentSongHandle, speed * 0.5f);
 }
 
 void stopSong() {
