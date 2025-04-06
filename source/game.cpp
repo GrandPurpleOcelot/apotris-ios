@@ -2688,7 +2688,7 @@ void disappear() {
     }
 
     if (found) {
-        showBackground(0);
+        showBackground(peek);
     }
 }
 
