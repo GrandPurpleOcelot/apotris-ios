@@ -13,6 +13,7 @@
 #include <atomic>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -469,6 +470,8 @@ void loadAudio(std::string pathPrefix) {
         wave_buf.nsamples = MUSIC_BUFFER_SAMPLE_COUNT;
     }
 
+    std::map<std::string, MusicMod> sorted_music;
+
     for (const auto& entry : dir_it) {
         if (!entry.is_regular_file()) {
             continue;
@@ -482,15 +485,29 @@ void loadAudio(std::string pathPrefix) {
                 }
 
                 auto name = entry.path().filename().string();
-                if (name.find("MENU_") != std::string::npos) {
-                    songs.menu.push_back(song_modules.size());
-                } else {
-                    songs.game.push_back(song_modules.size());
-                }
+#ifndef NDEBUG
                 fprintf(stderr, "Found music '%s'\n", entry.path().c_str());
-                song_modules.push_back(std::move(mod));
+#endif
+                sorted_music.emplace(std::move(name), std::move(mod));
             }
         }
+    }
+
+    for (auto& [name, mod] : sorted_music) {
+        if (name.find("MENU_") != std::string::npos) {
+            songs.menu.push_back(song_modules.size());
+#ifndef NDEBUG
+            fprintf(stderr, "Music %zd '%s' is menu %zd\n", song_modules.size(),
+                    name.c_str(), songs.menu.size());
+#endif
+        } else {
+            songs.game.push_back(song_modules.size());
+#ifndef NDEBUG
+            fprintf(stderr, "Music %zd '%s' is game %zd\n", song_modules.size(),
+                    name.c_str(), songs.game.size());
+#endif
+        }
+        song_modules.emplace_back(std::move(mod));
     }
 
     if (!NdspAudioThread::start_thread()) {
