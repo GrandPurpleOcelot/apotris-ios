@@ -1156,8 +1156,9 @@ bool keyboardNameInput(std::string* result, size_t length) {
     swkbdSetHintText(&kbd, "Your Name");
     swkbdSetFeatures(&kbd, SWKBD_ALLOW_HOME);
     swkbdSetValidation(&kbd, SWKBD_NOTEMPTY_NOTBLANK,
-                       SWKBD_FILTER_AT | SWKBD_FILTER_PERCENT |
-                           SWKBD_FILTER_BACKSLASH | SWKBD_FILTER_CALLBACK,
+                       SWKBD_FILTER_DIGITS | SWKBD_FILTER_AT |
+                           SWKBD_FILTER_PERCENT | SWKBD_FILTER_BACKSLASH |
+                           SWKBD_FILTER_CALLBACK,
                        0);
     swkbdSetFilterCallback(&kbd, nameInputCallback, nullptr);
 
