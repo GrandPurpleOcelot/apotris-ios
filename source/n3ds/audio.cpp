@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cinttypes>
 #include <cstdio>
+#include <strings.h>
 
 #include <algorithm>
 #include <array>
@@ -473,8 +474,8 @@ void loadAudio(std::string pathPrefix) {
             continue;
         }
 
-        for (const auto& ext : {".it", ".mod", ".xm"}) {
-            if (entry.path().extension() == ext) {
+        for (const auto& ext : {".it", ".mod", ".xm", ".s3m"}) {
+            if (strcasecmp(entry.path().extension().c_str(), ext) == 0) {
                 MusicMod mod;
                 if (!mod.load(entry.path())) {
                     continue;
