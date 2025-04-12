@@ -122,7 +122,7 @@ class TitleScene : public Scene {
 
 class SimpleListScene : public Scene {
 public:
-    int maxDas = 16;
+    int maxDas = 12;
     int dasHor = 0;
     int dasVer = 0;
 
@@ -238,7 +238,7 @@ public:
 
 class OptionListScene : public Scene {
 public:
-    int maxDas = 16;
+    int maxDas = 12;
     int dasHor = 0;
     int dasVer = 0;
 
