@@ -1742,11 +1742,12 @@ void GameScene::countdown() {
             game->rotateTwice(1);
         if (key_is_down(k.hardDrop))
             game->keyDrop(1);
-
         if (key_is_down(k.moveLeft)) {
             game->keyLeft(1);
         } else if (key_is_down(k.moveRight)) {
             game->keyRight(1);
+        } else if (key_is_down(k.softDrop)) {
+            game->keyDown(1);
         }
     }
 
