@@ -3578,8 +3578,6 @@ void GameScene::update() {
     updateFluid();
 
     checkPeek();
-
-    sqran(qran() % frameCounter);
 }
 
 void GameScene::deinit() {

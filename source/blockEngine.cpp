@@ -1429,11 +1429,9 @@ void Game::next() { //~21-29k cycles
 }
 
 void Game::fillQueue(int count) {
-    setupRNG();
-
     for (int i = 0; i < count; i++) {
         if (randomizer == BAG_7) {
-            int n = qran() % bag.size();
+            int n = random() % bag.size();
 
             queue.push_back(bag.array[n]);
             bag.erase(n);
@@ -1441,10 +1439,10 @@ void Game::fillQueue(int count) {
             if (bag.size() == 0)
                 fillBag();
         } else if (randomizer == RANDOM) {
-            int n = qran() % 8;
+            int n = random() % 8;
 
             if (n == 7 || n == pieceHistory)
-                n = qran() % 7;
+                n = random() % 7;
 
             queue.push_back(n);
             pieceHistory = n;
@@ -1454,7 +1452,7 @@ void Game::fillQueue(int count) {
             int droughted = 0;
             if (queue.empty()) {
                 do {
-                    n = qran() % 7;
+                    n = random() % 7;
                 } while (n == PIECE_O || n == PIECE_Z || n == PIECE_S);
 
                 historyList.push_front(n);
@@ -1466,7 +1464,7 @@ void Game::fillQueue(int count) {
 
             int r = 0;
             for (int i = 0; i < 6; i++) {
-                r = qran() % 35;
+                r = random() % 35;
 
                 n = bigBag[r];
 
@@ -1486,7 +1484,7 @@ void Game::fillQueue(int count) {
 
                 // in case all previous rolls failed
                 if (i == 5) {
-                    r = qran() % 35;
+                    r = random() % 35;
                     n = bigBag[r];
                 }
             }
@@ -1783,9 +1781,7 @@ void Game::setLevel(int newLevel) {
 void Game::setGoal(int newGoal) { goal = newGoal; }
 
 void Game::generateGarbage(int height, int localMode) {
-    setupRNG();
-
-    int hole = qran() % lengthX;
+    int hole = random() % lengthX;
 
     // shift up
     for (int i = 0; i < lengthY; i++) {
@@ -1802,9 +1798,9 @@ void Game::generateGarbage(int height, int localMode) {
     for (int i = lengthY - height; i < lengthY; i++) {
         int prevHole = hole;
         int count = 0;
-        if (!localMode || qran() % 10 < 3) {
+        if (!localMode || random() % 10 < 3) {
             do {
-                hole = qran() % lengthX;
+                hole = random() % lengthX;
             } while (++count < 11 &&
                      ((!board[i - 1][hole] && height < garbageHeight) ||
                       hole == prevHole));
@@ -2069,22 +2065,20 @@ void Game::demoClear() {
 void Game::demoFill() {
     clearLock = false;
     for (int i = lengthY - 2; i < lengthY; i++) {
-        int n = qran() % lengthX;
+        int n = random() % lengthX;
         board[i][n] = 0;
     }
 }
 
 void Game::bType(int height) {
-    setupRNG();
-
     int n = 0;
     if (height)
         n = height * 2 + (height + 1) / 2 - (height == 5);
 
     for (int i = lengthY - n; i < lengthY; i++) {
         for (int j = 0; j < lengthX; j++) {
-            if (qran() % 2 && !(i == lengthY - n && j == 0)) {
-                board[i][j] = (qran() % 7);
+            if (random() % 2 && !(i == lengthY - n && j == 0)) {
+                board[i][j] = (random() % 7);
 
                 if (columnHeights[j] < lengthY - i)
                     columnHeights[j] = lengthY - i;
@@ -2558,7 +2552,8 @@ Game::~Game() = default;
 
 Game::Game(int gm, int sd, bool big) {
     gameMode = gm;
-    seed = initSeed = sd;
+    initSeed = sd;
+    setRandomSeed(sd);
 
     for (int i = 0; i < 40; i++) {
         bitboard[i] = 0;
@@ -2702,7 +2697,7 @@ Game::Game(Game* oldGame) {
     pushDir = oldGame->pushDir;
     b2bCounter = oldGame->b2bCounter;
     bagCounter = oldGame->bagCounter;
-    seed = oldGame->seed;
+    setRandomSeed(oldGame->randomSeed);
     initSeed = oldGame->initSeed;
     subMode = oldGame->subMode;
     initialLevel = oldGame->initialLevel;
@@ -2826,13 +2821,6 @@ std::tuple<int, int> Game::getSpawnPosition() {
     return std::make_tuple(x, y);
 }
 
-void Game::setupRNG() {
-    if (seed != 0) {
-        sqran(seed);
-        seed += qran();
-    }
-}
-
 void Game::checkSecretGrade() {
     int result = 0;
     for (int i = lengthY - 1; i > lengthY / 2; i--) {
@@ -2927,4 +2915,15 @@ void Game::toggleBigMode() {
     }
 
     refresh = 1;
+}
+
+int Game::random() {
+    randomSeed = 1664525 * randomSeed + 1013904223;
+    return (randomSeed >> 16) & randomMax;
+}
+
+int Game::setRandomSeed(int newSeed) {
+    int old = randomSeed;
+    randomSeed = newSeed;
+    return old;
 }
