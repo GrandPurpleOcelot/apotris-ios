@@ -608,7 +608,12 @@ public:
     void loadFumen();
     std::string getFumen();
     void demoGarbage();
+    int random();
+    int setRandomSeed(int newSeed);
     std::tuple<int, int> getSpawnPosition();
+
+    const int randomMax = ((1 << 15) - 1);
+    int randomSeed = 0;
 
     int lengthX = 10;
     int lengthY = 40;
