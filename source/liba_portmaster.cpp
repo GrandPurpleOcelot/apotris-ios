@@ -25,6 +25,7 @@
 
 static int fd = -1;
 
+void rumbleUpdate();
 void cleanup_handler(int signum);
 int set_rumble(int strength);
 
@@ -64,6 +65,8 @@ float windowScale = 3;
 nanotime_step_data stepper;
 
 ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
+
+static int rumbleTimer = 0;
 
 void windowInit() {
     // Initialize SDL
@@ -316,8 +319,17 @@ void refreshWindowSize() {
 
 bool closed() {
     songEndHandler();
+    rumbleUpdate();
 
     return true;
+}
+
+void rumbleUpdate() {
+    if (rumbleTimer > 0) {
+        rumbleTimer--;
+    } else {
+        rumbleStop();
+    }
 }
 
 void toggleRendering(bool r) { render = r; }
@@ -381,7 +393,10 @@ void saveSavefile() {
     output.close();
 }
 
-void rumbleStart() { set_rumble(RUMBLE_STRONG); }
+void rumbleStart(int length) {
+    set_rumble(RUMBLE_STRONG);
+    rumbleTimer = length;
+}
 
 void rumbleStop() { set_rumble(RUMBLE_OFF); }
 

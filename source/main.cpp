@@ -235,7 +235,6 @@ void reset() {
 
     floatingList.clear();
     placeEffectList.clear();
-    rumbleTimer = 0;
 
     rumbleStop();
 

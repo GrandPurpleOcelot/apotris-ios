@@ -82,7 +82,6 @@ int restartTimer = 0;
 int attackFlashTimer = 0;
 #define attackFlashMax 10
 
-int rumbleTimer = 0;
 #define rumbleMax 1
 
 std::list<FloatText> floatingList;
@@ -240,12 +239,12 @@ void GameScene::checkSounds() {
             for (int i = 0; i < 3; i++)
                 sprite_hide(moveSprites[i]);
 
-        rumbleTimer = rumbleMax * savefile->settings.rumble;
+        rumbleStart(rumbleMax * savefile->settings.rumble);
     }
 
     if (game->sounds.invalid) {
         sfx(SFX_INVALID);
-        rumbleTimer = rumbleMax * savefile->settings.rumble;
+        rumbleStart(rumbleMax * savefile->settings.rumble);
     }
 
     if (game->sounds.rotate)
@@ -3493,20 +3492,9 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
-        rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
+        rumbleStart(rumbleMax * 2 * savefile->settings.rumble);
         clearTimer = 0;
         updateText();
-    }
-
-#ifdef GBA
-    rumble_update();
-#endif
-    if (!(demo || replaying) && rumbleTimer > 0) {
-        rumbleTimer--;
-
-        rumbleStart();
-    } else {
-        rumbleStop();
     }
 
     if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)) {

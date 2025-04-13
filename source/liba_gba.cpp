@@ -258,7 +258,19 @@ void setUpLinkUniversal(bool detectEmus) {
 
 void deinitialize() {}
 
-bool closed() { return true; }
+static int rumbleTimer = 0;
+
+bool closed() {
+    rumble_update();
+    if (rumbleTimer > 0) {
+        rumbleTimer--;
+
+        rumble_set_state(rumble_start);
+    } else {
+        rumble_set_state(rumble_hard_stop);
+    }
+    return true;
+}
 
 IWRAM_CODE void memcpy16_fast(void* dest, const void* src, int hwCount) {
     __agbabi_memcpy2(dest, src, hwCount * 2);
@@ -748,7 +760,7 @@ IWRAM_CODE void onKeyInterrupt() {
     SoftReset();
 }
 
-void rumbleStart() { rumble_set_state(rumble_start); }
+void rumbleStart(int length) { rumbleTimer = length; }
 
-void rumbleStop() { rumble_set_state(rumble_hard_stop); }
+void rumbleStop() { rumbleTimer = 0; }
 #endif

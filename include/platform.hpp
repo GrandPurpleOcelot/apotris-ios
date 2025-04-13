@@ -185,7 +185,7 @@ extern void mirrorPalettes(int index, int count);
 
 extern void toggleRendering(bool state);
 extern void initRumble();
-extern void rumbleStart();
+extern void rumbleStart(int length);
 extern void rumbleStop();
 
 extern void quit();

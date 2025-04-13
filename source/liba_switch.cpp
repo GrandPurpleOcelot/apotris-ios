@@ -9,6 +9,10 @@
 
 #include "nanotime.h"
 
+void rumbleUpdate();
+
+static int rumbleTimer = 0;
+
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
 
@@ -292,6 +296,7 @@ void refreshWindowSize() {
 bool closed() {
     songEndHandler();
     padUpdate(&pad);
+    rumbleUpdate();
 
     return true;
 }
@@ -371,9 +376,11 @@ void saveSavefile() {
     output.close();
 }
 
-void rumbleStart() {
+void rumbleStart(int length) {
     if (!R_SUCCEEDED(rc))
         return;
+
+    rumbleTimer = length;
 
     float factor = 1;
 
@@ -396,6 +403,15 @@ void rumbleStart() {
                                  VibrationValues, 2);
     if (R_FAILED(rc2))
         printf("hidSendVibrationValues() returned: 0x%x\n", rc2);
+}
+
+void rumbleUpdate() {
+    if (rumbleTimer > 0) {
+        rumbleTimer--;
+
+    } else {
+        rumbleStop();
+    }
 }
 
 void rumbleStop() {
