@@ -608,7 +608,7 @@ public:
     void loadFumen();
     std::string getFumen();
     void demoGarbage();
-    int random();
+    u32 random();
     int setRandomSeed(int newSeed);
     std::tuple<int, int> getSpawnPosition();
 

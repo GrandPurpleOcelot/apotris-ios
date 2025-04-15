@@ -67,6 +67,7 @@ sources = files(
     src_dir / 'shader.cpp',
     src_dir / 'gl.c',
     src_dir / 'gles2.c',
+    src_dir / 'xoshiro128plusplus.c',
 )
 
 # Generate version header
@@ -594,6 +595,7 @@ else
     dependencies = [
         rt_dep,
         dependency('libseven'),
+        dependency('libutil'),
         dependency('libsavgba'),
         dependency('libtonc'),
         dependency('agbabi'),
