@@ -13,6 +13,15 @@
 
 #include "nanotime.h"
 
+// For the Application Support directory save location
+#ifdef __APPLE__
+#include <cstring>
+#include <pwd.h>
+#include <string>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 void handleAnalogInput(int axis, int value);
 
 std::list<uint32_t> currentKeys;
@@ -396,9 +405,28 @@ void toggleRendering(bool r) { render = r; }
 
 void initRumble() {};
 
+#ifdef __APPLE__
+std::string initSavefileDir() {
+    // Get the user's home directory
+    const char* homeDir = getenv("HOME");
+    if (!homeDir) {
+        struct passwd* pw = getpwuid(getuid());
+        homeDir = pw->pw_dir;
+    }
+
+    // Build the path: ~/Library/Application Support/Apotris/
+    return std::string(homeDir) + "/Library/Application Support/Apotris";
+}
+#endif
+
 void loadSavefile() {
 
+#ifdef __APPLE__
+    std::string filePath = initSavefileDir() + "/Apotris.sav";
+    std::ifstream input(filePath, std::ios::binary | std::ios::in);
+#else
     std::ifstream input("Apotris.sav", std::ios::binary | std::ios::in);
+#endif
 
     if (savefile == nullptr)
         savefile = new Save();
@@ -416,8 +444,16 @@ void loadSavefile() {
 }
 
 void saveSavefile() {
+#ifdef __APPLE__
+    std::string dirPath = initSavefileDir();
+    mkdir(dirPath.c_str(), 0755); // Create directory if it doesn't exist
 
+    // Build the full file path
+    std::string filePath = dirPath + "/Apotris.sav";
+    std::ofstream output(filePath, std::ios::binary | std::ios::out);
+#else
     std::ofstream output("Apotris.sav", std::ios::binary | std::ios::out);
+#endif
 
     char* dst = (char*)savefile;
 

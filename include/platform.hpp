@@ -176,6 +176,9 @@ extern void pauseSong();
 extern void resumeSong();
 
 extern void loadSavefile();
+#ifdef __APPLE__
+extern std::string initSavefileDir();
+#endif
 extern void saveSavefile();
 
 extern s16 sinLut(int angle);
@@ -202,10 +205,6 @@ extern float fps;
  */
 #ifndef GBA
 #include "xoshiro128plusplus.h"
-static void randSetFullState(u32 seed) {
-    setXoshiroSeed(seed);
-}
-static u32 randNext() {
-    return nextXoshiro();
-}
+static void randSetFullState(u32 seed) { setXoshiroSeed(seed); }
+static u32 randNext() { return nextXoshiro(); }
 #endif
