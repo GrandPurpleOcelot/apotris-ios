@@ -202,7 +202,7 @@ extern float fps;
  */
 #ifndef GBA
 #include "xoshiro128plusplus.h"
-static void randSetSeed(u32 seed) {
+static void randSetFullState(u32 seed) {
     setXoshiroSeed(seed);
 }
 static u32 randNext() {

@@ -2922,10 +2922,6 @@ u32 Game::random() { return randNext(); }
 int Game::setRandomSeed(int newSeed) {
     int old = randomSeed;
     randomSeed = newSeed;
-#ifdef GBA
     randSetFullState(randomSeed);
-#else
-    randSetSeed(randomSeed);
-#endif
     return old;
 }
