@@ -38,9 +38,9 @@ public:
     virtual void deinit() = 0;
     virtual Scene* previousScene() = 0;
 
-    Scene(){};
+    Scene() {};
 
-    virtual ~Scene(){};
+    virtual ~Scene() {};
 };
 
 extern Scene* scene;

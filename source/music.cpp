@@ -34,13 +34,12 @@ void playSong(int menuId, int songId) {
 
 void playSongRandom(int menuId) {
 
-    int songId = -1;
     int max = 0;
 
     if (menuId == 0) {
-        max = songs.menu.size();
+        max = (int)songs.menu.size();
     } else if (menuId == 1) {
-        max = songs.game.size();
+        max = (int)songs.game.size();
     }
 
     if (max <= 0)
@@ -50,31 +49,26 @@ void playSongRandom(int menuId) {
     int count = 0;
 
     do {
-        index = qran() % max;
-    } while ((getSongState(menuId, index) || index == currentlyPlayingSong) &&
-             count++ < 1000);
+        index = (int)(randNext() % max);
+    } while (
+        (getSongState(menuId, (int)index) || index == currentlyPlayingSong) &&
+        count++ < 1000);
 
     if (count >= 1000)
         return;
 
-    songId = index;
-
-    if (songId == -1)
-        return;
-
-    playSong(menuId, songId);
+    playSong(menuId, (int)index);
 }
 
 void playNextSong() {
-    int songId = -1;
     int max = 0;
 
     int menuId = currentMenu;
 
     if (menuId == 0) {
-        max = songs.menu.size();
+        max = (int)songs.menu.size();
     } else if (menuId == 1) {
-        max = songs.game.size();
+        max = (int)songs.game.size();
     } else {
         return;
     }
@@ -93,12 +87,7 @@ void playNextSong() {
     if (count >= 1000)
         return;
 
-    songId = index;
-
-    if (songId == -1)
-        return;
-
-    playSong(menuId, songId);
+    playSong(menuId, (int)index);
 }
 
 void toggleSong(int group, int index, bool state) {

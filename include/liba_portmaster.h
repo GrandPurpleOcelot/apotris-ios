@@ -47,6 +47,7 @@ extern uint32_t key_is_down(uint32_t);
 extern uint32_t key_hit(uint32_t);
 extern uint32_t key_released(uint32_t);
 extern uint32_t key_first();
+extern uint32_t keys_raw();
 
 extern int rowStart;
 extern int rowEnd;

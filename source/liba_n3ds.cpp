@@ -282,6 +282,7 @@ public:
     inline uint32_t key_is_down(uint32_t key) const;
     inline uint32_t key_hit(uint32_t key) const;
     inline uint32_t key_released(uint32_t key) const;
+    inline uint32_t keys_raw() const;
 };
 
 class ApotrisN3ds {
@@ -1066,6 +1067,10 @@ inline uint32_t Input::key_released(uint32_t key) const {
     return (previousKeys & ~currentKeys) & key;
 }
 
+inline uint32_t Input::keys_raw() const {
+    return currentKeys;
+}
+
 void key_poll() { ApotrisN3ds::instance().input().key_poll(); }
 
 uint32_t key_is_down(uint32_t key) {
@@ -1078,6 +1083,10 @@ uint32_t key_hit(uint32_t key) {
 
 uint32_t key_released(uint32_t key) {
     return ApotrisN3ds::instance().input().key_released(key);
+}
+
+uint32_t keys_raw() {
+    return ApotrisN3ds::instance().input().keys_raw();
 }
 
 // ******************

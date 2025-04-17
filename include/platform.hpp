@@ -10,6 +10,7 @@
 #include "maxmod.h"
 #include "tonc.h"
 #include "util/random.h"
+#include "whisky.h"
 
 #define PLATFORM 0
 #endif
@@ -198,13 +199,3 @@ extern void deinitialize();
 extern void refreshWindowSize();
 
 extern float fps;
-
-/**
- * Random generation for all platforms other than GBA need an implementation of
- * the Xoroshiro128++ PRNG, hooked here in C++. GBA uses ASM from libutil.
- */
-#ifndef GBA
-#include "xoshiro128plusplus.h"
-static void randSetFullState(u32 seed) { setXoshiroSeed(seed); }
-static u32 randNext() { return nextXoshiro(); }
-#endif

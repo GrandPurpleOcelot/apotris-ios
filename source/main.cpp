@@ -175,6 +175,7 @@ int main(void) {
     platformInit();
 
     loadSave();
+    randSetSeed(savefile->seed);
 
     initialize();
 
@@ -184,6 +185,7 @@ int main(void) {
     while (closed()) {
         vsync();
         scene->update();
+        sampleEntropy();
     }
 
     deinitialize();
@@ -1096,7 +1098,7 @@ void startGame() {
     if (previousGameOptions == nullptr)
         previousGameOptions = new Options();
 
-    startGame(*previousGameOptions, qran());
+    startGame(*previousGameOptions, (int)randNext());
 }
 
 void startBotGame(int seed) {

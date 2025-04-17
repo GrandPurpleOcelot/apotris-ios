@@ -6,6 +6,7 @@ extern "C" {
 
 uint32_t nextXoshiro(void);
 void setXoshiroSeed(uint32_t seed);
+void setXoshiroState(uint32_t seed);
 #ifdef __cplusplus
 }
 #endif
