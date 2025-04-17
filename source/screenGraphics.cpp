@@ -349,11 +349,11 @@ bool GradientEditorScene::control() {
         sfx(SFX_MENUCONFIRM);
 
         for (int i = 0; i < 3; i++) {
-            color1[i] = qran() % 31;
-            color2[i] = qran() % 31;
+            color1[i] = (int)(randNext() % 31);
+            color2[i] = (int)(randNext() % 31);
         }
 
-        savefile->settings.backgroundType = ((qran() % 10) > 3);
+        savefile->settings.backgroundType = ((randNext() % 10) > 3);
         drawText();
         setMaxSelection();
     }

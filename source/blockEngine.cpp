@@ -2917,11 +2917,14 @@ void Game::toggleBigMode() {
     refresh = 1;
 }
 
-u32 Game::random() { return randNext(); }
+u32 Game::random() {
+    randomSeed = 1664525 * randomSeed + 1013904223;
+    return (randomSeed >> 16) & randomMax;
+}
 
 int Game::setRandomSeed(int newSeed) {
     int old = randomSeed;
     randomSeed = newSeed;
-    randSetFullState(randomSeed);
+    randSetFullState((u32)randomSeed);
     return old;
 }

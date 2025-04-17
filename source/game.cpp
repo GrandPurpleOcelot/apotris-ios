@@ -2845,8 +2845,9 @@ void frameSnow(int layer) {
         int add1 = 0;
         int add2 = 0;
         for (int j = 0; j < 4; j++) {
-            add1 += ((qran() % 100 < fillAmount) * 0xf) << ((j + 4) * 4);
-            add2 += (((qran() % 100) < ((10 - i) * 10)) * 0xf) << ((j + 4) * 4);
+            add1 += ((randNext() % 100 < fillAmount) * 0xf) << ((j + 4) * 4);
+            add2 += (((randNext() % 100) < ((10 - i) * 10)) * 0xf)
+                    << ((j + 4) * 4);
         }
 
         dest->data[i] = t->data[i] & ~add1;
@@ -3128,34 +3129,37 @@ Function getActionFromKey(int key) {
 void liftKeys() { game->liftKeys(); }
 
 void setRandomGraphics(Save* save) {
-    save->settings.edges = qran() % 2;
-    save->settings.palette = qran() % 8;
+    save->settings.edges = randNext() % 2;
+    save->settings.palette = randNext() % 8;
 
     if (save->settings.shadow != 4) {
         do {
-            save->settings.shadow = qran() % (MAX_SHADOWS);
+            save->settings.shadow = randNext() % (MAX_SHADOWS);
         } while (save->settings.shadow == 4);
     }
 
-    save->settings.colors = qran() % (MAX_COLORS);
+    save->settings.colors = randNext() % (MAX_COLORS);
     save->settings.backgroundGradient =
-        (RGB15(qran() % 31, qran() % 31, qran() % 31) << 16) +
-        RGB15(qran() % 31, qran() % 31, qran() % 31);
-    save->settings.frameBackground = qran() % (MAX_FRAME_BACKGROUNDS);
+        (RGB15((int)(randNext() % 31), (int)(randNext() % 31),
+               (int)(randNext() % 31))
+         << 16) +
+        RGB15((int)(randNext() % 31), (int)(randNext() % 31),
+              (int)(randNext() % 31));
+    save->settings.frameBackground = randNext() % (MAX_FRAME_BACKGROUNDS);
 
-    save->settings.backgroundType = ((qran() % 10) > 3);
+    save->settings.backgroundType = ((randNext() % 10) > 3);
 
     if (save->settings.colors == 3) {
         save->settings.shadow = 3;
     }
 
-    if (qran() % 10 == 0)
+    if (randNext() % 10 == 0)
         save->settings.backgroundGradient = 0;
 
-    int skin = 0;
+    u32 skin = 0;
     int count = 0;
     do {
-        skin = qran() % (MAX_SKINS + MAX_CUSTOM_SKINS) - MAX_CUSTOM_SKINS;
+        skin = randNext() % (MAX_SKINS + MAX_CUSTOM_SKINS) - MAX_CUSTOM_SKINS;
     } while (skin < 0 && !save->customSkins[(skin + 1) * -1].changed &&
              count++ < 20);
 
@@ -3166,15 +3170,15 @@ void setRandomGraphics(Save* save) {
 
     int grid = 0;
     do {
-        grid = qran() % (MAX_BACKGROUNDS);
+        grid = randNext() % (MAX_BACKGROUNDS);
     } while ((skin == 9 || skin == 10) && (grid == 0 || grid == 2));
 
     save->settings.backgroundGrid = grid;
 
-    save->settings.effects = qran() % 3;
+    save->settings.effects = randNext() % 3;
 
-    save->settings.clearEffect = qran() % MAX_CLEAR_EFFECTS;
-    save->settings.clearDirection = qran() % 2;
+    save->settings.clearEffect = randNext() % MAX_CLEAR_EFFECTS;
+    save->settings.clearDirection = randNext() % 2;
 }
 
 void setJourneyGraphics(Save* save, int level) {

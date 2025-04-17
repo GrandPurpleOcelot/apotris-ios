@@ -1,6 +1,7 @@
 #pragma once
 
 #include "platform.hpp"
+#include "prng.h"
 #include "tetromino.hpp"
 #include <list>
 #include <string>
@@ -733,7 +734,7 @@ public:
 
     Game(int gm, int sd, bool big);
 
-    Game(int gm, bool big) : Game(gm, qran(), big) {}
+    Game(int gm, bool big) : Game(gm, (int)randNext(), big) {}
 
     Game(Game* oldGame);
 

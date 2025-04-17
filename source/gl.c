@@ -2157,7 +2157,7 @@ static int glad_gl_has_extension(const char* exts, char** exts_i,
 
 static GLADapiproc glad_gl_get_proc_from_userptr(void* userptr,
                                                  const char* name) {
-    return (GLAD_GNUC_EXTENSION(GLADapiproc(*)(const char* name))
+    return (GLAD_GNUC_EXTENSION(GLADapiproc (*)(const char* name))
                 userptr)(name);
 }
 

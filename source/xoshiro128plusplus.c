@@ -34,90 +34,33 @@ static inline uint32_t rotl(const uint32_t x, int k) {
 }
 
 // One must set the state such that some bit is non-zero
-static uint32_t s[4] = {0x0, 0x0, 0x0, 0x1};
+static uint32_t state[4] = {0x0, 0x0, 0x0, 0x1};
 
-void setXoshiroSeed(uint32_t seed) {
-    s[0] = seed;
+void setXoshiroSeed(uint32_t seed) { state[0] = seed; }
+
+void setXoshiroState(uint32_t seed) {
+    state[0] = seed;
     // We additionally clobber the rest of the state to the default to allow
-    // reproducibility of seeded results
-    s[1] = 0x0;
-    s[2] = 0x0;
-    s[3] = 0x1;
+    // reproducibility of seeded results within game sessions.
+    state[1] = 0x0;
+    state[2] = 0x0;
+    state[3] = 0x1;
 }
 
 uint32_t nextXoshiro(void) {
-    const uint32_t result = rotl(s[0] + s[3], 7) + s[0];
+    const uint32_t result = rotl(state[0] + state[3], 7) + state[0];
 
-    const uint32_t t = s[1] << 9;
+    const uint32_t t = state[1] << 9;
 
-    s[2] ^= s[0];
-    s[3] ^= s[1];
-    s[1] ^= s[2];
-    s[0] ^= s[3];
+    state[2] ^= state[0];
+    state[3] ^= state[1];
+    state[1] ^= state[2];
+    state[0] ^= state[3];
 
-    s[2] ^= t;
+    state[2] ^= t;
 
-    s[3] = rotl(s[3], 11);
+    state[3] = rotl(state[3], 11);
 
     return result;
-}
-
-/* This is the jump function for the generator. It is equivalent
-   to 2^64 calls to next(); it can be used to generate 2^64
-   non-overlapping subsequences for parallel computations. */
-
-void jump(void) {
-    static const uint32_t JUMP[] = {0x8764000b, 0xf542d2d3, 0x6fa035c3,
-                                    0x77f2db5b};
-
-    uint32_t s0 = 0;
-    uint32_t s1 = 0;
-    uint32_t s2 = 0;
-    uint32_t s3 = 0;
-    for (int i = 0; i < sizeof JUMP / sizeof *JUMP; i++)
-        for (int b = 0; b < 32; b++) {
-            if (JUMP[i] & UINT32_C(1) << b) {
-                s0 ^= s[0];
-                s1 ^= s[1];
-                s2 ^= s[2];
-                s3 ^= s[3];
-            }
-            nextXoshiro();
-        }
-
-    s[0] = s0;
-    s[1] = s1;
-    s[2] = s2;
-    s[3] = s3;
-}
-
-/* This is the long-jump function for the generator. It is equivalent to
-   2^96 calls to next(); it can be used to generate 2^32 starting points,
-   from each of which jump() will generate 2^32 non-overlapping
-   subsequences for parallel distributed computations. */
-
-void long_jump(void) {
-    static const uint32_t LONG_JUMP[] = {0xb523952e, 0x0b6f099f, 0xccf5a0ef,
-                                         0x1c580662};
-
-    uint32_t s0 = 0;
-    uint32_t s1 = 0;
-    uint32_t s2 = 0;
-    uint32_t s3 = 0;
-    for (int i = 0; i < sizeof LONG_JUMP / sizeof *LONG_JUMP; i++)
-        for (int b = 0; b < 32; b++) {
-            if (LONG_JUMP[i] & UINT32_C(1) << b) {
-                s0 ^= s[0];
-                s1 ^= s[1];
-                s2 ^= s[2];
-                s3 ^= s[3];
-            }
-            nextXoshiro();
-        }
-
-    s[0] = s0;
-    s[1] = s1;
-    s[2] = s2;
-    s[3] = s3;
 }
 #endif

@@ -168,11 +168,11 @@ public:
             if (exit)
                 break;
 
-                // if(key_hit(savefile->settings.menuKeys.pause)){
-                //     sfx(SFX_MENUCANCEL);
-                //     exit = true;
-                //     continue;
-                // }
+            // if(key_hit(savefile->settings.menuKeys.pause)){
+            //     sfx(SFX_MENUCANCEL);
+            //     exit = true;
+            //     continue;
+            // }
 
 #if defined(GBA) || defined(N3DS)
 

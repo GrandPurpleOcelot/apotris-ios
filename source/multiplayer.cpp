@@ -222,10 +222,10 @@ u8 weightedRandomPlayerSelection() {
 
     // Pick randomly if no power
     if (!totalAttackPower)
-        return qran() % initialPlayerCount;
+        return randNext() % initialPlayerCount;
 
     // Generate a random number between 0 and totalAttackPower
-    u32 r = qran() % totalAttackPower;
+    u32 r = randNext() % totalAttackPower;
 
     // Determine which player is selected
     u32 accumulatedPower = 0;

@@ -4,6 +4,7 @@
 #include "cmath"
 #include "def.h"
 #include "platform.hpp"
+#include "prng.h"
 #include "sceneGraphics.hpp"
 #include "sprites.h"
 
@@ -175,6 +176,7 @@ int main(void) {
     platformInit();
 
     loadSave();
+    randSetSeed(savefile->seed);
 
     initialize();
 
@@ -184,6 +186,7 @@ int main(void) {
     while (closed()) {
         vsync();
         scene->update();
+        SampleEntropy();
     }
 
     deinitialize();
@@ -1056,6 +1059,9 @@ void gradient(int state) {
 }
 
 void startGame(BlockEngine::Options options, int seed) {
+    // Prevent PRNG from changing outside demo
+    if (!demo)
+        sampleEntropy = false;
     delete game;
     game = new Game(options.mode, seed, options.bigMode);
     game->setOptions(options);
@@ -1096,10 +1102,11 @@ void startGame() {
     if (previousGameOptions == nullptr)
         previousGameOptions = new Options();
 
-    startGame(*previousGameOptions, qran());
+    startGame(*previousGameOptions, (int)randNext());
 }
 
 void startBotGame(int seed) {
+    sampleEntropy = false;
     startMultiplayerGame(seed);
     multiplayer = false;
 

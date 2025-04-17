@@ -2,6 +2,7 @@
 #include "def.h"
 #include "flashSaves.h"
 #include "logging.h"
+#include "prng.h"
 #include "sprite1tiles_bin.h"
 #include "sprites.h"
 #include <algorithm>
@@ -35,6 +36,16 @@ const SaveChange saveChanges[] = {
     SaveChange(0x51, 624, 192),    // add zone + buffer to scoreboards
 };
 int changeLength = 3;
+
+// Hash entire save file deterministically
+u32 hashSave() {
+    u32* dump = (u32*)savefile;
+    u32 hash = 0;
+    for (int i = 0; i < (int)(sizeof(Save) / sizeof(u32)); i++) {
+        hash = whisky2(hash, dump[i]);
+    }
+    return hash;
+}
 
 void loadSave() {
     delete savefile;
@@ -135,6 +146,8 @@ void loadSave() {
         resetSkins(savefile);
 
         savefile->newGame = SAVE_TAG;
+        // Set initial seed deterministic to save file (sampling will change it)
+        savefile->seed = (int)hashSave();
     }
 
     // fix invalid values, since I messed up conversion at some point
@@ -215,13 +228,6 @@ void loadSave() {
 #endif
     }
 
-    u8* dump = (u8*)savefile;
-    int sum = 0;
-    for (int i = 0; i < (int)sizeof(Save); i++)
-        sum += dump[i];
-    sqran(sum);
-
-    savefile->seed = qran();
 #ifdef GBA
     status.update(&savefile->settings);
 #endif

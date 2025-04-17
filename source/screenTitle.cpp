@@ -157,15 +157,16 @@ void fallingBlocks() {
 
     if (bgSpawnBlock > bgSpawnBlockMax) {
 
-        int n = qran() % 7;
-        int* p = BlockEngine::getShape(n, qran() % 4, BlockEngine::SRS);
+        int n = (int)(randNext() % 7);
+        int* p =
+            BlockEngine::getShape(n, (int)(randNext() % 4), BlockEngine::SRS);
 
         bool found = false;
 
         if (!bigMode) {
-            int x = qran() % 27;
-            // int x = qran() % 7;
-            // x += 20 * (qran() % 2);
+            int x = (int)(randNext() % 27);
+            // int x = (int)(randNext() % 7);
+            // x += 20 * (int)(randNext() % 2);
 
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++)
@@ -178,7 +179,7 @@ void fallingBlocks() {
                         if (p[i * 4 + j])
                             backgroundArray[i][j + x] = n + p[i * 4 + j];
         } else {
-            int x = (qran() % 13) * 2;
+            u32 x = (randNext() % 13) * 2;
 
             for (i = 0; i < 8; i++)
                 for (j = 0; j < 8; j++)
@@ -335,7 +336,7 @@ void TitleScene::update() {
         botSleepDuration = 5;
         botStepMax = 1;
 
-        startGame(BlockEngine::Options(), qran());
+        startGame(BlockEngine::Options(), (int)randNext());
 
         changeScene(new GameScene(), Transitions::FADE);
     }

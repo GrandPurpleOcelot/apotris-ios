@@ -255,7 +255,7 @@ void GameScene::endScreen() {
                                                           true);
                         if (!playAgainMutex->checkAllReady()) {
 #ifdef GBA
-                            nextSeed = (u16)qran() % 0x1FFE;
+                            nextSeed = (u16)randNext() % 0x1FFE;
                             linkConnection->send((1 << 13) + nextSeed);
 #endif
                         } else {

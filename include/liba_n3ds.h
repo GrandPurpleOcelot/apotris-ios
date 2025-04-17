@@ -241,10 +241,6 @@ INLINE void memset32_fast(void* dest, int word, int wCount) {
     memset32(dest, word, wCount);
 }
 
-INLINE int qran() { return rand(); }
-
-INLINE void sqran(int seed) { srand(seed); }
-
 constexpr COLOR RGB15(int red, int green, int blue) {
     return red + (green << 5) + (blue << 10);
 }

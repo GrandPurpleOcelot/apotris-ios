@@ -8,6 +8,7 @@
 #include "sendMultiboot.h"
 
 #endif
+#include "prng.h"
 #include <cstring>
 
 static int lastPlayerCount = -1;
@@ -303,7 +304,7 @@ void PlayOptionScene::start() {
     proMode = (key_is_down(k.special1) || key_is_down(k.special2)) ^
               (savefile->settings.pro);
 
-    startGame(newOptions, qran());
+    startGame(newOptions, (int)randNext());
 
     gameLoop();
 }
@@ -799,7 +800,10 @@ void MultBattleScene::update() {
 
         // Await start signal and otherwise re-transmit ready signal
         if (key_hit(k.pause) && currentPlayerId == 0) {
-            nextSeed = (u16)qran() & 0x1fff;
+            u32 fullRandom = randNext();
+            // Preserve entropy of u32 within u16 register
+            u16 shortRandom = (u16)fullRandom + (u16)(fullRandom >> 16);
+            nextSeed = shortRandom & 0x1fff;
             multiplayerStart = true;
             linkConnection->send(nextSeed + 100);
         } else {

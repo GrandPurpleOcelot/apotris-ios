@@ -11,7 +11,7 @@ bool HandlingOptionScene::control() {
         BlockEngine::Options options;
         options.tuning = getTuning();
 
-        startGame(options, qran());
+        startGame(options, (int)randNext());
 
         // remove 'Handling' from path
         path.pop_back();
