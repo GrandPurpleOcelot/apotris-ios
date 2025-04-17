@@ -372,6 +372,7 @@ extern void key_poll();
 extern uint32_t key_is_down(uint32_t);
 extern uint32_t key_hit(uint32_t);
 extern uint32_t key_released(uint32_t);
+extern uint32_t keys_raw();
 
 extern std::map<int, std::string> keyToString;
 

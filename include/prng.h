@@ -12,6 +12,4 @@ void randSetSeed(uint32_t seed);
 uint32_t randNext();
 #endif
 
-extern bool sampleEntropy;
-
-void SampleEntropy();
+void sampleEntropy();

@@ -188,6 +188,18 @@ uint32_t key_first() {
     return KEY_FULL - 1;
 }
 
+uint32_t keys_raw() {
+    if (currentKeys.empty())
+        return KEY_FULL - 1;
+
+    u32 allKeys = KEY_FULL;
+    for (auto key : currentKeys) {
+        allKeys ^= key;
+    }
+
+    return allKeys;
+}
+
 void updateWindow(uint8_t* framebuffer) {
     const int in_width = SCREEN_WIDTH;
     const int in_height = SCREEN_HEIGHT;

@@ -41,6 +41,7 @@ extern uint32_t key_is_down(uint32_t);
 extern uint32_t key_hit(uint32_t);
 extern uint32_t key_released(uint32_t);
 extern uint32_t key_first();
+extern uint32_t keys_raw();
 
 extern void setKey(int&, uint32_t);
 extern void unbindDuplicateKey(int&, uint32_t);

@@ -1,28 +1,22 @@
 #include "def.h"
 
-bool sampleEntropy = true;
-
 /**
  * By sampling a hashed user input every VBlank the PRNG is seeded effectively
  * even without a save. Whisky's hash is sufficiently different for the seed.
  */
-void SampleEntropy() {
-    // If a game has ended begin sampling input
-    if (ended)
-        sampleEntropy = true;
-    // Don't sample input during user games or fixed PRNG tasks like replays
-    if (!sampleEntropy || replaying || multiplayer)
-        return;
+void sampleEntropy() {
 #ifdef GBA
-    // Read keys directly on GBA to capture potential simultaneous key inputs
-    u32 input = REG_KEYINPUT ^ 0x3ff;
+    // GBA has limited possible inputs
+    uint32_t keyMask = 0x3FF;
 #else
-    // Non-GBA doesn't have a direct register to read -- it should be OK
-    uint32_t input = key_first() ^ 0x3ff;
+    // Most other platforms will express inputs with the whole 32 bits
+    uint32_t keyMask = KEY_FULL;
 #endif
+    // Read input directly
+    uint32_t input = keys_raw() ^ keyMask;
     // Hash the input with the last seed
     savefile->seed = (int)whisky2(input, savefile->seed);
-    // Seed first 32 bits of state as Xoshiro128++ authors suggest
+    // Seed 32 bits as Xoshiro128++ authors suggest
     randSetSeed(savefile->seed);
 }
 #ifndef GBA
