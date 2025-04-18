@@ -1,6 +1,6 @@
 project('Apotris',
         'c', 'cpp',
-        version : '4.1.0RC',
+        version : '4.1.0',
         license : 'GPL3', meson_version : '>=0.60.0',
         default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=false'])
 
