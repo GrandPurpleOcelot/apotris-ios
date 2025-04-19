@@ -35,14 +35,14 @@ jobs:
             container: akouzoukos/apotris-arm64:latest
             build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
             package_name_suffix: Linux-arm64 # Specific suffix
-            package_files: "README.txt Apotris assets/* license/*" # Assuming same files needed
+            package_files: "README.txt Apotris assets/* assets/shaders/* license/*" # Assuming same files needed
             exclude_package_files: "assets/meson.build" # Exclude meson build file in assets
             readme_src: tools/README_LINUX.txt # Use the same Linux readme
           - target: linux
             platform: x86_64
             build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
             package_name_suffix: Linux-x64
-            package_files: "README.txt Apotris assets/* license/*" # Files inside build-linux
+            package_files: "README.txt Apotris assets/* assets/shaders/* license/*" # Files inside build-linux
             # Note: assets/* might need adjustment if they aren't copied by meson
             exclude_package_files: "assets/meson.build"
             readme_src: tools/README_LINUX.txt
@@ -53,7 +53,7 @@ jobs:
             cross_file: meson/mingw.ini
             build_flags: --reconfigure -Db_lto=false --buildtype=release
             package_name_suffix: Windows-x64
-            package_files: "README.txt Apotris.exe assets/* license/*" # Files inside build-win64
+            package_files: "README.txt Apotris.exe assets/* assets/shaders/* license/*" # Files inside build-win64
             exclude_package_files: "assets/meson.build"
             readme_src: tools/README.txt
             runs-on: ubuntu-latest
