@@ -532,8 +532,10 @@ void setDefaults(Save* save, int depth) {
 
     setDefaultGraphics(save, depth);
 
-    for (int i = 0; i < 5; i++) {
-        saveToProfile(&save->settings.profiles[i], &save->settings);
+    if (depth < 7) {
+        for (int i = 0; i < 5; i++) {
+            saveToProfile(&save->settings.profiles[i], &save->settings);
+        }
     }
 }
 
