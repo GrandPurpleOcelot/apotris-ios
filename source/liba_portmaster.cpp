@@ -408,9 +408,13 @@ void saveSavefile() {
 void rumbleStart(int length) {
     set_rumble(RUMBLE_STRONG);
     rumbleTimer = length;
+    SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
 }
 
-void rumbleStop() { set_rumble(RUMBLE_OFF); }
+void rumbleStop() {
+    set_rumble(RUMBLE_OFF);
+    SDL_GameControllerRumble(controller, 0, 0, 1);
+}
 
 std::map<int, std::string> keyToString = {
     {SDL_CONTROLLER_BUTTON_A, "A"},
