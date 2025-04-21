@@ -13,7 +13,7 @@ jobs:
             build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
             # Add specific package details if needed
             package_name_suffix: GBA
-            package_files: "LINUX_or_MAC_build.sh WINDOWS_build.bat README.txt Apotris.gba Apotris-pocket.gba tools/* audio/* license/*" # Files inside build-gba
+            package_files: "LINUX_or_MAC_build.sh WINDOWS_build.bat README.txt Apotris.gba tools/* audio/* license/*" # Files inside build-gba
             readme_src: tools/README.txt # Default GBA readme
             runs-on: ubuntu-latest
             container: akouzoukos/apotris:latest
@@ -138,9 +138,9 @@ jobs:
                ../tools/buildSoundbank.py ../tools/mmutil.exe ../tools/padbin.exe ../tools/cat.exe \
                ../tools/countchan.exe ../tools/sound_effects.txt ./tools/
             cp Apotris-base.gba ./tools/
-            cp ../tools/buildSongs.bat ../WINDOWS_build.bat
-            cp ../tools/buildSongs.sh ../LINUX_or_MAC_build.sh
-            chmod +x ../LINUX_or_MAC_build.sh
+            cp ../tools/buildSongs.bat ./WINDOWS_build.bat
+            cp ../tools/buildSongs.sh ./LINUX_or_MAC_build.sh
+            chmod +x ./LINUX_or_MAC_build.sh
             # Zip GBA contents
             zip "../$zip_name" ${{ matrix.package_files }}
 
