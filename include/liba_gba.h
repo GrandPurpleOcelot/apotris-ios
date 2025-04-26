@@ -2,9 +2,9 @@
 #include "audio_files.h"
 #include "interrupt.h"
 #include "mm_types.h"
-#include <cstdint>
 #include <map>
 #include <posprintf.h>
+#include <stdint.h>
 #include <string>
 #include <tonc.h>
 /* #include "soundbank.h" */
@@ -79,6 +79,10 @@ void enableVolatileInterrupts(bool setDispCnt);
 IWRAM_CODE void memcpy16_fast(void* dest, const void* src, int hwCount);
 IWRAM_CODE void memcpy32_fast(void* dest, const void* src, int wCount);
 IWRAM_CODE void memset32_fast(void* dest, int word, int wCount);
+
+INLINE u32 keys_raw() {
+    return REG_KEYINPUT;
+};
 
 extern u16 gradientTable[192 + 1];
 

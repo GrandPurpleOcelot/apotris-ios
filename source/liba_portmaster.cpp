@@ -7,9 +7,27 @@
 #include <iostream>
 #include <list>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "def.h"
+#include "shader.h"
 
 #include "nanotime.h"
+
+#define RUMBLE_OFF 1000000
+#define RUMBLE_STRONG 100000
+#define RUMBLE_MEDIUM 400000
+
+static int fd = -1;
+
+void rumbleUpdate();
+void cleanup_handler(int signum);
+int set_rumble(int strength);
 
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
@@ -33,6 +51,7 @@ float fps = 0;
 SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_GameController* controller;
+SDL_Texture* texture;
 
 bool render = true;
 
@@ -45,10 +64,17 @@ float windowScale = 3;
 
 nanotime_step_data stepper;
 
+ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
+
+static int rumbleTimer = 0;
+
 void windowInit() {
     // Initialize SDL
-
     window = NULL;
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -162,44 +188,86 @@ uint32_t key_first() {
     return KEY_FULL - 1;
 }
 
+uint32_t keys_raw() {
+    if (currentKeys.empty())
+        return KEY_FULL - 1;
+
+    u32 allKeys = KEY_FULL;
+    for (auto key : currentKeys) {
+        allKeys ^= key;
+    }
+
+    return allKeys;
+}
+
 void updateWindow(uint8_t* framebuffer) {
     const int in_width = SCREEN_WIDTH;
     const int in_height = SCREEN_HEIGHT;
 
+    // Create the SDL_Surface from the framebuffer
     SDL_Surface* img = SDL_CreateRGBSurfaceFrom(
         framebuffer, in_width, in_height, 32, in_width * 4, 0x0000ff, 0x00ff00,
         0xff0000, 0xff000000);
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
-
-    SDL_FreeSurface(img);
-
-    SDL_RenderClear(renderer);
-
-    SDL_Rect rect = {
-        0,
-        0,
-        in_width,
-        in_height,
-    };
-
-    const int w = in_width * windowScale;
-    const int h = in_height * windowScale;
-
-    SDL_Rect dest_rect = {
-        -(w - screenWidth) / 2,
-        -(h - screenHeight) / 2,
-        w,
-        h,
-    };
-
-    if (render) {
-        SDL_RenderCopy(renderer, texture, &rect, &dest_rect);
+    if (img == NULL) {
+        printf("Failed to create SDL_Surface: %s\n", SDL_GetError());
+        return;
     }
 
-    SDL_RenderPresent(renderer);
+    if (shaderStatus != ShaderStatus::OK || savefile->settings.shaders == 0) {
+        // Create the streaming texture once
+        if (texture == NULL) {
+            texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888,
+                                        SDL_TEXTUREACCESS_STREAMING, in_width,
+                                        in_height);
+            if (texture == NULL) {
+                printf("Failed to create texture: %s\n", SDL_GetError());
+                SDL_FreeSurface(img);
+                return;
+            }
+        }
 
-    SDL_DestroyTexture(texture);
+        // Lock the texture to update its pixel data
+        void* pixels;
+        int pitch;
+        if (SDL_LockTexture(texture, NULL, &pixels, &pitch) != 0) {
+            printf("Failed to lock texture: %s\n", SDL_GetError());
+            SDL_FreeSurface(img);
+            return;
+        }
+
+        // Copy the surface's pixel data into the streaming texture
+        for (int y = 0; y < in_height; y++) {
+            memcpy((uint8_t*)pixels + y * pitch, // Destination pointer
+                   (uint8_t*)img->pixels + y * img->pitch, // Source pointer
+                   in_width * 4                            // Row size in bytes
+            );
+        }
+
+        SDL_UnlockTexture(texture);
+
+        // Clear the renderer
+        SDL_RenderClear(renderer);
+
+        // Define source and destination rectangles
+        SDL_Rect src_rect = {0, 0, in_width, in_height};
+        const int w = in_width * windowScale;
+        const int h = in_height * windowScale;
+        SDL_Rect dest_rect = {-(w - screenWidth) / 2, -(h - screenHeight) / 2,
+                              w, h};
+
+        // Copy the updated texture to the renderer
+        if (render) {
+            SDL_RenderCopy(renderer, texture, &src_rect, &dest_rect);
+        }
+
+        SDL_RenderPresent(renderer);
+    } else {
+        if (render) {
+            drawWithShaders(window, img, true);
+        }
+    }
+    SDL_FreeSurface(img); // Free the surface after use
 
     // Cap FPS
     nanotime_step(&stepper);
@@ -253,19 +321,47 @@ void refreshWindowSize() {
     if (rowEnd > SCREEN_HEIGHT)
         rowEnd = SCREEN_HEIGHT;
 
-    if (savefile != nullptr)
+    if (savefile != nullptr) {
         setGradient(savefile->settings.backgroundGradient);
+        if (savefile->settings.shaders != 0) {
+            refreshShaderResolution(screenWidth, screenHeight, windowScale);
+        }
+    }
 }
 
 bool closed() {
     songEndHandler();
+    rumbleUpdate();
 
     return true;
 }
 
+void rumbleUpdate() {
+    if (rumbleTimer > 0) {
+        rumbleTimer--;
+    } else {
+        rumbleStop();
+    }
+}
+
 void toggleRendering(bool r) { render = r; }
 
-void initRumble() {};
+void initRumble() {
+    signal(SIGINT, cleanup_handler);
+    signal(SIGTERM, cleanup_handler);
+
+    fd = open("/sys/class/pwm/pwmchip0/pwm0/duty_cycle", O_WRONLY);
+    if (fd < 0) {
+        log("couldn't open rumble file 0");
+        fd = open("/sys/class/pwm/pwmchip1/pwm0/duty_cycle", O_WRONLY);
+        if (fd < 0) {
+            log("couldn't open rumble file");
+            fprintf(stderr, "Failed to open PWM: %s\n", strerror(errno));
+            return;
+        }
+    }
+    return;
+};
 
 void loadSavefile() {
 
@@ -309,6 +405,17 @@ void saveSavefile() {
     output.close();
 }
 
+void rumbleStart(int length) {
+    set_rumble(RUMBLE_STRONG);
+    rumbleTimer = length;
+    SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
+}
+
+void rumbleStop() {
+    set_rumble(RUMBLE_OFF);
+    SDL_GameControllerRumble(controller, 0, 0, 1);
+}
+
 std::map<int, std::string> keyToString = {
     {SDL_CONTROLLER_BUTTON_A, "A"},
     {SDL_CONTROLLER_BUTTON_B, "B"},
@@ -324,7 +431,42 @@ std::map<int, std::string> keyToString = {
     {SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, "R"},
 };
 
+// rumble signal handler
+void cleanup_handler(int signum) {
+    if (fd >= 0) {
+        char str[16];
+        snprintf(str, sizeof(str), "%d", RUMBLE_OFF);
+        write(fd, str, strlen(str));
+        close(fd);
+    }
+    exit(signum);
+}
+
+int set_rumble(int strength) {
+    if (fd < 0)
+        return -1;
+
+    char str[16];
+    snprintf(str, sizeof(str), "%d", strength);
+
+    if (write(fd, str, strlen(str)) < 0) {
+        fprintf(stderr, "Failed to set rumble: %s\n", strerror(errno));
+        return -1;
+    }
+    return 0;
+}
+
 void quit() {
+    // shutdown rumble
+    if (fd >= 0) {
+        char str[16];
+        snprintf(str, sizeof(str), "%d", RUMBLE_OFF);
+        write(fd, str, strlen(str));
+        close(fd);
+        fd = -1;
+    }
+
+    SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -332,4 +474,7 @@ void quit() {
     exit(0);
 }
 
+void shaderInit(int index) { initShaders(window, index); }
+
+void shaderDeinit() { freeShaders(); }
 #endif

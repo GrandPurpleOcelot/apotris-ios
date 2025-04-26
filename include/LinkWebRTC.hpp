@@ -56,7 +56,7 @@ public:
         std::uniform_int_distribution<int> uniform(0,
                                                    int(characters.size() - 1));
         std::generate(id.begin(), id.end(), [&]() {
-            return characters.at(qran() % (characters.length() - 1));
+            return characters.at((int)randNext() % (characters.length() - 1));
         });
         return id;
     }
@@ -177,7 +177,7 @@ public:
         });
 #endif
 
-        std::string url = "wss://signaling.pingas.org/" + localId +
+        std::string url = "wss://localhost:8088/" + localId +
                           (!roomId.empty() ? "/" + roomId : "/match");
         url.erase(remove(url.begin(), url.end(), ' '), url.end());
 

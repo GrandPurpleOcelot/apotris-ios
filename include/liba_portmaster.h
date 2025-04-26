@@ -38,6 +38,8 @@ extern void sfxRate(int, float);
 extern void pauseSong();
 
 extern void windowInit();
+extern void shaderInit(int);
+extern void shaderDeinit();
 
 extern void key_poll();
 
@@ -45,6 +47,7 @@ extern uint32_t key_is_down(uint32_t);
 extern uint32_t key_hit(uint32_t);
 extern uint32_t key_released(uint32_t);
 extern uint32_t key_first();
+extern uint32_t keys_raw();
 
 extern int rowStart;
 extern int rowEnd;

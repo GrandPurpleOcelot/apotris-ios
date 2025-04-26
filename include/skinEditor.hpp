@@ -271,4 +271,6 @@ class EditorScene : public Scene {
     u8 timer = 0;
 
     Board board;
+
+    ~EditorScene() { deinit(); }
 };

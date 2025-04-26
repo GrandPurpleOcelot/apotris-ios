@@ -8,6 +8,8 @@
 #include "agbabi.h"
 #include "detectEmulators.h"
 #include "flashSaves.h"
+#include "gba_flash.h"
+#include "gba_sram.h"
 #include "gbfs.h"
 #include "gbp_logo.hpp"
 #include "logging.h"
@@ -275,7 +277,19 @@ void setUpLinkUniversal(bool detectEmus) {
 
 void deinitialize() {}
 
-bool closed() { return true; }
+static int rumbleTimer = 0;
+
+bool closed() {
+    rumble_update();
+    if (rumbleTimer > 0) {
+        rumbleTimer--;
+
+        rumble_set_state(rumble_start);
+    } else {
+        rumble_set_state(rumble_hard_stop);
+    }
+    return true;
+}
 
 IWRAM_CODE void memcpy16_fast(void* dest, const void* src, int hwCount) {
     __agbabi_memcpy2(dest, src, hwCount * 2);
@@ -497,16 +511,6 @@ void enableVolatileInterrupts(bool setDispCnt) {
 
     if (prevGradient)
         gradient(1);
-}
-
-void sleep() {
-    disableVolatileInterrupts(true);
-
-    REG_P1CNT = 0b1100001100000100;
-
-    Stop();
-
-    enableVolatileInterrupts(true);
 }
 
 void sfx(int s) {
@@ -791,4 +795,7 @@ void setUpPresentException(std::string error) {
     changeScene(new MultiplayerExceptionScene(std::move(error)));
 }
 
+void rumbleStart(int length) { rumbleTimer = length; }
+
+void rumbleStop() { rumbleTimer = 0; }
 #endif

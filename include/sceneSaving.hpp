@@ -2,6 +2,9 @@
 
 #include "flashSaves.h"
 #include "scene.hpp"
+#ifdef GBA
+#include "gba_flash.h"
+#endif
 
 class SaveTypeElement : public Element {
 public:
@@ -44,7 +47,7 @@ public:
 
 #ifdef GBA
 
-        if (flashInfo.size == FLASH_SIZE_64KB || sramInfo.size == SAVE_64K_END)
+        if (flashInfo.size == FLASH_SIZE_64KB || sramInfo.size == 0xFFFF)
             result = "64KB";
         else if (flashInfo.size == FLASH_SIZE_128KB)
             result = "128KB";

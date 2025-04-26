@@ -208,6 +208,8 @@ public:
     int index = 0;
 
     std::string getLabel() override {
+        if (index < 0)
+            return "(empty)";
         return "Track " + std::to_string(index + 1);
     }
 
@@ -216,6 +218,8 @@ public:
     }
 
     std::string getCurrentOption() override {
+        if (index < 0)
+            return "-";
         if (!getSongState(menu, index))
             return "ON";
         else
@@ -223,6 +227,8 @@ public:
     }
 
     void action(int dir) override {
+        if (index < 0)
+            return;
         toggleSong(menu, index, !getSongState(menu, index));
         sfx(SFX_MENUMOVE);
     }
@@ -235,9 +241,9 @@ public:
     }
 };
 
-class SongListElement : public Element {
+class TrackListElement : public Element {
 public:
-    std::string getLabel() override { return "Song List"; }
+    std::string getLabel() override { return "Track List"; }
 
     std::string getCursor(std::string text) override {
         return "[" + text + "]";
@@ -256,17 +262,17 @@ public:
         return {
             new MusicVolumeElement(), new SFXVolumeElement(),
             new AnnouncerElement(),   new PlaybackElement(),
-            new MoveSfxElement(),     new SongListElement(),
+            new MoveSfxElement(),     new TrackListElement(),
         };
     };
 
     Scene* previousScene() { return new SettingsScene(); };
 };
 
-class SongListScene : public OptionListScene {
+class TrackListScene : public OptionListScene {
 public:
     int previous = 0;
-    std::string name() { return "Song List"; };
+    std::string name() { return "Track List"; };
 
     std::list<Element*> getElementList() {
         std::list<Element*> list;
@@ -276,11 +282,17 @@ public:
         for (int i = 0; i < (int)songs.menu.size(); i++) {
             list.push_back(new SongElement(0, i));
         }
+        if (songs.menu.size() == 0) {
+            list.push_back(new SongElement(0, -1));
+        }
 
         list.push_back(new LabelElement("In-Game:"));
 
         for (int i = 0; i < (int)songs.game.size(); i++) {
             list.push_back(new SongElement(1, i));
+        }
+        if (songs.game.size() == 0) {
+            list.push_back(new SongElement(1, -1));
         }
 
         return list;
@@ -297,11 +309,11 @@ public:
 
     Scene* previousScene() { return new AudioOptionScene(); };
 
-    SongListScene() {
+    TrackListScene() {
         previous = savefile->settings.cycleSongs;
 
         savefile->settings.cycleSongs = 0; // LOOP
     }
 
-    ~SongListScene() { deinit(); }
+    ~TrackListScene() { deinit(); }
 };

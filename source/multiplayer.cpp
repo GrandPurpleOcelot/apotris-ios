@@ -153,19 +153,19 @@ int weightedRandomPlayerSelection() {
     // Pick randomly if no power
     if (!totalAttackPower) {
         u8 randomPlayer =
-            static_cast<u8>(qran() % multiplayerLink->playingPlayerCount);
+            static_cast<u8>((int)randNext() % multiplayerLink->playingPlayerCount);
         while (randomPlayer == multiplayerLink->universal->currentPlayerId() &&
                loseIndex[randomPlayer].over) {
             // get another random value if it equals the current player's id or
             // they lost
             randomPlayer =
-                static_cast<u8>(qran() % multiplayerLink->playingPlayerCount);
+                static_cast<u8>((int)randNext() % multiplayerLink->playingPlayerCount);
         }
         return randomPlayer;
     }
 
     // Generate a random number between 0 and totalAttackPower
-    u32 r = qran() % totalAttackPower;
+    u32 r = randNext() % totalAttackPower;
 
     // Determine which player is selected
     u32 accumulatedPower = 0;
@@ -435,9 +435,7 @@ bool GameScene::reconnect() {
 
     showSprites(128);
 
-#ifdef GBA
-    rumble_set_state(rumble_stop);
-#endif
+    rumbleStop();
 
     int cursorFloat = 0;
     OBJ_ATTR* cursorSprites[2];

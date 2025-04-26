@@ -1,6 +1,7 @@
 #pragma once
 
 #include "platform.hpp"
+#include "prng.h"
 #include "tetromino.hpp"
 #include <list>
 #include <string>
@@ -105,7 +106,7 @@ namespace BlockEngine {
 
 extern const uint16_t connectedConversion[24];
 extern const uint16_t connectedFix[3][24];
-extern int* getShape(int n, int rotation, int rotationSystem);
+extern int* getShape(int piece, int rotation, int rotationSystem);
 
 enum Modes {
     NO_MODE,
@@ -608,14 +609,19 @@ public:
     void loadFumen();
     std::string getFumen();
     void demoGarbage();
+    u32 random();
+    int setRandomSeed(int newSeed);
     std::tuple<int, int> getSpawnPosition();
+
+    const int randomMax = ((1 << 15) - 1);
+    int randomSeed = 0;
 
     int lengthX = 10;
     int lengthY = 40;
-    int board[40][10]{};
+    int board[40][10]{};
 
-    uint16_t bitboard[40]{};
-    int columnHeights[10]{};
+    uint16_t bitboard[40]{};
+    int columnHeights[10]{};
 
     Pawn pawn = Pawn(0, 0);
     int held = -1;
@@ -728,7 +734,7 @@ public:
 
     Game(int gm, int sd, bool big);
 
-    Game(int gm, bool big) : Game(gm, qran(), big) {}
+    Game(int gm, bool big) : Game(gm, (int)randNext(), big) {}
 
     Game(Game* oldGame);
 

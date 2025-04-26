@@ -1,8 +1,10 @@
 #include <string>
 
 #include "blockEngine.hpp"
+#include "cmath"
 #include "def.h"
 #include "platform.hpp"
+#include "sceneGraphics.hpp"
 #include "sprites.h"
 
 #ifdef GBA
@@ -35,10 +37,12 @@
 #include "font2tiles_bin.h"
 #include "multiplayerClasses.h"
 
+#include "sceneColorEditor.hpp"
+
 using namespace BlockEngine;
 
 [[maybe_unused]] const std::string save_type = "SRAM_Vnnn";
-
+int getClassicPalette();
 void genWidths();
 
 OBJ_ATTR obj_buffer[128];
@@ -107,6 +111,17 @@ const std::list<std::string> menuControlOptions = {
 void initialize() {
     initRumble();
 
+#ifdef PC
+    setFullscreen(savefile != nullptr && savefile->settings.fullscreen);
+
+#endif
+
+#if defined(PC) || defined(PORTMASTER)
+    if (savefile->settings.shaders != 0) {
+        shaderInit(savefile->settings.shaders);
+    }
+#endif
+
     toggleSprites(true);
 
     buildBG(0, 2, 29, 0, 0, true);
@@ -161,6 +176,7 @@ int main() {
     platformInit();
 
     loadSave();
+    randSetSeed(savefile->seed);
 
     initialize();
 
@@ -176,13 +192,14 @@ int main() {
             setUpPresentException(localReason);
         } else
             scene->update();
+        sampleEntropy();
     }
 
     deinitialize();
 }
 
 #ifdef PC
-int WinMain() {
+int WinMain(void) {
     main();
     return 0;
 }
@@ -227,12 +244,8 @@ void reset() {
 
     floatingList.clear();
     placeEffectList.clear();
-    rumbleTimer = 0;
 
-// TODO:
-#ifdef GBA
-    rumble_set_state(RumbleState(rumble_stop));
-#endif
+    rumbleStop();
 
     resetZonePalette();
 
@@ -248,9 +261,9 @@ void reset() {
     setMosaic(0, 0);
 
     // reset glow
-    for (auto& i : glow)
+    for (int i = 0; i < 20; i++)
         for (int j = 0; j < 10; j++)
-            i[j] = 0;
+            glow[i][j] = 0;
 
     int g = savefile->settings.backgroundGradient;
 
@@ -302,16 +315,26 @@ std::string nameInput(int place) {
 
     showSprites(128);
 
+    if (place == 0 && game->gameMode != BATTLE &&
+        (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ))
+        aprint("New Record", 10, 5);
+
+    aprint("Name: ", 11, nameHeight - 2);
+
     MenuKeys k = savefile->settings.menuKeys;
+
+#if defined(N3DS)
+    resetSmallText();
+    setSmallTextArea(220, 0, 17, 30, 20);
+
+    // Show keyboard immediately if name is empty
+    bool requestKeyboard = (result.find_last_not_of(' ') == std::string::npos);
+#endif
 
     while (closed()) {
         vsync();
 
-        if (place != -1 && (place == 0 && game->gameMode != BATTLE &&
-                            (game->won || game->gameMode == MARATHON ||
-                             game->gameMode >= BLITZ)))
-            aprint("New Record", 10, 5);
-        else if (place == -1) {
+        if (place == -1) {
             aprint("Pick a unique room to", 5, 5);
             aprint("join/create", 7, 6);
         }
@@ -329,8 +352,37 @@ std::string nameInput(int place) {
         aprintClearArea(13, nameHeight, 10, 1);
         aprint(result, 13, nameHeight);
 
+#if defined(N3DS)
+        {
+            std::string s = "Press " + getStringFromKey(k.special3) +
+                            " to use on-screen keyboard";
+            aprints(s, (30 * 8 - 4 * s.size()) / 2, 8, 2);
+        }
+
+        requestKeyboard =
+            requestKeyboard ||
+            (key_hit(k.special3) && !(key_is_down(KEY_FULL) & (~k.special3)));
+
+        if (requestKeyboard) {
+            requestKeyboard = false;
+            sfx(SFX_MENUMOVE);
+            if (n3ds::keyboardNameInput(&result, 8)) {
+                result.resize(8, ' ');
+                cursor = max(min(result.find_last_not_of(' ') + 1, 7), 0);
+                onDone = true;
+                sfx(SFX_MENUCONFIRM);
+            }
+        }
+#endif
+
         if (!onDone) {
-#if defined(GBA) || defined(SWITCH) || defined(PORTMASTER)
+            char curr = result.at(cursor);
+
+#if defined(PC)
+            if (lastInputType == InputType::KEYBOARD)
+                goto keyboard;
+#endif
+
             if (key_hit(k.confirm) || key_hit(k.right)) {
                 cursor++;
                 if (cursor > 7) {
@@ -355,7 +407,6 @@ std::string nameInput(int place) {
                 sfx(SFX_MENUMOVE);
             }
 
-            char curr = result.at(cursor);
             if (key_hit(k.up)) {
                 if (curr == 'A')
                     result[cursor] = ' ';
@@ -406,11 +457,15 @@ std::string nameInput(int place) {
                     aprint("_", 13 + cursor, nameHeight);
             }
 
-#elif defined(PC) || defined(WEB)
+#if defined(PC) || defined(WEB)
+        keyboard:
 
             u32 key = key_first();
 
             char character = getStringFromKey(key)[0];
+
+            if (lastInputType == InputType::CONTROLLER)
+                goto end;
 
             if (cursor > 0 &&
                 ((key == SDLK_BACKSPACE) || (das == maxDas && arr == 0))) {
@@ -462,6 +517,7 @@ std::string nameInput(int place) {
             }
 
 #endif
+        end:
 
             if (key_hit(k.pause)) {
                 onDone = true;
@@ -515,9 +571,10 @@ std::string nameInput(int place) {
 
     clearText();
 
-    if (place == -1) {
-        return result;
-    }
+#if defined(N3DS)
+    resetSmallText();
+    aprintClearArea(0, 17, 30 + 1, 20);
+#endif
 
     if (result.size() >= 8)
         result = result.substr(0, 8);
@@ -531,7 +588,9 @@ std::string nameInput(int place) {
     return result;
 }
 
-void setSkin() {
+void setSkin() { setSkin(0); }
+
+void setSkin(int rotation) {
 
     switch (savefile->settings.skin) {
     case 0:
@@ -644,7 +703,7 @@ void setSkin() {
         else
             n = game->rotationSystem;
 
-        board = getShape(i, 0, n);
+        board = getShape(i, rotation, n);
 
         int iy = 16 * i;
         for (int j = 0; j < 4; j++) {
@@ -737,13 +796,22 @@ void diagnose() {
 }
 
 void setPalette() {
-    int n = (savefile->settings.colors < 2) ? savefile->settings.colors : 0;
+    int n = (savefile->settings.colors < 2 && savefile->settings.colors >= 0)
+                ? savefile->settings.colors
+                : 0;
 
     for (int i = 0; i < 16; i++) {
-
         if (i < 8 && savefile->settings.colors < 2) {
             loadPalette(i, 0, &palette[n][i * 16], 8);
             loadPalette(i + 16, 0, &palette[n][i * 16], 8);
+
+            if (i < 7 && savefile->settings.colors < 0) {
+                int customIndex = -(savefile->settings.colors + 1);
+                loadPalette(i, 1, savefile->customPalettes[customIndex][i], 3);
+                loadPalette(i + 16, 1, savefile->customPalettes[customIndex][i],
+                            3);
+            }
+
         } else if (i < 8) {
             loadPalette(i, 4, &palette[n][i * 16 + 4], 4);
             loadPalette(i + 16, 4, &palette[n][i * 16 + 4], 4);
@@ -766,11 +834,11 @@ void setPalette() {
         loadPalette(8, 0, &palette[n][color * 16], 16);
         loadPalette(8 + 16, 0, &palette[n][color * 16], 16);
 
-        int n = getClassicPalette();
+        int classic = getClassicPalette();
 
         for (int i = 0; i < 8; i++) {
-            loadPalette(i, 1, &nesPalette[n][0], 4);
-            loadPalette(i + 16, 1, &nesPalette[n][0], 4);
+            loadPalette(i, 1, &nesPalette[classic][0], 4);
+            loadPalette(i + 16, 1, &nesPalette[classic][0], 4);
         }
 
     } else if (savefile->settings.colors == 4) {
@@ -786,14 +854,6 @@ void setPalette() {
             setPaletteColor(i + 16, 1, c, 4);
         }
 
-        // if(!savefile->settings.lightMode){
-        //     setPaletteColor(7, 0, 0x7fff, 2);
-        //     setPaletteColor(7+16, 0, 0x7fff, 2);
-        // }else{
-        //     setPaletteColor(7, 0, 0x0421, 2);
-        //     setPaletteColor(7+16, 0, 0x0421, 2);
-        // }
-
     } else if (savefile->settings.colors == 5) {
         for (int i = 0; i < 8; i++) {
             loadPalette(i, 1, &arsPalette[0][i], 4);
@@ -808,21 +868,35 @@ void setPalette() {
             loadPalette(i, 1, &arsPalette[1][i], 4);
             loadPalette(i + 16, 1, &arsPalette[1][i], 4);
         }
+
         // set frame color
         loadPalette(8, 0, &palette[1][color * 16], 16);
         loadPalette(8 + 16, 0, &palette[1][color * 16], 16);
     } else {
+        const int index = clamp(savefile->settings.colors, 0, 3);
+
         // set frame color
-        loadPalette(8, 0, &palette[n][color * 16], 16);
-        loadPalette(8 + 16, 0, &palette[n][color * 16], 16);
+        loadPalette(8, 0, &palette[index][color * 16], 16);
+        loadPalette(8 + 16, 0, &palette[index][color * 16], 16);
+
+        // needs base case to fill all of the colors
+        if (savefile->settings.colors < 0) {
+            COLOR* src =
+                savefile
+                    ->customPalettes[-(savefile->settings.colors + 1)][color];
+
+            // set frame color
+            loadPalette(8, 1, src, 3);
+            loadPalette(8 + 16, 1, src, 3);
+        }
     }
 
     setLightMode();
 
     if (savefile->settings.effects == 2) {
         for (int i = 0; i < 16; i++) {
-            int color = (savefile->settings.lightMode) ? 29 - i : i;
-            setPaletteColor(i, 5, RGB15(color, color, color), 1);
+            int value = (savefile->settings.lightMode) ? 29 - i : i;
+            setPaletteColor(i, 5, RGB15(value, value, value), 1);
         }
     }
 
@@ -967,12 +1041,12 @@ void setDefaultGradient() {
                   defaultGradient_bin_size / 2);
 #endif
 
-#ifdef PC
+#if defined(PC) || defined(N3DS)
 
     int div = SCREEN_HEIGHT / 8;
     int n = (savefile->settings.colors < 2) ? savefile->settings.colors : 0;
 
-    auto* src = (COLOR*)&palette[n];
+    COLOR* src = (COLOR*)&palette[n];
 
     for (int i = 0; i < SCREEN_HEIGHT; i++) {
         color_fade((COLOR*)&gradientTable[i], src, GRADIENT_COLOR, 1,
@@ -1010,7 +1084,8 @@ void startGame(BlockEngine::Options options, int seed) {
         game->setOptions(options);
     }
 
-    savefile->stats.gamesStarted++;
+    if (!demo)
+        savefile->stats.gamesStarted++;
 
     delete previousGameOptions;
     previousGameOptions = new Options();
@@ -1045,7 +1120,7 @@ void startGame() {
     if (previousGameOptions == nullptr)
         previousGameOptions = new Options();
 
-    startGame(*previousGameOptions, qran());
+    startGame(*previousGameOptions, (int)randNext());
 }
 
 void startBotGame(int seed) {
@@ -1069,15 +1144,15 @@ void startBotGame(int seed) {
     status.Options = previousGameOptions;
 }
 
-void setPawnPalette(int dest, int n, int blend) {
+void setPawnPalette(int dest, int n, int blend, bool flip) {
     dest += 16;
 
-    if (savefile->settings.lightMode) {
-        if (savefile->settings.colors == 2)
+    if (savefile->settings.lightMode != flip) {
+        if (savefile->settings.colors == 2) {
             color_fade_palette(dest, 0, (COLOR*)classic_pal_bin, 0x0000, 5,
                                blend);
-        else if (savefile->settings.colors == 3) {
-            int n = getClassicPalette();
+        } else if (savefile->settings.colors == 3) {
+            n = getClassicPalette();
             color_fade_palette(dest, 1, &nesPalette[n][0], 0x0000, 4, blend);
         } else if (savefile->settings.colors == 4) {
             COLOR c;
@@ -1097,10 +1172,20 @@ void setPawnPalette(int dest, int n, int blend) {
         } else if (savefile->settings.colors == 6) {
             color_fade_palette(dest, 1, (COLOR*)&arsPalette[1][n], 0x0000, 4,
                                blend);
-        } else
+        } else {
+            const int index =
+                savefile->settings.colors >= 0 ? savefile->settings.colors : 0;
+
+            color_fade_palette(dest, 0, (COLOR*)&palette[index][n * 16], 0x0000,
+                               5, blend);
+        }
+
+        if (savefile->settings.colors < 0) {
             color_fade_palette(
-                dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16],
-                0x0000, 5, blend);
+                dest, 1,
+                savefile->customPalettes[-(savefile->settings.colors + 1)][n],
+                0x0000, 3, blend);
+        }
     } else {
         if (dest == 11 + 16)
             blend = int2fx(blend) >> 5;
@@ -1128,15 +1213,25 @@ void setPawnPalette(int dest, int n, int blend) {
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[0][n], 4, blend);
         } else if (savefile->settings.colors == 6) {
             color_adj_brightness(dest, 1, (COLOR*)&arsPalette[1][n], 4, blend);
-        } else
+        } else {
+            const int index =
+                savefile->settings.colors >= 0 ? savefile->settings.colors : 0;
+
+            color_adj_brightness(dest, 0, (COLOR*)&palette[index][n * 16], 5,
+                                 blend);
+        }
+
+        if (savefile->settings.colors < 0) {
             color_adj_brightness(
-                dest, 0, (COLOR*)&palette[savefile->settings.colors][n * 16], 5,
-                blend);
+                dest, 1,
+                savefile->customPalettes[-(savefile->settings.colors + 1)][n],
+                3, blend);
+        }
     }
 }
 
 std::string getStringFromKey(int key) {
-#if defined(GBA)
+#if defined(GBA) || defined(N3DS)
 
     std::string result;
 
@@ -1144,13 +1239,13 @@ std::string getStringFromKey(int key) {
         result = keyToString[key];
     } else {
 
-        int k = key;
+        u32 k = key;
 
         int counter = 0;
         do {
             if (k & (1 << counter)) {
                 result += keyToString[1 << counter] + " ";
-                k -= 1 << counter;
+                k &= ~(1 << counter);
             }
 
             counter++;
@@ -1237,4 +1332,99 @@ void genWidths() {
             str = "";
         }
     }
+}
+
+COLOR hsv2rgb(HSV_COLOR hsv) {
+    return hsv2rgb(hsv.hue, hsv.saturation, hsv.value);
+}
+
+COLOR hsv2rgb(int hue, float saturation, float value) {
+    if (saturation == 0.0f) { // Achromatic (gray)
+        const int gray = (int)(value * 31);
+
+        return RGB15_SAFE(gray, gray, gray);
+    }
+
+    hue = hue % 360;
+    float h_prime = hue / 60.0f;
+    int i = (int)(h_prime);
+    float f = h_prime - i; // fractional part of h_prime
+    float p = value * (1 - saturation);
+    float q = value * (1 - saturation * f);
+    float t = value * (1 - saturation * (1 - f));
+
+    float r = 0, g = 0, b = 0;
+
+    switch (i) {
+    case 0:
+        r = value;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = value;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = value;
+        b = t;
+        break;
+    case 3:
+        r = p;
+        g = q;
+        b = value;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = value;
+        break;
+    case 5:
+        r = value;
+        g = p;
+        b = q;
+        break;
+    }
+
+    return RGB15_SAFE((int)(r * 31), (int)(g * 31), (int)(b * 31));
+}
+
+HSV_COLOR rgb2hsv(int r, int g, int b) {
+    // Normalize RGB values to the range [0, 1]
+    float r_norm = r / 31.0f;
+    float g_norm = g / 31.0f;
+    float b_norm = b / 31.0f;
+
+    float c_max = std::max({r_norm, g_norm, b_norm});
+    float c_min = std::min({r_norm, g_norm, b_norm});
+    float delta = c_max - c_min;
+
+    float h = 0, s = 0, v = c_max;
+
+    if (delta == 0) {
+        h = 0; // Hue is undefined for achromatic colors (black, white, grays)
+    } else {
+        if (c_max == r_norm) {
+            h = 60 * (fmod(((g_norm - b_norm) / delta), 6));
+        } else if (c_max == g_norm) {
+            h = 60 * (((b_norm - r_norm) / delta) + 2);
+        } else if (c_max == b_norm) {
+            h = 60 * (((r_norm - g_norm) / delta) + 4);
+        }
+    }
+
+    if (c_max == 0) {
+        s = 0; // Saturation is 0 when color is black
+    } else {
+        s = delta / c_max;
+    }
+
+    // Ensure hue is non-negative
+    if (h < 0) {
+        h += 360;
+    }
+
+    return HSV_COLOR{(int)h, s, v};
 }

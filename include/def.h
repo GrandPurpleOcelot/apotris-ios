@@ -1,10 +1,14 @@
 #pragma once
 
+#include "version.h"
+
 #include "blockEngine.hpp"
 #include "menu.h"
 #include "platform.hpp"
 #include "save.h"
 #include "text.h"
+#include <list>
+#include <memory>
 
 #define glowDuration 12
 #ifdef GBA
@@ -85,7 +89,7 @@ public:
 
 #define TRAINING_MESSAGE_MAX 300
 #define MAX_SKINS 15
-#define MAX_SHADOWS 7
+#define MAX_SHADOWS 8
 #define MAX_BACKGROUNDS 8
 #define MAX_COLORS 7
 #define MAX_CLEAR_EFFECTS 4
@@ -97,7 +101,7 @@ public:
 #define GRADIENT_COLOR 0x71a6
 
 #define SHOW_FINESSE 1
-#define SAVE_TAG 0x51
+#define SAVE_TAG 0x52
 
 #define ENABLE_ROM_SAVE 1
 
@@ -110,6 +114,7 @@ extern void songListMenu();
 extern void showTitleSprites();
 extern void setLightMode();
 extern void setSkin();
+extern void setSkin(int rotation);
 extern void setDefaultKeys();
 extern void setClearEffect();
 
@@ -155,7 +160,7 @@ extern std::string timeToString(int frames, bool small);
 extern std::string timeToStringHours(int frames);
 extern void setDefaultGraphics(Save* save, int depth);
 extern void setRandomGraphics(Save* save);
-extern void setPawnPalette(int dest, int n, int blend);
+extern void setPawnPalette(int dest, int n, int blend, bool flip);
 
 extern void startGame(BlockEngine::Options options, int seed);
 extern void startGame(int seed);
@@ -179,6 +184,8 @@ extern void updateGrid();
 extern void updateFluid();
 
 extern void addGameStats();
+
+extern void setPreviousSettings(Settings settings);
 
 extern std::string modeToString(BlockEngine::Modes mode);
 
@@ -261,7 +268,6 @@ extern int currentMenu;
 extern int previousOptionScreen;
 extern bool goToOptions;
 
-extern int rumbleTimer;
 extern int rumbleMax;
 
 extern bool rumbleInitialized;
@@ -304,8 +310,9 @@ extern int previous[22][12];
 
 extern WordSprite* wordSprites[MAX_WORD_SPRITES];
 
-extern Settings previousSettings;
+extern std::unique_ptr<Settings> previousSettings;
 extern Skin previousSkins[MAX_CUSTOM_SKINS];
+extern COLOR* previousPalette;
 
 extern std::list<std::string> path;
 extern std::string previousElement;
@@ -359,3 +366,14 @@ extern std::string exceptionReason;
 
 struct StatusData;
 extern StatusData status;
+
+typedef struct HSV_COLOR {
+    int hue = 0;
+    float saturation = 0;
+    float value = 0;
+} HSV_COLOR;
+
+COLOR hsv2rgb(int h, float s, float v);
+COLOR hsv2rgb(HSV_COLOR hsv);
+
+HSV_COLOR rgb2hsv(int r, int g, int b);

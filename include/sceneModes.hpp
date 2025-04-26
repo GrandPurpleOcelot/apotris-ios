@@ -96,7 +96,7 @@ public:
     std::list<std::string> optionList;
     std::string label;
 
-    int getValue() override { return value; };
+    virtual int getValue() override { return value; };
 
     std::string getLabel() override { return label; };
 
@@ -292,13 +292,13 @@ public:
     explicit TupleSelectorElement(
         std::list<std::tuple<int, std::string>> list) {
         optionList = std::move(list);
-        options = optionList.size();
+        options = (int) optionList.size();
     }
 
     TupleSelectorElement(std::string newLabel,
                          std::list<std::tuple<int, std::string>> list) {
         optionList = std::move(list);
-        options = optionList.size();
+        options = (int) optionList.size();
         label = std::move(newLabel);
     }
 };

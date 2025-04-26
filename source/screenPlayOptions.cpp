@@ -8,6 +8,7 @@
 #else
 #include "LinkWebRTC.hpp"
 #endif
+#include "prng.h"
 #include <cstring>
 #include <utility>
 
@@ -301,7 +302,7 @@ void PlayOptionScene::start() {
     proMode = (key_is_down(k.special1) || key_is_down(k.special2)) ^
               (savefile->settings.pro);
 
-    startGame(newOptions, qran());
+    startGame(newOptions, (int)randNext());
 
     gameLoop();
 }
@@ -314,16 +315,26 @@ void PlayOptionScene::draw() {
     const int endX = 30 - 4;
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
-    auto scale = float2fx((1.0 - ((float)0.1 * offset)));
+    FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
 
     int verticalOffset = 0;
     if (moving) {
         int temp =
             lerp((movingDirection) * (space + 1) * 8, 0, 64 * movingTimer);
         verticalOffset = lerp(temp, 0, 64 * movingTimer);
+#ifdef N3DS
+        // Scroll falling blocks to top of screen when in 1x scale:
+        setLayerScroll(2, 0, -verticalOffset + 40);
+#else
         setLayerScroll(2, 0, -verticalOffset);
+#endif
     } else {
+#ifdef N3DS
+        // Scroll falling blocks to top of screen when in 1x scale:
+        setLayerScroll(2, 0, 40);
+#else
         setLayerScroll(2, 0, 0);
+#endif
     }
 
     EntryBoard* board = getBoard(subMode, goal);
@@ -414,7 +425,7 @@ void PlayOptionScene::draw() {
                 labels[i]->setText(buff);
                 labels[i]->show(startX, y, 15);
 
-                std::string str;
+                std::string str = "";
                 if (getIfGrade() && board->entries[i].value > 0) {
                     if (name() == "Master") {
                         str += GameInfo::masterGrades[board->entries[i].grade];
@@ -525,7 +536,7 @@ void PlayOptionScene::draw() {
                 scrollDelay = 0;
                 scrollingText[0]->setTextSlow(scrollText);
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
                 for (int i = 0; i < 2; i++) {
                     sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
                     sprite_set_pos(scrollSideSprites[i],
@@ -651,6 +662,10 @@ void MultBattleScene::init() {
 
 void MultBattleScene::draw() {
     fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     handleConnectionDisplay();
 
@@ -803,6 +818,10 @@ void PlayOptionScene::resetScoreboard() {
         key_poll();
 
         fallingBlocks();
+#ifdef N3DS
+        // Scroll falling blocks to top of screen when in 1x scale:
+        setLayerScroll(2, 0, 40);
+#endif
 
         if (timer < 200) {
             timer++;
@@ -820,7 +839,7 @@ void PlayOptionScene::resetScoreboard() {
             }
 
             int offset = (sinLut(cursorFloat) * 2) >> 12;
-            auto scale = float2fx((1.0 - ((float)0.1 * offset)));
+            FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
 
             for (int i = 0; i < 2; i++) {
                 sprite_unhide(cursorSprites[i], 0);
@@ -928,6 +947,8 @@ void MatchMakingScene::init() {
 
     enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
 }
+
+std::string nameInput(int);
 
 bool MatchMakingScene::control() {
     MenuKeys k = savefile->settings.menuKeys;

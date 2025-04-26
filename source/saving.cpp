@@ -2,15 +2,13 @@
 #include "def.h"
 #include "flashSaves.h"
 #include "logging.h"
+#include "prng.h"
 #include "sprite1tiles_bin.h"
 #include "sprites.h"
 #include <algorithm>
 #include <cstring>
 #include <memory>
 #include <string>
-#ifdef GBA
-#include "util/random.h"
-#endif
 
 class SaveChange {
 public:
@@ -25,9 +23,10 @@ public:
     }
 };
 
+void setDefaultKeys();
 void resetSkins(Save* save);
 void setDefaults(Save* save, int depth);
-
+void setDefaultGraphics(Save* save, int depth);
 void applySaveChanges(u8* newSave, u8* oldSave, int newSize);
 void convertScores(Save* save);
 
@@ -37,6 +36,16 @@ const SaveChange saveChanges[] = {
     SaveChange(0x51, 624, 192),    // add zone + buffer to scoreboards
 };
 int changeLength = 3;
+
+// Hash entire save file deterministically
+u32 hashSave() {
+    u32* dump = (u32*)savefile;
+    u32 hash = 0;
+    for (int i = 0; i < (int)(sizeof(Save) / sizeof(u32)); i++) {
+        hash = whisky2(hash, dump[i]);
+    }
+    return hash;
+}
 
 void loadSave() {
 
@@ -48,7 +57,56 @@ void loadSave() {
     const int pmSettings = 540;
     const int pmSave = 3876;
 
-    if (savefile->newGame >= 0x4e && savefile->newGame <= 0x50) {
+    if (savefile->newGame >= 0x50 && savefile->newGame <= 0x51) {
+#if defined(PC) || defined(WEB)
+
+        Keys keys = savefile->settings.keys;
+
+        savefile->settings.keys = {
+            .moveLeft = (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) |
+                        packKey(keys.moveLeft),
+            .moveRight = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) |
+                         packKey(keys.moveRight),
+            .rotateCCW =
+                (SDL_CONTROLLER_BUTTON_A << 16) | packKey(keys.rotateCCW),
+            .rotateCW =
+                (SDL_CONTROLLER_BUTTON_B << 16) | packKey(keys.rotateCW),
+            .rotate180 =
+                (SDL_CONTROLLER_BUTTON_Y << 16) | packKey(keys.rotate180),
+            .softDrop = (SDL_CONTROLLER_BUTTON_DPAD_DOWN << 16) |
+                        packKey(keys.softDrop),
+            .hardDrop =
+                (SDL_CONTROLLER_BUTTON_DPAD_UP << 16) | packKey(keys.hardDrop),
+            .hold = (SDL_CONTROLLER_BUTTON_RIGHTSHOULDER << 16) |
+                    packKey(keys.hold),
+            .zone =
+                (SDL_CONTROLLER_BUTTON_LEFTSHOULDER << 16) | packKey(keys.zone),
+        };
+
+        MenuKeys menu = savefile->settings.menuKeys;
+
+        savefile->settings.menuKeys = {
+            .up = (SDL_CONTROLLER_BUTTON_DPAD_UP << 16) | packKey(menu.up),
+            .down =
+                (SDL_CONTROLLER_BUTTON_DPAD_DOWN << 16) | packKey(menu.down),
+            .left =
+                (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) | packKey(menu.left),
+            .right =
+                (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(menu.right),
+            .confirm = (SDL_CONTROLLER_BUTTON_A << 16) | packKey(menu.confirm),
+            .cancel = (SDL_CONTROLLER_BUTTON_B << 16) | packKey(menu.cancel),
+            .pause = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(menu.pause),
+            .reset = packKey(menu.reset),
+            .special1 = (SDL_CONTROLLER_BUTTON_LEFTSHOULDER << 16) |
+                        packKey(menu.special1),
+            .special2 = (SDL_CONTROLLER_BUTTON_RIGHTSHOULDER << 16) |
+                        packKey(menu.special2),
+            .special3 =
+                (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(menu.special3),
+        };
+
+#endif
+    } else if (savefile->newGame >= 0x4e && savefile->newGame <= 0x50) {
         // purposefully empty
     } else if (savefile->newGame >= 0x4b && savefile->newGame <= 0x4d) {
         int size = 0;
@@ -89,6 +147,8 @@ void loadSave() {
         resetSkins(savefile);
 
         savefile->newGame = SAVE_TAG;
+        // Set initial seed deterministic to save file (sampling will change it)
+        savefile->seed = (int)hashSave();
     }
 
     // fix invalid values, since I messed up conversion at some point
@@ -120,6 +180,9 @@ void loadSave() {
         delete temp;
 
         switch (savefile->newGame) {
+        case 0x51:
+            setDefaults(savefile, 7);
+            break;
         case 0x50:
             setDefaults(savefile, 6);
             break;
@@ -146,24 +209,32 @@ void loadSave() {
     }
 
     if (savefile->platform != PLATFORM) {
+        auto oldPlatform = savefile->platform;
         savefile->platform = PLATFORM;
 
         savefile->settings.menuKeys = getDefaultMenuKeys();
         savefile->settings.keys = getDefaultGameKeys();
-    }
 
-    u8* dump = (u8*)savefile;
-    int sum = 0;
-    for (int i = 0; i < (int)sizeof(Save); i++)
-        sum += dump[i];
-    sqran(sum);
+#ifdef N3DS
+        savefile->settings.n3dsMainScreenIsTop = true;
+        savefile->settings.n3dsScaleMode = n3ds::ScaleMode::SCALED_SHARP;
+        savefile->settings._n3dsPlaceholder1 = 0;
+        savefile->settings._n3dsPlaceholder2 = 0;
+        savefile->settings._n3dsPlaceholder3 = 0;
+#else
+        if (oldPlatform == PLATFORM_N3DS) {
+            savefile->settings.integerScale = true;
+            savefile->settings.fullscreen = false;
+        }
+#endif
+    }
 
 #ifdef GBA
     randSetSeed(sum);
     savefile->seed = (int)randNext();
     status.update(&savefile->settings);
 #else
-    savefile->seed = qran();
+    savefile->seed = (int)randNext();
 #endif
     saveSavefile();
 }
@@ -173,15 +244,18 @@ Keys getDefaultGameKeys() {
 
 #if defined(PC) || defined(WEB)
     k = {
-        .moveLeft = SDLK_LEFT,
-        .moveRight = SDLK_RIGHT,
-        .rotateCCW = SDLK_z,
-        .rotateCW = SDLK_UP,
-        .rotate180 = SDLK_a,
-        .softDrop = SDLK_DOWN,
-        .hardDrop = SDLK_SPACE,
-        .hold = SDLK_c,
-        .zone = SDLK_s,
+        .moveLeft =
+            (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) | packKey(SDLK_LEFT),
+        .moveRight =
+            (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(SDLK_RIGHT),
+        .rotateCCW = (SDL_CONTROLLER_BUTTON_A << 16) | packKey(SDLK_z),
+        .rotateCW = (SDL_CONTROLLER_BUTTON_B << 16) | packKey(SDLK_UP),
+        .rotate180 = (SDL_CONTROLLER_BUTTON_Y << 16) | packKey(SDLK_a),
+        .softDrop =
+            (SDL_CONTROLLER_BUTTON_DPAD_DOWN << 16) | packKey(SDLK_DOWN),
+        .hardDrop = (SDL_CONTROLLER_BUTTON_DPAD_UP << 16) | packKey(SDLK_SPACE),
+        .hold = (SDL_CONTROLLER_BUTTON_RIGHTSHOULDER << 16) | packKey(SDLK_c),
+        .zone = (SDL_CONTROLLER_BUTTON_LEFTSHOULDER << 16) | packKey(SDLK_s),
     };
 
     return k;
@@ -199,7 +273,7 @@ Keys getDefaultGameKeys() {
         .zone = KEY_SELECT,
     };
 
-#ifdef GBA
+#if defined(GBA) || defined(N3DS)
     k.hold |= KEY_L;
 #endif
 
@@ -266,12 +340,12 @@ void setDefaultHandling(Save* save) {
 }
 
 void resetSkins(Save* save) {
-    for (auto& customSkin : save->customSkins) {
-        memcpy16_fast(&customSkin.board, sprite1tiles_bin,
+    for (int i = 0; i < MAX_CUSTOM_SKINS; i++) {
+        memcpy16_fast(&save->customSkins[i].board, sprite1tiles_bin,
                       sprite1tiles_bin_size / 2);
-        memcpy16_fast(&customSkin.smallBoard, mini[0],
+        memcpy16_fast(&save->customSkins[i].smallBoard, mini[0],
                       sprite1tiles_bin_size / 2);
-        customSkin.changed = false;
+        save->customSkins[i].changed = false;
     }
 }
 
@@ -296,8 +370,8 @@ void setDefaults(Save* save, int depth) {
     }
 
     if (depth < 2) {
-        for (bool& i : save->settings.songList)
-            i = true;
+        for (int i = 0; i < 10; i++)
+            save->settings.songList[i] = true;
 
         memset32_fast(savefile->boards.ultra, 0, sizeof(EntryBoard) * 3 / 4);
     }
@@ -392,7 +466,14 @@ void setDefaults(Save* save, int depth) {
         save->settings.rotationSystem = BlockEngine::SRS;
         save->settings.randomizer = BlockEngine::BAG_7;
         save->settings.zoom = -1;
+#ifdef N3DS
+        save->settings.n3dsMainScreenIsTop = true;
+        save->settings.n3dsScaleMode = n3ds::ScaleMode::SCALED_SHARP;
+        save->settings._n3dsPlaceholder1 = 0;
+        save->settings._n3dsPlaceholder2 = 0;
+#else
         save->settings.integerScale = true;
+#endif
         save->settings.peek = true;
         save->settings.moveSfx = 2;
         save->settings.pauseCountdown = 1;
@@ -401,6 +482,12 @@ void setDefaults(Save* save, int depth) {
         save->settings.journey = false;
         save->settings.autosave = 1;
         save->settings.showFPS = false;
+#ifdef N3DS
+        save->settings._n3dsPlaceholder3 = 0;
+#else
+        save->settings.fullscreen = false;
+#endif
+        save->settings.shaders = false;
 
         save->stats.maxLevel = 0;
         save->stats.totalLines = 0;
@@ -438,10 +525,22 @@ void setDefaults(Save* save, int depth) {
         strncpy(savefile->endTag, "SAVE_END", 9);
     }
 
+    if (depth < 8) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 7; j++) {
+                memcpy16(&save->customPalettes[i][j], &palette[1][j * 16 + 1],
+                         3);
+            }
+            loadPalette(i + 16, 0, palette, 3);
+        }
+    }
+
     setDefaultGraphics(save, depth);
 
-    for (auto& profile : save->settings.profiles) {
-        saveToProfile(&profile, &save->settings);
+    if (depth < 7) {
+        for (int i = 0; i < 5; i++) {
+            saveToProfile(&save->settings.profiles[i], &save->settings);
+        }
     }
 }
 
@@ -534,6 +633,9 @@ void setDefaultGraphics(Save* save, int depth) {
     if (depth < 7) {
         save->settings.frameBackground = 1;
         save->settings.backgroundType = 1;
+#ifdef N3DS
+        n3ds::savedAspectRatio = 0;
+#endif
         save->settings.aspectRatio = 0;
         save->settings.clearText = 2;
 
@@ -548,7 +650,7 @@ void setDefaultGraphics(Save* save, int depth) {
 }
 
 void convertScores(Save* save) {
-    auto* oldBoards = (OldScoreboards*)&save->boards;
+    OldScoreboards* oldBoards = (OldScoreboards*)&save->boards;
 
     ModeBoards newBoards;
 
@@ -590,11 +692,11 @@ void convertScores(Save* save) {
         }
     }
 
-    auto* b = (EntryBoard*)&newBoards;
+    EntryBoard* b = (EntryBoard*)&newBoards;
 
     for (int i = 0; i < 33; i++) {
-        for (auto& entrie : b->entries) {
-            entrie.pro = false;
+        for (int j = 0; j < 5; j++) {
+            b->entries[j].pro = false;
         }
         b++;
     }
@@ -619,7 +721,11 @@ void profileToSave(GraphicsOptions* profile, Settings* settings) {
     settings->placeEffect = profile->placeEffect;
     settings->frameBackground = profile->frameBackground;
     settings->backgroundType = profile->backgroundType;
+#ifdef N3DS
+    n3ds::savedAspectRatio = profile->aspectRatio;
+#else
     settings->aspectRatio = profile->aspectRatio;
+#endif
     settings->screenShakeType = profile->screenShakeType;
     settings->clearDirection = profile->clearDirection;
 }
@@ -641,7 +747,11 @@ void saveToProfile(GraphicsOptions* profile, Settings* settings) {
     profile->placeEffect = settings->placeEffect;
     profile->frameBackground = settings->frameBackground;
     profile->backgroundType = settings->backgroundType;
+#ifdef N3DS
+    profile->aspectRatio = n3ds::savedAspectRatio;
+#else
     profile->aspectRatio = settings->aspectRatio;
+#endif
     profile->screenShakeType = settings->screenShakeType;
     profile->clearDirection = settings->clearDirection;
 }

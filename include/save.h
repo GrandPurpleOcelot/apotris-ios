@@ -147,7 +147,19 @@ typedef struct Settings {
     int goalLine;
     int rotationSystem;
     int zoom;
+#ifdef N3DS
+    union {
+        struct {
+            u8 n3dsMainScreenIsTop;
+            n3ds::ScaleMode n3dsScaleMode;
+            u8 _n3dsPlaceholder1;
+            u8 _n3dsPlaceholder2;
+        };
+        int _n3dsDisplayOptionValue;
+    };
+#else
     int integerScale;
+#endif
     int peek;
     int moveSfx;
     int pauseCountdown;
@@ -166,8 +178,14 @@ typedef struct Settings {
     bool showSpawn;
     bool showFPS;
     int bootlegOverrideType;
+#ifdef N3DS
+    int _n3dsPlaceholder3;
+#else
+    int fullscreen;
+#endif
+    int shaders;
 
-    int placeHolder[31];
+    int placeHolder[29];
 
 } ALIGN(4) Settings;
 
@@ -203,6 +221,8 @@ typedef struct Skin {
 } ALIGN(4) Skin;
 
 #define MAX_CUSTOM_SKINS 5
+
+#define MAX_CUSTOM_PALETTES 3
 
 typedef struct SaveEntry {
     char name[9];
@@ -266,6 +286,9 @@ public:
     Skin customSkins[MAX_CUSTOM_SKINS];
 
     u8 platform;
+
+    COLOR customPalettes[MAX_CUSTOM_PALETTES][7][3];
+
     char endTag[9] = "SAVE_END";
 } ALIGN(4);
 

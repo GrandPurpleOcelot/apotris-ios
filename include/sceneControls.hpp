@@ -168,26 +168,26 @@ public:
             if (exit)
                 break;
 
-                // if(key_hit(savefile->settings.menuKeys.pause)){
-                //     sfx(SFX_MENUCANCEL);
-                //     exit = true;
-                //     continue;
-                // }
+            // if(key_hit(savefile->settings.menuKeys.pause)){
+            //     sfx(SFX_MENUCANCEL);
+            //     exit = true;
+            //     continue;
+            // }
 
-#if defined(GBA)
+#if defined(GBA) || defined(N3DS)
 
-            u16 key = key_hit(KEY_FULL);
+            u32 key = key_hit(KEY_FULL);
 
             if (key != 0) {
                 std::list<int> currentKeys;
 
-                int temp = key;
+                u32 temp = key;
 
                 int counter = 0;
                 do {
                     if (temp & (1 << counter)) {
                         currentKeys.push_back(1 << counter);
-                        temp -= 1 << counter;
+                        temp &= ~(1 << counter);
                     }
 
                     counter++;
@@ -196,12 +196,12 @@ public:
                 for (int i = 0; i < max; i++) {
                     foundKeys.clear();
 
-                    int k = keys[i];
+                    u32 k = keys[i];
                     counter = 0;
                     do {
                         if (k & (1 << counter)) {
                             foundKeys.push_back(1 << counter);
-                            k -= 1 << counter;
+                            k &= ~(1 << counter);
                         }
 
                         counter++;
@@ -246,6 +246,24 @@ public:
             //     continue;
             // }
 
+#elif defined(PC)
+            u32 key = key_first();
+
+            if (key != KEY_FULL - 1) {
+                setKey(keys[index], key);
+
+                for (int j = 0; j < max; j++) {
+                    if (j == index)
+                        continue;
+
+                    unbindDuplicateKey(keys[j], key);
+                }
+
+                sfx(SFX_MENUCONFIRM);
+                exit = true;
+                continue;
+            }
+
 #else
             u32 key = key_first();
 
@@ -276,7 +294,11 @@ public:
     std::string getCurrentOption() override {
         if (reading) {
             return "...";
+#ifdef N3DS
+        } else if (keys[index] == UNBOUND) {
+#else
         } else if (keys[index] < 0) {
+#endif
             return "";
         }
 
@@ -333,12 +355,15 @@ public:
             list.push_back(new RebindElement((int*)&savefile->settings.keys, 1,
                                              counter++, *it, 9));
 
-#if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER)
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
-        list.push_back(new RumbleElement());
 
-#elif defined(PC) || defined(WEB)
+#if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) ||   \
+    defined(PC)
+        list.push_back(new RumbleElement());
+#endif
+
+#if defined(PC) || defined(WEB)
 
         list.push_back(new LabelElement("Menu:"));
 

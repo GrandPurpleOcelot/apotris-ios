@@ -2,7 +2,6 @@
 #include "def.h"
 #include "logging.h"
 #include "menu.h"
-#include "meter1_tiles_bin.h"
 #include "sprites.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -13,7 +12,9 @@
 #include "multiplayerClasses.h"
 #endif
 
-#include "rumble.h"
+#ifdef GBA
+#include <rumble.h>
+#endif // GBA
 
 #include "achievementStructure.h"
 #include "classic_pal_bin.h"
@@ -31,7 +32,8 @@ void addPlaceEffect(const Drop&);
 
 void showBar(int, int, int, int, int);
 
-bool checkDiagonal(int);
+void showBestMove();
+bool checkDiagonal(uint32_t);
 void showSpeedMeter(int);
 
 void disappear();
@@ -87,7 +89,6 @@ int restartTimer = 0;
 int attackFlashTimer = 0;
 #define attackFlashMax 10
 
-int rumbleTimer = 0;
 #define rumbleMax 1
 
 std::list<FloatText> floatingList;
@@ -245,12 +246,12 @@ void GameScene::checkSounds() {
             for (auto& moveSprite : moveSprites)
                 sprite_hide(moveSprite);
 
-        rumbleTimer = rumbleMax * savefile->settings.rumble;
+        rumbleStart(rumbleMax * savefile->settings.rumble);
     }
 
     if (game->sounds.invalid) {
         sfx(SFX_INVALID);
-        rumbleTimer = rumbleMax * savefile->settings.rumble;
+        rumbleStart(rumbleMax * savefile->settings.rumble);
     }
 
     if (game->sounds.rotate)
@@ -421,7 +422,7 @@ void GameScene::checkSounds() {
         holdingSave = true;
 
         if (!savefile->settings.journey)
-            previousSettings = savefile->settings;
+            setPreviousSettings(savefile->settings);
 
         savefile->settings.colors = 4;
         savefile->settings.palette = 7;
@@ -456,7 +457,8 @@ void GameScene::checkSounds() {
 
         sfx(SFX_ZONESTART);
     } else if (game->sounds.zone == 2) {
-        savefile->settings.lightMode = !previousSettings.lightMode;
+        if (previousSettings != nullptr)
+            savefile->settings.lightMode = !previousSettings->lightMode;
 
         setPalette();
         if (savefile->settings.lightMode) {
@@ -487,8 +489,11 @@ void GameScene::checkSounds() {
         savefile->settings.edges = false;
         refreshSkin = true;
     } else if (game->sounds.bone == -1) {
-        savefile->settings.skin = previousSettings.skin;
-        savefile->settings.edges = previousSettings.edges;
+        if (previousSettings != nullptr) {
+            savefile->settings.skin = previousSettings->skin;
+            savefile->settings.edges = previousSettings->edges;
+        }
+
         refreshSkin = true;
     }
 
@@ -790,7 +795,7 @@ void showPawn() {
         blend += max(16 - (game->lockTimer * 16) / game->maxLockTimer, 0);
 
     if (!game->zoneTimer) {
-        setPawnPalette(11, n, blend);
+        setPawnPalette(11, n, blend, false);
     }
 
     if (!game->pawn.big) {
@@ -842,6 +847,7 @@ void showShadow() {
     u8* shadowTexture;
 
     bool bld = false;
+    bool flip = false;
     switch (savefile->settings.shadow) {
     case 0:
         shadowTexture = (u8*)sprite2tiles_bin;
@@ -863,6 +869,15 @@ void showShadow() {
     case 4:
         sprite_hide(pawnShadow);
         return;
+    case 7:
+        if (savefile->settings.skin < 7 || savefile->settings.skin > 8)
+            shadowTexture = blockSprite;
+        else
+            shadowTexture = (u8*)
+                classicTiles[savefile->settings.skin - 7][game->activePiece];
+        bld = true;
+        flip = true;
+        break;
     default:
         shadowTexture = (u8*)sprite2tiles_bin;
         break;
@@ -900,7 +915,7 @@ void showShadow() {
     int n = game->activePiece;
 
     if (!game->zoneTimer) {
-        setPawnPalette(10, n, 14 * bld);
+        setPawnPalette(10, n, 14 * bld, flip);
     }
 
     if (!game->pawn.big) {
@@ -910,7 +925,9 @@ void showShadow() {
         }
 
         sprite_set_attr(pawnShadow, ShapeSquare, 2,
-                        16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
+                        16 * (8 - (savefile->settings.shadow == 3 ||
+                                   savefile->settings.shadow == 7)),
+                        10, 2);
         sprite_set_pos(pawnShadow,
                        (10 + game->pawn.x) * 8 +
                            push * savefile->settings.shake,
@@ -922,7 +939,9 @@ void showShadow() {
             return;
         }
         sprite_set_attr(pawnShadow, ShapeSquare, 2,
-                        16 * (8 - (savefile->settings.shadow == 3)), 10, 2);
+                        16 * (8 - (savefile->settings.shadow == 3 ||
+                                   savefile->settings.shadow == 7)),
+                        10, 2);
         sprite_enable_mosaic(pawnShadow);
         sprite_enable_affine(pawnShadow, 30, true);
         sprite_set_size(pawnShadow, 1 << 7, 30);
@@ -1171,7 +1190,14 @@ bool GameScene::control() {
         return true;
     }
 
-    if (key_hit(m.pause) && !multiplayer && !eventPauseTimer && !flashTimer) {
+#ifdef N3DS
+    const bool shouldPause =
+        (!demo && !replaying && !handlingTest && n3ds::wasAppPaused) ||
+        key_hit(m.pause);
+#else
+    const bool shouldPause = key_hit(m.pause);
+#endif
+    if (shouldPause && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
         paused = true;
         pauseSong();
@@ -1619,8 +1645,8 @@ void addGlow(BlockEngine::Drop location) {
         }
 
         if (game->previousClear.isBackToBack == 1)
-            effectList.emplace_back(1 + (game->previousClear.isTSpin != 0),
-                                    xCenter, location.endY);
+            effectList.emplace_back(Effect(1 + (game->previousClear.isTSpin != 0),
+                                        xCenter, location.endY));
 
         for (int i = max(location.startY, 0); i < location.endY && i < 20; i++)
             memset32_fast(&current[i + 1][1], 2048, 10);
@@ -1732,6 +1758,8 @@ void GameScene::countdown() {
             game->keyLeft(1);
         } else if (key_is_down(k.moveRight)) {
             game->keyRight(1);
+        } else if (key_is_down(k.softDrop)) {
+            game->keyDown(1);
         }
     }
 
@@ -1756,7 +1784,7 @@ void screenShake() {
     enableLayerWindow(1, 0, shake, 240, 160 + shake, false);
     enableLayerWindow(2, 0, shake, 240, 160 + shake, false);
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
     setSpriteMaskRegion(shake);
 #endif
 
@@ -1771,7 +1799,7 @@ void screenShake() {
 
     } else if (savefile->settings.screenShakeType == 1) {
         shake = fx2int(shakeBuff);
-        const auto deccel = float2fx(0.768);
+        const FIXED deccel = float2fx(0.768);
         if (shakeBuff) {
 
             shakeBuff = fxmul(shakeBuff, deccel);
@@ -1818,7 +1846,7 @@ void drawFrame(int layer) {
             }
         }
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
 
         if (!game->zoneTimer) {
             setTile(l, 20, 20,
@@ -2399,10 +2427,18 @@ void showBestMove() {
     }
 }
 
-bool checkDiagonal(int key) {
+bool checkDiagonal(uint32_t key) {
     if ((!savefile->settings.diagonalType || game->rotationSystem == NRS) &&
         game->rotationSystem != ARS)
         return false;
+
+#if PC
+    return (
+        (splitKey(key) == splitKey(KEY_DOWN) ||
+         splitKey(key) == splitKey(KEY_UP)) &&
+        (key_is_down(splitKey(KEY_LEFT)) || key_is_down(splitKey(KEY_RIGHT))));
+#endif // PC
+
     return ((key == (KEY_DOWN) || key == (KEY_UP)) &&
             (key_is_down(KEY_LEFT) || key_is_down(KEY_RIGHT)));
 }
@@ -2573,7 +2609,7 @@ void showPlaceEffect() {
         sprite_unhide(it->sprite, ATTR0_AFF_DBL);
         sprite_set_attr(it->sprite, ShapeWide, 3, tileStart + 32 * i,
                         (game->zoneTimer != 0) ? 11 : it->piece,
-                        3 - (it->rotating != 0));
+                        it->rotating ? 0 : 3);
         sprite_enable_affine(it->sprite, 7 + i, doubleSize);
         sprite_set_pos(it->sprite, x, y);
         sprite_rotscale(it->sprite, ((flip) ? -1 : 1) << 8, 1 << 8,
@@ -2589,9 +2625,9 @@ void addPlaceEffect(const BlockEngine::Drop& drop) {
         game->pawn.big)
         return;
 
-    placeEffectList.emplace_back(drop.x, drop.y, drop.dx, drop.dy, drop.piece,
-                                 drop.rotation,
-                                 drop.rotating * (game->gameMode != CLASSIC));
+    placeEffectList.emplace_back(
+        PlaceEffect(drop.x, drop.y, drop.dx, drop.dy, drop.piece, drop.rotation,
+                    drop.rotating * (game->gameMode != CLASSIC)));
 }
 
 void hideMinos() {
@@ -2665,7 +2701,7 @@ void disappear() {
     }
 
     if (found) {
-        showBackground(0);
+        showBackground(peek);
     }
 }
 
@@ -2718,8 +2754,8 @@ void showZoneMeter() {
 
 void zoneFlash() {
     if (flashTimer == flashTimerMax) {
-
-        delete[] previousPalette;
+        if (previousPalette != nullptr)
+            delete[] previousPalette;
         previousPalette = new COLOR[512];
         savePalette(previousPalette);
         previousPalette[0] = 0x5ad6 * savefile->settings.lightMode;
@@ -2755,7 +2791,9 @@ void resetZonePalette() {
 
     holdingSave = false;
 
-    savefile->settings = previousSettings;
+    if (previousSettings != nullptr)
+        savefile->settings = *previousSettings;
+
     setPalette();
     setClearEffect();
 
@@ -2820,8 +2858,9 @@ void frameSnow(int layer) {
         int add1 = 0;
         int add2 = 0;
         for (int j = 0; j < 4; j++) {
-            add1 += ((qran() % 100 < fillAmount) * 0xf) << ((j + 4) * 4);
-            add2 += (((qran() % 100) < ((10 - i) * 10)) * 0xf) << ((j + 4) * 4);
+            add1 += ((randNext() % 100 < fillAmount) * 0xf) << ((j + 4) * 4);
+            add2 += (((randNext() % 100) < ((10 - i) * 10)) * 0xf)
+                    << ((j + 4) * 4);
         }
 
         dest->data[i] = t->data[i] & ~add1;
@@ -2846,7 +2885,7 @@ void frameSnow(int layer) {
         setTile(l, 9, i, tileBuild(46, false, false, 0));
         setTile(l, 20, i, tileBuild(46, true, false, 0));
 
-#ifdef TE
+#if defined(TE) || defined(N3DS)
 
         setTile(l, 20, 20,
                 tileBuild(29, true, true, 0)); // right bottom frame corner
@@ -3080,14 +3119,22 @@ const Function gameFunctions[9] = {
 
 Function getActionFromKey(int key) {
     int* keys = (int*)&savefile->settings.keys;
-
     int k = 0;
     for (int i = 0; i < 9; i++) {
+#ifndef PC
         if (keys[i] == key) {
             k = i;
             break;
         }
+#else
+        if (splitKey(keys[i]) == (splitKey(key))) {
+            k = i;
+            break;
+        }
+#endif // PC
     }
+
+    std::string text = std::to_string(key) + " " + std::to_string(k);
 
     return gameFunctions[k];
 }
@@ -3095,34 +3142,37 @@ Function getActionFromKey(int key) {
 void liftKeys() { game->liftKeys(); }
 
 void setRandomGraphics(Save* save) {
-    save->settings.edges = qran() % 2;
-    save->settings.palette = qran() % 8;
+    save->settings.edges = randNext() % 2;
+    save->settings.palette = randNext() % 8;
 
     if (save->settings.shadow != 4) {
         do {
-            save->settings.shadow = qran() % (MAX_SHADOWS - 1);
+            save->settings.shadow = randNext() % (MAX_SHADOWS);
         } while (save->settings.shadow == 4);
     }
 
-    save->settings.colors = qran() % (MAX_COLORS - 1);
+    save->settings.colors = randNext() % (MAX_COLORS);
     save->settings.backgroundGradient =
-        (RGB15(qran() % 31, qran() % 31, qran() % 31) << 16) +
-        RGB15(qran() % 31, qran() % 31, qran() % 31);
-    save->settings.frameBackground = qran() % (MAX_FRAME_BACKGROUNDS - 1);
+        (RGB15((int)(randNext() % 31), (int)(randNext() % 31),
+               (int)(randNext() % 31))
+         << 16) +
+        RGB15((int)(randNext() % 31), (int)(randNext() % 31),
+              (int)(randNext() % 31));
+    save->settings.frameBackground = randNext() % (MAX_FRAME_BACKGROUNDS);
 
-    save->settings.backgroundType = ((qran() % 10) > 3);
+    save->settings.backgroundType = ((randNext() % 10) > 3);
 
     if (save->settings.colors == 3) {
         save->settings.shadow = 3;
     }
 
-    if (qran() % 10 == 0)
+    if (randNext() % 10 == 0)
         save->settings.backgroundGradient = 0;
 
-    int skin = 0;
+    u32 skin = 0;
     int count = 0;
     do {
-        skin = qran() % (MAX_SKINS - 1 + MAX_CUSTOM_SKINS) - MAX_CUSTOM_SKINS;
+        skin = randNext() % (MAX_SKINS + MAX_CUSTOM_SKINS) - MAX_CUSTOM_SKINS;
     } while (skin < 0 && !save->customSkins[(skin + 1) * -1].changed &&
              count++ < 20);
 
@@ -3133,15 +3183,15 @@ void setRandomGraphics(Save* save) {
 
     int grid = 0;
     do {
-        grid = qran() % (MAX_BACKGROUNDS - 1);
+        grid = randNext() % (MAX_BACKGROUNDS);
     } while ((skin == 9 || skin == 10) && (grid == 0 || grid == 2));
 
     save->settings.backgroundGrid = grid;
 
-    save->settings.effects = qran() % 3;
+    save->settings.effects = randNext() % 3;
 
-    save->settings.clearEffect = qran() % MAX_CLEAR_EFFECTS;
-    save->settings.clearDirection = qran() % 2;
+    save->settings.clearEffect = randNext() % MAX_CLEAR_EFFECTS;
+    save->settings.clearDirection = randNext() % 2;
 }
 
 void setJourneyGraphics(Save* save, int level) {
@@ -3187,7 +3237,8 @@ std::list<Timestamp*>::iterator replayIterator;
 void replayControl() {
     Timestamp* t = *replayIterator;
 
-    while (replayIterator != currentReplay.end() && t->timer <= game->timer) {
+    while (replayIterator != currentReplay.end() &&
+           t->timer <= game->timer + game->eventTimer) {
         bool dir = t->dir;
         switch (t->move) {
         case 0:
@@ -3230,13 +3281,13 @@ void GameScene::init() {
     // for(int i = 0; i < 1024; i++)
     //     loadSpriteTiles(i, &d, 1, 1);
 
-#if defined(TE)
+#if defined(TE) || defined(N3DS)
     buildBG(2, 0, 25, 0, 0, true);
 #endif
 
     reset();
 
-    previousSettings = savefile->settings;
+    setPreviousSettings(savefile->settings);
 
     // hold frame tiles
     loadSpriteTiles(512, sprite6tiles_bin, 4, 4);
@@ -3355,6 +3406,15 @@ void GameScene::update() {
         return;
     }
 
+    if (skipSong) {
+        skipSong = false;
+        if (savefile->settings.cycleSongs == 1) { // CYCLE
+            playNextSong();
+        } else if (savefile->settings.cycleSongs == 2) { // SHUFFLE
+            playSongRandom(currentMenu);
+        }
+    }
+
     diagnose();
 
     if (exitGame) {
@@ -3388,7 +3448,7 @@ void GameScene::update() {
         game->update();
     }
 
-    if (handleMultiplayer(true)) {
+    if (handleMultiplayer(1)) {
         return;
     }
 
@@ -3452,22 +3512,10 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
-        rumbleTimer = rumbleMax * 2 * savefile->settings.rumble;
+        rumbleStart(rumbleMax * 2 * savefile->settings.rumble);
         clearTimer = 0;
         updateText();
     }
-
-// TODO:
-#ifdef GBA
-    rumble_update();
-    if (rumbleTimer > 0) {
-        rumbleTimer--;
-
-        rumble_set_state(rumble_start);
-    } else {
-        rumble_set_state(rumble_hard_stop);
-    }
-#endif
 
     if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)) {
         paused = true;
@@ -3478,6 +3526,7 @@ void GameScene::update() {
         if (!(playAgain && multiplayer)) {
             return;
         } else {
+            playAgain = false;
             counted = false;
         }
     }
@@ -3529,6 +3578,11 @@ void GameScene::update() {
         showCredits();
     }
 
+    if (demo && game->timer > 60 * 60 * 60 * 3) {
+        changeScene(new TitleScene(), Transitions::FADE);
+        return;
+    }
+
     if (flashTimer) {
         zoneFlash();
     }
@@ -3536,14 +3590,13 @@ void GameScene::update() {
     updateFluid();
 
     checkPeek();
-
-    sqran(qran() % frameCounter);
 }
 
 void GameScene::deinit() {
     gradient(0);
 
-    savefile->settings = previousSettings;
+    if (previousSettings != nullptr)
+        savefile->settings = *previousSettings;
 
     setPalette();
 
@@ -3556,7 +3609,7 @@ void GameScene::deinit() {
 
     setSkin();
 
-#if defined(TE)
+#if defined(TE) || defined(N3DS)
     buildBG(2, 0, 25, 0, 2, true);
 #endif
 

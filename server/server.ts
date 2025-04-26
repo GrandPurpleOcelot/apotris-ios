@@ -15,24 +15,20 @@
  */
 
 // Constants
-const HOST_NAME = Deno.env.get('HOST_NAME') || '0.0.0.0';
-const SERVER_PORT = Deno.env.get('PORT') ?? 8088;
+const HOST_NAME = Deno.env.get("HOST_NAME") || "0.0.0.0";
+const SERVER_PORT = Deno.env.get("PORT") ?? 8088;
 
 const MAX_PLAYERS = 5;
 
 const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
 const rooms: Map<string, string[]> = new Map<string, string[]>();
 
-const respond = (
-  code: number,
-  data: string,
-  contentType = 'text/plain',
-) => {
+const respond = (code: number, data: string, contentType = "text/plain") => {
   return new Response(data, {
     status: code,
     headers: {
-      'Content-Type': contentType,
-      'Access-Control-Allow-Origin': '*',
+      "Content-Type": contentType,
+      "Access-Control-Allow-Origin": "*",
     },
   });
 };
@@ -44,25 +40,25 @@ const getRandomInt = (min: number, max: number) => {
 const handler = (request: Request): Response => {
   console.info(`${request.method} :: ${request.url}`);
 
-  const upgradeHeader = request.headers.get('Upgrade');
-  if (upgradeHeader?.toLowerCase() != 'websocket') {
-    return respond(404, 'Not Found');
+  const upgradeHeader = request.headers.get("Upgrade");
+  if (upgradeHeader?.toLowerCase() != "websocket") {
+    return respond(404, "Not Found");
   }
 
   const { socket, response } = Deno.upgradeWebSocket(request);
   const url = new URL(request.url);
-  const clientID = url.pathname.split('/')[1];
-  const requestedRoomID = url.pathname.split('/')[2];
+  const clientID = url.pathname.split("/")[1];
+  const requestedRoomID = url.pathname.split("/")[2];
 
   console.info(`WS Upgrade :: ${request.url}`);
 
-  socket.addEventListener('open', (_websocketRequest) => {
+  socket.addEventListener("open", (_websocketRequest) => {
     clients.set(clientID, socket);
     console.info(`Client connected :: ${clientID}`);
 
     // Try to match the client with an existing room
     let roomID;
-    if (requestedRoomID === 'match') {
+    if (requestedRoomID === "match") {
       for (const [id, room] of rooms.entries()) {
         if (room.length < 2) {
           room.push(clientID);
@@ -73,7 +69,7 @@ const handler = (request: Request): Response => {
     } else {
       for (const [id, room] of rooms.entries()) {
         if (room.length >= MAX_PLAYERS) {
-          socket.send(JSON.stringify({ type: 'full', id: 'tryagain' }));
+          socket.send(JSON.stringify({ type: "full", id: "tryagain" }));
           return;
         }
         if (id.toLowerCase() === requestedRoomID.toLowerCase()) {
@@ -85,7 +81,7 @@ const handler = (request: Request): Response => {
     }
 
     // If no room is available, create a new one
-    if (!roomID && requestedRoomID != 'match') {
+    if (!roomID && requestedRoomID != "match") {
       roomID = `${requestedRoomID.toLowerCase()}`;
       rooms.set(roomID, [clientID]);
     } else if (!roomID) {
@@ -99,29 +95,39 @@ const handler = (request: Request): Response => {
       const seed = getRandomInt(1, 2000000000);
       room.forEach((clientID, index) => {
         // Send the client's own id and iter
-        clients.get(clientID)?.send(JSON.stringify({ type: 'match', id: clientID, iter: index }));
+        clients
+          .get(clientID)
+          ?.send(JSON.stringify({ type: "match", id: clientID, iter: index }));
 
         // Send the other clients' ids and iters
         room.forEach((otherClientID, otherIndex) => {
           if (clientID !== otherClientID) {
-            clients.get(clientID)?.send(JSON.stringify({ type: 'match', id: otherClientID, iter: otherIndex }));
+            clients.get(clientID)?.send(
+              JSON.stringify({
+                type: "match",
+                id: otherClientID,
+                iter: otherIndex,
+              }),
+            );
           }
         });
 
         // Send the shared seed
-        clients.get(clientID)?.send(JSON.stringify({ type: 'seed', id: seed.toString() }));
+        clients
+          .get(clientID)
+          ?.send(JSON.stringify({ type: "seed", id: seed.toString() }));
         console.info(`Sent ${clientID} a seed value of ${seed}`);
       });
-      console.log('Room connected!');
+      console.log("Room connected!");
     } else {
       // If the room is not full, send an iter message with 0
-      socket.send(JSON.stringify({ type: 'match', id: clientID, iter: 0 }));
-      console.log('Room pending');
+      socket.send(JSON.stringify({ type: "match", id: clientID, iter: 0 }));
+      console.log("Room pending");
     }
   });
 
-  socket.addEventListener('message', (websocketMessage) => {
-    if (typeof websocketMessage.data != 'string') return;
+  socket.addEventListener("message", (websocketMessage) => {
+    if (typeof websocketMessage.data != "string") return;
 
     console.info(`Client ${clientID} :: << :: ${websocketMessage.data}`);
 
@@ -147,7 +153,7 @@ const handler = (request: Request): Response => {
     }
   });
 
-  socket.addEventListener('close', () => {
+  socket.addEventListener("close", () => {
     clients.delete(clientID);
 
     // Remove the client from their room
@@ -163,7 +169,9 @@ const handler = (request: Request): Response => {
           rooms.set(id, Array.from(room.filter((value) => value)));
           // Send a close message to the other clients in the room
           for (const client of rooms.get(id) ?? []) {
-            clients.get(client)?.send(JSON.stringify({ type: 'close', id: clientID }));
+            clients
+              .get(client)
+              ?.send(JSON.stringify({ type: "close", id: clientID }));
             console.info(`Client ${client} heard that ${clientID} quit`);
           }
         }
@@ -182,8 +190,8 @@ const shutdown = () => {
   Deno.exit();
 };
 // Graceful shutdown of network clients
-Deno.addSignalListener('SIGINT', shutdown);
-Deno.addSignalListener('SIGTERM', shutdown);
+Deno.addSignalListener("SIGINT", shutdown);
+Deno.addSignalListener("SIGTERM", shutdown);
 
 Deno.serve({
   hostname: HOST_NAME,

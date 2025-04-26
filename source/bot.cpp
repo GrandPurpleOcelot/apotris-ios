@@ -130,8 +130,8 @@ void Bot::run() {
 
         if (thinkingI == -6) {
             if (checking == 0 && exploring == 0) {
-
-                delete testGame;
+                if (testGame != nullptr)
+                    delete testGame;
                 testGame = new Game(game);
 
                 if (game->pawn.current == -1) {
@@ -204,7 +204,8 @@ void Bot::stopThinking() {
 
         current = moves.front();
 
-        delete testGame;
+        if (testGame != nullptr)
+            delete testGame;
         testGame = new Game(game);
 
         moves.clear();
@@ -233,7 +234,8 @@ void Bot::stopThinking() {
         // else
         //     log("no better move found");
 
-        delete testGame;
+        if (testGame != nullptr)
+            delete testGame;
         testGame = new Game(game);
     } else {
         if (exploring == 0) { // populate first moves array (best moves from
@@ -262,8 +264,8 @@ void Bot::stopThinking() {
             // reset testGame to current game to prepare to execute the next
             // move. Only necessary the second time since testGame is the same
             // as current game initially
-
-            delete testGame;
+            if (testGame != nullptr)
+                delete testGame;
             testGame = new Game(game);
         }
 
@@ -285,16 +287,14 @@ void Bot::executeMove(const Move& move) const {
         }
     }
 
-    int step = 0;
     if (testGame->pawn.rotation != move.rotation) {
-        while (testGame->pawn.rotation != move.rotation &&
-               step++ < botStepMax) {
+        while (testGame->pawn.rotation != move.rotation) {
             testGame->rotateCW(1);
             testGame->rotateCW(0);
         }
     }
 
-    step = 0;
+    int step = 0;
     int botStepMax = 20;
     int dx = 0;
     if (dx > move.dx) {
@@ -342,16 +342,15 @@ void Bot::move() {
         return;
     }
 
-    int step = 0;
     if (game->pawn.rotation != current.rotation) {
-        while (game->pawn.rotation != current.rotation && step++ < botStepMax) {
+        while (game->pawn.rotation != current.rotation) {
             game->rotateCW(1);
             game->rotateCW(0);
             // rotation++;
         }
     }
 
-    step = 0;
+    int step = 0;
     if (dx > current.dx) {
         while (dx != current.dx && step++ < botStepMax) {
             game->keyLeft(1);

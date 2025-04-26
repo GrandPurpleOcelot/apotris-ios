@@ -24,6 +24,7 @@ using namespace BlockEngine;
 void endAnimation();
 void showScore();
 int onRecord();
+std::string nameInput(int);
 void qrScene();
 
 void saveReplay();
@@ -117,12 +118,6 @@ void GameScene::endScreen() {
         }
     }
 
-    savefile->stats.gamesCompleted++;
-    if (game->lost)
-        savefile->stats.gamesLost++;
-
-    addGameStats();
-
     showStats(showingStats, totalTime, ppsStr, true);
 
     if (!replaying) {
@@ -166,7 +161,7 @@ void GameScene::endScreen() {
             break;
         }
     } else if (game->gameMode == BATTLE) {
-        switch (rank) {
+        switch (rank - 1) {
         case 0:
             placeString = "1st";
             break;
@@ -185,7 +180,7 @@ void GameScene::endScreen() {
         }
     }
 
-    if (!placeString.empty()) {
+    if (placeString != "") {
         placeString += " Place";
         naprint(placeString, 15 * 8 - getVariableWidth(placeString) / 2, 5 * 8);
     }
@@ -194,7 +189,7 @@ void GameScene::endScreen() {
 
     bool shownOptions = false;
     while (closed()) {
-        if (handleMultiplayer(false)) {
+        if (handleMultiplayer(0)) {
             return;
         }
 
@@ -208,23 +203,23 @@ void GameScene::endScreen() {
                 shownOptions = true;
             }
             showScore();
-
-            cursorFloat += 6;
-            if (cursorFloat >= 512)
-                cursorFloat = 0;
-            int offset = (sinLut(cursorFloat) * 2) >> 12;
-            auto scale = float2fx((1.0 - ((float)0.1 * offset)));
-
-            sprite_unhide(cursorSprite, 0);
-            sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 0);
-            sprite_enable_affine(cursorSprite, 6, true);
-            sprite_set_size(cursorSprite, scale, 6);
-
-            int x = 240 / 2 - ((20) + offset + 4) - 16;
-
-            sprite_set_pos(cursorSprite, x,
-                           ((optionsHeight + selection * 3) * 8) - 5);
         }
+
+        cursorFloat += 6;
+        if (cursorFloat >= 512)
+            cursorFloat = 0;
+        int offset = (sinLut(cursorFloat) * 2) >> 12;
+        FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
+
+        sprite_unhide(cursorSprite, 0);
+        sprite_set_attr(cursorSprite, ShapeSquare, 0, 7 * 16, 5, 0);
+        sprite_enable_affine(cursorSprite, 6, true);
+        sprite_set_size(cursorSprite, scale, 6);
+
+        int x = 240 / 2 - ((20) + offset + 4) - 16;
+
+        sprite_set_pos(cursorSprite, x,
+                       ((optionsHeight + selection * 3) * 8) - 5);
 
         int counter = 0;
 
@@ -359,10 +354,7 @@ void endAnimation() {
     enableLayerWindow(1, 0, 0, 240, 160, false);
     enableLayerWindow(2, 0, 0, 240, 160, false);
 
-// TODO::
-#ifdef GBA
-    rumble_set_state(RumbleState(rumble_stop));
-#endif
+    rumbleStop();
 
     sfx(SFX_END);
 
@@ -504,6 +496,15 @@ void GameScene::showStats(bool moreStats, const std::string& time,
                 aprints("Replay", 0, 21, 1);
                 aprints("not available", 0, 28, 1);
             }
+        } else if (game->gameMode != TRAINING) {
+            std::string keyString =
+                getStringFromKey(savefile->settings.menuKeys.special3);
+
+            std::transform(keyString.begin(), keyString.end(),
+                           keyString.begin(), ::toupper);
+
+            aprints("Press " + keyString, 0, 21, 2);
+            aprints("to Skip Track", 0, 28, 2);
         }
 
         return;
@@ -634,9 +635,7 @@ int GameScene::pauseMenu() {
 
     showSprites(128);
 
-#ifdef GBA
-    rumble_set_state(rumble_stop);
-#endif
+    rumbleStop();
 
     // calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
@@ -661,6 +660,7 @@ int GameScene::pauseMenu() {
     bool shown = false;
 
     bool showSleep = false;
+    bool skipped = false;
 
     bool count = true;
 
@@ -728,9 +728,9 @@ int GameScene::pauseMenu() {
 
             if (key_hit(k.confirm)) {
                 int n = selection;
-                if (!showSleep && selection >= 2)
-                    n++;
                 if (!(game->gameMode == TRAINING) && selection >= 2)
+                    n++;
+                if (!showSleep && n >= 3)
                     n++;
 
                 if (n == 0) {
@@ -796,7 +796,8 @@ int GameScene::pauseMenu() {
                             testBot = new Bot(game);
                         }
 
-                        aprint("Loaded!", 22, 18);
+                        aprint("Loaded!",
+                               22 - (savefile->settings.aspectRatio == 1), 18);
                         sfx(SFX_MENUCONFIRM);
                     } else {
                         sfx(SFX_MENUCANCEL);
@@ -807,7 +808,8 @@ int GameScene::pauseMenu() {
                     quickSave = new Game(game);
                     saveExists = true;
 
-                    aprint(" Saved!", 22, 18);
+                    aprint(" Saved!",
+                           22 - (savefile->settings.aspectRatio == 1), 18);
                     sfx(SFX_MENUCONFIRM);
                 } else if (selection == 2) {
                     sfx(SFX_MENUCONFIRM);
@@ -824,7 +826,7 @@ int GameScene::pauseMenu() {
         if (cursorFloat >= 512)
             cursorFloat = 0;
         int offset = (sinLut(cursorFloat) * 2) >> 12;
-        auto scale = float2fx((1.0 - ((float)0.1 * offset)));
+        FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
 
         for (int i = 0; i < 2; i++) {
             sprite_unhide(cursorSprites[i], 0);
@@ -847,7 +849,22 @@ int GameScene::pauseMenu() {
         }
 
         if (key_hit(k.special3)) {
+#ifndef NO_DIAGNOSE
             qrScene();
+#endif
+            if (game->gameMode != TRAINING) {
+                skipSong = true;
+                sfx(SFX_MENUCONFIRM);
+                if (!skipped) {
+                    skipped = true;
+                    std::string trackSkip = "Track Skipped!";
+                    naprint(
+                        trackSkip,
+                        ((savefile->settings.aspectRatio) ? (240 - 13) : 240) -
+                            getVariableWidth(trackSkip),
+                        18 * 8);
+                }
+            }
         }
 
         if (key_hit(k.cancel)) {
@@ -900,11 +917,11 @@ int GameScene::pauseMenu() {
 
     enableBlend(prevBld);
 
-    for (auto& wordSprite : wordSprites)
-        wordSprite.hide();
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i].hide();
 
-    for (auto& cursorSprite : cursorSprites)
-        sprite_hide(cursorSprite);
+    for (int i = 0; i < 2; i++)
+        sprite_hide(cursorSprites[i]);
 
     drawFrame(0);
     if (game->zoneTimer)
@@ -1209,7 +1226,8 @@ void saveReplay() {
         return;
     }
 
-    delete test;
+    if (test != nullptr)
+        delete test;
 
     test = new Replay();
 
@@ -1231,7 +1249,12 @@ void saveReplay() {
     }
 
 #ifdef PC
+#ifdef __APPLE__
+    std::string filePath = initSavefileDir() + "/replay.sav";
+    std::ofstream output(filePath, std::ios::binary | std::ios::out);
+#else
     std::ofstream output("replay.sav", std::ios::binary | std::ios::out);
+#endif
 
     char* src = (char*)test;
     output.write(src, sizeof(Replay));
@@ -1277,7 +1300,12 @@ void loadReplay() {
 
 #ifdef PC
 
+#ifdef __APPLE__
+    std::string filePath = initSavefileDir() + "/replay.sav";
+    std::ifstream input(filePath, std::ios::binary | std::ios::in);
+#else
     std::ifstream input("replay.sav", std::ios::binary | std::ios::in);
+#endif
 
     Replay rep;
     char* dst = (char*)&rep;
@@ -1463,7 +1491,6 @@ void addGameStats() {
 
 int GameScene::endScreenSetup() {
     clearSmallText();
-    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     for (auto& wordSprite : wordSprites)
         wordSprite.hide();
@@ -1482,6 +1509,20 @@ int GameScene::endScreenSetup() {
     resetZonePalette();
 
     showScore();
+
+    if (savefile->settings.skin >= 1000 && previousSettings != nullptr) {
+        savefile->settings.skin = previousSettings->skin;
+        savefile->settings.edges = previousSettings->edges;
+        setSkin();
+    }
+
+    if (!replaying) {
+        savefile->stats.gamesCompleted++;
+        if (game->lost)
+            savefile->stats.gamesLost++;
+
+        addGameStats();
+    }
 
     int record = -1;
     if (multiplayer) {

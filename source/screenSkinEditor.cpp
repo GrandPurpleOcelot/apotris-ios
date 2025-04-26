@@ -45,10 +45,19 @@ static bool onMini = false;
 static bool refresh = false;
 
 void EditorScene::init() {
+    clearSprites(128);
+    showSprites(128);
+
+    // background
+    setTiles(26, 0, 32 * 32, 35 * !(savefile->settings.lightMode));
+
+    clearTilemap(25);
+    clearTilemap(27);
+    clearTilemap(29);
+
     onMini = false;
     gradient(false);
     setPaletteColor(0, 0, 0, 1);
-    clearTilemap(27);
     buildBG(3, 0, 27, 0, 2, 0);
 
     prevBld = blendInfo;
@@ -73,7 +82,7 @@ void EditorScene::update() {
         buildBG(3, 0, 27, 0, 1, 0);
         toggleBG(3, true);
 
-        changeScene(new ConfirmSaveScene(), Transitions::FADE);
+        changeScene(new ConfirmSaveScene(1), Transitions::FADE);
         return;
     }
 
@@ -143,7 +152,6 @@ void EditorScene::deinit() {
     clearTilemap(26);
     clearTilemap(27);
 
-    gradient(true);
     setLayerScroll(3, 0, 0);
 
     clearTiles(2, 110, 400);

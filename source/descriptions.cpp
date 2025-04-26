@@ -62,8 +62,8 @@ std::string getDescription(const std::string& element) {
         return "Play a sound affect when you move the falling piece. Initial "
                "only plays a sound for the start of the movement.";
 
-    } else if (element == "Song List") {
-        return "Enable/Disable songs.";
+    } else if (element == "Track List") {
+        return "Enable/Disable music tracks.";
 
         // CONTROL
         // -------------------------------------------------------------------------------
@@ -159,6 +159,30 @@ std::string getDescription(const std::string& element) {
     } else if (element == "Autosave") {
         return "How often the game saves automatically (doesn't save while in "
                "a round).";
+        // VIDEO
+        // ------------------------------------------------------------------------------
+    } else if (element == "Integer Scale") {
+        return "Fixes uneven pixel sizes at the cost of less control over "
+               "scaling.";
+
+    } else if (element == "Shaders") {
+        return "Enables GPU shaders (Requires OpenGL).";
+#ifdef N3DS
+        // 3DS-specific scaling options:
+    } else if (element == "1x") {
+        return "Pixel-perfect display centered on the screen.";
+
+    } else if (element == "1.5x smooth") {
+        return "Fit height with linear filtering.";
+
+    } else if (element == "1.5x sharp") {
+        return "Sharper linear filtering with 2x prescale.";
+
+    } else if (element == "1.5x ultra") {
+        return "Use double the horizontal pixels for crisp output; "
+               "vertically same as \"1.5x sharp\". "
+               "Old 2DS not supported.";
+#endif
     }
 
     return "";

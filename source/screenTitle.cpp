@@ -2,6 +2,8 @@
 #include "def.h"
 #include "flashSaves.h"
 #include "menu.h"
+#include "sceneColorEditor.hpp"
+#include "skinEditor.hpp"
 #include "sprite41tiles_bin.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -50,13 +52,14 @@ int previousOptionMax = 0;
 
 // std::list<int> keyHistory;
 
-Settings previousSettings;
 Skin previousSkins[MAX_CUSTOM_SKINS];
+std::unique_ptr<Settings> previousSettings = nullptr;
 
 bool bigMode = false;
 
-const std::list<std::string> menuOptions = {"Play",  "Settings",    "Stats",
-                                            "Links", "Skin Editor", "Credits"};
+const std::list<std::string> menuOptions = {
+    "Play",        "Settings",     "Stats",  "Links",
+    "Skin Editor", "Color Editor", "Credits"};
 const std::list<std::string> gameOptions = {
     "Marathon", "Sprint",       "Dig",        "Ultra",   "Blitz",
     "Combo",    "Survival",     "Classic",    "Master",  "Death",
@@ -152,15 +155,16 @@ void fallingBlocks() {
 
     if (bgSpawnBlock > bgSpawnBlockMax) {
 
-        int n = qran() % 7;
-        int* p = BlockEngine::getShape(n, qran() % 4, BlockEngine::SRS);
+        int n = (int)(randNext() % 7);
+        int* p =
+            BlockEngine::getShape(n, (int)(randNext() % 4), BlockEngine::SRS);
 
         bool found = false;
 
         if (!bigMode) {
-            int x = qran() % 27;
-            // int x = qran() % 7;
-            // x += 20 * (qran() % 2);
+            int x = (int)(randNext() % 27);
+            // int x = (int)(randNext() % 7);
+            // x += 20 * (int)(randNext() % 2);
 
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++)
@@ -173,7 +177,7 @@ void fallingBlocks() {
                         if (p[i * 4 + j])
                             backgroundArray[i][j + x] = n + p[i * 4 + j];
         } else {
-            int x = (qran() % 13) * 2;
+            u32 x = (randNext() % 13) * 2;
 
             for (i = 0; i < 8; i++)
                 for (j = 0; j < 8; j++)
@@ -227,7 +231,7 @@ bool settingsChanged() {
     temp.menuKeys = menuKeys;
 
     int* v1 = (int*)&temp;
-    int* v2 = (int*)&previousSettings;
+    int* v2 = (int*)&*previousSettings;
 
     for (int i = 0; i < (int)sizeof(Settings) / 4; i++) {
         if (v1[i] != v2[i])
@@ -266,7 +270,7 @@ void TitleScene::init() {
     wordSprites[0].setText("Press Any");
     wordSprites[1].setText("Button");
 
-    versionText.setText("v4.1.0a");
+    versionText.setText("v" APOTRIS_VERSION);
 
     nameText.setText("akouzoukos");
 
@@ -275,6 +279,10 @@ void TitleScene::init() {
 
 void TitleScene::draw() {
     fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
     showTitleSprites();
     showSprites(128);
 
@@ -326,7 +334,7 @@ void TitleScene::update() {
         botSleepDuration = 5;
         botStepMax = 1;
 
-        startGame(BlockEngine::Options(), qran());
+        startGame(BlockEngine::Options(), (int)randNext());
 
         changeScene(new GameScene(), Transitions::FADE);
     }
@@ -343,6 +351,11 @@ void TitleScene::deinit() {
     clearSpriteTiles(256, 256, 1);
 
     clearText();
+
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
 }
 
 Scene* MainMenuScene::previousScene() { return new TitleScene(); }
@@ -389,9 +402,13 @@ void ConfirmSaveScene::init() {
 
 void ConfirmSaveScene::draw() {
     fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
-    auto scale = float2fx((1.0 - ((float)0.1 * offset)));
+    FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
 
     const int y = 104;
 
@@ -435,16 +452,30 @@ bool ConfirmSaveScene::control() {
         sfx(SFX_MENUCONFIRM);
 
         if (cancel) {
-            savefile->settings = previousSettings;
 
-            for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
-                savefile->customSkins[i] = previousSkins[i];
+            switch (type) {
+            case 0:
+                if (previousSettings != nullptr)
+                    savefile->settings = *previousSettings;
+                break;
+            case 1:
+                for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
+                    savefile->customSkins[i] = previousSkins[i];
+                break;
+            case 2:
+                if (previousSettings != nullptr)
+                    savefile->settings = *previousSettings;
+
+                if (previousPalette != nullptr)
+                    memcpy16(savefile->customPalettes, previousPalette,
+                             3 * 7 * 3);
+                break;
+            }
 
             setMusicVolume(512 * ((float)savefile->settings.volume / 10));
             setSkin();
             setPalette();
             setGradient(savefile->settings.backgroundGradient);
-
         } else {
             savefile->settings.menuKeys = menuKeys;
 
@@ -453,13 +484,39 @@ bool ConfirmSaveScene::control() {
             saveSavefile();
         }
 
+#ifdef PC
+        setFullscreen(savefile->settings.fullscreen);
+#endif
+
         changeScene(new MainMenuScene(), Transitions::FADE);
+
+        return true;
     } else if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
-        changeScene(new SettingsScene(), Transitions::FADE);
+
+        switch (type) {
+        case 0:
+            changeScene(new SettingsScene(), Transitions::FADE);
+            break;
+        case 1:
+            changeScene(new EditorScene(), Transitions::FADE);
+            break;
+        case 2:
+            changeScene(new ColorSelectorScene(), Transitions::FADE);
+            break;
+        }
+
+        return true;
     }
 
     return false;
+}
+
+void ConfirmSaveScene::deinit() {
+#ifdef N3DS
+    // Reset scroll for falling blocks:
+    setLayerScroll(2, 0, 0);
+#endif
 }
 
 void ConfirmEmuScene::init() {
@@ -530,6 +587,10 @@ bool ConfirmEmuScene::control() {
 
 void ConfirmEmuScene::draw() {
     fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
     FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
@@ -575,6 +636,9 @@ void MainMenuScene::init() {
     SimpleListScene::init();
 
 #if defined(PC) || defined(WEB)
+    if (lastInputType == InputType::CONTROLLER)
+        return;
+
     int offset = 0;
     if (savefile->settings.aspectRatio == 1) {
         offset = (240 - 214) / 2;

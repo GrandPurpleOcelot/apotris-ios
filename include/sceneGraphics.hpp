@@ -280,7 +280,7 @@ public:
     std::string getCursor(std::string text) override {
         std::string result;
 
-        if (savefile->settings.colors > 0)
+        if (savefile->settings.colors > -(MAX_CUSTOM_PALETTES))
             result += "<";
         else
             result += " ";
@@ -300,7 +300,7 @@ public:
                 sfx(SFX_MENUMOVE);
             }
         } else {
-            if (savefile->settings.colors > 0) {
+            if (savefile->settings.colors > -(MAX_CUSTOM_PALETTES)) {
                 savefile->settings.colors--;
                 sfx(SFX_MENUMOVE);
             }
@@ -310,7 +310,11 @@ public:
     }
 
     std::string getCurrentOption() override {
-        return std::to_string(savefile->settings.colors + 1);
+        if (savefile->settings.colors >= 0) {
+            return std::to_string(savefile->settings.colors + 1);
+        } else {
+            return "C" + std::to_string(-(savefile->settings.colors));
+        }
     }
 };
 
@@ -648,14 +652,22 @@ public:
     }
 
     void action(int dir) override {
+#ifdef N3DS
+        n3ds::savedAspectRatio = !n3ds::savedAspectRatio;
+#else
         savefile->settings.aspectRatio = !savefile->settings.aspectRatio;
+#endif
         clearText();
 
         sfx(SFX_MENUCONFIRM);
     }
 
     std::string getCurrentOption() override {
+#ifdef N3DS
+        if (n3ds::savedAspectRatio == 0)
+#else
         if (savefile->settings.aspectRatio == 0)
+#endif
             return "3:2";
         else
             return "4:3";
@@ -729,7 +741,7 @@ public:
 };
 
 class GraphicsScene : public Scene {
-    int maxDas = 16;
+    int maxDas = 12;
     int dasHor = 0;
     int dasVer = 0;
 
@@ -763,7 +775,7 @@ class GraphicsScene : public Scene {
         l.push_back(new ClearStyleElement());
         l.push_back(new ClearDirectionElement());
 
-#ifdef GBA
+#if defined(GBA) || defined(N3DS)
         l.push_back(new PlaceEffectElement());
 #endif
 
@@ -841,9 +853,12 @@ class GraphicsScene : public Scene {
 };
 
 class GradientEditorScene : public Scene {
-    int color[3];
+    int color1[3];
 
     int color2[3];
+
+    HSV_COLOR hsv1;
+    HSV_COLOR hsv2;
 
     int selection = 0;
     int colorSelection = 0;
@@ -851,6 +866,8 @@ class GradientEditorScene : public Scene {
     int maxSelection = 3;
 
     bool onValues = false;
+
+    bool hsvMode = false;
 
     int das = 0;
 
@@ -875,7 +892,42 @@ class GradientEditorScene : public Scene {
             maxSelection++;
     }
 
-    static void drawText();
+    void set(int dir) {
+        HSV_COLOR* hsv = (selection - 1) ? &hsv2 : &hsv1;
+
+        bool res = false;
+        switch (colorSelection) {
+        case 0:
+            hsv->hue += dir;
+            if (hsv->hue < 0)
+                hsv->hue = 359;
+            else if (hsv->hue > 359)
+                hsv->hue = 0;
+            else
+                res = true;
+            break;
+        case 1:
+            hsv->saturation += ((float)dir) / 100.f;
+            if (hsv->saturation < 0)
+                hsv->saturation = 0;
+            else if (hsv->saturation > 1)
+                hsv->saturation = 1;
+            else
+                res = true;
+            break;
+        case 2:
+            hsv->value += ((float)dir) / 100.f;
+            if (hsv->value < 0)
+                hsv->value = 0;
+            else if (hsv->value > 1)
+                hsv->value = 1;
+            else
+                res = true;
+            break;
+        }
+    }
+
+    void drawText();
 
     void draw();
     void update();

@@ -1,15 +1,19 @@
 #include "logging.h"
 #include "sceneAudio.hpp"
 
-bool SongListElement::action() {
+bool TrackListElement::action() {
     sfx(SFX_MENUCONFIRM);
-    changeScene(new SongListScene(), Transitions::FADE);
+    changeScene(new TrackListScene(), Transitions::FADE);
     return true;
 }
 
-void SongElement::select() const { playSong(menu, index); }
+void SongElement::select() const {
+    if (index < 0)
+        return;
+    playSong(menu, index);
+}
 
-void SongListScene::init() {
+void TrackListScene::init() {
     OptionListScene::init();
 
     auto it = elementList.begin();
@@ -18,12 +22,12 @@ void SongListScene::init() {
         std::advance(it, 1);
     } while ((*it)->getCurrentOption() == "\n");
 
-    auto* song = (SongElement*)*it;
+    SongElement* song = (SongElement*)*it;
 
     song->select();
 }
 
-bool SongListScene::control() {
+bool TrackListScene::control() {
     int previous = selection;
     if (OptionListScene::control())
         return true;
@@ -32,7 +36,7 @@ bool SongListScene::control() {
         auto it = elementList.begin();
         std::advance(it, selection);
 
-        auto* song = (SongElement*)*it;
+        SongElement* song = (SongElement*)*it;
 
         song->select();
     }

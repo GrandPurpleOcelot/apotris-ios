@@ -12,7 +12,7 @@
 #define _TILENGINE_H
 
 #ifndef TLN_EXCLUDE_WINDOW
-#include "SDL2/SDL.h"
+#include "SDL.h"
 #endif
 
 /**
@@ -55,8 +55,8 @@ typedef unsigned char bool; /*!< C++ bool type for C language */
 #else
 #define TLNAPI
 #endif
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #endif
 
 #include <stdio.h>

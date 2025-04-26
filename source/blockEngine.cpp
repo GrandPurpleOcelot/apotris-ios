@@ -1,6 +1,6 @@
 #include <algorithm>
-#include <cmath>
 #include <iostream>
+#include <math.h>
 #include <string>
 #include <tuple>
 
@@ -130,7 +130,7 @@ int Game::getNbr(int x, int y, int ex, int sy, int ey) {
 void Game::rotateCW(int dir) {
     rotates[0] = dir;
 
-    replay.emplace_back(timer, 2, dir);
+    replay.emplace_back(timer + eventTimer, 2, dir);
 
     rotate(1, dir);
 }
@@ -138,7 +138,7 @@ void Game::rotateCW(int dir) {
 void Game::rotateCCW(int dir) {
     rotates[1] = dir;
 
-    replay.emplace_back(timer, 3, dir);
+    replay.emplace_back(timer + eventTimer, 3, dir);
 
     rotate(-1, dir);
 }
@@ -149,7 +149,7 @@ void Game::rotateTwice(int dir) {
 
     rotates[2] = dir;
 
-    replay.emplace_back(timer, 4, dir);
+    replay.emplace_back(timer + eventTimer, 4, dir);
 
     rotate(2, dir);
 }
@@ -282,16 +282,18 @@ void Game::rotate(int dir, int on) {
             return;
         }
 
-        for (int i = 0; i < 3; i++) {
+        bool TFloorKick = (pawn.current == PIECE_T && r == 2);
+
+        for (int i = 0; i < 3 + TFloorKick; i++) {
             dx = 0;
             dy = 0;
 
-            if (i == 1 && pawn.current == PIECE_T && r == 2) {
-                dy = -1;
-            } else if (i == 1)
+            if (i == 1)
                 dx = 1;
             else if (i == 2)
                 dx = -1;
+            else if (i == 3)
+                dy = -1;
 
             if (checkRotation(dx, dy, r)) {
                 rotatePlace(dir, dx, dy, r);
@@ -359,8 +361,10 @@ bool Game::moveLeft() {
         return true;
     } else {
         pushDir = -1;
-        if (gameMode == CLASSIC)
+        if (gameMode == CLASSIC) {
             das = maxDas;
+            arrCounter = 0;
+        }
         return false;
     }
 }
@@ -383,8 +387,10 @@ bool Game::moveRight() {
         return true;
     } else {
         pushDir = 1;
-        if (gameMode == CLASSIC)
+        if (gameMode == CLASSIC) {
             das = maxDas;
+            arrCounter = 0;
+        }
         return false;
     }
 }
@@ -624,6 +630,7 @@ void Game::update() {
             pawn.y++;
             if (rotationSystem == ARS)
                 lockTimer = maxLockTimer;
+
             lastMoveRotation = false;
         } else if (rotationSystem == NRS) {
             place();
@@ -1421,11 +1428,9 @@ void Game::next() { //~21-29k cycles
 }
 
 void Game::fillQueue(int count) {
-    setupRNG();
-
     for (int i = 0; i < count; i++) {
         if (randomizer == BAG_7) {
-            int n = qran() % bag.size();
+            int n = random() % bag.size();
 
             queue.push_back(bag.array[n]);
             bag.erase(n);
@@ -1433,10 +1438,10 @@ void Game::fillQueue(int count) {
             if (bag.size() == 0)
                 fillBag();
         } else if (randomizer == RANDOM) {
-            int n = qran() % 8;
+            int n = random() % 8;
 
             if (n == 7 || n == pieceHistory)
-                n = qran() % 7;
+                n = random() % 7;
 
             queue.push_back(n);
             pieceHistory = n;
@@ -1446,7 +1451,7 @@ void Game::fillQueue(int count) {
             int droughted = 0;
             if (queue.empty()) {
                 do {
-                    n = qran() % 7;
+                    n = random() % 7;
                 } while (n == PIECE_O || n == PIECE_Z || n == PIECE_S);
 
                 historyList.push_front(n);
@@ -1458,7 +1463,7 @@ void Game::fillQueue(int count) {
 
             int r = 0;
             for (int i = 0; i < 6; i++) {
-                r = qran() % 35;
+                r = random() % 35;
 
                 n = bigBag[r];
 
@@ -1478,7 +1483,7 @@ void Game::fillQueue(int count) {
 
                 // in case all previous rolls failed
                 if (i == 5) {
-                    r = qran() % 35;
+                    r = random() % 35;
                     n = bigBag[r];
                 }
             }
@@ -1512,7 +1517,7 @@ void Game::fillQueue(int count) {
 void Game::hold(int dir) {
     holding = dir;
 
-    replay.emplace_back(timer, 5, dir);
+    replay.emplace_back(timer + eventTimer, 5, dir);
 
     if ((clearLock || entryDelay) && gameMode != CLASSIC) {
         // holding = dir;
@@ -1596,21 +1601,22 @@ void Game::lockCheck() {
 }
 
 void Game::keyLeft(int dir) {
-    replay.emplace_back(timer, 0, dir);
+    replay.emplace_back(timer + eventTimer, 0, dir);
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         left = dir;
         return;
     }
 
+    bool moved = false;
     if (left == 0 && dir)
-        moveLeft();
+        moved = moveLeft();
     left = dir;
 
     previousKey = -1;
     dropLockTimer = 0;
 
-    if (gameMode == CLASSIC && dir) {
+    if (gameMode == CLASSIC && dir && moved) {
         das = 0;
         arrCounter = 0;
     }
@@ -1626,21 +1632,22 @@ void Game::keyLeft(int dir) {
 }
 
 void Game::keyRight(int dir) {
-    replay.emplace_back(timer, 1, dir);
+    replay.emplace_back(timer + eventTimer, 1, dir);
 
     if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
         right = dir;
         return;
     }
 
+    bool moved = false;
     if (right == 0 && dir)
-        moveRight();
+        moved = moveRight();
     right = dir;
 
     previousKey = 1;
     dropLockTimer = 0;
 
-    if (gameMode == CLASSIC && dir) {
+    if (gameMode == CLASSIC && dir && moved) {
         das = 0;
         arrCounter = 0;
     }
@@ -1655,7 +1662,7 @@ void Game::keyRight(int dir) {
 }
 
 void Game::keyDown(int dir) {
-    replay.emplace_back(timer, 6, dir);
+    replay.emplace_back(timer + eventTimer, 6, dir);
     if (clearLock || eventLock || entryDelay) {
         if (!(entryDelay && rotationSystem == NRS))
             down = dir;
@@ -1773,9 +1780,7 @@ void Game::setLevel(int newLevel) {
 void Game::setGoal(int newGoal) { goal = newGoal; }
 
 void Game::generateGarbage(int height, int localMode) {
-    setupRNG();
-
-    int hole = qran() % lengthX;
+    int hole = random() % lengthX;
 
     // shift up
     for (int i = 0; i < lengthY; i++) {
@@ -1792,9 +1797,9 @@ void Game::generateGarbage(int height, int localMode) {
     for (int i = lengthY - height; i < lengthY; i++) {
         int prevHole = hole;
         int count = 0;
-        if (!localMode || qran() % 10 < 3) {
+        if (!localMode || random() % 10 < 3) {
             do {
-                hole = qran() % lengthX;
+                hole = random() % lengthX;
             } while (++count < 11 &&
                      ((!board[i - 1][hole] && height < garbageHeight) ||
                       hole == prevHole));
@@ -1823,7 +1828,7 @@ void Game::generateGarbage(int height, int localMode) {
 }
 
 void Game::keyDrop(int dir) {
-    replay.emplace_back(timer, 7, dir);
+    replay.emplace_back(timer + eventTimer, 7, dir);
 
     if (dir == 0 && (gameMode == MASTER || gameMode == DEATH))
         dropping = false;
@@ -2059,22 +2064,20 @@ void Game::demoClear() {
 void Game::demoFill() {
     clearLock = false;
     for (int i = lengthY - 2; i < lengthY; i++) {
-        int n = qran() % lengthX;
+        int n = random() % lengthX;
         board[i][n] = 0;
     }
 }
 
 void Game::bType(int height) {
-    setupRNG();
-
     int n = 0;
     if (height)
         n = height * 2 + (height + 1) / 2 - (height == 5);
 
     for (int i = lengthY - n; i < lengthY; i++) {
         for (int j = 0; j < lengthX; j++) {
-            if (qran() % 2 && !(i == lengthY - n && j == 0)) {
-                board[i][j] = (qran() % 7);
+            if (random() % 2 && !(i == lengthY - n && j == 0)) {
+                board[i][j] = (random() % 7);
 
                 if (columnHeights[j] < lengthY - i)
                     columnHeights[j] = lengthY - i;
@@ -2192,7 +2195,7 @@ void Game::activateZone(int dir) {
     if (!dir)
         return;
 
-    replay.emplace_back(timer, 8, dir);
+    replay.push_back(Timestamp(timer, 8, dir));
 
 #ifndef NO_DIAGNOSE
     zoneCharge = 32;
@@ -2548,7 +2551,8 @@ Game::~Game() = default;
 
 Game::Game(int gm, int sd, bool big) {
     gameMode = gm;
-    seed = initSeed = sd;
+    initSeed = sd;
+    setRandomSeed(sd);
 
     for (int i = 0; i < 40; i++) {
         bitboard[i] = 0;
@@ -2692,7 +2696,7 @@ Game::Game(Game* oldGame) {
     pushDir = oldGame->pushDir;
     b2bCounter = oldGame->b2bCounter;
     bagCounter = oldGame->bagCounter;
-    seed = oldGame->seed;
+    setRandomSeed(oldGame->randomSeed);
     initSeed = oldGame->initSeed;
     subMode = oldGame->subMode;
     initialLevel = oldGame->initialLevel;
@@ -2816,13 +2820,6 @@ std::tuple<int, int> Game::getSpawnPosition() {
     return std::make_tuple(x, y);
 }
 
-void Game::setupRNG() {
-    if (seed != 0) {
-        sqran(seed);
-        seed += qran();
-    }
-}
-
 void Game::checkSecretGrade() {
     int result = 0;
     for (int i = lengthY - 1; i > lengthY / 2; i--) {
@@ -2917,4 +2914,16 @@ void Game::toggleBigMode() {
     }
 
     refresh = 1;
+}
+
+u32 Game::random() {
+    randomSeed = 1664525 * randomSeed + 1013904223;
+    return (randomSeed >> 16) & randomMax;
+}
+
+int Game::setRandomSeed(int newSeed) {
+    int old = randomSeed;
+    randomSeed = newSeed;
+    randSetFullState((u32)randomSeed);
+    return old;
 }

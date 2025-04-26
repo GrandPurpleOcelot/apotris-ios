@@ -2,10 +2,15 @@
 
 #include <list>
 
+#define PLATFORM_N3DS 6
+
 #ifdef GBA
 
 #include "liba_gba.h"
 #include "maxmod.h"
+#include "tonc.h"
+#include "util/random.h"
+#include "whisky.h"
 
 #define PLATFORM 0
 #endif
@@ -45,6 +50,13 @@
 #define PLATFORM 5
 #include "liba_portmaster.h"
 #include "liba_sdl_audio.hpp"
+
+#endif
+
+#ifdef N3DS
+
+#define PLATFORM PLATFORM_N3DS
+#include "liba_n3ds.h"
 
 #endif
 
@@ -165,6 +177,9 @@ extern void pauseSong();
 extern void resumeSong();
 
 extern void loadSavefile();
+#ifdef __APPLE__
+extern std::string initSavefileDir();
+#endif
 extern void saveSavefile();
 
 extern s16 sinLut(int angle);
@@ -175,6 +190,8 @@ extern void mirrorPalettes(int index, int count);
 
 extern void toggleRendering(bool r);
 extern void initRumble();
+extern void rumbleStart(int length);
+extern void rumbleStop();
 
 extern void quit();
 

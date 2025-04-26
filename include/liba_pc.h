@@ -203,16 +203,6 @@ INLINE void memset32_fast(void* dest, int word, int wCount) {
     memset32(dest, word, wCount);
 }
 
-static std::mt19937 mt_engine =
-    std::mt19937(std::chrono::system_clock::now().time_since_epoch().count());
-
-INLINE int qran() {
-    std::uniform_int_distribution<int> dist(0, RAND_MAX);
-    return dist(mt_engine);
-}
-
-INLINE void sqran(int seed) { mt_engine.seed(seed); }
-
 INLINE COLOR RGB15(int red, int green, int blue) {
     return red + (green << 5) + (blue << 10);
 }
@@ -281,6 +271,7 @@ INLINE u32 bf_clamp(int x, uint len) {
     return x;
 }
 
+// [min,max)
 INLINE int clamp(int x, int min, int max) {
     return (x >= max) ? (max - 1) : ((x < min) ? min : x);
 }
@@ -303,3 +294,13 @@ extern void setSpriteMaskRegion(int shift);
 void setUpPresentException(std::string error);
 
 #define UNBOUND -2
+
+enum class ShaderStatus {
+    NOT_INITED,
+    NO_GL,
+    NO_SHADER_FILES,
+    SHADER_FILE_ERROR,
+    OK,
+};
+
+extern ShaderStatus shaderStatus;

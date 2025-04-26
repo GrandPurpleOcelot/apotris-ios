@@ -154,5 +154,3 @@ public:
         setup(_id, _index, _tiles, _big);
     }
 };
-
-std::string nameInput(int);

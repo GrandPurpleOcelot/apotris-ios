@@ -39,9 +39,9 @@ public:
     virtual void deinit() = 0;
     virtual Scene* previousScene() = 0;
 
-    Scene(){};
+    Scene() {};
 
-    virtual ~Scene(){};
+    virtual ~Scene() {};
 };
 
 extern Scene* scene;
@@ -73,6 +73,7 @@ class GameScene : public Scene {
     int endScreenSetup();
 
     bool counted = false;
+    bool skipSong = false;
 
     int timesPaused = 0;
 
@@ -118,7 +119,7 @@ class TitleScene : public Scene {
 
 class SimpleListScene : public Scene {
 public:
-    int maxDas = 16;
+    int maxDas = 12;
     int dasHor = 0;
     int dasVer = 0;
 
@@ -206,7 +207,8 @@ public:
     std::list<std::string> getOptionList() {
         std::list<std::string> l = gameOptions;
 
-#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH)
+#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) ||   \
+    defined(N3DS)
         l.remove("2P Battle");
 #endif
 
@@ -233,7 +235,7 @@ public:
 
 class OptionListScene : public Scene {
 public:
-    int maxDas = 16;
+    int maxDas = 12;
     int dasHor = 0;
     int dasVer = 0;
 
@@ -317,12 +319,19 @@ public:
 
     int pos[2];
 
+    int type = 0; // 0 for settings, 1 for skin editor, 2 for color editor
+
     void draw();
     void update();
     bool control();
     void init();
-    void deinit() {};
+    void deinit();
+
+    ConfirmSaveScene(int type) { this->type = type; }
+
     Scene* previousScene() { return new MainMenuScene(); };
+
+    ~ConfirmSaveScene() { deinit(); };
 };
 
 class ConfirmEmuScene : public Scene {
@@ -380,7 +389,7 @@ class SettingsScene : public SimpleListScene {
 public:
     Scene* previousScene() {
         if (settingsChanged())
-            return new ConfirmSaveScene();
+            return new ConfirmSaveScene(0);
         else
             return new MainMenuScene();
     };

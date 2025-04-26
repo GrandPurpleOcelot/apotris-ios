@@ -231,3 +231,41 @@ meson compile -C build-pm
 ```
 
 **Note:** on typical Intel/AMD machines this can take a *long* time.
+
+
+### Nintendo 3DS
+
+Compiling the 3DS build requires you to install the devkitARM toolchain from devkitPro. You can refer to the [3DBrew](https://www.3dbrew.org/wiki/Setting_up_Development_Environment) and [devkitPro](https://devkitpro.org/wiki/Getting_Started) guides to set it up. Following the guide, you should install all packages in the package group `3ds-dev` using `pacman` (or `dkp-pacman`).
+
+You will also need to install the library `libxmp` using `pacman` (or `dkp-pacman`):
+
+```bash
+pacman -S 3ds-libxmp
+```
+
+To perform the cross build:
+
+```bash
+meson setup --cross-file=meson/n3ds.ini build-n3ds
+meson compile -C build-n3ds
+```
+
+The build output file can be found as `build-n3ds/Apotris.3dsx`.
+
+To run the build, the audio assets must be placed on the SD card under `/3ds/Apotris/assets/` beforehand.
+
+#### Building a CIA file
+
+Normally, there is no reason to use a CIA file. Especially if you are developing and debugging code, the 3dsx file can be easily loaded using `3dslink` which also allows you to see stdout and stderr output with its server.
+
+To build the CIA, you will need to install [`bannertool`](https://github.com/Epicpkmn11/bannertool) and [`makerom`](https://github.com/3DSGuy/Project_CTR/tree/master/makerom) manually and have them available on the `PATH` environment variable while building.
+
+```bash
+meson compile -C build-n3ds cia
+```
+
+**Metadata**:
+
+* Unique ID: `0xA9715`
+* Title ID: `000400000A971500`
+* Product Code: `CTR-H-APTR`

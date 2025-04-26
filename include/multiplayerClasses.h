@@ -1,7 +1,5 @@
 #pragma once
 
-#define ENABLE_BOT 0
-
 #include "platform.hpp"
 
 #ifdef GBA
@@ -9,6 +7,7 @@
 #include "LinkUniversal.hpp"
 #include "def.h"
 #include "scene.hpp"
+#include <memory>
 
 #else
 #include "LinkWebRTC.hpp"
@@ -346,7 +345,7 @@ struct MultiplayerStates {
                 return;
 
             if (!nextSeed)
-                nextSeed = qran() % (SEND_SEED - 1);
+                nextSeed = (int)randNext() % (SEND_SEED - 1);
 
             Owner().players[Owner().universal->currentPlayerId()].seeded = true;
             Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
@@ -467,7 +466,7 @@ struct MultiplayerStates {
                     enableBot = true;
                 else
                     enableBot = false;
-                if (readyTimeout-- <= 0 && qran() % 0xFF == 0)
+                if (readyTimeout-- <= 0 && (int)randNext() % 0xFF == 0)
                     Owner().readyUp();
             }
 #else

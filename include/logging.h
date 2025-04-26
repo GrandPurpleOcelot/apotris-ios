@@ -15,19 +15,12 @@ inline bool logInitMgba(void) {
     return REG_MGBA_ENABLE == 0x1DEA;
 }
 
-inline void logOutputMgba(u8 level, const char* message) {
+static void logOutputMgba(u8 level, const char* message) {
     for (int i = 0; message[i] && i < 256; i++) {
         MGBA_LOG_OUT[i] = message[i];
     }
 
     REG_MGBA_FLAGS = (level - 1) | 0x100;
-}
-
-static void logMgba(char* buffer) {
-#ifdef NO_DIAGNOSE
-    return;
-#endif
-    logOutputMgba(3, buffer);
 }
 
 static inline void log(int n) {

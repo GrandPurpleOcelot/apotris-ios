@@ -299,7 +299,7 @@ void showSprites(int n) {
 void loadPalette(int palette, int index, const void* src, int count) {
     for (int i = 0; i < (int)count; i++) {
         u16 r = (u16)((u16*)src)[i];
-        auto c = ColorSplit(r);
+        ColorSplit c = ColorSplit(r);
         int p = palette + i / 16;
 
         TLN_SetPaletteColor(palettes[p], index + i % 16, c.r, c.g, c.b);
@@ -307,7 +307,7 @@ void loadPalette(int palette, int index, const void* src, int count) {
 
     if (palette == 0 && index == 0 && !gradientEnabled) {
         u16 r = (u16)((u16*)src)[0];
-        auto c = ColorSplit(r);
+        ColorSplit c = ColorSplit(r);
 
         TLN_SetBGColor(c.r, c.g, c.b);
     }
@@ -503,7 +503,7 @@ void clearSprites(int n) {
 }
 
 void setPaletteColor(int palette, int index, u16 color, int count) {
-    auto c = ColorSplit(color);
+    ColorSplit c = ColorSplit(color);
     if (palette == 0 && index == 0)
         TLN_SetBGColor(c.r, c.g, c.b);
 

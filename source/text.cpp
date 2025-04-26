@@ -31,9 +31,7 @@ public:
 
 TextArea* textArea = nullptr;
 
-void aprint(std::string str, int x, int y) {
-    aprintColor(std::move(str), x, y, 0);
-}
+void aprint(std::string str, int x, int y) { aprintColor(str, x, y, 0); }
 
 void aprintSprite(std::string str, int tile) {
     for (int i = 0; i < (int)str.length(); i++) {
@@ -84,8 +82,8 @@ void clearText() {
 }
 
 void setSmallTextArea(int tid, int startX, int startY, int endX, int endY) {
-
-    delete textArea;
+    if (textArea != nullptr)
+        delete textArea;
 
     textArea = new TextArea(tid, startX, startY, endX, endY);
 
@@ -129,17 +127,17 @@ IWRAM_CODE void aprints(std::string str, int x, int y,
     // text is drawn on the next line if w is greater than text area width
     int w = 0;
 
-    for (char i : str) {
-        if (i == '\n') {
+    for (int i = 0; i < (int)str.length(); i++) {
+        if (str[i] == '\n') {
             w = 0;
             y += 8;
             continue;
-        } else if (i == ' ') {
+        } else if (str[i] == ' ') {
             w += 4;
             continue;
         }
 
-        u16 character = font3x5[i - 32];
+        u16 character = font3x5[str[i] - 32];
 
         // least significant byte determines if the character should be
         // drawn 1 pixel down (for characters like q g j)
@@ -171,17 +169,17 @@ IWRAM_CODE void aprintsSprite(std::string str, int x, int y,
     // text is drawn on the next line if w is greater than text area width
     int w = 0;
 
-    for (char i : str) {
-        if (i == '\n') {
+    for (int i = 0; i < (int)str.length(); i++) {
+        if (str[i] == '\n') {
             w = 0;
             y += 8;
             continue;
-        } else if (i == ' ') {
+        } else if (str[i] == ' ') {
             w += 4;
             continue;
         }
 
-        u16 character = font3x5[i - 32];
+        u16 character = font3x5[str[i] - 32];
 
         // least significant byte determines if the character should be
         // drawn 1 pixel down (for characters like q g j)
@@ -240,9 +238,9 @@ const int spaceWidth = 6;
 
 int getVariableWidth(std::string str) {
     int widthCount = 0;
-    for (char i : str) {
-        if (i - 32) {
-            widthCount += ((fontWidths[i - 32][1]) + fontGap);
+    for (int i = 0; i < (int)str.size(); i++) {
+        if (str[i] - 32) {
+            widthCount += ((fontWidths[str[i] - 32][1]) + fontGap);
         } else
             widthCount += spaceWidth;
     }
@@ -250,9 +248,7 @@ int getVariableWidth(std::string str) {
     return widthCount;
 }
 
-void naprint(std::string str, int x, int y) {
-    naprintColor(std::move(str), x, y, 15);
-}
+void naprint(std::string str, int x, int y) { naprintColor(str, x, y, 15); }
 
 void naprintColor(std::string str, int x, int y, int palette) {
     // calculate tiles needed to write word
@@ -323,7 +319,7 @@ void naprintColor(std::string str, int x, int y, int palette) {
 }
 
 void naprintSprite(std::string str, int tile) {
-    naprintSpriteOffset(std::move(str), tile, 0);
+    naprintSpriteOffset(str, tile, 0);
 }
 
 IWRAM_CODE void naprintSpriteOffset(std::string str, int tile, int col) {
@@ -377,3 +373,5 @@ IWRAM_CODE void naprintSpriteOffset(std::string str, int tile, int col) {
         cursor += fontWidths[character][1] + fontGap;
     }
 }
+
+int textAllocateTile() { return allocateStart + (allocatedTiles++); }
