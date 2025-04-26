@@ -1,19 +1,19 @@
 #include "sceneHandling.hpp"
 
-bool HandlingOptionScene::control(){
+bool HandlingOptionScene::control() {
     OptionListScene::control();
 
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(k.special2)){
+    if (key_hit(k.special2)) {
         handlingTest = true;
 
         BlockEngine::Options options;
         options.tuning = getTuning();
 
-        startGame(options,qran());
+        startGame(options, qran());
 
-        //remove 'Handling' from path
+        // remove 'Handling' from path
         path.pop_back();
 
         changeScene(new GameScene(), Transitions::FADE);
@@ -22,23 +22,24 @@ bool HandlingOptionScene::control(){
     return false;
 }
 
-void HandlingOptionScene::init(){
+void HandlingOptionScene::init() {
     OptionListScene::init();
 
     int offset = 0;
-    if(savefile->settings.aspectRatio == 1){
+    if (savefile->settings.aspectRatio == 1) {
         offset = (240 - 214) / 2;
     }
 
     setSmallTextArea(110, 0, 17, 15, 20);
     clearText();
 
-    std::string test = "Test: " + getStringFromKey(savefile->settings.menuKeys.special2);
+    std::string test =
+        "Test: " + getStringFromKey(savefile->settings.menuKeys.special2);
 
     aprints(test, 1 + offset, 8, 2);
 }
 
-void HandlingOptionScene::deinit(){
+void HandlingOptionScene::deinit() {
     resetSmallText();
     OptionListScene::deinit();
 }

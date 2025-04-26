@@ -1,12 +1,10 @@
 #pragma once
 #include "def.h"
-#include <queue>
-#include <future>
-#include <algorithm>
 #include "rtc/rtc.hpp"
+#include <algorithm>
+#include <future>
 #include <nlohmann/json.hpp>
-
-
+#include <queue>
 
 constexpr char LINK_UNIVERSAL_MAX_PLAYERS = 5;
 constexpr char LINK_WIRELESS_QUEUE_SIZE = 30;
@@ -43,24 +41,30 @@ class LinkUniversal {
     int playerId = -1;
     std::unordered_map<std::string, u8> playerStringToId;
     std::unordered_map<u8, std::string> playerIdToString;
-    std::unordered_map<std::string, shared_ptr<rtc::PeerConnection>> peerConnectionMap;
-    std::unordered_map<std::string, shared_ptr<rtc::DataChannel>> dataChannelMap;
+    std::unordered_map<std::string, shared_ptr<rtc::PeerConnection>>
+        peerConnectionMap;
+    std::unordered_map<std::string, shared_ptr<rtc::DataChannel>>
+        dataChannelMap;
+
 public:
     std::string localId = randomId(10);
-    [[nodiscard]] u8 currentPlayerId() const {
-        return playerId;
-    }
+    [[nodiscard]] u8 currentPlayerId() const { return playerId; }
     static std::string randomId(size_t length) {
         using std::chrono::high_resolution_clock;
-        static const std::string characters(
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        static const std::string characters("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         std::string id(length, '0');
-        std::uniform_int_distribution<int> uniform(0, int(characters.size() - 1));
-        std::generate(id.begin(), id.end(), [&]() { return characters.at(qran() % (characters.length() - 1)); });
+        std::uniform_int_distribution<int> uniform(0,
+                                                   int(characters.size() - 1));
+        std::generate(id.begin(), id.end(), [&]() {
+            return characters.at(qran() % (characters.length() - 1));
+        });
         return id;
     }
-    shared_ptr<rtc::PeerConnection> getOrCreatePeerConnection(const std::string& peerId, const std::string& type) {
-        if (auto jt = peerConnectionMap.find(peerId); jt != peerConnectionMap.end())
+    shared_ptr<rtc::PeerConnection>
+    getOrCreatePeerConnection(const std::string& peerId,
+                              const std::string& type) {
+        if (auto jt = peerConnectionMap.find(peerId);
+            jt != peerConnectionMap.end())
             return jt->second;
         else if (type == OFFER || type == MATCH)
             return createPeerConnection(make_weak_ptr(ws), peerId);
@@ -78,9 +82,11 @@ public:
         ws->onMessage([this, wws = make_weak_ptr(ws)](auto data) {
             if (!std::holds_alternative<std::string>(data))
                 return;
-            std::cout << "Got websocket message: " << std::get<std::string>(data) << std::endl;
+            std::cout << "Got websocket message: "
+                      << std::get<std::string>(data) << std::endl;
             json message = json::parse(std::get<std::string>(data));
-            if (message.find(ID) == message.end() || message.find(TYPE) == message.end())
+            if (message.find(ID) == message.end() ||
+                message.find(TYPE) == message.end())
                 return;
 
             std::string type = message[TYPE];
@@ -99,12 +105,13 @@ public:
                         playerStringToId.clear();
                     }
                     playerId = remotePlayerId;
-                    std::cout << "We think we are player ID " << playerId << std::endl;
+                    std::cout << "We think we are player ID " << playerId
+                              << std::endl;
                 }
                 playerIdToString[remotePlayerId] = id;
                 playerStringToId[id] = remotePlayerId;
                 clearPlayers();
-                for (auto & i : playerIdToString) {
+                for (auto& i : playerIdToString) {
                     initPlayer(i.first);
                 }
                 if (id == localId)
@@ -126,22 +133,23 @@ public:
                 removePlayer(pId);
                 playerIdToString.erase(pId);
                 playerStringToId.erase(id);
-            }
-            else if (type == MATCH && id != localId) {
+            } else if (type == MATCH && id != localId) {
                 if (!pc || dataChannelMap.find(id) != dataChannelMap.end())
                     return;
                 makeOffer(pc, id);
-            }
-            else if (type == OFFER || type == ANSWER)
-                pc->setRemoteDescription(rtc::Description(message[DESCRIPTION], type));
+            } else if (type == OFFER || type == ANSWER)
+                pc->setRemoteDescription(
+                    rtc::Description(message[DESCRIPTION], type));
             else if (type == CANDIDATE)
-                pc->addRemoteCandidate(rtc::Candidate(message[CANDIDATE], message[MID]));
+                pc->addRemoteCandidate(
+                    rtc::Candidate(message[CANDIDATE], message[MID]));
             else if (type == FULL)
                 exceptionReason = "Room is full";
         });
     }
     void activate() {
-        if (active) return;
+        if (active)
+            return;
         active = true;
         initWebSocketConfig();
 
@@ -156,7 +164,8 @@ public:
 
         ws->onError([&wsPromise](const std::string& s) {
             std::cout << "WebSocket error" << std::endl;
-            wsPromise.set_exception(std::make_exception_ptr(std::runtime_error(s)));
+            wsPromise.set_exception(
+                std::make_exception_ptr(std::runtime_error(s)));
         });
 #else
         ws->onOpen([]() {
@@ -168,7 +177,8 @@ public:
         });
 #endif
 
-        std::string url = "wss://signaling.pingas.org/" + localId + (!roomId.empty() ? "/" + roomId : "/match");
+        std::string url = "wss://signaling.pingas.org/" + localId +
+                          (!roomId.empty() ? "/" + roomId : "/match");
         url.erase(remove(url.begin(), url.end(), ' '), url.end());
 
         std::cout << "WebSocket URL is " << url << std::endl;
@@ -180,14 +190,17 @@ public:
 #endif
     }
 
-    void makeOffer(std::shared_ptr<rtc::PeerConnection> pc, const std::string& remoteId) {
+    void makeOffer(std::shared_ptr<rtc::PeerConnection> pc,
+                   const std::string& remoteId) {
         // We are the offerer if we have a lower ID
         if (playerId < playerStringToId[remoteId] && playerId != -1) {
             return;
         }
         std::stringstream ss;
-        ss << "apotris:" << localId << std::to_string(playerId) << "<->" << std::to_string(playerStringToId[remoteId]);
-        std::cout << "Creating DataChannel with label \"" << ss.str() << "\"" << std::endl;
+        ss << "apotris:" << localId << std::to_string(playerId) << "<->"
+           << std::to_string(playerStringToId[remoteId]);
+        std::cout << "Creating DataChannel with label \"" << ss.str() << "\""
+                  << std::endl;
         auto dc = pc->createDataChannel(ss.str());
         registerDataChannelHandlers(dc, remoteId);
     }
@@ -196,8 +209,7 @@ public:
         // data holds either std::string or rtc::binary
         if (std::holds_alternative<std::string>(data)) {
             return;
-        }
-        else {
+        } else {
             auto packet = std::get<rtc::binary>(data);
             if (packet.size() == 2) {
                 std::byte foo = packet[0];
@@ -209,28 +221,35 @@ public:
         }
     }
 
-    void registerDataChannelHandlers(const shared_ptr<rtc::DataChannel>& dataChannel, const std::string& peerId) {
+    void
+    registerDataChannelHandlers(const shared_ptr<rtc::DataChannel>& dataChannel,
+                                const std::string& peerId) {
         dataChannel->onOpen([this, peerId]() {
-            std::cout << "DataChannel from " << peerId << " opened" << std::endl;
+            std::cout << "DataChannel from " << peerId << " opened"
+                      << std::endl;
             initPlayer(playerStringToId[peerId]);
         });
 
         dataChannel->onClosed([this, peerId]() {
-            std::cout << "DataChannel from " << peerId << " closed" << std::endl;
+            std::cout << "DataChannel from " << peerId << " closed"
+                      << std::endl;
         });
 
-        dataChannel->onMessage([this, peerId](auto data) {
-            parseMessage(data, peerId);
-        });
+        dataChannel->onMessage(
+            [this, peerId](auto data) { parseMessage(data, peerId); });
 
-        dataChannel->onError([peerId](auto error){
-           std::cout << "Error on DataChannel to peer " << peerId << ", was error:\n" << error << std::endl;
+        dataChannel->onError([peerId](auto error) {
+            std::cout << "Error on DataChannel to peer " << peerId
+                      << ", was error:\n"
+                      << error << std::endl;
         });
 
         dataChannelMap.emplace(peerId, dataChannel);
     }
 
-    shared_ptr<rtc::PeerConnection> createPeerConnection(const weak_ptr<rtc::WebSocket>& wws, std::string peerId) {
+    shared_ptr<rtc::PeerConnection>
+    createPeerConnection(const weak_ptr<rtc::WebSocket>& wws,
+                         std::string peerId) {
         auto pc = std::make_shared<rtc::PeerConnection>(config);
 
 #ifndef WEB
@@ -238,35 +257,41 @@ public:
             std::cout << "State: " << state << std::endl;
         });
 
-        pc->onGatheringStateChange([](rtc::PeerConnection::GatheringState state) {
-            std::cout << "Gathering State: " << state << std::endl;
-        });
+        pc->onGatheringStateChange(
+            [](rtc::PeerConnection::GatheringState state) {
+                std::cout << "Gathering State: " << state << std::endl;
+            });
 #endif
 
-        pc->onLocalDescription([wws, peerId](const rtc::Description& description) {
-            json message = {{ID, peerId},
-                            {TYPE, description.typeString()},
-                            {DESCRIPTION, std::string(description)}};
-            std::cout << "Websocket local description " << to_string(message) << std::endl;
-            if (auto wwss = wws.lock())
-                wwss->send(message.dump());
-        });
+        pc->onLocalDescription(
+            [wws, peerId](const rtc::Description& description) {
+                json message = {{ID, peerId},
+                                {TYPE, description.typeString()},
+                                {DESCRIPTION, std::string(description)}};
+                std::cout << "Websocket local description "
+                          << to_string(message) << std::endl;
+                if (auto wwss = wws.lock())
+                    wwss->send(message.dump());
+            });
 
         pc->onLocalCandidate([wws, peerId](const rtc::Candidate& candidate) {
             json message = {{ID, peerId},
                             {TYPE, "candidate"},
                             {CANDIDATE, std::string(candidate)},
                             {MID, candidate.mid()}};
-            std::cout << "Websocket local candidate " << to_string(message) << std::endl;
+            std::cout << "Websocket local candidate " << to_string(message)
+                      << std::endl;
             if (auto wwss = wws.lock())
                 wwss->send(message.dump());
         });
 
-        pc->onDataChannel([this, peerId](const shared_ptr<rtc::DataChannel>& dataChannel) {
-            std::cout << "DataChannel from " << peerId << " received with label \"" << dataChannel->label() << "\""
-                      << std::endl;
-            registerDataChannelHandlers(dataChannel, peerId);
-        });
+        pc->onDataChannel(
+            [this, peerId](const shared_ptr<rtc::DataChannel>& dataChannel) {
+                std::cout << "DataChannel from " << peerId
+                          << " received with label \"" << dataChannel->label()
+                          << "\"" << std::endl;
+                registerDataChannelHandlers(dataChannel, peerId);
+            });
 
         peerConnectionMap.emplace(peerId, pc);
         return pc;
@@ -274,12 +299,13 @@ public:
     [[nodiscard]] bool isActive() const { return active; }
 
     void deactivate() {
-        if (!active) return;
+        if (!active)
+            return;
         active = false;
         send(2 << 13); // BYE
         dataChannelMap.clear();
 #ifndef WEB
-        for (auto & it : peerConnectionMap)
+        for (auto& it : peerConnectionMap)
             it.second->close();
 #endif
         readQueues.clear();
@@ -290,12 +316,11 @@ public:
         localId = randomId(10);
     }
 
-    [[nodiscard]] bool sync() const {
-        return isConnected();
-    }
+    [[nodiscard]] bool sync() const { return isConnected(); }
 
     bool canRead(u8 pId) {
-        if (pId == playerId) return false;
+        if (pId == playerId)
+            return false;
         std::string peerId = playerIdToString[pId];
         return !readQueues[peerId].empty();
     }
@@ -309,45 +334,44 @@ public:
 
     bool send(u16 packet) {
         try {
-            for (auto &it: dataChannelMap) {
+            for (auto& it : dataChannelMap) {
                 if (!it.second->isOpen()) {
-                    std::cout << "DataChannel to " << it.first << " appears closed!";
+                    std::cout << "DataChannel to " << it.first
+                              << " appears closed!";
                     return false;
                 }
-                if (!it.second->send(reinterpret_cast<const std::byte *>(&packet), sizeof(u16)))
+                if (!it.second->send(
+                        reinterpret_cast<const std::byte*>(&packet),
+                        sizeof(u16)))
                     return false;
             }
             return true;
-        } catch (std::exception &e) {
+        } catch (std::exception& e) {
             printf("%s", e.what());
             return true;
         }
     }
     bool send(std::string msg) {
         try {
-            for (auto &it: dataChannelMap) {
+            for (auto& it : dataChannelMap) {
                 if (!it.second->isOpen()) {
-                    std::cout << "DataChannel to " << it.first << " appears closed!";
+                    std::cout << "DataChannel to " << it.first
+                              << " appears closed!";
                     return false;
                 }
                 if (!it.second->send(msg))
                     return false;
             }
             return true;
-        } catch (std::exception &e) {
+        } catch (std::exception& e) {
             printf("%s", e.what());
             return true;
         }
     }
 
-    [[nodiscard]] bool isConnected() const {
-        return playerCount() > 1;
-    }
+    [[nodiscard]] bool isConnected() const { return playerCount() > 1; }
 
-    [[nodiscard]] u8 playerCount() const {
-        return dataChannelMap.size() + 1;
-    }
-
+    [[nodiscard]] u8 playerCount() const { return dataChannelMap.size() + 1; }
 };
 
 extern LinkUniversal* linkUniversal;

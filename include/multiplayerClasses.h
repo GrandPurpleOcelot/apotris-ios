@@ -14,13 +14,13 @@
 #include "LinkWebRTC.hpp"
 #endif
 
-#include <memory>
-#include <queue>
-#include <optional>
-#include <utility>
-#include "hsm.h"
 #include "def.h"
+#include "hsm.h"
 #include "scene.hpp"
+#include <memory>
+#include <optional>
+#include <queue>
+#include <utility>
 
 // Higher three bits of u16 for commands
 #define UPDATE_STATE (2 << 13)
@@ -38,7 +38,7 @@
 #define I_LOST 7
 
 // These are upper bit masks
-#define SEND_SEED   0x1000
+#define SEND_SEED 0x1000
 #define POWER_LEVEL 0x800
 
 using namespace hsm;
@@ -78,13 +78,9 @@ public:
     bool over = false;
     bool reconnected = false;
 
-    explicit Player(u8 lId) {
-        linkId = lId;
-    }
+    explicit Player(u8 lId) { linkId = lId; }
 
-    explicit Player() {
-        linkId = -1;
-    }
+    explicit Player() { linkId = -1; }
 };
 
 class MultiplayerLink {
@@ -92,32 +88,40 @@ private:
     bool allOverB = false;
 
     bool allSeeded(u8 playerCount) {
-        if (playerCount <= 1 || players.size() <= 1) return false;
+        if (playerCount <= 1 || players.size() <= 1)
+            return false;
         return std::all_of(players.begin(), players.end(),
-                           [](std::pair<const unsigned char, Player> i) { return i.second.seeded; });
+                           [](std::pair<const unsigned char, Player> i) {
+                               return i.second.seeded;
+                           });
     }
 
     bool allOver(u8 playerCount) {
-        if (playerCount <= 1 || players.size() <= 1) return false;
+        if (playerCount <= 1 || players.size() <= 1)
+            return false;
         if (playerCount > players.size())
             return allOverB;
         return std::all_of(players.begin(), players.end(),
-                           [](std::pair<const unsigned char, Player> i) { return i.second.over; });
+                           [](std::pair<const unsigned char, Player> i) {
+                               return i.second.over;
+                           });
     }
 
     bool allConnected(u8 playerCount) {
-        if (playerCount <= 1 || players.size() <= 1) return false;
+        if (playerCount <= 1 || players.size() <= 1)
+            return false;
         return std::all_of(players.begin(), players.end(),
-                           [](std::pair<const unsigned char, Player> i) { return i.second.reconnected; });
+                           [](std::pair<const unsigned char, Player> i) {
+                               return i.second.reconnected;
+                           });
     }
 
-    void markAllOver(u8 playerCount) {
-        allOverB = true;
-    }
+    void markAllOver(u8 playerCount) { allOverB = true; }
 
     friend struct MultiplayerStates;
+
 public:
-    LinkUniversal *universal;
+    LinkUniversal* universal;
     std::map<u8, Player> players;
     StateMachine stateMachine;
     std::queue<u16> sendQueue;
@@ -130,7 +134,7 @@ public:
 
     u32 enemyPower[4] = {1, 1, 1, 1};
 
-    explicit MultiplayerLink(LinkUniversal *universal) {
+    explicit MultiplayerLink(LinkUniversal* universal) {
         this->universal = universal;
     }
 
@@ -148,23 +152,19 @@ public:
         purgeQueues();
     }
 
-    void initPlayer(u8 i) {
-        players[i] = Player(i);
-    }
+    void initPlayer(u8 i) { players[i] = Player(i); }
 
     void resetPlayers() {
-        for (auto i: players) {
+        for (auto i : players) {
             players[i.first] = Player(i.first);
         }
     }
 
-    void readyUp() {
-        players[universal->currentPlayerId()].ready = true;
-    }
+    void readyUp() { players[universal->currentPlayerId()].ready = true; }
 
     int getReadyCount() {
         int over = 0;
-        for (auto &it: players)
+        for (auto& it : players)
             over += it.second.ready;
         return over;
     }
@@ -177,7 +177,7 @@ public:
 
     [[nodiscard]] std::queue<Packet> readPackets() const {
         std::queue<Packet> queue;
-        for (auto player: players) {
+        for (auto player : players) {
             int i = player.first;
             while (universal->canRead(i))
                 queue.emplace(i, universal->read(i));
@@ -186,30 +186,29 @@ public:
     }
 
     bool allReady(u8 playerCount) {
-        if (playerCount <= 1 || players.size() <= 1) return false;
-        return std::all_of(players.begin(), players.end(), [](auto i) {
-            return i.second.ready;
-        });
+        if (playerCount <= 1 || players.size() <= 1)
+            return false;
+        return std::all_of(players.begin(), players.end(),
+                           [](auto i) { return i.second.ready; });
     }
 
 #ifndef GBA
-    void removePlayer(u8 pId) {
-        players.erase(pId);
-    }
+    void removePlayer(u8 pId) { players.erase(pId); }
 #endif
 };
 
 /**
- * Contains the various outer and inner states that power the multiplayer state machine for networking.
- * Outer states:
+ * Contains the various outer and inner states that power the multiplayer state
+ * machine for networking. Outer states:
  * - Deactivated
  * - Activated
  */
 struct MultiplayerStates {
 
     /**
-     * When state is entered, will disable underlying network or wireless hardware automatically.
-     * Is the default state when the state machine is not initialized.
+     * When state is entered, will disable underlying network or wireless
+     * hardware automatically. Is the default state when the state machine is
+     * not initialized.
      */
     struct Deactivated : StateWithOwner<MultiplayerLink> {
 
@@ -229,8 +228,10 @@ struct MultiplayerStates {
     };
 
     /**
-     * This state manages an active network or GBA wireless connection and calls to the underlying polling mechanism.
-     * It awaits the presence of players and will set its own inner states. PlayersPresent is the entry to the inner chain.
+     * This state manages an active network or GBA wireless connection and calls
+     * to the underlying polling mechanism. It awaits the presence of players
+     * and will set its own inner states. PlayersPresent is the entry to the
+     * inner chain.
      */
     struct Activated : StateWithOwner<MultiplayerLink> {
 
@@ -241,17 +242,17 @@ struct MultiplayerStates {
             Update();
         }
 
-        void Update() override {
-            Owner().universal->sync();
-        }
+        void Update() override { Owner().universal->sync(); }
 
-        // Defaults to connection initializing on first entry and when a player disconnects during a live game.
-        // Otherwise, proceeds to PlayersPresent and attempts to seed, etc.
+        // Defaults to connection initializing on first entry and when a player
+        // disconnects during a live game. Otherwise, proceeds to PlayersPresent
+        // and attempts to seed, etc.
         Transition GetTransition() override {
             if (!Owner().universal->isActive())
                 return SiblingTransition<Deactivated>();
-            if (!Owner().universal->isConnected()
-                || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount)) {
+            if (!Owner().universal->isConnected() ||
+                (Owner().playing && Owner().universal->playerCount() <
+                                        Owner().playingPlayerCount)) {
                 return InnerEntryTransition<ConnectionInitializing>();
             }
             return InnerEntryTransition<PlayersPresent>();
@@ -259,8 +260,8 @@ struct MultiplayerStates {
     };
 
     /**
-     * This state captures resetting and/or persisting player connection data for existing or new games before connection
-     * and during reconnection.
+     * This state captures resetting and/or persisting player connection data
+     * for existing or new games before connection and during reconnection.
      */
     struct ConnectionInitializing : StateWithOwner<MultiplayerLink> {
 
@@ -274,21 +275,23 @@ struct MultiplayerStates {
 #endif
         }
 
-        // Waits for correct player count or any connection before marking remote players as "present"
+        // Waits for correct player count or any connection before marking
+        // remote players as "present"
         Transition GetTransition() override {
-            if (!Owner().universal->isConnected()
-                || (Owner().playing && Owner().universal->playerCount() < Owner().playingPlayerCount)) {
+            if (!Owner().universal->isConnected() ||
+                (Owner().playing && Owner().universal->playerCount() <
+                                        Owner().playingPlayerCount)) {
                 return NoTransition();
             } else {
                 return SiblingTransition<PlayersPresent>();
             }
         }
-
     };
 
     /**
-     * Handles the unique case of 3+P where only some players are present after disconnect during a live game.
-     * Also handles resetting player ready states before a game has started when a disconnect occurs.
+     * Handles the unique case of 3+P where only some players are present after
+     * disconnect during a live game. Also handles resetting player ready states
+     * before a game has started when a disconnect occurs.
      */
     struct PlayersPresent : StateWithOwner<MultiplayerLink> {
         unsigned int seenPlayerCount = 0;
@@ -310,9 +313,11 @@ struct MultiplayerStates {
 
         Transition GetTransition() override {
             if (Owner().playing) {
-                if (Owner().playingPlayerCount > Owner().universal->playerCount()) {
+                if (Owner().playingPlayerCount >
+                    Owner().universal->playerCount()) {
                     return SiblingTransition<ConnectionInitializing>();
-                } else if (Owner().playingPlayerCount <= Owner().universal->playerCount()) {
+                } else if (Owner().playingPlayerCount <=
+                           Owner().universal->playerCount()) {
                     return InnerEntryTransition<PlayersReconnecting>();
                 }
             } else if (seenPlayerCount != Owner().universal->playerCount()) {
@@ -323,8 +328,9 @@ struct MultiplayerStates {
     };
 
     /**
-     * Represents the state where some but not all players are synchronized on the host-chosen seed.
-     * On entry, the host rolls a seed and transmits it to players. All players await seed messages to confirm synchronization
+     * Represents the state where some but not all players are synchronized on
+     * the host-chosen seed. On entry, the host rolls a seed and transmits it to
+     * players. All players await seed messages to confirm synchronization
      * before proceeding, so each client will have the same random state.
      */
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
@@ -348,12 +354,13 @@ struct MultiplayerStates {
         }
 
         void Update() override {
-            auto process_queue = [this](std::queue<Packet> &queue) {
+            auto process_queue = [this](std::queue<Packet>& queue) {
                 while (!queue.empty()) {
                     Packet packet = queue.front();
                     queue.pop();
 
-                    auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
+                    auto command =
+                        Command(RemotePlayerId(packet.playerId), packet.packet);
                     if (command.command != 2)
                         continue;
 
@@ -371,8 +378,11 @@ struct MultiplayerStates {
                         if (Owner().universal->currentPlayerId()) {
                             if (!packet.playerId) {
                                 nextSeed = packet.packet & (SEND_SEED - 1);
-                            } else if (nextSeed && ((packet.packet & (SEND_SEED - 1)) != nextSeed))
-                                nextSeed = packet.packet & (SEND_SEED - 1); // bad seed??
+                            } else if (nextSeed &&
+                                       ((packet.packet & (SEND_SEED - 1)) !=
+                                        nextSeed))
+                                nextSeed = packet.packet &
+                                           (SEND_SEED - 1); // bad seed??
                             Owner().players[packet.playerId].seeded = true;
                         } else {
                             if ((packet.packet & (SEND_SEED - 1)) == nextSeed)
@@ -380,7 +390,6 @@ struct MultiplayerStates {
                         }
 #endif
                     }
-
                 }
             };
             std::queue<Packet> readQueue = Owner().readPackets();
@@ -390,7 +399,8 @@ struct MultiplayerStates {
             process_queue(seedQueue);
 
             if (nextSeed) {
-                Owner().players[Owner().universal->currentPlayerId()].seeded = true;
+                Owner().players[Owner().universal->currentPlayerId()].seeded =
+                    true;
 #ifdef GBA
                 Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
 #endif
@@ -407,9 +417,10 @@ struct MultiplayerStates {
     };
 
     /**
-     * When all players are seeded, we set the playingPlayerCount here, but only if not already in-game.
-     * This is how the player count gets determined without confusion before the ready up stage.
-     * Relies on the reset operations from earlier stages in the chain.
+     * When all players are seeded, we set the playingPlayerCount here, but only
+     * if not already in-game. This is how the player count gets determined
+     * without confusion before the ready up stage. Relies on the reset
+     * operations from earlier stages in the chain.
      */
     struct PlayersSeeded : StateWithOwner<MultiplayerLink> {
 
@@ -427,7 +438,8 @@ struct MultiplayerStates {
     };
 
     /**
-     * Players send out and await ready-up messages from others in this state, gated by a confirm button in the UI.
+     * Players send out and await ready-up messages from others in this state,
+     * gated by a confirm button in the UI.
      */
     struct PlayersAwaitReady : StateWithOwner<MultiplayerLink> {
         bool sentReady = false;
@@ -439,9 +451,12 @@ struct MultiplayerStates {
             while (!queue.empty()) {
                 Packet packet = queue.front();
                 queue.pop();
-                auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
-                if (command.command != 2) continue;
-                if (command.value != LETS_PLAY) continue;
+                auto command =
+                    Command(RemotePlayerId(packet.playerId), packet.packet);
+                if (command.command != 2)
+                    continue;
+                if (command.value != LETS_PLAY)
+                    continue;
                 Owner().players[packet.playerId].ready = true;
             }
             // TODO: Remove bot code
@@ -460,7 +475,8 @@ struct MultiplayerStates {
             if (readyTimeout-- <= 0 && qran() % 0xFF == 0)
                 Owner().readyUp();*/
 #endif
-            if (!sentReady && Owner().players[Owner().universal->currentPlayerId()].ready) {
+            if (!sentReady &&
+                Owner().players[Owner().universal->currentPlayerId()].ready) {
                 sentReady = true;
                 Owner().send(UPDATE_STATE + LETS_PLAY);
 #ifdef GBA
@@ -471,7 +487,8 @@ struct MultiplayerStates {
         }
 
         void OnExit() override {
-            if (!sentReady && Owner().players[Owner().universal->currentPlayerId()].ready)
+            if (!sentReady &&
+                Owner().players[Owner().universal->currentPlayerId()].ready)
                 Owner().send(UPDATE_STATE + LETS_PLAY);
         }
 
@@ -485,8 +502,10 @@ struct MultiplayerStates {
     };
 
     /**
-     * The game logic itself, which parses packets of all types into Command classes that have effects when execute()'d
-     * It will transition into Won or Lost states depending on flags set by game logic elsewhere in the application.
+     * The game logic itself, which parses packets of all types into Command
+     * classes that have effects when execute()'d It will transition into Won or
+     * Lost states depending on flags set by game logic elsewhere in the
+     * application.
      */
     struct Playing : StateWithOwner<MultiplayerLink> {
         int echoCounter = 0;
@@ -506,7 +525,8 @@ struct MultiplayerStates {
                 Packet packet = queue.front();
                 queue.pop();
 
-                auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
+                auto command =
+                    Command(RemotePlayerId(packet.playerId), packet.packet);
 
                 if (command.command == 2) {
                     if (command.value == I_LOST)
@@ -532,7 +552,7 @@ struct MultiplayerStates {
                 Owner().send(UPDATE_STATE + WELCOME_BACK);
 
             int lostCount = 0;
-            for (auto i: Owner().players)
+            for (auto i : Owner().players)
                 if (i.second.over)
                     lostCount += 1;
             if (lostCount == Owner().playingPlayerCount - 1)
@@ -550,7 +570,8 @@ struct MultiplayerStates {
     };
 
     /**
-     * When a player has won, they announce it to the network and proceed to the GameOver state.
+     * When a player has won, they announce it to the network and proceed to the
+     * GameOver state.
      */
     struct Won : StateWithOwner<MultiplayerLink> {
 
@@ -568,8 +589,9 @@ struct MultiplayerStates {
     };
 
     /**
-     * When a player has lost, they continuously announce it to the network and proceed to the GameOver state when
-     * hearing another player has won. This state still parses remote board updates.
+     * When a player has lost, they continuously announce it to the network and
+     * proceed to the GameOver state when hearing another player has won. This
+     * state still parses remote board updates.
      */
     struct Lost : StateWithOwner<MultiplayerLink> {
         unsigned int echoCounter = 0;
@@ -585,7 +607,8 @@ struct MultiplayerStates {
             while (!queue.empty()) {
                 Packet packet = queue.front();
                 queue.pop();
-                auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
+                auto command =
+                    Command(RemotePlayerId(packet.playerId), packet.packet);
                 if (command.command == 2) {
                     if (command.value == I_LOST) {
                         Owner().players[command.playerId.id].over = true;
@@ -604,7 +627,8 @@ struct MultiplayerStates {
 #ifdef GBA
                     else if (command.value & SEND_SEED)
                         Owner().seedQueue.emplace(command.playerId.id,
-                                                  (command.command << 13) + command.value);
+                                                  (command.command << 13) +
+                                                      command.value);
 #endif
                 } else if (command.command >= SEND_ROW) {
                     command.execute();
@@ -617,7 +641,8 @@ struct MultiplayerStates {
         }
 
         Transition GetTransition() override {
-            if (!Owner().allOver(Owner().playingPlayerCount)) return NoTransition();
+            if (!Owner().allOver(Owner().playingPlayerCount))
+                return NoTransition();
             Owner().playing = false;
             Owner().resetPlayers();
             Owner().playAgain = true;
@@ -626,8 +651,9 @@ struct MultiplayerStates {
     };
 
     /**
-     * The GameOver state is a temporary state. It exists to announce to any straggling players that are still in-game
-     * (perhaps due to dropped network traffic) that the game is considered over and they must reset to re-seed.
+     * The GameOver state is a temporary state. It exists to announce to any
+     * straggling players that are still in-game (perhaps due to dropped network
+     * traffic) that the game is considered over and they must reset to re-seed.
      */
     struct GameOver : StateWithOwner<MultiplayerLink> {
         unsigned int echoCounter = 0;
@@ -645,7 +671,8 @@ struct MultiplayerStates {
                 Packet packet = queue.front();
                 queue.pop();
 
-                auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
+                auto command =
+                    Command(RemotePlayerId(packet.playerId), packet.packet);
                 if (command.command != 2) {
                     continue;
                 }
@@ -655,7 +682,8 @@ struct MultiplayerStates {
 #ifdef GBA
                 else if (command.value & SEND_SEED) {
                     Owner().seedQueue.emplace(command.playerId.id,
-                                              (command.command << 13) + command.value);
+                                              (command.command << 13) +
+                                                  command.value);
                 }
 #endif
             }
@@ -687,13 +715,12 @@ struct MultiplayerStates {
     };
 
     /**
-     * When one or more players disconnect(s) from the network, all players wait for each other to echo "welcome back".
+     * When one or more players disconnect(s) from the network, all players wait
+     * for each other to echo "welcome back".
      */
     struct PlayersReconnecting : StateWithOwner<MultiplayerLink> {
 
-        void OnEnter() override {
-            Owner().send(UPDATE_STATE + WELCOME_BACK);
-        }
+        void OnEnter() override { Owner().send(UPDATE_STATE + WELCOME_BACK); }
 
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
@@ -702,14 +729,17 @@ struct MultiplayerStates {
                 Packet packet = queue.front();
                 queue.pop();
 
-                auto command = Command(RemotePlayerId(packet.playerId), packet.packet);
+                auto command =
+                    Command(RemotePlayerId(packet.playerId), packet.packet);
 
                 if (command.command != 2)
                     continue;
 
                 if (command.value == WELCOME_BACK) {
                     Owner().players[command.playerId.id].reconnected = true;
-                    Owner().players[Owner().universal->currentPlayerId()].reconnected = true;
+                    Owner()
+                        .players[Owner().universal->currentPlayerId()]
+                        .reconnected = true;
                 }
             }
 
@@ -724,4 +754,4 @@ struct MultiplayerStates {
         }
     };
 };
-extern MultiplayerLink *multiplayerLink;
+extern MultiplayerLink* multiplayerLink;

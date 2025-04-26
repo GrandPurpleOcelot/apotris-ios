@@ -3,13 +3,17 @@
 #include "platform.hpp"
 
 #ifdef GBA
-#include <gba_sram.h>
 #include <gba_flash.h>
+#include <gba_sram.h>
 
-#define AGB_ROM  ((u8*)0x8000000)
+#define AGB_ROM ((u8*)0x8000000)
 #define AGB_SRAM ((u8*)0xE000000)
-#define AGB_SRAM_SIZE 32*1024
-#define _FLASH_WRITE(pa, pd) { *(((u16 *)AGB_ROM)+((pa)/2)) = pd; __asm("nop"); }
+#define AGB_SRAM_SIZE 32 * 1024
+#define _FLASH_WRITE(pa, pd)                                                   \
+    {                                                                          \
+        *(((u16*)AGB_ROM) + ((pa) / 2)) = pd;                                  \
+        __asm("nop");                                                          \
+    }
 #define STATEID 0x57a731d8
 #define STATEID2 0x57a731d9
 

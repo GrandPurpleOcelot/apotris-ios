@@ -36,4 +36,4 @@ void interrupt_mask();
 }
 #endif
 
-#endif  // INTERRUPT_H
+#endif // INTERRUPT_H

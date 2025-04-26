@@ -1,30 +1,30 @@
 #include "def.h"
-#include "platform.hpp"
-#include "text.h"
-#include "sprites.h"
-#include <string>
-#include <posprintf.h>
 #include "logging.h"
+#include "platform.hpp"
 #include "scene.hpp"
 #include "sceneGraphics.hpp"
+#include "sprites.h"
+#include "text.h"
+#include <posprintf.h>
+#include <string>
 
 using namespace BlockEngine;
 
 static void screenShake();
 
-
-void GradientEditorScene::init(){
+void GradientEditorScene::init() {
     toggleBG(0, true);
     toggleBG(1, false);
     toggleBG(2, false);
     toggleBG(3, false);
 
-    for(int i = 0; i < 3; i++){
-        color[i] = (savefile->settings.backgroundGradient >> (5*i)) & 0x1f;
+    for (int i = 0; i < 3; i++) {
+        color[i] = (savefile->settings.backgroundGradient >> (5 * i)) & 0x1f;
     }
 
-    for(int i = 0; i < 3; i++){
-        color2[i] = (savefile->settings.backgroundGradient >> (5*i + 16)) & 0x1f;
+    for (int i = 0; i < 3; i++) {
+        color2[i] =
+            (savefile->settings.backgroundGradient >> (5 * i + 16)) & 0x1f;
     }
 
     clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
@@ -47,7 +47,7 @@ void GradientEditorScene::init(){
     sprite_enable_affine(cursorSprite, 10, true);
     sprite_hide(cursorSprite);
 
-    for(int i = 0; i < 6; i++){
+    for (int i = 0; i < 6; i++) {
         colorSprites[i] = &obj_buffer[15 + i];
 
         sprite_set_attr(colorSprites[i], ShapeSquare, 0, 254, i % 3, 0);
@@ -59,7 +59,7 @@ void GradientEditorScene::init(){
     setPaletteColor(16 + 2, 15, RGB15(5, 5, 31), 1);
 }
 
-void GradientEditorScene::draw(){
+void GradientEditorScene::draw() {
 
     const int space = 4;
     const int height = 11;
@@ -68,111 +68,122 @@ void GradientEditorScene::draw(){
 
     const int tile = 105;
 
-    if(savefile->settings.backgroundType == 0){
-        for(int i = 0; i < 3; i++){
-            int x = 19 + (i-1)*space;
+    if (savefile->settings.backgroundType == 0) {
+        for (int i = 0; i < 3; i++) {
+            int x = 19 + (i - 1) * space;
 
             char buff[8];
-            posprintf(buff, "%02d",color[i]);
+            posprintf(buff, "%02d", color[i]);
 
             aprintColor(buff, x, height, !onValues);
 
-            if(i == colorSelection && onValues){
-                setTile(29, x, height - 1 , tileBuild(tile, false, false, 15));
-                setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 15));
-                setTile(29, x, height + 1 , tileBuild(tile, false, true, 15));
-                setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 15));
-            }else{
-                aprint("  " , x,height-1);
-                aprint("  " , x,height+1);
+            if (i == colorSelection && onValues) {
+                setTile(29, x, height - 1, tileBuild(tile, false, false, 15));
+                setTile(29, x + 1, height - 1,
+                        tileBuild(tile + 1, false, false, 15));
+                setTile(29, x, height + 1, tileBuild(tile, false, true, 15));
+                setTile(29, x + 1, height + 1,
+                        tileBuild(tile + 1, false, true, 15));
+            } else {
+                aprint("  ", x, height - 1);
+                aprint("  ", x, height + 1);
             }
 
-            c += color[i] << (5*i);
+            c += color[i] << (5 * i);
 
-            sprite_unhide(colorSprites[i],0);
+            sprite_unhide(colorSprites[i], 0);
             sprite_set_pos(colorSprites[i], x * 8 - 9, height * 8);
         }
 
-        for(int i = 0; i < 3; i++)
-            sprite_hide(colorSprites[i+3]);
+        for (int i = 0; i < 3; i++)
+            sprite_hide(colorSprites[i + 3]);
 
-    }else if(savefile->settings.backgroundType == 1){
+    } else if (savefile->settings.backgroundType == 1) {
         int height = 8;
 
-        for(int i = 0; i < 3; i++){
-            int x = 19 + (i-1)*space;
+        for (int i = 0; i < 3; i++) {
+            int x = 19 + (i - 1) * space;
 
             char buff[8];
-            posprintf(buff, "%02d",color[i]);
+            posprintf(buff, "%02d", color[i]);
 
             aprintColor(buff, x, height, !(selection == 1 && onValues));
 
-            if(i == colorSelection && onValues && selection == 1){
-                setTile(29, x, height - 1 , tileBuild(tile, false, false, 15));
-                setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 15));
-                setTile(29, x, height + 1 , tileBuild(tile, false, true, 15));
-                setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 15));
-            }else{
-                aprint("  " , x,height-1);
-                aprint("  " , x,height+1);
+            if (i == colorSelection && onValues && selection == 1) {
+                setTile(29, x, height - 1, tileBuild(tile, false, false, 15));
+                setTile(29, x + 1, height - 1,
+                        tileBuild(tile + 1, false, false, 15));
+                setTile(29, x, height + 1, tileBuild(tile, false, true, 15));
+                setTile(29, x + 1, height + 1,
+                        tileBuild(tile + 1, false, true, 15));
+            } else {
+                aprint("  ", x, height - 1);
+                aprint("  ", x, height + 1);
             }
 
-            c += color[i] << (5*i);
+            c += color[i] << (5 * i);
 
-            sprite_unhide(colorSprites[i],0);
+            sprite_unhide(colorSprites[i], 0);
             sprite_set_pos(colorSprites[i], x * 8 - 9, height * 8);
         }
 
         height = 13;
 
-        for(int i = 0; i < 3; i++){
-            int x = 19 + (i-1)*space;
+        for (int i = 0; i < 3; i++) {
+            int x = 19 + (i - 1) * space;
 
             char buff[8];
-            posprintf(buff, "%02d",color2[i]);
+            posprintf(buff, "%02d", color2[i]);
 
             aprintColor(buff, x, height, !(selection == 2 && onValues));
 
-            if(i == colorSelection && onValues && selection == 2){
-                setTile(29, x, height - 1 , tileBuild(tile, false, false, 15));
-                setTile(29, x+1, height - 1 , tileBuild(tile + 1, false, false, 15));
-                setTile(29, x, height + 1 , tileBuild(tile, false, true, 15));
-                setTile(29, x+1, height + 1 , tileBuild(tile + 1, false, true, 15));
-            }else{
-                aprint("  " , x,height-1);
-                aprint("  " , x,height+1);
+            if (i == colorSelection && onValues && selection == 2) {
+                setTile(29, x, height - 1, tileBuild(tile, false, false, 15));
+                setTile(29, x + 1, height - 1,
+                        tileBuild(tile + 1, false, false, 15));
+                setTile(29, x, height + 1, tileBuild(tile, false, true, 15));
+                setTile(29, x + 1, height + 1,
+                        tileBuild(tile + 1, false, true, 15));
+            } else {
+                aprint("  ", x, height - 1);
+                aprint("  ", x, height + 1);
             }
 
-            c += color2[i] << (5*i + 16);
+            c += color2[i] << (5 * i + 16);
 
-            sprite_unhide(colorSprites[i + 3],0);
+            sprite_unhide(colorSprites[i + 3], 0);
             sprite_set_pos(colorSprites[i + 3], x * 8 - 9, height * 8);
         }
-
     }
 
     std::string temp;
 
-    switch(savefile->settings.backgroundType){
-    case 0: temp = "Single Color"; break;
-    case 1: temp = "Dual Color"; break;
-    default: temp = "Single Color"; break;
+    switch (savefile->settings.backgroundType) {
+    case 0:
+        temp = "Single Color";
+        break;
+    case 1:
+        temp = "Dual Color";
+        break;
+    default:
+        temp = "Single Color";
+        break;
     }
 
     std::string typeString;
-    if(selection == 0){
-        if(savefile->settings.backgroundType > 0)
+    if (selection == 0) {
+        if (savefile->settings.backgroundType > 0)
             typeString += "<";
         else
             typeString += " ";
 
         typeString += temp;
 
-        if(savefile->settings.backgroundType < 1)
+        if (savefile->settings.backgroundType < 1)
             typeString += ">";
         else
             typeString += " ";
-    }else{
+    } else {
         typeString += " " + temp + " ";
     }
 
@@ -182,60 +193,64 @@ void GradientEditorScene::draw(){
     showSprites(128);
 
     int offset = (sinLut(cursorFloat) * 2) >> 12;
-    auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
+    auto scale = float2fx((1.0 - ((float)0.1 * offset)));
 
-    sprite_unhide(cursorSprite,0);
+    sprite_unhide(cursorSprite, 0);
     sprite_enable_affine(cursorSprite, 10, true);
     sprite_set_size(cursorSprite, scale, 10);
 
-    if(selection == 0){
+    if (selection == 0) {
 
         int x = 3 * 8 - ((8) + offset + 4) - 4;
 
         sprite_set_pos(cursorSprite, x, 3 * 8 - 5);
-    }else{
+    } else {
         int x = 3 * 8 - ((8) + offset + 4) - 4;
 
-        if(savefile->settings.backgroundType == 0){
+        if (savefile->settings.backgroundType == 0) {
             sprite_set_pos(cursorSprite, x, 11 * 8 - 5);
-        }else if(savefile->settings.backgroundType == 1){
-            if(selection == 1){
+        } else if (savefile->settings.backgroundType == 1) {
+            if (selection == 1) {
                 sprite_set_pos(cursorSprite, x, 8 * 8 - 5);
-            }else if(selection == 2){
+            } else if (selection == 2) {
                 sprite_set_pos(cursorSprite, x, 13 * 8 - 5);
             }
         }
     }
 }
 
-void GradientEditorScene::drawText(){
+void GradientEditorScene::drawText() {
     clearText();
 
     int offset = 0;
-    if(savefile->settings.aspectRatio == 1){
+    if (savefile->settings.aspectRatio == 1) {
         offset = (240 - 214) / 2;
     }
 
-    std::string keyString = getStringFromKey(savefile->settings.menuKeys.cancel);
+    std::string keyString =
+        getStringFromKey(savefile->settings.menuKeys.cancel);
 
-    std::transform(keyString.begin(), keyString.end(), keyString.begin(), ::toupper);
+    std::transform(keyString.begin(), keyString.end(), keyString.begin(),
+                   ::toupper);
 
     std::string s = "Press " + keyString + " to Exit";
-    aprints(s, 30 * 8 - 4 * s.size() - offset,10,2);
+    aprints(s, 30 * 8 - 4 * s.size() - offset, 10, 2);
 
     naprint("Type:", 3 * 8, 3 * 8);
 
-    if(savefile->settings.backgroundType == 0){
+    if (savefile->settings.backgroundType == 0) {
         naprint("Color:", 3 * 8, 11 * 8);
-    }else if(savefile->settings.backgroundType == 1){
+    } else if (savefile->settings.backgroundType == 1) {
         naprint("Top:", 3 * 8, 8 * 8);
         naprint("Bottom:", 3 * 8, 13 * 8);
     }
 
-    aprints("Randomize: " + getStringFromKey(savefile->settings.menuKeys.special3),1 + offset,10,2);
+    aprints("Randomize: " +
+                getStringFromKey(savefile->settings.menuKeys.special3),
+            1 + offset, 10, 2);
 }
 
-void GradientEditorScene::update(){
+void GradientEditorScene::update() {
     canDraw = true;
     key_poll();
 
@@ -243,19 +258,19 @@ void GradientEditorScene::update(){
     gradient(2);
 
     cursorFloat += 6;
-    if(cursorFloat >= 512)
+    if (cursorFloat >= 512)
         cursorFloat = 0;
 
     control();
 }
 
-bool GradientEditorScene::control(){
+bool GradientEditorScene::control() {
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(k.special3)){
+    if (key_hit(k.special3)) {
         sfx(SFX_MENUCONFIRM);
 
-        for(int i = 0; i < 3; i++){
+        for (int i = 0; i < 3; i++) {
             color[i] = qran() % 31;
             color2[i] = qran() % 31;
         }
@@ -265,29 +280,29 @@ bool GradientEditorScene::control(){
         setMaxSelection();
     }
 
-    if(!onValues){
-        if(key_hit(k.up)){
-            if(selection > 0)
+    if (!onValues) {
+        if (key_hit(k.up)) {
+            if (selection > 0)
                 selection--;
 
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(k.down)){
-            if(selection < maxSelection - 1)
+        if (key_hit(k.down)) {
+            if (selection < maxSelection - 1)
                 selection++;
             sfx(SFX_MENUMOVE);
         }
 
-        if(key_hit(k.cancel)){
+        if (key_hit(k.cancel)) {
             sfx(SFX_MENUCANCEL);
-            changeScene(previousScene(),Transitions::FADE);
+            changeScene(previousScene(), Transitions::FADE);
             return true;
         }
 
-        if(selection == 0){
-            if(key_hit(k.left)){
-                if(savefile->settings.backgroundType > 0){
+        if (selection == 0) {
+            if (key_hit(k.left)) {
+                if (savefile->settings.backgroundType > 0) {
                     savefile->settings.backgroundType--;
                     drawText();
                     setMaxSelection();
@@ -296,8 +311,8 @@ bool GradientEditorScene::control(){
                 sfx(SFX_MENUMOVE);
             }
 
-            if(key_hit(k.right)){
-                if(savefile->settings.backgroundType < 1){
+            if (key_hit(k.right)) {
+                if (savefile->settings.backgroundType < 1) {
                     savefile->settings.backgroundType++;
                     drawText();
                     setMaxSelection();
@@ -305,72 +320,72 @@ bool GradientEditorScene::control(){
 
                 sfx(SFX_MENUMOVE);
             }
-        }else{
-            if(key_hit(k.right) || key_hit(k.confirm)){
+        } else {
+            if (key_hit(k.right) || key_hit(k.confirm)) {
                 onValues = true;
                 colorSelection = 0;
                 sfx(SFX_MENUCONFIRM);
             }
         }
-    }else{
-        if(key_hit(k.left)){
-            if(colorSelection > 0){
+    } else {
+        if (key_hit(k.left)) {
+            if (colorSelection > 0) {
                 colorSelection--;
                 sfx(SFX_MENUMOVE);
-            } else{
+            } else {
                 onValues = false;
                 sfx(SFX_MENUCANCEL);
             }
         }
 
-        if(key_hit(k.cancel)){
+        if (key_hit(k.cancel)) {
             onValues = false;
             sfx(SFX_MENUCANCEL);
         }
 
-        if(key_hit(k.right)){
-            if(colorSelection< 2)
+        if (key_hit(k.right)) {
+            if (colorSelection < 2)
                 colorSelection++;
             sfx(SFX_MENUMOVE);
         }
 
-        int * arr;
-        if(selection == 1)
-            arr = (int *) color;
+        int* arr;
+        if (selection == 1)
+            arr = (int*)color;
         else
-            arr = (int *) color2;
+            arr = (int*)color2;
 
-        if(key_hit(k.up)){
-            if(arr[colorSelection] < 31)
+        if (key_hit(k.up)) {
+            if (arr[colorSelection] < 31)
                 arr[colorSelection]++;
             sfx(SFX_SHIFT2);
         }
 
-        if(key_hit(k.down)){
-            if(arr[colorSelection] > 0)
+        if (key_hit(k.down)) {
+            if (arr[colorSelection] > 0)
                 arr[colorSelection]--;
             sfx(SFX_SHIFT2);
         }
 
-        if(key_is_down(k.up) || key_is_down(k.down)){
+        if (key_is_down(k.up) || key_is_down(k.down)) {
             das++;
 
-            if(das == dasMax){
+            if (das == dasMax) {
                 das -= arrMax;
 
-                if(key_is_down(k.up)){
-                    if(arr[colorSelection] < 31){
+                if (key_is_down(k.up)) {
+                    if (arr[colorSelection] < 31) {
                         arr[colorSelection]++;
                         sfx(SFX_SHIFT2);
                     }
-                }else if(key_is_down(k.down)){
-                    if(arr[colorSelection] > 0){
+                } else if (key_is_down(k.down)) {
+                    if (arr[colorSelection] > 0) {
                         arr[colorSelection]--;
                         sfx(SFX_SHIFT2);
                     }
                 }
             }
-        }else{
+        } else {
             das = 0;
         }
     }
@@ -378,7 +393,7 @@ bool GradientEditorScene::control(){
     return false;
 }
 
-void GradientEditorScene::deinit(){
+void GradientEditorScene::deinit() {
     savefile->settings.backgroundGradient = c;
 
     toggleBG(0, true);
@@ -388,47 +403,50 @@ void GradientEditorScene::deinit(){
     resetSmallText();
     clearText();
 
-    for (auto & wordSprite : wordSprites)
+    for (auto& wordSprite : wordSprites)
         delete wordSprite;
 }
 
-bool GradientElement::action(){
+bool GradientElement::action() {
     sfx(SFX_MENUCONFIRM);
-    changeScene(new GradientEditorScene(),Transitions::FADE);
+    changeScene(new GradientEditorScene(), Transitions::FADE);
 
     return true;
 }
 
-void GraphicsScene::init(){
-    loadTiles(2,102,sprite37tiles_bin,sprite37tiles_bin_size/32);
-    loadTiles(2,105,sprite41tiles_bin,sprite41tiles_bin_size/32);
+void GraphicsScene::init() {
+    loadTiles(2, 102, sprite37tiles_bin, sprite37tiles_bin_size / 32);
+    loadTiles(2, 105, sprite41tiles_bin, sprite41tiles_bin_size / 32);
 
     clearSprites(128);
 
     elementList = getElementList();
-    options = (int) elementList.size();
+    options = (int)elementList.size();
 
     startY = 24;
-    if(options < 7){
-       startY += ((7 - options) * 8) & ~0xf;
+    if (options < 7) {
+        startY += ((7 - options) * 8) & ~0xf;
     }
 
     selection = 0;
 
-    //transparent gray
-    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    // transparent gray
+    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i] = new WordSprite(i, 32 + i * 3, 256 + i * 12);
 
     for (int i = 0; i < 7; i++)
-        labels[i] = new WordSprite(MAX_WORD_SPRITES + i, 32 + 3 * MAX_WORD_SPRITES + i * 5, 512 + 64 + i * 20, true);
+        labels[i] = new WordSprite(MAX_WORD_SPRITES + i,
+                                   32 + 3 * MAX_WORD_SPRITES + i * 5,
+                                   512 + 64 + i * 20, true);
 
     for (int i = 0; i < 3; i++)
-        scrollingText[i] = new WordSprite(MAX_WORD_SPRITES + 7 + i, 23 + i * 3, 672 + 64 + i * 12);
+        scrollingText[i] = new WordSprite(MAX_WORD_SPRITES + 7 + i, 23 + i * 3,
+                                          672 + 64 + i * 12);
 
     loadSpriteTiles(255, blockSprite, 1, 1);
-    for(int i = 0; i < 2; i++){
+    for (int i = 0; i < 2; i++) {
         cursorSprites[i] = &obj_buffer[14 + i];
         sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 255, 5, 0);
         sprite_enable_affine(cursorSprites[i], 10, true);
@@ -436,21 +454,22 @@ void GraphicsScene::init(){
     }
 
     loadSpriteTiles(910, sprite41tiles_bin, 2, 1);
-    for(int i = 0; i < 2; i++){
+    for (int i = 0; i < 2; i++) {
         arrowSprites[i] = &obj_buffer[21 + i];
         sprite_set_attr(arrowSprites[i], ShapeWide, 0, 910, 14, 0);
 
-        if(i) sprite_enable_flip(arrowSprites[1], false, true);
+        if (i)
+            sprite_enable_flip(arrowSprites[1], false, true);
 
         sprite_hide(arrowSprites[i]);
     }
 
-    if(!name().empty()){
+    if (!name().empty()) {
         bool found = false;
         int count = 0;
         auto it = path.begin();
-        while(it != path.end()){
-            if(*it == name()){
+        while (it != path.end()) {
+            if (*it == name()) {
                 found = true;
                 break;
             }
@@ -458,19 +477,19 @@ void GraphicsScene::init(){
             it++;
         }
 
-        if(found){
+        if (found) {
             int n = path.size() - count;
-            for(int i = 0; i < n; i++)
+            for (int i = 0; i < n; i++)
                 path.pop_back();
-        }else{
+        } else {
             path.push_back(name());
         }
     }
 
     int i = 0;
     auto it = path.begin();
-    while(it != path.end()){
-        if(i != 0)
+    while (it != path.end()) {
+        if (i != 0)
             p += " > ";
 
         p += *it;
@@ -486,8 +505,9 @@ void GraphicsScene::init(){
 
     wordSprites[wordIndex]->setText(p);
 
-    for(int i = 0; i < pathCount; i++)
-        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
+    for (int i = 0; i < pathCount; i++)
+        wordSprites[wordIndex + i]->show(
+            i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
 
     setPalette();
     setSkin();
@@ -501,12 +521,12 @@ void GraphicsScene::init(){
     clearTilemap(26);
 
     enableFumen = true;
-    fumenString = "v115@fgY4Aeo0Ae4wAeItAeYpAeolAe4hKeAgHfg4DAeoHA?eYLAeIPAe4SAeoWAeQaQ4WaKeAAAchAAA8QeAAA";
+    fumenString = "v115@fgY4Aeo0Ae4wAeItAeYpAeolAe4hKeAgHfg4DAeoHA?"
+                  "eYLAeIPAe4SAeoWAeQaQ4WaKeAAAchAAA8QeAAA";
 
-    
-        delete game;
+    delete game;
 
-    game = new Game(NO_MODE,bigMode);
+    game = new Game(NO_MODE, bigMode);
 
     game->demoGarbage();
     game->setGoal(0);
@@ -526,26 +546,26 @@ void GraphicsScene::init(){
 
     drawFrameBackgrounds();
 
-    loadSpriteTiles(512, sprite6tiles_bin,4,4);
+    loadSpriteTiles(512, sprite6tiles_bin, 4, 4);
 
-    loadSpriteTiles(512 + 16, sprite6tiles_bin,4,3);
-    loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3,4,1,4);
-    loadSpriteTiles(512 + 32, &sprite6tiles_bin[128],4,2);
-    loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128],0,2,4,2,4);
-    loadSpriteTiles(512 + 48, &sprite6tiles_bin[128],4,1);
-    loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128],0,1,4,3,4);
+    loadSpriteTiles(512 + 16, sprite6tiles_bin, 4, 3);
+    loadSpriteTilesPartial(512 + 16, &sprite6tiles_bin[128], 0, 3, 4, 1, 4);
+    loadSpriteTiles(512 + 32, &sprite6tiles_bin[128], 4, 2);
+    loadSpriteTilesPartial(512 + 32, &sprite6tiles_bin[128], 0, 2, 4, 2, 4);
+    loadSpriteTiles(512 + 48, &sprite6tiles_bin[128], 4, 1);
+    loadSpriteTilesPartial(512 + 48, &sprite6tiles_bin[128], 0, 1, 4, 3, 4);
 
     draw();
 
     refreshGame = true;
 
-    for(int i = 0; i < 3; i++)
-        scrollingText[i]->show(12 * 8 * i,160-8,15);
+    for (int i = 0; i < 3; i++)
+        scrollingText[i]->show(12 * 8 * i, 160 - 8, 15);
 
     scrollingText[0]->setTextSlow(scrollText);
 
     int offset = 0;
-    if(savefile->settings.aspectRatio == 1){
+    if (savefile->settings.aspectRatio == 1) {
         offset = (240 - 214) / 2;
     }
 
@@ -553,43 +573,45 @@ void GraphicsScene::init(){
     setSmallTextArea(110, 0, 17, 15, 20);
     clearText();
 
-    std::string hide = "Hide Options: " + getStringFromKey(savefile->settings.menuKeys.special2);
-    aprints(hide,1 + offset, 24 - 7, 2);
+    std::string hide = "Hide Options: " +
+                       getStringFromKey(savefile->settings.menuKeys.special2);
+    aprints(hide, 1 + offset, 24 - 7, 2);
 
     previousAspectRatio = savefile->settings.aspectRatio;
 }
 
-void GraphicsScene::draw(){
-    if(showText){
-        if(refreshText){
+void GraphicsScene::draw() {
+    if (showText) {
+        if (refreshText) {
             setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
         }
 
         const int space = 1;
         const int startX = 3 * 8;
-        const int endX = 30-4;
+        const int endX = 30 - 4;
 
         int offset = (sinLut(cursorFloat) * 2) >> 12;
-        auto scale = float2fx((1.0 - ((float) 0.1 * offset)));
+        auto scale = float2fx((1.0 - ((float)0.1 * offset)));
 
         int verticalOffset = 0;
-        if(moving){
-            int temp = lerp((movingDirection) * (space + 1) * 8,0,64*movingTimer);
-            verticalOffset = lerp(temp,0,64*movingTimer);
+        if (moving) {
+            int temp =
+                lerp((movingDirection) * (space + 1) * 8, 0, 64 * movingTimer);
+            verticalOffset = lerp(temp, 0, 64 * movingTimer);
             setLayerScroll(2, 0, -verticalOffset);
-        }else{
+        } else {
             setLayerScroll(2, 0, 0);
         }
 
-        int i = 0;//drawing index, starts at listStart
-        int counter = 0;//element index
-        for(auto & option : elementList){
-            if(counter < listStart){
+        int i = 0;       // drawing index, starts at listStart
+        int counter = 0; // element index
+        for (auto& option : elementList) {
+            if (counter < listStart) {
                 counter++;
                 continue;
             }
 
-            if(i > elementMax + 1){ // break if elements drawn reached max
+            if (i > elementMax + 1) { // break if elements drawn reached max
                 continue;
             }
 
@@ -597,28 +619,37 @@ void GraphicsScene::draw(){
 
             int index = (i + listStart) % (elementMax + 2);
 
-            if(refreshText || refreshOption){
-                if(counter == selection)
-                    wordSprites[index]->setText(option->getCursor(opt)); //draw option with text cursor
+            if (refreshText || refreshOption) {
+                if (counter == selection)
+                    wordSprites[index]->setText(
+                        option->getCursor(opt)); // draw option with text cursor
                 else
-                    wordSprites[index]->setText(" " + opt); // draw option without text cursor
+                    wordSprites[index]->setText(
+                        " " + opt); // draw option without text cursor
             }
 
-            if(refreshText)
+            if (refreshText)
                 labels[index]->setText(option->getLabel());
 
             int x = (endX) * 8 - getVariableWidth(opt);
-            int y = startY + 8 * (space + 1) * i + verticalOffset - spriteVOffset;
+            int y =
+                startY + 8 * (space + 1) * i + verticalOffset - spriteVOffset;
 
             wordSprites[index]->setPriority(0);
-            wordSprites[index]->show(x, y, 15 - (counter != selection) - (i == elementMax + 1 || (listStart && i == 0)));
+            wordSprites[index]->show(
+                x, y,
+                15 - (counter != selection) -
+                    (i == elementMax + 1 || (listStart && i == 0)));
 
-            labels[index]->show(startX, y, 15 - ((counter != selection) + (i == elementMax + 1 || (listStart && i == 0))));
+            labels[index]->show(
+                startX, y,
+                15 - ((counter != selection) +
+                      (i == elementMax + 1 || (listStart && i == 0))));
 
-            if(counter == selection){ //draw sprite cursor
+            if (counter == selection) { // draw sprite cursor
                 currentOption = option->getLabel();
-                for(auto & cursorSprite : cursorSprites){
-                    sprite_unhide(cursorSprite,0);
+                for (auto& cursorSprite : cursorSprites) {
+                    sprite_unhide(cursorSprite, 0);
                     sprite_enable_affine(cursorSprite, 10, true);
                     sprite_set_size(cursorSprite, scale, 10);
 
@@ -632,7 +663,7 @@ void GraphicsScene::draw(){
             counter++;
         }
 
-        for(int j = i; j < elementMax + 2; j++){
+        for (int j = i; j < elementMax + 2; j++) {
             int index = (j + listStart) % (elementMax + 2);
 
             wordSprites[index]->hide();
@@ -642,7 +673,7 @@ void GraphicsScene::draw(){
         refreshOption = false;
     }
 
-    if(refreshGame){
+    if (refreshGame) {
         refreshGame = false;
 
         drawFrame(0);
@@ -660,51 +691,53 @@ void GraphicsScene::draw(){
 
     showPlaceEffect();
 
-    if(savefile->settings.clearText == 2){
+    if (savefile->settings.clearText == 2) {
         showClearText();
     }
 
-    if(listStart > 0 && showText){
+    if (listStart > 0 && showText) {
         sprite_unhide(arrowSprites[0], 0);
         sprite_set_pos(arrowSprites[0], 240 / 2 - 8, startY - 11);
-    }else{
+    } else {
         sprite_hide(arrowSprites[0]);
     }
 
-    if(listStart + elementMax + 2 <  (int) elementList.size() && showText){
+    if (listStart + elementMax + 2 < (int)elementList.size() && showText) {
         sprite_unhide(arrowSprites[1], 0);
-        sprite_set_pos(arrowSprites[1], 240 / 2 - 8, (elementMax + 2) * 2 * 8 + startY + 0);
-    }else{
+        sprite_set_pos(arrowSprites[1], 240 / 2 - 8,
+                       (elementMax + 2) * 2 * 8 + startY + 0);
+    } else {
         sprite_hide(arrowSprites[1]);
     }
 
-    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+    const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
 
-    if(refreshText){
+    if (refreshText) {
         scrollText = getDescription(currentOption);
         clearSpriteTiles(672 + 64, 144, 1);
-        if(!scrollText.empty()){
+        if (!scrollText.empty()) {
             scrollTextLength = getVariableWidth(scrollText);
 
             endDelay = 0;
-            scrollOffset = - max((width - scrollTextLength),0) / 2;
+            scrollOffset = -max((width - scrollTextLength), 0) / 2;
             scrollDelay = 0;
             scrollingText[0]->setTextSlow(scrollText);
-        }else{
+        } else {
             scrollingText[0]->setTextSlow(scrollText);
         }
     }
 
     int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
-    for(int i = 0; i < pathCount; i++)
-        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
+    for (int i = 0; i < pathCount; i++)
+        wordSprites[wordIndex + i]->show(
+            i * 12 * 8 + 4 + 13 * savefile->settings.aspectRatio, 4, 14);
 
     showSprites(128);
 
     refreshText = false;
 }
 
-void GraphicsScene::update(){
+void GraphicsScene::update() {
     canDraw = true;
     key_poll();
     gradient(1);
@@ -715,11 +748,11 @@ void GraphicsScene::update(){
     toggleBG(3, true);
 
     cursorFloat += 6;
-    if(cursorFloat >= 512)
+    if (cursorFloat >= 512)
         cursorFloat = 0;
 
-    if(moving){
-        if(++movingTimer > 4){
+    if (moving) {
+        if (++movingTimer > 4) {
             moving = false;
             movingHor = false;
             movingTimer = 0;
@@ -728,7 +761,7 @@ void GraphicsScene::update(){
         }
     }
 
-    if(++gridUpdateTimer >= gridUpdateTimerMax){
+    if (++gridUpdateTimer >= gridUpdateTimerMax) {
         gridUpdateTimer = 0;
         updateGrid();
 
@@ -739,46 +772,49 @@ void GraphicsScene::update(){
         memcpy32_fast(previous, temp, 22 * 12);
     }
 
-    if(dampTimer){
+    if (dampTimer) {
         dampTimer--;
-        if(!dampTimer)
+        if (!dampTimer)
             damp = 2;
     }
 
-    const int width = (savefile->settings.aspectRatio == 0)? 240 : 214;
+    const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
 
-    if(endDelay){
+    if (endDelay) {
         endDelay--;
-        if(!endDelay){
+        if (!endDelay) {
             scrollOffset = 0;
             scrollDelay = 0;
             clearSpriteTiles(672 + 64, scrollTextLength / 8 + 1, 1);
             scrollingText[0]->setTextSlow(scrollText);
         }
-    }else if(scrollDelay < scrollDelayMax){
+    } else if (scrollDelay < scrollDelayMax) {
         scrollDelay++;
-    }else if(scrollTextLength > width){
-        if(++scrollTimer >= scrollTimerMax){
+    } else if (scrollTextLength > width) {
+        if (++scrollTimer >= scrollTimerMax) {
             scrollTimer = 0;
-            if(++scrollOffset >= max(scrollTextLength-width,0)){
+            if (++scrollOffset >= max(scrollTextLength - width, 0)) {
                 endDelay = endDelayMax;
             }
         }
     }
 
-    for(int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
         scrollingText[i]->setScroll(scrollOffset);
-        scrollingText[i]->show(12 * 8 * i + 13 * savefile->settings.aspectRatio,160-8,14);
+        scrollingText[i]->show(12 * 8 * i + 13 * savefile->settings.aspectRatio,
+                               160 - 8, 14);
     }
 
-    if(previousAspectRatio != savefile->settings.aspectRatio){
+    if (previousAspectRatio != savefile->settings.aspectRatio) {
         clearSmallText();
         int offset = 0;
-        if(savefile->settings.aspectRatio == 1){
+        if (savefile->settings.aspectRatio == 1) {
             offset = (240 - 214) / 2;
         }
 
-        std::string hide = "Hide Options: " + getStringFromKey(savefile->settings.menuKeys.special2);
+        std::string hide =
+            "Hide Options: " +
+            getStringFromKey(savefile->settings.menuKeys.special2);
         aprints(hide, 1 + offset, 24 - 7, 2);
 
         previousAspectRatio = savefile->settings.aspectRatio;
@@ -787,24 +823,24 @@ void GraphicsScene::update(){
     control();
 }
 
-bool GraphicsScene::control(){
+bool GraphicsScene::control() {
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(k.cancel)){
+    if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
         previousElement = name();
         previousSelection = selection;
 
-        if(!path.empty())
+        if (!path.empty())
             path.pop_back();
 
-        changeScene(previousScene(),Transitions::FADE);
+        changeScene(previousScene(), Transitions::FADE);
         return true;
     }
 
-    if(key_hit(k.left)){
+    if (key_hit(k.left)) {
         auto it = elementList.begin();
-        std::advance(it,selection);
+        std::advance(it, selection);
 
         (*it)->action(-1);
 
@@ -812,9 +848,9 @@ bool GraphicsScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(k.right)){
+    if (key_hit(k.right)) {
         auto it = elementList.begin();
-        std::advance(it,selection);
+        std::advance(it, selection);
 
         (*it)->action(1);
 
@@ -822,11 +858,11 @@ bool GraphicsScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(k.confirm)){
+    if (key_hit(k.confirm)) {
         auto it = elementList.begin();
-        std::advance(it,selection);
+        std::advance(it, selection);
 
-        if((*it)->action())
+        if ((*it)->action())
             return true;
 
         refreshText = true;
@@ -834,32 +870,32 @@ bool GraphicsScene::control(){
         refreshOption = true;
     }
 
-    if(key_hit(k.special2)){
+    if (key_hit(k.special2)) {
         showText = !showText;
 
-        if(showText){
+        if (showText) {
             setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
 
             int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
-            for(int i = 0; i < pathCount; i++)
-                wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+            for (int i = 0; i < pathCount; i++)
+                wordSprites[wordIndex + i]->show(i * 12 * 8 + 4, 4, 14);
 
-        }else{
+        } else {
             clearTilemap(27);
 
-            for(int j = 0; j < elementMax + 2; j++){
+            for (int j = 0; j < elementMax + 2; j++) {
                 int index = (j + listStart) % (elementMax + 2);
 
                 wordSprites[index]->hide();
                 labels[index]->hide();
             }
 
-            for(auto & cursorSprite : cursorSprites)
+            for (auto& cursorSprite : cursorSprites)
                 sprite_hide(cursorSprite);
 
             int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
-            for(int i = 0; i < pathCount; i++)
-                wordSprites[wordIndex+i]->hide();
+            for (int i = 0; i < pathCount; i++)
+                wordSprites[wordIndex + i]->hide();
         }
 
         refreshGame = true;
@@ -875,11 +911,11 @@ bool GraphicsScene::control(){
         else
             selection--;
 
-        if(selection == options -1)
-            listStart = max(0,selection-elementMax);
-        else if(selection < listStart + 1){
+        if (selection == options - 1)
+            listStart = max(0, selection - elementMax);
+        else if (selection < listStart + 1) {
             listStart--;
-            if(listStart < 0)
+            if (listStart < 0)
                 listStart = 0;
         }
 
@@ -896,9 +932,9 @@ bool GraphicsScene::control(){
         else
             selection++;
 
-        if(selection == 0)
+        if (selection == 0)
             listStart = 0;
-        else if(selection > listStart + elementMax)
+        else if (selection > listStart + elementMax)
             listStart++;
 
         sfx(SFX_MENUMOVE);
@@ -910,29 +946,29 @@ bool GraphicsScene::control(){
         if (dasVer < maxDas) {
             dasVer++;
         } else {
-            int dir = (key_is_down(k.up)? -1 : 1);
+            int dir = (key_is_down(k.up) ? -1 : 1);
 
-            if (selection + dir >= 0 && selection + dir <= options-1 && arr++ > maxArr) {
+            if (selection + dir >= 0 && selection + dir <= options - 1 &&
+                arr++ > maxArr) {
                 arr = 0;
 
                 movingDirection = dir;
 
                 selection += dir;
 
-                if(dir < 0){
-                    if(selection == options -1)
-                        listStart = max(0,selection-elementMax);
-                    else if(selection < listStart + 1){
+                if (dir < 0) {
+                    if (selection == options - 1)
+                        listStart = max(0, selection - elementMax);
+                    else if (selection < listStart + 1) {
                         listStart--;
-                        if(listStart < 0)
+                        if (listStart < 0)
                             listStart = 0;
                     }
-                }else{
-                    if(selection == 0)
+                } else {
+                    if (selection == 0)
                         listStart = 0;
-                    else if(selection > listStart + elementMax)
+                    else if (selection > listStart + elementMax)
                         listStart++;
-
                 }
 
                 refreshText = true;
@@ -947,13 +983,13 @@ bool GraphicsScene::control(){
     if (key_is_down(k.left) || key_is_down(k.right)) {
         if (dasHor < maxDas) {
             dasHor++;
-        } else{
-            int dir = (key_is_down(k.left)? -1 : 1);
+        } else {
+            int dir = (key_is_down(k.left) ? -1 : 1);
             if (arr++ > maxArr) {
                 arr = 0;
 
                 auto it = elementList.begin();
-                std::advance(it,selection);
+                std::advance(it, selection);
 
                 (*it)->action(dir);
 
@@ -965,11 +1001,11 @@ bool GraphicsScene::control(){
         dasHor = 0;
     }
 
-    if(prev != listStart){
+    if (prev != listStart) {
         moving = true;
     }
 
-    if(key_hit(k.special3)){
+    if (key_hit(k.special3)) {
         setDefaultGraphics(savefile, 0);
         setSkin();
         setPalette();
@@ -983,7 +1019,7 @@ bool GraphicsScene::control(){
     return false;
 }
 
-void GraphicsScene::deinit(){
+void GraphicsScene::deinit() {
     buildBG(3, 0, 27, 0, 1, true);
 
     clearSprites(128);
@@ -994,7 +1030,7 @@ void GraphicsScene::deinit(){
     clearTilemap(27);
     clearSpriteTiles(2, 100, 1);
     clearSpriteTiles(256, 256, 1);
-    for(int i = 0; i < 7; i++)
+    for (int i = 0; i < 7; i++)
         clearSpriteTiles(512 + 64 + i * 20, 20, 1);
 
     resetSmallText();
@@ -1002,7 +1038,7 @@ void GraphicsScene::deinit(){
 
     auto it = elementList.begin();
 
-    while(it != elementList.end()){
+    while (it != elementList.end()) {
         delete *it;
         it++;
     }
@@ -1010,13 +1046,13 @@ void GraphicsScene::deinit(){
     gradient(false);
     spriteVOffset = 0;
 
-    for (auto & wordSprite : wordSprites)
+    for (auto& wordSprite : wordSprites)
         delete wordSprite;
 
-    for (auto & label : labels)
+    for (auto& label : labels)
         delete label;
 
-    for (auto & i : scrollingText)
+    for (auto& i : scrollingText)
         delete i;
 
     disableLayerWindow(1);
@@ -1039,7 +1075,7 @@ void screenShake() {
     enableLayerWindow(1, 0, shake, 240, 168 + shake, false);
     enableLayerWindow(2, 0, shake, 240, 168 + shake, false);
 
-    if(savefile->settings.screenShakeType == 0){
+    if (savefile->settings.screenShakeType == 0) {
         if (shake) {
             if (shake > 0)
                 shake--;
@@ -1048,32 +1084,32 @@ void screenShake() {
             shake *= -1;
         }
 
-    }else if(savefile->settings.screenShakeType == 1){
+    } else if (savefile->settings.screenShakeType == 1) {
         shake = fx2int(shakeBuff);
         const auto deccel = float2fx(0.768);
-        if(shakeBuff){
+        if (shakeBuff) {
 
-            shakeBuff = fxmul(shakeBuff,deccel);
+            shakeBuff = fxmul(shakeBuff, deccel);
 
-            if(abs(shakeBuff) < int2fx(1))
+            if (abs(shakeBuff) < int2fx(1))
                 shakeBuff = 0;
         }
 
-        if(shakeVelocity){
+        if (shakeVelocity) {
             shakeBuff += shakeVelocity;
             shakeVelocity = fxmul(shakeVelocity, deccel);
-            if(shakeVelocity <= 0){
+            if (shakeVelocity <= 0) {
                 shakeVelocity = 0;
             }
 
-            if(shake >= (shakeMax * (savefile->settings.shakeAmount) / 4)){
+            if (shake >= (shakeMax * (savefile->settings.shakeAmount) / 4)) {
                 shake = (shakeMax * (savefile->settings.shakeAmount) / 4);
             }
         }
     }
 
     if (game->pushDir != 0) {
-        if (abs(push) < pushMax * (savefile->settings.shakeAmount)/4)
+        if (abs(push) < pushMax * (savefile->settings.shakeAmount) / 4)
             push += game->pushDir * (1 + (savefile->settings.shakeAmount > 2));
     } else {
         if (push > 0)
@@ -1083,68 +1119,70 @@ void screenShake() {
     }
 }
 
-void GraphicsScene::showClear(){
-    if(currentOption != "Clear Direction"){
+void GraphicsScene::showClear() {
+    if (currentOption != "Clear Direction") {
         for (int i = 0; i < game->lengthX; i++) {
-            setTile(25, 10 + i, 18, tileBuild(3, false, false, savefile->settings.lightMode));
-            setTile(25, 10 + i, 19, tileBuild(3, false, false, savefile->settings.lightMode));
+            setTile(25, 10 + i, 18,
+                    tileBuild(3, false, false, savefile->settings.lightMode));
+            setTile(25, 10 + i, 19,
+                    tileBuild(3, false, false, savefile->settings.lightMode));
         }
 
         return;
     }
 
-    if(++clearAnimationTimer >= maxClearAnimationTimer * 2){
+    if (++clearAnimationTimer >= maxClearAnimationTimer * 2) {
         clearAnimationTimer = -maxClearAnimationTimer;
     }
 
     clearTilemapEntries(25, 18 * 32 + 10, 10);
     clearTilemapEntries(25, 19 * 32 + 10, 10);
 
-    if(clearAnimationTimer >= maxClearAnimationTimer){
+    if (clearAnimationTimer >= maxClearAnimationTimer) {
         return;
     }
 
-    int timer = max(clearAnimationTimer,0);
+    int timer = max(clearAnimationTimer, 0);
 
-    for(int i = 0; i < 2; i++){
-        if(savefile->settings.clearDirection == 0){
-            for(int j = 0; j < 5; j++){
+    for (int i = 0; i < 2; i++) {
+        if (savefile->settings.clearDirection == 0) {
+            for (int j = 0; j < 5; j++) {
                 if (timer < maxClearAnimationTimer - 10 + j * 2)
-                    setTile(25, 10+j, 18+i, 3);
+                    setTile(25, 10 + j, 18 + i, 3);
             }
-            for(int j = 5; j < 10; j++){
+            for (int j = 5; j < 10; j++) {
                 if (timer < maxClearAnimationTimer - 10 + (9 - j) * 2)
-                    setTile(25, 10+j, 18+i, 3);
+                    setTile(25, 10 + j, 18 + i, 3);
             }
-        }else if(savefile->settings.clearDirection == 1){
-            for(int j = 0; j < 5; j++){
+        } else if (savefile->settings.clearDirection == 1) {
+            for (int j = 0; j < 5; j++) {
                 if (timer < maxClearAnimationTimer - 10 + (4 - j) * 2)
-                    setTile(25, 10+j, 18+i, 3);
+                    setTile(25, 10 + j, 18 + i, 3);
             }
-            for(int j = 5; j < 10; j++){
-                if (timer < maxClearAnimationTimer - 10 + (j-5) * 2)
-                    setTile(25, 10+j, 18+i, 3);
+            for (int j = 5; j < 10; j++) {
+                if (timer < maxClearAnimationTimer - 10 + (j - 5) * 2)
+                    setTile(25, 10 + j, 18 + i, 3);
             }
         }
     }
 }
 
-void setClearEffect(){
-    switch(savefile->settings.clearEffect){
+void setClearEffect() {
+    switch (savefile->settings.clearEffect) {
     case 0:
-        loadTiles(0, 3, sprite4tiles_bin, sprite4tiles_bin_size/32);
+        loadTiles(0, 3, sprite4tiles_bin, sprite4tiles_bin_size / 32);
         break;
     case 1:
-        loadTiles(0, 3, sprite25tiles_bin, sprite25tiles_bin_size/32);
+        loadTiles(0, 3, sprite25tiles_bin, sprite25tiles_bin_size / 32);
         break;
     case 2:
-        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
+        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size / 32);
         break;
     case 3:
         clearTiles(0, 3, 1);
         break;
     default:
-        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size/32);
+        loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size / 32);
         break;
     }
 }

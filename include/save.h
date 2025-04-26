@@ -1,31 +1,31 @@
 #pragma once
-#include "platform.hpp"
 #include "blockEngine.hpp"
+#include "platform.hpp"
 
-typedef struct Highscore{
+typedef struct Highscore {
     char name[9];
     int score;
-}ALIGN(4) Highscore;
+} ALIGN(4) Highscore;
 
-typedef struct Scoreboard{
+typedef struct Scoreboard {
     Highscore highscores[5];
-}ALIGN(4) Scoreboard;
+} ALIGN(4) Scoreboard;
 
-typedef struct Time{
+typedef struct Time {
     char name[9];
     int frames;
-}ALIGN(4) Time;
+} ALIGN(4) Time;
 
-typedef struct Timeboard{
+typedef struct Timeboard {
     Time times[5];
-}ALIGN(4) Timeboard;
+} ALIGN(4) Timeboard;
 
-typedef struct Gradeboard{
+typedef struct Gradeboard {
     Time times[5];
     s8 grade[5];
-}ALIGN(4) Gradeboard;
+} ALIGN(4) Gradeboard;
 
-typedef struct Keys{
+typedef struct Keys {
     int moveLeft;
     int moveRight;
     int rotateCCW;
@@ -37,9 +37,9 @@ typedef struct Keys{
     int zone;
 
     int placeHolder[19];
-}ALIGN(4) Keys;
+} ALIGN(4) Keys;
 
-typedef struct MenuKeys{
+typedef struct MenuKeys {
     int up;
     int down;
     int left;
@@ -53,17 +53,17 @@ typedef struct MenuKeys{
     int special3;
 
     int placeHolder[9];
-}ALIGN(4) MenuKeys;
+} ALIGN(4) MenuKeys;
 
-typedef struct QuickStart{
+typedef struct QuickStart {
     int mode;
     int submode;
     int goal;
     int level;
     int big;
-}ALIGN(4) QuickStart;
+} ALIGN(4) QuickStart;
 
-typedef struct GraphicsOptions{
+typedef struct GraphicsOptions {
     s8 clearText;
     bool shake;
     bool effects;
@@ -85,17 +85,17 @@ typedef struct GraphicsOptions{
     s8 clearDirection;
 
     int placeHolder[6];
-}ALIGN(4) GraphicsOptions;
+} ALIGN(4) GraphicsOptions;
 
-typedef struct SongDisabling{
+typedef struct SongDisabling {
     u8 menu;
     u8 game;
 
     int menuBits[4];
     int gameBits[4];
-}ALIGN(4) SongDisabling;
+} ALIGN(4) SongDisabling;
 
-typedef struct Settings{
+typedef struct Settings {
     bool announcer;
     bool finesse;
     bool floatText;
@@ -112,7 +112,7 @@ typedef struct Settings{
     int palette;
     int shadow;
     bool lightMode;
-    bool songList[10];//deprecated
+    bool songList[10]; // deprecated
     int sfxVolume;
     bool directionalDas;
     int shakeAmount;
@@ -169,24 +169,24 @@ typedef struct Settings{
 
     int placeHolder[31];
 
-}ALIGN(4) Settings;
+} ALIGN(4) Settings;
 
-typedef struct Test{
+typedef struct Test {
     bool t1[6];
     int t2[4];
-}ALIGN(4) Test;
+} ALIGN(4) Test;
 
-typedef struct Test2{
+typedef struct Test2 {
     bool t1[18];
     int t2[10];
-}ALIGN(4) Test2;
+} ALIGN(4) Test2;
 
-typedef struct Test3{
-    bool t1[14];//14
-    int t2[30];//22
-}ALIGN(4) Test3;
+typedef struct Test3 {
+    bool t1[14]; // 14
+    int t2[30];  // 22
+} ALIGN(4) Test3;
 
-typedef struct TotalStats{
+typedef struct TotalStats {
     int timePlayed;
     int gamesStarted;
     int gamesCompleted;
@@ -194,28 +194,28 @@ typedef struct TotalStats{
     BlockEngine::Stats gameStats;
     int maxLevel;
     int totalLines;
-}ALIGN(4) TotalStats;
+} ALIGN(4) TotalStats;
 
-typedef struct Skin{
+typedef struct Skin {
     TILE board;
     TILE smallBoard;
     bool changed;
-}ALIGN(4) Skin;
+} ALIGN(4) Skin;
 
 #define MAX_CUSTOM_SKINS 5
 
-typedef struct SaveEntry{
+typedef struct SaveEntry {
     char name[9];
     bool pro;
     s16 grade;
     int value;
-}ALIGN(4) SaveEntry;
+} ALIGN(4) SaveEntry;
 
-typedef struct EntryBoard{
-   SaveEntry entries[5];
-}ALIGN(4) EntryBoard;
+typedef struct EntryBoard {
+    SaveEntry entries[5];
+} ALIGN(4) EntryBoard;
 
-typedef struct OldScoreboards{
+typedef struct OldScoreboards {
     Scoreboard marathon[4];
     Timeboard sprint[3];
     Timeboard dig[3];
@@ -228,9 +228,9 @@ typedef struct OldScoreboards{
     Scoreboard classic[2];
     Gradeboard master[2];
     Scoreboard zone[4];
-}ALIGN(4) OldScoreboards;
+} ALIGN(4) OldScoreboards;
 
-typedef struct ModeBoards{
+typedef struct ModeBoards {
     EntryBoard marathon[4];
     EntryBoard sprint[3];
     EntryBoard dig[3];
@@ -245,9 +245,9 @@ typedef struct ModeBoards{
     EntryBoard zone[4];
     u32 zen;
     EntryBoard death[2];
-}ALIGN(4) ModeBoards;
+} ALIGN(4) ModeBoards;
 
-class Save{
+class Save {
 public:
     u8 newGame;
 
@@ -267,9 +267,9 @@ public:
 
     u8 platform;
     char endTag[9] = "SAVE_END";
-}ALIGN(4);
+} ALIGN(4);
 
-typedef struct ReplayHeader{
+typedef struct ReplayHeader {
     u8 tag;
     u32 length;
     u32 duration;
@@ -278,15 +278,15 @@ typedef struct ReplayHeader{
     BlockEngine::Options options;
 
     int placeholder[240];
-}ALIGN(4) ReplayHeader;
+} ALIGN(4) ReplayHeader;
 
-typedef struct Replay{
+typedef struct Replay {
     ReplayHeader header;
     uint32_t moves[4096];
-}ALIGN(4) Replay;
+} ALIGN(4) Replay;
 
-extern Save *savefile;
+extern Save* savefile;
 
-extern void saveToProfile(GraphicsOptions *profile, Settings *settings);
-extern void profileToSave(GraphicsOptions *profile, Settings *settings);
+extern void saveToProfile(GraphicsOptions* profile, Settings* settings);
+extern void profileToSave(GraphicsOptions* profile, Settings* settings);
 extern void autosave();

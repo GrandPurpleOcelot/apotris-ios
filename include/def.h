@@ -1,10 +1,10 @@
 #pragma once
 
-#include "platform.hpp"
 #include "blockEngine.hpp"
-#include "text.h"
 #include "menu.h"
+#include "platform.hpp"
 #include "save.h"
+#include "text.h"
 
 #define glowDuration 12
 #ifdef GBA
@@ -16,13 +16,11 @@ extern bool emulatorPrompted;
 #endif
 extern int initialPlayerCount;
 
-INLINE FIXED lerp(FIXED a, FIXED b, FIXED mix){
-    return a + (((b-a)*mix)>>8);
+INLINE FIXED lerp(FIXED a, FIXED b, FIXED mix) {
+    return a + (((b - a) * mix) >> 8);
 }
 
-INLINE int flipSign(int x, int y){
-    return (((x > 0) - (x < 0)) ^ y) - y;
-}
+INLINE int flipSign(int x, int y) { return (((x > 0) - (x < 0)) ^ y) - y; }
 
 extern const u16 fontTiles[1552];
 #define fontTilesLen 3104
@@ -34,9 +32,7 @@ public:
     int timer = 0;
 
     FloatText() {}
-    FloatText(std::string _t) {
-        text = _t;
-    }
+    FloatText(std::string _t) { text = _t; }
 };
 
 class Effect {
@@ -60,31 +56,31 @@ public:
     }
 };
 
-class PlaceEffect{
+class PlaceEffect {
 public:
+    int x;
+    int y;
+    int dx;
+    int dy;
+    int piece;
+    int rotation;
+    int rotating;
 
-        int x;
-        int y;
-        int dx;
-        int dy;
-        int piece;
-        int rotation;
-        int rotating;
+    int timer = 12;
 
-        int timer = 12;
+    OBJ_ATTR* sprite;
 
-        OBJ_ATTR* sprite;
-
-        PlaceEffect(){}
-        PlaceEffect(int _x, int _y, int _dx, int _dy, int _piece, int _rotation, int _rotating){
-            x = (_x + 10) * 8 - 16 - 32;
-            y = _y * 8 - 16;
-            dx = _dx;
-            dy = _dy;
-            piece = _piece;
-            rotation = _rotation;
-            rotating = _rotating;
-        }
+    PlaceEffect() {}
+    PlaceEffect(int _x, int _y, int _dx, int _dy, int _piece, int _rotation,
+                int _rotating) {
+        x = (_x + 10) * 8 - 16 - 32;
+        y = _y * 8 - 16;
+        dx = _dx;
+        dy = _dy;
+        piece = _piece;
+        rotation = _rotation;
+        rotating = _rotating;
+    }
 };
 
 #define TRAINING_MESSAGE_MAX 300
@@ -107,7 +103,7 @@ public:
 
 extern void sfx(int);
 extern void gameLoop();
-extern void playSong(int,int);
+extern void playSong(int, int);
 extern void playSongRandom(int);
 extern void playNextSong();
 extern void songListMenu();
@@ -133,11 +129,11 @@ extern void reset();
 
 extern void handleMultiplayer(int state);
 extern void startMultiplayerGame(int);
-extern void acknowledgeGarbage(BlockEngine::Game *, BlockEngine::Garbage);
+extern void acknowledgeGarbage(BlockEngine::Game*, BlockEngine::Garbage);
 extern void progressBar(int layer);
 
 extern void saveToSram();
-extern void addToResults(int,int);
+extern void addToResults(int, int);
 
 extern void handleBotGame();
 extern void showPPS();
@@ -146,7 +142,7 @@ extern void setPalette();
 extern void loadSave();
 extern void showPlaceEffect();
 extern int getClassicPalette();
-extern void buildMini(TILE *);
+extern void buildMini(TILE*);
 extern void showZoneMeter();
 extern void resetZonePalette();
 extern void showBestMove();
@@ -157,8 +153,8 @@ extern void setDefaultGradient();
 extern void gradient(int state);
 extern std::string timeToString(int frames, bool small);
 extern std::string timeToStringHours(int frames);
-extern void setDefaultGraphics(Save * save, int depth);
-extern void setRandomGraphics(Save *save);
+extern void setDefaultGraphics(Save* save, int depth);
+extern void setRandomGraphics(Save* save);
 extern void setPawnPalette(int dest, int n, int blend);
 
 extern void startGame(BlockEngine::Options options, int seed);
@@ -191,22 +187,27 @@ extern std::string getStringFromKey(int key);
 extern void checkPeek();
 extern MenuKeys getDefaultMenuKeys();
 extern Keys getDefaultGameKeys();
-extern void setDefaultHandling(Save *save);
-extern void setDefaultGameplay(Save *save);
+extern void setDefaultHandling(Save* save);
+extern void setDefaultGameplay(Save* save);
 
 extern bool getSongState(int group, int index);
 extern void toggleSong(int group, int index, bool state);
 extern void checkSongs();
 
-extern int countClears(const u16 *board, int lengthX, int lengthY, int startY);
-extern IWRAM_CODE BlockEngine::Values evaluate(u16 *board, const int *columnHeights, int lengthX, int lengthY, int startY);
-extern int findBestDrop(int ii,int jj, BlockEngine::Game * game, std::list<BlockEngine::Move> &moves, BlockEngine::Weights weights);
+extern int countClears(const u16* board, int lengthX, int lengthY, int startY);
+extern IWRAM_CODE BlockEngine::Values evaluate(u16* board,
+                                               const int* columnHeights,
+                                               int lengthX, int lengthY,
+                                               int startY);
+extern int findBestDrop(int ii, int jj, BlockEngine::Game* game,
+                        std::list<BlockEngine::Move>& moves,
+                        BlockEngine::Weights weights);
 
-extern BlockEngine::Game *game;
-extern BlockEngine::Game *quickSave;
-extern BlockEngine::Game *botGame;
+extern BlockEngine::Game* game;
+extern BlockEngine::Game* quickSave;
+extern BlockEngine::Game* botGame;
 
-extern u8 * blockSprite;
+extern u8* blockSprite;
 
 extern int shake;
 extern int shakeMax;
@@ -246,10 +247,10 @@ extern bool multiplayerStart;
 extern int initialLevel;
 extern int frameCounter;
 
-extern OBJ_ATTR * titleSprites[2];
-extern OBJ_ATTR * queueFrameSprites[3];
+extern OBJ_ATTR* titleSprites[2];
+extern OBJ_ATTR* queueFrameSprites[3];
 
-extern BlockEngine::Bot *testBot;
+extern BlockEngine::Bot* testBot;
 extern u8 enemyBoard[4][20][10];
 
 extern int mode;
@@ -279,7 +280,7 @@ extern int botStepMax;
 extern int clearTimer;
 extern int maxClearTimer;
 
-extern BlockEngine::Options *previousGameOptions;
+extern BlockEngine::Options* previousGameOptions;
 
 extern FIXED shakeBuff;
 extern FIXED shakeVelocity;
@@ -287,7 +288,7 @@ extern FIXED shakeVelocity;
 extern std::list<BlockEngine::Timestamp*>::iterator replayIterator;
 extern std::list<BlockEngine::Timestamp*> currentReplay;
 
-extern BlockEngine::Game *quickSave;
+extern BlockEngine::Game* quickSave;
 extern bool saveExists;
 
 #define shakeMax 10
@@ -325,13 +326,12 @@ extern int framesSinceLastSave;
 
 extern bool ended;
 
-extern ReplayHeader *currentReplayHeader;
+extern ReplayHeader* currentReplayHeader;
 
-class Function{
-    private:
-
-    public:
-        void (BlockEngine::Game::*gameFunction)(int);
+class Function {
+private:
+public:
+    void (BlockEngine::Game::*gameFunction)(int);
 };
 
 struct Packet {
@@ -356,7 +356,6 @@ struct Packet {
 extern std::string roomId;
 #endif
 extern std::string exceptionReason;
-
 
 struct StatusData;
 extern StatusData status;

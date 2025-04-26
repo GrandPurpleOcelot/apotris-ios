@@ -34,60 +34,37 @@
 
 #include <string>
 
-
-
-namespace sfmod
-{
-  class Error;
+namespace sfmod {
+class Error;
 }
-
 
 ///////////////////////////////////////////////////////////
 // Error class                                           //
 ///////////////////////////////////////////////////////////
-class sfmod::Error
-{
+class sfmod::Error {
 public:
-  Error() { error_ = ""; }
+    Error() { error_ = ""; }
 
-  const std::string& getError  () const;
-  bool               hasError  () const;
-  void               clearError();
-
+    const std::string& getError() const;
+    bool hasError() const;
+    void clearError();
 
 protected:
-  void setError(const std::string& error);
-
+    void setError(const std::string& error);
 
 private:
-  std::string error_;
+    std::string error_;
 };
-
 
 ///////////////////////////////////////////////////////////
 // Error class                                           //
 ///////////////////////////////////////////////////////////
-inline const std::string& sfmod::Error::getError() const
-{
-  return error_;
-}
+inline const std::string& sfmod::Error::getError() const { return error_; }
 
-inline bool sfmod::Error::hasError() const
-{
-  return !error_.empty();
-}
+inline bool sfmod::Error::hasError() const { return !error_.empty(); }
 
-inline void sfmod::Error::clearError()
-{
-  error_.clear();
-}
+inline void sfmod::Error::clearError() { error_.clear(); }
 
-
-inline void sfmod::Error::setError(const std::string& error)
-{
-  error_ = error;
-}
-
-
+inline void sfmod::Error::setError(const std::string& error) { error_ = error; }
 
 #endif // SFMOD_ERROR_H

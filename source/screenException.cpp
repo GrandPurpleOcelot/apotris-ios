@@ -1,6 +1,6 @@
+#include "multiplayerClasses.h"
 #include "scene.hpp"
 #include "sprites.h"
-#include "multiplayerClasses.h"
 
 void MultiplayerExceptionScene::init() {
     reset();
@@ -10,13 +10,14 @@ void MultiplayerExceptionScene::init() {
     clearSprites(128);
     clearEnemyBoard();
 
-    //backgroundGrid
-    setTiles(26,0,32*32, tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+    // backgroundGrid
+    setTiles(26, 0, 32 * 32,
+             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
 
-    setTiles(27,0,32*32,tileBuild(34, false, false, 0));
+    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i] = new WordSprite(i,64 + i * 5, 256 + i * 20, true);
+        wordSprites[i] = new WordSprite(i, 64 + i * 5, 256 + i * 20, true);
 
     enableBlend((0b101111 << 8) + (1 << 6) + (1 << 3));
 
@@ -27,8 +28,8 @@ void MultiplayerExceptionScene::init() {
     std::string p;
     int i = 0;
     auto it = path.begin();
-    while(it != path.end()){
-        if(i != 0)
+    while (it != path.end()) {
+        if (i != 0)
             p += " > ";
 
         p += *it;
@@ -44,15 +45,15 @@ void MultiplayerExceptionScene::init() {
 
     wordSprites[wordIndex]->setText(p);
 
-    for(int i = 0; i < count; i++)
-        wordSprites[wordIndex+i]->show(i * 12 * 8 + 4, 4, 14);
+    for (int i = 0; i < count; i++)
+        wordSprites[wordIndex + i]->show(i * 12 * 8 + 4, 4, 14);
 
     naprint(what, 15 * 8 - getVariableWidth(what) / 2, 9 * 8);
 }
 
-void MultiplayerExceptionScene::draw(){
+void MultiplayerExceptionScene::draw() {
     fallingBlocks();
-    toggleBG(3,true);
+    toggleBG(3, true);
     showSprites(128);
     sprite_hide(&obj_buffer[25]);
     sprite_hide(&obj_buffer[26]);
@@ -61,36 +62,36 @@ void MultiplayerExceptionScene::draw(){
     sprite_hide(&obj_buffer[29]);
 }
 
-bool MultiplayerExceptionScene::control(){
+bool MultiplayerExceptionScene::control() {
 
     MenuKeys k = savefile->settings.menuKeys;
 
-    if(key_hit(k.cancel)){
+    if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
         previousElement = name;
 
-        if(!path.empty())
+        if (!path.empty())
             path.pop_back();
 
-        changeScene(previousScene(),Transitions::FADE);
+        changeScene(previousScene(), Transitions::FADE);
     }
 
     return false;
 }
 
-void MultiplayerExceptionScene::update(){
+void MultiplayerExceptionScene::update() {
     canDraw = true;
     key_poll();
 
     control();
 }
 
-void MultiplayerExceptionScene::deinit(){
+void MultiplayerExceptionScene::deinit() {
     clearSprites(128);
     showSprites(128);
 
     clearText();
 
-    for(auto & wordSprite : wordSprites)
+    for (auto& wordSprite : wordSprites)
         delete wordSprite;
 }

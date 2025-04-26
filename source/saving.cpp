@@ -1,47 +1,46 @@
+#include "achievementStructure.h"
 #include "def.h"
 #include "flashSaves.h"
+#include "logging.h"
 #include "sprite1tiles_bin.h"
 #include "sprites.h"
-#include <memory>
-#include <string>
-#include "logging.h"
 #include <algorithm>
 #include <cstring>
-#include "achievementStructure.h"
+#include <memory>
+#include <string>
 #ifdef GBA
 #include "util/random.h"
 #endif
 
-class SaveChange{
+class SaveChange {
 public:
     int saveId;
     int location;
     int size;
 
-    SaveChange(int _id, int _location, int _size){
+    SaveChange(int _id, int _location, int _size) {
         saveId = _id;
         location = _location;
         size = _size;
     }
 };
 
+void resetSkins(Save* save);
+void setDefaults(Save* save, int depth);
 
-void resetSkins(Save * save);
-void setDefaults(Save * save, int depth);
-
-void applySaveChanges(u8* newSave, u8* oldSave,  int newSize);
-void convertScores(Save *save);
+void applySaveChanges(u8* newSave, u8* oldSave, int newSize);
+void convertScores(Save* save);
 
 const SaveChange saveChanges[] = {
-    SaveChange(0x50,132,20 * 4),//add zone + buffer to keys
-    SaveChange(0x50,3120,4096),// add zone + buffer to scoreboards
-    SaveChange(0x51,624,192),// add zone + buffer to scoreboards
+    SaveChange(0x50, 132, 20 * 4), // add zone + buffer to keys
+    SaveChange(0x50, 3120, 4096),  // add zone + buffer to scoreboards
+    SaveChange(0x51, 624, 192),    // add zone + buffer to scoreboards
 };
 int changeLength = 3;
 
 void loadSave() {
 
-        delete savefile;
+    delete savefile;
 
     savefile = new Save();
     loadSavefile();
@@ -50,13 +49,19 @@ void loadSave() {
     const int pmSave = 3876;
 
     if (savefile->newGame >= 0x4e && savefile->newGame <= 0x50) {
-        //purposefully empty
-    }else if (savefile->newGame >= 0x4b && savefile->newGame <= 0x4d) {
+        // purposefully empty
+    } else if (savefile->newGame >= 0x4b && savefile->newGame <= 0x4d) {
         int size = 0;
-        switch(savefile->newGame){
-        case 0x4b: size = sizeof(Test) + 1; break;
-        case 0x4c: size = sizeof(Test2) + 1; break;
-        case 0x4d: size = sizeof(Test3); break;
+        switch (savefile->newGame) {
+        case 0x4b:
+            size = sizeof(Test) + 1;
+            break;
+        case 0x4c:
+            size = sizeof(Test2) + 1;
+            break;
+        case 0x4d:
+            size = sizeof(Test3);
+            break;
         }
 
         Save* temp = new Save();
@@ -68,7 +73,8 @@ void loadSave() {
         for (int i = 0; i < size; i++)
             tmp[i] = sf[i];
 
-        memcpy32_fast(&tmp[pmSettings+ sizeof(u8)], &sf[size], (pmSave - size) / 4);
+        memcpy32_fast(&tmp[pmSettings + sizeof(u8)], &sf[size],
+                      (pmSave - size) / 4);
 
         memcpy32_fast(savefile, temp, pmSave / 4);
 
@@ -76,7 +82,7 @@ void loadSave() {
     } else if (savefile->newGame != SAVE_TAG) {
         savefile = new Save();
 
-        setDefaults(savefile,0);
+        setDefaults(savefile, 0);
 
         setDefaultKeys();
 
@@ -85,21 +91,23 @@ void loadSave() {
         savefile->newGame = SAVE_TAG;
     }
 
-    //fix invalid values, since I messed up conversion at some point
-    if ((savefile->settings.lightMode != 0) && (savefile->settings.lightMode != 1))
+    // fix invalid values, since I messed up conversion at some point
+    if ((savefile->settings.lightMode != 0) &&
+        (savefile->settings.lightMode != 1))
         savefile->settings.lightMode = false;
 
     if ((savefile->settings.rumble < 0) || (savefile->settings.rumble > 4))
         savefile->settings.rumble = 0;
 
-    if(savefile->settings.irs < 0 || savefile->settings.irs > 1)
+    if (savefile->settings.irs < 0 || savefile->settings.irs > 1)
         savefile->settings.irs = 1;
-    if(savefile->settings.ihs < 0 || savefile->settings.ihs > 1)
+    if (savefile->settings.ihs < 0 || savefile->settings.ihs > 1)
         savefile->settings.ihs = 1;
-    if(savefile->settings.initialType < 0 || savefile->settings.initialType > 1)
+    if (savefile->settings.initialType < 0 ||
+        savefile->settings.initialType > 1)
         savefile->settings.initialType = 1;
 
-    if(savefile->newGame != SAVE_TAG){
+    if (savefile->newGame != SAVE_TAG) {
         Save* temp = new Save();
         u8* tmp = (u8*)temp;
 
@@ -111,25 +119,25 @@ void loadSave() {
 
         delete temp;
 
-        switch(savefile->newGame){
+        switch (savefile->newGame) {
         case 0x50:
-            setDefaults(savefile,6);
+            setDefaults(savefile, 6);
             break;
         case 0x4f:
-            setDefaults(savefile,6);
+            setDefaults(savefile, 6);
             break;
         case 0x4e:
-            setDefaults(savefile,4);
+            setDefaults(savefile, 4);
             break;
         case 0x4d:
-            setDefaults(savefile,3);
+            setDefaults(savefile, 3);
             break;
         case 0x4c:
-            setDefaults(savefile,2);
+            setDefaults(savefile, 2);
             setDefaultKeys();
             break;
         case 0x4b:
-            setDefaults(savefile,1);
+            setDefaults(savefile, 1);
             setDefaultKeys();
             break;
         }
@@ -137,7 +145,7 @@ void loadSave() {
         savefile->newGame = SAVE_TAG;
     }
 
-    if(savefile->platform != PLATFORM){
+    if (savefile->platform != PLATFORM) {
         savefile->platform = PLATFORM;
 
         savefile->settings.menuKeys = getDefaultMenuKeys();
@@ -160,10 +168,10 @@ void loadSave() {
     saveSavefile();
 }
 
-Keys getDefaultGameKeys(){
+Keys getDefaultGameKeys() {
     Keys k;
 
-    #if defined(PC) || defined(WEB)
+#if defined(PC) || defined(WEB)
     k = {
         .moveLeft = SDLK_LEFT,
         .moveRight = SDLK_RIGHT,
@@ -177,7 +185,7 @@ Keys getDefaultGameKeys(){
     };
 
     return k;
-    #endif
+#endif
 
     k = {
         .moveLeft = KEY_LEFT,
@@ -191,14 +199,14 @@ Keys getDefaultGameKeys(){
         .zone = KEY_SELECT,
     };
 
-    #ifdef GBA
+#ifdef GBA
     k.hold |= KEY_L;
-    #endif
+#endif
 
     return k;
 }
 
-MenuKeys getDefaultMenuKeys(){
+MenuKeys getDefaultMenuKeys() {
     MenuKeys m{
         .up = KEY_UP,
         .down = KEY_DOWN,
@@ -213,20 +221,20 @@ MenuKeys getDefaultMenuKeys(){
         .special3 = KEY_SELECT,
     };
 
-    #ifdef GBA
+#ifdef GBA
     m.reset = 0;
-    #endif
+#endif
 
     return m;
 }
 
-void setDefaultKeys(){
+void setDefaultKeys() {
     savefile->settings.keys = getDefaultGameKeys();
 
     savefile->settings.menuKeys = getDefaultMenuKeys();
 }
 
-void setDefaultGameplay(Save *save){
+void setDefaultGameplay(Save* save) {
     save->settings.maxQueue = 5;
     save->settings.pro = false;
     save->settings.goalLine = 2;
@@ -238,7 +246,7 @@ void setDefaultGameplay(Save *save){
     save->settings.randomizer = BlockEngine::BAG_7;
 }
 
-void setDefaultHandling(Save *save){
+void setDefaultHandling(Save* save) {
     save->settings.customDas = false;
     save->settings.das = 11;
     save->settings.arr = 2;
@@ -257,17 +265,19 @@ void setDefaultHandling(Save *save){
     save->settings.initialType = 1;
 }
 
-void resetSkins(Save *save){
-    for(auto & customSkin : save->customSkins){
-        memcpy16_fast(&customSkin.board,sprite1tiles_bin,sprite1tiles_bin_size/2);
-        memcpy16_fast(&customSkin.smallBoard,mini[0],sprite1tiles_bin_size/2);
+void resetSkins(Save* save) {
+    for (auto& customSkin : save->customSkins) {
+        memcpy16_fast(&customSkin.board, sprite1tiles_bin,
+                      sprite1tiles_bin_size / 2);
+        memcpy16_fast(&customSkin.smallBoard, mini[0],
+                      sprite1tiles_bin_size / 2);
         customSkin.changed = false;
     }
 }
 
-void setDefaults(Save *save, int depth){
+void setDefaults(Save* save, int depth) {
 
-    if(depth < 1){
+    if (depth < 1) {
         save->settings.announcer = true;
         save->settings.finesse = false;
         save->settings.das = 11;
@@ -285,14 +295,14 @@ void setDefaults(Save *save, int depth){
         memset32_fast(savefile->boards.dig, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
-    if(depth < 2){
-        for (bool & i : save->settings.songList)
+    if (depth < 2) {
+        for (bool& i : save->settings.songList)
             i = true;
 
         memset32_fast(savefile->boards.ultra, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
-    if(depth < 3){
+    if (depth < 3) {
         save->settings.maxQueue = 5;
         save->settings.sfxVolume = 10;
         save->settings.directionalDas = true;
@@ -307,13 +317,15 @@ void setDefaults(Save *save, int depth){
         memset32_fast(savefile->boards.survival, 0, sizeof(EntryBoard) * 3 / 4);
     }
 
-    if(depth < 4){
+    if (depth < 4) {
         save->settings.rumble = 0;
     }
 
-    if(depth < 5){
-        memset32_fast(savefile->boards.sprintAttack, 0, sizeof(EntryBoard) * 3 / 4);
-        memset32_fast(savefile->boards.digEfficiency, 0, sizeof(EntryBoard) * 3 / 4);
+    if (depth < 5) {
+        memset32_fast(savefile->boards.sprintAttack, 0,
+                      sizeof(EntryBoard) * 3 / 4);
+        memset32_fast(savefile->boards.digEfficiency, 0,
+                      sizeof(EntryBoard) * 3 / 4);
         memset32_fast(savefile->boards.classic, 0, sizeof(EntryBoard) * 2 / 4);
 
         save->stats.timePlayed = 0;
@@ -324,7 +336,7 @@ void setDefaults(Save *save, int depth){
         resetSkins(save);
     }
 
-    if(depth < 6){
+    if (depth < 6) {
         memset32_fast(savefile->boards.master, 0, sizeof(EntryBoard) * 2 / 4);
         memset32_fast(savefile->boards.zone, 0, sizeof(EntryBoard) * 4 / 4);
 
@@ -336,40 +348,41 @@ void setDefaults(Save *save, int depth){
         save->settings.initialType = 1;
         save->settings.resetHoldToggle = false;
 
-        //check if select is already bound - if not, bind it to zone activation
-        int* keys = (int*) &save->settings.keys;
+        // check if select is already bound - if not, bind it to zone activation
+        int* keys = (int*)&save->settings.keys;
 
         bool found = false;
 
         std::list<int> foundKeys;
-        for(int i = 0; i < 9; i++){
+        for (int i = 0; i < 9; i++) {
             foundKeys.clear();
 
             int k = keys[i];
             int counter = 0;
-            do{
-                if(k & (1 << counter)){
-                    foundKeys.push_back(1<<counter);
-                    k-= 1 << counter;
+            do {
+                if (k & (1 << counter)) {
+                    foundKeys.push_back(1 << counter);
+                    k -= 1 << counter;
                 }
 
                 counter++;
-            }while(k != 0);
+            } while (k != 0);
 
-            if(std::find(foundKeys.begin(), foundKeys.end(),(int) KEY_SELECT) != foundKeys.end()){
+            if (std::find(foundKeys.begin(), foundKeys.end(),
+                          (int)KEY_SELECT) != foundKeys.end()) {
                 found = true;
                 break;
             }
         }
 
-        if(!found)
+        if (!found)
             save->settings.keys.zone = KEY_SELECT;
         else
             save->settings.keys.zone = 0;
     }
 
-    if(depth < 7){
-        if(depth)
+    if (depth < 7) {
+        if (depth)
             convertScores(savefile);
 
         save->settings.big = false;
@@ -395,7 +408,7 @@ void setDefaults(Save *save, int depth){
 
         memset32_fast(savefile->boards.death, 0, sizeof(EntryBoard) * 2 / 4);
 
-        //swapped CW/CCW rotates in settings
+        // swapped CW/CCW rotates in settings
         int temp = save->settings.keys.rotateCW;
         save->settings.keys.rotateCW = save->settings.keys.rotateCCW;
         save->settings.keys.rotateCCW = temp;
@@ -414,9 +427,9 @@ void setDefaults(Save *save, int depth){
             .special3 = KEY_SELECT,
         };
 
-        #ifdef GBA
+#ifdef GBA
         m.reset = 0;
-        #endif
+#endif
 
         save->settings.menuKeys = m;
 
@@ -427,20 +440,20 @@ void setDefaults(Save *save, int depth){
 
     setDefaultGraphics(save, depth);
 
-    for(auto & profile : save->settings.profiles){
-        saveToProfile(&profile,&save->settings);
+    for (auto& profile : save->settings.profiles) {
+        saveToProfile(&profile, &save->settings);
     }
 }
 
-bool compareVersion(const SaveChange & first,const SaveChange & second){
+bool compareVersion(const SaveChange& first, const SaveChange& second) {
     return first.saveId < second.saveId;
 }
 
-bool compareLocation(const SaveChange & first,const SaveChange & second){
+bool compareLocation(const SaveChange& first, const SaveChange& second) {
     return first.location < second.location;
 }
 
-void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
+void applySaveChanges(u8* newSave, u8* oldSave, int newSize) {
     int migSize = 3876;
     bool changed = false;
 
@@ -448,9 +461,9 @@ void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
     int newPos = 0;
 
     int i = 0;
-    while(i < changeLength){
-        if(saveChanges[i].saveId <= savefile->newGame){
-            migSize+=saveChanges[i].size;
+    while (i < changeLength) {
+        if (saveChanges[i].saveId <= savefile->newGame) {
+            migSize += saveChanges[i].size;
             i++;
             continue;
         }
@@ -459,15 +472,17 @@ void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
 
         int count = saveChanges[i].location - oldPos;
 
-        memcpy32_fast(&newSave[newPos],&oldSave[oldPos],count / 4);
+        memcpy32_fast(&newSave[newPos], &oldSave[oldPos], count / 4);
 
         oldPos = saveChanges[i].location;
         newPos += count + saveChanges[i].size;
 
         i++;
 
-        if(i >= changeLength || saveChanges[i-1].saveId != saveChanges[i].saveId){
-            memcpy32_fast(&newSave[newPos], &oldSave[oldPos], (migSize - oldPos) / 4);
+        if (i >= changeLength ||
+            saveChanges[i - 1].saveId != saveChanges[i].saveId) {
+            memcpy32_fast(&newSave[newPos], &oldSave[oldPos],
+                          (migSize - oldPos) / 4);
 
             memcpy32_fast(oldSave, newSave, (newPos + migSize - oldPos) / 4);
 
@@ -477,19 +492,19 @@ void applySaveChanges(u8* newSave, u8* oldSave, int newSize){
         }
     }
 
-    if(!changed){
+    if (!changed) {
         memcpy32_fast(newSave, oldSave, sizeof(Save) / 4);
     }
 }
 
-void setDefaultGraphics(Save *save, int depth){
-    if(depth < 1){
+void setDefaultGraphics(Save* save, int depth) {
+    if (depth < 1) {
         save->settings.floatText = true;
         save->settings.shake = true;
         save->settings.effects = true;
     }
 
-    if(depth < 2){
+    if (depth < 2) {
         save->settings.edges = true;
         save->settings.backgroundGrid = 6;
         save->settings.skin = 12;
@@ -498,74 +513,87 @@ void setDefaultGraphics(Save *save, int depth){
         save->settings.lightMode = false;
     }
 
-    if(depth < 3){
+    if (depth < 3) {
         save->settings.colors = 1;
         save->settings.clearEffect = 2;
 
-        if(save->settings.shake){
+        if (save->settings.shake) {
             save->settings.shakeAmount = 2;
-        }else{
+        } else {
             save->settings.shake = true;
             save->settings.shakeAmount = 0;
         }
     }
 
-    if(depth < 4){
+    if (depth < 4) {
         save->settings.placeEffect = true;
         // save->settings.backgroundGradient = 0x6c525141;
         save->settings.backgroundGradient = 0x2dd827bf;
     }
 
-    if(depth < 7){
+    if (depth < 7) {
         save->settings.frameBackground = 1;
         save->settings.backgroundType = 1;
         save->settings.aspectRatio = 0;
         save->settings.clearText = 2;
 
-        #if defined(GBA)
+#if defined(GBA)
         save->settings.screenShakeType = 0;
-        #else
+#else
         save->settings.screenShakeType = 1;
-        #endif
+#endif
 
         save->settings.clearDirection = 0;
     }
 }
 
-void convertScores(Save *save){
-    auto *oldBoards = (OldScoreboards *) &save->boards;
+void convertScores(Save* save) {
+    auto* oldBoards = (OldScoreboards*)&save->boards;
 
     ModeBoards newBoards;
 
-    memcpy32_fast(&newBoards.marathon, &oldBoards->marathon, sizeof(EntryBoard) * 4 / 4);
-    memcpy32_fast(&newBoards.sprint, &oldBoards->sprint, sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.marathon, &oldBoards->marathon,
+                  sizeof(EntryBoard) * 4 / 4);
+    memcpy32_fast(&newBoards.sprint, &oldBoards->sprint,
+                  sizeof(EntryBoard) * 3 / 4);
     memcpy32_fast(&newBoards.dig, &oldBoards->dig, sizeof(EntryBoard) * 3 / 4);
-    memcpy32_fast(&newBoards.ultra, &oldBoards->ultra, sizeof(EntryBoard) * 3 / 4);
-    memcpy32_fast(&newBoards.blitz, &oldBoards->blitz, sizeof(EntryBoard) * 2 / 4);
-    memcpy32_fast(&newBoards.combo, &oldBoards->combo, sizeof(EntryBoard) * 1 / 4);
-    memcpy32_fast(&newBoards.survival, &oldBoards->survival, sizeof(EntryBoard) * 3 / 4);
-    memcpy32_fast(&newBoards.sprintAttack, &oldBoards->sprintAttack, sizeof(EntryBoard) * 3 / 4);
-    memcpy32_fast(&newBoards.digEfficiency, &oldBoards->digEfficiency, sizeof(EntryBoard) * 3 / 4);
-    memcpy32_fast(&newBoards.classic, &oldBoards->classic, sizeof(EntryBoard) * 2 / 4);
-    memcpy32_fast(&newBoards.zone, &oldBoards->zone, sizeof(EntryBoard) * 4 / 4);
+    memcpy32_fast(&newBoards.ultra, &oldBoards->ultra,
+                  sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.blitz, &oldBoards->blitz,
+                  sizeof(EntryBoard) * 2 / 4);
+    memcpy32_fast(&newBoards.combo, &oldBoards->combo,
+                  sizeof(EntryBoard) * 1 / 4);
+    memcpy32_fast(&newBoards.survival, &oldBoards->survival,
+                  sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.sprintAttack, &oldBoards->sprintAttack,
+                  sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.digEfficiency, &oldBoards->digEfficiency,
+                  sizeof(EntryBoard) * 3 / 4);
+    memcpy32_fast(&newBoards.classic, &oldBoards->classic,
+                  sizeof(EntryBoard) * 2 / 4);
+    memcpy32_fast(&newBoards.zone, &oldBoards->zone,
+                  sizeof(EntryBoard) * 4 / 4);
 
-    for(int i = 0; i < 2; i++){
-        for(int j = 0; j < 5; j++){
-            newBoards.master[i].entries[j].grade = oldBoards->master[i].grade[j];
-            newBoards.master[i].entries[j].value = oldBoards->master[i].times[j].frames;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 5; j++) {
+            newBoards.master[i].entries[j].grade =
+                oldBoards->master[i].grade[j];
+            newBoards.master[i].entries[j].value =
+                oldBoards->master[i].times[j].frames;
 
-            if(oldBoards->master[i].times[j].frames > 0){
-                strncpy(newBoards.master[i].entries[j].name, oldBoards->master[i].times[j].name, 9);
-            }else{
+            if (oldBoards->master[i].times[j].frames > 0) {
+                strncpy(newBoards.master[i].entries[j].name,
+                        oldBoards->master[i].times[j].name, 9);
+            } else {
                 newBoards.master[i].entries[j].name[0] = '\0';
             }
         }
     }
 
-    auto *b = (EntryBoard *) &newBoards;
+    auto* b = (EntryBoard*)&newBoards;
 
-    for(int i = 0; i < 33; i++){
-        for(auto & entrie : b->entries){
+    for (int i = 0; i < 33; i++) {
+        for (auto& entrie : b->entries) {
             entrie.pro = false;
         }
         b++;
@@ -574,7 +602,7 @@ void convertScores(Save *save){
     memcpy32_fast(&save->boards, &newBoards, sizeof(ModeBoards) / 4);
 }
 
-void profileToSave(GraphicsOptions *profile, Settings *settings){
+void profileToSave(GraphicsOptions* profile, Settings* settings) {
     settings->clearText = profile->clearText;
     settings->shake = profile->shake;
     settings->effects = profile->effects;
@@ -596,7 +624,7 @@ void profileToSave(GraphicsOptions *profile, Settings *settings){
     settings->clearDirection = profile->clearDirection;
 }
 
-void saveToProfile(GraphicsOptions *profile, Settings *settings){
+void saveToProfile(GraphicsOptions* profile, Settings* settings) {
     profile->clearText = settings->clearText;
     profile->shake = settings->shake;
     profile->effects = settings->effects;
@@ -618,11 +646,11 @@ void saveToProfile(GraphicsOptions *profile, Settings *settings){
     profile->clearDirection = settings->clearDirection;
 }
 
-void autosave(){
-    if(!savefile->settings.autosave || multiplayer)
+void autosave() {
+    if (!savefile->settings.autosave || multiplayer)
         return;
 
-    if(framesSinceLastSave < savefile->settings.autosave * 5 * 3600)
+    if (framesSinceLastSave < savefile->settings.autosave * 5 * 3600)
         return;
 
     saveSavefile();

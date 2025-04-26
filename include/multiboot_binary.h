@@ -3,4 +3,4 @@
 
 #include "Multiboot.h"
 
-#endif //APOTRIS_MULTIBOOT_BINARY_H
+#endif // APOTRIS_MULTIBOOT_BINARY_H

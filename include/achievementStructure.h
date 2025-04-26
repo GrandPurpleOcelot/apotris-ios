@@ -7,36 +7,39 @@ struct StatusData {
     // Handling Settings
     [[maybe_unused]] BlockEngine::Tuning tuning;
     // In-game Settings
-    [[maybe_unused]] bool *BigMode = nullptr, *ProMode = nullptr, *Paused = nullptr;
-    [[maybe_unused]] int *GoalLine = nullptr, *RotationSystem = nullptr, *PeekAbove = nullptr, *UnpauseCountdown = nullptr;
-    [[maybe_unused]] int *Randomizer = nullptr, *PlayerLost = nullptr, *PlayerWon = nullptr, *Combo = nullptr;
-    [[maybe_unused]] int *ZoneScore = nullptr, *GameMode = nullptr, *SubMode = nullptr;
-    [[maybe_unused]] unsigned int *Score = nullptr;
+    [[maybe_unused]] bool *BigMode = nullptr, *ProMode = nullptr,
+                          *Paused = nullptr;
+    [[maybe_unused]] int *GoalLine = nullptr, *RotationSystem = nullptr,
+                         *PeekAbove = nullptr, *UnpauseCountdown = nullptr;
+    [[maybe_unused]] int *Randomizer = nullptr, *PlayerLost = nullptr,
+                         *PlayerWon = nullptr, *Combo = nullptr;
+    [[maybe_unused]] int *ZoneScore = nullptr, *GameMode = nullptr,
+                         *SubMode = nullptr;
+    [[maybe_unused]] unsigned int* Score = nullptr;
     // Stats
-    [[maybe_unused]] BlockEngine::Stats *Stats = nullptr;
-    [[maybe_unused]] int *ElapsedTime = nullptr;
-    [[maybe_unused]] int *LinesSent = nullptr;
-    [[maybe_unused]] BlockEngine::Options *Options;
+    [[maybe_unused]] BlockEngine::Stats* Stats = nullptr;
+    [[maybe_unused]] int* ElapsedTime = nullptr;
+    [[maybe_unused]] int* LinesSent = nullptr;
+    [[maybe_unused]] BlockEngine::Options* Options;
     [[maybe_unused]] int gradeIndex;
     [[maybe_unused]] std::string gradeString;
-    [[maybe_unused]] int *ZoneCharge = nullptr;
-    [[maybe_unused]] int *ZoneLines = nullptr;
-    [[maybe_unused]] int *ZoneTimer = nullptr;
+    [[maybe_unused]] int* ZoneCharge = nullptr;
+    [[maybe_unused]] int* ZoneLines = nullptr;
+    [[maybe_unused]] int* ZoneTimer = nullptr;
     // Requested data
-    [[maybe_unused]] int *GameLevel = nullptr;
-    [[maybe_unused]] int *LinesCleared = nullptr;
-    [[maybe_unused]] int *FinesseFaults = nullptr;
-    [[maybe_unused]] int *FinesseStreak = nullptr;
-    [[maybe_unused]] int *StackHeight = nullptr;
-    [[maybe_unused]] int *GarbageHeight = nullptr;
-    [[maybe_unused]] int *ActivePiece = nullptr;
-    [[maybe_unused]] int *Held = nullptr;
-    [[maybe_unused]] int *PawnX = nullptr;
-    [[maybe_unused]] int *PawnY = nullptr;
-    [[maybe_unused]] int *PawnType = nullptr;
-    [[maybe_unused]] int *PawnCurrent = nullptr;
-    [[maybe_unused]] int *PawnRotation = nullptr;
-    
+    [[maybe_unused]] int* GameLevel = nullptr;
+    [[maybe_unused]] int* LinesCleared = nullptr;
+    [[maybe_unused]] int* FinesseFaults = nullptr;
+    [[maybe_unused]] int* FinesseStreak = nullptr;
+    [[maybe_unused]] int* StackHeight = nullptr;
+    [[maybe_unused]] int* GarbageHeight = nullptr;
+    [[maybe_unused]] int* ActivePiece = nullptr;
+    [[maybe_unused]] int* Held = nullptr;
+    [[maybe_unused]] int* PawnX = nullptr;
+    [[maybe_unused]] int* PawnY = nullptr;
+    [[maybe_unused]] int* PawnType = nullptr;
+    [[maybe_unused]] int* PawnCurrent = nullptr;
+    [[maybe_unused]] int* PawnRotation = nullptr;
 
     // Methods for updating
     void update(Settings* settings) {
@@ -81,5 +84,4 @@ struct StatusData {
         ProMode = &proMode;
     }
 
-}
-__attribute((aligned(4)));
+} __attribute((aligned(4)));

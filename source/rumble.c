@@ -1,6 +1,5 @@
-#include <stdbool.h>
 #include "rumble.h"
-
+#include <stdbool.h>
 
 /*
   NOTE:
@@ -37,31 +36,27 @@
    26h=RumbleOn.
 */
 
-
 typedef unsigned int u32;
 typedef unsigned short u16;
 
-
-#define GPIO_PORT_DATA        (*(volatile u16 *)0x80000C4)
-#define GPIO_PORT_DIRECTION   (*(volatile u16 *)0x80000C6)
+#define GPIO_PORT_DATA (*(volatile u16*)0x80000C4)
+#define GPIO_PORT_DIRECTION (*(volatile u16*)0x80000C6)
 
 #define REG_BASE 0x04000000
 
-#define REG_RCNT              *(volatile u16*)(REG_BASE + 0x134)
-#define REG_SIOCNT            *(volatile u16*)(REG_BASE + 0x128)
-#define REG_SIODATA32         *(volatile u32*)(REG_BASE + 0x120)
+#define REG_RCNT *(volatile u16*)(REG_BASE + 0x134)
+#define REG_SIOCNT *(volatile u16*)(REG_BASE + 0x128)
+#define REG_SIODATA32 *(volatile u32*)(REG_BASE + 0x120)
 
-#define SIO_SO_HIGH (1<<3)
-#define SIO_START (1<<7)
+#define SIO_SO_HIGH (1 << 3)
+#define SIO_START (1 << 7)
 #define SIO_32BIT 0x1000
-#define SIO_IRQ	0x4000
+#define SIO_IRQ 0x4000
 
 #define R_NORMAL 0x0000
 
-
 static bool gbp_configured;
 static enum RumbleState rumble_state;
-
 
 enum GBPCommsStage {
     gbp_comms_nintendo_handshake,
@@ -71,7 +66,6 @@ enum GBPCommsStage {
     gbp_comms_finalize
 };
 
-
 static struct GBPComms {
     enum GBPCommsStage stage_;
     u32 serial_in_;
@@ -80,9 +74,7 @@ static struct GBPComms {
     u16 out_1_;
 } gbp_comms;
 
-
-static void gbp_serial_start()
-{
+static void gbp_serial_start() {
 
     if (gbp_comms.serial_in_ == 0x30000003) {
         /* We're currently in the middle of the GBP comms rumble stage. */
@@ -93,9 +85,7 @@ static void gbp_serial_start()
     REG_SIOCNT |= SIO_START;
 }
 
-
-static void gbp_serial_isr()
-{
+static void gbp_serial_isr() {
     gbp_comms.serial_in_ = REG_SIODATA32;
 
     u32 result = 0;
@@ -173,9 +163,7 @@ static void gbp_serial_isr()
     REG_SIOCNT |= SIO_START;
 }
 
-
-void rumble_init(struct RumbleGBPConfig* config)
-{
+void rumble_init(struct RumbleGBPConfig* config) {
     rumble_state = rumble_stop;
 
     if (config) {
@@ -191,21 +179,16 @@ void rumble_init(struct RumbleGBPConfig* config)
         gbp_comms.out_1_ = 0;
     } else {
         gbp_configured = false;
-
     }
 }
 
-
-void rumble_update()
-{
+void rumble_update() {
     if (gbp_configured) {
         gbp_serial_start();
     }
 }
 
-
-void rumble_set_state(enum RumbleState state)
-{
+void rumble_set_state(enum RumbleState state) {
     rumble_state = state;
 
     if (!gbp_configured) {
