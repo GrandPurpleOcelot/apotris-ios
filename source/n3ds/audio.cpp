@@ -303,6 +303,75 @@ public:
     }
 };
 
+class MusicSource {
+public:
+    virtual ~MusicSource() = default;
+    virtual void unload() = 0;
+    virtual void set_loop_count(int loop) = 0;
+    virtual bool set_playback_rate(float rate) = 0;
+    virtual size_t get_samples(u8* buffer, size_t len) = 0;
+};
+
+class MusicSourceXMP final : public MusicSource {
+    xmp_context m_xmp_ctx;
+    int m_loop_count;
+
+public:
+    inline MusicSourceXMP() : m_xmp_ctx{xmp_create_context()} {}
+
+    ~MusicSourceXMP() override { xmp_free_context(m_xmp_ctx); }
+
+    MusicSourceXMP(const MusicSourceXMP&) = delete;
+    MusicSourceXMP(MusicSourceXMP&&) = delete;
+    MusicSourceXMP& operator=(const MusicSourceXMP&) = delete;
+    MusicSourceXMP& operator=(MusicSourceXMP&&) = delete;
+
+    bool try_load(const void* data, size_t len);
+    void unload() override;
+    void set_loop_count(int loop) override;
+    bool set_playback_rate(float rate) override;
+    size_t get_samples(u8* buffer, size_t len) override;
+};
+
+bool MusicSourceXMP::try_load(const void* data, size_t len) {
+    if (xmp_load_module_from_memory(m_xmp_ctx, data, len) != 0) {
+        fprintf(stderr, "Failed to load song module\n");
+        return false;
+    }
+
+    // Use native 3DS DSP sampling rate.
+    if (xmp_start_player(m_xmp_ctx, NDSP_SAMPLE_RATE, 0) != 0) {
+        fprintf(stderr, "Failed to start player to play song module\n");
+        xmp_stop_module(m_xmp_ctx);
+        return false;
+    }
+
+    return true;
+}
+
+void MusicSourceXMP::unload() {
+    xmp_end_player(m_xmp_ctx);
+    xmp_stop_module(m_xmp_ctx);
+}
+
+void MusicSourceXMP::set_loop_count(int loop) { m_loop_count = loop; }
+
+bool MusicSourceXMP::set_playback_rate(float rate) {
+    xmp_set_tempo_factor(m_xmp_ctx, 1.0 / rate);
+    return true;
+}
+
+size_t MusicSourceXMP::get_samples(u8* buffer, size_t len) {
+    auto res = xmp_play_buffer(m_xmp_ctx, buffer, len, m_loop_count);
+    if (res == -XMP_END) {
+        return 0;
+    } else if (res != 0) {
+        fprintf(stderr, "Failed to continue playing song.\n");
+        return 0;
+    }
+    return len;
+}
+
 class NdspAudioThread {
     // The inter-thread communication state. Only the data in this struct
     // should be touched from any non-audio threads.
@@ -317,7 +386,7 @@ class NdspAudioThread {
         int in_start_song_arg_song_id{};
         bool in_start_song_arg_loop{};
 
-        std::atomic<float> in_music_tempo_factor{};
+        std::atomic<float> in_music_playback_rate{1.0};
         static_assert(std::atomic<float>::is_always_lock_free);
 
         std::atomic<bool> out_song_ended{};
@@ -326,9 +395,9 @@ class NdspAudioThread {
 
     // The following fields must only be accessed from the audio thread.
 
-    xmp_context m_xmp_ctx{};
-    bool m_is_playing{false};
-    float m_music_tempo_factor{1.f};
+    std::optional<MusicSourceXMP> m_mus_xmp{};
+    MusicSource* m_mus_current{nullptr};
+    float m_music_playback_rate{1.f};
     int m_loop_count{};
 
     void audio_thread();
@@ -359,7 +428,7 @@ public:
 
     static void send_start_song(int song_id, bool loop);
     static void send_stop_song();
-    static void send_set_tempo(float tempo_factor);
+    static void send_set_playback_rate(float rate);
 
     static bool recv_song_ended();
 };
@@ -832,9 +901,7 @@ void setMusicTempo(int tempo) {
     }
 
     const float playback_rate = tempo * (1.f / 1024.f);
-    const float music_tempo_factor = 1.f / playback_rate;
-
-    NdspAudioThread::send_set_tempo(music_tempo_factor);
+    NdspAudioThread::send_set_playback_rate(playback_rate);
 }
 
 std::string getSongName(int song) { return songNameList[song]; }
@@ -912,13 +979,12 @@ void NdspAudioThread::send_stop_song() {
     inst->m_state.out_song_ended.store(false, std::memory_order_relaxed);
 }
 
-void NdspAudioThread::send_set_tempo(float tempo_factor) {
+void NdspAudioThread::send_set_playback_rate(float rate) {
     // This is called on the main thread.
     auto* inst = s_instance.load(std::memory_order_relaxed);
     assert(inst);
 
-    inst->m_state.in_music_tempo_factor.store(tempo_factor,
-                                              std::memory_order_release);
+    inst->m_state.in_music_playback_rate.store(rate, std::memory_order_release);
 }
 
 bool NdspAudioThread::recv_song_ended() {
@@ -944,7 +1010,7 @@ void NdspAudioThread::audio_thread() {
     tracy::SetThreadName("Ndsp audio thread");
 #endif
 
-    m_xmp_ctx = xmp_create_context();
+    m_mus_xmp.emplace();
 
     ndspSetCallback(ndsp_callback, this);
 
@@ -973,16 +1039,16 @@ void NdspAudioThread::audio_thread() {
             }
         }
 
-        if (m_is_playing) {
-            float new_tempo_factor =
-                m_state.in_music_tempo_factor.load(std::memory_order_consume);
-            if (new_tempo_factor != m_music_tempo_factor) {
-                m_music_tempo_factor = new_tempo_factor;
-                xmp_set_tempo_factor(m_xmp_ctx, m_music_tempo_factor);
+        if (m_mus_current) {
+            float new_playback_rate =
+                m_state.in_music_playback_rate.load(std::memory_order_consume);
+            if (new_playback_rate != m_music_playback_rate) {
+                m_music_playback_rate = new_playback_rate;
+                m_mus_current->set_playback_rate(m_music_playback_rate);
             }
         }
 
-        if (m_is_playing) {
+        if (m_mus_current) {
             if (!fill_buffer()) {
                 // printf("Song ended.\n");
                 m_state.out_song_ended.store(true, std::memory_order_release);
@@ -995,7 +1061,7 @@ void NdspAudioThread::audio_thread() {
     ndspSetCallback(nullptr, nullptr);
 
     stop_song();
-    xmp_free_context(m_xmp_ctx);
+    m_mus_xmp.reset();
 }
 
 bool NdspAudioThread::start_song(int song_id, bool loop) {
@@ -1012,25 +1078,16 @@ bool NdspAudioThread::start_song(int song_id, bool loop) {
 
     auto [mod_data, mod_size] = song_mod.module_data();
 
-    if (xmp_load_module_from_memory(m_xmp_ctx, mod_data, mod_size) != 0) {
+    if (!m_mus_xmp->try_load(mod_data, mod_size)) {
         fprintf(stderr, "Failed to load song module %d\n", song_id);
         song_mod.unload();
         return false;
     }
 
-    if (xmp_start_player(m_xmp_ctx, MUSIC_SAMPLING_RATE, 0) != 0) {
-        fprintf(stderr, "Failed to start player to play song module %d\n",
-                song_id);
-        xmp_stop_module(m_xmp_ctx);
-        song_mod.unload();
-        return false;
-    }
+    m_mus_current = &*m_mus_xmp;
 
-    xmp_set_tempo_factor(m_xmp_ctx, m_music_tempo_factor);
-
-    // printf("Playing song module %d\n", song_id);
-    m_is_playing = true;
-    m_loop_count = loop ? 0 : 1;
+    m_mus_current->set_playback_rate(m_music_playback_rate);
+    m_mus_current->set_loop_count(loop ? 0 : 1);
 
     return true;
 }
@@ -1042,12 +1099,11 @@ void NdspAudioThread::stop_song() {
 
     ndspChnWaveBufClear(CH_NDSP_MUSIC);
 
-    if (m_is_playing) {
-        // printf("Stopping song module\n");
-        xmp_end_player(m_xmp_ctx);
-        xmp_stop_module(m_xmp_ctx);
-        m_is_playing = false;
-    }
+    if (!m_mus_current)
+        return;
+
+    m_mus_current->unload();
+    m_mus_current = nullptr;
 }
 
 bool NdspAudioThread::fill_buffer() {
@@ -1055,7 +1111,7 @@ bool NdspAudioThread::fill_buffer() {
     ZoneScoped;
 #endif
 
-    const auto status = ndsp_wave_buf_music[music_next_buf_idx].status;
+    auto status = ndsp_wave_buf_music[music_next_buf_idx].status;
     if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
         // Buffers already full.
         return true;
@@ -1071,13 +1127,9 @@ bool NdspAudioThread::fill_buffer() {
     auto& wave_buf = ndsp_wave_buf_music[music_next_buf_idx];
     wave_buf.data_vaddr = buffer;
 
-    auto res =
-        xmp_play_buffer(m_xmp_ctx, buffer, MUSIC_BUFFER_SIZE, m_loop_count);
-    if (res == -XMP_END) {
+    auto len = m_mus_current->get_samples(buffer, MUSIC_BUFFER_SIZE);
+    if (len == 0) {
         // Play next song
-        return false;
-    } else if (res != 0) {
-        fprintf(stderr, "Failed to continue playing song.\n");
         return false;
     }
 
