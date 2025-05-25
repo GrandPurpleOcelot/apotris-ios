@@ -439,32 +439,38 @@ elif host_machine.system() == 'n3ds'
         generated_files += bin2s_target
     endforeach
 
-    vshader_shbin = custom_target(
+    picasso_wrapper = files('tools/picasso_wrapper.py')
+
+    shader_shbin = custom_target(
         input : [
-            src_dir / 'n3ds/vshader_sprite.v.pica',
-            src_dir / 'n3ds/vshader_bg.v.pica',
-            src_dir / 'n3ds/vshader_gradient.v.pica',
-            src_dir / 'n3ds/vshader_bg_mosaic_tex.v.pica',
-            src_dir / 'n3ds/vshader_simple_tex.v.pica',
+            src_dir / 'n3ds/shader_sprite.v.pica',
+            src_dir / 'n3ds/shader_bg.v.pica',
+            src_dir / 'n3ds/shader_bg.g.pica',
+            src_dir / 'n3ds/shader_gradient.v.pica',
+            src_dir / 'n3ds/shader_bg_mosaic_tex.v.pica',
+            src_dir / 'n3ds/shader_simple_tex.v.pica',
         ],
-        output : 'n3ds_vshader.shbin',
+        output : [
+            'n3ds_shader.shbin',
+            'n3ds_shader.dvle.h',
+        ],
         command : [
-            'picasso',
-            '-o', '@OUTPUT@',
+            py3, picasso_wrapper,
+            '-o', '@OUTPUT0@',
             '@INPUT@',
         ],
     )
-    vshader_shbin_bin2s = custom_target(
-        'n3ds_vshader_bin2s',
-        input : vshader_shbin,
-        output : ['n3ds_vshader.shbin.s', 'n3ds_vshader.shbin.h'],
+    shader_shbin_bin2s = custom_target(
+        'n3ds_shader_bin2s',
+        input : shader_shbin[0],
+        output : ['n3ds_shader.shbin.s', 'n3ds_shader.shbin.h'],
         command : [
             py3, call_bin2s, bin2s, '@INPUT@', '@OUTPUT1@', '@OUTPUT0@', 'gba', xxd
         ],
     )
 
     generated_files += [
-        vshader_shbin_bin2s,
+        shader_shbin_bin2s,
     ]
 
     link_args = []

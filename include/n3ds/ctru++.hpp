@@ -25,6 +25,9 @@ class Program {
 public:
     explicit inline Program(const Binary& binary, size_t vsh_index) noexcept;
 
+    explicit inline Program(const Binary& binary, size_t vsh_index,
+                            size_t gsh_index, u8 stride) noexcept;
+
     inline ~Program() noexcept {
         if (m_program.vertexShader) {
             shaderProgramFree(&m_program);
@@ -46,6 +49,10 @@ public:
 
     constexpr shaderInstance_s* vsh() noexcept {
         return m_program.vertexShader;
+    }
+
+    constexpr shaderInstance_s* gsh() noexcept {
+        return m_program.geometryShader;
     }
 };
 
@@ -85,6 +92,15 @@ inline Program::Program(const Binary& binary, size_t vsh_index) noexcept {
 
     shaderProgramInit(&m_program);
     shaderProgramSetVsh(&m_program, &binary->DVLE[vsh_index]);
+}
+
+inline Program::Program(const Binary& binary, size_t vsh_index,
+                        size_t gsh_index, u8 stride) noexcept {
+    assert(vsh_index < binary->numDVLE);
+
+    shaderProgramInit(&m_program);
+    shaderProgramSetVsh(&m_program, &binary->DVLE[vsh_index]);
+    shaderProgramSetGsh(&m_program, &binary->DVLE[gsh_index], stride);
 }
 
 } /* namespace shader */
