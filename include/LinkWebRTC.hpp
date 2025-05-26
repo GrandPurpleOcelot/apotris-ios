@@ -33,6 +33,7 @@ class LinkUniversal {
     static constexpr char CANDIDATE[] = "candidate";
     static constexpr char MID[] = "mid";
     static constexpr char ITER[] = "iter";
+    static constexpr char FROM[] = "from";
 
     rtc::Configuration config;
     std::map<std::string, std::queue<Packet>> readQueues;
@@ -47,7 +48,7 @@ class LinkUniversal {
         dataChannelMap;
 
 public:
-    std::string localId = randomId(10);
+    std::string localId;
     [[nodiscard]] u8 currentPlayerId() const { return playerId; }
     static std::string randomId(size_t length) {
         using std::chrono::high_resolution_clock;
@@ -72,6 +73,7 @@ public:
             return nullptr;
     }
     void initWebSocketConfig() {
+        localId = randomId(10);
 #ifndef WEB
         rtc::InitLogger(rtc::LogLevel::Debug);
 #endif
@@ -90,7 +92,32 @@ public:
                 return;
 
             std::string type = message[TYPE];
-            std::string id = message[ID];
+            std::string id =
+                message[ID]; // The value from the "id" field of the JSON
+            std::string peerId = id; // This will be the peer ID for RTC
+                                     // operations. Default to
+                                     // id_field_in_message.
+
+            // For OFFER, ANSWER, CANDIDATE, the message[ID] is localId
+            // (recipient). The actual remote peer's ID is in the "from" field
+            // added by the server.
+            if (type == OFFER || type == ANSWER || type == CANDIDATE) {
+                if (!message.contains(FROM)) {
+                    std::cerr << "WebSocket " << type
+                              << " message missing 'from' field. Discarding."
+                              << std::endl;
+                    return;
+                }
+                peerId = message[FROM].get<std::string>();
+                if (peerId ==
+                    localId) { // Should be caught by server or is an error
+                    std::cerr << "WebSocket " << type
+                              << " message 'from' self (" << peerId
+                              << "). Discarding." << std::endl;
+                    return;
+                }
+            }
+
             if (type == SEED) {
                 nextSeed = stoi(id);
                 lastSeed = nextSeed;
@@ -99,7 +126,7 @@ public:
             if (type == MATCH) {
                 int iter = message[ITER];
                 int remotePlayerId = iter;
-                if (id == localId) {
+                if (peerId == localId) {
                     if (playerId != -1 && remotePlayerId == 0) {
                         playerIdToString.clear();
                         playerStringToId.clear();
@@ -108,35 +135,39 @@ public:
                     std::cout << "We think we are player ID " << playerId
                               << std::endl;
                 }
-                playerIdToString[remotePlayerId] = id;
-                playerStringToId[id] = remotePlayerId;
+                playerIdToString[remotePlayerId] = peerId;
+                playerStringToId[peerId] = remotePlayerId;
                 clearPlayers();
                 for (auto& i : playerIdToString) {
                     initPlayer(i.first);
                 }
-                if (id == localId)
+                if (peerId == localId)
                     return;
-            } else if (type == SEED) {
             }
-            auto pc = getOrCreatePeerConnection(id, type);
+
+            auto pc = getOrCreatePeerConnection(peerId, type);
 
             if (type == CLOSE) {
-                if (dataChannelMap.find(id) != dataChannelMap.end())
-                    dataChannelMap[id]->close();
-                dataChannelMap.erase(id);
-                peerConnectionMap.erase(id);
+                if (dataChannelMap.count(peerId)) {
+                    dataChannelMap[peerId]->close();
+                    dataChannelMap.erase(peerId);
+                }
+                peerConnectionMap.erase(peerId);
 #ifndef WEB
                 if (pc)
                     pc->close();
 #endif
-                int pId = playerStringToId[id];
-                removePlayer(pId);
-                playerIdToString.erase(pId);
-                playerStringToId.erase(id);
-            } else if (type == MATCH && id != localId) {
-                if (!pc || dataChannelMap.find(id) != dataChannelMap.end())
+                if (playerStringToId.count(peerId)) {
+                    u8 pId_to_remove = playerStringToId[peerId];
+                    removePlayer(pId_to_remove);
+                    playerIdToString.erase(pId_to_remove);
+                    playerStringToId.erase(peerId);
+                }
+
+            } else if (type == MATCH && peerId != localId) {
+                if (!pc || dataChannelMap.count(peerId))
                     return;
-                makeOffer(pc, id);
+                makeOffer(pc, peerId);
             } else if (type == OFFER || type == ANSWER)
                 pc->setRemoteDescription(
                     rtc::Description(message[DESCRIPTION], type));
@@ -177,7 +208,7 @@ public:
         });
 #endif
 
-        std::string url = "wss://localhost:8088/" + localId +
+        std::string url = "wss://api.apotris.com/ws/" + localId +
                           (!roomId.empty() ? "/" + roomId : "/match");
         url.erase(remove(url.begin(), url.end(), ' '), url.end());
 
