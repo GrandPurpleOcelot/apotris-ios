@@ -631,6 +631,15 @@ void ConfirmEmuScene::deinit() {
     resetSmallText();
 }
 
+void MainMenuScene::update() {
+    SimpleListScene::update();
+
+    if (updateAvailable != "" && !showingUpdateNotification) {
+        aprint("Update available: " + updateAvailable, 0, 0);
+        showingUpdateNotification = true;
+    }
+}
+
 void MainMenuScene::init() {
     path.clear();
     SimpleListScene::init();

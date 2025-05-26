@@ -183,7 +183,10 @@ public:
 class MainMenuScene : public SimpleListScene {
 public:
     void init();
+    void update();
     void deinit();
+
+    bool showingUpdateNotification = false;
 
     Scene* previousScene();
     std::list<std::string> getOptionList() {

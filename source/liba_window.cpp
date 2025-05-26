@@ -22,7 +22,13 @@
 #include <unistd.h>
 #endif
 
+#include <string>
+
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+
 void handleAnalogInput(int axis, int value);
+void checkLatestVersion();
 
 std::list<uint32_t> currentKeys;
 std::list<uint32_t> previousKeys;
@@ -115,6 +121,8 @@ void windowInit() {
 
     SDL_FreeSurface(icon);
 #endif
+
+    checkLatestVersion();
 }
 
 void pressKey(int key, InputType type) {
@@ -450,6 +458,25 @@ std::string initSavefileDir() {
 #endif
 
 void loadSavefile() {
+    // std::ofstream outfile("Apotris.sav");
+    // if (!outfile.is_open()) {
+    //     std::cerr << "Failed to open file for writing." << std::endl;
+    //     return;
+    // }
+
+    // cpr::Response r = cpr::Download(
+    //     outfile,
+    //     cpr::Url{"https://apotrisstorage.blob.core.windows.net/saves/" +
+    //              userId + "/Apotris.sav"});
+    // if (r.status_code == 200) {
+    //     std::cout << "File downloaded successfully." << std::endl;
+    // } else {
+    //     std::cerr << "Failed to download file. Status code: " <<
+    //     r.status_code
+    //               << std::endl;
+    // }
+
+    // outfile.close();
 
 #ifdef __APPLE__
     std::string filePath = initSavefileDir() + "/Apotris.sav";
@@ -502,6 +529,15 @@ void saveSavefile() {
     }
 
     output.close();
+
+    // cpr::Multipart multipart_data{{"save", cpr::File{"Apotris.sav"}}};
+
+    // auto r = cpr::Post(
+    //     cpr::Url{"https://api.apotris.com/v1/upload-save?userId=" + userId},
+    //     multipart_data);
+
+    // log("status " + r.status_code);
+    // log("response " + r.text);
 }
 
 void quit() {
@@ -611,5 +647,31 @@ void handleAnalogInput(int axis, int value) {
         unpressKey((key), InputType::CONTROLLER);
         unpressKey((key) | (1 << 5), InputType::CONTROLLER);
     }
+}
+
+void checkLatestVersion() {
+    cpr::Response r =
+        cpr::Get(cpr::Url{"https://api.apotris.com/v1/latest-version"});
+
+    cpr::GetCallback(
+        [updateAvailable = &updateAvailable](cpr::Response r) {
+            log("status: " + std::to_string(r.status_code));
+            log("text: " + r.text);
+            try {
+                auto json = nlohmann::json::parse(r.text);
+                if (json.contains("latestVersion") &&
+                    json["latestVersion"].is_string()) {
+                    std::string version =
+                        json["latestVersion"].get<std::string>();
+                    log("version " + version);
+
+                    if (version != "v" APOTRIS_VERSION)
+                        *updateAvailable = version;
+                }
+            } catch (const nlohmann::json::exception& e) {
+                std::cerr << "JSON parse error: " << e.what() << std::endl;
+            }
+        },
+        cpr::Url{"https://api.apotris.com/v1/latest-version"});
 }
 #endif

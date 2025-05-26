@@ -377,3 +377,5 @@ COLOR hsv2rgb(int h, float s, float v);
 COLOR hsv2rgb(HSV_COLOR hsv);
 
 HSV_COLOR rgb2hsv(int r, int g, int b);
+
+extern std::string updateAvailable;

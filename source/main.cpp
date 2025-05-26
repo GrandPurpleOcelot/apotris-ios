@@ -75,6 +75,7 @@ int nextSeed = 0;
 bool multiplayer = false;
 bool playingBotGame = false;
 
+std::string updateAvailable;
 bool rumble_enabled = false;
 
 bool rumbleInitialized = false;
