@@ -13,7 +13,7 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import type { Context } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import type { Context, RouterContext } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 
 // Constants
 const MAX_PLAYERS = 5; // Max players per room
@@ -26,7 +26,7 @@ const getRandomInt = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-export async function handleWebSocket(ctx: Context) {
+export async function handleWebSocket(ctx: RouterContext<string>) {
   // Made function async
   const clientID = ctx.params.clientID;
   const requestedRoomID = ctx.params.roomID;
@@ -241,7 +241,7 @@ export async function handleWebSocket(ctx: Context) {
         }
       } catch (error) {
         console.error(
-          `Invalid JSON from ${clientID} :: ${error.message}. Data: ${websocketMessage.data.substring(0, 200)}`,
+          `Invalid JSON from ${clientID} :: ${error instanceof Error ? error.message : String(error)}. Data: ${websocketMessage.data.substring(0, 200)}`,
         );
       }
     });

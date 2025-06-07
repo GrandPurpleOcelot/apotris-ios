@@ -3,7 +3,7 @@ import {
     Router,
     Status,
 } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { crypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
+// Using built-in Web Crypto API instead of std library to avoid WASM compilation issues
 import {
     BlobServiceClient,
     ContainerClient,
@@ -81,17 +81,25 @@ router.post("/v1/upload-save", async (ctx) => {
             maxFileSize: 10 * 1024 * 1024 /* 10MB limit */,
         });
 
-        const fileEntry = formData.files?.save;
+        const fileEntry = formData.files && 'save' in formData.files ? formData.files.save : null;
 
-        if (!fileEntry || !fileEntry.content) {
+        if (!fileEntry || Array.isArray(fileEntry)) {
             ctx.response.status = Status.BadRequest;
             ctx.response.body = {
-                error: "Please pass a file in the request under the 'save' field.",
+                error: "Please pass a single file in the request under the 'save' field.",
             };
             return;
         }
 
-        const file = fileEntry;
+        const file = fileEntry as any; // Type assertion for Oak FormFile
+        if (!file.content) {
+            ctx.response.status = Status.BadRequest;
+            ctx.response.body = {
+                error: "File content is missing.",
+            };
+            return;
+        }
+
         const originalFileName = file.filename || "unknown_file";
         // content is Uint8Array as per Oak's FormFile type
         const fileContent = file.content as Uint8Array;
@@ -131,14 +139,15 @@ router.post("/v1/upload-save", async (ctx) => {
             uri: blobUri,
         };
     } catch (ex) {
+        const error = ex instanceof Error ? ex : new Error(String(ex));
         console.error(
-            `Error processing file upload for userId: ${userId}: ${ex.message}`,
+            `Error processing file upload for userId: ${userId}: ${error.message}`,
         );
-        if (ex.stack) {
-            console.error(ex.stack);
+        if (error.stack) {
+            console.error(error.stack);
         }
         ctx.response.status = Status.InternalServerError;
-        ctx.response.body = { error: `Error processing file: ${ex.message}` };
+        ctx.response.body = { error: `Error processing file: ${error.message}` };
     }
 });
 

@@ -25,17 +25,9 @@ const PENDING_LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
 
 async function handlePollSession(ctx: Context) {
     if (ctx.request.method !== "POST") {
-        ctx.response = new Response(
-            JSON.stringify({
-                error: "Method Not Allowed",
-            }),
-            {
-                status: 405,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            },
-        );
+        ctx.response.status = 405;
+        ctx.response.body = { error: "Method Not Allowed" };
+        ctx.response.headers.set("Content-Type", "application/json");
         return;
     }
     try {
@@ -43,17 +35,15 @@ async function handlePollSession(ctx: Context) {
         const { device_id } = body;
 
         if (!device_id || typeof device_id !== "string") {
-            ctx.response = new Response(
-                JSON.stringify({
-                    error: "Missing or invalid device_id",
-                }),
-                {
-                    status: 400,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                },
-            );
+            ctx.response.status = 400;
+            ctx.response.body = { error: "Missing or invalid device_id" };
+            ctx.response.headers.set("Content-Type", "application/json");
+            return;
+        }
+        if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+            ctx.response.status = 500;
+            ctx.response.body = { error: "Supabase configuration missing" };
+            ctx.response.headers.set("Content-Type", "application/json");
             return;
         }
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -68,50 +58,31 @@ async function handlePollSession(ctx: Context) {
             .single(); // Expecting only one row
         if (fetchError || !pendingLogin) {
             if (fetchError && fetchError.code === "PGRST116") {
-                ctx.response = new Response(
-                    JSON.stringify({
-                        status: "pending",
-                        message:
-                            "No login attempt found for this device ID or it has expired.",
-                    }),
-                    {
-                        status: 202,
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                    },
-                );
+                ctx.response.status = 202;
+                ctx.response.body = {
+                    status: "pending",
+                    message: "No login attempt found for this device ID or it has expired.",
+                };
+                ctx.response.headers.set("Content-Type", "application/json");
                 return;
             }
             console.error("Error fetching pending login:", fetchError);
-            ctx.response = new Response(
-                JSON.stringify({
-                    error: "Failed to fetch login status",
-                    details: fetchError?.message,
-                }),
-                {
-                    status: 500,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                },
-            );
+            ctx.response.status = 500;
+            ctx.response.body = {
+                error: "Failed to fetch login status",
+                details: fetchError?.message,
+            };
+            ctx.response.headers.set("Content-Type", "application/json");
             return;
         }
 
         if (pendingLogin.claimed_at) {
-            ctx.response = new Response(
-                JSON.stringify({
-                    status: "claimed_already",
-                    message: "This login has already been claimed.",
-                }),
-                {
-                    status: 409,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                },
-            );
+            ctx.response.status = 409;
+            ctx.response.body = {
+                status: "claimed_already",
+                message: "This login has already been claimed.",
+            };
+            ctx.response.headers.set("Content-Type", "application/json");
             return;
         }
 
@@ -122,18 +93,12 @@ async function handlePollSession(ctx: Context) {
                 .from("logins")
                 .delete()
                 .eq("device_id", device_id);
-            ctx.response = new Response(
-                JSON.stringify({
-                    status: "expired",
-                    message: "Login attempt expired.",
-                }),
-                {
-                    status: 410,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                },
-            );
+            ctx.response.status = 410;
+            ctx.response.body = {
+                status: "expired",
+                message: "Login attempt expired.",
+            };
+            ctx.response.headers.set("Content-Type", "application/json");
             return;
         }
         const { error: updateError } = await supabase
@@ -145,50 +110,32 @@ async function handlePollSession(ctx: Context) {
             .eq("device_id", device_id);
         if (updateError) {
             console.error("Error marking login as claimed:", updateError);
-            ctx.response = new Response(
-                JSON.stringify({
-                    error: "Failed to finalize login",
-                    details: updateError.message,
-                }),
-                {
-                    status: 500,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                },
-            );
+            ctx.response.status = 500;
+            ctx.response.body = {
+                error: "Failed to finalize login",
+                details: updateError.message,
+            };
+            ctx.response.headers.set("Content-Type", "application/json");
             return;
         }
-        ctx.response = new Response(
-            JSON.stringify({
-                status: "success",
-                access_token: pendingLogin.access_token,
-                refresh_token: pendingLogin.refresh_token,
-                user_id: pendingLogin.user_id,
-                expires_at: pendingLogin.expires_at,
-            }),
-            {
-                status: 200,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            },
-        );
+        ctx.response.status = 200;
+        ctx.response.body = {
+            status: "success",
+            access_token: pendingLogin.access_token,
+            refresh_token: pendingLogin.refresh_token,
+            expires_at: pendingLogin.expires_at,
+        };
+        ctx.response.headers.set("Content-Type", "application/json");
         return;
     } catch (e) {
-        console.error("Error in poll-device-auth function:", e);
-        return new Response(
-            JSON.stringify({
-                error: "Internal Server Error",
-                details: e.message,
-            }),
-            {
-                status: 500,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            },
-        );
+        const error = e instanceof Error ? e : new Error(String(e));
+        console.error("Error in poll-device-auth function:", error);
+        ctx.response.status = 500;
+        ctx.response.body = {
+            error: "Internal Server Error",
+            details: error.message,
+        };
+        ctx.response.headers.set("Content-Type", "application/json");
     }
 }
 
@@ -279,11 +226,12 @@ async function handleStoreDeviceTokenInternal(ctx: Context) {
         ctx.response.body = { message: "Token stored successfully" };
         ctx.response.headers.set("Content-Type", "application/json");
     } catch (e) {
-        console.error("Error in store-device-token handler:", e);
+        const error = e instanceof Error ? e : new Error(String(e));
+        console.error("Error in store-device-token handler:", error);
         ctx.response.status = Status.InternalServerError;
         ctx.response.body = {
             error: "Internal Server Error",
-            details: e.message,
+            details: error.message,
         };
         ctx.response.headers.set("Content-Type", "application/json");
     }

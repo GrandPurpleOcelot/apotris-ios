@@ -26,8 +26,8 @@ const PORT = parseInt(
 );
 
 // --- WebSocket Endpoint ---
-router.get("/ws/:clientID/:roomID", (ctx: Context) => {
-    return handleWebSocket(ctx);
+router.get("/ws/:clientID/:roomID", (ctx) => {
+    return handleWebSocket(ctx as any); // Type assertion for RouterContext
 });
 
 // --- Application Setup ---
