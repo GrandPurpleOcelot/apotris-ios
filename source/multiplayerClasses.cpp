@@ -60,39 +60,39 @@ bool MultiplayerLink::sync() {
             else {
 #ifdef GBA
                 std::string error;
-                switch (universal->linkWireless->getLastError(true)) {
-                case LinkWireless::WRONG_STATE:
+                switch (universal->getLinkWireless()->getLastError(true)) {
+                case LinkWireless::Error::WRONG_STATE:
                     error = "Wrong state       ";
                     break;
-                case LinkWireless::GAME_NAME_TOO_LONG:
+                case LinkWireless::Error::GAME_NAME_TOO_LONG:
                     error = "Game name too long";
                     break;
-                case LinkWireless::USER_NAME_TOO_LONG:
+                case LinkWireless::Error::USER_NAME_TOO_LONG:
                     error = "User name too long";
                     break;
-                case LinkWireless::BUFFER_IS_FULL:
+                case LinkWireless::Error::BUFFER_IS_FULL:
                     // Hopefully it'll catch up, keep trying
                     exitEarly = true;
                     break;
-                case LinkWireless::COMMAND_FAILED:
+                case LinkWireless::Error::COMMAND_FAILED:
                     error = "Command failed    ";
                     break;
-                case LinkWireless::CONNECTION_FAILED:
+                case LinkWireless::Error::CONNECTION_FAILED:
                     error = "Connection failed ";
                     break;
-                case LinkWireless::SEND_DATA_FAILED:
+                case LinkWireless::Error::SEND_DATA_FAILED:
                     error = "Send data failed  ";
                     break;
-                case LinkWireless::RECEIVE_DATA_FAILED:
+                case LinkWireless::Error::RECEIVE_DATA_FAILED:
                     error = "Recv data failed  ";
                     break;
-                case LinkWireless::ACKNOWLEDGE_FAILED:
+                case LinkWireless::Error::ACKNOWLEDGE_FAILED:
                     error = "ACK failed        ";
                     break;
-                case LinkWireless::NONE:
+                case LinkWireless::Error::NONE:
                     break;
-                case LinkWireless::TIMEOUT:
-                case LinkWireless::REMOTE_TIMEOUT:
+                case LinkWireless::Error::TIMEOUT:
+                case LinkWireless::Error::REMOTE_TIMEOUT:
                     exitEarly = true;
                     break;
                 }

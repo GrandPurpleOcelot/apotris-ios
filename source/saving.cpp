@@ -230,11 +230,7 @@ void loadSave() {
     }
 
 #ifdef GBA
-    randSetSeed(sum);
-    savefile->seed = (int)randNext();
     status.update(&savefile->settings);
-#else
-    savefile->seed = (int)randNext();
 #endif
     saveSavefile();
 }

@@ -3,7 +3,6 @@
 #include "platform.hpp"
 
 #ifdef GBA
-#include <gba_flash.h>
 #include <gba_sram.h>
 
 #define AGB_ROM ((u8*)0x8000000)

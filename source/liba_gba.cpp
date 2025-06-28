@@ -214,7 +214,6 @@ void platformInit() {
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER1);
-    interrupt_enable(INTR_TIMER2);
 
 #ifndef NO_DIAGNOSE
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
@@ -226,7 +225,6 @@ void platformInit() {
 
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
-    interrupt_set_handler(INTR_TIMER2, LINK_UNIVERSAL_ISR_ACK_TIMER);
 
     // interrupt_add(INTR_HBLANK, onHBlank);
 
@@ -247,31 +245,28 @@ void platformInit() {
 void setUpLinkUniversal(bool detectEmus) {
     inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
-    const u32 wirelessRemoteTimeoutFrames = inaccurateEmulator ? 45 : 15;
     const u32 wirelessInterval = 50; // No reason to go lower
     const u32 wiredInterval =
         300; // 150 usually works but some devices needed 300...
-    const u32 wirelessRemoteTimeout =
-        calculateRemoteTimeout(wirelessInterval, wirelessRemoteTimeoutFrames);
     delete multiplayerLink;
     delete linkUniversal;
+
     linkUniversal = new LinkUniversal(
-        LinkUniversal::WIRELESS_AUTO, "Apotris",
+        LinkUniversal::Protocol::WIRELESS_AUTO, "Apotris",
         (LinkUniversal::CableOptions){
-            .baudRate = LinkCable::BAUD_RATE_3, // Baud 3 is required for enough
-                                                // b/w to send garbage
+            .baudRate =
+                LinkCable::BaudRate::BAUD_RATE_3, // Baud 3 is required for
+                                                  // enough b/w to send garbage
             .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
-            .remoteTimeout = LINK_CABLE_DEFAULT_REMOTE_TIMEOUT,
             .interval = wiredInterval,
             .sendTimerId = 1},
-        (LinkUniversal::WirelessOptions){.retransmission = true,
-                                         .maxPlayers =
-                                             LINK_WIRELESS_MAX_PLAYERS,
-                                         .timeout = wirelessTimeout,
-                                         .remoteTimeout = wirelessRemoteTimeout,
-                                         .interval = wirelessInterval,
-                                         .sendTimerId = 1,
-                                         .asyncACKTimerId = 2});
+        (LinkUniversal::WirelessOptions){
+            .forwarding = true,
+            .retransmission = true,
+            .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
+            .timeout = wirelessTimeout,
+            .interval = wirelessInterval,
+            .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID});
     multiplayerLink = new MultiplayerLink(linkUniversal);
 }
 
@@ -784,11 +779,15 @@ IWRAM_CODE void onKeyInterrupt() {
     SoftReset();
 }
 
-#ifdef LINK_WIRELESS_PUT_ISR_IN_IWRAM
-LINK_WIRELESS_CODE_IWRAM void LinkWireless::_onSerial() { __onSerial(); }
-LINK_WIRELESS_CODE_IWRAM void LinkWireless::_onTimer() { __onTimer(); }
-LINK_WIRELESS_CODE_IWRAM void LinkWireless::_onACKTimer() { __onACKTimer(); }
-#endif
+void sleep() {
+    disableVolatileInterrupts(true);
+
+    REG_P1CNT = 0b1100001100000100;
+
+    Stop();
+
+    enableVolatileInterrupts(true);
+}
 
 void setUpPresentException(std::string error) {
     multiplayerLink->deactivate(true);

@@ -2,11 +2,12 @@
 
 #ifdef GBA
 
+#include <cstdint>
 #include <string>
 
 #define VOLADDR(a, t) (*(t volatile*)(a))
-#define REG_MGBA_ENABLE VOLADDR(0x04FFF780, u16)
-#define REG_MGBA_FLAGS VOLADDR(0x04FFF700, u16)
+#define REG_MGBA_ENABLE VOLADDR(0x04FFF780, uint16_t)
+#define REG_MGBA_FLAGS VOLADDR(0x04FFF700, uint16_t)
 #define MGBA_LOG_OUT ((char*)0x04FFF600)
 
 inline bool logInitMgba(void) {
@@ -15,7 +16,7 @@ inline bool logInitMgba(void) {
     return REG_MGBA_ENABLE == 0x1DEA;
 }
 
-static void logOutputMgba(u8 level, const char* message) {
+static void logOutputMgba(uint8_t level, const char* message) {
     for (int i = 0; message[i] && i < 256; i++) {
         MGBA_LOG_OUT[i] = message[i];
     }

@@ -1,6 +1,5 @@
 #include <algorithm>
-#include <iostream>
-#include <math.h>
+#include <cmath>
 #include <string>
 #include <tuple>
 

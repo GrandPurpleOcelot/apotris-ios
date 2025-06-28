@@ -404,9 +404,8 @@ HSM_DEPRECATED(
     "Passing state args to state overrides is not supported") // See details on
                                                               // SiblingTransition
                                                               // version
-                                                              Transition
-    InnerTransition(const StateOverride<TargetState>& stateOverride, T1&& arg1,
-                    Args&&... args);
+Transition InnerTransition(const StateOverride<TargetState>& stateOverride,
+                           T1&& arg1, Args&&... args);
 
 // InnerEntryTransition
 
@@ -430,9 +429,8 @@ HSM_DEPRECATED(
     "Passing state args to state overrides is not supported") // See details on
                                                               // SiblingTransition
                                                               // version
-                                                              Transition
-    InnerEntryTransition(const StateOverride<TargetState>& stateOverride,
-                         T1&& arg1, Args&&... args);
+Transition InnerEntryTransition(const StateOverride<TargetState>& stateOverride,
+                                T1&& arg1, Args&&... args);
 
 // NoTransition
 
@@ -797,7 +795,7 @@ public:
     }
 
     //@NOTE: Removing this overload as it causes ambiguity when owner is not
-    //specified.
+    // specified.
     // Can make this work using SFINAE to enable this overload when
     // StateArgsType derives from hsm::StateArgs. This would be simpler in
     // C++11.
@@ -808,7 +806,7 @@ public:
     //{
     //	HSM_ASSERT(mInitialTransition.IsNo());
     //	mInitialTransition =
-    //SiblingTransition(GetStateFactory<InitialStateType>(), initialStateArgs);
+    // SiblingTransition(GetStateFactory<InitialStateType>(), initialStateArgs);
     //	mOwner = owner;
     //}
 
@@ -1323,7 +1321,7 @@ inline void StateMachine::Log(size_t minLevel, size_t numSpaces,
 
         // Print to stdout
 #ifdef GBA
-        logMgba(buffer);
+        log(buffer);
 #else
         printf("%s", buffer);
 #endif

@@ -636,14 +636,16 @@ void MultBattleScene::init() {
     if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba()))
         // mGBA only supports cable, so set it to speed up initial multiplayer
         // sync
-        multiplayerLink->universal->setProtocol(LinkUniversal::CABLE);
+        multiplayerLink->universal->setProtocol(LinkUniversal::Protocol::CABLE);
     else if (inaccurateEmulator)
         // gpSP only does wireless
-        multiplayerLink->universal->setProtocol(LinkUniversal::WIRELESS_AUTO);
+        multiplayerLink->universal->setProtocol(
+            LinkUniversal::Protocol::WIRELESS_AUTO);
     else
         // This undoes the hold L override if exiting and returning to this
         // screen
-        multiplayerLink->universal->setProtocol(LinkUniversal::AUTODETECT);
+        multiplayerLink->universal->setProtocol(
+            LinkUniversal::Protocol::AUTODETECT);
 
     if (!inaccurateEmulator) {
         rumbleHandler = interrupt_get_handler(INTR_SERIAL);

@@ -91,7 +91,6 @@ effect_locations_file = 'effect_locations.bin'
 # Set up recommended compiler and linker flags for GBA before loading any other projects
 if host_machine.system() == 'gba'
     subdir('meson/toolchain')
-    add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language : 'cpp')
     add_project_arguments('-frtti', language : 'cpp')
     add_project_arguments('-DLINK_WIRELESS_USE_SEND_RECEIVE_LATCH=1', language : 'cpp')
     add_project_arguments('-Wno-incompatible-pointer-types', language : 'c')
