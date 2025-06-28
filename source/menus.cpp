@@ -354,6 +354,10 @@ void endAnimation() {
     enableLayerWindow(1, 0, 0, 240, 160, false);
     enableLayerWindow(2, 0, 0, 240, 160, false);
 
+#if defined(TE) || defined(N3DS)
+    setSpriteMaskRegion(shake);
+#endif
+
     rumbleStop();
 
     sfx(SFX_END);
