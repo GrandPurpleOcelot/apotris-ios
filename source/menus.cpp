@@ -1490,7 +1490,9 @@ void addGameStats() {
 }
 
 int GameScene::endScreenSetup() {
+    resetSmallText();
     clearSmallText();
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     for (auto& wordSprite : wordSprites)
         wordSprite.hide();
@@ -1621,6 +1623,7 @@ void GameScene::showReadyPlayers() {
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     }
 }
+
 void MultBattleScene::showReadyPlayers() {
     int readyCount = multiplayerLink->getReadyCount();
     unsigned int playerCount = multiplayerLink->playingPlayerCount;
