@@ -555,7 +555,7 @@ void unbindDuplicateKey(int& dest, uint32_t key) {
 }
 
 void rumbleStart(int length) {
-    if (lastInputType != InputType::CONTROLLER)
+    if (lastInputType != InputType::CONTROLLER || length <= 0)
         return;
 
     SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
