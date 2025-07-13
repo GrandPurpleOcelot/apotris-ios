@@ -168,6 +168,12 @@ public:
         return over;
     }
 
+#ifndef GBA
+    [[nodiscard]] std::unordered_map<u8, std::string> getPlayerNames() const {
+        return universal->playerNames();
+    }
+#endif
+
     void purgeQueues();
 
     void deactivate(bool sendBye);

@@ -698,12 +698,18 @@ void MultBattleScene::handleConnectionDisplay() {
     switch (state) {
     case 1:
     case 2:
-        naprint("Connected!", 10 * 8, 8 * 8);
         if (state == 1)
             naprint("                    ", 6 * 8, 15 * 8);
         else
             naprint("Press A to ready up!", 6 * 8, 15 * 8);
+
+#ifdef GBA
+        naprint("Connected!", 10 * 8, 8 * 8);
         naprint("Waiting for all players...", 4 * 8, 10 * 8);
+#else
+        naprint("Waiting for all players...", 4 * 8, 4 * 8);
+#endif
+
         break;
     default:
         naprint("Waiting for connection...", 5 * 8, 9 * 8);

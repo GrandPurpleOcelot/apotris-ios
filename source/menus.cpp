@@ -1640,6 +1640,36 @@ void MultBattleScene::showReadyPlayers() {
         wordSprites[8]->show(236 - wordSprites[8]->width, 160 - 12 - 8, 14);
     }
 
+#ifndef GBA
+    const int startX = 3 * 8;
+    const int endX = 30 - 4;
+
+    int verticalOffset = 0;
+
+    std::unordered_map<u8, std::string> playerNames =
+        multiplayerLink->getPlayerNames();
+
+    int counter = 0;
+    for (const std::pair<const u8, std::string>& pair : playerNames) {
+        const int y = startY + 8 * (1) * counter + verticalOffset;
+
+        char buff[12];
+        posprintf(buff, "%d. %s", counter + 1, (pair.second).c_str());
+
+        labels[counter]->setText(buff);
+        labels[counter]->show(startX, y, 15);
+
+        std::string str =
+            multiplayerLink->players[pair.first].ready ? "READY" : " ";
+
+        const int x = (endX) * 8 - getVariableWidth(str);
+        wordSprites[counter]->setText(str);
+        wordSprites[counter]->show(x, y, 15);
+
+        counter++;
+    }
+#endif
+
     if (multiplayerLink->players[multiplayerLink->universal->currentPlayerId()]
             .ready &&
         !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {

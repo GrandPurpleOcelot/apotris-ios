@@ -13,6 +13,7 @@
     "lineWidth": 120,
     "semiColons": true,
     "singleQuote": true,
+    "indentWidth" : 4,
     "include": ["*.ts" "README.md"]
   },
   "tasks": {

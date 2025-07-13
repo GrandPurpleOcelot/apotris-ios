@@ -23,6 +23,7 @@ class LinkUniversal {
     static constexpr char STUN_SERVER[] = "stun:stun.l.google.com:19302";
     static constexpr char TYPE[] = "type";
     static constexpr char ID[] = "id";
+    static constexpr char NAME[] = "name";
     static constexpr char DESCRIPTION[] = "description";
     static constexpr char OFFER[] = "offer";
     static constexpr char ANSWER[] = "answer";
@@ -31,6 +32,7 @@ class LinkUniversal {
     static constexpr char SEED[] = "seed";
     static constexpr char FULL[] = "full";
     static constexpr char CANDIDATE[] = "candidate";
+    static constexpr char PLAYER_INFO[] = "playerInfo";
     static constexpr char MID[] = "mid";
     static constexpr char ITER[] = "iter";
     static constexpr char FROM[] = "from";
@@ -46,9 +48,11 @@ class LinkUniversal {
         peerConnectionMap;
     std::unordered_map<std::string, shared_ptr<rtc::DataChannel>>
         dataChannelMap;
+    std::unordered_map<u8, std::string> playerIdToName;
 
 public:
     std::string localId;
+    std::string localPlayerName;
     [[nodiscard]] u8 currentPlayerId() const { return playerId; }
     static std::string randomId(size_t length) {
         using std::chrono::high_resolution_clock;
@@ -74,6 +78,8 @@ public:
     }
     void initWebSocketConfig() {
         localId = randomId(10);
+        localPlayerName = savefile->latestName;
+
 #ifndef WEB
         rtc::InitLogger(rtc::LogLevel::Debug);
 #endif
@@ -118,6 +124,9 @@ public:
                 }
             }
 
+            if (type == PLAYER_INFO) {
+                playerIdToName[playerStringToId[message[FROM]]] = message[NAME];
+            }
             if (type == SEED) {
                 nextSeed = stoi(id);
                 lastSeed = nextSeed;
@@ -130,8 +139,11 @@ public:
                     if (playerId != -1 && remotePlayerId == 0) {
                         playerIdToString.clear();
                         playerStringToId.clear();
+                        playerIdToName.clear();
                     }
                     playerId = remotePlayerId;
+
+                    playerIdToName[playerId] = localPlayerName;
                     std::cout << "We think we are player ID " << playerId
                               << std::endl;
                 }
@@ -188,9 +200,17 @@ public:
         std::promise<void> wsPromise;
         auto wsFuture = wsPromise.get_future();
 
-        ws->onOpen([&wsPromise]() {
+        ws->onOpen([this, wws = make_weak_ptr(ws), &wsPromise]() {
             std::cout << "WebSocket connected, signaling ready" << std::endl;
             wsPromise.set_value();
+            if (auto shared_ws = wws.lock()) {
+                json playerInfo = {{ID, "broadcast"},
+                                   {TYPE, PLAYER_INFO},
+                                   {NAME, localPlayerName}};
+                shared_ws->send(playerInfo.dump());
+                std::cout << "Sent player info to signaling server: "
+                          << playerInfo.dump() << std::endl;
+            }
         });
 
         ws->onError([&wsPromise](const std::string& s) {
@@ -199,8 +219,16 @@ public:
                 std::make_exception_ptr(std::runtime_error(s)));
         });
 #else
-        ws->onOpen([]() {
+        ws->onOpen([wws = make_weak_ptr(ws)]() {
             std::cout << "WebSocket connected, signaling ready" << std::endl;
+            if (auto shared_ws = wws.lock()) {
+                json playerInfo = {{ID, "broadcast"},
+                                   {TYPE, PLAYER_INFO},
+                                   {NAME, localPlayerName}};
+                shared_ws->send(playerInfo.dump());
+                std::cout << "Sent player info to signaling server: "
+                          << playerInfo.dump() << std::endl;
+            }
         });
 
         ws->onError([](const std::string& s) {
@@ -403,6 +431,10 @@ public:
     [[nodiscard]] bool isConnected() const { return playerCount() > 1; }
 
     [[nodiscard]] u8 playerCount() const { return dataChannelMap.size() + 1; }
+
+    [[nodiscard]] std::unordered_map<u8, std::string> playerNames() const {
+        return playerIdToName;
+    }
 };
 
 extern LinkUniversal* linkUniversal;

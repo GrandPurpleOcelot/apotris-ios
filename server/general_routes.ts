@@ -1,33 +1,25 @@
-import {
-    Application,
-    Router,
-    Status,
-} from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { Application, Router, Status } from 'https://deno.land/x/oak@v12.6.1/mod.ts';
 // Using built-in Web Crypto API instead of std library to avoid WASM compilation issues
-import {
-    BlobServiceClient,
-    ContainerClient,
-    BlobUploadCommonResponse,
-} from "npm:@azure/storage-blob@12";
+import { BlobServiceClient, BlobUploadCommonResponse, ContainerClient } from 'npm:@azure/storage-blob@12';
 
 const app = new Application();
 const router = new Router();
 
 // --- Azure Blob Storage Configuration ---
 export const AZURE_STORAGE_CONNECTION_STRING = Deno.env.get(
-    "AZURE_STORAGE_CONNECTION_STRING",
+    'AZURE_STORAGE_CONNECTION_STRING',
 );
 
 if (!AZURE_STORAGE_CONNECTION_STRING) {
     console.warn(
-        "WARNING: AZURE_STORAGE_CONNECTION_STRING environment variable is not set. File upload endpoint will not function correctly.",
+        'WARNING: AZURE_STORAGE_CONNECTION_STRING environment variable is not set. File upload endpoint will not function correctly.',
     );
 }
 
 function getBlobContainerClient(containerName: string): ContainerClient | null {
     if (!AZURE_STORAGE_CONNECTION_STRING) {
         console.error(
-            "Azure Storage connection string is not configured. Cannot get blob container client.",
+            'Azure Storage connection string is not configured. Cannot get blob container client.',
         );
         return null;
     }
@@ -38,13 +30,13 @@ function getBlobContainerClient(containerName: string): ContainerClient | null {
 }
 
 // --- General Endpoints ---
-router.get("/v1/latest-version", (ctx) => {
-    ctx.response.body = { latestVersion: "v4.1.0" };
+router.get('/v1/latest-version', (ctx) => {
+    ctx.response.body = { latestVersion: 'v4.1.0' };
 });
 
-router.get("/v1/generate-device-id", (ctx) => {
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let result = "";
+router.get('/v1/generate-device-id', (ctx) => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
     const charactersLength = characters.length;
     for (let i = 0; i < 5; i++) {
         result += characters.charAt(
@@ -58,8 +50,8 @@ router.get("/v1/generate-device-id", (ctx) => {
 });
 
 // --- Saves Endpoint: UploadSave ---
-router.post("/v1/upload-save", async (ctx) => {
-    const userId = ctx.request.url.searchParams.get("userId");
+router.post('/v1/upload-save', async (ctx) => {
+    const userId = ctx.request.url.searchParams.get('userId');
     if (!userId) {
         ctx.response.status = Status.BadRequest;
         ctx.response.body = { error: "Query parameter 'userId' is required." };
@@ -69,16 +61,16 @@ router.post("/v1/upload-save", async (ctx) => {
     if (!AZURE_STORAGE_CONNECTION_STRING) {
         ctx.response.status = Status.InternalServerError;
         ctx.response.body = {
-            error: "Azure Storage is not configured on the server.",
+            error: 'Azure Storage is not configured on the server.',
         };
         return;
     }
 
     try {
-        const body = ctx.request.body({ type: "form-data" });
+        const body = ctx.request.body({ type: 'form-data' });
         const formDataReader = await body.value;
         const formData = await formDataReader.read({
-            maxFileSize: 10 * 1024 * 1024 /* 10MB limit */,
+            maxFileSize: 10 * 1024 * 1024, /* 10MB limit */
         });
 
         const fileEntry = formData.files && 'save' in formData.files ? formData.files.save : null;
@@ -95,38 +87,36 @@ router.post("/v1/upload-save", async (ctx) => {
         if (!file.content) {
             ctx.response.status = Status.BadRequest;
             ctx.response.body = {
-                error: "File content is missing.",
+                error: 'File content is missing.',
             };
             return;
         }
 
-        const originalFileName = file.filename || "unknown_file";
+        const originalFileName = file.filename || 'unknown_file';
         // content is Uint8Array as per Oak's FormFile type
         const fileContent = file.content as Uint8Array;
         const fileSize = fileContent.byteLength;
-        const contentType = file.contentType || "application/octet-stream";
+        const contentType = file.contentType || 'application/octet-stream';
 
         console.log(
             `Received file: ${originalFileName}, Size: ${fileSize} bytes, ContentType: ${contentType} for userId: ${userId}`,
         );
 
-        const blobContainerClient = getBlobContainerClient("saves");
+        const blobContainerClient = getBlobContainerClient('saves');
         if (!blobContainerClient) {
             ctx.response.status = Status.InternalServerError;
             ctx.response.body = {
-                error: "Could not connect to Azure Blob Storage.",
+                error: 'Could not connect to Azure Blob Storage.',
             };
             return;
         }
         const blobName = `${userId}/Apotris.sav`;
-        const blockBlobClient =
-            blobContainerClient.getBlockBlobClient(blobName);
+        const blockBlobClient = blobContainerClient.getBlockBlobClient(blobName);
 
         console.log(`Attempting to upload to Azure Blob Storage: ${blobName}`);
-        const uploadBlobResponse: BlobUploadCommonResponse =
-            await blockBlobClient.upload(fileContent, fileSize, {
-                blobHTTPHeaders: { blobContentType: contentType },
-            });
+        const uploadBlobResponse: BlobUploadCommonResponse = await blockBlobClient.upload(fileContent, fileSize, {
+            blobHTTPHeaders: { blobContentType: contentType },
+        });
 
         const blobUri = blockBlobClient.url;
         console.log(
