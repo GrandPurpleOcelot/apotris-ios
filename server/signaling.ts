@@ -27,7 +27,9 @@ const getRandomInt = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-export async function handleWebSocket(ctx: Context) {
+export async function handleWebSocket(
+    ctx: Context & { params: { clientID: string; roomID: string } },
+) {
     // Made function async
     const clientID = ctx.params.clientID;
     const requestedRoomID = ctx.params.roomID;
@@ -92,7 +94,7 @@ export async function handleWebSocket(ctx: Context) {
     // as ctx.upgrade() handles this. For other error paths, ctx.response is set above.
 }
 
-function handleMessage(websocketMessage, clientID) {
+function handleMessage(websocketMessage: MessageEvent, clientID: string) {
     console.info(
         `Client ${clientID} :: << :: ${websocketMessage.data.substring(0, 200)}`,
     );
@@ -102,9 +104,13 @@ function handleMessage(websocketMessage, clientID) {
     try {
         message = JSON.parse(websocketMessage.data);
     } catch (error) {
-        console.error(
-            `Invalid JSON from ${clientID} :: ${error.message}. Data: ${websocketMessage.data.substring(0, 200)}`,
-        );
+        if (error instanceof Error) {
+            console.error(
+                `Invalid JSON from ${clientID} :: ${error.message}. Data: ${
+                    (websocketMessage.data as string).substring(0, 200)
+                }`,
+            );
+        }
 
         return;
     }
@@ -163,7 +169,7 @@ function handleMessage(websocketMessage, clientID) {
         );
 
         if (message.type === 'playerInfo') {
-            names[clientID] = message.name;
+            names.set(clientID, message.name);
         }
 
         roomMembers.forEach((memberId) => {
@@ -187,7 +193,7 @@ function handleMessage(websocketMessage, clientID) {
                 const infoMessage = JSON.stringify({
                     id: 'broadcast',
                     from: member,
-                    name: names[member],
+                    name: names.get(member),
                     type: 'playerInfo',
                 });
 
@@ -207,7 +213,11 @@ function handleMessage(websocketMessage, clientID) {
     );
 }
 
-function handleOpen(clientID, requestedRoomID, socket) {
+function handleOpen(
+    clientID: string,
+    requestedRoomID: string,
+    socket: WebSocket,
+) {
     clients.set(clientID, socket);
     console.info(`Client connected :: ${clientID}`);
 
@@ -251,7 +261,9 @@ function handleOpen(clientID, requestedRoomID, socket) {
             roomIDToJoin = targetRoomID;
         } else {
             roomIDToJoin = targetRoomID;
-            rooms.set(roomIDToJoin, [clientID]);
+            if (roomIDToJoin) {
+                rooms.set(roomIDToJoin, [clientID]);
+            }
             console.info(
                 `New room created: ${roomIDToJoin} for client ${clientID}`,
             );
@@ -325,7 +337,7 @@ function handleOpen(clientID, requestedRoomID, socket) {
     }
 }
 
-function handleClose(event, clientID) {
+function handleClose(event: CloseEvent, clientID: string) {
     clients.delete(clientID);
     console.info(
         `Client disconnected :: ${clientID} (Code: ${event.code}, Reason: ${event.reason || 'N/A'})`,
@@ -348,7 +360,7 @@ function handleClose(event, clientID) {
 
         roomMembers.forEach((memberClientID) => {
             const memberSocket = clients.get(memberClientID);
-            if (!memberSocket && memberSocket.readyState !== WebSocket.OPEN) {
+            if (!memberSocket || memberSocket.readyState !== WebSocket.OPEN) {
                 return;
             }
 
