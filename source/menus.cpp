@@ -958,6 +958,12 @@ int saveRecord(EntryBoard& board, int value, int dir) {
 
         std::string name = nameInput(i);
 
+        for (int j = 0; j < 8; j++)
+            savefile->latestName[j] = ' ';
+
+        for (int j = 0; j < name.size(); j++)
+            savefile->latestName[j] = name.at(j);
+
         board.entries[i].value = value;
 
         board.entries[i].pro = proMode;
@@ -1035,6 +1041,12 @@ int onRecord() {
 
             std::string name = nameInput(i);
 
+            for (int j = 0; j < 8; j++)
+                savefile->latestName[j] = ' ';
+
+            for (int j = 0; j < name.size(); j++)
+                savefile->latestName[j] = name.at(j);
+
             board.entries[i].value = gameSeconds;
             board.entries[i].grade = grade;
 
@@ -1062,6 +1074,12 @@ int onRecord() {
                 board.entries[j + 1] = board.entries[j];
 
             std::string name = nameInput(i);
+
+            for (int j = 0; j < 8; j++)
+                savefile->latestName[j] = ' ';
+
+            for (int j = 0; j < name.size(); j++)
+                savefile->latestName[j] = name.at(j);
 
             board.entries[i].value = gameSeconds;
             board.entries[i].grade = grade;
