@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <sys/stat.h>
 
 #include "def.h"
 
@@ -18,7 +19,6 @@
 #include <cstring>
 #include <pwd.h>
 #include <string>
-#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -417,8 +417,8 @@ void toggleRendering(bool r) { render = r; }
 
 void initRumble() {};
 
-#ifdef __APPLE__
 std::string initSavefileDir() {
+#ifdef __APPLE__
     // Get the user's home directory
     const char* homeDir = getenv("HOME");
     if (!homeDir) {
@@ -428,17 +428,27 @@ std::string initSavefileDir() {
 
     // Build the path: ~/Library/Application Support/Apotris/
     return std::string(homeDir) + "/Library/Application Support/Apotris";
-}
+#else
+    // Check for XDG_DATA_HOME first
+    const char* xdgDataHome = getenv("XDG_DATA_HOME");
+    if (xdgDataHome) {
+        return std::string(xdgDataHome) + "/Apotris";
+    }
+
+    // Fall back to checking HOME
+    const char* homeDir = getenv("HOME");
+    if (homeDir) {
+        return std::string(homeDir) + "/.local/share/Apotris";
+    }
+
+    // Fall back to current directory behavior
+    return ".";
 #endif
+}
 
 void loadSavefile() {
-
-#ifdef __APPLE__
     std::string filePath = initSavefileDir() + "/Apotris.sav";
     std::ifstream input(filePath, std::ios::binary | std::ios::in);
-#else
-    std::ifstream input("Apotris.sav", std::ios::binary | std::ios::in);
-#endif
 
     if (savefile == nullptr)
         savefile = new Save();
@@ -456,16 +466,14 @@ void loadSavefile() {
 }
 
 void saveSavefile() {
-#ifdef __APPLE__
     std::string dirPath = initSavefileDir();
-    mkdir(dirPath.c_str(), 0755); // Create directory if it doesn't exist
+    if (dirPath != ".") {
+        mkdir(dirPath.c_str(), 0755); // Create directory if it doesn't exist
+    }
 
     // Build the full file path
     std::string filePath = dirPath + "/Apotris.sav";
     std::ofstream output(filePath, std::ios::binary | std::ios::out);
-#else
-    std::ofstream output("Apotris.sav", std::ios::binary | std::ios::out);
-#endif
 
     char* dst = (char*)savefile;
 
