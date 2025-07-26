@@ -2572,7 +2572,7 @@ void showPlaceEffect() {
         const bool doubleSize = (it->piece == PIECE_I && (spin != 0 || r != 0));
 
         x += xoffset + push * savefile->settings.shake + !doubleSize * 32;
-        y += yoffset - shake * savefile->settings.shake + peek * 8 + peekShift +
+        y += yoffset + shake * savefile->settings.shake + peek * 8 + peekShift +
              16 * !doubleSize;
 
         it->sprite = &obj_buffer[19 + i];
