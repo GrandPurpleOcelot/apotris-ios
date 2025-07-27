@@ -774,11 +774,7 @@ class GraphicsScene : public Scene {
         l.push_back(new BoardEffectsElement());
         l.push_back(new ClearStyleElement());
         l.push_back(new ClearDirectionElement());
-
-#if defined(GBA) || defined(N3DS)
         l.push_back(new PlaceEffectElement());
-#endif
-
         l.push_back(new ScreenShakeElement());
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
