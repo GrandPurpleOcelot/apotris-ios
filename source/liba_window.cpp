@@ -495,6 +495,10 @@ std::string getSavefilePath() {
 void loadSavefile() {
     std::string filePath = getSavefilePath();
     std::ifstream input(filePath, std::ios::binary | std::ios::in);
+    if (!input.is_open()){
+        // Savefile does not exist, return early
+        return;
+    }
 
     if (savefile == nullptr)
         savefile = new Save();
