@@ -437,42 +437,45 @@ std::string getSavefilePath() {
 #else
     // Build list of possible save file locations in priority order
     std::vector<std::string> possibleSaveDirs;
-    
+
     // XDG_DATA_HOME location
     const char* xdgDataHome = getenv("XDG_DATA_HOME");
     if (xdgDataHome) {
         possibleSaveDirs.push_back(std::string(xdgDataHome) + "/Apotris");
     }
-    
+
     // HOME/.local/share location
     const char* homeDir = getenv("HOME");
     if (homeDir) {
-        possibleSaveDirs.push_back(std::string(homeDir) + "/.local/share/Apotris");
+        possibleSaveDirs.push_back(std::string(homeDir) +
+                                   "/.local/share/Apotris");
     }
-    
+
     // Current directory location
     possibleSaveDirs.push_back(".");
-    
+
     std::string saveFileDir = possibleSaveDirs.at(0);
-    
+
     if (saveFileDir != ".") {
         // Create directory if it doesn't exist
         mkdir(saveFileDir.c_str(), 0755);
     }
-    
+
     std::string preferredSavefile = saveFileDir + "/Apotris.sav";
     struct stat fileStat;
     // Return early if only one possible savedir or preferred savefile exists
-    if (possibleSaveDirs.size() == 1 || stat(preferredSavefile.c_str(), &fileStat) == 0) {
+    if (possibleSaveDirs.size() == 1 ||
+        stat(preferredSavefile.c_str(), &fileStat) == 0) {
         return preferredSavefile;
     }
-    
+
     // Logic for moving save files in lower priority location:
-    // 
+    //
     // Find the most recently modified existing save file
     std::string mostRecentSavefile;
     time_t mostRecentTime = 0;
-    for (auto it = possibleSaveDirs.begin() + 1; it != possibleSaveDirs.end(); ++it) {
+    for (auto it = possibleSaveDirs.begin() + 1; it != possibleSaveDirs.end();
+         ++it) {
         auto savefilePath = *it + "/Apotris.sav";
         struct stat fileStat;
         if (stat(savefilePath.c_str(), &fileStat) == 0) {
@@ -482,15 +485,18 @@ std::string getSavefilePath() {
             }
         }
     }
-    
-    // If we found an existing save file and it's not in the preferred location, move it
-    if (!mostRecentSavefile.empty() && mostRecentSavefile != preferredSavefile) {
+
+    // If we found an existing save file and it's not in the preferred location
+    if (!mostRecentSavefile.empty() &&
+        mostRecentSavefile != preferredSavefile) {
         // Move the most recent save file to the preferred location
-        if (rename(mostRecentSavefile.c_str(), preferredSavefile.c_str()) == 0) {
-            // Successfully moved the file
-            log("Moved save file from " + mostRecentSavefile + " to " + preferredSavefile);
+        if (rename(mostRecentSavefile.c_str(), preferredSavefile.c_str()) ==
+            0) {
+            log("Moved save file from " + mostRecentSavefile + " to " +
+                preferredSavefile);
         } else {
-            log("Failed to move save file from " + mostRecentSavefile + " to " + preferredSavefile);
+            log("Failed to move save file from " + mostRecentSavefile + " to " +
+                preferredSavefile);
         }
     }
     return preferredSavefile;
@@ -500,7 +506,7 @@ std::string getSavefilePath() {
 void loadSavefile() {
     std::string filePath = getSavefilePath();
     std::ifstream input(filePath, std::ios::binary | std::ios::in);
-    if (!input.is_open()){
+    if (!input.is_open()) {
         // Savefile does not exist, return early
         return;
     }
