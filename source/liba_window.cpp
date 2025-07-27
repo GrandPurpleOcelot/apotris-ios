@@ -14,12 +14,15 @@
 
 #include "nanotime.h"
 
-// For the Application Support directory save location
 #ifdef __APPLE__
+// For the Application Support directory save location
 #include <cstring>
 #include <pwd.h>
 #include <string>
 #include <unistd.h>
+#else
+// For Linux directory save location
+#include <vector>
 #endif
 
 void handleAnalogInput(int axis, int value);
@@ -417,7 +420,7 @@ void toggleRendering(bool r) { render = r; }
 
 void initRumble() {};
 
-std::string initSavefileDir() {
+std::string getSavefilePath() {
 #ifdef __APPLE__
     // Get the user's home directory
     const char* homeDir = getenv("HOME");
@@ -427,27 +430,70 @@ std::string initSavefileDir() {
     }
 
     // Build the path: ~/Library/Application Support/Apotris/
-    return std::string(homeDir) + "/Library/Application Support/Apotris";
+    savefileDir = std::string(homeDir) + "/Library/Application Support/Apotris";
+    // Create directory if it doesn't exist
+    mkdir(savefileDir.c_str(), 0755);
+    return savefileDir + "/Apotris.sav";
 #else
-    // Check for XDG_DATA_HOME first
+    // Build list of possible save file locations in priority order
+    std::vector<std::string> possibleSaveDirs;
+    
+    // XDG_DATA_HOME location
     const char* xdgDataHome = getenv("XDG_DATA_HOME");
     if (xdgDataHome) {
-        return std::string(xdgDataHome) + "/Apotris";
+        possibleSaveDirs.push_back(std::string(xdgDataHome) + "/Apotris");
     }
-
-    // Fall back to checking HOME
+    
+    // HOME/.local/share location
     const char* homeDir = getenv("HOME");
     if (homeDir) {
-        return std::string(homeDir) + "/.local/share/Apotris";
+        possibleSaveDirs.push_back(std::string(homeDir) + "/.local/share/Apotris");
     }
-
-    // Fall back to current directory behavior
-    return ".";
+    
+    // Current directory location
+    possibleSaveDirs.push_back(".");
+    
+    std::string saveFileDir = possibleSaveDirs.at(0);
+    
+    if (saveFileDir != ".") {
+        // Create directory if it doesn't exist
+        mkdir(saveFileDir.c_str(), 0755);
+    }
+    
+    std::string preferredSavefile = saveFileDir + "/Apotris.sav";
+    
+    // Logic for moving save files in lower priority location:
+    // 
+    // Find the most recently modified existing save file
+    std::string mostRecentSavefile;
+    time_t mostRecentTime = 0;
+    for (const std::string& dirPath : possibleSaveDirs) {
+        auto savefilePath = dirPath + "/Apotris.sav";
+        struct stat fileStat;
+        if (stat(savefilePath.c_str(), &fileStat) == 0) {
+            if (fileStat.st_mtime > mostRecentTime) {
+                mostRecentTime = fileStat.st_mtime;
+                mostRecentSavefile = savefilePath;
+            }
+        }
+    }
+    
+    // If we found an existing save file and it's not in the preferred location, move it
+    if (!mostRecentSavefile.empty() && mostRecentSavefile != preferredSavefile) {
+        // Move the most recent save file to the preferred location
+        if (rename(mostRecentSavefile.c_str(), preferredSavefile.c_str()) == 0) {
+            // Successfully moved the file
+            log("Moved save file from " + mostRecentSavefile + " to " + preferredSavefile);
+        } else {
+            log("Failed to move save file from " + mostRecentSavefile + " to " + preferredSavefile);
+        }
+    }
+    return preferredSavefile;
 #endif
 }
 
 void loadSavefile() {
-    std::string filePath = initSavefileDir() + "/Apotris.sav";
+    std::string filePath = getSavefilePath();
     std::ifstream input(filePath, std::ios::binary | std::ios::in);
 
     if (savefile == nullptr)
@@ -466,13 +512,7 @@ void loadSavefile() {
 }
 
 void saveSavefile() {
-    std::string dirPath = initSavefileDir();
-    if (dirPath != ".") {
-        mkdir(dirPath.c_str(), 0755); // Create directory if it doesn't exist
-    }
-
-    // Build the full file path
-    std::string filePath = dirPath + "/Apotris.sav";
+    std::string filePath = getSavefilePath();
     std::ofstream output(filePath, std::ios::binary | std::ios::out);
 
     char* dst = (char*)savefile;
