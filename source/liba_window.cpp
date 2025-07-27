@@ -461,14 +461,19 @@ std::string getSavefilePath() {
     }
     
     std::string preferredSavefile = saveFileDir + "/Apotris.sav";
+    struct stat fileStat;
+    // Return early if only one possible savedir or preferred savefile exists
+    if (possibleSaveDirs.size() == 1 || stat(preferredSavefile.c_str(), &fileStat) == 0) {
+        return preferredSavefile;
+    }
     
     // Logic for moving save files in lower priority location:
     // 
     // Find the most recently modified existing save file
     std::string mostRecentSavefile;
     time_t mostRecentTime = 0;
-    for (const std::string& dirPath : possibleSaveDirs) {
-        auto savefilePath = dirPath + "/Apotris.sav";
+    for (auto it = possibleSaveDirs.begin() + 1; it != possibleSaveDirs.end(); ++it) {
+        auto savefilePath = *it + "/Apotris.sav";
         struct stat fileStat;
         if (stat(savefilePath.c_str(), &fileStat) == 0) {
             if (fileStat.st_mtime > mostRecentTime) {
