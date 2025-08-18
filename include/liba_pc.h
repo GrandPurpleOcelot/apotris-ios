@@ -87,6 +87,7 @@ public:
     bool flipx = false;
     bool flipy = false;
     bool rotate = false;
+    float angle = 0.0f;
     bool blend = false;
     bool doubleSize = false;
 };

@@ -49,6 +49,13 @@ std::string translateLine(std::string in) {
     if (pos != std::string::npos)
         in.replace(pos, 8, "out highp vec4");
 
+#ifdef __APPLE__
+    // Precision qualifiers for macOS
+    pos = in.find("uniform vec2");
+    if (pos != std::string::npos)
+        in.replace(pos, 12, "uniform mediump vec2");
+#endif
+
     // pos = in.find("attribute");
 
     // if(pos != std::string::npos)
@@ -62,6 +69,8 @@ uint loadShaderFromFile(std::string path, int type) {
 
 #if defined(PORTMASTER)
     add += "#version 300 es\n\n";
+#elif defined(__APPLE__)
+    add += "#version 410 core\n\n";
 #endif
 
     if (type == GL_VERTEX_SHADER) {
@@ -96,8 +105,8 @@ uint loadShaderFromFile(std::string path, int type) {
 
     if (!success) {
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n"
-                  << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::COMPILATION_FAILED for " << path << "\n"
+                  << "Error: " << infoLog << std::endl;
     }
 
     return shader;
@@ -139,6 +148,14 @@ int getShader(int index) {
 }
 
 void initShaders(SDL_Window* window, int index) {
+#ifdef __APPLE__
+    // Request OpenGL 4.1 Core Profile (macOS maximum)
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+#endif
+
     shaderContext = SDL_GL_CreateContext(window);
 
     if (shaderStatus == ShaderStatus::NOT_INITED) {

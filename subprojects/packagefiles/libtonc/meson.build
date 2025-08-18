@@ -75,7 +75,7 @@ sources_c = [
 
 includes = ['include']
 
-compile_args = []
+compile_args = ['-Wno-incompatible-pointer-types']
 
 cc = meson.get_compiler('c')
 
@@ -96,6 +96,7 @@ libtonc_asm = static_library('tonc_asm', sources_asm,
 
 libtonc = static_library('tonc', sources_c,
   include_directories: includes,
+  c_args: compile_args,
   objects: libtonc_asm.extract_all_objects(recursive: false))
 
 libtonc_dep = declare_dependency(

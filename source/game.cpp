@@ -1645,8 +1645,9 @@ void addGlow(BlockEngine::Drop location) {
         }
 
         if (game->previousClear.isBackToBack == 1)
-            effectList.emplace_back(Effect(1 + (game->previousClear.isTSpin != 0),
-                                        xCenter, location.endY));
+            effectList.emplace_back(
+                Effect(1 + (game->previousClear.isTSpin != 0), xCenter,
+                       location.endY));
 
         for (int i = max(location.startY, 0); i < location.endY && i < 20; i++)
             memset32_fast(&current[i + 1][1], 2048, 10);
@@ -2444,10 +2445,6 @@ bool checkDiagonal(uint32_t key) {
 }
 
 void showPlaceEffect() {
-#ifdef TE
-    return;
-#endif
-
     const int tileStart = 512 - 32 * 3;
 
     for (int i = 0; i < 3; i++)
@@ -2472,8 +2469,6 @@ void showPlaceEffect() {
         switch (it->piece) {
         case 0:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n], 8, 3);
-            // memcpy32_fast(&tile_mem[5][138 + 32 *
-            // i],placeEffectTiles[n],size/2);
             if (game->rotationSystem == NRS) {
                 if (r % 2 == 1)
                     r = 1;
@@ -2488,8 +2483,6 @@ void showPlaceEffect() {
             break;
         case 1:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 3], 8, 3);
-            // memcpy32_fast(&tile_mem[5][138 + 32 *
-            // i],placeEffectTiles[n+3],size/2);
             xoffset = yoffset = -4;
 
             if (game->rotationSystem == ARS && r == 2)
@@ -2501,8 +2494,6 @@ void showPlaceEffect() {
             break;
         case 2:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 3], 8, 3);
-            // memcpy32_fast(&tile_mem[5][138 + 32 *
-            // i],placeEffectTiles[n+3],size/2);
             xoffset = yoffset = -4;
             flip = true;
 
@@ -2514,8 +2505,6 @@ void showPlaceEffect() {
             break;
         case 3:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 6], 8, 3);
-            // memcpy32_fast(&tile_mem[5][138 + 32 *
-            // i],placeEffectTiles[n+6],size/2);
             yoffset = -4 + (game->rotationSystem == NRS ||
                             game->rotationSystem == ARS) *
                                8;
@@ -2523,8 +2512,6 @@ void showPlaceEffect() {
             break;
         case 4:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 9], 8, 3);
-            // memcpy32_fast(&tile_mem[5][138 + 32 *
-            // i],placeEffectTiles[n+9],size/2);
             xoffset = -4;
             yoffset = -4;
             if (game->rotationSystem == NRS || game->rotationSystem == ARS) {
@@ -2536,8 +2523,6 @@ void showPlaceEffect() {
             break;
         case 5:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 12], 8, 3);
-            // memcpy32_fast(&tile_mem[5][138 + 32 *
-            // i],placeEffectTiles[n+12],size/2);
             xoffset = yoffset = -4;
 
             if (game->rotationSystem == ARS && r == 2)
@@ -2548,8 +2533,6 @@ void showPlaceEffect() {
             break;
         case 6:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 9], 8, 3);
-            // memcpy32_fast(&tile_mem[5][138 + 32 *
-            // i],placeEffectTiles[n+9],size/2);
             xoffset = -4;
             yoffset = -4;
             flip = true;
@@ -2602,7 +2585,7 @@ void showPlaceEffect() {
         const bool doubleSize = (it->piece == PIECE_I && (spin != 0 || r != 0));
 
         x += xoffset + push * savefile->settings.shake + !doubleSize * 32;
-        y += yoffset - shake * savefile->settings.shake + peek * 8 + peekShift +
+        y += yoffset + shake * savefile->settings.shake + peek * 8 + peekShift +
              16 * !doubleSize;
 
         it->sprite = &obj_buffer[19 + i];
