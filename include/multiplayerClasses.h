@@ -465,22 +465,21 @@ struct MultiplayerStates {
                 Owner().players[packet.playerId].ready = true;
             }
             // TODO: Remove bot code
-            // #ifdef GBA
-            //             if (ENABLE_BOT) {
-            //                 key_poll();
-            //                 if (!key_held(KEY_R))
-            //                     enableBot = true;
-            //                 else
-            //                     enableBot = false;
-            //                 if (readyTimeout-- <= 0 && (int)randNext() % 0xFF
-            //                 == 0)
-            //                     Owner().readyUp();
-            //             }
-            // #else
+            #ifdef GBA
+            key_poll();
+            if (!key_held(KEY_R)) {
+                enableBot = true;
+            } else {
+                enableBot = false;
+            }
+            if (enableBot && readyTimeout-- <= 0 && (int)randNext() % 0xFF == 0) {
+                Owner().readyUp();
+            }
+             #else
             /*enableBot = true;
             if (readyTimeout-- <= 0 && qran() % 0xFF == 0)
                 Owner().readyUp();*/
-            // #endif
+             #endif
 
             if (!sentReady &&
                 Owner().players[Owner().universal->currentPlayerId()].ready) {

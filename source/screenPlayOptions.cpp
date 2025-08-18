@@ -637,8 +637,8 @@ void MultBattleScene::init() {
         // mGBA only supports cable, so set it to speed up initial multiplayer
         // sync
         multiplayerLink->universal->setProtocol(LinkUniversal::Protocol::CABLE);
-    else if (inaccurateEmulator)
-        // gpSP only does wireless
+    else if (key_held(KEY_R) || inaccurateEmulator)
+        // gpSP only does wireless, users may want to override
         multiplayerLink->universal->setProtocol(
             LinkUniversal::Protocol::WIRELESS_AUTO);
     else

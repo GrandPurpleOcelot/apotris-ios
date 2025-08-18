@@ -243,7 +243,7 @@ void platformInit() {
 }
 
 void setUpLinkUniversal(bool detectEmus) {
-    inaccurateEmulator = detectEmus ? detect_inaccurate_emulator() : true;
+    inaccurateEmulator = !detectEmus || detect_inaccurate_emulator();
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
     const u32 wirelessInterval = 50; // No reason to go lower
     const u32 wiredInterval =
@@ -266,7 +266,7 @@ void setUpLinkUniversal(bool detectEmus) {
             .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
             .timeout = wirelessTimeout,
             .interval = wirelessInterval,
-            .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID});
+            .sendTimerId = 1});
     multiplayerLink = new MultiplayerLink(linkUniversal);
 }
 
