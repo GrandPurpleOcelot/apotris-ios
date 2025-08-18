@@ -1,4 +1,5 @@
 #include "scene.hpp"
+#include "sceneModes.hpp"
 #include "def.h"
 #include "logging.h"
 #include <list>
@@ -441,7 +442,11 @@ void SimpleListScene::deinit() {
 #endif
 }
 
+#ifndef MULTIBOOT
 Scene* ModeListScene::previousScene() { return new MainMenuScene(); }
+#else
+Scene* ModeListScene::previousScene() { return new MultBattleScene(); }
+#endif
 
 void OptionListScene::init() {
     loadTiles(2, 102, sprite37tiles_bin, sprite37tiles_bin_size / 32);

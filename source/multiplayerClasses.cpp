@@ -71,6 +71,7 @@ bool MultiplayerLink::sync() {
                     error = "User name too long";
                     break;
                 case LinkWireless::Error::BUFFER_IS_FULL:
+                case LinkWireless::Error::BUSY_TRY_AGAIN:
                     // Hopefully it'll catch up, keep trying
                     exitEarly = true;
                     break;
@@ -109,10 +110,14 @@ bool MultiplayerLink::sync() {
            !stateMachine.IsInState<MultiplayerStates::PlayersReconnecting>();
 }
 
-void MultiplayerLink::send(u16 packet) {
+void MultiplayerLink::sendEvent(u16 packet) {
     bool sent = universal->send(packet);
     if (!sent)
         sendQueue.push(packet);
+}
+
+void MultiplayerLink::broadcastState(u16 packet) const {
+    universal->send(packet);
 }
 
 void MultiplayerLink::deactivate(bool sendBye) {

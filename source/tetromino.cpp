@@ -4,11 +4,17 @@
 #include <string>
 
 namespace GameInfo {
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.colors")))
+#endif
 const int colors[7][3] = {
     {50, 200, 255}, {50, 70, 237},  {249, 146, 2}, {249, 221, 2},
     {70, 216, 2},   {170, 50, 250}, {211, 0, 0},
 };
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.tetrominos")))
+#endif
 const int tetrominos[7][4][4][4] = {
     {
         {
@@ -754,6 +760,9 @@ const int tetrominos[7][4][4][4] = {
     },
 };
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.classic")))
+#endif
 const int classic[7][4][4][4] = {
     {
         {
@@ -1499,6 +1508,9 @@ const int classic[7][4][4][4] = {
     },
 };
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.ars")))
+#endif
 const int ars[7][4][4][4] = {
     {
         {
@@ -2244,6 +2256,9 @@ const int ars[7][4][4][4] = {
     },
 };
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.bars")))
+#endif
 const int bars[7][4][4][4] = {
     {
         {
@@ -2993,6 +3008,9 @@ const int bars[7][4][4][4] = {
     },
 };
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.kick_twice")))
+#endif
 const int kickTwice[4][6][2] = {
     {{0, 0}, {0, -1}, {1, -1}, {-1, -1}, {1, 0}, {-1, 0}},
     {
@@ -3013,6 +3031,9 @@ const int kickTwice[4][6][2] = {
         {0, -1},
     }};
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.kicks")))
+#endif
 const int kicks[2][2][4][5][2] = {
     {  //[Normal block or I block]
      { //[clockwise or counter clockwise]
@@ -3038,6 +3059,9 @@ const int kicks[2][2][4][5][2] = {
       {{0, 0}, {1, 0}, {-2, 0}, {1, 2}, {-2, -1}},
       {{0, 0}, {-2, 0}, {1, 0}, {-2, 1}, {1, -2}}}}};
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.bars_kick_twice")))
+#endif
 const int barsKickTwice[4][8][2] = {
     {{0, 0}, {0, -1}, {0, 1}, {-1, 1}, {1, -1}, {1, 1}, {1, 0}, {-1, 0}},
     {
@@ -3062,6 +3086,9 @@ const int barsKickTwice[4][8][2] = {
         {0, 0},
     }};
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.bars_kicks")))
+#endif
 const int barsKicks[2][2][4][7][2] = {
     {  //[Normal block or I block]
      { //[clockwise or counter clockwise]
@@ -3093,11 +3120,17 @@ const int arikaKicks[] = {
 
 };
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.gravity")))
+#endif
 const float gravity[19] = {0.01667, 0.021017, 0.026977, 0.035256, 0.04693,
                            0.06361, 0.0879,   0.1236,   0.1775,   0.2598,
                            0.388,   0.59,     0.92,     1.46,     2.36,
                            3.91,    6.61,     11.43,    20.0};
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.classic_gravity")))
+#endif
 const float classicGravity[30] = {
     0.0208, 0.0232, 0.0263, 0.0303, 0.0344, 0.0434, 0.0555, 0.0769,
     0.125,  0.1667, 0.2,    0.2,    0.2,    0.25,   0.25,   0.25,
@@ -3114,6 +3147,9 @@ const int blitzLevels[15] = {
     3, 8, 15, 24, 35, 48, 63, 80, 99, 120, 144, 170, 198, 228, 260,
 };
 
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.scoring")))
+#endif
 const int scoring[17][3] = {{// Single
                              100, 0, 0},
                             {// Double
@@ -3155,6 +3191,9 @@ const int comboTable[20] = {0, 1, 1, 2, 2, 3, 3, 4, 4, 4,
                             5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
 
 // Left: 0, Right: 1, Das Left: 2, Das Right: 3, CW: 4, CCW: 5, 180: 6, Drop: 7,
+#ifdef MULTIBOOT
+    __attribute((section(".iwram.finesse")))
+#endif
 const int finesse[7][4][10][4] = {{ // I
                                    {// 0
                                     {2, 7},

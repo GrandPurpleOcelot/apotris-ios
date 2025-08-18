@@ -4,6 +4,10 @@
 
 #ifdef GBA
 
+#ifndef MULTIBOOT
+#include "LinkWirelessMultiboot.hpp"
+#include "LinkCableMultiboot.hpp"
+#endif
 #include "LinkUniversal.hpp"
 #include "def.h"
 #include "scene.hpp"
@@ -141,7 +145,8 @@ public:
 
     void UpdateStateMachine();
 
-    void send(u16 packet);
+    void sendEvent(u16 packet);
+    void broadcastState(u16 packet) const;
 
     void reset() {
         playingPlayerCount = 0;
@@ -218,6 +223,15 @@ struct MultiplayerStates {
     struct Deactivated : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
+#if defined(GBA) && !defined(MULTIBOOT)
+            // Don't touch the adapter on multiboot success
+            if (linkWirelessMultibootAsync->getResult() == Link::AsyncMultiboot::Result::SUCCESS) {
+                return;
+            }
+            if (linkCableMultibootAsync->getResult() == Link::AsyncMultiboot::Result::SUCCESS) {
+                return;
+            }
+#endif
             if (Owner().universal->isActive()) {
                 Owner().universal->deactivate();
             }
@@ -343,7 +357,7 @@ struct MultiplayerStates {
         void OnEnter() override {
 #ifdef GBA
             if (Owner().universal->currentPlayerId() && nextSeed) {
-                Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
+                Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
                 return;
             }
 
@@ -354,7 +368,7 @@ struct MultiplayerStates {
                 nextSeed = (int)randNext() % (SEND_SEED - 1);
 
             Owner().players[Owner().universal->currentPlayerId()].seeded = true;
-            Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
+            Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
 #endif
         }
 
@@ -407,7 +421,7 @@ struct MultiplayerStates {
                 Owner().players[Owner().universal->currentPlayerId()].seeded =
                     true;
 #ifdef GBA
-                Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
+                Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
 #endif
             }
         }
@@ -484,10 +498,10 @@ struct MultiplayerStates {
             if (!sentReady &&
                 Owner().players[Owner().universal->currentPlayerId()].ready) {
                 sentReady = true;
-                Owner().send(UPDATE_STATE + LETS_PLAY);
+                Owner().broadcastState(UPDATE_STATE + LETS_PLAY);
 #ifdef GBA
                 // Help stragglers catch up (I hope I hope I hope)
-                Owner().send(UPDATE_STATE + SEND_SEED + nextSeed);
+                Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
 #endif
             }
         }
@@ -495,7 +509,7 @@ struct MultiplayerStates {
         void OnExit() override {
             if (!sentReady &&
                 Owner().players[Owner().universal->currentPlayerId()].ready)
-                Owner().send(UPDATE_STATE + LETS_PLAY);
+                Owner().broadcastState(UPDATE_STATE + LETS_PLAY);
         }
 
         Transition GetTransition() override {
@@ -555,7 +569,7 @@ struct MultiplayerStates {
             }
 
             if (echoCounter++ % 10 == 0)
-                Owner().send(UPDATE_STATE + WELCOME_BACK);
+                Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
 
             int lostCount = 0;
             for (auto i : Owner().players)
@@ -582,7 +596,7 @@ struct MultiplayerStates {
     struct Won : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
-            Owner().send(UPDATE_STATE + I_WON);
+            Owner().broadcastState(UPDATE_STATE + I_WON);
             updateRank();
         }
 
@@ -603,7 +617,7 @@ struct MultiplayerStates {
         unsigned int echoCounter = 0;
 
         void OnEnter() override {
-            Owner().send(UPDATE_STATE + I_LOST);
+            Owner().broadcastState(UPDATE_STATE + I_LOST);
             updateRank();
             Owner().players[Owner().universal->currentPlayerId()].over = true;
         }
@@ -640,8 +654,8 @@ struct MultiplayerStates {
                     command.execute();
                 }
                 if (echoCounter++ % 60 == 0) {
-                    Owner().send(UPDATE_STATE + I_LOST);
-                    Owner().send(UPDATE_STATE + WELCOME_BACK);
+                    Owner().broadcastState(UPDATE_STATE + I_LOST);
+                    Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
                 }
             }
         }
@@ -666,8 +680,8 @@ struct MultiplayerStates {
 
         void OnEnter() override {
             Owner().players[Owner().universal->currentPlayerId()].over = true;
-            Owner().send(UPDATE_STATE + GAME_OVER);
-            Owner().send(UPDATE_STATE + I_LOST);
+            Owner().broadcastState(UPDATE_STATE + GAME_OVER);
+            Owner().broadcastState(UPDATE_STATE + I_LOST);
         }
 
         void Update() override {
@@ -695,14 +709,14 @@ struct MultiplayerStates {
             }
 
             if (echoCounter++ % 10 == 0) {
-                Owner().send(UPDATE_STATE + GAME_OVER);
-                Owner().send(UPDATE_STATE + I_LOST);
-                Owner().send(UPDATE_STATE + WELCOME_BACK);
+                Owner().broadcastState(UPDATE_STATE + GAME_OVER);
+                Owner().broadcastState(UPDATE_STATE + I_LOST);
+                Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
             }
         }
 
         void OnExit() override {
-            Owner().send(UPDATE_STATE + GAME_OVER);
+            Owner().broadcastState(UPDATE_STATE + GAME_OVER);
             Owner().resetPlayers();
             Owner().playing = false;
             Owner().playingPlayerCount = 0;
@@ -726,7 +740,7 @@ struct MultiplayerStates {
      */
     struct PlayersReconnecting : StateWithOwner<MultiplayerLink> {
 
-        void OnEnter() override { Owner().send(UPDATE_STATE + WELCOME_BACK); }
+        void OnEnter() override { Owner().broadcastState(UPDATE_STATE + WELCOME_BACK); }
 
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
@@ -749,7 +763,7 @@ struct MultiplayerStates {
                 }
             }
 
-            Owner().send(UPDATE_STATE + WELCOME_BACK);
+            Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
         }
 
         Transition GetTransition() override {

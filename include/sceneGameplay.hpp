@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #include "scene.hpp"
 
 class PreviewsElement : public Element {
@@ -324,3 +325,4 @@ public:
 
     Scene* previousScene() { return new SettingsScene(); };
 };
+#endif

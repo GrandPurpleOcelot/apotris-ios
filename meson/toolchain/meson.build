@@ -3,8 +3,6 @@ cc = meson.get_compiler('c')
 
 cc_ver = run_command(cc, '--version', capture: true, check: false)
 
-have_devkitarm = cc_ver.stdout().to_lower().contains('devkitarm')
-
 # List of global compiler arguments.
 compile_args = [
   '-ffunction-sections',        # Every function gets placed into its own section.
@@ -45,13 +43,3 @@ if cc.find_library('c_nano', required: false).found()
 endif
 
 add_project_link_arguments(link_args, language: ['c', 'cpp'])
-
-if have_devkitarm
-  dka_rom_rt = declare_dependency(link_args: ['-specs=gba.specs'])
-  dka_mb_rt = declare_dependency(link_args: ['-specs=gba_mb.specs'])
-  dka_er_rt = declare_dependency(link_args: ['-specs=gba_er.specs'])
-
-  meson.override_dependency('dka-rom-rt', dka_rom_rt)
-  meson.override_dependency('dka-multiboot-rt', dka_mb_rt)
-  meson.override_dependency('dka-ereader-rt', dka_er_rt)
-endif

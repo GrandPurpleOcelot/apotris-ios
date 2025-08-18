@@ -7,6 +7,7 @@
 #include "text.h"
 #include <posprintf.h>
 #include <string>
+#ifndef MULTIBOOT
 
 using namespace BlockEngine;
 
@@ -1285,7 +1286,9 @@ void GraphicsScene::showClear() {
     }
 }
 
+#endif
 void setClearEffect() {
+#ifndef MULTIBOOT
     switch (savefile->settings.clearEffect) {
     case 0:
         loadTiles(0, 3, sprite4tiles_bin, sprite4tiles_bin_size / 32);
@@ -1300,7 +1303,10 @@ void setClearEffect() {
         clearTiles(0, 3, 1);
         break;
     default:
+#endif
         loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size / 32);
+#ifndef MULTIBOOT
         break;
     }
+#endif
 }

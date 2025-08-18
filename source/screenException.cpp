@@ -1,5 +1,6 @@
 #include "multiplayerClasses.h"
 #include "scene.hpp"
+#include "sceneModes.hpp"
 #include "sprites.h"
 
 void MultiplayerExceptionScene::init() {
@@ -95,3 +96,9 @@ void MultiplayerExceptionScene::deinit() {
     for (auto& wordSprite : wordSprites)
         delete wordSprite;
 }
+
+#ifndef MULTIBOOT
+Scene *MultiplayerExceptionScene::previousScene() { return new MainMenuScene(); }
+#else
+Scene *MultiplayerExceptionScene::previousScene() { return new MultBattleScene(); }
+#endif

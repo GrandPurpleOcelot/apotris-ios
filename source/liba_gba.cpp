@@ -1,23 +1,28 @@
 #include "platform.hpp"
 
 #ifdef GBA
-#include "LinkCableMultiboot.hpp"
 #include "LinkUniversal.hpp"
 #include "achievementStructure.h"
 #include "aeabi.h"
 #include "agbabi.h"
 #include "detectEmulators.h"
 #include "flashSaves.h"
+#ifndef MULTIBOOT
+#include "LinkCableMultiboot.hpp"
 #include "gba_flash.h"
 #include "gba_sram.h"
+#include "maxmod.h"
+#else
+#define AGB_ROM ((u8*)0x8000000)
+#endif
 #include "gbfs.h"
 #include "gbp_logo.hpp"
 #include "logging.h"
-#include "maxmod.h"
 #include "multiplayerClasses.h"
 #include "rumble.h"
 #include "scene.hpp"
 #include "text.h"
+#include "LinkWirelessMultiboot.hpp"
 
 // #include <string>
 // #include "scene.hpp"
@@ -25,6 +30,8 @@
 bool unlock_gbp();
 void loadAudio();
 void onKeyInterrupt();
+
+interrupt_vector linkVBlankHandler = nullptr;
 
 MultiplayerLink* multiplayerLink = nullptr;
 std::string exceptionReason;
@@ -52,12 +59,15 @@ void onHBlank() {
 LinkUniversal* linkUniversal = nullptr;
 LinkUniversal* linkConnection = nullptr;
 
+#ifndef MULTIBOOT
 extern struct FlashInfo gFlashInfo;
 struct FlashInfo flashInfo;
 struct SramInfo sramInfo;
+#endif
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
+#ifndef MULTIBOOT
 mm_word myEventHandler(mm_word msg, mm_word param) {
     if (msg == MMCB_SONGMESSAGE)
         return 0;
@@ -70,6 +80,7 @@ mm_word myEventHandler(mm_word msg, mm_word param) {
 
     return 0;
 }
+#endif
 
 void toggleBG(int layer, bool state) {
     if (state) {
@@ -129,18 +140,8 @@ void showSprites(int count) {
     obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
 }
 
-unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait) {
-    // Calculate the duration of one transfer in milliseconds
-    float transferDurationMs = (float)interval * 61.04f / 1000.0f;
-    // Calculate the total duration for the specified number of frames in
-    // milliseconds
-    float totalDurationMs = (float)framesToWait * 16.67f;
-    // Calculate how many transfers can occur in the total duration
-    u32 transfers = (u32)((float)totalDurationMs / transferDurationMs);
-    return transfers;
-}
-
 void testSaveMedia() {
+#ifndef MULTIBOOT
     const int testRegion = SAVE_32K_END;
     const int testMirror = SAVE_64K_END;
     flashInfo.size = 0;
@@ -182,6 +183,7 @@ void testSaveMedia() {
     if (err)
         return; // EEPROM or no save media, no luck
     flashInfo = gFlashInfo;
+#endif
 }
 
 void platformInit() {
@@ -192,25 +194,26 @@ void platformInit() {
     while (REG_VCOUNT != 161)
         ;
 
-    testSaveMedia();
-
 #ifndef NO_DIAGNOSE
     logInitMgba();
 #endif
 
-    // Init RTC for RNG
-    int rtc_error_code = __agbabi_rtc_init();
-    if (!rtc_error_code)
-        sqran((int)__agbabi_rtc_time());
-
+#ifndef MULTIBOOT
+    testSaveMedia();
     loadAudio();
 
     mmInitDefault((mm_addr)soundbank, 12);
     mmSetEventHandler((mm_callback)myEventHandler);
+#endif
 
     interrupt_init();
     interrupt_unmask();
     REG_DISPSTAT |= (1 << 3) | (1 << 4);
+    interrupt_set_handler(INTR_VBLANK, onVBlank);
+    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
+    linkVBlankHandler = LINK_UNIVERSAL_ISR_VBLANK;
+
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER1);
@@ -220,18 +223,6 @@ void platformInit() {
     interrupt_set_handler(INTR_KEYPAD, onKeyInterrupt);
     interrupt_enable(INTR_KEYPAD);
 #endif
-
-    interrupt_set_handler(INTR_VBLANK, onVBlank);
-
-    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
-    interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
-
-    // interrupt_add(INTR_HBLANK, onHBlank);
-
-    loadAudio();
-
-    mmInitDefault((mm_addr)soundbank, 12);
-    mmSetEventHandler((mm_callback)myEventHandler);
 
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
 
@@ -246,13 +237,17 @@ void setUpLinkUniversal(bool detectEmus) {
     inaccurateEmulator = !detectEmus || detect_inaccurate_emulator();
     const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
     const u32 wirelessInterval = 50; // No reason to go lower
-    const u32 wiredInterval =
-        300; // 150 usually works but some devices needed 300...
+    const u32 wiredInterval = 300; // 150 usually works, but some devices need 300...
     delete multiplayerLink;
     delete linkUniversal;
 
     linkUniversal = new LinkUniversal(
-        LinkUniversal::Protocol::WIRELESS_AUTO, "Apotris",
+#ifdef MULTIBOOT
+        LinkUniversal::Protocol::AUTODETECT,
+#else
+        LinkUniversal::Protocol::WIRELESS_AUTO, // We use auto to support gpSP
+#endif
+        "Apotris",
         (LinkUniversal::CableOptions){
             .baudRate =
                 LinkCable::BaudRate::BAUD_RATE_3, // Baud 3 is required for
@@ -275,6 +270,7 @@ void deinitialize() {}
 static int rumbleTimer = 0;
 
 bool closed() {
+#ifndef MULTIBOOT
     rumble_update();
     if (rumbleTimer > 0) {
         rumbleTimer--;
@@ -283,6 +279,7 @@ bool closed() {
     } else {
         rumble_set_state(rumble_hard_stop);
     }
+#endif
     return true;
 }
 
@@ -408,6 +405,7 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
 }
 
 void initRumble() {
+#ifndef MULTIBOOT
     if (!savefile->settings.rumble)
         return;
 
@@ -427,9 +425,11 @@ void initRumble() {
     } else {
         rumble_init(nullptr);
     }
+#endif
 }
 
 bool unlock_gbp() {
+#ifndef MULTIBOOT
     bool gbp_detected = false;
 
     memcpy16_fast((u16*)0x6008000, gbp_logo_pixels,
@@ -453,11 +453,13 @@ bool unlock_gbp() {
     REG_WAITCNT = 0x4317;
 
     return gbp_detected;
+#endif
 }
 
 int display_value, stat_value, dsc_value, dmg_value;
 bool prevGradient, isLinked;
 
+#ifndef MULTIBOOT
 void disableVolatileInterrupts(bool setDispCnt) {
     display_value = REG_DISPCNT;
 
@@ -507,9 +509,10 @@ void enableVolatileInterrupts(bool setDispCnt) {
     if (prevGradient)
         gradient(1);
 }
+#endif
 
 void sfx(int s) {
-
+#ifndef MULTIBOOT
     int id = SoundEffectIds[s];
 
     if (id == -1)
@@ -517,9 +520,11 @@ void sfx(int s) {
 
     mm_sfxhand h = mmEffect(id);
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
+#endif
 }
 
 void sfxRate(int sound, float rate) {
+#ifndef MULTIBOOT
     int id = SoundEffectIds[sound];
 
     if (id == -1)
@@ -534,6 +539,7 @@ void sfxRate(int sound, float rate) {
     };
 
     mmEffectEx(&s);
+#endif
 }
 
 void stopDMA() { disableDMA = true; }
@@ -548,8 +554,11 @@ void clearTiles(int tileset, int index, int count) {
 
 IWRAM_CODE void onVBlank() {
 
+#ifndef MULTIBOOT
     mmVBlank();
-    LINK_UNIVERSAL_ISR_VBLANK();
+#endif
+    if (linkVBlankHandler)
+        linkVBlankHandler();
 
     if (disableHBlank) {
         interrupt_disable(INTR_HBLANK);
@@ -571,7 +580,9 @@ IWRAM_CODE void onVBlank() {
     }
 
     frameCounter++;
+#ifndef MULTIBOOT
     mmFrame();
+#endif
 }
 
 void sprite_enable_affine(OBJ_ATTR* sprite, int affineId, bool doubleSize) {
@@ -594,11 +605,17 @@ void sprite_rotscale(OBJ_ATTR* sprite, FIXED sizex, FIXED sizey, int angle,
     obj_aff_rotscale(&obj_aff_buffer[aff_id], sizex, sizey, angle);
 }
 
-void setMusicTempo(int tempo) { mmSetModuleTempo(tempo); }
+void setMusicTempo(int tempo) {
+#ifndef MULTIBOOT
+    mmSetModuleTempo(tempo);
+#endif
+}
 
 void setMusicVolume(int volume) {
     musicVolume = volume;
+#ifndef MULTIBOOT
     mmSetModuleVolume(volume);
+#endif
 }
 
 void startSong(int song, bool loop) {
@@ -607,20 +624,34 @@ void startSong(int song, bool loop) {
     if (n < 0)
         return;
 
+#ifndef MULTIBOOT
     mmStart(n, (!loop) ? MM_PLAY_ONCE : MM_PLAY_LOOP);
     mmSetModuleVolume(musicVolume);
+#endif
 }
 
-void stopSong() { mmStop(); }
+void stopSong() {
+#ifndef MULTIBOOT
+    mmStop();
+#endif
+}
 
 void setTiles(int tilemap, int index, int count, u32 tile) {
     u16* dst = (u16*)&se_mem[tilemap];
     memset16(&dst[index], tile, count);
 }
 
-void pauseSong() { mmPause(); }
+void pauseSong() {
+#ifndef MULTIBOOT
+    mmPause();
+#endif
+}
 
-void resumeSong() { mmResume(); }
+void resumeSong() {
+#ifndef MULTIBOOT
+    mmResume();
+#endif
+}
 
 void clearTilemapEntries(int tilemap, int index, int count) {
     u16* dst = (u16*)&se_mem[tilemap];
@@ -629,6 +660,7 @@ void clearTilemapEntries(int tilemap, int index, int count) {
 }
 
 void loadSavefile() {
+#ifndef MULTIBOOT
     delete savefile;
 
     savefile = new Save();
@@ -638,9 +670,11 @@ void loadSavefile() {
     } else {
         __agbabi_memcpy1((u8*)savefile, sram_mem, sizeof(Save));
     }
+#endif
 }
 
 void saveSavefile() {
+#ifndef MULTIBOOT
     if (flashInfo.size != 0) {
         flash_write(0, (u8*)savefile, sizeof(Save));
     } else {
@@ -650,6 +684,7 @@ void saveSavefile() {
             save_sram_flash();
     }
     status.update(&savefile->settings);
+#endif
 }
 
 void mirrorPalettes(int index, int count) {
@@ -764,9 +799,11 @@ void toggleSpriteSorting(bool state) { sortSprites = state; }
 
 IWRAM_CODE void onKeyInterrupt() {
     // Soft reset on bootleg carts will destroy the save
+#ifndef MULTIBOOT
     if (bootleg_type)
         return;
     mmStop();
+#endif
     REG_IME = 0;
     REG_DMA0CNT_H &= ~DMA_ENABLE;
     REG_DMA1CNT_H &= ~DMA_ENABLE;
@@ -780,6 +817,7 @@ IWRAM_CODE void onKeyInterrupt() {
 }
 
 void sleep() {
+#ifndef MULTIBOOT
     disableVolatileInterrupts(true);
 
     REG_P1CNT = 0b1100001100000100;
@@ -787,6 +825,7 @@ void sleep() {
     Stop();
 
     enableVolatileInterrupts(true);
+#endif
 }
 
 void setUpPresentException(std::string error) {

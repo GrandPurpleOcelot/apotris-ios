@@ -28,6 +28,9 @@
 
 void checkCustomSkins();
 
+#ifdef MULTIBOOT
+__attribute((section(".iwram.word_sprites")))
+#endif
 WordSprite* wordSprites[MAX_WORD_SPRITES];
 
 int titleFloat = 0;
@@ -39,6 +42,7 @@ const int bgGridHeight = 30;
 #ifndef GBA
 const int bgGridHeight = 42;
 #endif
+
 u16 backgroundArray[bgGridHeight][30];
 
 int bgSpawnBlock = 0;
@@ -63,7 +67,12 @@ const std::list<std::string> menuOptions = {
 const std::list<std::string> gameOptions = {
     "Marathon", "Sprint",       "Dig",        "Ultra",   "Blitz",
     "Combo",    "Survival",     "Classic",    "Master",  "Death",
-    "Zen",      "Multi Battle", "CPU Battle", "Training"};
+    "Zen",      "Multi Battle",
+#ifdef GBA
+    "Wireless Pak",
+    "Wired Pak",
+#endif
+    "CPU Battle", "Training"};
 const std::list<std::string> settingsOptions = {
     "Graphics", "Audio", "Controls", "Handling", "Gameplay", "Saving"};
 
@@ -79,6 +88,8 @@ std::string previousElement;
 std::list<std::string> path;
 
 MenuKeys menuKeys;
+
+#ifndef MULTIBOOT
 
 void showTitleSprites() {
     for (int i = 0; i < 2; i++)
@@ -102,6 +113,8 @@ void showTitleSprites() {
     if (titleFloat >= 512)
         titleFloat = 0;
 }
+
+#endif
 
 void fallingBlocks() {
     gravity++;
@@ -209,6 +222,7 @@ void fallingBlocks() {
     }
 }
 
+#ifndef MULTIBOOT
 std::string timeToStringHours(int frames) {
     int t = (int)frames * 0.0167f;
     int minutes = (t / 60) % 60;
@@ -684,9 +698,11 @@ void MainMenuScene::deinit() {
     resetSmallText();
     clearText();
 }
+#endif
 
 void initFallingBlocks() { memset16(backgroundArray, 0, 30 * (bgGridHeight)); }
 
+#ifndef MULTIBOOT
 void checkCustomSkins() {
     for (auto& customSkin : savefile->customSkins) {
         bool changed = false;
@@ -723,3 +739,4 @@ void checkCustomSkins() {
         customSkin.changed = changed && sum;
     }
 }
+#endif

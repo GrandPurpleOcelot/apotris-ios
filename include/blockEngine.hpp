@@ -618,10 +618,13 @@ public:
 
     int lengthX = 10;
     int lengthY = 40;
-    int board[40][10]{};
+    int board[40][10]{};
 
-    uint16_t bitboard[40]{};
-    int columnHeights[10]{};
+
+    uint16_t bitboard[40]{};
+
+    int columnHeights[10]{};
+
 
     Pawn pawn = Pawn(0, 0);
     int held = -1;
@@ -762,6 +765,7 @@ typedef struct Values {
     int wellX;
 } Values;
 
+#ifndef MULTIBOOT
 class Bot {
 public:
     bool thinking = true;
@@ -824,5 +828,6 @@ public:
             delete testGame;
     }
 };
+#endif
 
 } // namespace BlockEngine

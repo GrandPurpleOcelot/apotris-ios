@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #include "scene.hpp"
 
 class MusicVolumeElement : public Element {
@@ -317,3 +318,4 @@ public:
 
     ~TrackListScene() { deinit(); }
 };
+#endif

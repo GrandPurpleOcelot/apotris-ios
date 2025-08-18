@@ -7,7 +7,9 @@
 #ifdef GBA
 
 #include "liba_gba.h"
+#ifndef MULTIBOOT
 #include "maxmod.h"
+#endif
 #include "tonc.h"
 #include "util/random.h"
 #include "whisky.h"

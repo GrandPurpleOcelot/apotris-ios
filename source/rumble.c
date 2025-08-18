@@ -1,4 +1,5 @@
 #include "rumble.h"
+#ifndef MULTIBOOT
 #include <stdbool.h>
 
 /*
@@ -196,3 +197,4 @@ void rumble_set_state(enum RumbleState state) {
         GPIO_PORT_DATA = (rumble_state == rumble_start) << 3;
     }
 }
+#endif

@@ -40,7 +40,12 @@ std::string getDescription(const std::string& element) {
 
     } else if (element == "Multi Battle") {
         return "Battle your friends.";
-
+#ifdef GBA
+    } else if (element == "Wireless Pak") {
+        return "Battle friends without a cart via wireless.";
+    } else if (element == "Wired Pak") {
+        return "Battle friends without a cart via cable.";
+#endif
     } else if (element == "CPU Battle") {
         return "Go against an AI opponent.";
 

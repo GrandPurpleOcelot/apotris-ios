@@ -1,3 +1,4 @@
+#ifndef MULTIBOOT
 #include "blockEngine.hpp"
 #include "def.h"
 #include "logging.h"
@@ -533,3 +534,4 @@ void showTestBoard(const u16* testBoard) {
     //     }
     // }
 }
+#endif

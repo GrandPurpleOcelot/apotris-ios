@@ -5,6 +5,7 @@
 #include <future>
 #include <nlohmann/json.hpp>
 #include <queue>
+#include <sstream>
 
 constexpr char LINK_UNIVERSAL_MAX_PLAYERS = 5;
 constexpr char LINK_WIRELESS_QUEUE_SIZE = 30;

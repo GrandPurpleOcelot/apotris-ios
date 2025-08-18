@@ -39,7 +39,7 @@ public:
     virtual void deinit() = 0;
     virtual Scene* previousScene() = 0;
 
-    Scene() {};
+    Scene() = default;
 
     virtual ~Scene() {};
 };
@@ -91,6 +91,7 @@ public:
     void showEndScreenOptions();
 };
 
+#ifndef MULTIBOOT
 class TitleScene : public Scene {
     WordSprite wordSprites[MAX_WORD_SPRITES];
 
@@ -116,6 +117,7 @@ class TitleScene : public Scene {
 
     ~TitleScene() { deinit(); };
 };
+#endif
 
 class SimpleListScene : public Scene {
 public:
@@ -180,6 +182,7 @@ public:
     ~SimpleListScene() { deinit(); };
 };
 
+#ifndef MULTIBOOT
 class MainMenuScene : public SimpleListScene {
 public:
     void init();
@@ -202,6 +205,7 @@ public:
     };
     std::string name() { return ""; };
 };
+#endif
 
 class ModeListScene : public SimpleListScene {
 public:
@@ -306,6 +310,7 @@ public:
     ~OptionListScene() { deinit(); };
 };
 
+#ifndef MULTIBOOT
 class ConfirmSaveScene : public Scene {
 public:
     int timer = 0;
@@ -410,8 +415,6 @@ public:
     std::string name() { return "Settings"; };
 };
 
-#ifndef MULTIBOOT
-
 class CreditsScene : public Scene {
 public:
     virtual std::list<std::string> getOptionList() { return menuOptions; };
@@ -460,6 +463,8 @@ public:
     std::string name() { return "Links"; };
 };
 
+#endif
+
 class MultiplayerExceptionScene : public Scene {
 private:
     std::string what;
@@ -477,10 +482,11 @@ public:
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return new MainMenuScene(); };
+    Scene* previousScene();;
 
     ~MultiplayerExceptionScene() { deinit(); };
 };
+#ifndef MULTIBOOT
 
 class QRScene : public Scene {
 public:

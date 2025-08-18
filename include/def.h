@@ -257,7 +257,9 @@ extern int frameCounter;
 extern OBJ_ATTR* titleSprites[2];
 extern OBJ_ATTR* queueFrameSprites[3];
 
+#ifndef MULTIBOOT
 extern BlockEngine::Bot* testBot;
+#endif
 extern u8 enemyBoard[4][20][10];
 
 extern int mode;
@@ -279,9 +281,11 @@ extern bool proMode;
 
 extern bool gradientEnabled;
 
+#ifndef MULTIBOOT
 extern int botThinkingSpeed;
 extern int botSleepDuration;
 extern int botStepMax;
+#endif
 
 extern int clearTimer;
 extern int maxClearTimer;
@@ -362,10 +366,19 @@ struct Packet {
 #ifndef GBA
 extern std::string roomId;
 #endif
+#ifdef PC
+std::string getSavefilePath();
+#endif
 extern std::string exceptionReason;
 
+#ifndef MULTIBOOT
 struct StatusData;
 extern StatusData status;
+
+#endif
+#ifdef GBA
+extern interrupt_vector linkVBlankHandler;
+#endif
 
 typedef struct HSV_COLOR {
     int hue = 0;

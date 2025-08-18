@@ -1,10 +1,12 @@
 #pragma once
 #include "audio_files.h"
 #include "interrupt.h"
+#ifndef MULTIBOOT
 #include "mm_types.h"
+#endif
 #include <map>
 #include <posprintf.h>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <tonc.h>
 /* #include "soundbank.h" */
@@ -67,7 +69,9 @@ INLINE void setSpriteTileRow(int index, int y, int n) {
 
 extern OBJ_AFFINE* obj_aff_buffer;
 
+#ifndef MULTIBOOT
 extern mm_word myEventHandler(mm_word msg, mm_word param);
+#endif
 
 #define blendInfo REG_BLDCNT
 #define SAVE_32K_END 0x7FFF

@@ -1,3 +1,4 @@
+#ifndef MULTIBOOT
 #include "logging.h"
 #include "sceneAudio.hpp"
 
@@ -43,3 +44,4 @@ bool TrackListScene::control() {
 
     return false;
 }
+#endif

@@ -1,3 +1,4 @@
+#ifndef MULTIBOOT
 #include "sceneColorEditor.hpp"
 
 #include "sprite30tiles_bin.h"
@@ -850,3 +851,4 @@ void ColorSelectorScene::deinit() {
     clearText();
     clearSprites(128);
 }
+#endif

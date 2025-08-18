@@ -1,3 +1,4 @@
+#ifndef MULTIBOOT
 #include "sceneControls.hpp"
 
 bool ControlOptionScene::control() {
@@ -18,3 +19,4 @@ bool ControlOptionScene::control() {
 
     return false;
 }
+#endif

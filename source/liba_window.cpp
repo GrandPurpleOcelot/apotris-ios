@@ -456,7 +456,7 @@ std::string getSavefilePath() {
     }
 
     // Build the path: ~/Library/Application Support/Apotris/
-    savefileDir = std::string(homeDir) + "/Library/Application Support/Apotris";
+    std::string savefileDir = std::string(homeDir) + "/Library/Application Support/Apotris";
     // Create directory if it doesn't exist
     mkdir(savefileDir.c_str(), 0755);
     return savefileDir + "/Apotris.sav";
@@ -484,7 +484,11 @@ std::string getSavefilePath() {
 
     if (saveFileDir != ".") {
         // Create directory if it doesn't exist
+#ifndef WINDOWS
         mkdir(saveFileDir.c_str(), 0755);
+#else
+        mkdir(saveFileDir.c_str());
+#endif
     }
 
     std::string preferredSavefile = saveFileDir + "/Apotris.sav";

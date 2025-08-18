@@ -36,12 +36,15 @@ bool showingStats = false;
 
 bool saveExists = false;
 BlockEngine::Game* quickSave = nullptr;
+#ifndef MULTIBOOT
 BlockEngine::Bot* testBot = nullptr;
+#endif
 
 int igt = 0;
 
 bool ended = false;
 
+#ifndef MULTIBOOT
 const std::string modeStrings[] = {
     "Marathon", "Sprint",  "Dig",    "Battle",   "Ultra", "Blitz", "Combo",
     "Survival", "Classic", "Master", "Training", "Zen",   "Death",
@@ -62,6 +65,7 @@ const std::string modeOptionStrings[][5] = {
     {""},
     {"Normal", "Classic"},
 };
+#endif
 
 void GameScene::endScreen() {
     const int optionsHeight = 11;
@@ -271,7 +275,11 @@ void GameScene::endScreen() {
                 buildBG(3, 0, 27, 0, 1, true);
                 multiplayerLink->deactivate(true);
                 multiplayer = false;
+#ifndef MULTIBOOT
                 changeScene(new MainMenuScene, Transitions::FADE);
+#else
+                changeScene(new MultBattleScene, Transitions::FADE);
+#endif
                 return;
             } else if (selection == 1) {
                 sfx(SFX_MENUCANCEL);
@@ -768,7 +776,7 @@ int GameScene::pauseMenu() {
                     buildBG(3, 0, 27, 0, 1, true);
                     addGameStats();
                     playSongRandom(0);
-                    changeScene(new MainMenuScene(), Transitions::FADE);
+                    changeScene(new MultBattleScene(), Transitions::FADE);
                     return 1;
                 }
             }
@@ -795,10 +803,12 @@ int GameScene::pauseMenu() {
                         if (savefile->settings.colors == 3)
                             setPalette();
 
+#ifndef MULTIBOOT
                         if (enableBot) {
                             delete testBot;
                             testBot = new Bot(game);
                         }
+#endif
 
                         aprint("Loaded!",
                                22 - (savefile->settings.aspectRatio == 1), 18);
@@ -1107,6 +1117,7 @@ void GameScene::showModeText() {
         std::string str;
         std::string str2;
 
+#ifndef MULTIBOOT
         str = modeStrings[game->gameMode - 1];
 
         if (game->gameMode == TRAINING)
@@ -1176,6 +1187,7 @@ void GameScene::showModeText() {
                          counter * 8, 14);
             counter++;
         }
+#endif
 
         int mode = game->gameMode;
 
@@ -1272,7 +1284,8 @@ void saveReplay() {
 
 #ifdef PC
 #ifdef __APPLE__
-    std::string filePath = initSavefileDir() + "/replay.sav";
+    std::string filePath = getSavefilePath();
+    filePath.replace(filePath.find("Apotris.sav"), 11, "replay.sav");
     std::ofstream output(filePath, std::ios::binary | std::ios::out);
 #else
     std::ofstream output("replay.sav", std::ios::binary | std::ios::out);
@@ -1323,7 +1336,8 @@ void loadReplay() {
 #ifdef PC
 
 #ifdef __APPLE__
-    std::string filePath = initSavefileDir() + "/replay.sav";
+    std::string filePath = getSavefilePath();
+    filePath.replace(filePath.find("Apotris.sav"), 11, "replay.sav");
     std::ifstream input(filePath, std::ios::binary | std::ios::in);
 #else
     std::ifstream input("replay.sav", std::ios::binary | std::ios::in);

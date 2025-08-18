@@ -1,7 +1,8 @@
+#pragma once
+
+#ifndef MULTIBOOT
 #include "blockEngine.hpp"
 #include "def.h"
-
-#pragma once
 
 struct StatusData {
     [[maybe_unused]] const unsigned int primaryMagic = 1689123404;
@@ -87,3 +88,4 @@ struct StatusData {
     }
 
 } __attribute((aligned(4)));
+#endif

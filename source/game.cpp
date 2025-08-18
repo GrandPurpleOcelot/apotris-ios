@@ -10,9 +10,7 @@
 
 #ifdef GBA
 #include "multiplayerClasses.h"
-#endif
-
-#ifdef GBA
+#include "sceneModes.hpp"
 #include <rumble.h>
 #endif // GBA
 
@@ -1144,8 +1142,8 @@ void showQueue(bool offsetSpriteIndex) {
 
 bool GameScene::control() {
     if (multiplayerStart) {
-        multiplayerStart = false;
         changeScene(new GameScene());
+        multiplayerStart = false;
         return true;
     }
     if (paused || !counted)
@@ -1153,6 +1151,7 @@ bool GameScene::control() {
 
     key_poll();
 
+#ifndef MULTIBOOT
     if (demo && key_hit(KEY_FULL)) {
         if (key_hit(KEY_SELECT)) {
             if (botThinkingSpeed != 11) {
@@ -1170,6 +1169,7 @@ bool GameScene::control() {
             return true;
         }
     }
+#endif
 
     if (replaying && key_hit(KEY_FULL)) {
         exitGame = true;
@@ -1404,15 +1404,19 @@ void GameScene::showText() {
         if (gm == MASTER) {
             str = GameInfo::masterGrades[game->grade + game->coolCount];
 
+#ifndef MULTIBOOT
             status.gradeString = str;
             status.gradeIndex = game->grade + game->coolCount;
+#endif
         } else if (gm == DEATH) {
             const int index = game->level / 100 - game->regretCount;
 
             str = GameInfo::deathGrades[index];
 
+#ifndef MULTIBOOT
             status.gradeString = str;
             status.gradeIndex = index;
+#endif
         }
 
         wordSprites[1].setText(str);
@@ -3402,8 +3406,10 @@ void GameScene::update() {
 
     if (exitGame) {
         if (handlingTest) {
+#ifndef MULTIBOOT
             handlingTest = false;
             changeScene(new HandlingOptionScene(), Transitions::FADE);
+#endif
         } else if (replaying) {
             replaying = false;
             path.clear();
@@ -3412,8 +3418,12 @@ void GameScene::update() {
             buildBG(3, 0, 27, 0, 1, true);
             sceneSwitcher(modeToString(previousGameOptions->mode));
         } else {
+#ifndef MULTIBOOT
             enableBot = false;
             changeScene(new TitleScene(), Transitions::FADE);
+#else
+            changeScene(new MultBattleScene(), Transitions::FADE);
+#endif
         }
 
         for (auto& item : currentReplay)
@@ -3436,13 +3446,17 @@ void GameScene::update() {
     }
 
     if (game->gameMode == BATTLE && !multiplayer) {
+#ifndef MULTIBOOT
         if (!botGame->clearLock) {
             testBot->run();
             botGame->update();
         }
         handleBotGame();
+#endif
     } else if (enableBot && !replaying) {
+#ifndef MULTIBOOT
         testBot->run();
+#endif
 #ifdef GBA
         multiplayerLink->sync();
 #endif
@@ -3561,10 +3575,12 @@ void GameScene::update() {
         showCredits();
     }
 
+#ifndef MULTIBOOT
     if (demo && game->timer > 60 * 60 * 60 * 3) {
         changeScene(new TitleScene(), Transitions::FADE);
         return;
     }
+#endif
 
     if (flashTimer) {
         zoneFlash();

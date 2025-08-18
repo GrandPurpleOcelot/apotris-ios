@@ -1,5 +1,6 @@
 #include "def.h"
 
+#ifndef MULTIBOOT
 #ifdef GBA
 #include "agbabi.h"
 #include "flashSaves.h"
@@ -334,5 +335,6 @@ void save_sram_flash() {
     aprint("   Saved!", 21, 19); // spaces necessary to "erase" the previous
                                  // text
 }
+#endif
 #endif
 #endif

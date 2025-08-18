@@ -9,6 +9,7 @@
 
 #ifdef GBA
 #include "LinkUniversal.hpp"
+#include "sceneModes.hpp"
 #endif
 
 #include "achievementStructure.h"
@@ -86,10 +87,12 @@ bool gradientEnabled = false;
 
 Options* previousGameOptions = nullptr;
 
+#ifndef MULTIBOOT
 #ifdef GBA
 __attribute((section(".ewram.status")))
 #endif
 StatusData status{};
+#endif
 
 #ifdef GBA
 u16 gradientTable[192 + 1];
@@ -181,7 +184,11 @@ int main() {
 
     initialize();
 
+#ifndef MULTIBOOT
     changeScene(new TitleScene());
+#else
+    changeScene(new MultBattleScene());
+#endif
 
     // start screen animation
     while (closed()) {
@@ -1087,6 +1094,7 @@ void startGame(BlockEngine::Options options, int seed) {
 
     *previousGameOptions = options;
 
+#ifndef MULTIBOOT
     if (!replaying && enableBot) {
         log("starting bot!");
 
@@ -1095,13 +1103,16 @@ void startGame(BlockEngine::Options options, int seed) {
     } else if (options.mode == BATTLE && !multiplayer) {
         startBotGame(seed);
     }
+#endif
 
     if (options.mode == BlockEngine::ZEN) {
         game->score = savefile->boards.zen;
     }
 
+#ifndef MULTIBOOT
     status.startGame();
     status.Options = previousGameOptions;
+#endif
 }
 
 void startGame(int seed) {
@@ -1118,6 +1129,7 @@ void startGame() {
     startGame(*previousGameOptions, (int)randNext());
 }
 
+#ifndef MULTIBOOT
 void startBotGame(int seed) {
     startMultiplayerGame(seed);
     multiplayer = false;
@@ -1138,6 +1150,7 @@ void startBotGame(int seed) {
     status.startGame();
     status.Options = previousGameOptions;
 }
+#endif
 
 void setPawnPalette(int dest, int n, int blend, bool flip) {
     dest += 16;

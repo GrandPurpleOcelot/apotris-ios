@@ -1,4 +1,5 @@
 #pragma once
+#ifndef MULTIBOOT
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,4 +24,5 @@ void rumble_update();
 
 #ifdef __cplusplus
 }
+#endif
 #endif

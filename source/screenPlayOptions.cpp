@@ -5,6 +5,9 @@
 #include "sprites.h"
 #ifdef GBA
 #include "detectEmulators.h"
+#ifndef MULTIBOOT
+#include "sendMultiboot.h"
+#endif
 #else
 #include "LinkWebRTC.hpp"
 #endif
@@ -12,7 +15,14 @@
 #include <cstring>
 #include <utility>
 
+void no_op_isr() {}
+
 bool lostConnection = true;
+
+#if defined(GBA) && !defined(MULTIBOOT)
+LinkWirelessMultiboot::Async* linkWirelessMultibootAsync = new LinkWirelessMultiboot::Async("Apotris");
+LinkCableMultiboot::Async* linkCableMultibootAsync = new LinkCableMultiboot::Async();
+#endif
 
 void PlayOptionScene::init() {
     loadSpriteTiles(620, &sprite49tiles_bin, 1, 1);
@@ -236,6 +246,7 @@ void PlayOptionScene::start() {
     int goal = 0;
     int bTypeHeight = 0;
 
+#ifndef MULTIBOOT
     for (auto const& element : elementList) {
         std::string s = element->getLabel();
         int value = element->getValue();
@@ -267,6 +278,7 @@ void PlayOptionScene::start() {
             mode = element->value;
         }
     }
+#endif
 
     BlockEngine::Options newOptions;
 
@@ -627,34 +639,73 @@ void ClassicScene::update() {
 
 int lastState = 0;
 void MultBattleScene::init() {
+#ifdef MULTIBOOT
+    toggleBG(3, false);
+
+    loadSpriteTiles(512 + 64, title1tiles_bin, 8, 4);
+    loadSpriteTiles(512 + 96, title2tiles_bin, 8, 4);
+
+    loadPalette(12 + 16, 0, title_pal_bin, title_pal_bin_size / 2);
+    loadTiles(2, 102, sprite37tiles_bin, sprite37tiles_bin_size / 32);
+    loadTiles(2, 105, sprite41tiles_bin, sprite41tiles_bin_size / 32);
+
+    setSkin();
+    setLightMode();
+
+    clearSprites(128);
+
+    // backgroundGrid
+    setTiles(26, 0, 32 * 32,
+             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i] = new WordSprite(i, 32 + i * 3, 256 + i * 12);
+
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i]->setup(i, 64 + i * 3, 256 + i * 12, false);
+
+    clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
+
+    enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
+#else
     PlayOptionScene::init();
+#endif
 
-#ifdef GBA
-
+#if defined(GBA)
     key_poll();
     // Secret feature: hold L on real hardware to force cable mode
-    if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba()))
-        // mGBA only supports cable, so set it to speed up initial multiplayer
-        // sync
-        multiplayerLink->universal->setProtocol(LinkUniversal::Protocol::CABLE);
-    else if (key_held(KEY_R) || inaccurateEmulator)
+    if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba())) {
+        // mGBA only supports cable, so set it to speed up initial multiplayer sync
+        multiplayerLink->universal->setProtocol(
+                LinkUniversal::Protocol::CABLE);
+    }
+    else if (key_held(KEY_R) || inaccurateEmulator) {
         // gpSP only does wireless, users may want to override
         multiplayerLink->universal->setProtocol(
-            LinkUniversal::Protocol::WIRELESS_AUTO);
-    else
-        // This undoes the hold L override if exiting and returning to this
-        // screen
+                LinkUniversal::Protocol::WIRELESS_AUTO);
+    }
+    // If we booted wirelessly, attempt to restore existing connection
+    // Also support calling from the multiboot-send menu on cart if wireless
+    else if (LinkWireless::isWirelessMultibootRom() ||
+        (multiplayerLink->universal->getProtocol() ==
+            LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING
+            && !LinkWireless::isWirelessMultibootRom())) {
+        multiplayerLink->universal->setProtocol(
+                LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING);
+    }
+    else {
+        // This undoes the hold L or R overrides if exiting and returning to this screen
         multiplayerLink->universal->setProtocol(
             LinkUniversal::Protocol::AUTODETECT);
+    }
 
     if (!inaccurateEmulator) {
         rumbleHandler = interrupt_get_handler(INTR_SERIAL);
         interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     }
-
 #endif
 
-    multiplayerLink->active = true;
+    multiplayerLink->activate();
 
     lastState = 0;
 
@@ -736,7 +787,9 @@ bool MultBattleScene::control() {
 
             changeScene(previousScene(), Transitions::FADE);
 
+#ifndef MULTIBOOT
             multiplayerLink->deactivate(false);
+#endif
 
             return true;
         } else {
@@ -745,7 +798,6 @@ bool MultBattleScene::control() {
             movingDirection = -1;
             listStart = 0;
         }
-
     } else if ((multiplayerLink->stateMachine
                     .IsInState<MultiplayerStates::PlayersAwaitReady>()) &&
                !multiplayerLink
@@ -783,9 +835,9 @@ void MultBattleScene::update() {
 }
 
 void MultBattleScene::deinit() {
+#ifdef GBA
     PlayOptionScene::deinit();
     playAgain = false;
-#ifdef GBA
     multiplayerLink->deactivate(false);
     if (!inaccurateEmulator) {
         if (rumbleHandler)
@@ -798,6 +850,337 @@ void MultBattleScene::deinit() {
 MultBattleScene::MultBattleScene() { this->matchMake = true; }
 
 MultBattleScene::MultBattleScene(std::string room) { roomId = std::move(room); }
+#else
+#ifndef MULTIBOOT
+void SinglePakWirelessScene::pumpMultibootFeed() {
+    if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
+        return;
+    }
+    if (multibootState == MultibootState::FAILED_INIT) {
+        // Re-try in case adapter becomes live
+        bool result = linkWirelessMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
+        if (result)
+            multibootState = MultibootState::NOT_READY;
+        return;
+    }
+    if (multibootState == MultibootState::NOT_READY) {
+        return;
+    }
+    u8 progress = linkWirelessMultibootAsync->getPercentage();
+    u8 playerCount = linkWirelessMultibootAsync->playerCount();
+    if (lastResult == Link::AsyncMultiboot::Result::NONE && (lastProgress != progress || lastPlayerCount != playerCount)) {
+        clearText();
+        naprint("Uploading game to " + std::to_string(playerCount - 1) + " players...", 0, 9 * 8);
+        naprint("Transfer " + std::to_string(progress) + "% complete...", 0, 11 * 8);
+        refreshText = true;
+        lastProgress = progress;
+        lastPlayerCount = playerCount;
+        return;
+    }
+    // Attempt to persist a result of success
+    Link::AsyncMultiboot::Result result = linkWirelessMultibootAsync->getResult(false);
+    if (result != Link::AsyncMultiboot::Result::SUCCESS) {
+        // Clear result if not a success result
+        linkWirelessMultibootAsync->getResult();
+    }
+    if (lastResult == result) {
+        return;
+    }
+    lastResult = result;
+    if (result == Link::AsyncMultiboot::Result::NONE) {
+        return;
+    }
+    clearText();
+    switch (result) {
+        case Link::AsyncMultiboot::Result::INVALID_DATA:
+            naprint("Invalid data", 3 * 8, 11 * 8);
+            break;
+        case Link::AsyncMultiboot::Result::FAILURE:
+            naprint("Send failure", 3 * 8, 11 * 8);
+            break;
+        case Link::AsyncMultiboot::Result::INIT_FAILED:
+            naprint("Init failure", 3 * 8, 11 * 8);
+            break;
+        default:
+        case Link::AsyncMultiboot::Result::NONE:
+            break;
+        case Link::AsyncMultiboot::Result::SUCCESS:
+            naprint("Successful!", 3 * 8, 11 * 8);
+            break;
+    }
+}
+
+void SinglePakWirelessScene::update() {
+    PlayOptionScene::update();
+    pumpMultibootFeed();
+}
+
+bool SinglePakWirelessScene::control() {
+    MenuKeys k = savefile->settings.menuKeys;
+    if (key_hit(k.cancel)) {
+        sfx(SFX_MENUCANCEL);
+        previousElement = name();
+        previousSelection = selection;
+
+        if (!path.empty())
+            path.pop_back();
+
+        changeScene(previousScene(), Transitions::FADE);
+
+        return true;
+    } else if (key_hit(k.confirm)) {
+        if (multibootState == MultibootState::NOT_READY && linkWirelessMultibootAsync->playerCount() > 1) {
+            sfx(SFX_MENUCONFIRM);
+            multibootState = MultibootState::READY;
+            linkWirelessMultibootAsync->markReady();
+        }
+    } else if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
+        sfx(SFX_MENUCONFIRM);
+        linkUniversal->setProtocol(LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING);
+
+        if (!path.empty())
+            path.pop_back();
+
+        changeScene(new MultBattleScene(), Transitions::FADE);
+
+        return true;
+    }
+    return false;
+}
+
+void SinglePakWirelessScene::draw() {
+    fallingBlocks();
+
+    switch (multibootState) {
+        case READY:
+            break;
+        case NOT_READY: {
+            u8 playerCount = linkWirelessMultibootAsync->playerCount();
+            if (lastPlayerCount == playerCount) {
+                return;
+            }
+            lastPlayerCount = playerCount;
+            if (playerCount > 1) {
+                clearText();
+                sfx(SFX_SECRET);
+                naprint("Ready to send game to " + std::to_string(playerCount - 1) + " players!", 0, 9 * 8);
+                naprint("Press A to send multiboot!", 2 * 8, 10 * 8);
+            } else {
+                clearText();
+                sfx(SFX_HOLD);
+                naprint("      Waiting for others...     ", 0, 9 * 8);
+            }
+            break;
+        }
+        case NONE:
+            break;
+        default:
+        case FAILED_INIT:
+            clearText();
+            naprint("No wireless adapter detected...", 2 * 8, 10 * 8);
+            break;
+    }
+    showSprites(128);
+}
+
+void SinglePakWirelessScene::startMultibootTransfer() {
+    // Begin transfer and setup interrupt
+    linkWirelessMultibootAsync->reset();
+    linkWirelessMultibootAsync->config.gameId = 0x0420;
+    linkWirelessMultibootAsync->config.timerId = 1;
+    linkWirelessMultibootAsync->config.waitForReadySignal = true;
+    linkWirelessMultibootAsync->config.userName = savefile->latestName;
+    interrupt_set_handler(INTR_SERIAL, LINK_WIRELESS_MULTIBOOT_ASYNC_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER1, LINK_WIRELESS_MULTIBOOT_ASYNC_ISR_TIMER);
+    linkVBlankHandler = LINK_WIRELESS_MULTIBOOT_ASYNC_ISR_VBLANK;
+    bool result = linkWirelessMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
+    if (!result)
+        multibootState = MultibootState::FAILED_INIT;
+}
+
+void SinglePakWirelessScene::init() {
+    PlayOptionScene::init();
+    clearSpriteTiles(672, 144, 1);
+    startMultibootTransfer();
+}
+
+void SinglePakWirelessScene::deinit() {
+    PlayOptionScene::deinit();
+    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
+    linkVBlankHandler = LINK_UNIVERSAL_ISR_VBLANK;
+    if (lastResult != Link::AsyncMultiboot::Result::SUCCESS) {
+        linkWirelessMultibootAsync->reset();
+    }
+}
+
+void SinglePakWiredScene::pumpMultibootFeed() {
+    if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
+        return;
+    }
+    if (multibootState == MultibootState::FAILED_INIT) {
+        // Re-try in case adapter becomes live
+        bool result = linkCableMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
+        if (result)
+            multibootState = MultibootState::NOT_READY;
+        return;
+    }
+    if (multibootState == MultibootState::NOT_READY) {
+        return;
+    }
+    u8 progress = linkCableMultibootAsync->getPercentage();
+    u8 playerCount = linkCableMultibootAsync->playerCount();
+    if (lastResult == Link::AsyncMultiboot::Result::NONE && (lastProgress != progress || lastPlayerCount != playerCount)) {
+        clearText();
+        naprint("Uploading game to " + std::to_string(playerCount - 1) + " players...", 0, 9 * 8);
+        naprint("Transfer " + std::to_string(progress) + "% complete...", 0, 11 * 8);
+        refreshText = true;
+        lastProgress = progress;
+        lastPlayerCount = playerCount;
+        return;
+    }
+    // Attempt to persist a result of success
+    Link::AsyncMultiboot::Result result = linkCableMultibootAsync->getResult(false);
+    if (result != Link::AsyncMultiboot::Result::SUCCESS) {
+        // Clear result if not a success result
+        linkCableMultibootAsync->getResult();
+    }
+    if (lastResult == result) {
+        return;
+    }
+    lastResult = result;
+    if (result == Link::AsyncMultiboot::Result::NONE) {
+        return;
+    }
+    clearText();
+    switch (result) {
+        case Link::AsyncMultiboot::Result::INVALID_DATA:
+            naprint("Invalid data", 3 * 8, 11 * 8);
+            break;
+        case Link::AsyncMultiboot::Result::FAILURE:
+            naprint("Send failure", 3 * 8, 11 * 8);
+            break;
+        case Link::AsyncMultiboot::Result::INIT_FAILED:
+            naprint("Init failure", 3 * 8, 11 * 8);
+            break;
+        default:
+        case Link::AsyncMultiboot::Result::NONE:
+            break;
+        case Link::AsyncMultiboot::Result::SUCCESS:
+            naprint("Successful!", 3 * 8, 11 * 8);
+            break;
+    }
+}
+
+void SinglePakWiredScene::update() {
+    PlayOptionScene::update();
+    pumpMultibootFeed();
+}
+
+bool SinglePakWiredScene::control() {
+    MenuKeys k = savefile->settings.menuKeys;
+    if (key_hit(k.cancel)) {
+        sfx(SFX_MENUCANCEL);
+        previousElement = name();
+        previousSelection = selection;
+
+        if (!path.empty())
+            path.pop_back();
+
+        changeScene(previousScene(), Transitions::FADE);
+
+        return true;
+    } else if (key_hit(k.confirm)) {
+        if (multibootState == MultibootState::NOT_READY && linkCableMultibootAsync->playerCount() > 1) {
+            sfx(SFX_MENUCONFIRM);
+            multibootState = MultibootState::READY;
+            linkCableMultibootAsync->markReady();
+        }
+    } else if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
+        sfx(SFX_MENUCONFIRM);
+        linkUniversal->setProtocol(LinkUniversal::Protocol::CABLE);
+
+        if (!path.empty())
+            path.pop_back();
+
+        changeScene(new MultBattleScene(), Transitions::FADE);
+
+        return true;
+    }
+    return false;
+}
+
+void SinglePakWiredScene::draw() {
+    fallingBlocks();
+
+    switch (multibootState) {
+        case READY:
+            break;
+        case NOT_READY: {
+            u8 playerCount = linkCableMultibootAsync->playerCount();
+            if (lastPlayerCount == playerCount) {
+                return;
+            }
+            lastPlayerCount = playerCount;
+            if (playerCount > 1) {
+                clearText();
+                sfx(SFX_SECRET);
+                naprint("Ready to send game to " + std::to_string(playerCount - 1) + " players!", 0, 9 * 8);
+                naprint("Press A to send multiboot!", 2 * 8, 10 * 8);
+            } else {
+                clearText();
+                sfx(SFX_HOLD);
+                naprint("      Waiting for others...     ", 0, 9 * 8);
+            }
+            break;
+        }
+        case NONE:
+            break;
+        default:
+        case FAILED_INIT:
+            clearText();
+            naprint("No cable detected...", 2 * 8, 10 * 8);
+            break;
+    }
+    showSprites(128);
+}
+
+void SinglePakWiredScene::startMultibootTransfer() {
+    // Begin transfer and setup interrupt
+    linkCableMultibootAsync->reset();
+    linkCableMultibootAsync->config.waitForReadySignal = true;
+    interrupt_set_handler(INTR_SERIAL, LINK_CABLE_MULTIBOOT_ASYNC_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER1, no_op_isr);
+    linkVBlankHandler = LINK_CABLE_MULTIBOOT_ASYNC_ISR_VBLANK;
+    bool result = linkCableMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
+    if (!result)
+        multibootState = MultibootState::FAILED_INIT;
+}
+
+void SinglePakWiredScene::init() {
+    PlayOptionScene::init();
+    clearSpriteTiles(672, 144, 1);
+
+    key_poll();
+    if (key_held(KEY_L) || key_held(KEY_R)) {
+        linkCableMultibootAsync->config.mode = LinkCableMultiboot::TransferMode::SPI;
+    } else {
+        linkCableMultibootAsync->config.mode = LinkCableMultiboot::TransferMode::MULTI_PLAY;
+    }
+
+    startMultibootTransfer();
+}
+
+void SinglePakWiredScene::deinit() {
+    PlayOptionScene::deinit();
+    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
+    linkVBlankHandler = LINK_UNIVERSAL_ISR_VBLANK;
+    if (lastResult != Link::AsyncMultiboot::Result::SUCCESS) {
+        linkCableMultibootAsync->reset();
+    }
+}
+#endif
 #endif
 
 void PlayOptionScene::resetScoreboard() {
@@ -915,6 +1298,8 @@ void PlayOptionScene::resetScoreboard() {
 
     showPath();
 }
+
+#ifndef MULTIBOOT
 
 void MatchMakingScene::init() {
     clearSprites(128);
@@ -1041,3 +1426,4 @@ void MatchMakingScene::deinit() {
     clearSmallText();
     resetSmallText();
 }
+#endif

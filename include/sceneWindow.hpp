@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #include "scene.hpp"
 
 #if defined(PC) || defined(PORTMASTER)
@@ -390,3 +391,4 @@ public:
 
     Scene* previousScene() { return new SettingsScene(); };
 };
+#endif

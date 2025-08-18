@@ -2,6 +2,7 @@
 
 #include "platform.hpp"
 
+#ifndef MULTIBOOT
 #ifdef GBA
 #include <gba_sram.h>
 
@@ -36,4 +37,5 @@ struct SramInfo {
 extern struct FlashInfo flashInfo;
 extern struct SramInfo sramInfo;
 
+#endif
 #endif

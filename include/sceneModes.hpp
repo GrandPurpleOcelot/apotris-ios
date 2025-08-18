@@ -572,6 +572,10 @@ public:
 
     void hideReadyPlayers();
 
+#ifdef MULTIBOOT
+    Scene* previousScene() override { return new MultBattleScene(); };
+#endif
+
 #ifdef GBA
 private:
     interrupt_vector rumbleHandler = nullptr;
@@ -584,6 +588,68 @@ private:
 };
 
 #ifndef MULTIBOOT
+
+#ifdef GBA
+class SinglePakWirelessScene : public PlayOptionScene {
+private:
+    enum MultibootState {
+        NOT_READY,
+        READY,
+        FAILED_INIT,
+        NONE
+    };
+    MultibootState multibootState = NOT_READY;
+    u8 lastPlayerCount = 255;
+    u8 lastProgress = 255;
+    Link::AsyncMultiboot::Result lastResult = Link::AsyncMultiboot::Result::NONE;
+public:
+    BlockEngine::Modes getMode() override { return BlockEngine::BATTLE; };
+
+    std::list<Element*> getElementList() override { return {}; };
+
+    void init() override;
+    bool control() override;
+    void update() override;
+    void deinit() override;
+    void draw() override;
+
+    std::string name() override { return "Wireless Pak"; };
+
+    void pumpMultibootFeed();
+    void startMultibootTransfer();
+
+};
+
+class SinglePakWiredScene : public PlayOptionScene {
+private:
+    enum MultibootState {
+        NOT_READY,
+        READY,
+        FAILED_INIT,
+        NONE
+    };
+    MultibootState multibootState = NOT_READY;
+    u8 lastPlayerCount = 255;
+    u8 lastProgress = 255;
+    Link::AsyncMultiboot::Result lastResult = Link::AsyncMultiboot::Result::NONE;
+public:
+    BlockEngine::Modes getMode() override { return BlockEngine::BATTLE; };
+
+    std::list<Element*> getElementList() override { return {}; };
+
+    void init() override;
+    bool control() override;
+    void update() override;
+    void deinit() override;
+    void draw() override;
+
+    std::string name() override { return "Wired Pak"; };
+
+    void pumpMultibootFeed();
+    void startMultibootTransfer();
+
+};
+#endif
 
 class CPUBattleScene : public PlayOptionScene {
 public:

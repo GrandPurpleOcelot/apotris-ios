@@ -230,7 +230,9 @@ void loadSave() {
     }
 
 #ifdef GBA
+#ifndef MULTIBOOT
     status.update(&savefile->settings);
+#endif
 #endif
     saveSavefile();
 }

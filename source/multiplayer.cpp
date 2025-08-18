@@ -2,6 +2,7 @@
 
 #ifdef GBA
 #include "LinkUniversal.hpp"
+#include "sceneModes.hpp"
 #endif
 #include "blockEngine.hpp"
 #include "logging.h"
@@ -71,7 +72,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
             u32 power = ownPower;
             if (game->lost)
                 power = 0; // we lost
-            multiplayerLink->send(UPDATE_STATE + POWER_LEVEL + power);
+            multiplayerLink->broadcastState(UPDATE_STATE + POWER_LEVEL + power);
             return 0;
         } else {
             return 1;
@@ -90,7 +91,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
             game->attackQueue.pop_front();
             // Encode and send out attack
             u8 targetId = weightedRandomPlayerSelection();
-            multiplayerLink->send(
+            multiplayerLink->sendEvent(
                 (u16)(ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
             ownPower += atck.amount;
         } else {
@@ -196,7 +197,7 @@ int weightedRandomPlayerSelection() {
 void acknowledgeGarbage(BlockEngine::Game* sourceGame,
                         BlockEngine::Garbage garbage) {
     if (multiplayer) {
-        multiplayerLink->send(ENCODE(ACK_ATTACK) + (garbage.id << 4) +
+        multiplayerLink->sendEvent(ENCODE(ACK_ATTACK) + (garbage.id << 4) +
                               garbage.amount);
     } else {
         if (sourceGame == botGame) {
@@ -250,16 +251,20 @@ void startMultiplayerGame(int seed) {
 
     nextSeed = 0;
     multiplayerStart = true;
+#ifndef MULTIBOOT
     botThinkingSpeed = 8 + multiplayerLink->universal->currentPlayerId();
+#endif
     for (auto& i : multiplayerLink->enemyPower)
         i = 1;
     ended = false;
     rank = 0;
     ownPower = 1;
+#ifndef MULTIBOOT
     delete testBot;
     if (enableBot) {
         testBot = new BlockEngine::Bot(game);
     }
+#endif
 }
 
 void drawEnemyBoard() {
@@ -360,7 +365,7 @@ void drawEnemyBoard() {
 }
 
 int botClearTimer = 0;
-
+#ifndef MULTIBOOT
 void handleBotGame() {
 
     if (botIncomingHeight++ > 19) {
@@ -401,6 +406,7 @@ void handleBotGame() {
         game->won = true;
     }
 }
+#endif
 
 // returns true on reconnect
 bool GameScene::reconnect() {
@@ -485,7 +491,11 @@ bool GameScene::reconnect() {
                 enableBlend(prevBld);
                 playSongRandom(0);
                 buildBG(3, 0, 27, 0, 1, true);
+#ifndef MULTIBOOT
                 changeScene(new TitleScene(), Transitions::FADE);
+#else
+                changeScene(new MultBattleScene(), Transitions::FADE);
+#endif
                 return false;
             }
 
