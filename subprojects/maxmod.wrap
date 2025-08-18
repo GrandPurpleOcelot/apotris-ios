@@ -1,6 +1,6 @@
 [wrap-git]
-url = https://github.com/aronson/maxmod.git
-revision = master
+url = https://github.com/aronson/maxmod
+revision = b75e9aa
 patch_directory = maxmod
 
 [provide]
