@@ -1,4 +1,5 @@
 #include "def.h"
+#include "platform.hpp"
 #include "rumble.h"
 #include "scene.hpp"
 #include "tetromino.hpp"
@@ -1256,7 +1257,7 @@ void saveReplay() {
 
 #ifdef PC
 #ifdef __APPLE__
-    std::string filePath = initSavefileDir() + "/replay.sav";
+    std::string filePath = savefileDir() + "/replay.sav";
     std::ofstream output(filePath, std::ios::binary | std::ios::out);
 #else
     std::ofstream output("replay.sav", std::ios::binary | std::ios::out);
@@ -1307,7 +1308,7 @@ void loadReplay() {
 #ifdef PC
 
 #ifdef __APPLE__
-    std::string filePath = initSavefileDir() + "/replay.sav";
+    std::string filePath = savefileDir() + "/replay.sav";
     std::ifstream input(filePath, std::ios::binary | std::ios::in);
 #else
     std::ifstream input("replay.sav", std::ios::binary | std::ios::in);

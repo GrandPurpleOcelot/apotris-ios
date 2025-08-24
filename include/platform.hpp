@@ -177,10 +177,11 @@ extern void pauseSong();
 extern void resumeSong();
 
 extern void loadSavefile();
-#ifdef __APPLE__
-extern std::string initSavefileDir();
-#endif
 extern void saveSavefile();
+#ifdef __APPLE__
+extern const char* homeDir;
+extern std::string savefileDir();
+#endif
 
 extern s16 sinLut(int angle);
 
