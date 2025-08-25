@@ -110,12 +110,19 @@ bool MultiplayerLink::sync() {
            !stateMachine.IsInState<MultiplayerStates::PlayersReconnecting>();
 }
 
+/**
+ * For sending events such as attack and acknowledge attack that must never be dropped.
+ */
 void MultiplayerLink::sendEvent(u16 packet) {
     bool sent = universal->send(packet);
     if (!sent)
         sendQueue.push(packet);
 }
 
+/**
+ * Does not insert members into the queue on transport send fail to prevent flooding the queue.
+ * Logic managing states should handle its own re-try concerns.
+ */
 void MultiplayerLink::broadcastState(u16 packet) const {
     universal->send(packet);
 }
@@ -150,7 +157,11 @@ void MultiplayerLink::purgeQueues() {
 void MultiplayerLink::UpdateStateMachine() {
     if (!stateMachine.IsInitialized()) {
         stateMachine.SetDebugTraceLevel(hsm::TraceLevel::Diagnostic);
+#ifndef MULTIBOOT
         stateMachine.Initialize<MultiplayerStates::Deactivated>(this);
+#else
+        stateMachine.Initialize<MultiplayerStates::Activated>(this);
+#endif
     }
     stateMachine.ProcessStateTransitions();
     stateMachine.UpdateStates();

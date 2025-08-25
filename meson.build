@@ -697,13 +697,33 @@ else
         generated_files += bin2s_target
     endforeach
 
+    subdir('assets/multiboot')
+    # Assemble multiboot audio bin2s targets
+    foreach binfile : multiboot_audio_files
+        filename = fs.name(binfile).split('.')[0]
+        output_o = '@0@.bin.o'.format(fs.name(filename))
+        output_h = '@0@_bin.h'.format(fs.name(filename))
+        output_s = '@0@_bin.s'.format(fs.name(filename))
+
+        bin2s_target = custom_target(
+            'bin2s_' + fs.name(binfile),
+            output : [output_s, output_h],
+            command : [
+                py3, call_bin2s, bin2s, binfile, output_h, output_s, 'gba', xxd
+            ],
+            depend_files : binfile,
+        )
+
+        generated_files += bin2s_target
+    endforeach
+
     # Required for minrt
     link_args = ['-specs=nosys.specs', '-specs=sync-none.specs']
 
     # The base multiboot elf binary
     multi = executable(
         name + '-multi',
-        sources + generated_files,
+        sources + generated_files + 'source/vgm.cpp',
         link_args : link_args,
         cpp_args : ['-DMULTIBOOT', '-Oz'],
         c_args : ['-Oz'],

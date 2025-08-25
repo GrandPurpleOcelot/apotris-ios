@@ -15,8 +15,6 @@
 #include <cstring>
 #include <utility>
 
-void no_op_isr() {}
-
 bool lostConnection = true;
 
 #if defined(GBA) && !defined(MULTIBOOT)
@@ -667,11 +665,12 @@ void MultBattleScene::init() {
     clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
 
     enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
+    setUpLinkUniversal(true);
 #else
     PlayOptionScene::init();
 #endif
 
-#if defined(GBA)
+#ifdef GBA
     key_poll();
     // Secret feature: hold L on real hardware to force cable mode
     if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba())) {
@@ -686,17 +685,24 @@ void MultBattleScene::init() {
     }
     // If we booted wirelessly, attempt to restore existing connection
     // Also support calling from the multiboot-send menu on cart if wireless
-    else if (LinkWireless::isWirelessMultibootRom() ||
-        (multiplayerLink->universal->getProtocol() ==
-            LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING
-            && !LinkWireless::isWirelessMultibootRom())) {
-        multiplayerLink->universal->setProtocol(
-                LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING);
-    }
     else {
-        // This undoes the hold L or R overrides if exiting and returning to this screen
-        multiplayerLink->universal->setProtocol(
-            LinkUniversal::Protocol::AUTODETECT);
+        bool wirelessMultibootRom = LinkWireless::isWirelessMultibootRom();
+        if (wirelessMultibootRom ||
+            (multiplayerLink->universal->getProtocol() ==
+                LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING)) {
+            if (!wirelessMultibootRom) {
+                const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
+                multiplayerLink->universal->getLinkWireless()->config.timeout = wirelessTimeout;
+                multiplayerLink->universal->resetTimeout();
+            }
+            multiplayerLink->universal->setProtocol(
+                    LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING);
+        }
+        else {
+            // This undoes the hold L or R overrides if exiting and returning to this screen
+            multiplayerLink->universal->setProtocol(
+                LinkUniversal::Protocol::AUTODETECT);
+        }
     }
 
     if (!inaccurateEmulator) {
@@ -705,7 +711,7 @@ void MultBattleScene::init() {
     }
 #endif
 
-    multiplayerLink->activate();
+    multiplayerLink->active = true;
 
     lastState = 0;
 
@@ -775,7 +781,7 @@ bool MultBattleScene::control() {
         return true;
     }
     MenuKeys k = savefile->settings.menuKeys;
-
+#ifndef MULTIBOOT
     if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
         if (!onScore || options == 0) {
@@ -787,9 +793,7 @@ bool MultBattleScene::control() {
 
             changeScene(previousScene(), Transitions::FADE);
 
-#ifndef MULTIBOOT
             multiplayerLink->deactivate(false);
-#endif
 
             return true;
         } else {
@@ -799,6 +803,9 @@ bool MultBattleScene::control() {
             listStart = 0;
         }
     } else if ((multiplayerLink->stateMachine
+#else
+    if ((multiplayerLink->stateMachine
+#endif
                     .IsInState<MultiplayerStates::PlayersAwaitReady>()) &&
                !multiplayerLink
                     ->players[multiplayerLink->universal->currentPlayerId()]
@@ -906,6 +913,10 @@ void SinglePakWirelessScene::pumpMultibootFeed() {
             break;
         case Link::AsyncMultiboot::Result::SUCCESS:
             naprint("Successful!", 3 * 8, 11 * 8);
+            // Set timeout super long to allow time for other consoles to boot
+            const u32 fiveSecondsInFrames = 5 * 60;
+            multiplayerLink->universal->getLinkWireless()->config.timeout = fiveSecondsInFrames;
+            multiplayerLink->universal->resetTimeout();
             break;
     }
 }
@@ -1006,12 +1017,13 @@ void SinglePakWirelessScene::init() {
 
 void SinglePakWirelessScene::deinit() {
     PlayOptionScene::deinit();
-    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
-    interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
-    linkVBlankHandler = LINK_UNIVERSAL_ISR_VBLANK;
     if (lastResult != Link::AsyncMultiboot::Result::SUCCESS) {
         linkWirelessMultibootAsync->reset();
     }
+    vsync();
+    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
+    linkVBlankHandler = LINK_UNIVERSAL_ISR_VBLANK;
 }
 
 void SinglePakWiredScene::pumpMultibootFeed() {
@@ -1150,7 +1162,6 @@ void SinglePakWiredScene::startMultibootTransfer() {
     linkCableMultibootAsync->reset();
     linkCableMultibootAsync->config.waitForReadySignal = true;
     interrupt_set_handler(INTR_SERIAL, LINK_CABLE_MULTIBOOT_ASYNC_ISR_SERIAL);
-    interrupt_set_handler(INTR_TIMER1, no_op_isr);
     linkVBlankHandler = LINK_CABLE_MULTIBOOT_ASYNC_ISR_VBLANK;
     bool result = linkCableMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
     if (!result)
@@ -1299,7 +1310,7 @@ void PlayOptionScene::resetScoreboard() {
     showPath();
 }
 
-#ifndef MULTIBOOT
+#if !defined(MULTIBOOT) && !defined(GBA)
 
 void MatchMakingScene::init() {
     clearSprites(128);

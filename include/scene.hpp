@@ -366,6 +366,7 @@ public:
     Scene* previousScene() { return new MainMenuScene(); };
 };
 
+#ifndef GBA
 class MatchMakingScene : public Scene {
 public:
     int timer = 0;
@@ -392,6 +393,7 @@ public:
     Scene* previousScene() { return new MainMenuScene(); };
     bool hideSprites;
 };
+#endif
 
 class SettingsScene : public SimpleListScene {
 public:

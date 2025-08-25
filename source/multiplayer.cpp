@@ -92,7 +92,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
             // Encode and send out attack
             u8 targetId = weightedRandomPlayerSelection();
             multiplayerLink->sendEvent(
-                (u16)(ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
+                    (u16) (ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
             ownPower += atck.amount;
         } else {
             if (duringGame) {
@@ -186,7 +186,7 @@ int weightedRandomPlayerSelection() {
     // Try to find an alternative player than current one
     for (int i = 0; i < multiplayerLink->playingPlayerCount; ++i) {
         if (i != multiplayerLink->universal->currentPlayerId() &&
-            loseIndex[i].over == false) {
+            !loseIndex[i].over) {
             return i;
         }
     }

@@ -24,10 +24,6 @@ static COLOR* preTransitionPalette = nullptr;
 
 void changeScene(Scene* newScene, Transitions transition) {
     gradient(0);
-    if (!multiplayerStart)
-        vsync();
-    else
-        toggleRendering(false);
     setLightMode();
 
     switch (transition) {

@@ -13,6 +13,15 @@
 #include "gba_sram.h"
 #include "maxmod.h"
 #else
+#include "vgm.h"
+#include "Bump_bin.h"
+#include "Cancel_bin.h"
+#include "Click_bin.h"
+#include "Confirm_bin.h"
+#include "Evil_Laugh_bin.h"
+#include "Jump_bin.h"
+#include "Menu_In_bin.h"
+#include "Powerup_bin.h"
 #define AGB_ROM ((u8*)0x8000000)
 #endif
 #include "gbfs.h"
@@ -209,10 +218,10 @@ void platformInit() {
     interrupt_init();
     interrupt_unmask();
     REG_DISPSTAT |= (1 << 3) | (1 << 4);
+    linkVBlankHandler = LINK_UNIVERSAL_ISR_VBLANK;
     interrupt_set_handler(INTR_VBLANK, onVBlank);
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
-    linkVBlankHandler = LINK_UNIVERSAL_ISR_VBLANK;
 
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
@@ -242,10 +251,10 @@ void setUpLinkUniversal(bool detectEmus) {
     delete linkUniversal;
 
     linkUniversal = new LinkUniversal(
-#ifdef MULTIBOOT
-        LinkUniversal::Protocol::AUTODETECT,
-#else
+#ifndef MULTIBOOT
         LinkUniversal::Protocol::WIRELESS_AUTO, // We use auto to support gpSP
+#else
+        LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING, // Restore existing possible wireless connection
 #endif
         "Apotris",
         (LinkUniversal::CableOptions){
@@ -520,6 +529,58 @@ void sfx(int s) {
 
     mm_sfxhand h = mmEffect(id);
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
+#else
+    const u8* sfxData = nullptr;
+    switch(s) {
+        case SFX_LEVELUP:
+        case SFX_DOUBLE:
+            sfxData = Confirm_vgm;
+            break;
+        case SFX_YOUWIN:
+        case SFX_SECRET:
+        case SFX_TSPIN:
+        case SFX_TSPINMINI:
+        case SFX_MULTICLEAR:
+        case SFX_PERFECTRIS:
+        case SFX_PERFECTCLEAR:
+        case SFX_ULTIMATRIS:
+        case SFX_TRIPLE:
+        case SFX_QUAD:
+        case SFX_BACKTOBACKQUAD:
+        case SFX_BACKTOBACKTSPIN:
+        case SFX_DODECATRIS:
+        case SFX_OCTORIS:
+            sfxData = Powerup_vgm;
+            break;
+        case SFX_HOLD:
+            sfxData = Jump_vgm;
+            break;
+        case SFX_GO:
+        case SFX_ROTATE:
+            sfxData = Menu_In_vgm;
+            break;
+        case SFX_INITIAL:
+        case SFX_MENUCANCEL:
+            sfxData = Cancel_vgm;
+            break;
+        case SFX_READY:
+        case SFX_PLACE:
+        case SFX_INVALID:
+            sfxData = Bump_vgm;
+            break;
+        case SFX_SHIFT:
+        case SFX_SHIFT2:
+        case SFX_MENUCONFIRM:
+        case SFX_GAMEOVER:
+            sfxData = Click_vgm;
+            break;
+        case SFX_YOULOSE:
+            sfxData = Evil_Laugh_vgm;
+            break;
+    }
+    if (sfxData) {
+        VgmPlay(sfxData, false);
+    }
 #endif
 }
 
@@ -556,6 +617,8 @@ IWRAM_CODE void onVBlank() {
 
 #ifndef MULTIBOOT
     mmVBlank();
+#else
+    VgmIntrVblank();
 #endif
     if (linkVBlankHandler)
         linkVBlankHandler();
@@ -803,6 +866,8 @@ IWRAM_CODE void onKeyInterrupt() {
     if (bootleg_type)
         return;
     mmStop();
+#else
+    VgmStop();
 #endif
     REG_IME = 0;
     REG_DMA0CNT_H &= ~DMA_ENABLE;

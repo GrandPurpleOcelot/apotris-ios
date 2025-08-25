@@ -145,8 +145,8 @@ public:
 
     void UpdateStateMachine();
 
-    void sendEvent(u16 packet);
     void broadcastState(u16 packet) const;
+    void sendEvent(u16 packet);
 
     void reset() {
         playingPlayerCount = 0;
@@ -353,6 +353,8 @@ struct MultiplayerStates {
      * before proceeding, so each client will have the same random state.
      */
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
+        // Time in frames to reset attempting to seed
+        int readyTimeout = 3 * 60;
 
         void OnEnter() override {
 #ifdef GBA
@@ -431,6 +433,11 @@ struct MultiplayerStates {
             if (Owner().allSeeded(Owner().universal->playerCount()))
 #endif
                 return SiblingTransition<PlayersSeeded>();
+            if (readyTimeout-- <= 0) {
+                Owner().reset();
+                Owner().universal->deactivate(true);
+                Owner().active = true;
+            }
             return NoTransition();
         }
     };
@@ -462,7 +469,7 @@ struct MultiplayerStates {
      */
     struct PlayersAwaitReady : StateWithOwner<MultiplayerLink> {
         bool sentReady = false;
-        int readyTimeout = 120;
+        int readyTimeout = 3 * 60;
 
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
@@ -478,22 +485,12 @@ struct MultiplayerStates {
                     continue;
                 Owner().players[packet.playerId].ready = true;
             }
-            // TODO: Remove bot code
-            #ifdef GBA
-            key_poll();
-            if (!key_held(KEY_R)) {
-                enableBot = true;
-            } else {
-                enableBot = false;
-            }
-            if (enableBot && readyTimeout-- <= 0 && (int)randNext() % 0xFF == 0) {
+            #if defined(GBA) && !defined(MULTIBOOT)
+            enableBot = true;
+            if (readyTimeout-- <= 0) {
                 Owner().readyUp();
             }
-             #else
-            /*enableBot = true;
-            if (readyTimeout-- <= 0 && qran() % 0xFF == 0)
-                Owner().readyUp();*/
-             #endif
+            #endif
 
             if (!sentReady &&
                 Owner().players[Owner().universal->currentPlayerId()].ready) {
@@ -508,13 +505,15 @@ struct MultiplayerStates {
 
         void OnExit() override {
             if (!sentReady &&
-                Owner().players[Owner().universal->currentPlayerId()].ready)
+                Owner().players[Owner().universal->currentPlayerId()].ready) {
                 Owner().broadcastState(UPDATE_STATE + LETS_PLAY);
+            }
         }
 
         Transition GetTransition() override {
             if (Owner().allReady(Owner().playingPlayerCount)) {
                 return SiblingTransition<Playing>();
+            } else if (readyTimeout) {
             } else {
                 return NoTransition();
             }
@@ -568,8 +567,9 @@ struct MultiplayerStates {
                     command.execute();
             }
 
-            if (echoCounter++ % 10 == 0)
+            if (echoCounter++ % 10 == 0) {
                 Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
+            }
 
             int lostCount = 0;
             for (auto i : Owner().players)
@@ -740,7 +740,9 @@ struct MultiplayerStates {
      */
     struct PlayersReconnecting : StateWithOwner<MultiplayerLink> {
 
-        void OnEnter() override { Owner().broadcastState(UPDATE_STATE + WELCOME_BACK); }
+        void OnEnter() override {
+            Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
+        }
 
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();

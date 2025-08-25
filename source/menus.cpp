@@ -1587,8 +1587,9 @@ void GameScene::showEndScreenOptions() {
     wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[2].setText("Again");
     wordSprites[2].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
-
+#ifndef MULTIBOOT
     counter += 3;
+#endif
 
     if (!multiplayer) {
         wordSprites[3].setText("Change");
@@ -1600,11 +1601,12 @@ void GameScene::showEndScreenOptions() {
     } else {
         showReadyPlayers();
     }
-
+#ifndef MULTIBOOT
     wordSprites[5].setText("Main");
     wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[6].setText("Menu");
     wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
+#endif
 
     showModeText();
 }

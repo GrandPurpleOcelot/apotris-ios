@@ -542,7 +542,7 @@ void ConfirmEmuScene::init() {
         wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
 
     clearTilemap(29);
-    naprint("Are you on an emulator?", 40, 56);
+    naprint("Are you on mGBA or gpSP emu?", 16, 56);
 
     wordSprites[0].setText("I AM");
     wordSprites[0].show(48, 104, 14);
