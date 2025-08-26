@@ -609,8 +609,17 @@ else
     # GameBoy-Advance-specific configuration #
     ##########################################
 
+    have_devkitarm = cc_ver.stdout().to_lower().contains('devkitarm')
+    if have_devkitarm
+        rt_dep = dependency('dka-rom-rt')
+        rt_dep_mb = dependency('dka-multiboot-rt')
+    else
+        rt_dep = dependency('minrt')
+        rt_dep_mb = dependency('minrt-multiboot')
+    endif
+
     dependencies = [
-        dependency('minrt'),
+        rt_dep,
         dependency('libseven'),
         dependency('libutil'),
         dependency('libsavgba'),
@@ -623,13 +632,12 @@ else
     ]
 
     dependencies_multi = [
-        dependency('minrt-multiboot'),
+        rt_dep_mb,
         dependency('libseven'),
         dependency('libutil'),
         dependency('libtonc'),
         dependency('agbabi'),
         dependency('posprintf'),
-        dependency('gbfs'),
         dependency('gba-link-connection'),
     ]
 
@@ -718,15 +726,16 @@ else
     endforeach
 
     # Required for minrt
-    link_args = ['-specs=nosys.specs', '-specs=sync-none.specs']
+    link_args = ['-specs=nosys.specs']
+    link_mb_args = link_args + ['-flto=auto']
 
     # The base multiboot elf binary
     multi = executable(
         name + '-multi',
         sources + generated_files + 'source/vgm.cpp',
-        link_args : link_args,
-        cpp_args : ['-DMULTIBOOT', '-Oz'],
-        c_args : ['-Oz'],
+        link_args : link_mb_args,
+        cpp_args : ['-flto', '-DMULTIBOOT', '-Os'],
+        c_args : ['-flto', '-Os'],
         include_directories : includes,
         dependencies : dependencies_multi,
         name_suffix : 'elf')
