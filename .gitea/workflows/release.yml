@@ -103,6 +103,9 @@ jobs:
           elif [[ "${{ matrix.target }}" == "n3ds" ]]; then
             meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} $build_dir
             meson compile -C $build_dir 3dsx cia
+          elif [[ "${{ matrix.target }}" == "gba" ]]; then
+            meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} $build_dir
+            ninja -C $build_dir patches
           else
             cross_file_arg=""
             if [[ -n "${{ matrix.cross_file }}" ]]; then
