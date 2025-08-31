@@ -72,6 +72,7 @@ LinkUniversal* linkConnection = nullptr;
 extern struct FlashInfo gFlashInfo;
 struct FlashInfo flashInfo;
 struct SramInfo sramInfo;
+u8 bootleg_type = 0;
 #endif
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
@@ -175,9 +176,10 @@ void testSaveMedia() {
             sramInfo.size = testRegion;
             break;
         }
+#ifdef ENABLE_ROM_SAVE
         // Detect bootlegs
-        if (ENABLE_ROM_SAVE)
-            detect_rom_backed_flash();
+        detect_rom_backed_flash();
+#endif
         return;
     }
 
@@ -237,7 +239,9 @@ void platformInit() {
 
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
 
+#ifdef ENABLE_FAST_ROM
     REG_WAITCNT = 0x4317;
+#endif
 
     setUpLinkUniversal(false);
 }
@@ -459,7 +463,9 @@ bool unlock_gbp() {
 
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
+#ifdef ENABLE_FAST_ROM
     REG_WAITCNT = 0x4317;
+#endif
 
     return gbp_detected;
 #endif
@@ -743,8 +749,9 @@ void saveSavefile() {
     } else {
         __agbabi_memcpy1(sram_mem, savefile, sizeof(Save));
 
-        if (ENABLE_ROM_SAVE)
-            save_sram_flash();
+#ifdef ENABLE_ROM_SAVE
+        save_sram_flash();
+#endif
     }
     status.update(&savefile->settings);
 #endif

@@ -103,8 +103,6 @@ public:
 #define SHOW_FINESSE 1
 #define SAVE_TAG 0x52
 
-#define ENABLE_ROM_SAVE 1
-
 extern void sfx(int);
 extern void gameLoop();
 extern void playSong(int, int);

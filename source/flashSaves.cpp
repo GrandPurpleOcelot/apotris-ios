@@ -19,7 +19,6 @@ void flash_write(u8 flash_type, u32 sa);
 // static u32 total_rom_size = 0;
 u32 flash_size = 0;
 u32 flash_sram_area = 0;
-u8 bootleg_type = 0;
 bool escape = false;
 
 BYTECMP_CODE static int bytecmp(vu8* buf1, vu8* buf2, size_t count) {
