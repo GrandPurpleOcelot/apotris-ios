@@ -609,13 +609,11 @@ else
     # GameBoy-Advance-specific configuration #
     ##########################################
 
+    rt_dep = dependency('minrt')
+    rt_dep_mb = dependency('minrt-multiboot')
     have_devkitarm = cc_ver.stdout().to_lower().contains('devkitarm')
     if have_devkitarm
-        rt_dep = dependency('dka-rom-rt')
-        rt_dep_mb = dependency('dka-multiboot-rt')
-    else
-        rt_dep = dependency('minrt')
-        rt_dep_mb = dependency('minrt-multiboot')
+        sources += files('source/stubs.s')
     endif
 
     dependencies = [
