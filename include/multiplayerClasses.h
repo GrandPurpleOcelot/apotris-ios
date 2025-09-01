@@ -476,12 +476,12 @@ struct MultiplayerStates {
                     continue;
                 Owner().players[packet.playerId].ready = true;
             }
-            #if defined(GBA) && !defined(MULTIBOOT)
+            /*#if defined(GBA) && !defined(MULTIBOOT)
             enableBot = true;
             if (readyTimeout-- <= 0) {
                 Owner().readyUp();
             }
-            #endif
+            #endif*/
 
             if (!sentReady &&
                 Owner().players[Owner().universal->currentPlayerId()].ready) {
