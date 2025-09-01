@@ -192,11 +192,7 @@ void sceneSwitcher(const std::string& str) {
         changeScene(new ZenScene(), Transitions::FADE);
     } else if (str == "Multi Battle") {
 #ifdef GBA
-        if (emulatorPrompted) {
-            changeScene(new MultBattleScene(), Transitions::FADE);
-        } else {
-            changeScene(new ConfirmEmuScene(), Transitions::FADE);
-        }
+        changeScene(new MultBattleScene(), Transitions::FADE);
 #ifndef MULTIBOOT
     } else if (str == "Wireless Pak") {
         changeScene(new SinglePakWirelessScene(), Transitions::FADE);

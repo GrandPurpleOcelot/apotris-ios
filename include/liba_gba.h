@@ -94,7 +94,7 @@ extern std::map<int, std::string> keyToString;
 
 #define UNBOUND 0
 
-void setUpLinkUniversal(bool);
+void setUpLinkUniversal();
 unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait);
 extern void toggleSpriteSorting(bool state);
 extern void setUpPresentException(std::string);

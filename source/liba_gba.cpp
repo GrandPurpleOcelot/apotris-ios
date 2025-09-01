@@ -55,9 +55,6 @@ int musicVolume = 0;
 bool disableHBlank = true;
 bool disableDMA = true;
 
-bool inaccurateEmulator = false;
-bool emulatorPrompted = false;
-
 Songs songs;
 
 void onHBlank() {
@@ -243,36 +240,31 @@ void platformInit() {
     REG_WAITCNT = 0x4317;
 #endif
 
-    setUpLinkUniversal(false);
+    setUpLinkUniversal();
 }
 
-void setUpLinkUniversal(bool detectEmus) {
-    inaccurateEmulator = !detectEmus || detect_inaccurate_emulator();
-    const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
+void setUpLinkUniversal() {
+    const u32 timeout = 60;
     const u32 wirelessInterval = 50; // No reason to go lower
     const u32 wiredInterval = 300; // 150 usually works, but some devices need 300...
     delete multiplayerLink;
     delete linkUniversal;
 
     linkUniversal = new LinkUniversal(
-#ifndef MULTIBOOT
-        LinkUniversal::Protocol::WIRELESS_AUTO, // We use auto to support gpSP
-#else
-        LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING, // Restore existing possible wireless connection
-#endif
+        LinkUniversal::Protocol::AUTODETECT,
         "Apotris",
         (LinkUniversal::CableOptions){
             .baudRate =
                 LinkCable::BaudRate::BAUD_RATE_3, // Baud 3 is required for
                                                   // enough b/w to send garbage
-            .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
+            .timeout = timeout,
             .interval = wiredInterval,
             .sendTimerId = 1},
         (LinkUniversal::WirelessOptions){
             .forwarding = true,
             .retransmission = true,
             .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
-            .timeout = wirelessTimeout,
+            .timeout = timeout,
             .interval = wirelessInterval,
             .sendTimerId = 1});
     multiplayerLink = new MultiplayerLink(linkUniversal);

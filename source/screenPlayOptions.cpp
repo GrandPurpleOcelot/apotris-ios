@@ -665,7 +665,6 @@ void MultBattleScene::init() {
     clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
 
     enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
-    setUpLinkUniversal(true);
 #else
     PlayOptionScene::init();
 #endif
@@ -673,12 +672,12 @@ void MultBattleScene::init() {
 #ifdef GBA
     key_poll();
     // Secret feature: hold L on real hardware to force cable mode
-    if (!inaccurateEmulator && (key_held(KEY_L) || logInitMgba())) {
+    if (key_held(KEY_L)) {
         // mGBA only supports cable, so set it to speed up initial multiplayer sync
         multiplayerLink->universal->setProtocol(
                 LinkUniversal::Protocol::CABLE);
     }
-    else if (key_held(KEY_R) || inaccurateEmulator) {
+    else if (key_held(KEY_R)) {
         // gpSP only does wireless, users may want to override
         multiplayerLink->universal->setProtocol(
                 LinkUniversal::Protocol::WIRELESS_AUTO);
@@ -686,29 +685,13 @@ void MultBattleScene::init() {
     // If we booted wirelessly, attempt to restore existing connection
     // Also support calling from the multiboot-send menu on cart if wireless
     else {
-        bool wirelessMultibootRom = LinkWireless::isWirelessMultibootRom();
-        if (wirelessMultibootRom ||
-            (multiplayerLink->universal->getProtocol() ==
-                LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING)) {
-            if (!wirelessMultibootRom) {
-                const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
-                multiplayerLink->universal->getLinkWireless()->config.timeout = wirelessTimeout;
-                multiplayerLink->universal->resetTimeout();
-            }
-            multiplayerLink->universal->setProtocol(
-                    LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING);
-        }
-        else {
-            // This undoes the hold L or R overrides if exiting and returning to this screen
-            multiplayerLink->universal->setProtocol(
-                LinkUniversal::Protocol::AUTODETECT);
-        }
+        // This undoes the hold L or R overrides if exiting and returning to this screen
+        multiplayerLink->universal->setProtocol(
+            LinkUniversal::Protocol::AUTODETECT);
     }
 
-    if (!inaccurateEmulator) {
-        rumbleHandler = interrupt_get_handler(INTR_SERIAL);
-        interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
-    }
+    rumbleHandler = interrupt_get_handler(INTR_SERIAL);
+    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
 #endif
 
     multiplayerLink->active = true;
@@ -846,10 +829,8 @@ void MultBattleScene::deinit() {
     PlayOptionScene::deinit();
     playAgain = false;
     multiplayerLink->deactivate(false);
-    if (!inaccurateEmulator) {
-        if (rumbleHandler)
-            interrupt_set_handler(INTR_SERIAL, rumbleHandler);
-    }
+    if (rumbleHandler)
+        interrupt_set_handler(INTR_SERIAL, rumbleHandler);
 #endif
 }
 
@@ -952,7 +933,7 @@ bool SinglePakWirelessScene::control() {
         if (!path.empty())
             path.pop_back();
 
-        changeScene(new ConfirmEmuScene(), Transitions::FADE);
+        changeScene(new MultBattleScene(), Transitions::FADE);
 
         return true;
     }
@@ -1115,7 +1096,7 @@ bool SinglePakWiredScene::control() {
         if (!path.empty())
             path.pop_back();
 
-        changeScene(new ConfirmEmuScene(), Transitions::FADE);
+        changeScene(new MultBattleScene(), Transitions::FADE);
 
         return true;
     }

@@ -49,6 +49,7 @@ sources = files(
     src_dir / 'liba_web.cpp',
     src_dir / 'liba_window.cpp',
     src_dir / 'liba_sdl_audio.cpp',
+    src_dir / 'LinkWireless.cpp',
     src_dir / 'main.cpp',
     src_dir / 'menuSystem.cpp',
     src_dir / 'menus.cpp',
@@ -101,9 +102,7 @@ effect_locations_file = 'effect_locations.bin'
 if host_machine.system() == 'gba'
     subdir('meson/toolchain')
     add_project_arguments('-Wno-incompatible-pointer-types', language: 'c')
-    if get_option('emu_detect')
-        add_project_arguments('-DEMU_DETECT', language: 'cpp')
-    endif
+    add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language: 'cpp')
 endif
 
 if host_machine.system() == 'windows'
@@ -115,8 +114,6 @@ elif host_machine.system() == 'emscripten'
     add_global_arguments('-U_FORTIFY_SOURCE', language: ['cpp', 'c'])
 elif host_machine.system() == 'darwin'
     add_global_arguments('-mmacosx-version-min=10.15', language: ['cpp', 'c'])
-elif host_machine.system() == 'gba'
-    add_global_arguments('-Wno-incompatible-pointer-types', language: ['c'])
 endif
 
 build_type = get_option('buildtype')

@@ -15,8 +15,6 @@
 #include "LinkUniversal.hpp"
 extern LinkUniversal* linkConnection;
 extern bool disableHBlank;
-extern bool inaccurateEmulator;
-extern bool emulatorPrompted;
 #endif
 extern int initialPlayerCount;
 

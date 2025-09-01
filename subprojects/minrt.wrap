@@ -1,6 +1,6 @@
 [wrap-git]
 url = https://github.com/aronson/minrt.git
-revision = 1ce8fb3709f4e88eeb852be3ffa5f263a4cb3fa7
+revision = a0fd2ce
 
 [provide]
 dependency_names = minrt, minrt-multiboot
