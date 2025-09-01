@@ -894,10 +894,6 @@ void SinglePakWirelessScene::pumpMultibootFeed() {
             break;
         case Link::AsyncMultiboot::Result::SUCCESS:
             naprint("Successful!", 3 * 8, 11 * 8);
-            // Set timeout super long to allow time for other consoles to boot
-            const u32 fiveSecondsInFrames = 5 * 60;
-            multiplayerLink->universal->getLinkWireless()->config.timeout = fiveSecondsInFrames;
-            multiplayerLink->universal->resetTimeout();
             break;
     }
 }
@@ -920,7 +916,8 @@ bool SinglePakWirelessScene::control() {
         changeScene(previousScene(), Transitions::FADE);
 
         return true;
-    } else if (key_hit(k.confirm)) {
+    }
+    if (key_hit(k.confirm)) {
         if (multibootState == MultibootState::NOT_READY && linkWirelessMultibootAsync->playerCount() > 1) {
             sfx(SFX_MENUCONFIRM);
             multibootState = MultibootState::READY;
@@ -928,7 +925,6 @@ bool SinglePakWirelessScene::control() {
         }
     } else if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
         sfx(SFX_MENUCONFIRM);
-        linkUniversal->setProtocol(LinkUniversal::Protocol::WIRELESS_RESTORE_EXISTING);
 
         if (!path.empty())
             path.pop_back();
@@ -1083,7 +1079,8 @@ bool SinglePakWiredScene::control() {
         changeScene(previousScene(), Transitions::FADE);
 
         return true;
-    } else if (key_hit(k.confirm)) {
+    }
+    if (key_hit(k.confirm)) {
         if (multibootState == MultibootState::NOT_READY && linkCableMultibootAsync->playerCount() > 1) {
             sfx(SFX_MENUCONFIRM);
             multibootState = MultibootState::READY;
@@ -1091,7 +1088,6 @@ bool SinglePakWiredScene::control() {
         }
     } else if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
         sfx(SFX_MENUCONFIRM);
-        linkUniversal->setProtocol(LinkUniversal::Protocol::CABLE);
 
         if (!path.empty())
             path.pop_back();

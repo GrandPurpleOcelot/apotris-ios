@@ -157,11 +157,7 @@ void MultiplayerLink::purgeQueues() {
 void MultiplayerLink::UpdateStateMachine() {
     if (!stateMachine.IsInitialized()) {
         stateMachine.SetDebugTraceLevel(hsm::TraceLevel::Diagnostic);
-#ifndef MULTIBOOT
         stateMachine.Initialize<MultiplayerStates::Deactivated>(this);
-#else
-        stateMachine.Initialize<MultiplayerStates::Activated>(this);
-#endif
     }
     stateMachine.ProcessStateTransitions();
     stateMachine.UpdateStates();

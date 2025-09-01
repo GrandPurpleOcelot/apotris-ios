@@ -223,15 +223,6 @@ struct MultiplayerStates {
     struct Deactivated : StateWithOwner<MultiplayerLink> {
 
         void OnEnter() override {
-#if defined(GBA) && !defined(MULTIBOOT)
-            // Don't touch the adapter on multiboot success
-            if (linkWirelessMultibootAsync->getResult() == Link::AsyncMultiboot::Result::SUCCESS) {
-                return;
-            }
-            if (linkCableMultibootAsync->getResult() == Link::AsyncMultiboot::Result::SUCCESS) {
-                return;
-            }
-#endif
             if (Owner().universal->isActive()) {
                 Owner().universal->deactivate();
             }
