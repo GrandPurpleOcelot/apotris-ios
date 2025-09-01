@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/WonderfulToolchain/agbpack.git
+revision = main
+clone-recursive = true
+
+[provide]
+program_names = agbpack

@@ -1,6 +1,6 @@
 [wrap-git]
-url = https://github.com/sdk-seven/runtime
-revision = v0.12.1
+url = https://github.com/aronson/minrt.git
+revision = 360f493ebced07d21094771984faddd85550abde
 
 [provide]
 dependency_names = minrt, minrt-multiboot

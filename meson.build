@@ -735,8 +735,15 @@ else
     # GameBoy-Advance-specific configuration #
     ##########################################
 
+    # Required for minrt
+    link_args = ['-specs=nosys.specs']
+    link_mb_args = link_args + ['-flto=auto']
+
     have_devkitarm = cc_ver.stdout().to_lower().contains('devkitarm')
     if have_devkitarm
+        sync_none = ['-specs=sync-none.specs']
+        link_args += sync_none
+        link_mb_args += sync_none
         sources += files('source/stubs.s')
     endif
 
@@ -785,6 +792,8 @@ else
     makebase = files('tools/makeBase.py')
     subproject('mmutil')
     mmutil = find_program('mmutil')
+    subproject('agbpack')
+    agbpack = find_program('agbpack', required: true)
 
     # References to python helper scripts
     buildSoundbank = files('tools/buildSoundbank.py')
@@ -872,10 +881,6 @@ else
         generated_files += bin2s_target
     endforeach
 
-    # Required for minrt
-    link_args = ['-specs=nosys.specs']
-    link_mb_args = link_args + ['-flto=auto']
-
     ##########################################
     # Multiboot-specific build configuration #
     ##########################################
@@ -897,7 +902,7 @@ else
         name + '-multi-base',
         input: multi,
         output: name + '-multi-base.gba',
-        command: [makerom, '@INPUT@', '@OUTPUT@'],
+        command: [agbpack, '@INPUT@', '@OUTPUT@'],
     )
 
     # The base multiboot ROM with no audio, padded and fixed
