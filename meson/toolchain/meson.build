@@ -11,6 +11,7 @@ compile_args = [
   '-fdata-sections',            # Every global variable gets placed into its own section.
   '-mthumb',                    # Generate THUMB code by default.
   '-masm-syntax-unified',       # Use unified assembler syntax for inline assembly.
+  '-fno-exceptions',            # Do not generate exception stubs
   '-frtti',       		# Use RTTI to improve codegen and speed for HSM in multiplayer
 ]
 

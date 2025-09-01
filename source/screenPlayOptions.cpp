@@ -952,7 +952,7 @@ bool SinglePakWirelessScene::control() {
         if (!path.empty())
             path.pop_back();
 
-        changeScene(new MultBattleScene(), Transitions::FADE);
+        changeScene(new ConfirmEmuScene(), Transitions::FADE);
 
         return true;
     }
@@ -1115,7 +1115,7 @@ bool SinglePakWiredScene::control() {
         if (!path.empty())
             path.pop_back();
 
-        changeScene(new MultBattleScene(), Transitions::FADE);
+        changeScene(new ConfirmEmuScene(), Transitions::FADE);
 
         return true;
     }

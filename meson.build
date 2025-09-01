@@ -988,6 +988,7 @@ else
         include_directories: includes,
         dependencies: dependencies,
         name_suffix: 'elf',
+        build_by_default: false,
     )
 
     # The base EZFlash Air GBA ROM with no audio
@@ -996,6 +997,7 @@ else
         input: elf_ezf_air,
         output: name + '-Air-base.gba',
         command: [py3, makebase, makerom, '@INPUT@', '@OUTPUT@', gbafix],
+        build_by_default: false,
     )
 
     # The final EZFlash Air GBA ROM with audio
@@ -1042,6 +1044,7 @@ else
         include_directories: includes,
         dependencies: dependencies,
         name_suffix: 'elf',
+        build_by_default: false,
     )
 
     # The base Supercard GBA ROM with no audio
@@ -1050,6 +1053,7 @@ else
         input: elf_sc,
         output: name + '-Supercard-base.gba',
         command: [py3, makebase, makerom, '@INPUT@', '@OUTPUT@', gbafix],
+        build_by_default: false,
     )
 
     # The final Supercard GBA ROM with audio
