@@ -15,6 +15,7 @@
 #include "LinkUniversal.hpp"
 extern LinkUniversal* linkConnection;
 extern bool disableHBlank;
+extern LinkUniversal::Protocol multiplayerProtocol;
 #endif
 extern int initialPlayerCount;
 

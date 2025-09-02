@@ -1480,8 +1480,10 @@ void GameScene::showText() {
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
 
     } else if (gm == BATTLE || (gm == SPRINT && game->subMode == 1)) {
+#ifndef MULTIBOOT
         wordSprites[6].setText("Attack");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
+#endif
 
         wordSprites[7].setTextNum(game->linesSent);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);

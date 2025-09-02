@@ -96,7 +96,11 @@ void GameScene::endScreen() {
     int record = endScreenSetup();
 
     if (multiplayer)
+#ifndef MULTIBOOT
         max = 2;
+#else
+        max = 1;
+#endif
 
     playSongRandom(0);
 
@@ -278,7 +282,7 @@ void GameScene::endScreen() {
 #ifndef MULTIBOOT
                 changeScene(new MainMenuScene, Transitions::FADE);
 #else
-                changeScene(new MultBattleScene, Transitions::FADE);
+                changeScene(new MultiplayerProtocolScene, Transitions::FADE);
 #endif
                 return;
             } else if (selection == 1) {

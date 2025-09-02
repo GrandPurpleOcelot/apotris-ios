@@ -1,6 +1,8 @@
 #include "platform.hpp"
 
 #ifdef GBA
+#include <LinkUniversal.hpp>
+
 #include "LinkUniversal.hpp"
 #include "achievementStructure.h"
 #include "aeabi.h"
@@ -33,6 +35,7 @@
 #include "text.h"
 #include "LinkWirelessMultiboot.hpp"
 
+LinkUniversal::Protocol multiplayerProtocol = LinkUniversal::Protocol::AUTODETECT;
 // #include <string>
 // #include "scene.hpp"
 // #include "main.hpp"

@@ -222,6 +222,122 @@ void fallingBlocks() {
     }
 }
 
+#ifdef GBA
+void MultiplayerProtocolScene::init() {
+    clearSprites(128);
+    showSprites(128);
+
+    clearSpriteTiles(256, 12 * 2, 1);
+    for (int i = 0; i < 2; i++)
+        wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
+
+    clearTilemap(29);
+    naprint("How are you connected?", 16, 56);
+
+    wordSprites[0].setText("CABLE");
+    wordSprites[0].show(32, 104, 14);
+
+    wordSprites[1].setText("WIRELESS");
+    wordSprites[1].show(120, 104, 14);
+
+    // backgroundGrid
+    setTiles(26, 0, 32 * 32,
+             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+
+    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
+
+    lengths[0] = wordSprites[0].width;
+    lengths[1] = wordSprites[1].width;
+
+    pos[0] = 48 + lengths[0] / 2;
+    pos[1] = 120 + lengths[1] / 2;
+
+    loadSpriteTiles(16 * 7, blockSprite, 1, 1);
+    for (int i = 0; i < 2; i++) {
+        cursorSprites[i] = &obj_buffer[1 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_hide(cursorSprites[i]);
+    }
+
+    enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
+}
+
+bool MultiplayerProtocolScene::control() {
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if (key_hit(k.left) || key_hit(k.right)) {
+        cancel = !cancel;
+        sfx(SFX_MENUMOVE);
+    }
+
+    if (key_hit(k.confirm)) {
+        sfx(SFX_MENUCONFIRM);
+        if (!cancel) {
+            multiplayerProtocol = LinkUniversal::Protocol::CABLE;
+        } else {
+            multiplayerProtocol = LinkUniversal::Protocol::WIRELESS_AUTO;
+        }
+        changeScene(new MultBattleScene(), Transitions::FADE);
+#ifndef MULTIBOOT
+    } else if (key_hit(k.cancel)) {
+        sfx(SFX_MENUCANCEL);
+        changeScene(new MainMenuScene(), Transitions::FADE);
+    }
+#else
+    }
+#endif
+
+    return false;
+}
+
+void MultiplayerProtocolScene::draw() {
+    fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
+
+    int offset = (sinLut(cursorFloat) * 2) >> 12;
+    FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
+
+    const int y = 104;
+
+    for (int i = 0; i < 2; i++) {
+        sprite_unhide(cursorSprites[i], 0);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_set_size(cursorSprites[i], scale, i);
+
+        int x = pos[cancel] -
+                ((lengths[cancel] + 8) / 2 + offset + 4) * ((i) ? -1 : 1) - 8;
+
+        sprite_set_pos(cursorSprites[i], x, y - 5);
+    }
+
+    wordSprites[0].show(48, 104, 14 + (cancel == 0));
+    wordSprites[1].show(120, 104, 14 + (cancel == 1));
+
+    showSprites(128);
+}
+
+void MultiplayerProtocolScene::update() {
+    canDraw = true;
+    key_poll();
+
+    cursorFloat += 6;
+    if (cursorFloat >= 512)
+        cursorFloat = 0;
+
+    control();
+}
+
+void MultiplayerProtocolScene::deinit() {
+    clearText();
+    clearSmallText();
+    resetSmallText();
+}
+#endif
+
 #ifndef MULTIBOOT
 std::string timeToStringHours(int frames) {
     int t = (int)frames * 0.0167f;

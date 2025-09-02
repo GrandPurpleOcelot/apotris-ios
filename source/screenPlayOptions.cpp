@@ -665,33 +665,18 @@ void MultBattleScene::init() {
     clearSpriteTiles(256, 12 * MAX_WORD_SPRITES, 1);
 
     enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
-#else
-    PlayOptionScene::init();
-#endif
-
-#ifdef GBA
-    key_poll();
-    // Secret feature: hold L on real hardware to force cable mode
-    if (key_held(KEY_L)) {
-        // mGBA only supports cable, so set it to speed up initial multiplayer sync
-        multiplayerLink->universal->setProtocol(
-                LinkUniversal::Protocol::CABLE);
+    if (LinkWireless::isWirelessMultibootRom()) {
+        multiplayerLink->universal->setProtocol(LinkUniversal::Protocol::WIRELESS_AUTO);
+    } else {
+        multiplayerLink->universal->setProtocol(LinkUniversal::Protocol::CABLE);
     }
-    else if (key_held(KEY_R)) {
-        // gpSP only does wireless, users may want to override
-        multiplayerLink->universal->setProtocol(
-                LinkUniversal::Protocol::WIRELESS_AUTO);
-    }
-    // If we booted wirelessly, attempt to restore existing connection
-    // Also support calling from the multiboot-send menu on cart if wireless
-    else {
-        // This undoes the hold L or R overrides if exiting and returning to this screen
-        multiplayerLink->universal->setProtocol(
-            LinkUniversal::Protocol::AUTODETECT);
-    }
-
+#elif defined(GBA)
+    multiplayerLink->universal->setProtocol(multiplayerProtocol);
     rumbleHandler = interrupt_get_handler(INTR_SERIAL);
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+#endif
+#ifndef MULTIBOOT
+    PlayOptionScene::init();
 #endif
 
     multiplayerLink->active = true;
@@ -785,11 +770,11 @@ bool MultBattleScene::control() {
             movingDirection = -1;
             listStart = 0;
         }
-    } else if ((multiplayerLink->stateMachine
+    } else if (multiplayerLink->stateMachine
 #else
-    if ((multiplayerLink->stateMachine
+    if (multiplayerLink->stateMachine
 #endif
-                    .IsInState<MultiplayerStates::PlayersAwaitReady>()) &&
+                    .IsInState<MultiplayerStates::PlayersAwaitReady>() &&
                !multiplayerLink
                     ->players[multiplayerLink->universal->currentPlayerId()]
                     .ready &&
@@ -808,11 +793,13 @@ void MultBattleScene::update() {
         return;
 
     if (multiplayerLink->sync()) {
+#ifndef MULTIBOOT
         if (lostConnection) {
             if (multiplayerLink->active)
                 sfx(SFX_SECRET);
             lostConnection = false;
         }
+#endif
     } else {
         if (!lostConnection) {
             refreshText = true;
@@ -925,6 +912,7 @@ bool SinglePakWirelessScene::control() {
         }
     } else if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
         sfx(SFX_MENUCONFIRM);
+        multiplayerProtocol = LinkUniversal::Protocol::WIRELESS_AUTO;
 
         if (!path.empty())
             path.pop_back();
@@ -1088,6 +1076,7 @@ bool SinglePakWiredScene::control() {
         }
     } else if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
         sfx(SFX_MENUCONFIRM);
+        multiplayerProtocol = LinkUniversal::Protocol::CABLE;
 
         if (!path.empty())
             path.pop_back();

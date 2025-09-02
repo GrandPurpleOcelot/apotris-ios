@@ -9,7 +9,7 @@
 
 #include "text.h"
 
-#if ENABLE_ROM_SAVE
+#ifdef ENABLE_ROM_SAVE
 
 #define FLASH_CODE __attribute__((noinline, section(".ewram.flash")))
 #define BYTECMP_CODE __attribute((section(".ewram.bytecmp")))

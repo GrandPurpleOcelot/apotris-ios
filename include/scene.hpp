@@ -557,6 +557,37 @@ public:
 
 #endif
 
+#ifdef GBA
+class MultiplayerProtocolScene : public Scene {
+public:
+    int timer = 0;
+
+    bool cancel = true;
+
+    int cursorFloat = 0;
+
+    WordSprite wordSprites[2];
+
+    OBJ_ATTR* cursorSprites[2];
+
+    int lengths[2];
+
+    int pos[2];
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+#ifndef MULTIBOOT
+    Scene* previousScene() { return new MainMenuScene(); };
+#else
+    Scene* previousScene() { return new MultiplayerProtocolScene(); };
+#endif
+};
+#endif
+
+
 class LabelElement : public Element {
     std::string label;
 
