@@ -1,16 +1,14 @@
-diff --git a/meson.build b/meson.build
-index db8c5e5..706c9d4 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -1,6 +1,6 @@
- project('agbpack', 'c', default_options: 'c_std=gnu11')
+ project('agbpack', 'c', default_options: 'c_std=gnu11', version: '0.3.1')
  
 -executable('agbpack', [
 +agbpack = executable('agbpack', [
-     'rt/out/crt0_multiboot_bin.c',
-     'rt/out/crt0_rom_bin.c',
-     'src/main.c',
-@@ -12,4 +12,7 @@ executable('agbpack', [
+     'rt/out/bootstrap_multiboot_bin.c',
+     'rt/out/bootstrap_multiboot_nopack_bin.c',
+     'rt/out/bootstrap_rom_bin.c',
+@@ -14,4 +14,7 @@ executable('agbpack', [
      'vendor/apultra/src/libdivsufsort/lib/divsufsort_utils.c',
      'vendor/apultra/src/libdivsufsort/lib/sssort.c',
      'vendor/apultra/src/libdivsufsort/lib/trsort.c'
