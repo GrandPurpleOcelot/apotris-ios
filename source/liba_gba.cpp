@@ -57,6 +57,7 @@ int musicVolume = 0;
 
 bool disableHBlank = true;
 bool disableDMA = true;
+bool superCardDetected = false;
 
 Songs songs;
 
@@ -90,6 +91,38 @@ mm_word myEventHandler(mm_word msg, mm_word param) {
 
     return 0;
 }
+
+#define SC_REG_ENABLE       (*(volatile uint16_t *)0x9FFFFFE)
+#define SC_ENABLE_MAGIC     0xA55A
+
+#define SC_ENABLE_PSRAM     BIT(0)
+#define SC_ENABLE_CARD      BIT(1)
+#define SC_ENABLE_WRITE     BIT(2)
+
+__attribute__((section(".text")))
+static volatile bool sentinel = false;
+
+static void superCardUnlock(uint16_t sc_mode)
+{
+    SC_REG_ENABLE = SC_ENABLE_MAGIC;
+    SC_REG_ENABLE = SC_ENABLE_MAGIC;
+    SC_REG_ENABLE = sc_mode;
+    SC_REG_ENABLE = sc_mode;
+}
+
+/**
+ * SuperCard detection routine from Asie. The idea is that we attempt to unlock the "ROM" area for writes, then test if
+ * our flip of sentinel, in "ROM" from "false" to "true" was registered by the card. If it was, we're executing on a
+ * SuperCard. If it was not flipped, the card providing "ROM" is not a SuperCard. Required for safe "fast ROM waitstate"
+ */
+bool isRunningOnSuperCard()
+{
+    superCardUnlock(SC_ENABLE_PSRAM | SC_ENABLE_WRITE);
+    sentinel = true;
+    superCardUnlock(SC_ENABLE_PSRAM);
+    return sentinel;
+}
+
 #endif
 
 void toggleBG(int layer, bool state) {
@@ -239,8 +272,12 @@ void platformInit() {
 
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
 
-#ifdef ENABLE_FAST_ROM
-    REG_WAITCNT = 0x4317;
+#ifndef MULTIBOOT
+    superCardDetected = isRunningOnSuperCard();
+    if (!superCardDetected) {
+        // SuperCard cannot handle fast ROM waitstates in a stable way
+        REG_WAITCNT = 0x4317;
+    }
 #endif
 
     setUpLinkUniversal();
@@ -458,9 +495,9 @@ bool unlock_gbp() {
 
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
-#ifdef ENABLE_FAST_ROM
-    REG_WAITCNT = 0x4317;
-#endif
+    if (!superCardDetected) {
+        REG_WAITCNT = 0x4317;
+    }
 
     return gbp_detected;
 #endif

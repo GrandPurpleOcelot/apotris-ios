@@ -21,7 +21,6 @@ MAC:
 
 Patching for unique hardware:
     IF YOU USE ONE OF THESE:
-    - Supercard flash cart
     - EZFlash Air flash cart
     - Analogue Pocket with a Rumble Cart
     You will need to patch your 'Apotris.gba' (or 'audio/Apotris-base.gba' before running the script for custom music).

@@ -98,11 +98,23 @@ subdir(data_dir)
 icon_file = files('sprites/favicon32.bmp')
 effect_locations_file = 'effect_locations.bin'
 
+build_type = get_option('buildtype')
+
 # Set up recommended compiler and linker flags for GBA before loading any other projects
 if host_machine.system() == 'gba'
     subdir('meson/toolchain')
     add_project_arguments('-Wno-incompatible-pointer-types', language: 'c')
     add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language: 'cpp')
+    # -O3 is too bloated to work right now, so release builds should use -O2
+    if build_type == 'release'
+        # Add additional optimization flags that don't overbloat the IWRAM and kill stack space
+        add_global_arguments(['-O2', '-fgcse-after-reload', '-fipa-cp-clone', '-floop-interchange',
+                              '-floop-unroll-and-jam', '-fpeel-loops', '-fpredictive-commoning', '-fsplit-loops',
+                              '-fsplit-paths', '-ftree-loop-distribution', '-ftree-partial-pre', '-funswitch-loops',
+                              '-fvect-cost-model=dynamic', '-fversion-loops-for-strides'],
+                             language: ['c', 'cpp'])
+        add_global_link_arguments('-s', language: ['c', 'cpp'])
+    endif
 endif
 
 if host_machine.system() == 'windows'
@@ -115,8 +127,6 @@ elif host_machine.system() == 'emscripten'
 elif host_machine.system() == 'darwin'
     add_global_arguments('-mmacosx-version-min=10.15', language: ['cpp', 'c'])
 endif
-
-build_type = get_option('buildtype')
 
 if host_machine.system() == 'n3ds'
 
@@ -887,8 +897,8 @@ else
         name + '-multi',
         sources + generated_files + 'source/vgm.cpp',
         link_args: link_mb_args,
-        cpp_args: ['-flto', '-DMULTIBOOT', '-Os'],
-        c_args: ['-flto', '-Os'],
+        cpp_args: ['-flto', '-DMULTIBOOT', '-Oz'],
+        c_args: ['-flto', '-Oz'],
         include_directories: includes,
         dependencies: dependencies_multi,
         name_suffix: 'elf',
@@ -925,8 +935,6 @@ else
 
     # Flag enables bootleg save support
     rom_save = ['-DENABLE_ROM_SAVE']
-    # Flag enables fast ROM waitstates
-    fast_rom = ['-DENABLE_FAST_ROM']
 
     ##########################################
     # Base GBA ROM build configuration steps #
@@ -936,8 +944,8 @@ else
     elf = executable(
         name,
         sources + generated_files,
-        cpp_args: rom_save + fast_rom,
-        c_args: rom_save + fast_rom,
+        cpp_args: rom_save,
+        c_args: rom_save,
         link_args: link_args,
         include_directories: includes,
         dependencies: dependencies,
@@ -979,8 +987,6 @@ else
     elf_ezf_air = executable(
         name + '-Air',
         sources + generated_files,
-        cpp_args: fast_rom,
-        c_args: fast_rom,
         link_args: link_args,
         include_directories: includes,
         dependencies: dependencies,
@@ -1023,52 +1029,9 @@ else
     # Analogue Pocket rumble-patched ROM (masquerades as DRILL DOZER)
     pocket = custom_target(
         'patched ROM for Analogue Pocket rumble support',
-        output: name + '-pocket.gba',
+        output: name + '-Pocket.gba',
         input: rom,
         command: [py3, pocket_patch, gbafix, '@INPUT@', '@OUTPUT@'],
-        build_by_default: false,
-    )
-
-    #######################################
-    # Supercard build configuration steps #
-    #######################################
-
-    # The base elf binary without fast rom support for Supercard
-    elf_sc = executable(
-        name + '-Supercard',
-        sources + generated_files,
-        link_args: link_args,
-        include_directories: includes,
-        dependencies: dependencies,
-        name_suffix: 'elf',
-        build_by_default: false,
-    )
-
-    # The base Supercard GBA ROM with no audio
-    rom_base_sc = custom_target(
-        name + '-Supercard-base',
-        input: elf_sc,
-        output: name + '-Supercard-base.gba',
-        command: [py3, makebase, makerom, '@INPUT@', '@OUTPUT@', gbafix],
-        build_by_default: false,
-    )
-
-    # The final Supercard GBA ROM with audio
-    rom_sc = custom_target(
-        'final Supercard ROM with audio',
-        output: name + '-Supercard.gba',
-        input: rom_base_sc,
-        command: [
-            py3,
-            gbabuild,
-            padbin,
-            '256',
-            '@INPUT@',
-            'audio.gbfs',
-            '0x400000',
-            '@OUTPUT@',
-            gbafix,
-        ],
         build_by_default: false,
     )
 
@@ -1078,10 +1041,8 @@ else
 
     # A list that pairs [MODIFIED_ROM_TARGET, ITS_BASE_ROM_TARGET, 'output-suffix']
     patches_to_generate = [
-        [pocket, rom, 'pocket'],
-        [rom_sc, rom, 'Supercard'],
+        [pocket, rom, 'Pocket'],
         [rom_air, rom, 'Air'],
-        [rom_base_sc, rom_base, 'Supercard-base'],
         [rom_base_air, rom_base, 'Air-base'],
     ]
     all_ups_targets = []

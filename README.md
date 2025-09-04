@@ -169,9 +169,8 @@ their equivalent target invocation names:
 
 | Hardware | Meson ninja target |
 |----------|----------|
-| Supercard | `Apotris-Supercard.gba` |
-| Analogue Pocket Rumble  | `Apotris-pocket.gba` |
-| EZFlash Air | Data B2  | `Apotris-Air.gba` |
+| Analogue Pocket Rumble  | `Apotris-Pocket.gba` |
+| EZFlash Air | `Apotris-Air.gba` |
 
 To build one of these locally, in the final `meson compile` step replace the command with
 ```sh
