@@ -104,6 +104,7 @@ build_type = get_option('buildtype')
 if host_machine.system() == 'gba'
     subdir('meson/toolchain')
     add_project_arguments('-Wno-incompatible-pointer-types', language: 'c')
+    add_global_arguments('-Wno-implicit-function-declaration', language: 'c')
     add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language: 'cpp')
     # -O3 is too bloated to work right now, so release builds should use -O2
     if build_type == 'release'
@@ -742,17 +743,29 @@ else
     # GameBoy-Advance-specific configuration #
     ##########################################
 
-    # Required for minrt
-    link_args = ['-specs=nosys.specs']
-    link_mb_args = link_args + ['-flto=auto']
+    # Check Wonderful Toolchain and Eden Toolchain
+    cc_version_identifier = cc_ver.stdout().to_lower()
+    have_eden = cc_version_identifier.contains('wonderful') or cc_version_identifier.contains('eden')
+    # Check devkitARM
+    have_devkitarm = cc_version_identifier.contains('devkitarm')
 
-    have_devkitarm = cc_ver.stdout().to_lower().contains('devkitarm')
-    if have_devkitarm
-        sync_none = ['-specs=sync-none.specs']
+    # Gather link arguments and per-toolchain override flags and sources
+    link_args = []
+    sync_none = ['-specs=sync-none.specs']
+
+    # Use correct toolchain .specs to start
+    if have_devkitarm # devkitARM
         link_args += sync_none
-        link_mb_args += sync_none
         sources += files('source/stubs.s')
+    elif not have_eden # e.g. generic arm.com
+        link_args += ['-specs=nosys.specs']
+    else # wf and eden
+        link_args += sync_none
+        link_args += ['-specs=picolibc.specs', '-lnosys']
+        sources += files('source/stubs.s', 'source/stubs.c')
     endif
+
+    link_mb_args = link_args + ['-flto=auto']
 
     dependencies = [
         dependency('minrt'),

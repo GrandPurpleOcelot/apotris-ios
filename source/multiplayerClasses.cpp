@@ -105,9 +105,8 @@ bool MultiplayerLink::sync() {
         }
     }
 
-    return !stateMachine
-                .IsInState<MultiplayerStates::ConnectionInitializing>() &&
-           !stateMachine.IsInState<MultiplayerStates::PlayersReconnecting>();
+    return !stateMachine.IsInState<MultiplayerStates::ConnectionInitializing>() &&
+        universal->playerCount() == this->playingPlayerCount;
 }
 
 /**

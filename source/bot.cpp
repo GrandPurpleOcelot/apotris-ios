@@ -38,7 +38,7 @@ INLINE int countBits(u16 n) {
 
 INLINE int countTransitions(u16 a) { return countBits((a >> 1) ^ a); }
 
-IWRAM_CODE Values evaluate(u16* board, const int* columnHeights, int lengthX,
+Values evaluate(u16* board, const int* columnHeights, int lengthX,
                            int lengthY, int startY) {
     int start = max(1, startY - 1);
 

@@ -2007,7 +2007,7 @@ void drawFrameBackgrounds() {
 
 INLINE int prep(int n) { return min(clamp((n + 500) / 8, 0, 255) / 16, 14); }
 
-IWRAM_CODE void updateGrid() {
+void updateGrid() {
     for (int i = 1; i < 21; i++) {
         for (int j = 1; j < 11; j++) {
             current[i][j] = (previous[i - 1][j] + previous[i + 1][j] +

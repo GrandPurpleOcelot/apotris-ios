@@ -315,24 +315,28 @@ struct MultiplayerStates {
 #endif
         }
 
-#ifndef GBA
         void Update() override {
             seenPlayerCount = Owner().universal->playerCount();
         }
-#endif
 
+        // In MultiplayerStates::PlayersPresent
         Transition GetTransition() override {
             if (Owner().playing) {
-                if (Owner().playingPlayerCount >
-                    Owner().universal->playerCount()) {
+                // A player has dropped, wait for them to come back.
+                if (Owner().playingPlayerCount > Owner().universal->playerCount()) {
                     return SiblingTransition<ConnectionInitializing>();
-                } else if (Owner().playingPlayerCount <=
-                           Owner().universal->playerCount()) {
-                    return InnerEntryTransition<PlayersReconnecting>();
                 }
-            } else if (seenPlayerCount != Owner().universal->playerCount()) {
+                // The player is back! Go right back to the game.
+                else if (Owner().playingPlayerCount <= Owner().universal->playerCount()) {
+                    return SiblingTransition<Playing>();
+                }
+            }
+            // This handles player changes in the lobby before a game starts.
+            else if (seenPlayerCount != Owner().universal->playerCount()) {
                 return SiblingTransition<ConnectionInitializing>();
             }
+
+            // If no player changes, proceed to seeding as normal.
             return InnerEntryTransition<PlayersSeeding>();
         }
     };
@@ -344,9 +348,6 @@ struct MultiplayerStates {
      * before proceeding, so each client will have the same random state.
      */
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
-        // Time in frames to reset attempting to seed
-        int readyTimeout = 3 * 60;
-
         void OnEnter() override {
 #ifdef GBA
             if (Owner().universal->currentPlayerId() && nextSeed) {
@@ -387,18 +388,18 @@ struct MultiplayerStates {
                         Owner().playingPlayerCount = newPlayerCount;
 #ifdef GBA
                     } else if (packet.packet & SEND_SEED) {
-                        if (Owner().universal->currentPlayerId()) {
-                            if (!packet.playerId) {
-                                nextSeed = packet.packet & (SEND_SEED - 1);
-                            } else if (nextSeed &&
-                                       ((packet.packet & (SEND_SEED - 1)) !=
-                                        nextSeed))
-                                nextSeed = packet.packet &
-                                           (SEND_SEED - 1); // bad seed??
-                            Owner().players[packet.playerId].seeded = true;
-                        } else {
-                            if ((packet.packet & (SEND_SEED - 1)) == nextSeed)
+                        // Host logic: Mark players as seeded if they have the correct seed.
+                        if (Owner().universal->currentPlayerId() == 0) {
+                            if ((packet.packet & (SEND_SEED - 1)) == nextSeed) {
                                 Owner().players[packet.playerId].seeded = true;
+                            }
+                        }
+                        // Client logic: Only accept a seed from the host.
+                        else {
+                            if (packet.playerId == 0) {
+                                nextSeed = packet.packet & (SEND_SEED - 1);
+                                Owner().players[packet.playerId].seeded = true;
+                            }
                         }
 #endif
                     }
@@ -411,23 +412,17 @@ struct MultiplayerStates {
             process_queue(seedQueue);
 
             if (nextSeed) {
-                Owner().players[Owner().universal->currentPlayerId()].seeded =
-                    true;
+                Owner().players[Owner().universal->currentPlayerId()].seeded = true;
 #ifdef GBA
                 Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
 #endif
             }
         }
 
+
         Transition GetTransition() override {
-#ifdef GBA
-            if (Owner().allSeeded(Owner().universal->playerCount()))
-#endif
+            if (Owner().allSeeded(Owner().universal->playerCount())) {
                 return SiblingTransition<PlayersSeeded>();
-            if (readyTimeout-- <= 0) {
-                Owner().reset();
-                Owner().universal->deactivate(true);
-                Owner().active = true;
             }
             return NoTransition();
         }
@@ -558,10 +553,6 @@ struct MultiplayerStates {
                     command.execute();
             }
 
-            if (echoCounter++ % 10 == 0) {
-                Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
-            }
-
             int lostCount = 0;
             for (auto i : Owner().players)
                 if (i.second.over)
@@ -646,7 +637,6 @@ struct MultiplayerStates {
                 }
                 if (echoCounter++ % 60 == 0) {
                     Owner().broadcastState(UPDATE_STATE + I_LOST);
-                    Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
                 }
             }
         }
@@ -667,6 +657,7 @@ struct MultiplayerStates {
      * traffic) that the game is considered over and they must reset to re-seed.
      */
     struct GameOver : StateWithOwner<MultiplayerLink> {
+        int transitionTimeout = 120; // 2 seconds
         unsigned int echoCounter = 0;
 
         void OnEnter() override {
@@ -676,6 +667,10 @@ struct MultiplayerStates {
         }
 
         void Update() override {
+            if (transitionTimeout > 0) {
+                transitionTimeout--;
+            }
+
             std::queue<Packet> queue = Owner().readPackets();
 
             while (!queue.empty()) {
@@ -690,19 +685,11 @@ struct MultiplayerStates {
                 if (command.value == GAME_OVER) {
                     Owner().players[command.playerId.id].over = true;
                 }
-#ifdef GBA
-                else if (command.value & SEND_SEED) {
-                    Owner().seedQueue.emplace(command.playerId.id,
-                                              (command.command << 13) +
-                                                  command.value);
-                }
-#endif
             }
 
             if (echoCounter++ % 10 == 0) {
                 Owner().broadcastState(UPDATE_STATE + GAME_OVER);
                 Owner().broadcastState(UPDATE_STATE + I_LOST);
-                Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
             }
         }
 
@@ -718,50 +705,8 @@ struct MultiplayerStates {
         }
 
         Transition GetTransition() override {
-            if (Owner().allOver(Owner().playingPlayerCount)) {
+            if (transitionTimeout <= 0) {
                 return SiblingTransition<PlayersSeeding>();
-            }
-            return NoTransition();
-        }
-    };
-
-    /**
-     * When one or more players disconnect(s) from the network, all players wait
-     * for each other to echo "welcome back".
-     */
-    struct PlayersReconnecting : StateWithOwner<MultiplayerLink> {
-
-        void OnEnter() override {
-            Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
-        }
-
-        void Update() override {
-            std::queue<Packet> queue = Owner().readPackets();
-
-            while (!queue.empty()) {
-                Packet packet = queue.front();
-                queue.pop();
-
-                auto command =
-                    Command(RemotePlayerId(packet.playerId), packet.packet);
-
-                if (command.command != 2)
-                    continue;
-
-                if (command.value == WELCOME_BACK) {
-                    Owner().players[command.playerId.id].reconnected = true;
-                    Owner()
-                        .players[Owner().universal->currentPlayerId()]
-                        .reconnected = true;
-                }
-            }
-
-            Owner().broadcastState(UPDATE_STATE + WELCOME_BACK);
-        }
-
-        Transition GetTransition() override {
-            if (Owner().allConnected(Owner().universal->playerCount())) {
-                return SiblingTransition<Playing>();
             }
             return NoTransition();
         }
