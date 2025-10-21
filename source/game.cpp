@@ -1016,9 +1016,9 @@ void showHold() {
         sprite_set_pos(
             holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push,
             (10) * 8 -
-                3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS)) +
+                3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS || rs == SDRS)) +
                 yoffset +
-                3 * ((rs == ARS || rs == BARS) && game->held == PIECE_I) - 4);
+                3 * ((rs == ARS || rs == BARS || rs == SDRS) && game->held == PIECE_I) - 4);
     }
 }
 
@@ -1113,7 +1113,7 @@ void showQueue(bool offsetSpriteIndex) {
             sprite_set_pos(queueSprites[k],
                            startX + add * 3 + (push > 0) * push,
                            (3 + (k * 3)) * 6 - 3 * (n == PIECE_I) + yoffset +
-                               8 * ((rs == ARS || rs == BARS) && n == PIECE_I));
+                               8 * ((rs == ARS || rs == BARS && n == PIECE_I)));
         } else {
             sprite_unhide(queueSprites[k], ATTR0_AFF);
             sprite_set_attr(queueSprites[k], ShapeSquare, 2, 16 * n,
@@ -2456,7 +2456,7 @@ void showPlaceEffect() {
         switch (it->piece) {
         case 0:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n], 8, 3);
-            if (game->rotationSystem == NRS) {
+            if (game->rotationSystem == NRS || game->rotationSystem == SDRS) {
                 if (r % 2 == 1)
                     r = 1;
                 else
@@ -2472,7 +2472,7 @@ void showPlaceEffect() {
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 3], 8, 3);
             xoffset = yoffset = -4;
 
-            if (game->rotationSystem == ARS && r == 2)
+            if (game->rotationSystem == ARS && r == 2 || (game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
                 yoffset += 8;
 
             if (game->rotationSystem == NRS || game->rotationSystem == ARS)
@@ -2484,7 +2484,7 @@ void showPlaceEffect() {
             xoffset = yoffset = -4;
             flip = true;
 
-            if (game->rotationSystem == ARS && r == 2)
+            if (game->rotationSystem == ARS && r == 2 || (game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
                 yoffset += 8;
 
             if (game->rotationSystem == NRS || game->rotationSystem == ARS)
@@ -2493,7 +2493,7 @@ void showPlaceEffect() {
         case 3:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 6], 8, 3);
             yoffset = -4 + (game->rotationSystem == NRS ||
-                            game->rotationSystem == ARS) *
+                            game->rotationSystem == ARS || game->rotationSystem == SDRS) *
                                8;
             r = 0;
             break;
@@ -2507,12 +2507,14 @@ void showPlaceEffect() {
                 else
                     r = 2;
             }
+            if ((game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
+                yoffset += 8;
             break;
         case 5:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 12], 8, 3);
             xoffset = yoffset = -4;
 
-            if (game->rotationSystem == ARS && r == 2)
+            if (game->rotationSystem == ARS && r == 2 || (game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
                 yoffset += 8;
 
             if (game->rotationSystem == NRS || game->rotationSystem == ARS)
@@ -2529,6 +2531,8 @@ void showPlaceEffect() {
                 else
                     r = 2;
             }
+            if ((game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
+                yoffset += 8;
             break;
         default:
             break;
@@ -3707,7 +3711,7 @@ void showSpawn() {
         BlockEngine::getShape(game->queue.front(), 0, game->rotationSystem);
 
     bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS ||
-                game->rotationSystem == BARS);
+                game->rotationSystem == BARS || game->rotationSystem == SDRS);
 
     std::tuple<int, int> pos = game->getSpawnPosition();
 
@@ -3735,7 +3739,7 @@ void showSpawn() {
             sprite, (10 + x) * 8 + push * savefile->settings.shake,
             (y - game->boardOffset + peek) * 8 +
                 shake * savefile->settings.shake + peekShift -
-                8 * (game->rotationSystem == BARS && piece != PIECE_I));
+                8 * (game->rotationSystem == BARS && piece != PIECE_I || game->rotationSystem == SDRS));
     } else {
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
         sprite_enable_mosaic(sprite);
@@ -3745,6 +3749,6 @@ void showSpawn() {
             sprite, (10 + x * 2) * 8 + push * savefile->settings.shake,
             (y - game->boardOffset + peek) * 8 * 2 +
                 shake * savefile->settings.shake + peekShift -
-                16 * (game->rotationSystem == BARS && piece != PIECE_I));
+                16 * (game->rotationSystem == BARS && piece != PIECE_I || game->rotationSystem == SDRS));
     }
 }

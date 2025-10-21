@@ -12,6 +12,8 @@ extern const int tetrominos[7][4][4][4];
 
 extern const int bars[7][4][4][4];
 
+extern const int sdrs[7][4][4][4];
+
 extern const int classic[7][4][4][4];
 
 extern const int ars[7][4][4][4];
@@ -23,6 +25,8 @@ extern const int barsKickTwice[4][8][2];
 extern const int kicks[2][2][4][5][2];
 
 extern const int barsKicks[2][2][4][7][2];
+
+extern const int sdrsKicks[2][2][4][10][2];
 
 extern const int arikaKicks[];
 

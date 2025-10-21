@@ -1178,6 +1178,9 @@ void GameScene::showModeText() {
                 case BlockEngine::BARS:
                     text = "BARS";
                     break;
+                case BlockEngine::SDRS:
+                    text = "SDRS";
+                    break;
                 default:
                     text = "SRS";
                     break;
