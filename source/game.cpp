@@ -2514,7 +2514,8 @@ void showPlaceEffect() {
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 12], 8, 3);
             xoffset = yoffset = -4;
 
-            if (game->rotationSystem == ARS && r == 2 || (game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
+            if (game->rotationSystem == ARS && r == 2 || 
+            (game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
                 yoffset += 8;
 
             if (game->rotationSystem == NRS || game->rotationSystem == ARS)
