@@ -34,6 +34,11 @@ meson setup --cross-file=meson/mingw.ini build-windows && meson compile -C build
 # Linux
 meson setup build-linux && meson compile -C build-linux
 
+# NOTE: If you're trying to produce a build exactly like the released builds, you want to add flags as well like below
+# Some emulators and platforms will behave differently without these flags (e.g. a debug build)
+meson setup -Db_lto=true -Db_lto_mode=thin --buildtype=release ...
+# Also note that some builds (specifically the Windows build) may fail with the LTO-related flags, so remove those if the sources no longer compile
+
 # Built executables are now in the Docker environment's apotris/build-*/ folders
 ```
 
