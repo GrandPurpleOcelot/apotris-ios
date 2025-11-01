@@ -83,7 +83,7 @@ void GameScene::endScreen() {
 
     std::string totalTime = timeToString(gameSeconds, false);
 
-    stopSong();
+    stopMusic();
 
     int prevBld = blendInfo;
 

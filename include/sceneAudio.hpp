@@ -300,7 +300,7 @@ public:
 
     void deinit() {
         savefile->settings.cycleSongs = previous;
-        stopSong();
+        stopMusic();
         playSongRandom(0);
     }
 
