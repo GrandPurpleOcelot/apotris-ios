@@ -457,8 +457,12 @@ std::string getSavefilePath() {
     std::string saveFileDir = possibleSaveDirs.at(0);
 
     if (saveFileDir != ".") {
-        // Create directory if it doesn't exist
+// Create directory if it doesn't exist
+#ifdef WIN32
+        mkdir(saveFileDir.c_str());
+#else
         mkdir(saveFileDir.c_str(), 0755);
+#endif
     }
 
     std::string preferredSavefile = saveFileDir + "/Apotris.sav";
