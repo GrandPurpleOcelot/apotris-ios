@@ -251,19 +251,28 @@ void showSprites(int n) {
         TLN_SetSpritePicture(counter, counter);
         TLN_SetSpritePalette(counter, palettes[sprite->palette + 16]);
         if (sprite->affine && !sprite->rotate) {
+            TLN_ResetSpriteRotation(counter);
             TLN_SetSpritePivot(counter, 0.5, 0.5);
-            log(sprite->scalex);
+
             TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
             float scaleOffset = (1 + sprite->doubleSize) / 2.0;
+
             TLN_SetSpritePosition(
                 counter, sprite->x + offsetx + sprite->sx * scaleOffset,
                 sprite->y + offsety + sprite->sy * scaleOffset);
         } else if (sprite->affine && sprite->rotate) {
-            TLN_SetSpritePivot(counter, 0, 0);
-            TLN_SetSpritePosition(counter, sprite->x + offsetx,
-                                  sprite->y + offsety);
-            TLN_ResetSpriteScaling(counter);
+            TLN_SetSpritePivot(counter, 0.5, 0.5);
+            TLN_SetSpriteScaling(counter, sprite->scalex, sprite->scaley);
+
+            float scaleOffset = (sprite->doubleSize) ? 0 : 0.5;
+
+            const int sprite_x = sprite->x + offsetx - sprite->sx * scaleOffset;
+            const int sprite_y = sprite->y + offsety - sprite->sy * scaleOffset;
+
+            TLN_SetSpritePosition(counter, sprite_x, sprite_y);
+            TLN_SetSpriteRotation(counter, sprite->angle);
         } else {
+            TLN_ResetSpriteRotation(counter);
             TLN_SetSpritePosition(counter, sprite->x + offsetx,
                                   sprite->y + offsety);
             TLN_SetSpritePivot(counter, 0.0, 0.0);
@@ -535,21 +544,13 @@ void sprite_set_size(OBJ_ATTR* sprite, FIXED size, int aff_id) {
 
 void sprite_rotscale(OBJ_ATTR* sprite, FIXED sizex, FIXED sizey, int angle,
                      int aff_id) {
-    // sprite->affine = false;
-    sprite->flipx = (sizex < 0);
-    // sprite->flipy = (sizey < 0);
-
-    int n = angle / 0x4000;
-
-    if ((abs(n)) % 2 == 1) {
-        sprite->rotate = true;
-    }
-
-    // if(n > 1){
-    //     sprite->flipy = !sprite->flipy;
-    // }
-
-    // sprite_set_size(sprite, sizex, aff_id);
+    sprite->scalex = fx2float(sizex);
+    sprite->scaley = fx2float(sizey);
+    sprite->angle = ((float)angle * 360.0f) /
+                    65536.0f; // Convert from fixed-point to degrees
+    sprite->affine = true;
+    sprite->rotate = true;
+    // sprite->rotate = (sprite->angle != 0.0f);
 };
 
 void sprite_enable_affine(OBJ_ATTR* sprite, int affineId, bool doubleSize) {
