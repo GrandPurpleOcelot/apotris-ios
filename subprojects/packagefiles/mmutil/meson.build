@@ -9,7 +9,6 @@ sources = [
   'source/files.c',
   'source/gba.c',
   'source/it.c',
-  'source/kiwi.c',
   'source/main.c',
   'source/mas.c',
   'source/mod.c',
@@ -18,16 +17,16 @@ sources = [
   'source/s3m.c',
   'source/samplefix.c',
   'source/simple.c',
-  'source/upload.c',
   'source/wav.c',
   'source/xm.c',
 ]
 
 includes = ['source']
 
-pkgver = 'PACKAGE_VERSION="@0@"'.format(meson.project_version())
+version_string = meson.project_version()
+pkgver = 'PACKAGE_VERSION="@0@"'.format(version_string)
 
-args = ['-D' + pkgver]
+args = ['-D' + pkgver, '-DVERSION_STRING="@0@"'.format(version_string)]
 
 cc = meson.get_compiler('c', native: true)
 
