@@ -199,6 +199,7 @@ extern void setDefaultGameplay(Save* save);
 extern bool getSongState(int group, int index);
 extern void toggleSong(int group, int index, bool state);
 extern void checkSongs();
+extern void stopMusic();
 
 extern int countClears(u16* board, int lengthX, int lengthY, int startY);
 extern IWRAM_CODE BlockEngine::Values

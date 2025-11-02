@@ -1162,7 +1162,7 @@ bool GameScene::control() {
     if (replaying && key_hit(KEY_FULL)) {
         exitGame = true;
 
-        stopSong();
+        stopMusic();
         playSongRandom(0);
 
         return true;
@@ -3329,7 +3329,7 @@ void GameScene::init() {
     drawFrame(-1);
     drawFrameBackgrounds();
 
-    stopSong();
+    stopMusic();
 
     showHold();
 

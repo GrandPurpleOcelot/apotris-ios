@@ -10,6 +10,7 @@
 #include "soloud.h"
 #include "soloud_openmpt.h"
 #include "soloud_wav.h"
+#include "soloud_wavstream.h"
 
 #include "def.h"
 
@@ -18,7 +19,7 @@ SoLoud::Queue musicQueue;
 
 SoLoud::Wav soundEffects[SFX_COUNT];
 
-SoLoud::Openmpt* musicArray;
+std::vector<SoLoud::AudioSource*> musicArray;
 
 SoLoud::handle currentSongHandle;
 
@@ -62,6 +63,10 @@ void loadAudio(std::string pathPrefix) {
             hasSuffix(entry->d_name, ".mod") ||
             hasSuffix(entry->d_name, ".s3m") ||
             hasSuffix(entry->d_name, ".S3M") ||
+            hasSuffix(entry->d_name, ".mp3") ||
+            hasSuffix(entry->d_name, ".ogg") ||
+            hasSuffix(entry->d_name, ".flac") ||
+            hasSuffix(entry->d_name, ".wav") ||
             hasSuffix(entry->d_name, ".xm")) {
             songPaths.push_back(entry->d_name);
         }
@@ -72,19 +77,30 @@ void loadAudio(std::string pathPrefix) {
     sort(songPaths.begin(), songPaths.end());
 
     for (auto str : songPaths) {
+        songList.push_back(path + "/" + str);
+
         if (str.find("MENU_") != std::string::npos) {
-            songList.push_back(path + "/" + str);
             songs.menu.push_back(counter++);
         } else {
-            songList.push_back(path + "/" + str);
             songs.game.push_back(counter++);
         }
     }
 
-    musicArray = new SoLoud::Openmpt[counter];
-
     for (int i = 0; i < counter; i++) {
-        SoLoud::result loaded = musicArray[i].load(songList.at(i).c_str());
+        SoLoud::result loaded;
+        std::string songPath = songList.at(i);
+
+        if (hasSuffix(songPath, ".mp3") || hasSuffix(songPath, ".ogg") ||
+            hasSuffix(songPath, ".flac") || hasSuffix(songPath, ".wav")) {
+            SoLoud::WavStream* wavstream = new SoLoud::WavStream;
+            loaded = wavstream->load(songPath.c_str());
+            musicArray.push_back((SoLoud::AudioSource*)wavstream);
+        } else {
+            SoLoud::Openmpt* openmpt = new SoLoud::Openmpt;
+            loaded = openmpt->load(songPath.c_str());
+            musicArray.push_back((SoLoud::AudioSource*)openmpt);
+        }
+
         if (loaded != SoLoud::SO_NO_ERROR) {
             log("couldn't load: " + songList.at(i) + " " +
                 std::to_string(loaded));
@@ -93,7 +109,10 @@ void loadAudio(std::string pathPrefix) {
 }
 
 void freeAudio() {
-    delete[] musicArray;
+    for (auto source : musicArray) {
+        delete source;
+    }
+
     gSoloud.deinit();
 }
 
@@ -102,7 +121,7 @@ void songEndHandler() {
         return;
 
     if (currentSong != -1 &&
-        !musicQueue.isCurrentlyPlaying(musicArray[currentSong])) {
+        !musicQueue.isCurrentlyPlaying(*musicArray.at(currentSong))) {
         if (savefile->settings.cycleSongs == 1) { // CYCLE
             playNextSong();
         } else if (savefile->settings.cycleSongs == 2) { // SHUFFLE
@@ -119,11 +138,12 @@ void sfx(int n) {
 void startSong(int song, bool loop) {
     if (song == currentSong && !gSoloud.getPause(currentSongHandle) &&
         (currentSong != -1 &&
-         musicQueue.isCurrentlyPlaying(musicArray[currentSong])))
+         musicQueue.isCurrentlyPlaying(*musicArray.at(currentSong)))) {
         return;
+    }
 
     if (currentSong != -1 &&
-        musicQueue.isCurrentlyPlaying(musicArray[currentSong])) {
+        musicQueue.isCurrentlyPlaying(*musicArray.at(currentSong))) {
         musicQueue.stop();
         musicQueue.skip();
     }
@@ -131,8 +151,8 @@ void startSong(int song, bool loop) {
     if (musicVolume > 0) {
         musicQueue.setParams(44100, 2);
         currentSongHandle = gSoloud.play(musicQueue);
-        musicArray[song].setLooping(loop);
-        musicQueue.play(musicArray[song]);
+        musicArray.at(song)->setLooping(loop);
+        musicQueue.play(*musicArray.at(song));
     }
 
     currentSong = song;
