@@ -20,6 +20,8 @@
 #include <pwd.h>
 #include <string>
 #include <unistd.h>
+const char* homeDir = getenv("HOME");
+std::string savefileDir() { return std::string(homeDir) + "/Library/Application Support/Apotris"; }
 #else
 // For Linux directory save location
 #include <vector>
@@ -416,17 +418,15 @@ void initRumble() {};
 std::string getSavefilePath() {
 #ifdef __APPLE__
     // Get the user's home directory
-    const char* homeDir = getenv("HOME");
     if (!homeDir) {
         struct passwd* pw = getpwuid(getuid());
         homeDir = pw->pw_dir;
     }
 
     // Build the path: ~/Library/Application Support/Apotris/
-    savefileDir = std::string(homeDir) + "/Library/Application Support/Apotris";
     // Create directory if it doesn't exist
-    mkdir(savefileDir.c_str(), 0755);
-    return savefileDir + "/Apotris.sav";
+    mkdir(savefileDir().c_str(), 0755);
+    return savefileDir() + "/Apotris.sav";
 #else
     // Build list of possible save file locations in priority order
     std::vector<std::string> possibleSaveDirs;

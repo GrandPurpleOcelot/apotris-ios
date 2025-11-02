@@ -2918,13 +2918,17 @@ void Game::toggleBigMode() {
 }
 
 u32 Game::random() {
-    randomSeed = 1664525 * randomSeed + 1013904223;
-    return (randomSeed >> 16) & randomMax;
+    randomSeed = randNext2();
+    return randomSeed & randomMax;
 }
 
 int Game::setRandomSeed(int newSeed) {
     int old = randomSeed;
     randomSeed = newSeed;
-    randSetFullState((u32)randomSeed);
+    randSetFullState2((u32)randomSeed);
+    // Mix up seed into state array with 10 iterations to init xorshiro
+    for (int i = 0; i < 10; i++) {
+        randomSeed = randNext2();
+    }
     return old;
 }

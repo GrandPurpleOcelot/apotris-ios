@@ -23,4 +23,7 @@ void sampleEntropy() {
 void randSetSeed(uint32_t seed) { setXoshiroSeed(seed); }
 uint32_t randNext() { return nextXoshiro(); }
 void randSetFullState(uint32_t seed) { setXoshiroState(seed); }
+void randSetSeed2(uint32_t seed) { setXoshiroSeed2(seed); }
+uint32_t randNext2() { return nextXoshiro2(); }
+void randSetFullState2(uint32_t seed) { setXoshiroState2(seed); }
 #endif
