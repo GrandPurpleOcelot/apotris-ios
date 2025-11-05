@@ -523,14 +523,6 @@ void Game::hardDrop() {
 }
 
 void Game::update() {
-    for (int i = 0; i < 20; i++) {
-        for (int j = 0; j < 10; j++) {
-            int value = (bitboard[i + 20] >> j) & 0b1;
-            if (value)
-                drawRect(j * 4 + 8, i * 4, 4, 4);
-        }
-    }
-
     if (!disappearing)
         timer++;
     else
@@ -553,21 +545,20 @@ void Game::update() {
             return;
         }
 
-        if (cascade()) {
-            calculateColumnHeights(0);
+        cascade();
 
-            refresh = 2;
+        calculateColumnHeights(0);
 
-            if (unstable.size() == 0) {
-                Drop d;
-                d.startY = stackHeight - boardOffset;
-                d.rawEndY = lengthY - 1;
-                if (!clear(d)) {
-                }
-            }
+        refresh = 2;
 
-            return;
+        if (unstable.size() == 0) {
+            Drop d;
+            d.startY = stackHeight - boardOffset;
+            d.rawEndY = lengthY - 1;
+            clear(d);
         }
+
+        return;
     }
 
     if (!disappearing)
@@ -978,10 +969,8 @@ void Game::place() {
         }
     }
 
-    if (entryDelay) {
-        pawn.current = -1;
-        activePiece = -1;
-    }
+    pawn.current = -1;
+    activePiece = -1;
 
     canHold = true;
 
@@ -2033,7 +2022,7 @@ void Game::removeClearLock() {
         clear(d);
     }
 
-    if (!entryDelay && !zoneExit && unstable.size() == 0) {
+    if (!entryDelay && !zoneExit && !unstable.size()) {
         next();
     } else if (zoneExit) {
         zoneExit = false;
@@ -2629,9 +2618,10 @@ void Game::fixConnected(const std::list<int>& sourceList) {
         // check if connection needs to be split
         // (don't need to check 1 block connections)
         if (before != connection->blocks && countBits(connection->blocks) > 1) {
-            for (int i = 4; i > 0; i--) {
-                int currentLine = (connection->blocks >> 4 * i) & 0xf;
-                int previousLine = (connection->blocks >> 4 * (i - 1)) & 0xf;
+            for (int i = 3; i > 0; i--) {
+                const int currentLine = (connection->blocks >> 4 * i) & 0xf;
+                const int previousLine =
+                    (connection->blocks >> 4 * (i - 1)) & 0xf;
 
                 if (currentLine == 0)
                     continue;
@@ -2639,7 +2629,14 @@ void Game::fixConnected(const std::list<int>& sourceList) {
                 // if current and previous line don't have any bits in common
                 // then they are disconnected and current needs to split
                 if ((currentLine & previousLine) == 0) {
-                    int newBlocks = currentLine << 4 * i;
+                    int mask = 0;
+
+                    for (int j = i; j < 4; j++) {
+                        mask |= 0xf << (j * 4);
+                    }
+
+                    const int newBlocks = mask & connection->blocks;
+
                     splits.push_back(Connection(x, y, newBlocks));
 
                     connection->blocks &= ~(newBlocks);
