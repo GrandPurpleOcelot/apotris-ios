@@ -941,6 +941,7 @@ void PlayOptionScene::resetScoreboard() {
             memset32_fast(board, 0, sizeof(EntryBoard) / 4);
         } else {
             savefile->boards.zen = 0;
+            savefile->boards.zenLines = 0;
         }
 
         saveSavefile();

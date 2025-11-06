@@ -1496,6 +1496,7 @@ void addGameStats() {
 
     if (game->gameMode == ZEN) {
         savefile->boards.zen = game->score;
+        savefile->boards.zenLines = savefile->boards.zenLines + game->linesCleared;
 
         saveSavefile();
     }

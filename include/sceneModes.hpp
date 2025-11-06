@@ -520,6 +520,16 @@ class ZenScoreElement : public Element {
     std::string getCursor(std::string text) override { return text; }
 };
 
+class ZenLinesElement : public Element {
+    std::string getLabel() override { return "Total Lines"; }
+
+    std::string getCurrentOption() override {
+        return std::to_string(savefile->boards.zenLines);
+    }
+
+    std::string getCursor(std::string text) override { return text; }
+};
+
 class ZenScene : public PlayOptionScene {
 public:
     BlockEngine::Modes getMode() { return BlockEngine::ZEN; };
@@ -527,6 +537,7 @@ public:
     std::list<Element*> getElementList() {
         return {
             new ZenScoreElement(),
+            new ZenLinesElement(),
         };
     };
 

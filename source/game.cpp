@@ -1427,7 +1427,7 @@ void GameScene::showText() {
         wordSprites[4].show(9 * 8 - wordSprites[4].width, 18 * 8, 15);
     }
 
-    if (gm != BATTLE && gm != BLITZ && !(gm == SPRINT && game->subMode == 1) &&
+    if (gm != BATTLE && gm != BLITZ && gm != ZEN && !(gm == SPRINT && game->subMode == 1) &&
         !(gm == MASTER || gm == DEATH)) {
         wordSprites[6].setText("Lines");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
@@ -1468,6 +1468,18 @@ void GameScene::showText() {
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
 
         wordSprites[7].setTextNum(game->linesSent);
+        wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
+    } else if (gm == ZEN) {
+        wordSprites[4].setText("Lines");
+        wordSprites[4].show(9 * 8 - wordSprites[4].width, 15 * 8, 15);
+
+        wordSprites[5].setTextNum(game->linesCleared);
+        wordSprites[5].show(9 * 8 - wordSprites[5].width, 16 * 8, 15);
+
+        wordSprites[6].setText("Total");
+        wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
+
+        wordSprites[7].setTextNum(game->linesCleared + savefile->boards.zenLines);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
     }
 
