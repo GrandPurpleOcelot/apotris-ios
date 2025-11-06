@@ -1477,6 +1477,11 @@ void sleepMenu() {
     toggleBG(1, true);
     toggleBG(2, true);
     toggleBG(3, true);
+
+    static volatile u16* keys = (volatile u16*)0x04000130;
+    while (~(*keys) & (KEY_L | KEY_R | KEY_SELECT)) {
+        VBlankIntrWait();
+    }
 }
 
 void addGameStats() {

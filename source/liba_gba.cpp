@@ -466,7 +466,7 @@ void sleep() {
     interrupt_disable(INTR_TIMER2);
     interrupt_disable(INTR_SERIAL);
 
-    REG_P1CNT = 0b1100001100000100;
+    REG_P1CNT = 0b1100000000000000 | KEY_L | KEY_R | KEY_SELECT;
     interrupt_enable(INTR_KEYPAD);
     interrupt_set_handler(INTR_KEYPAD, nullptr);
 
