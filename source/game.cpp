@@ -1679,6 +1679,7 @@ void GameScene::countdown() {
     showShadow();
     showSpawn();
     showZoneMeter();
+    showGoalLine();
 
     showSprites(128);
 
