@@ -21,7 +21,7 @@
 // #include <string>
 // #include "scene.hpp"
 // #include "main.hpp"
-bool unlock_gbp();
+bool detect_gbp();
 void loadAudio();
 void onKeyInterrupt();
 
@@ -394,28 +394,34 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
 }
 
 void initRumble() {
-    if (!savefile->settings.rumble)
-        return;
+    if (savefile->settings.gameBoyPlayerSupport) {
+        RegisterRamReset(RESET_VRAM);
+        REG_DISPCNT = DCNT_MODE0 | DCNT_BG0;
+        *((volatile u16*)0x4000008) = 0x0088;
 
-    rumbleInitialized = true;
-    RegisterRamReset(RESET_VRAM);
-    REG_DISPCNT = DCNT_MODE0 | DCNT_BG0;
-    *((volatile u16*)0x4000008) = 0x0088;
+        if (detect_gbp()) {
+            RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
+                interrupt_enable(INTR_SERIAL);
+                interrupt_set_handler(INTR_SERIAL, rumble_isr);
+            }};
 
-    if (unlock_gbp()) {
-
-        RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
-            interrupt_enable(INTR_SERIAL);
-            interrupt_set_handler(INTR_SERIAL, rumble_isr);
-        }};
-
-        rumble_init(&conf);
+            rumble_init(&conf);
+        } else {
+            rumble_init(nullptr);
+        }
+        gbpChecked = true;
     } else {
         rumble_init(nullptr);
     }
+
+    RegisterRamReset(RESET_VRAM);
+
+    REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
+    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
+    REG_WAITCNT = 0x4317;
 }
 
-bool unlock_gbp() {
+bool detect_gbp() {
     bool gbp_detected = false;
 
     memcpy16_fast((u16*)0x6008000, gbp_logo_pixels,
@@ -431,12 +437,6 @@ bool unlock_gbp() {
         }
         VBlankIntrWait();
     }
-
-    RegisterRamReset(RESET_VRAM);
-
-    REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
-    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
-    REG_WAITCNT = 0x4317;
 
     return gbp_detected;
 }

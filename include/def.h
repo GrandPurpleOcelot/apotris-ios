@@ -271,7 +271,10 @@ extern bool goToOptions;
 
 extern int rumbleMax;
 
-extern bool rumbleInitialized;
+#ifdef GBA
+extern bool gbpChecked;
+#endif
+
 extern bool bigMode;
 
 extern TILE* customSkin;

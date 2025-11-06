@@ -76,13 +76,15 @@ bool playingBotGame = false;
 
 bool rumble_enabled = false;
 
-bool rumbleInitialized = false;
-
 Scene* scene = nullptr;
 
 bool gradientEnabled = false;
 
 Options* previousGameOptions = nullptr;
+
+#ifdef GBA
+bool gbpChecked = false;
+#endif
 
 #ifdef GBA
 __attribute((section(".ewram.status")))

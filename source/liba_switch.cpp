@@ -378,7 +378,7 @@ void rumbleStart(int length) {
     float factor = 1;
 
     if (savefile != nullptr) {
-        factor *= (float)savefile->settings.rumble / 4.0f;
+        factor *= (float)savefile->settings.rumbleStrength / 4.0f;
     }
 
     VibrationValue.amp_low = 1.0f * factor;

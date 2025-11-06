@@ -75,18 +75,18 @@ public:
 
 class RumbleElement : public Element {
 public:
-    std::string getLabel() override { return "Rumble"; }
+    std::string getLabel() override { return "Rumble Strength"; }
 
     std::string getCursor(std::string text) override {
         std::string result;
-        if (savefile->settings.rumble > 0)
+        if (savefile->settings.rumbleStrength > 0)
             result += "<";
         else
             result += " ";
 
         result += text;
 
-        if (savefile->settings.rumble < 4)
+        if (savefile->settings.rumbleStrength < 4)
             result += ">";
 
         return result;
@@ -94,21 +94,42 @@ public:
 
     void action(int dir) override {
         if (dir > 0) {
-            if (savefile->settings.rumble < 4) {
-                savefile->settings.rumble++;
+            if (savefile->settings.rumbleStrength < 4) {
+                savefile->settings.rumbleStrength++;
                 sfx(SFX_MENUMOVE);
             }
         } else {
-            if (savefile->settings.rumble > 0) {
-                savefile->settings.rumble--;
+            if (savefile->settings.rumbleStrength > 0) {
+                savefile->settings.rumbleStrength--;
                 sfx(SFX_MENUMOVE);
             }
         }
     }
 
     std::string getCurrentOption() override {
-        if (savefile->settings.rumble)
-            return std::to_string(savefile->settings.rumble * 25) + "%";
+        if (savefile->settings.rumbleStrength)
+            return std::to_string(savefile->settings.rumbleStrength * 25) + "%";
+        else
+            return "OFF";
+    }
+};
+
+class GBPSupportElement : public Element {
+public:
+    std::string getLabel() override { return "Enable GBP Support"; }
+
+    std::string getCursor(std::string text) override {
+        return "[" + text + "]";
+    }
+
+    void action(int dir) override {
+        savefile->settings.gameBoyPlayerSupport = !savefile->settings.gameBoyPlayerSupport;
+        sfx(SFX_MENUCONFIRM);
+    }
+
+    std::string getCurrentOption() override {
+        if (savefile->settings.gameBoyPlayerSupport)
+            return "ON";
         else
             return "OFF";
     }
@@ -357,6 +378,10 @@ public:
 
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
+
+#if defined(GBA)
+        list.push_back(new GBPSupportElement());
+#endif
 
 #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) ||   \
     defined(PC)

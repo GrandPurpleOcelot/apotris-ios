@@ -155,8 +155,8 @@ void loadSave() {
         (savefile->settings.lightMode != 1))
         savefile->settings.lightMode = false;
 
-    if ((savefile->settings.rumble < 0) || (savefile->settings.rumble > 4))
-        savefile->settings.rumble = 0;
+    if ((savefile->settings.rumbleStrength < 0) || (savefile->settings.rumbleStrength > 4))
+        savefile->settings.rumbleStrength = 0;
 
     if (savefile->settings.irs < 0 || savefile->settings.irs > 1)
         savefile->settings.irs = 1;
@@ -387,7 +387,7 @@ void setDefaults(Save* save, int depth) {
     }
 
     if (depth < 4) {
-        save->settings.rumble = 0;
+        save->settings.rumbleStrength = 0;
     }
 
     if (depth < 5) {

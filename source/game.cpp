@@ -239,12 +239,12 @@ void GameScene::checkSounds() {
             for (int i = 0; i < 3; i++)
                 sprite_hide(moveSprites[i]);
 
-        rumbleStart(rumbleMax * savefile->settings.rumble);
+        rumbleStart(rumbleMax * savefile->settings.rumbleStrength);
     }
 
     if (game->sounds.invalid) {
         sfx(SFX_INVALID);
-        rumbleStart(rumbleMax * savefile->settings.rumble);
+        rumbleStart(rumbleMax * savefile->settings.rumbleStrength);
     }
 
     if (game->sounds.rotate)
@@ -3492,7 +3492,7 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
-        rumbleStart(rumbleMax * 2 * savefile->settings.rumble);
+        rumbleStart(rumbleMax * 2 * savefile->settings.rumbleStrength);
         clearTimer = 0;
         updateText();
     }

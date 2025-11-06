@@ -129,7 +129,7 @@ typedef struct Settings {
     bool resetHoldType;
     bool placeEffect;
     bool resetHoldToggle;
-    int rumble;
+    int rumbleStrength;
     int diagonalType;
     bool delaySoftDrop;
     int backgroundGradient;
@@ -185,7 +185,13 @@ typedef struct Settings {
 #endif
     int shaders;
 
-    int placeHolder[29];
+#ifdef GBA
+    bool gameBoyPlayerSupport;
+#else
+    bool _gbpPlaceholder;
+#endif
+
+    int placeHolder[28];
 
 } ALIGN(4) Settings;
 

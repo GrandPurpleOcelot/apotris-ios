@@ -666,8 +666,8 @@ void MainMenuScene::init() {
 #endif
 
 #ifdef GBA
-    if (!rumbleInitialized && savefile->settings.rumble) {
-        naprint("Reboot to enable rumble.", 4, 4);
+    if (!gbpChecked && savefile->settings.gameBoyPlayerSupport) {
+        naprint("Reboot to enable GBP Rumble!", 4, 4);
     }
 #endif
 }

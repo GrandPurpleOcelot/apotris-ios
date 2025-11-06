@@ -73,8 +73,11 @@ std::string getDescription(std::string element) {
     } else if (element == "Quick Restart") {
         return "Press/Hold L and R to restart the game.";
 
-    } else if (element == "Rumble") {
-        return "Enables rumble on compatible hardware (REQUIRES RESTART!)";
+    } else if (element == "Rumble Strength") {
+        return "Strength of rumble on compatible hardware.";
+
+    } else if (element == "Enable GBP Support") {
+        return "Enable Game Boy Player handshake for GameCube Controller rumble. (REQUIRES RESTART!)";
 
     } else if (element == "Reset Controls") {
         return "Set bindings back to default.";
