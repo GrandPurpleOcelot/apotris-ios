@@ -521,7 +521,7 @@ class ZenScoreElement : public Element {
 };
 
 class ZenLinesElement : public Element {
-    std::string getLabel() override { return "Total Lines"; }
+    std::string getLabel() override { return "Lines Cleared"; }
 
     std::string getCurrentOption() override {
         return std::to_string(savefile->boards.zenLines);

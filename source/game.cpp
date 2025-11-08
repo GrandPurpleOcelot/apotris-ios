@@ -1471,10 +1471,10 @@ void GameScene::showText() {
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
     } else if (gm == ZEN) {
         wordSprites[4].setText("Lines");
-        wordSprites[4].show(9 * 8 - wordSprites[4].width, 15 * 8, 15);
+        wordSprites[4].show(9 * 8 - wordSprites[4].width, 14 * 8, 15);
 
         wordSprites[5].setTextNum(game->linesCleared);
-        wordSprites[5].show(9 * 8 - wordSprites[5].width, 16 * 8, 15);
+        wordSprites[5].show(9 * 8 - wordSprites[5].width, 15 * 8, 15);
 
         wordSprites[6].setText("Total");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
