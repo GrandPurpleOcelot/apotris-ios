@@ -490,6 +490,10 @@ bool ConfirmSaveScene::control() {
         setFullscreen(savefile->settings.fullscreen);
 #endif
 
+#ifdef GBA
+        sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
+#endif
+
         changeScene(new MainMenuScene(), Transitions::FADE);
 
         return true;

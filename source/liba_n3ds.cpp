@@ -865,7 +865,7 @@ inline void ApotrisN3ds::render()
 
 void stopDMA() {};
 
-void sleep() {};
+void sleep(bool autosleep) {};
 
 void rumbleStart(int length) {}
 void rumbleStop() {}

@@ -375,6 +375,8 @@ public:
 
 #ifndef GBA
         result.push_front("Video");
+#else
+        result.push_back("Sleep");
 #endif
 
         return result;

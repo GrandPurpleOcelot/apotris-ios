@@ -63,6 +63,63 @@ INLINE void setSpriteTileRow(int index, int y, int n) {
     tile->data[y] |= n;
 }
 
+INLINE u16 get_sleep_combo(u32 index) {
+    switch (index) {
+        case 0: // Disabled
+            return 0;
+        case 1:
+            return KEY_L | KEY_R | KEY_SELECT;
+        case 2:
+            return KEY_START | KEY_SELECT;
+        default:
+            return 0;
+    }
+}
+
+
+INLINE u32 get_autosleep_mins(u32 index) {
+    switch (index) {
+        case 0: // Disabled
+            return 0;
+        case 1:
+            return 1;
+        case 2:
+            return 3;
+        default: // 5 minute intervals, starting from 5
+            return (index - 2) * 5;
+    }
+}
+
+// Hard waits until all keys in the supplied mask are released, with an optional timeout.
+INLINE void await_key_release(u32 keys, int timeout_secs) {
+    int timer = 0;
+    int timeout_frames = timeout_secs * 60;
+    do {
+        if (timer > timeout_frames && timeout_frames != 0) {
+            break;
+        }
+        VBlankIntrWait();
+        key_poll();
+        timer++;
+    } while ( key_curr_state() != ((~keys) & KEY_FULL) );
+}
+
+extern u32 sleep_combo;
+extern void sleep(bool autosleep);
+extern bool multiplayer;
+
+INLINE bool sleep_combo_check(u32 keys) {
+    if (multiplayer)
+        return false;
+
+    if (sleep_combo && keys == sleep_combo) {
+        sleep(false);
+        return true;
+    } else {
+        return false;
+    }
+}
+
 extern OBJ_AFFINE* obj_aff_buffer;
 
 extern mm_word myEventHandler(mm_word msg, mm_word param);

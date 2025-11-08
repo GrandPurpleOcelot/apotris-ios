@@ -186,6 +186,14 @@ std::string getDescription(std::string element) {
                "vertically same as \"1.5x sharp\". "
                "Old 2DS not supported.";
 #endif
+        // Sleep
+        // ------------------------------------------------------------------------------
+    } else if (element == "Autosleep Time") {
+        return "Put the console to sleep if no input is detected for the chosen duration.";
+    } else if (element == "Autosleep Wake") {
+        return "Choose to allow waking from Autosleep with any button or only the Sleep Combo.";
+    } else if (element == "Sleep Combo") {
+        return "Button combination to Sleep/Wake the console at any time.";
     }
 
     return "";

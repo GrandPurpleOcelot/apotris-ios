@@ -40,6 +40,8 @@ bool emulatorPrompted = false;
 
 Songs songs;
 
+u32 sleep_combo = 0;
+
 void onHBlank() {
     if (REG_VCOUNT < 160)
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
@@ -260,7 +262,32 @@ void deinitialize() {}
 
 static int rumbleTimer = 0;
 
+static u32 autosleepTimer = 0;
+
+void sleep_checks() {
+    if (multiplayer)
+        return;
+
+    u32 autosleep_wait_frames = get_autosleep_mins(savefile->settings.sleep.autosleepDelay) * 3600;
+
+    if (!key_curr_state()) {
+        autosleepTimer++;
+
+        if (autosleep_wait_frames && autosleepTimer > autosleep_wait_frames) {
+            autosleepTimer = 0;
+            sleep(true);
+        }
+    } else if (sleep_combo && key_curr_state() == sleep_combo) {
+        autosleepTimer = 0;
+        sleep_combo_check(key_curr_state());
+    } else {
+        autosleepTimer = 0;
+    }
+}
+
 bool closed() {
+    sleep_checks();
+
     rumble_update();
     if (rumbleTimer > 0) {
         rumbleTimer--;
@@ -394,6 +421,9 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
 }
 
 void initRumble() {
+    // just putting this here for now since it's during init, and after savefile is loaded
+    sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
+
     if (savefile->settings.gameBoyPlayerSupport) {
         RegisterRamReset(RESET_VRAM);
         REG_DISPCNT = DCNT_MODE0 | DCNT_BG0;
@@ -441,7 +471,15 @@ bool detect_gbp() {
     return gbp_detected;
 }
 
-void sleep() {
+void sleep(bool autosleep) {
+    int timer = 0;
+
+    bool use_combo_for_wake = !autosleep || (autosleep && sleep_combo && savefile->settings.sleep.autosleepUseWakeCombo);
+
+    // Wait for keys to be released so the console doesn't
+    // insta-wake due to the interrupt combo already being active.
+    await_key_release(KEY_FULL, 2);
+
     int display_value = REG_DISPCNT;
 
     bool prevGradient = gradientEnabled;
@@ -466,11 +504,21 @@ void sleep() {
     interrupt_disable(INTR_TIMER2);
     interrupt_disable(INTR_SERIAL);
 
-    REG_P1CNT = 0b1100000000000000 | KEY_L | KEY_R | KEY_SELECT;
+    if (use_combo_for_wake) {
+        // Using the same keys used to put manually to sleep.
+        REG_P1CNT = sleep_combo | BIT(14) | BIT(15);
+    } else {
+        // Any key should be able to wake the console.
+        REG_P1CNT = static_cast<vu16>(~(BIT(15) | BIT(10) | BIT(11) | BIT(12) | BIT(13))); // 10-13 are unused bits in the register
+    }
+
     interrupt_enable(INTR_KEYPAD);
     interrupt_set_handler(INTR_KEYPAD, nullptr);
 
     Stop();
+
+    interrupt_disable(INTR_KEYPAD);
+    REG_P1CNT = 0;
 
     REG_DISPCNT = display_value;
     REG_SNDSTAT = stat_value;
@@ -487,6 +535,9 @@ void sleep() {
 
     if (prevGradient)
         gradient(1);
+
+    // Wait for waking keys to be released so they don't trigger menu/game actions.
+    await_key_release(KEY_FULL, 3);
 }
 
 void sfx(int s) {

@@ -95,6 +95,14 @@ typedef struct SongDisabling {
     int gameBits[4];
 } ALIGN(4) SongDisabling;
 
+#ifdef GBA
+typedef struct SleepOptions {
+    u32 autosleepDelay;
+    bool autosleepUseWakeCombo;
+    u32 sleepWakeCombo;
+} ALIGN(4) SleepOptions;
+#endif
+
 typedef struct Settings {
     bool announcer;
     bool finesse;
@@ -186,12 +194,14 @@ typedef struct Settings {
     int shaders;
 
 #ifdef GBA
+    SleepOptions sleep;
     bool gameBoyPlayerSupport;
 #else
+    u32 _sleepPlaceholder[3];
     bool _gbpPlaceholder;
 #endif
 
-    int placeHolder[28];
+    int placeHolder[25];
 
 } ALIGN(4) Settings;
 

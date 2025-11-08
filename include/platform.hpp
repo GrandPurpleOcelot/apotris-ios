@@ -158,7 +158,7 @@ extern void enableLayerWindow(int layer, int x1, int y1, int x2, int y2,
 
 extern void disableLayerWindow(int layer);
 
-extern void sleep();
+extern void sleep(bool autosleep);
 
 extern void sfx(int sound);
 
