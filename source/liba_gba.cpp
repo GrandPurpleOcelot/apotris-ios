@@ -480,6 +480,8 @@ void sleep(bool autosleep) {
     // insta-wake due to the interrupt combo already being active.
     await_key_release(KEY_FULL, 2);
 
+    SoundBias(0);
+
     int display_value = REG_DISPCNT;
 
     bool prevGradient = gradientEnabled;
@@ -521,6 +523,7 @@ void sleep(bool autosleep) {
     REG_P1CNT = 0;
 
     REG_DISPCNT = display_value;
+    SoundBias(0x200);
     REG_SNDSTAT = stat_value;
     REG_SNDDSCNT = dsc_value;
     REG_SNDDMGCNT = dmg_value;
