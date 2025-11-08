@@ -1221,15 +1221,12 @@ std::string getStringFromKey(int key) {
 
         u32 k = key;
 
-        int counter = 0;
-        do {
-            if (k & (1 << counter)) {
-                result += keyToString[1 << counter] + " ";
-                k &= ~(1 << counter);
+        for (int i = 31; i >= 0; --i) {
+            if (k & (1 << i)) {
+                result += keyToString[1 << i] + " ";
+                k &= ~(1 << i);
             }
-
-            counter++;
-        } while (k != 0);
+        }
 
         // remove trailing space
         result.pop_back();
