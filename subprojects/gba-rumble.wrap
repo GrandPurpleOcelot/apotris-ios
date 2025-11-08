@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/evanbowman/gba-rumble
+revision = 26c7892ea5a1c8c8b8e2a083a14a4ac7e097b2af
+patch_directory = gba-rumble
+
+[provide]
+dependency_names = gba-rumble

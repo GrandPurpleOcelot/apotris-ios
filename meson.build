@@ -48,7 +48,6 @@ sources = files(
     src_dir / 'music.cpp',
     src_dir / 'prng.cpp',
     src_dir / 'qrcodegen.c',
-    src_dir / 'rumble.c',
     src_dir / 'saving.cpp',
     src_dir / 'scene.cpp',
     src_dir / 'screenAudio.cpp',
@@ -610,6 +609,7 @@ else
         dependency('gbfs'),
         dependency('maxmod'),
         dependency('gba-link-connection'),
+        dependency('gba-rumble'),
     ]
 
     #dependencies_multi = [
