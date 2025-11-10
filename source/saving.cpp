@@ -179,6 +179,9 @@ void loadSave() {
         delete temp;
 
         switch (savefile->newGame) {
+        case 0x52:
+            setDefaults(savefile, 8);
+            break;
         case 0x51:
             setDefaults(savefile, 7);
             break;
@@ -229,6 +232,7 @@ void loadSave() {
     }
 
 #ifdef GBA
+    sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
     status.update(&savefile->settings);
 #endif
     saveSavefile();
@@ -537,6 +541,15 @@ void setDefaults(Save* save, int depth) {
             saveToProfile(&save->settings.profiles[i], &save->settings);
         }
     }
+
+    if (depth < 9) {
+        #ifdef GBA
+            save->settings.sleep.autosleepDelay = 0; // Disable Autosleep
+            save->settings.sleep.autosleepUseWakeCombo = false; // Use any button to wake from Autosleep
+            save->settings.sleep.sleepWakeCombo = 1; // Use L+R+Select as default Sleep/Wake combo.
+        #endif
+    }
+
 }
 
 bool compareVersion(const SaveChange& first, const SaveChange& second) {

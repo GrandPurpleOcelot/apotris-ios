@@ -421,9 +421,6 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
 }
 
 void initRumble() {
-    // just putting this here for now since it's during init, and after savefile is loaded
-    sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
-
     if (savefile->settings.gameBoyPlayerSupport) {
         RegisterRamReset(RESET_VRAM);
         REG_DISPCNT = DCNT_MODE0 | DCNT_BG0;

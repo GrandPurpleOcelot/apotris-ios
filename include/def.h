@@ -100,7 +100,7 @@ public:
 #define GRADIENT_COLOR 0x71a6
 
 #define SHOW_FINESSE 1
-#define SAVE_TAG 0x52
+#define SAVE_TAG 0x53
 
 #define ENABLE_FLASH_SAVE 1
 
