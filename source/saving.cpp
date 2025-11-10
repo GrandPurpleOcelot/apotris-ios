@@ -137,36 +137,6 @@ void loadSave() {
 
         delete temp;
     } else if (savefile->newGame != SAVE_TAG) {
-        savefile = new Save();
-
-        setDefaults(savefile, 0);
-
-        setDefaultKeys();
-
-        resetSkins(savefile);
-
-        savefile->newGame = SAVE_TAG;
-        // Set initial seed deterministic to save file (sampling will change it)
-        savefile->seed = (int)hashSave();
-    }
-
-    // fix invalid values, since I messed up conversion at some point
-    if ((savefile->settings.lightMode != 0) &&
-        (savefile->settings.lightMode != 1))
-        savefile->settings.lightMode = false;
-
-    if ((savefile->settings.rumbleStrength < 0) || (savefile->settings.rumbleStrength > 4))
-        savefile->settings.rumbleStrength = 0;
-
-    if (savefile->settings.irs < 0 || savefile->settings.irs > 1)
-        savefile->settings.irs = 1;
-    if (savefile->settings.ihs < 0 || savefile->settings.ihs > 1)
-        savefile->settings.ihs = 1;
-    if (savefile->settings.initialType < 0 ||
-        savefile->settings.initialType > 1)
-        savefile->settings.initialType = 1;
-
-    if (savefile->newGame != SAVE_TAG) {
         Save* temp = new Save();
         u8* tmp = (u8*)temp;
 
@@ -205,10 +175,33 @@ void loadSave() {
             setDefaults(savefile, 1);
             setDefaultKeys();
             break;
+        default:
+            setDefaults(savefile, 0);
+            setDefaultKeys();
+            resetSkins(savefile);
+            savefile->newGame = SAVE_TAG;
+            // Set initial seed deterministic to save file (sampling will change it)
+            savefile->seed = (int)hashSave();
         }
 
         savefile->newGame = SAVE_TAG;
     }
+
+    // fix invalid values, since I messed up conversion at some point
+    if ((savefile->settings.lightMode != 0) &&
+        (savefile->settings.lightMode != 1))
+        savefile->settings.lightMode = false;
+
+    if ((savefile->settings.rumbleStrength < 0) || (savefile->settings.rumbleStrength > 4))
+        savefile->settings.rumbleStrength = 0;
+
+    if (savefile->settings.irs < 0 || savefile->settings.irs > 1)
+        savefile->settings.irs = 1;
+    if (savefile->settings.ihs < 0 || savefile->settings.ihs > 1)
+        savefile->settings.ihs = 1;
+    if (savefile->settings.initialType < 0 ||
+        savefile->settings.initialType > 1)
+        savefile->settings.initialType = 1;
 
     if (savefile->platform != PLATFORM) {
         auto oldPlatform = savefile->platform;
