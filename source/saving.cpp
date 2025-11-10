@@ -136,7 +136,7 @@ void loadSave() {
         memcpy32_fast(savefile, temp, pmSave / 4);
 
         delete temp;
-    } else if (savefile->newGame != SAVE_TAG) {
+    } else if (savefile->newGame != SAVE_TAG && savefile->newGame >= 0x4b && savefile->newGame < SAVE_TAG) {
         Save* temp = new Save();
         u8* tmp = (u8*)temp;
 
@@ -175,16 +175,21 @@ void loadSave() {
             setDefaults(savefile, 1);
             setDefaultKeys();
             break;
-        default:
-            setDefaults(savefile, 0);
-            setDefaultKeys();
-            resetSkins(savefile);
-            savefile->newGame = SAVE_TAG;
-            // Set initial seed deterministic to save file (sampling will change it)
-            savefile->seed = (int)hashSave();
         }
 
         savefile->newGame = SAVE_TAG;
+    } else if (savefile->newGame != SAVE_TAG) {
+        savefile = new Save();
+
+        setDefaults(savefile, 0);
+
+        setDefaultKeys();
+
+        resetSkins(savefile);
+
+        savefile->newGame = SAVE_TAG;
+        // Set initial seed deterministic to save file (sampling will change it)
+        savefile->seed = (int)hashSave();
     }
 
     // fix invalid values, since I messed up conversion at some point
