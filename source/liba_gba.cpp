@@ -216,10 +216,10 @@ void platformInit() {
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
 
+    // Setup rumble PWM with one of the hardware timers (0-3)
     interrupt_set_handler(INTR_TIMER2, rumbleISR);
-
-    REG_TM2D   = -0x10; // Overflow every 0x10 (16) ticks, every 1ms
-    REG_TM2CNT = TM_FREQ_1024 | TM_IRQ | TM_ENABLE;
+    REG_TM2D   = -0x10; // Overflow every 0x10 (16) timer ticks, every ~1ms
+    REG_TM2CNT = TM_FREQ_1024 | TM_IRQ | TM_ENABLE; // 1024-cycle prescaler -> 16.384 kHz, 61.04 μs per timer tick
 
     // interrupt_add(INTR_HBLANK, onHBlank);
 
@@ -509,11 +509,10 @@ void sleep(bool autosleep) {
         linkConnection->deactivate();
 
     interrupt_disable(INTR_TIMER3);
-    interrupt_disable(INTR_TIMER2);
     interrupt_disable(INTR_SERIAL);
 
+    interrupt_disable(INTR_TIMER2);
     rumbleStop();
-    rumble_set_state(rumble_stop);
 
     if (use_combo_for_wake) {
         // Using the same keys used to put manually to sleep.
@@ -547,9 +546,10 @@ void sleep(bool autosleep) {
         linkConnection->activate();
 
     interrupt_enable(INTR_TIMER3);
-    interrupt_enable(INTR_TIMER2);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_VBLANK);
+
+    interrupt_enable(INTR_TIMER2);
 
     if (prevGradient)
         gradient(1);
