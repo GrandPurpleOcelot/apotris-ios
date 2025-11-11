@@ -56,6 +56,8 @@ void loadSave() {
     const int pmSettings = 540;
     const int pmSave = 3876;
 
+    // 0x50-0x51, re-pack desktop keys into mask?
+    // This'll skip upgrading saves for 0x50 and 0x51, was this intended to be SAVE_TAG?
     if (savefile->newGame >= 0x50 && savefile->newGame <= 0x51) {
 #if defined(PC) || defined(WEB)
 
@@ -137,6 +139,7 @@ void loadSave() {
 
         delete temp;
     } else if (savefile->newGame != SAVE_TAG && savefile->newGame >= 0x4b && savefile->newGame < SAVE_TAG) {
+        // Upgrade old saves
         Save* temp = new Save();
         u8* tmp = (u8*)temp;
 
@@ -156,8 +159,6 @@ void loadSave() {
             setDefaults(savefile, 7);
             break;
         case 0x50:
-            setDefaults(savefile, 6);
-            break;
         case 0x4f:
             setDefaults(savefile, 6);
             break;
@@ -179,6 +180,8 @@ void loadSave() {
 
         savefile->newGame = SAVE_TAG;
     } else if (savefile->newGame != SAVE_TAG) {
+        // No tag recognized, create fresh save file.
+        // (this can be trigger-happy if misconfigured, maybe a prompt is in order to protect against errant triggers?)
         savefile = new Save();
 
         setDefaults(savefile, 0);
