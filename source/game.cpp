@@ -1221,7 +1221,7 @@ bool GameScene::control() {
         return true;
     }
 
-    Keys k = savefile->settings.keys;
+    GameKeys k = savefile->settings.keys;
     MenuKeys m = savefile->settings.menuKeys;
 
     if (handlingTest && key_hit(m.pause)) {
@@ -1755,10 +1755,72 @@ void GameScene::countdown() {
 
     paused = true;
 
+    GameKeys k = savefile->settings.keys;
+    MenuKeys m = savefile->settings.menuKeys;
+
+    bool interrupted = false;
+
     while (closed() && timer++ < timerMax - 1) {
         canDraw = true;
         vsync();
         key_poll();
+
+        if (!multiplayer && !replaying && !interrupted && !demo && savefile->settings.interruptCountdown && (timer < 2 * timerMax / 3) && key_hit(k.rotateCW | k.rotateCCW | k.rotate180)) {
+            interrupted = true;
+            timer = timerMax - 30;
+            sfx(SFX_GO);
+        } else if (key_hit(KEY_FULL & ~(KEY_SELECT))) {
+            if (demo) {
+                exitGame = true;
+                demo = false;
+                break;
+            } else if (!multiplayer && savefile->settings.interruptCountdown && key_hit(m.pause)) { // TODO maybe add the n3ds::wasAppPaused check here too?
+                sfx(SFX_MENUCONFIRM);
+                paused = true;
+                pauseSong();
+                clearText();
+                updateText();
+                preventLayeredCountdowns = true;
+
+                if (pauseMenu()) {
+                    paused = false;
+                    preventLayeredCountdowns = false;
+                    return;
+                } else {
+                    timer = 0;
+                    paused = true;
+                    preventLayeredCountdowns = false;
+                    clearText();
+                    updateText();
+
+                    // drawFrame(0);
+                    // if (game->zoneTimer)
+                    //     frameSnow(0);
+                    //
+                    // showBackground(0);
+                    // resetSmallText();
+                    // clearText();
+                    // setSmallTextArea(110, 3, 7, 9, 10);
+                    // showText();
+
+                    showTimer();
+                    showQueue(0);
+                    showHold();
+                    showPawn();
+                    showShadow();
+                    showSpawn();
+                    showZoneMeter();
+                    showGoalLine();
+
+                    showSprites(128);
+
+                    if (!game->zoneTimer)
+                        gradient(1);
+
+                    showBackground(0);
+                }
+            }
+        }
 
         if (timer < timerMax / 3) {
             aprint("READY?", 12, 10);
@@ -1774,7 +1836,7 @@ void GameScene::countdown() {
             }
         } else {
             aprint("  GO  ", 12, 10);
-            if (timer == 2 * timerMax / 3 && savefile->settings.announcer)
+            if (timer == 2 * timerMax / 3 && savefile->settings.announcer && !interrupted)
                 sfx(SFX_GO);
         }
 #ifdef GBA
@@ -1796,8 +1858,6 @@ void GameScene::countdown() {
     if (replaying) {
         replayControl();
     } else {
-        Keys k = savefile->settings.keys;
-
         if (key_is_down(k.hold))
             game->hold(1);
         if (key_is_down(k.rotateCW))

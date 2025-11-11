@@ -148,8 +148,11 @@ std::string getDescription(std::string element) {
         return "Moves the camera up when trying to place near the top of the "
                "field.";
 
-    } else if (element == "Unpause Countdown") {
+    } else if (element == "Countdown on Unpause") {
         return "Enables a grace period countdown when unpausing.";
+
+    } else if (element == "Interrupt Countdown") {
+        return "Allow interrupting the countdown with a rotation input (1P only).";
 
         // SAVING
         // ------------------------------------------------------------------------------

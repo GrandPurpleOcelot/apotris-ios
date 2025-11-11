@@ -948,10 +948,11 @@ int GameScene::pauseMenu() {
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 
-    if (count && savefile->settings.pauseCountdown)
+    if (count && savefile->settings.pauseCountdown && !preventLayeredCountdowns)
         countdown();
 
-    resumeSong();
+    if (!preventLayeredCountdowns)
+        resumeSong();
 
     return 0;
 }
