@@ -50,19 +50,46 @@ public:
     std::string getLabel() override { return "Autosleep Wake"; }
 
     std::string getCursor(std::string text) override {
-        return "[" + text + "]";
+        std::string result;
+
+        if (savefile->settings.sleep.autosleepDelay > 0)
+            result += "<";
+        else
+            result += " ";
+
+        result += text;
+
+        if (savefile->settings.sleep.autosleepDelay < 2)
+            result += ">";
+
+        return result;
     }
 
     void action(int dir) override {
-        savefile->settings.sleep.autosleepUseWakeCombo = !savefile->settings.sleep.autosleepUseWakeCombo;
-        sfx(SFX_MENUCONFIRM);
+        if (dir > 0) {
+            if (savefile->settings.sleep.autosleepWakeCombo < 2) {
+                savefile->settings.sleep.autosleepWakeCombo++;
+                sfx(SFX_MENUMOVE);
+            }
+        } else {
+            if (savefile->settings.sleep.autosleepWakeCombo > 0) {
+                savefile->settings.sleep.autosleepWakeCombo--;
+                sfx(SFX_MENUMOVE);
+            }
+        }
     }
 
     std::string getCurrentOption() override {
-        if (savefile->settings.sleep.autosleepUseWakeCombo)
+        switch (savefile->settings.sleep.autosleepWakeCombo) {
+        case 0:
             return "Sleep Combo";
-        else
+        case 1:
             return "Any Button";
+        case 2:
+            return "Any but L/R";
+        default:
+            return "";
+        }
     }
 };
 

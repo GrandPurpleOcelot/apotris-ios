@@ -98,7 +98,7 @@ typedef struct SongDisabling {
 #ifdef GBA
 typedef struct SleepOptions {
     u32 autosleepDelay;
-    bool autosleepUseWakeCombo;
+    u32 autosleepWakeCombo;
     u32 sleepWakeCombo;
 } ALIGN(4) SleepOptions;
 #endif

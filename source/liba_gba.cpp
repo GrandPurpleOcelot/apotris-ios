@@ -277,7 +277,9 @@ void sleep_checks() {
 
     u32 autosleep_wait_frames = get_autosleep_mins(savefile->settings.sleep.autosleepDelay) * 3600;
 
-    if (!key_curr_state()) {
+    bool no_user_input = savefile->settings.sleep.autosleepWakeCombo == 2 ? !key_is_down(KEY_FULL & ~(KEY_L | KEY_R)) : !key_is_down(KEY_FULL);
+
+    if (no_user_input) {
         autosleepTimer++;
 
         if (autosleep_wait_frames && autosleepTimer > autosleep_wait_frames) {
@@ -478,7 +480,7 @@ bool detect_gbp() {
 void sleep(bool autosleep) {
     int timer = 0;
 
-    bool use_combo_for_wake = !autosleep || (autosleep && sleep_combo && savefile->settings.sleep.autosleepUseWakeCombo);
+    bool use_combo_for_wake = !autosleep || (autosleep && sleep_combo && savefile->settings.sleep.autosleepWakeCombo == 0);
 
     // Wait for keys to be released so the console doesn't
     // insta-wake due to the interrupt combo already being active.
@@ -516,9 +518,13 @@ void sleep(bool autosleep) {
     if (use_combo_for_wake) {
         // Using the same keys used to put manually to sleep.
         REG_P1CNT = sleep_combo | BIT(14) | BIT(15);
+    } else if (savefile->settings.sleep.autosleepWakeCombo == 2) {
+        // Any key except shoulder L and R (bits 8 and 9) should be able to wake the console.
+        REG_P1CNT = static_cast<vu16>(~(BIT(15) | BIT(8) | BIT(9) | BIT(10) | BIT(11) | BIT(12) | BIT(13)));
     } else {
-        // Any key should be able to wake the console.
-        REG_P1CNT = static_cast<vu16>(~(BIT(15) | BIT(10) | BIT(11) | BIT(12) | BIT(13))); // 10-13 are unused bits in the register
+        // Setting bit 15 to 0 allows any single key in the active mask to wake the console.
+        // 10-13 are unused bits in the register
+        REG_P1CNT = static_cast<vu16>(~(BIT(15) | BIT(10) | BIT(11) | BIT(12) | BIT(13)));
     }
 
     interrupt_enable(INTR_KEYPAD);

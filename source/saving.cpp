@@ -546,7 +546,7 @@ void setDefaults(Save* save, int depth) {
     if (depth < 9) {
         #ifdef GBA
             save->settings.sleep.autosleepDelay = 0; // Disable Autosleep
-            save->settings.sleep.autosleepUseWakeCombo = false; // Use any button to wake from Autosleep
+            save->settings.sleep.autosleepWakeCombo = 1; // Use any button to wake from Autosleep
             save->settings.sleep.sleepWakeCombo = 1; // Use L+R+Select as default Sleep/Wake combo.
         #endif
     }
