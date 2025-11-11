@@ -1,4 +1,5 @@
 #include "platform.hpp"
+#include "rumblePatterns.hpp"
 
 #ifdef GBA
 #include "LinkCableMultiboot.hpp"
@@ -202,6 +203,7 @@ void platformInit() {
     interrupt_enable(INTR_VBLANK);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_TIMER3);
+    interrupt_enable(INTR_TIMER2);
 
 #ifndef NO_DIAGNOSE
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
@@ -213,6 +215,11 @@ void platformInit() {
 
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
+
+    interrupt_set_handler(INTR_TIMER2, rumbleISR);
+
+    REG_TM2D   = -0x10; // Overflow every 0x10 (16) ticks, every 1ms
+    REG_TM2CNT = TM_FREQ_1024 | TM_IRQ | TM_ENABLE;
 
     // interrupt_add(INTR_HBLANK, onHBlank);
 
@@ -260,7 +267,7 @@ void setUpLinkUniversal(bool detectEmus) {
 
 void deinitialize() {}
 
-static int rumbleTimer = 0;
+// static int rumbleTimer = 0;
 
 static u32 autosleepTimer = 0;
 
@@ -289,13 +296,13 @@ bool closed() {
     sleep_checks();
 
     rumble_update();
-    if (rumbleTimer > 0) {
-        rumbleTimer--;
+    // if (rumbleTimer > 0) {
+    //     rumbleTimer--;
 
-        rumble_set_state(rumble_start);
-    } else {
-        rumble_set_state(rumble_hard_stop);
-    }
+    //     rumble_set_state(rumble_start);
+    // } else {
+    //     rumble_set_state(rumble_hard_stop);
+    // }
     return true;
 }
 
@@ -503,6 +510,9 @@ void sleep(bool autosleep) {
     interrupt_disable(INTR_TIMER2);
     interrupt_disable(INTR_SERIAL);
 
+    rumbleStop();
+    rumble_set_state(rumble_stop);
+
     if (use_combo_for_wake) {
         // Using the same keys used to put manually to sleep.
         REG_P1CNT = sleep_combo | BIT(14) | BIT(15);
@@ -513,6 +523,8 @@ void sleep(bool autosleep) {
 
     interrupt_enable(INTR_KEYPAD);
     interrupt_set_handler(INTR_KEYPAD, nullptr);
+
+    // while (REG_SNDBIAS != 0) {}
 
     Stop();
 
@@ -811,7 +823,7 @@ IWRAM_CODE void onKeyInterrupt() {
     SoftReset();
 }
 
-void rumbleStart(int length) { rumbleTimer = length; }
+// void rumbleStart(int length) {}
 
-void rumbleStop() { rumbleTimer = 0; }
+// void rumbleStop() { rumbleStop(); }
 #endif

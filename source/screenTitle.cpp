@@ -2,6 +2,7 @@
 #include "def.h"
 #include "flashSaves.h"
 #include "menu.h"
+#include "rumblePatterns.hpp"
 #include "sceneColorEditor.hpp"
 #include "skinEditor.hpp"
 #include "sprite41tiles_bin.h"
@@ -311,6 +312,7 @@ void TitleScene::draw() {
 bool TitleScene::control() {
     if (key_hit(KEY_FULL)) {
         sfx(SFX_MENUCONFIRM);
+        rumbleStart(RUMBLE_PLACE);
         changeScene(new MainMenuScene(), Transitions::FADE);
         return true;
     }

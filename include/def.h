@@ -5,6 +5,7 @@
 #include "blockEngine.hpp"
 #include "menu.h"
 #include "platform.hpp"
+#include "rumblePatterns.hpp"
 #include "save.h"
 #include "text.h"
 #include <memory>

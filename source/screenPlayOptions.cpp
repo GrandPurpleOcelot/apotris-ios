@@ -1,4 +1,5 @@
 #include "logging.h"
+#include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "sceneModes.hpp"
 #include "sprites.h"
@@ -866,6 +867,9 @@ void PlayOptionScene::resetScoreboard() {
 
         if (timer < 200) {
             timer++;
+        } else if (timer == 200) {
+            timer++;
+            rumbleStart(RUMBLE_ERR_2);
         } else {
             aprint(" YES      NO ", 8, 15);
 

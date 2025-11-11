@@ -1,0 +1,50 @@
+#pragma once
+
+#define RUMBLE_SEQUENCE(name) RUMBLE_##name
+
+#define DEFINE_RUMBLE_LIST \
+    RUMBLE_SEQUENCE( ZONE ), \
+    RUMBLE_SEQUENCE( ZONE_2 ), \
+    RUMBLE_SEQUENCE( ZONE_3 ), \
+    RUMBLE_SEQUENCE( ZONE_4 ), \
+    RUMBLE_SEQUENCE( ZONE_5 ), \
+    RUMBLE_SEQUENCE( ZONE_6 ), \
+    RUMBLE_SEQUENCE( PLACE ), \
+    RUMBLE_SEQUENCE( SINGLE ), \
+    RUMBLE_SEQUENCE( DOUBLE ), \
+    RUMBLE_SEQUENCE( TRIPLE ), \
+    RUMBLE_SEQUENCE( QUAD ), \
+    RUMBLE_SEQUENCE( QUAD_B2B ), \
+    RUMBLE_SEQUENCE( TSPIN ), \
+    RUMBLE_SEQUENCE( TSPIN_B2B ), \
+    RUMBLE_SEQUENCE( TSPIN_MINI ), \
+    RUMBLE_SEQUENCE( PERFECT_CLEAR ), \
+    RUMBLE_SEQUENCE( LEVEL_UP ), \
+    RUMBLE_SEQUENCE( COOL ), \
+    RUMBLE_SEQUENCE( REGRET ), \
+    RUMBLE_SEQUENCE( OCTORIS ), \
+    RUMBLE_SEQUENCE( DODECATRIS ), \
+    RUMBLE_SEQUENCE( DECAHEXATRIS ), \
+    RUMBLE_SEQUENCE( PERFECTRIS ), \
+    RUMBLE_SEQUENCE( ULTIMATRIS ), \
+    RUMBLE_SEQUENCE( ERR_2 ), \
+    RUMBLE_SEQUENCE( ERR_4 ), \
+    RUMBLE_SEQUENCE( YOUWIN ), \
+    RUMBLE_SEQUENCE( YOULOSE ), \
+    RUMBLE_SEQUENCE( TEST_DOUBLE ), \
+    RUMBLE_SEQUENCE( TEST_TRIPLE ), \
+    RUMBLE_SEQUENCE( SECRET )
+
+enum RumbleSequence : int
+{
+    DEFINE_RUMBLE_LIST,
+
+    RUMBLE_ARRAY_MAX,
+    RUMBLE_NONE
+};
+
+void rumbleStart(const RumbleSequence sequence);
+void rumbleStartLowPri(const RumbleSequence sequence);
+void rumbleStop();
+const RumbleSequence rumbleGetCurrent();
+void rumbleISR();

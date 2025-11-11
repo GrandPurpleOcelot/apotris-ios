@@ -1,6 +1,7 @@
 #include "def.h"
 #include "platform.hpp"
 #include "rumble.h"
+#include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "tetromino.hpp"
 // #include "soundbank.h"
@@ -95,23 +96,37 @@ void GameScene::endScreen() {
 
     if (savefile->settings.announcer) {
         if (game->gameMode == ULTRA || game->gameMode == BLITZ) {
-            if (game->won == 1)
+            if (game->won == 1) {
                 sfx(SFX_TIME);
-            else if (game->lost == 1)
+                rumbleStart(RUMBLE_TSPIN);
+            } else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
+                rumbleStart(RUMBLE_YOULOSE);
+            }
         } else if (game->gameMode != BATTLE) {
             if (game->gameMode == MASTER && game->won == 1 &&
                 game->level / 100 == 5)
+            {
                 sfx(SFX_TIME);
-            else if (game->won == 1)
+                rumbleStart(RUMBLE_TSPIN);
+            }
+            else if (game->won == 1) {
                 sfx(SFX_CLEAR);
-            else if (game->lost == 1)
+                rumbleStart(RUMBLE_YOUWIN);
+            }
+            else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
+                rumbleStart(RUMBLE_YOULOSE);
+            }
         } else {
             if (game->won == 1)
+            {
                 sfx(SFX_YOUWIN);
-            else if (game->lost == 1)
+                rumbleStart(RUMBLE_YOUWIN);
+            } else if (game->lost == 1) {
                 sfx(SFX_YOULOSE);
+                rumbleStart(RUMBLE_YOULOSE);
+            }
         }
     }
 

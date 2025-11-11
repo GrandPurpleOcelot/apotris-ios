@@ -6,6 +6,7 @@
 
 #include "blockEngine.hpp"
 #include "logging.h"
+#include "rumblePatterns.hpp"
 #include "tetromino.hpp"
 #include <posprintf.h>
 
@@ -1526,6 +1527,11 @@ void Game::hold(int dir) {
         return;
     } else if (dir == 0) {
         fromLockHold = false;
+        return;
+    }
+
+    if (!canHold) {
+        rumbleStart(RUMBLE_ERR_2);
         return;
     }
 
