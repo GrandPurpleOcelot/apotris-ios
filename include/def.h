@@ -193,7 +193,7 @@ extern std::string getStringFromKey(int key);
 
 extern void checkPeek();
 extern MenuKeys getDefaultMenuKeys();
-extern Keys getDefaultGameKeys();
+extern GameKeys getDefaultGameKeys();
 extern void setDefaultHandling(Save* save);
 extern void setDefaultGameplay(Save* save);
 

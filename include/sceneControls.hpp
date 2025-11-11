@@ -333,7 +333,7 @@ public:
             int* src = (int*)&k;
             keys[index] = src[index];
         } else if (menu == 1) {
-            Keys k = getDefaultGameKeys();
+            GameKeys k = getDefaultGameKeys();
 
             int* src = (int*)&k;
             keys[index] = src[index];

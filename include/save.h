@@ -25,7 +25,7 @@ typedef struct Gradeboard {
     s8 grade[5];
 } ALIGN(4) Gradeboard;
 
-typedef struct Keys {
+typedef struct GameKeys {
     int moveLeft;
     int moveRight;
     int rotateCCW;
@@ -37,7 +37,7 @@ typedef struct Keys {
     int zone;
 
     int placeHolder[19];
-} ALIGN(4) Keys;
+} ALIGN(4) GameKeys;
 
 typedef struct MenuKeys {
     int up;
@@ -131,7 +131,7 @@ typedef struct Settings {
     int dropProtectionFrames;
     bool abHold;
 
-    Keys keys;
+    GameKeys keys;
 
     int clearEffect;
     bool resetHoldType;

@@ -239,8 +239,8 @@ void loadSave() {
     saveSavefile();
 }
 
-Keys getDefaultGameKeys() {
-    Keys k;
+GameKeys getDefaultGameKeys() {
+    GameKeys k;
 
 #if defined(PC) || defined(WEB)
     k = {
