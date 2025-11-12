@@ -459,11 +459,11 @@ void rumbleISR()
             s_state.partEndFrame = frameCounter + s_state.sequenceData[s_state.partIndex].frames;
 
             // reset to start of the pattern (cheaper ofc)
-            // s_state.partTick = 0;
+            s_state.partTick = 0;
 
             // or alternatively, find out where we'd have been if we had always been
             // playing back the new pattern and start from there
-            s_state.partTick &= (PERIOD - 1);
+            // s_state.partTick &= (PERIOD - 1);
         }
     }
 
