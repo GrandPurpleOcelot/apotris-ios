@@ -160,7 +160,7 @@ void Game::rotate(int dir, int on) {
     if (!on)
         return;
 
-    if ((clearLock || entryDelay)) {
+    if ((clearLock || entryDelay || cascadeTimer)) {
         fromLockRotate = true;
         return;
     } else if (eventLock) {
@@ -446,7 +446,7 @@ void Game::moveDown() {
 }
 
 void Game::hardDrop() {
-    if (clearLock || eventLock || dropLockTimer || entryDelay)
+    if (clearLock || eventLock || dropLockTimer || entryDelay || cascadeTimer)
         return;
 
     int diff = pawn.lowest - pawn.y;
@@ -547,8 +547,6 @@ void Game::update() {
 
         cascade();
 
-        calculateColumnHeights(0);
-
         refresh = 2;
 
         if (unstable.size() == 0) {
@@ -556,6 +554,7 @@ void Game::update() {
             d.startY = stackHeight - boardOffset;
             d.rawEndY = lengthY - 1;
             clear(d);
+            calculateColumnHeights(0);
         }
 
         return;
@@ -1662,7 +1661,7 @@ void Game::hold(int dir) {
 
     replay.emplace_back(timer + eventTimer, 5, dir);
 
-    if ((clearLock || entryDelay) && gameMode != CLASSIC) {
+    if ((clearLock || entryDelay || cascadeTimer) && gameMode != CLASSIC) {
         // holding = dir;
         fromLockHold = true;
         return;
@@ -1755,7 +1754,8 @@ void Game::lockCheck() {
 void Game::keyLeft(int dir) {
     replay.emplace_back(timer + eventTimer, 0, dir);
 
-    if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
+    if (clearLock || eventLock || entryDelay || cascadeTimer ||
+        (gameMode == CLASSIC && down)) {
         left = dir;
         return;
     }
@@ -1786,7 +1786,8 @@ void Game::keyLeft(int dir) {
 void Game::keyRight(int dir) {
     replay.emplace_back(timer + eventTimer, 1, dir);
 
-    if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
+    if (clearLock || eventLock || entryDelay || cascadeTimer ||
+        (gameMode == CLASSIC && down)) {
         right = dir;
         return;
     }
@@ -1815,7 +1816,7 @@ void Game::keyRight(int dir) {
 
 void Game::keyDown(int dir) {
     replay.emplace_back(timer + eventTimer, 6, dir);
-    if (clearLock || eventLock || entryDelay) {
+    if (clearLock || eventLock || entryDelay || cascadeTimer) {
         if (!(entryDelay && rotationSystem == NRS))
             down = dir;
         return;
@@ -1981,10 +1982,10 @@ void Game::removeClearLock() {
 
     if (CASCADE) {
         cascaded = cascade();
+    } else {
+        calculateColumnHeights(len);
     }
-
-    calculateColumnHeights(len);
-
+    
     if (gameMode == COMBO) {
         if (!pawn.big) {
             for (int i = lengthY / 2 - 4; i < lengthY; i++) {

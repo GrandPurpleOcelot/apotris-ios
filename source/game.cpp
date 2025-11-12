@@ -653,7 +653,8 @@ void showBackground(int offset) {
             int y = i - 20 + offset;
 
             if (game->bitboard[i] == 0 &&
-                !(i < game->lengthY - 1 && game->bitboard[i + 1] != 0)) {
+                !((i < game->lengthY - 1 && game->bitboard[i + 1] != 0) ||
+                  game->bitboard[i - 1] != 0)) {
                 for (int j = 0; j < 10; j++)
                     setTile(25, pos.x / 8 + j, pos.y / 8 + y, 0);
                 continue;
