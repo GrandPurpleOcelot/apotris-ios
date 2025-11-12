@@ -424,7 +424,7 @@ INLINE void getNewRumble()
 }
 
 #ifdef GBA
-EWRAM_CODE
+// EWRAM_CODE
 #endif
 void rumbleISR()
 {
