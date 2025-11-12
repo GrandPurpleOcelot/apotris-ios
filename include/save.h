@@ -203,7 +203,7 @@ typedef struct Settings {
 
     bool interruptCountdown; // TODO merge into pauseCountdown as bitpacked set of bools?
 
-    int placeHolder[24];
+    int placeHolder[25];
 
 } ALIGN(4) Settings;
 
