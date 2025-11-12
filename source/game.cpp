@@ -260,17 +260,18 @@ void GameScene::checkSounds() {
     }
 
     if (game->sounds.clear) {
+        int speed = game->comboCounter;
+        if (speed > 10)
+            speed = 10;
 
         if (game->previousClear.linesCleared <= 4) {
-            int speed = game->comboCounter;
-            if (speed > 10)
-                speed = 10;
-
             sfxRate(SFX_LEVELUP,
                     (1.0 + (float)speed / 10) / (1 + (game->zoneTimer != 0)));
         } else {
             sfx(SFX_MULTICLEAR);
         }
+
+        rumbleStart(RUMBLE_SINGLE, speed);
 
         int soundEffect = -1;
 
@@ -281,15 +282,15 @@ void GameScene::checkSounds() {
             soundEffect = SFX_PERFECTCLEAR;
             clearTypeText = "perfect clear";
             effectList.push_back(Effect(0));
-            rumbleStart(RUMBLE_PERFECT_CLEAR);
+            rumbleStart(RUMBLE_PERFECT_CLEAR, speed);
         } else if (game->previousClear.isTSpin == 2) {
             if (game->previousClear.isBackToBack == 1)
             {
                 soundEffect = SFX_BACKTOBACKTSPIN;
-                rumbleStart(RUMBLE_TSPIN_B2B);
+                rumbleStart(RUMBLE_TSPIN_B2B, speed);
             } else {
                 soundEffect = SFX_TSPIN;
-                rumbleStart(RUMBLE_TSPIN);
+                rumbleStart(RUMBLE_TSPIN, speed);
             }
             if (game->previousClear.linesCleared == 1) {
                 clearTypeText = "t-spin single";
@@ -302,52 +303,52 @@ void GameScene::checkSounds() {
             soundEffect = SFX_TSPINMINI;
 
             clearTypeText = "t-spin mini";
-            rumbleStart(RUMBLE_TSPIN_MINI);
+            rumbleStart(RUMBLE_TSPIN_MINI, speed);
         } else if (game->previousClear.linesCleared > 4) {
             int n = game->previousClear.linesCleared;
             if (n < 8) {
                 clearTypeText = "quad";
                 soundEffect = SFX_QUAD;
-                rumbleStart(RUMBLE_QUAD);
+                rumbleStart(RUMBLE_QUAD, speed);
             } else if (n < 12) {
                 clearTypeText = "octo";
                 soundEffect = SFX_OCTORIS;
-                rumbleStart(RUMBLE_OCTORIS);
+                rumbleStart(RUMBLE_OCTORIS, speed);
             } else if (n < 16) {
                 clearTypeText = "dodeca";
                 soundEffect = SFX_DODECATRIS;
-                rumbleStart(RUMBLE_DODECATRIS);
+                rumbleStart(RUMBLE_DODECATRIS, speed);
             } else if (n < 18) {
                 clearTypeText = "decahexa";
                 soundEffect = SFX_DECAHEXATRIS;
-                rumbleStart(RUMBLE_DECAHEXATRIS);
+                rumbleStart(RUMBLE_DECAHEXATRIS, speed);
             } else if (n < 20) {
                 clearTypeText = "perfectus";
                 soundEffect = SFX_PERFECTRIS;
-                rumbleStart(RUMBLE_PERFECTRIS);
+                rumbleStart(RUMBLE_PERFECTRIS, speed);
             } else {
                 clearTypeText = "ultimus";
                 soundEffect = SFX_ULTIMATRIS;
-                rumbleStart(RUMBLE_ULTIMATRIS);
+                rumbleStart(RUMBLE_ULTIMATRIS, speed);
             }
         } else if (game->previousClear.linesCleared == 4) {
             if (game->previousClear.isBackToBack == 1) {
                 soundEffect = SFX_BACKTOBACKQUAD;
-                rumbleStart(RUMBLE_QUAD_B2B);
+                rumbleStart(RUMBLE_QUAD_B2B, speed);
             } else {
                 soundEffect = SFX_QUAD;
-                rumbleStart(RUMBLE_QUAD);
+                rumbleStart(RUMBLE_QUAD, speed);
             }
             clearTypeText = "quad";
             // rumbleStart(testQuad);
         } else if (game->previousClear.linesCleared == 3) {
             soundEffect = SFX_TRIPLE;
             clearTypeText = "triple";
-            rumbleStart(RUMBLE_TRIPLE);
+            rumbleStart(RUMBLE_TRIPLE, speed);
         } else if (game->previousClear.linesCleared == 2) {
             soundEffect = SFX_DOUBLE;
             clearTypeText = "double";
-            rumbleStart(RUMBLE_DOUBLE);
+            rumbleStart(RUMBLE_DOUBLE, speed);
         }
 
         if (savefile->settings.clearText == 2 && clearTypeText != "")
@@ -365,7 +366,7 @@ void GameScene::checkSounds() {
             zoneFlash();
             refreshSkin = true;
             sfx(SFX_LEVELUPSOUND);
-            rumbleStartLowPri(RUMBLE_LEVEL_UP);
+            rumbleStartLowPri(RUMBLE_LEVEL_UP, speed);
         }
     } else if (game->sounds.tspin != 0) {
         int sound = 0;
@@ -3605,7 +3606,6 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
-        rumbleStart(RUMBLE_SINGLE);
         clearTimer = 0;
         updateText();
     }

@@ -374,22 +374,32 @@ static RumbleSequence s_currentSequence = RUMBLE_NONE;
 
 // owned by main code
 static RumbleSequence s_newSequence = RUMBLE_NONE;
+static u8 s_newStrengthMod = 0;
 
-void rumbleStart(const RumbleSequence sequence)
+void rumbleStart(const RumbleSequence sequence, u8 strength_mod)
 {
     s_newSequence = sequence;
+    if (strength_mod > 8)
+        s_newStrengthMod = 8;
+    else
+        s_newStrengthMod = strength_mod;
 }
 
-void rumbleStartLowPri(const RumbleSequence sequence)
+void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mod)
 {
     if (s_newSequence == RUMBLE_NONE || sequence > s_newSequence) {
         s_newSequence = sequence;
     }
+    if (strength_mod > 8)
+        s_newStrengthMod = 8;
+    else
+        s_newStrengthMod = strength_mod;
 }
 
 void rumbleStop()
 {
     s_newSequence = RUMBLE_NONE;
+    s_newStrengthMod = 0;
     rumble_set_state(rumble_stop);
 }
 
@@ -474,7 +484,7 @@ void rumbleISR()
     const u8 strengthModifier = userStrength * 2;
 
     // multiply strengths and round up, in integer math
-    const u8 partStrength = (s_state.partStrength * strengthModifier + (PERIOD - 1)) / PERIOD;
+    const u8 partStrength = s_state.partStrength ? ((s_state.partStrength + s_newStrengthMod) * strengthModifier + (PERIOD - 1)) / PERIOD : 0;
 
     const bool rumble = partStrength != 0 && tickStrength < partStrength;
 

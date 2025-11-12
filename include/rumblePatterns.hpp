@@ -1,5 +1,6 @@
 #pragma once
 
+#include "def.h"
 #define RUMBLE_SEQUENCE(name) RUMBLE_##name
 
 #define DEFINE_RUMBLE_LIST \
@@ -43,8 +44,8 @@ enum RumbleSequence : int
     RUMBLE_NONE
 };
 
-void rumbleStart(const RumbleSequence sequence);
-void rumbleStartLowPri(const RumbleSequence sequence);
+void rumbleStart(const RumbleSequence sequence, u8 strength_mod = 0);
+void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mod = 0);
 void rumbleStop();
 const RumbleSequence rumbleGetCurrent();
 void rumbleISR();
