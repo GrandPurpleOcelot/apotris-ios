@@ -271,8 +271,6 @@ void GameScene::checkSounds() {
             sfx(SFX_MULTICLEAR);
         }
 
-        rumbleStart(RUMBLE_SINGLE, speed);
-
         int soundEffect = -1;
 
         clearTypeText = "";
@@ -3606,6 +3604,7 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
+        rumbleStart(RUMBLE_SINGLE, game->comboCounter);
         clearTimer = 0;
         updateText();
     }
