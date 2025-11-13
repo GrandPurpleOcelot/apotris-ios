@@ -388,7 +388,7 @@ public:
         return {
             new TupleSelectorElement(
                 "Minutes",
-                {{3 * 3600, "3"}, {5 * 3600, "5"}, {10 * 3600, "10"}}),
+                {{3 * FRAMES_PER_MIN, "3"}, {5 * FRAMES_PER_MIN, "5"}, {10 * FRAMES_PER_MIN, "10"}}),
         };
     };
 
@@ -412,7 +412,7 @@ public:
     std::string name() { return "Blitz"; };
 
     BlitzScene() {
-        goal = 2 * 3600;
+        goal = 2 * FRAMES_PER_MIN;
         level = 1;
     }
 };

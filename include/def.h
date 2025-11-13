@@ -105,6 +105,9 @@ public:
 
 #define ENABLE_FLASH_SAVE 1
 
+// Assuming locked at 60fps.
+#define FRAMES_PER_MIN 3600
+
 extern void sfx(int);
 extern void gameLoop();
 extern void playSong(int, int);

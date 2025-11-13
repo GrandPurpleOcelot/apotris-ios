@@ -276,7 +276,7 @@ void PlayOptionScene::start() {
     newOptions.mode = getMode();
 
     if (newOptions.mode == BlockEngine::BLITZ)
-        goal = 2 * 3600;
+        goal = 2 * FRAMES_PER_MIN;
 
     if (newOptions.mode == BlockEngine::CLASSIC) {
         newOptions.rotationSystem = BlockEngine::NRS;

@@ -769,7 +769,7 @@ void autosave() {
     if (!savefile->settings.autosave || multiplayer)
         return;
 
-    if (framesSinceLastSave < savefile->settings.autosave * 5 * 3600)
+    if (framesSinceLastSave < savefile->settings.autosave * 5 * FRAMES_PER_MIN)
         return;
 
     saveSavefile();

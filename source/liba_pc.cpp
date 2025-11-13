@@ -784,7 +784,7 @@ void setMosaic(int sx, int sy) {
     }
 };
 
-void sleep(bool autosleep) {};
+void sleep() {};
 void rumble_set_state(int n) {};
 
 void onVBlank() {
