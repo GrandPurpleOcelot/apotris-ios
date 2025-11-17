@@ -1,3 +1,5 @@
+#include "gba-rumble-cart.h"
+#include "gba-rumble.h"
 #include "platform.hpp"
 #include "rumblePatterns.hpp"
 
@@ -297,7 +299,7 @@ void sleep_checks() {
 bool closed() {
     sleep_checks();
 
-    rumble_update();
+    gba_rumble_loop();
     // if (rumbleTimer > 0) {
     //     rumbleTimer--;
 
@@ -429,6 +431,29 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
     }
 }
 
+void initRumbleCart() {
+    enum GBARumbleCartType cart_type = gba_rumble_cart_uninitialized;
+
+    switch (savefile->settings.rumbleCartType) {
+        case 0: // "Type A", ROM GPIO
+            cart_type = gba_rumble_cart_rio;
+            break;
+        case 1: // "Type B", DS Rumble Pak
+            cart_type = gba_rumble_cart_ds;
+            break;
+        case 2: // "Type C", EZ-Flash Omega DE/3-in-1
+            cart_type = gba_rumble_cart_ezflash;
+            break;
+        default:
+            return;
+    }
+    gba_rumble_init_cart(cart_type);
+
+    if (savefile->settings.rumbleCartType == 2) {
+        gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
+    }
+}
+
 void initRumble() {
     if (savefile->settings.gameBoyPlayerSupport) {
         RegisterRamReset(RESET_VRAM);
@@ -436,18 +461,18 @@ void initRumble() {
         *((volatile u16*)0x4000008) = 0x0088;
 
         if (detect_gbp()) {
-            RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
+            GBARumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
                 interrupt_enable(INTR_SERIAL);
                 interrupt_set_handler(INTR_SERIAL, rumble_isr);
             }};
 
-            rumble_init(&conf);
+            gba_rumble_init_gbp(conf);
         } else {
-            rumble_init(nullptr);
+            initRumbleCart();
         }
         gbpChecked = true;
     } else {
-        rumble_init(nullptr);
+        initRumbleCart();
     }
 
     RegisterRamReset(RESET_VRAM);

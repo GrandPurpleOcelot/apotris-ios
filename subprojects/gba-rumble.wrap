@@ -1,6 +1,6 @@
 [wrap-git]
-url = https://github.com/evanbowman/gba-rumble
-revision = 26c7892ea5a1c8c8b8e2a083a14a4ac7e097b2af
+url = https://github.com/nullstalgia/gba-rumble
+revision = 16b9d3f6f776575451d55c4a942dfd0e54b92c43
 patch_directory = gba-rumble
 
 [provide]

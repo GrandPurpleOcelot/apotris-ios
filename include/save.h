@@ -95,13 +95,11 @@ typedef struct SongDisabling {
     int gameBits[4];
 } ALIGN(4) SongDisabling;
 
-#ifdef GBA
-typedef struct SleepOptions {
+typedef struct GBASleepOptions {
     u32 autosleepDelay;
     u32 autosleepWakeCombo;
     u32 sleepWakeCombo;
-} ALIGN(4) SleepOptions;
-#endif
+} ALIGN(4) GBASleepOptions;
 
 typedef struct Settings {
     bool announcer;
@@ -193,15 +191,14 @@ typedef struct Settings {
 #endif
     int shaders;
 
-#ifdef GBA
-    SleepOptions sleep;
+    GBASleepOptions sleep;
     bool gameBoyPlayerSupport;
-#else
-    u32 _sleepPlaceholder[3];
-    bool _gbpPlaceholder;
-#endif
 
     bool interruptCountdown; // TODO merge into pauseCountdown as bitpacked set of bools?
+
+    u8 rumbleCartType;
+
+    u8 ezFlash3in1Strength;
 
     int placeHolder[25];
 

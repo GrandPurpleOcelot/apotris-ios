@@ -52,14 +52,14 @@ public:
     std::string getCursor(std::string text) override {
         std::string result;
 
-        if (savefile->settings.sleep.autosleepDelay > 0)
+        if (savefile->settings.sleep.autosleepWakeCombo > 0)
             result += "<";
         else
             result += " ";
 
         result += text;
 
-        if (savefile->settings.sleep.autosleepDelay < 2)
+        if (savefile->settings.sleep.autosleepWakeCombo < 2)
             result += ">";
 
         return result;

@@ -494,6 +494,7 @@ bool ConfirmSaveScene::control() {
 
 #ifdef GBA
         sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
+        initRumbleCart();
 #endif
 
         changeScene(new MainMenuScene(), Transitions::FADE);

@@ -1,5 +1,6 @@
 #include "rumblePatterns.hpp"
 #include "def.h"
+#include "gba-rumble.h"
 #include "rumble.h"
 #include "save.h"
 #include "tonc_types.h"
@@ -400,7 +401,7 @@ void rumbleStop()
 {
     s_newSequence = RUMBLE_NONE;
     s_newStrengthMod = 0;
-    rumble_set_state(rumble_stop);
+    gba_rumble_stop();
 }
 
 const RumbleSequence rumbleGetCurrent() {
@@ -448,7 +449,7 @@ void rumbleISR()
     if (s_currentSequence == RUMBLE_NONE || !savefile->settings.rumbleStrength)
     {
         s_newSequence = RUMBLE_NONE;
-        rumble_set_state(rumble_stop);
+        gba_rumble_stop();
         return;
     }
 
@@ -460,7 +461,7 @@ void rumbleISR()
         if (s_state.partIndex >= s_state.sequenceLen)
         {
             s_newSequence = RUMBLE_NONE;
-            rumble_set_state(rumble_stop);
+            gba_rumble_stop();
             return;
         }
         else
@@ -482,6 +483,7 @@ void rumbleISR()
     const u8 tickStrength = s_state.partTick & (PERIOD - 1);
 
     const u8 strengthModifier = userStrength * 2;
+    //const u8 strengthModifier = userStrength;
 
     // multiply strengths and round up, in integer math
     const u8 partStrength = s_state.partStrength ? ((s_state.partStrength + s_newStrengthMod) * strengthModifier + (PERIOD - 1)) / PERIOD : 0;
@@ -489,9 +491,9 @@ void rumbleISR()
     const bool rumble = partStrength != 0 && tickStrength < partStrength;
 
     if (rumble) {
-        rumble_set_state(rumble_start);
+        gba_rumble_start();
     } else {
-        rumble_set_state(rumble_stop);
+        gba_rumble_stop();
     }
 
     s_state.partTick++;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gba-rumble-cart.h"
 #include "scene.hpp"
 
 class ABHoldElement : public Element {
@@ -132,6 +133,102 @@ public:
             return "ON";
         else
             return "OFF";
+    }
+};
+
+class RumbleCartTypeElement : public Element {
+public:
+    std::string getLabel() override { return "Rumble Cart Type"; }
+
+    std::string getCursor(std::string text) override {
+        std::string result;
+        if (savefile->settings.rumbleCartType > 0)
+            result += "<";
+        else
+            result += " ";
+
+        result += text;
+
+        if (savefile->settings.rumbleCartType < 2)
+            result += ">";
+
+        return result;
+    }
+
+    void action(int dir) override {
+        if (dir > 0) {
+            if (savefile->settings.rumbleCartType < 2) {
+                savefile->settings.rumbleCartType++;
+                sfx(SFX_MENUMOVE);
+            }
+        } else {
+            if (savefile->settings.rumbleCartType > 0) {
+                savefile->settings.rumbleCartType--;
+                sfx(SFX_MENUMOVE);
+            }
+        }
+    }
+
+    std::string getCurrentOption() override {
+        switch (savefile->settings.rumbleCartType) {
+            case 0:
+                return "TYPE A";
+            case 1:
+                return "TYPE B";
+            case 2:
+                return "TYPE C";
+
+            default:
+                return "???";
+        }
+    }
+};
+
+class EZFlash3in1StrengthElement : public Element {
+public:
+    std::string getLabel() override { return "EZ3-in-1 Motor"; }
+
+    std::string getCursor(std::string text) override {
+        std::string result;
+        if (savefile->settings.ezFlash3in1Strength > EZFLASH_MIN_RUMBLE)
+            result += "<";
+        else
+            result += " ";
+
+        result += text;
+
+        if (savefile->settings.ezFlash3in1Strength < EZFLASH_MAX_RUMBLE)
+            result += ">";
+
+        return result;
+    }
+
+    void action(int dir) override {
+        if (dir > 0) {
+            if (savefile->settings.ezFlash3in1Strength < EZFLASH_MAX_RUMBLE) {
+                savefile->settings.ezFlash3in1Strength++;
+                sfx(SFX_MENUMOVE);
+            }
+        } else {
+            if (savefile->settings.ezFlash3in1Strength > EZFLASH_MIN_RUMBLE) {
+                savefile->settings.ezFlash3in1Strength--;
+                sfx(SFX_MENUMOVE);
+            }
+        }
+    }
+
+    std::string getCurrentOption() override {
+        switch (savefile->settings.ezFlash3in1Strength) {
+            case EZFLASH_MIN_RUMBLE:
+                return "MIN";
+            case EZFLASH_MED_RUMBLE:
+                return "MED";
+            case EZFLASH_MAX_RUMBLE:
+                return "MAX";
+
+            default:
+                return "???";
+        }
     }
 };
 
@@ -381,6 +478,8 @@ public:
 
 #if defined(GBA)
         list.push_back(new GBPSupportElement());
+        list.push_back(new RumbleCartTypeElement());
+        list.push_back(new EZFlash3in1StrengthElement());
 #endif
 
 #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) ||   \

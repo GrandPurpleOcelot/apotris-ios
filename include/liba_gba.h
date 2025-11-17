@@ -119,6 +119,7 @@ INLINE bool sleep_combo_check(u32 keys) {
         return false;
     }
 }
+void initRumbleCart();
 
 extern OBJ_AFFINE* obj_aff_buffer;
 

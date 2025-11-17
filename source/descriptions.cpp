@@ -79,6 +79,12 @@ std::string getDescription(std::string element) {
     } else if (element == "Enable GBP Support") {
         return "Enable Game Boy Player handshake for GameCube Controller rumble. (REQUIRES RESTART!)";
 
+    } else if (element == "Rumble Cart Type") {
+        return "Set Cartridge Rumble hardware type. A: ROM GPIO (most common!) | B: DS Rumble Pak | C: EZ Flash, etc.";
+
+    } else if (element == "EZ3-in-1 Motor") {
+        return "Set motor strength for EZFlash 3-in-1 rumble. (EZ3-in-1 Only! Separate from Rumble Strength!)";
+
     } else if (element == "Reset Controls") {
         return "Set bindings back to default.";
 
