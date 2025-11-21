@@ -1,7 +1,4 @@
-#include "gba-rumble-cart.h"
-#include "gba-rumble.h"
 #include "platform.hpp"
-#include "rumblePatterns.hpp"
 
 #ifdef GBA
 #include "LinkCableMultiboot.hpp"
@@ -18,6 +15,7 @@
 #include "logging.h"
 #include "maxmod.h"
 #include "rumble.h"
+#include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "text.h"
 
@@ -449,7 +447,7 @@ void initRumbleCart() {
     }
     gba_rumble_init_cart(cart_type);
 
-    if (savefile->settings.rumbleCartType == 2) {
+    if (savefile->settings.rumbleCartType == 2 && savefile->settings.ezFlash3in1Strength >= EZFLASH_MIN_RUMBLE && savefile->settings.ezFlash3in1Strength <= EZFLASH_MAX_RUMBLE) {
         gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
     }
 }

@@ -190,7 +190,7 @@ public:
 
     std::string getCursor(std::string text) override {
         std::string result;
-        if (savefile->settings.ezFlash3in1Strength > EZFLASH_MIN_RUMBLE)
+        if (savefile->settings.ezFlash3in1Strength > EZFLASH_RUMBLE_DONT_SET)
             result += "<";
         else
             result += " ";
@@ -210,7 +210,7 @@ public:
                 sfx(SFX_MENUMOVE);
             }
         } else {
-            if (savefile->settings.ezFlash3in1Strength > EZFLASH_MIN_RUMBLE) {
+            if (savefile->settings.ezFlash3in1Strength > EZFLASH_RUMBLE_DONT_SET) {
                 savefile->settings.ezFlash3in1Strength--;
                 sfx(SFX_MENUMOVE);
             }
@@ -225,6 +225,9 @@ public:
                 return "MED";
             case EZFLASH_MAX_RUMBLE:
                 return "MAX";
+
+            case EZFLASH_RUMBLE_DONT_SET:
+                return "OFF";
 
             default:
                 return "???";

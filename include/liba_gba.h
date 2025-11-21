@@ -1,6 +1,8 @@
 #pragma once
 #include "audio_files.h"
 #include "interrupt.h"
+#include "gba-rumble.h"
+#include "gba-rumble-cart.h"
 #include "mm_types.h"
 #include <stdint.h>
 #include <string>
@@ -120,6 +122,8 @@ INLINE bool sleep_combo_check(u32 keys) {
     }
 }
 void initRumbleCart();
+
+#define EZFLASH_RUMBLE_DONT_SET (EZFLASH_MIN_RUMBLE - 1)
 
 extern OBJ_AFFINE* obj_aff_buffer;
 
