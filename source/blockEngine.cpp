@@ -539,7 +539,7 @@ void Game::update() {
         return;
 
     if (unstable.size()) {
-        if (cascadeTimer++ >= CASCADE_DELAY) {
+        if (cascadeTimer++ >= CASCADE_DELAY || maxClearDelay == 1) {
             cascadeTimer = 0;
         } else {
             return;
