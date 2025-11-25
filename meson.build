@@ -226,11 +226,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             endif
         endif
 
-        if host_machine.system() == 'android'
-            soloud = dependency('SoLoud', static : false, default_options : ['default_library=shared'], fallback : ['SoLoud', 'soloud_dep'])
-        else
-            soloud = dependency('SoLoud', static : true, default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
-        endif
+        soloud = dependency('SoLoud', static : true, default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
     endif
 
     dependencies = [

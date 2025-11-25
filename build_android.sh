@@ -100,7 +100,6 @@ echo "Locating SDL2 libraries..."
 # Match lowercase names found in build
 SDL2_LIB=$(find build-android -name "libsdl2.so" -o -name "libSDL2.so" | head -n 1)
 SDL2_MIXER_LIB=$(find build-android -name "libsdl2mixer.so" -o -name "libSDL2_mixer.so" | head -n 1)
-SOLOUD_LIB=$(find build-android -name "lib*oLoud.so" | head -n 1)
 
 if [ -f "$SDL2_LIB" ]; then
     # Rename to libSDL2.so as expected by standard SDLActivity
@@ -118,14 +117,6 @@ if [ -f "$SDL2_MIXER_LIB" ]; then
 else
     echo "Error: Could not find libsdl2mixer.so in build-android"
     exit 1
-fi
-
-if [ -f "$SOLOUD_LIB" ]; then
-    cp "$SOLOUD_LIB" android/app/src/main/jniLibs/arm64-v8a/libSoLoud.so
-    echo "Copied libSoLoud.so"
-else
-    echo "Error: Could not find libSoLoud shared library in build-android"
-    # exit 1 # Optional
 fi
 
 # Copy Vorbis dependencies if they exist (required by SDL2_mixer)
