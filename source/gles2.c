@@ -1,7 +1,7 @@
 /**
  * SPDX-License-Identifier: (WTFPL OR CC0-1.0) AND Apache-2.0
  */
-#ifdef PORTMASTER
+#if defined(PORTMASTER) || defined(ANDROID)
 #include <glad/gles2.h>
 #include <stdio.h>
 #include <stdlib.h>

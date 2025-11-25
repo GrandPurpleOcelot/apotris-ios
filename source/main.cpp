@@ -174,7 +174,7 @@ void initialize() {
     checkSongs();
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
     platformInit();
 
     loadSave();
@@ -192,11 +192,12 @@ int main(void) {
     }
 
     deinitialize();
+    return 0;
 }
 
 #ifdef PC
 int WinMain(void) {
-    main();
+    main(0, NULL);
     return 0;
 }
 #endif

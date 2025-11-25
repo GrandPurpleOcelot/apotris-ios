@@ -1,8 +1,9 @@
 #include "platform.hpp"
 #include <string>
 
-#ifdef TE
-#include "Tilengine.h"
+#if defined(PC) || defined(ANDROID)
+
+#include "liba_pc.h"
 #include "def.h"
 #include "logging.h"
 #include "scene.hpp"

@@ -1,11 +1,6 @@
 #ifdef GL
 #include "shader.h"
 
-#ifdef PC
-#elif defined(PORTMASTER)
-#include <glad/gles2.h>
-#endif
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -18,6 +13,16 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+#ifdef ANDROID
+#include <android/log.h>
+#define LOG_TAG "ApotrisShader"
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#else
+#define LOGE(...) printf(__VA_ARGS__)
+#define LOGI(...) printf(__VA_ARGS__)
+#endif
 
 int width = 0;
 int height = 0;
@@ -40,7 +45,7 @@ uint indices[] = {
     1, 2, 3  // second triangle
 };
 
-std::string translateLine(std::string in) {
+std::string translateLine(std::string in, bool isVertex) {
 
     std::size_t pos = in.find("out vec4");
 
@@ -54,10 +59,31 @@ std::string translateLine(std::string in) {
         in.replace(pos, 12, "uniform mediump vec2");
 #endif
 
-    // pos = in.find("attribute");
+    pos = in.find("varying");
+    if (pos != std::string::npos) {
+        if (isVertex) {
+            in.replace(pos, 7, "out");
+        } else {
+            in.replace(pos, 7, "in");
+        }
+    }
 
-    // if(pos != std::string::npos)
-    //     in.replace(pos, 9, "in");
+    pos = in.find("attribute");
+    if (pos != std::string::npos) {
+        if (isVertex) {
+            in.replace(pos, 9, "in");
+        }
+    }
+
+    pos = in.find("texture2D");
+    if (pos != std::string::npos) {
+        in.replace(pos, 9, "texture");
+    }
+
+    pos = in.find("gl_FragColor");
+    if (pos != std::string::npos) {
+        in.replace(pos, 12, "FragColor");
+    }
 
     return in;
 }
@@ -65,7 +91,7 @@ std::string translateLine(std::string in) {
 uint loadShaderFromFile(std::string path, int type) {
     std::string add = "";
 
-#if defined(PORTMASTER)
+#if defined(PORTMASTER) || defined(ANDROID)
     add += "#version 300 es\n\n";
 #elif defined(__APPLE__)
     add += "#version 410 core\n\n";
@@ -77,24 +103,46 @@ uint loadShaderFromFile(std::string path, int type) {
         add += "#define FRAGMENT\n\n";
     }
 
-    std::ifstream t(path);
-    std::stringstream buffer_in;
-
-    buffer_in << t.rdbuf();
-
     std::string buffer_out;
 
-    std::string line;
-    while (getline(buffer_in, line)) {
-        if (line.find("pragma") == std::string::npos) {
-            buffer_out += translateLine(line) + "\n";
+    SDL_RWops *file = SDL_RWFromFile(path.c_str(), "rb");
+    if (file) {
+        Sint64 size = SDL_RWsize(file);
+        char *content = (char*)malloc(size + 1);
+        SDL_RWread(file, content, size, 1);
+        content[size] = 0;
+        SDL_RWclose(file);
+        
+        // Check if the shader already declares FragColor
+        std::string fileContent(content);
+        if (type == GL_FRAGMENT_SHADER) {
+            if (fileContent.find("out vec4 FragColor") == std::string::npos && 
+                fileContent.find("out mediump vec4 FragColor") == std::string::npos &&
+                fileContent.find("out COMPAT_PRECISION vec4 FragColor") == std::string::npos) {
+                add += "out mediump vec4 FragColor;\n";
+            }
         }
+
+        std::stringstream buffer_in(content);
+        free(content);
+
+        std::string line;
+        while (getline(buffer_in, line)) {
+            if (line.find("pragma") == std::string::npos) {
+                buffer_out += translateLine(line, type == GL_VERTEX_SHADER) + "\n";
+            }
+        }
+    } else {
+        std::cout << "Failed to open shader file: " << path << std::endl;
+        LOGE("Failed to open shader file: %s", path.c_str());
+        return 0;
     }
 
     std::string str = add + buffer_out;
 
     uint shader = glCreateShader(type);
-    glShaderSource(shader, 1, (const char* const*)&str, NULL);
+    const char* sourcePtr = str.c_str();
+    glShaderSource(shader, 1, &sourcePtr, NULL);
     glCompileShader(shader);
 
     int success;
@@ -105,27 +153,37 @@ uint loadShaderFromFile(std::string path, int type) {
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::COMPILATION_FAILED for " << path << "\n"
                   << "Error: " << infoLog << std::endl;
+        LOGE("ERROR::SHADER::COMPILATION_FAILED for %s\nError: %s", path.c_str(), infoLog);
+        glDeleteShader(shader);
+        return 0;
     }
 
     return shader;
 }
 
-int getShader(int index) {
+uint getShader(int index) {
     std::vector<std::string> shaders = findShaders();
 
     if (shaders.size() == 0)
-        return -2;
+        return 0;
 
     if (index <= 0 || index > (int)shaders.size()) {
-        return -1;
+        return 0;
     }
 
     std::string shaderFile = shaders.at(index - 1);
 
     log("loading shader: " + shaderFile);
+    LOGI("loading shader: %s", shaderFile.c_str());
 
     uint vertexShader = loadShaderFromFile(shaderFile, GL_VERTEX_SHADER);
+    if (vertexShader == 0) return 0;
+
     uint fragmentShader = loadShaderFromFile(shaderFile, GL_FRAGMENT_SHADER);
+    if (fragmentShader == 0) {
+        glDeleteShader(vertexShader);
+        return 0;
+    }
 
     uint program = glCreateProgram();
     glAttachShader(program, vertexShader);
@@ -141,6 +199,9 @@ int getShader(int index) {
     if (!success) {
         glGetProgramInfoLog(program, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::LINKING_FAILED\n" << infoLog << std::endl;
+        LOGE("ERROR::SHADER::LINKING_FAILED\n%s", infoLog);
+        glDeleteProgram(program);
+        return 0;
     }
     return program;
 }
@@ -154,6 +215,12 @@ void initShaders(SDL_Window* window, int index) {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 #endif
 
+#ifdef ANDROID
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+#endif
+
     shaderContext = SDL_GL_CreateContext(window);
 
     if (shaderStatus == ShaderStatus::NOT_INITED) {
@@ -165,27 +232,40 @@ void initShaders(SDL_Window* window, int index) {
 
         printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version),
                GLAD_VERSION_MINOR(version));
-        ;
+        LOGI("GL %d.%d", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
         if (version == 0) {
             shaderStatus = ShaderStatus::NO_GL;
+            LOGE("Failed to initialize GLAD");
             return;
         }
+
+#ifdef ANDROID
+        if (GLAD_VERSION_MAJOR(version) < 3) {
+            LOGE("OpenGL ES 3.0 required but found %d.%d", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+            shaderStatus = ShaderStatus::NO_GL;
+            return;
+        }
+#endif
     }
+
 
     glViewport(0, 0, width, height);
 
     shaderProgram = getShader(index);
 
-    if (shaderProgram < 0) {
+    if (shaderProgram == 0) {
         shaderStatus = ShaderStatus::NO_SHADER_FILES;
+        LOGE("Failed to get shader program");
         return;
     }
 
     int res_out = glGetUniformLocation(shaderProgram, "OutputSize");
     if (res_out == -1) {
         log("ERROR: OutputSize");
+        LOGE("ERROR: OutputSize");
         shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+        return;
     }
 
     glUniform2f(res_out, (float)width, (float)height);
@@ -194,7 +274,9 @@ void initShaders(SDL_Window* window, int index) {
     if (res_in == -1) {
 
         log("ERROR: InputSize");
+        LOGE("ERROR: InputSize");
         shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+        return;
     }
 
     glUniform2f(res_in, (float)width, (float)height);
@@ -202,7 +284,9 @@ void initShaders(SDL_Window* window, int index) {
     int res_tex = glGetUniformLocation(shaderProgram, "TextureSize");
     if (res_tex == -1) {
         log("ERROR: TextureSize");
+        LOGE("ERROR: TextureSize");
         shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+        return;
     }
 
     glUniform2f(res_tex, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
@@ -226,7 +310,9 @@ void initShaders(SDL_Window* window, int index) {
     int position = glGetAttribLocation(shaderProgram, "VertexCoord");
     if (position == -1) {
         log("ERROR: position");
+        LOGE("ERROR: position");
         shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+        return;
     }
 
     glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
@@ -236,7 +322,9 @@ void initShaders(SDL_Window* window, int index) {
     int texCoord = glGetAttribLocation(shaderProgram, "TexCoord");
     if (texCoord == -1) {
         log("ERROR: texcoord");
+        LOGE("ERROR: texcoord");
         shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+        return;
     }
 
     glVertexAttribPointer(texCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
@@ -248,7 +336,9 @@ void initShaders(SDL_Window* window, int index) {
         glGetUniformLocation(shaderProgram, "MVPMatrix");
     if (transformLoc == -1) {
         log("ERROR: MVP");
+        LOGE("ERROR: MVP");
         shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
+        return;
     }
 
     // if (shaderStatus == ShaderStatus::SHADER_FILE_ERROR)
@@ -265,6 +355,7 @@ void initShaders(SDL_Window* window, int index) {
 
     shaderStatus = ShaderStatus::OK;
 }
+
 
 void drawWithShaders(SDL_Window* window, SDL_Surface* img,
                      bool shadersEnabled) {
@@ -346,14 +437,35 @@ static bool hasSuffix(const std::string& s, const std::string& suffix) {
 
 std::vector<std::string> findShaders() {
     std::string shaderPath = "assets/shaders";
+    std::vector<std::string> shaderPaths;
+
+#ifdef ANDROID
+    size_t listSize;
+    void* listData = SDL_LoadFile("assets/file_list.txt", &listSize);
+    if (listData) {
+        std::string listStr((char*)listData, listSize);
+        SDL_free(listData);
+
+        std::stringstream ss(listStr);
+        std::string line;
+        while (std::getline(ss, line)) {
+             // Trim whitespace
+            line.erase(line.find_last_not_of(" \n\r\t") + 1);
+            if (hasSuffix(line, ".glsl")) {
+                // file_list.txt contains "shaders/foo.glsl"
+                // We want "assets/shaders/foo.glsl"
+                shaderPaths.push_back("assets/" + line);
+            }
+        }
+    }
+    return shaderPaths;
+#else
 
     DIR* dir = opendir(shaderPath.c_str());
     if (!dir) {
         log("couldn't open dir");
         return {};
     }
-
-    std::vector<std::string> shaderPaths;
 
     dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
@@ -365,5 +477,6 @@ std::vector<std::string> findShaders() {
     closedir(dir);
 
     return shaderPaths;
+#endif
 }
 #endif

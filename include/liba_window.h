@@ -8,7 +8,11 @@
 #include "SDL.h"
 #include "SDL_gamecontroller.h"
 #include "SDL_mixer.h"
+#ifdef ANDROID
+#include "glad/gles2.h"
+#else
 #include "glad/gl.h"
+#endif
 
 #include <map>
 
@@ -28,6 +32,7 @@ extern int KEY_START;
 extern void updateWindow(uint8_t*);
 extern void refreshWindowSize();
 extern bool closed();
+extern void drawRect(int x, int y, int w, int h);
 
 extern void windowInit();
 

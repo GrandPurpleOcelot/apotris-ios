@@ -2,7 +2,7 @@
 
 #include "scene.hpp"
 
-#if defined(PC) || defined(PORTMASTER)
+#if defined(PC) || defined(PORTMASTER) || defined (ANDROID)
 #include "liba_pc.h"
 #include "shader.h"
 #include <sstream>
@@ -110,7 +110,7 @@ public:
                 (savefile->settings.zoom / 10) * 10; // round to 10s
         }
 
-#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH)
+#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) || defined(ANDROID)
         refreshWindowSize();
 #endif
     }
@@ -168,7 +168,7 @@ public:
             }
         }
 
-#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH)
+#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) || defined(ANDROID)
         refreshWindowSize();
 #endif
     }
@@ -235,7 +235,7 @@ public:
 };
 #endif
 
-#if defined(PC) || defined(PORTMASTER)
+#if defined(PC) || defined(PORTMASTER) || defined (ANDROID)
 class ShaderElement : public Element {
 public:
     const std::vector<std::string> shaders = findShaders();
@@ -363,7 +363,7 @@ public:
 #endif
         list.push_back(new FPSElement());
 
-#if defined(PC) || defined(PORTMASTER)
+#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
         list.push_back(new ShaderElement());
 #endif
 

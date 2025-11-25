@@ -224,7 +224,12 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
                 sdl_mixer = dependency('sdl2_mixer', static : false, default_options : ['default_library=shared'], fallback : ['sdl2_mixer', 'sdl2_mixer_dep'])
             endif
         endif
-        soloud = dependency('SoLoud', static : true, default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+
+        if host_machine.system() == 'android'
+            soloud = dependency('SoLoud', static : false, default_options : ['default_library=shared'], fallback : ['SoLoud', 'soloud_dep'])
+        else
+            soloud = dependency('SoLoud', static : true, default_options : ['default_library=static'], fallback : ['SoLoud', 'soloud_dep'])
+        endif
     endif
 
     dependencies = [
@@ -246,6 +251,11 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         add_project_arguments('-DGL', language : ['c', 'cpp'])
 
         dependencies += dependency('glesv2')
+    elif host_machine.system() == 'android'
+        add_project_arguments('-DANDROID', language : ['cpp', 'c'])
+        add_project_arguments('-DGL', language : ['c', 'cpp'])
+
+        dependencies += meson.get_compiler('c').find_library('GLESv2')
     elif host_machine.system() != 'emscripten'
         add_project_arguments('-DPC', language : ['cpp', 'c'])
         add_project_arguments('-DGL', language : ['c', 'cpp'])
@@ -354,6 +364,15 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             ],
             depends : binary,
             build_by_default : true,
+        )
+    elif host_machine.system() == 'android'
+        binary = shared_library(
+            'main',
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            link_args : link_args,
+            name_prefix : 'lib',
         )
     else
         binary = executable(

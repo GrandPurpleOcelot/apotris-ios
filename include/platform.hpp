@@ -24,6 +24,15 @@
 #define PLATFORM 1
 #endif
 
+#ifdef ANDROID
+
+#include "liba_pc.h"
+#include "liba_sdl_audio.hpp"
+#include "liba_window.h"
+
+#define PLATFORM 1
+#endif
+
 #ifdef MM
 #include "liba_mm.h"
 #define PLATFORM 2
