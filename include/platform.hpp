@@ -28,7 +28,7 @@
 
 #include "liba_pc.h"
 #include "liba_sdl_audio.hpp"
-#include "liba_window.h"
+#include "liba_android.h"
 
 #define PLATFORM 1
 #endif

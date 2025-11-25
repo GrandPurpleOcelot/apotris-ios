@@ -105,20 +105,22 @@ uint loadShaderFromFile(std::string path, int type) {
 
     std::string buffer_out;
 
-    SDL_RWops *file = SDL_RWFromFile(path.c_str(), "rb");
+    SDL_RWops* file = SDL_RWFromFile(path.c_str(), "rb");
     if (file) {
         Sint64 size = SDL_RWsize(file);
-        char *content = (char*)malloc(size + 1);
+        char* content = (char*)malloc(size + 1);
         SDL_RWread(file, content, size, 1);
         content[size] = 0;
         SDL_RWclose(file);
-        
+
         // Check if the shader already declares FragColor
         std::string fileContent(content);
         if (type == GL_FRAGMENT_SHADER) {
-            if (fileContent.find("out vec4 FragColor") == std::string::npos && 
-                fileContent.find("out mediump vec4 FragColor") == std::string::npos &&
-                fileContent.find("out COMPAT_PRECISION vec4 FragColor") == std::string::npos) {
+            if (fileContent.find("out vec4 FragColor") == std::string::npos &&
+                fileContent.find("out mediump vec4 FragColor") ==
+                    std::string::npos &&
+                fileContent.find("out COMPAT_PRECISION vec4 FragColor") ==
+                    std::string::npos) {
                 add += "out mediump vec4 FragColor;\n";
             }
         }
@@ -129,7 +131,8 @@ uint loadShaderFromFile(std::string path, int type) {
         std::string line;
         while (getline(buffer_in, line)) {
             if (line.find("pragma") == std::string::npos) {
-                buffer_out += translateLine(line, type == GL_VERTEX_SHADER) + "\n";
+                buffer_out +=
+                    translateLine(line, type == GL_VERTEX_SHADER) + "\n";
             }
         }
     } else {
@@ -153,7 +156,8 @@ uint loadShaderFromFile(std::string path, int type) {
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::COMPILATION_FAILED for " << path << "\n"
                   << "Error: " << infoLog << std::endl;
-        LOGE("ERROR::SHADER::COMPILATION_FAILED for %s\nError: %s", path.c_str(), infoLog);
+        LOGE("ERROR::SHADER::COMPILATION_FAILED for %s\nError: %s",
+             path.c_str(), infoLog);
         glDeleteShader(shader);
         return 0;
     }
@@ -174,10 +178,10 @@ uint getShader(int index) {
     std::string shaderFile = shaders.at(index - 1);
 
     log("loading shader: " + shaderFile);
-    LOGI("loading shader: %s", shaderFile.c_str());
 
     uint vertexShader = loadShaderFromFile(shaderFile, GL_VERTEX_SHADER);
-    if (vertexShader == 0) return 0;
+    if (vertexShader == 0)
+        return 0;
 
     uint fragmentShader = loadShaderFromFile(shaderFile, GL_FRAGMENT_SHADER);
     if (fragmentShader == 0) {
@@ -211,7 +215,8 @@ void initShaders(SDL_Window* window, int index) {
     // Request OpenGL 4.1 Core Profile (macOS maximum)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 #endif
 
@@ -232,7 +237,6 @@ void initShaders(SDL_Window* window, int index) {
 
         printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version),
                GLAD_VERSION_MINOR(version));
-        LOGI("GL %d.%d", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
         if (version == 0) {
             shaderStatus = ShaderStatus::NO_GL;
@@ -242,13 +246,13 @@ void initShaders(SDL_Window* window, int index) {
 
 #ifdef ANDROID
         if (GLAD_VERSION_MAJOR(version) < 3) {
-            LOGE("OpenGL ES 3.0 required but found %d.%d", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+            LOGE("OpenGL ES 3.0 required but found %d.%d",
+                 GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
             shaderStatus = ShaderStatus::NO_GL;
             return;
         }
 #endif
     }
-
 
     glViewport(0, 0, width, height);
 
@@ -356,7 +360,6 @@ void initShaders(SDL_Window* window, int index) {
     shaderStatus = ShaderStatus::OK;
 }
 
-
 void drawWithShaders(SDL_Window* window, SDL_Surface* img,
                      bool shadersEnabled) {
 
@@ -449,7 +452,7 @@ std::vector<std::string> findShaders() {
         std::stringstream ss(listStr);
         std::string line;
         while (std::getline(ss, line)) {
-             // Trim whitespace
+            // Trim whitespace
             line.erase(line.find_last_not_of(" \n\r\t") + 1);
             if (hasSuffix(line, ".glsl")) {
                 // file_list.txt contains "shaders/foo.glsl"

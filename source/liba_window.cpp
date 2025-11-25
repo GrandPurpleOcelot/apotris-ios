@@ -1,4 +1,4 @@
-#if defined(PC) || defined(ANDROID)
+#ifdef PC
 
 #include "liba_window.h"
 #include <cstdio>
@@ -120,7 +120,7 @@ void windowInit() {
     nanotime_step_init(&stepper, (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
 
-#if !defined(__APPLE__) && !defined(ANDROID)
+#if !defined(__APPLE__)
     SDL_Surface* icon = SDL_LoadBMP("assets/favicon32.bmp");
 
     SDL_SetWindowIcon(window, icon);
@@ -187,63 +187,6 @@ void handleInput() {
         case SDL_JOYBUTTONUP:
             key = event.jbutton.button;
             unpressKey(key, InputType::CONTROLLER);
-            break;
-        case SDL_FINGERDOWN:
-            x = touchLocation.x = event.tfinger.x * screenWidth;
-            y = touchLocation.y = event.tfinger.y * screenHeight;
-
-            if (y > screenHeight * 0.75) {
-                if (x > screenWidth * 0.5) {
-                    k = SDL_CONTROLLER_BUTTON_A;
-                } else {
-                    k = SDL_CONTROLLER_BUTTON_B;
-                }
-            } else {
-                if (y < screenHeight * 0.25) {
-                    k = SDL_CONTROLLER_BUTTON_DPAD_UP;
-                } else if (y > screenHeight * 0.5) {
-                    k = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
-                } else {
-                    if (x < screenWidth * 0.5) {
-                        k = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
-                    } else {
-                        k = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
-                    }
-                }
-            }
-
-            pressKey(k, InputType::CONTROLLER);
-
-            drawRect(touchLocation.x, touchLocation.y, 25, 25);
-
-            break;
-        case SDL_FINGERUP:
-            x = touchLocation.x = event.tfinger.x * screenWidth;
-            y = touchLocation.y = event.tfinger.y * screenHeight;
-
-            if (y > screenHeight * 0.75) {
-                if (x > screenWidth * 0.5) {
-                    k = SDL_CONTROLLER_BUTTON_A;
-                } else {
-                    k = SDL_CONTROLLER_BUTTON_B;
-                }
-            } else {
-                if (y < screenHeight * 0.25) {
-                    k = SDL_CONTROLLER_BUTTON_DPAD_UP;
-                } else if (y > screenHeight * 0.5) {
-                    k = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
-                } else {
-                    if (x < screenWidth * 0.5) {
-                        k = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
-                    } else {
-                        k = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
-                    }
-                }
-            }
-
-            unpressKey(k, InputType::CONTROLLER);
-
-            drawRect(touchLocation.x, touchLocation.y, 25, 25);
             break;
         case SDL_QUIT:
             quit();
@@ -498,15 +441,7 @@ void toggleRendering(bool r) { render = r; }
 void initRumble() {};
 
 std::string getSavefilePath() {
-#ifdef ANDROID
-    char* path = SDL_GetPrefPath("akouzoukos", "Apotris");
-    if (!path) {
-        return "Apotris.sav";
-    }
-    std::string s = std::string(path) + "Apotris.sav";
-    SDL_free(path);
-    return s;
-#elif defined(__APPLE__)
+#ifdef __APPLE__
     // Get the user's home directory
     if (!homeDir) {
         struct passwd* pw = getpwuid(getuid());
