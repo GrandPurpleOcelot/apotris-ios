@@ -45,6 +45,8 @@ SDL_Renderer* renderer;
 SDL_Texture* texture;
 SDL_GameController* controller;
 
+Layout layout;
+
 int controllerCount = 0;
 
 bool fullscreen = false;
@@ -86,7 +88,7 @@ void windowInit() {
     window = SDL_CreateWindow("Apotris Android", SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight,
                               SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL |
-                                  SDL_WINDOW_RESIZABLE);
+                                  SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE);
 
     renderer = SDL_CreateRenderer(window, -1, 0);
 
@@ -123,7 +125,7 @@ void key_poll() {}
 void handleInput() {
     SDL_Event event;
 
-    int x = 0, y = 0, k = 0;
+    int x = 0, y = 0, k = 0, dx = 0, dy = 0;
 
     while (SDL_PollEvent(&event)) {
         int key = 0;
@@ -169,58 +171,74 @@ void handleInput() {
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
 
-            if (y > screenHeight * 0.75) {
-                if (x > screenWidth * 0.5) {
-                    k = SDL_CONTROLLER_BUTTON_A;
-                } else {
-                    k = SDL_CONTROLLER_BUTTON_B;
-                }
-            } else {
-                if (y < screenHeight * 0.25) {
-                    k = SDL_CONTROLLER_BUTTON_DPAD_UP;
-                } else if (y > screenHeight * 0.5) {
-                    k = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
-                } else {
-                    if (x < screenWidth * 0.5) {
-                        k = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
-                    } else {
-                        k = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
-                    }
+            for (auto const& button : layout.buttons) {
+                if (x > button.x - button.radius &&
+                    x < button.x + button.radius &&
+                    y > button.y - button.radius &&
+                    y < button.y + button.radius) {
+
+                    pressKey(button.key, InputType::CONTROLLER);
                 }
             }
 
-            pressKey(k, InputType::CONTROLLER);
+            break;
+        case SDL_FINGERMOTION:
+            dx = event.tfinger.dx * screenWidth;
+            dy = event.tfinger.dy * screenHeight;
 
-            drawRect(touchLocation.x, touchLocation.y, 25, 25);
+            x = touchLocation.x = event.tfinger.x * screenWidth;
+            y = touchLocation.y = event.tfinger.y * screenHeight;
+
+            for (auto const& button : layout.buttons) {
+                if (!(x > button.x - button.radius &&
+                      x < button.x + button.radius &&
+                      y > button.y - button.radius &&
+                      y < button.y + button.radius) &&
+                    ((x - dx) > button.x - button.radius &&
+                     (x - dx) < button.x + button.radius &&
+                     (y - dy) > button.y - button.radius &&
+                     (y - dy) < button.y + button.radius)) {
+
+                    unpressKey(button.key, InputType::CONTROLLER);
+                } else if ((x > button.x - button.radius &&
+                            x < button.x + button.radius &&
+                            y > button.y - button.radius &&
+                            y < button.y + button.radius) &&
+                           !((x - dx) > button.x - button.radius &&
+                             (x - dx) < button.x + button.radius &&
+                             (y - dy) > button.y - button.radius &&
+                             (y - dy) < button.y + button.radius)) {
+
+                    pressKey(button.key, InputType::CONTROLLER);
+                }
+            }
+
+            // if (abs(dy) > abs(dx)) {
+            //     if (dy > 0) {
+            //         pressKey(SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+            //                  InputType::CONTROLLER);
+            //     } else if (dy < 0) {
+            //         pressKey(SDL_CONTROLLER_BUTTON_DPAD_UP,
+            //                  InputType::CONTROLLER);
+            //     }
+            // } else {
+
+            // }
 
             break;
         case SDL_FINGERUP:
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
 
-            if (y > screenHeight * 0.75) {
-                if (x > screenWidth * 0.5) {
-                    k = SDL_CONTROLLER_BUTTON_A;
-                } else {
-                    k = SDL_CONTROLLER_BUTTON_B;
-                }
-            } else {
-                if (y < screenHeight * 0.25) {
-                    k = SDL_CONTROLLER_BUTTON_DPAD_UP;
-                } else if (y > screenHeight * 0.5) {
-                    k = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
-                } else {
-                    if (x < screenWidth * 0.5) {
-                        k = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
-                    } else {
-                        k = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
-                    }
+            for (auto const& button : layout.buttons) {
+                if (x > button.x - button.radius &&
+                    x < button.x + button.radius &&
+                    y > button.y - button.radius &&
+                    y < button.y + button.radius) {
+
+                    unpressKey(button.key, InputType::CONTROLLER);
                 }
             }
-
-            unpressKey(k, InputType::CONTROLLER);
-
-            drawRect(touchLocation.x, touchLocation.y, 25, 25);
             break;
         case SDL_QUIT:
             quit();
@@ -305,11 +323,6 @@ uint32_t keys_raw() {
 }
 
 void updateWindow(uint8_t* framebuffer) {
-    drawRect(0, screenHeight * 0.25, screenWidth, 10);
-    drawRect(0, screenHeight * 0.50, screenWidth, 10);
-    drawRect(0, screenHeight * 0.75, screenWidth, 10);
-    drawRect(screenWidth / 2, 0, 10, screenHeight);
-
     const int in_width = 512;
     const int in_height = 512;
 
@@ -377,6 +390,20 @@ void updateWindow(uint8_t* framebuffer) {
 
             // Render rect
             SDL_RenderFillRect(renderer, &rect);
+        }
+
+        for (auto const& button : layout.buttons) {
+            // Set render color to blue ( rect will be rendered in this color )
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 100);
+
+            SDL_Rect r;
+            r.x = button.x - button.radius / 2;
+            r.y = button.y - button.radius / 2;
+            r.w = button.radius;
+            r.h = button.radius;
+
+            // Render rect
+            SDL_RenderFillRect(renderer, &r);
         }
 
         rects.clear();
@@ -461,6 +488,38 @@ void refreshWindowSize() {
             refreshShaderResolution(screenWidth, screenHeight, windowScale);
         }
     }
+
+    int space = 210;
+    int radius = 190;
+
+    Button defaultLayout[10] = {
+        Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.75 + space / 2,
+               screenHeight * 0.75 + space, radius),
+        Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.75 - space / 2,
+               screenHeight * 0.75 + space, radius),
+        Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+               screenWidth * 0.75 - space / 2, screenHeight * 0.75 - space / 2,
+               radius),
+        Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+               screenWidth * 0.75 + space / 2, screenHeight * 0.75 - space / 2,
+               radius),
+
+        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.30,
+               screenHeight * 0.65, radius),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.30,
+               screenHeight * 0.65 + space * 2, radius),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.30 - space,
+               screenHeight * 0.65 + space, radius),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.30 + space,
+               screenHeight * 0.65 + space, radius),
+
+        Button(SDL_CONTROLLER_BUTTON_START, screenWidth / 2 + space,
+               screenHeight - space, radius),
+        Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth / 2 - space,
+               screenHeight - space, radius),
+    };
+
+    layout = Layout(defaultLayout);
 }
 
 bool closed() {

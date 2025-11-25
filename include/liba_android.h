@@ -67,3 +67,31 @@ INLINE u16 packKey(SDL_Keycode key) {
 INLINE SDL_Keycode unpackKey(u16 key) {
     return (SDL_Keycode)(key & 0xfff) | (((key & 0xf000) << 16));
 }
+
+class Button {
+public:
+    int x = 0;
+    int y = 0;
+    int radius = 0;
+    int key = 0;
+
+    Button(int key, int x, int y, int radius) {
+        this->key = key;
+        this->x = x;
+        this->y = y;
+        this->radius = radius;
+    };
+
+    Button() {}
+};
+
+class Layout {
+public:
+    Button buttons[10];
+
+    Layout(Button* buttons) {
+        memcpy(this->buttons, buttons, sizeof(Button) * 10);
+    }
+
+    Layout() {}
+};
