@@ -21,8 +21,7 @@ TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$HOST_TAG"
 TARGET="aarch64-none-linux-android21"
 
 # Generate cross file
-mkdir -p meson/cross
-cat > meson/cross/android-aarch64.ini <<EOF
+cat > meson/android-aarch64.ini <<EOF
 [binaries]
 c = '$TOOLCHAIN/bin/aarch64-linux-android21-clang'
 cpp = '$TOOLCHAIN/bin/aarch64-linux-android21-clang++'
@@ -57,14 +56,14 @@ use_hidapi = 'disabled'
 default_library = 'shared'
 EOF
 
-echo "Generated meson/cross/android-aarch64.ini"
+echo "Generated meson/android-aarch64.ini"
 
 # Setup Meson
 echo "Running Meson Setup..."
 if [ -d "build-android" ]; then
-    meson setup --reconfigure build-android --cross-file meson/cross/android-aarch64.ini -Dbuildtype=debugoptimized
+    meson setup --reconfigure build-android --cross-file meson/android-aarch64.ini -Dbuildtype=debugoptimized
 else
-    meson setup build-android --cross-file meson/cross/android-aarch64.ini -Dbuildtype=debugoptimized
+    meson setup build-android --cross-file meson/android-aarch64.ini -Dbuildtype=debugoptimized
 fi
 
 SDL_JAVA_SRC="$(find subprojects -type d -path "*/SDL2-*/android-project/app/src/main/java/org/libsdl/app" -print -quit)"
