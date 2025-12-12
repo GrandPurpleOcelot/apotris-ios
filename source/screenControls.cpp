@@ -18,3 +18,10 @@ bool ControlOptionScene::control() {
 
     return false;
 }
+
+bool RumbleElement::action() {
+    sfx(SFX_MENUCONFIRM);
+    changeScene(new RumbleOptionScene(), Transitions::FADE);
+
+    return true;
+}

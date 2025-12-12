@@ -1,6 +1,5 @@
 #pragma once
 
-#include "liba_gba.h"
 #include "scene.hpp"
 
 class AutoSleepElement : public Element {

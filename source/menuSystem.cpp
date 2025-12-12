@@ -172,6 +172,8 @@ void sceneSwitcher(std::string str) {
         changeScene(new WindowOptionScene(), Transitions::FADE);
     } else if (str == "Sleep") {
         changeScene(new SleepOptionScene(), Transitions::FADE);
+    } else if (str == "Rumble") {
+        changeScene(new RumbleOptionScene(), Transitions::FADE);
     } else if (str == "Marathon") {
         changeScene(new MarathonScene(), Transitions::FADE);
     } else if (str == "Sprint") {

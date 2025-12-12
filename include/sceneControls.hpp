@@ -74,47 +74,6 @@ public:
     }
 };
 
-class RumbleElement : public Element {
-public:
-    std::string getLabel() override { return "Rumble Strength"; }
-
-    std::string getCursor(std::string text) override {
-        std::string result;
-        if (savefile->settings.rumbleStrength > 0)
-            result += "<";
-        else
-            result += " ";
-
-        result += text;
-
-        if (savefile->settings.rumbleStrength < 4)
-            result += ">";
-
-        return result;
-    }
-
-    void action(int dir) override {
-        if (dir > 0) {
-            if (savefile->settings.rumbleStrength < 4) {
-                savefile->settings.rumbleStrength++;
-                sfx(SFX_MENUMOVE);
-            }
-        } else {
-            if (savefile->settings.rumbleStrength > 0) {
-                savefile->settings.rumbleStrength--;
-                sfx(SFX_MENUMOVE);
-            }
-        }
-    }
-
-    std::string getCurrentOption() override {
-        if (savefile->settings.rumbleStrength)
-            return std::to_string(savefile->settings.rumbleStrength * 25) + "%";
-        else
-            return "OFF";
-    }
-};
-
 class GBPSupportElement : public Element {
 public:
     std::string getLabel() override { return "Enable GBP Support"; }
@@ -233,6 +192,60 @@ public:
                 return "???";
         }
     }
+};
+
+class RumbleStrengthElement : public Element {
+public:
+    std::string getLabel() override { return "Rumble Strength"; }
+
+    std::string getCursor(std::string text) override {
+        std::string result;
+        if (savefile->settings.rumbleStrength > 0)
+            result += "<";
+        else
+            result += " ";
+
+        result += text;
+
+        if (savefile->settings.rumbleStrength < 4)
+            result += ">";
+
+        return result;
+    }
+
+    void action(int dir) override {
+        if (dir > 0) {
+            if (savefile->settings.rumbleStrength < 4) {
+                savefile->settings.rumbleStrength++;
+                sfx(SFX_MENUMOVE);
+            }
+        } else {
+            if (savefile->settings.rumbleStrength > 0) {
+                savefile->settings.rumbleStrength--;
+                sfx(SFX_MENUMOVE);
+            }
+        }
+    }
+
+    std::string getCurrentOption() override {
+        if (savefile->settings.rumbleStrength)
+            return std::to_string(savefile->settings.rumbleStrength * 25) + "%";
+        else
+            return "OFF";
+    }
+};
+
+class RumbleElement : public Element {
+public:
+    std::string getLabel() override { return "Rumble"; }
+
+    std::string getCursor(std::string text) override {
+        return "[" + text + "]";
+    }
+
+    bool action() override;
+
+    std::string getCurrentOption() override { return "..."; }
 };
 
 class ResetControlsElement : public Element {
@@ -479,16 +492,11 @@ public:
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
 
-#if defined(GBA)
-        list.push_back(new GBPSupportElement());
-        list.push_back(new RumbleCartTypeElement());
-        list.push_back(new EZFlash3in1StrengthElement());
-#endif
-
-#if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) ||   \
-    defined(PC)
-        list.push_back(new RumbleElement());
-#endif
+        #if defined(GBA)
+            list.push_back(new RumbleElement());
+        #elif defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC)
+            list.push_back(new RumbleStrengthElement());
+        #endif
 
 #if defined(PC) || defined(WEB)
 
@@ -510,4 +518,26 @@ public:
     bool control();
 
     Scene* previousScene() { return new SettingsScene(); };
+};
+
+class RumbleOptionScene : public OptionListScene {
+public:
+    std::string name() { return "Rumble"; };
+    std::list<Element*> getElementList() {
+        std::list<Element*> list;
+
+        #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC)
+                list.push_back(new RumbleStrengthElement());
+        #endif
+
+        #if defined(GBA)
+                list.push_back(new GBPSupportElement());
+                list.push_back(new RumbleCartTypeElement());
+                list.push_back(new EZFlash3in1StrengthElement());
+        #endif
+
+        return list;
+    };
+
+    Scene* previousScene() { return new ControlOptionScene(); };
 };
