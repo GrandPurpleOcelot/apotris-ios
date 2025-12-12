@@ -358,6 +358,7 @@ struct RumblePatternState
     u8 partStrength;
     int partEndFrame;
     u32 partTick;
+    bool lastRumble;
 };
 
 constexpr RumblePatternState c_stoppedState = RumblePatternState {
@@ -367,6 +368,7 @@ constexpr RumblePatternState c_stoppedState = RumblePatternState {
     .partStrength = 0,
     .partEndFrame = 0,
     .partTick = 0,
+    .lastRumble = false,
 };
 
 // owned by rumble interrupt
@@ -379,6 +381,7 @@ static u8 s_newStrengthMod = 0;
 
 void rumbleStart(const RumbleSequence sequence, u8 strength_mod)
 {
+    s_currentSequence = RUMBLE_NONE;
     s_newSequence = sequence;
     if (strength_mod > 8)
         s_newStrengthMod = 8;
@@ -389,12 +392,8 @@ void rumbleStart(const RumbleSequence sequence, u8 strength_mod)
 void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mod)
 {
     if (s_newSequence == RUMBLE_NONE || sequence > s_newSequence) {
-        s_newSequence = sequence;
+        rumbleStart(sequence, strength_mod);
     }
-    if (strength_mod > 8)
-        s_newStrengthMod = 8;
-    else
-        s_newStrengthMod = strength_mod;
 }
 
 void rumbleStop()
@@ -423,7 +422,8 @@ INLINE void getNewRumble()
             .partIndex = 0,
             .partStrength = newSequenceData->data[0].strength,
             .partEndFrame = frameCounter + newSequenceData->data[0].frames,
-            .partTick = 0
+            .partTick = 0,
+            .lastRumble = false
         };
     }
     else
@@ -453,7 +453,7 @@ void rumbleISR()
         return;
     }
 
-    if (frameCounter >= s_state.partEndFrame)
+    if (frameCounter > s_state.partEndFrame)
     {
         // reached end of part, advance sequence
         s_state.partIndex++;
@@ -491,10 +491,12 @@ void rumbleISR()
     const bool rumble = partStrength != 0 && tickStrength < partStrength;
 
     if (rumble) {
-        gba_rumble_start();
+        if (!s_state.lastRumble)
+            gba_rumble_start();
     } else {
         gba_rumble_stop();
     }
 
     s_state.partTick++;
+    s_state.lastRumble = rumble;
 }

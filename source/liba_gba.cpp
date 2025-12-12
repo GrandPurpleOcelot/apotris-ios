@@ -200,10 +200,7 @@ void platformInit() {
     interrupt_init();
     interrupt_unmask();
     REG_DISPSTAT |= (1 << 3) | (1 << 4);
-    interrupt_enable(INTR_VBLANK);
-    interrupt_enable(INTR_SERIAL);
-    interrupt_enable(INTR_TIMER3);
-    interrupt_enable(INTR_TIMER2);
+
 
 #ifndef NO_DIAGNOSE
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
@@ -216,12 +213,11 @@ void platformInit() {
     interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
     interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
 
-    // Setup rumble PWM with one of the hardware timers (0-3)
-    interrupt_set_handler(INTR_TIMER2, rumbleISR);
-    REG_TM2D   = -0x10; // Overflow every 0x10 (16) timer ticks, every ~1ms
-    REG_TM2CNT = TM_FREQ_1024 | TM_IRQ | TM_ENABLE; // 1024-cycle prescaler -> 16.384 kHz, 61.04 μs per timer tick
-
     // interrupt_add(INTR_HBLANK, onHBlank);
+
+    interrupt_enable(INTR_VBLANK);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_enable(INTR_TIMER3);
 
     loadAudio();
 
@@ -429,7 +425,19 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
     }
 }
 
+INLINE bool usingEzFlashRumble() {
+    return savefile->settings.rumbleCartType == 2;
+}
+
 void initRumbleCart() {
+    interrupt_disable(INTR_TIMER2);
+    // *(vu16 *)0x9fe0000 = 0xd200;
+	// *(vu16 *)0x8000000 = 0x1500;
+	// *(vu16 *)0x8020000 = 0xd200;
+	// *(vu16 *)0x8040000 = 0x1500;
+	// *(vu16 *)0x9880000 = 0x0;
+	// *(vu16 *)0x9fc0000 = 0x1500;
+
     enum GBARumbleCartType cart_type = gba_rumble_cart_uninitialized;
 
     switch (savefile->settings.rumbleCartType) {
@@ -447,8 +455,20 @@ void initRumbleCart() {
     }
     gba_rumble_init_cart(cart_type);
 
-    if (savefile->settings.rumbleCartType == 2 && savefile->settings.ezFlash3in1Strength >= EZFLASH_MIN_RUMBLE && savefile->settings.ezFlash3in1Strength <= EZFLASH_MAX_RUMBLE) {
+    if (savefile->settings.ezFlash3in1Strength >= EZFLASH_MIN_RUMBLE && savefile->settings.ezFlash3in1Strength <= EZFLASH_MAX_RUMBLE) {
         gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
+    }
+
+    if (!usingEzFlashRumble()) {
+        // Setup rumble PWM with one of the hardware timers (any of 0-3)
+        interrupt_set_handler(INTR_TIMER2, rumbleISR);
+        REG_TM2D   = -0x100; // Overflow every 0x10 (16) timer ticks, every ~1ms
+        REG_TM2CNT = TM_FREQ_1024 | TM_IRQ | TM_ENABLE; // 1024-cycle prescaler -> 16.384 kHz, 61.04 μs per timer tick
+
+        interrupt_enable(INTR_TIMER2);
+    } else {
+        // We'll be relying on VBlank
+        // interrupt_disable(INTR_TIMER2);
     }
 }
 
@@ -575,7 +595,9 @@ void sleep() {
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_VBLANK);
 
-    interrupt_enable(INTR_TIMER2);
+    if (!usingEzFlashRumble()) {
+        interrupt_enable(INTR_TIMER2);
+    }
 
     if (prevGradient)
         gradient(1);
@@ -626,6 +648,10 @@ IWRAM_CODE void onVBlank() {
 
     mmVBlank();
     LINK_UNIVERSAL_ISR_VBLANK();
+
+    if (usingEzFlashRumble()) {
+        rumbleISR();
+    }
 
     if (disableHBlank) {
         interrupt_disable(INTR_HBLANK);
