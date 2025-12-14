@@ -506,6 +506,11 @@ public:
     }
 
     void action(int dir) override {
+        if (savefile->settings.rumbleUpdateRate > 5) {
+            savefile->settings.rumbleUpdateRate = 5;
+            sfx(SFX_MENUMOVE);
+            return;
+        }
         if (dir > 0) {
             if (savefile->settings.rumbleUpdateRate < 5) {
                 savefile->settings.rumbleUpdateRate++;
@@ -538,9 +543,9 @@ public:
         }
     }
 };
-class EZFlash3in1StrengthElement : public Element {
+class EZFlashStrengthElement : public Element {
 public:
-    std::string getLabel() override { return "EZ3-in-1 Motor"; }
+    std::string getLabel() override { return "EZFlash Motor"; }
 
     std::string getCursor(std::string text) override {
         std::string result;
@@ -586,7 +591,7 @@ public:
                 return "MAX";
 
             case EZFLASH_RUMBLE_DONT_SET:
-                return "OFF";
+                return "DON'T";
 
             default:
                 return "???";
@@ -708,7 +713,7 @@ public:
 #if defined(GBA)
         list.push_back(new GBPSupportElement());
         list.push_back(new RumbleCartTypeElement());
-        list.push_back(new EZFlash3in1StrengthElement());
+        list.push_back(new EZFlashStrengthElement());
         list.push_back(new RumbleUpdateRateElement());
 #endif
 

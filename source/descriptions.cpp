@@ -94,9 +94,9 @@ std::string getDescription(std::string element) {
     } else if (element == "Rumble Cart Type") {
         return "Set Cartridge Rumble hardware type. A: ROM GPIO (most common!) | B: DS Rumble Pak | C: EZ Flash, etc.";
 
-    } else if (element == "EZ3-in-1 Motor") {
-        return "Optionally send motor strength command for EZFlash 3-in-1 rumble. "
-               "(EZ3-in-1 Only! Separate from Rumble Strength setting!)";
+    } else if (element == "EZFlash Motor") {
+        return "Optionally send motor strength command to EZFlash rumble carts. "
+               "(EZ3-in-1/EZODE Only! Separate from Rumble Strength setting!)";
 
     } else if (element == "Reset Controls") {
         return "Set bindings back to default.";
