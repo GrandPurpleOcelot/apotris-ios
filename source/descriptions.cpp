@@ -73,11 +73,23 @@ std::string getDescription(std::string element) {
     } else if (element == "Quick Restart") {
         return "Press/Hold L and R to restart the game.";
 
+    } else if (element == "Rumble") {
+        return "Configure rumble strength, modes, and more.";
+
+    } else if (element == "Test Rumble") {
+        return "Test Rumble with patterns: Drop, Clear 1-4, B2B Clear 4, Clear 8, Zone 1-3";
+
     } else if (element == "Rumble Strength") {
         return "Strength of rumble on compatible hardware.";
 
+    } else if (element == "Zone Rumble Mode") {
+        return "Mode A - Continuous background rumble, Mode B - Ripple Rumble on Drop.";
+
     } else if (element == "Enable GBP Support") {
         return "Enable Game Boy Player handshake for GameCube Controller rumble. (REQUIRES RESTART!)";
+
+    } else if (element == "Rumble Update Rate") {
+        return "Advanced: Set the update rate of the rumble patterns.";
 
     } else if (element == "Rumble Cart Type") {
         return "Set Cartridge Rumble hardware type. A: ROM GPIO (most common!) | B: DS Rumble Pak | C: EZ Flash, etc.";

@@ -544,15 +544,19 @@ void setDefaults(Save* save, int depth) {
     }
 
     if (depth < 9) {
-        #ifdef GBA
-            save->settings.sleep.autosleepDelay = 0; // Disable Autosleep
-            save->settings.sleep.autosleepWakeCombo = 1; // Use any button to wake from Autosleep
-            save->settings.sleep.sleepWakeCombo = 1; // Use L+R+Select as default Sleep/Wake combo.
+        save->settings.zoneRumbleMode = 1; // Set to Mode A
 
-            save->settings.rumbleCartType = 0; // Use ROM GPIO as default Rumble Cart type, most common and least likely to cause issues.
+#ifdef GBA
+        save->settings.sleep.autosleepDelay = 0; // Disable Autosleep
+        save->settings.sleep.autosleepWakeCombo = 1; // Use any button to wake from Autosleep
+        save->settings.sleep.sleepWakeCombo = 1; // Use L+R+Select as default Sleep/Wake combo.
 
-            save->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_DONT_SET; // Use Medium strength as default.
-        #endif
+        save->settings.rumbleCartType = 0; // Use ROM GPIO as default Rumble Cart type, most common and least likely to cause issues.
+        save->settings.rumbleUpdateRate = 0; // Set to Auto (for ROM GPIO, it'll be 1024hz).
+
+        save->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_DONT_SET; // Use Medium strength as default.
+#endif
+
     }
 
 }

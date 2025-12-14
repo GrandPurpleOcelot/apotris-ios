@@ -221,10 +221,42 @@ void GameScene::checkSounds() {
         sfx(SFX_SHIFT2);
 
     if (game->sounds.place) {
-        if (!game->zoneTimer) {
-            sfx(SFX_PLACE);
-        } else {
+        if (game->zoneTimer) {
             sfxRate(SFX_PLACE, 0.5);
+
+            // Zone Rumble Mode B
+            if (savefile->settings.zoneRumbleMode == 2) {
+                u8 zoneStrengthMod = 0;
+                switch (game->zonedLines) {
+                    case 0 ... 3:
+                        zoneStrengthMod = 0;
+                        break;
+                    case 4 ... 7:
+                        zoneStrengthMod = 1;
+                        break;
+                    case 8 ... 11:
+                        zoneStrengthMod = 2;
+                        break;
+                    case 12 ... 15:
+                        zoneStrengthMod = 2;
+                        break;
+                    case 16 ... 19:
+                        zoneStrengthMod = 3;
+                        break;
+                    default:
+                        zoneStrengthMod = 3;
+                        break;
+                }
+                rumbleStartLowPri(RUMBLE_TSPIN_MINI, zoneStrengthMod);
+            } else {
+                // Zone Rumble Mode A/Off
+                rumbleStartLowPri(RUMBLE_PLACE);
+            }
+
+        } else {
+            sfx(SFX_PLACE);
+
+            rumbleStartLowPri(RUMBLE_PLACE);
         }
 
         if (savefile->settings.screenShakeType == 0) {
@@ -240,8 +272,6 @@ void GameScene::checkSounds() {
         if (!game->sounds.finesse && game->trainingMode)
             for (int i = 0; i < 3; i++)
                 sprite_hide(moveSprites[i]);
-
-        rumbleStartLowPri(RUMBLE_PLACE); // RUMBLE_PLACE
     }
 
     if (game->sounds.invalid) {
@@ -517,27 +547,27 @@ void GameScene::checkSounds() {
 
     const RumbleSequence currentRumble = rumbleGetCurrent();
 
-    bool doZoneRumble = game->zoneTimer && (currentRumble == RUMBLE_NONE || (currentRumble >= RUMBLE_ZONE && currentRumble <= RUMBLE_ZONE_6));
+    bool doZoneRumbleModeA = game->zoneTimer && (currentRumble == RUMBLE_NONE || (currentRumble >= RUMBLE_ZONE && currentRumble <= RUMBLE_ZONE_6));
 
-    if (doZoneRumble) {
+    if (doZoneRumbleModeA && savefile->settings.zoneRumbleMode == 1) {
         switch (game->zonedLines) {
             case 0 ... 3:
-                rumbleStart(RUMBLE_ZONE);
+                rumbleStartLowPri(RUMBLE_ZONE);
                 break;
             case 4 ... 7:
-                rumbleStart(RUMBLE_ZONE_2);
+                rumbleStartLowPri(RUMBLE_ZONE_2);
                 break;
             case 8 ... 11:
-                rumbleStart(RUMBLE_ZONE_3);
+                rumbleStartLowPri(RUMBLE_ZONE_3);
                 break;
             case 12 ... 15:
-                rumbleStart(RUMBLE_ZONE_4);
+                rumbleStartLowPri(RUMBLE_ZONE_4);
                 break;
             case 16 ... 19:
-                rumbleStart(RUMBLE_ZONE_5);
+                rumbleStartLowPri(RUMBLE_ZONE_5);
                 break;
             default:
-                rumbleStart(RUMBLE_ZONE_6);
+                rumbleStartLowPri(RUMBLE_ZONE_6);
                 break;
         }
     }

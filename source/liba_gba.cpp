@@ -425,18 +425,18 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
     }
 }
 
-INLINE bool usingEzFlashRumble() {
-    return savefile->settings.rumbleCartType == 2;
+INLINE bool usingVBlankForRumbleISR() {
+    if (savefile->settings.rumbleUpdateRate == 0 && savefile->settings.rumbleCartType == 2) {
+        return true;
+    } else if (savefile->settings.rumbleUpdateRate == 5) { // Manually selected 60Hz
+        return true;
+    }
+    return false;
 }
 
 void initRumbleCart() {
     interrupt_disable(INTR_TIMER2);
-    // *(vu16 *)0x9fe0000 = 0xd200;
-	// *(vu16 *)0x8000000 = 0x1500;
-	// *(vu16 *)0x8020000 = 0xd200;
-	// *(vu16 *)0x8040000 = 0x1500;
-	// *(vu16 *)0x9880000 = 0x0;
-	// *(vu16 *)0x9fc0000 = 0x1500;
+    REG_TM2CNT = 0;
 
     enum GBARumbleCartType cart_type = gba_rumble_cart_uninitialized;
 
@@ -459,10 +459,17 @@ void initRumbleCart() {
         gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
     }
 
-    if (!usingEzFlashRumble()) {
+    if (!usingVBlankForRumbleISR()) {
         // Setup rumble PWM with one of the hardware timers (any of 0-3)
         interrupt_set_handler(INTR_TIMER2, rumbleISR);
-        REG_TM2D   = -0x100; // Overflow every 0x10 (16) timer ticks, every ~1ms
+
+        u16 timerReloadVal = 8 << savefile->settings.rumbleUpdateRate; // Expecting vals 0-5, but 1-4 are the only valid ones.
+
+        if (timerReloadVal <= 8 || timerReloadVal >= 8 << 5) { // Sanity check.
+            timerReloadVal = 8 << 1;
+        }
+
+        REG_TM2D   = -timerReloadVal; // Set negative val in timer reload reg
         REG_TM2CNT = TM_FREQ_1024 | TM_IRQ | TM_ENABLE; // 1024-cycle prescaler -> 16.384 kHz, 61.04 μs per timer tick
 
         interrupt_enable(INTR_TIMER2);
@@ -595,7 +602,7 @@ void sleep() {
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_VBLANK);
 
-    if (!usingEzFlashRumble()) {
+    if (!usingVBlankForRumbleISR()) {
         interrupt_enable(INTR_TIMER2);
     }
 
@@ -649,7 +656,7 @@ IWRAM_CODE void onVBlank() {
     mmVBlank();
     LINK_UNIVERSAL_ISR_VBLANK();
 
-    if (usingEzFlashRumble()) {
+    if (usingVBlankForRumbleISR()) {
         rumbleISR();
     }
 

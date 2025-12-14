@@ -168,7 +168,10 @@ typedef struct Settings {
 #endif
     int peek;
     int moveSfx;
-    int pauseCountdown;
+    bool pauseCountdown;
+    bool interruptCountdown;
+    u8   rumbleUpdateRate;
+    bool _unused;
     int clearText;
     int randomizer;
 
@@ -193,12 +196,9 @@ typedef struct Settings {
 
     GBASleepOptions sleep;
     bool gameBoyPlayerSupport;
-
-    bool interruptCountdown; // TODO merge into pauseCountdown as bitpacked set of bools?
-
     u8 rumbleCartType;
-
     u8 ezFlash3in1Strength;
+    u8 zoneRumbleMode;
 
     int placeHolder[25];
 

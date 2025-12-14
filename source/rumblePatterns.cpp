@@ -143,6 +143,51 @@ DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_6,
     RumbleSequencePart{1, 1},
 );
 
+DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE,
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{1, 0},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{1, 0},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{1, 0},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{1, 0},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{1, 0},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{1, 0},
+);
+
+DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE_2,
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{3, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{3, 1},
+);
+
+DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE_3,
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{1, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{1, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{1, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{1, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{1, 1},
+    RumbleSequencePart{3, 2},
+    RumbleSequencePart{1, 1},
+);
+
 DEFINE_RUMBLE_SEQUENCE_DATA(REGRET,
     RumbleSequencePart{4, 6},
     RumbleSequencePart{4, 5},
@@ -482,11 +527,10 @@ void rumbleISR()
 
     const u8 tickStrength = s_state.partTick & (PERIOD - 1);
 
-    const u8 strengthModifier = userStrength * 2;
-    //const u8 strengthModifier = userStrength;
+    const u8 strengthModifier = std::min(s_state.partStrength + s_newStrengthMod, PERIOD);
 
     // multiply strengths and round up, in integer math
-    const u8 partStrength = s_state.partStrength ? ((s_state.partStrength + s_newStrengthMod) * strengthModifier + (PERIOD - 1)) / PERIOD : 0;
+    const u8 partStrength = s_state.partStrength ? (strengthModifier * userStrength + (PERIOD - 1)) / PERIOD : 0;
 
     const bool rumble = partStrength != 0 && tickStrength < partStrength;
 
