@@ -202,6 +202,8 @@ typedef struct Settings {
 
     int placeHolder[25];
 
+    Layout onScreenLayouts[2];
+
 } ALIGN(4) Settings;
 
 typedef struct Test {

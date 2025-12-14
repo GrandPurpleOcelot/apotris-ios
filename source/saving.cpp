@@ -27,6 +27,7 @@ void setDefaultKeys();
 void resetSkins(Save* save);
 void setDefaults(Save* save, int depth);
 void setDefaultGraphics(Save* save, int depth);
+void setDefaultLayouts(Save* save);
 void applySaveChanges(u8* newSave, u8* oldSave, int newSize);
 void convertScores(Save* save);
 
@@ -516,6 +517,13 @@ void setDefaults(Save* save, int depth) {
 
 #ifdef GBA
         m.reset = 0;
+#endif
+
+#ifdef ANDROID
+        std::vector<Layout> layouts = getDefaultLayouts();
+
+        save->settings.onScreenLayouts[0] = layouts[0];
+        save->settings.onScreenLayouts[1] = layouts[1];
 #endif
 
         save->settings.menuKeys = m;

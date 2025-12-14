@@ -97,3 +97,5 @@ public:
 };
 
 extern void setGameWindowScale();
+
+extern std::vector<Layout> getDefaultLayouts();

@@ -160,7 +160,7 @@ if [ ! -f "./gradlew" ] || [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
         # Create temp build file to bypass version incompatibilities
         cat > wrapper.gradle <<EOF
 task wrapper(type: Wrapper) {
-    gradleVersion = '8.0'
+    gradleVersion = '8.5'
 }
 EOF
         gradle -b wrapper.gradle wrapper

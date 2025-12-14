@@ -21,6 +21,7 @@ static jmethodID vibrateCancelMethodId = 0;
 
 void handleAnalogInput(int axis, int value);
 void handleInput();
+void setLayout();
 
 bool vibrationInit();
 void vibrationStart(int durationMS);
@@ -142,6 +143,14 @@ void unpressKey(int key, InputType type) {
 
 void key_poll() {}
 
+void saveLayout() {
+    if (savefile == nullptr) {
+        return;
+    }
+
+    savefile->settings.onScreenLayouts[screenWidth > screenHeight] = layout;
+}
+
 void handleInput() {
     SDL_Event event;
 
@@ -200,6 +209,9 @@ void handleInput() {
 
                     if (button.key == -1) {
                         controlsUnlocked = !controlsUnlocked;
+                        if (!controlsUnlocked) {
+                            saveLayout();
+                        }
                         continue;
                     }
 
@@ -524,69 +536,8 @@ void refreshWindowSize() {
         if (savefile->settings.shaders != 0) {
             refreshShaderResolution(screenWidth, screenHeight, windowScale);
         }
-    }
 
-    int space = 210;
-    int radius = 95;
-
-    if (screenWidth < screenHeight) {
-        Button defaultLayout[11] = {
-            Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.75 + space / 2,
-                   screenHeight * 0.70 + space, radius),
-            Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.75 - space / 2,
-                   screenHeight * 0.70 + space, radius),
-
-            Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
-                   screenWidth * 0.75 + space / 2,
-                   screenHeight * 0.70 + space * 2, radius),
-            Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
-                   screenWidth * 0.75 + space / 2, screenHeight * 0.70, radius),
-
-            Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.30,
-                   screenHeight * 0.70, radius),
-            Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.30,
-                   screenHeight * 0.70 + space * 2, radius),
-            Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.30 - space,
-                   screenHeight * 0.70 + space, radius),
-            Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.30 + space,
-                   screenHeight * 0.70 + space, radius),
-
-            Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth * 0.25 - space / 2,
-                   screenHeight * 0.60 - space / 2, radius),
-            Button(SDL_CONTROLLER_BUTTON_START, screenWidth * 0.25 + space / 2,
-                   screenHeight * 0.60 - space / 2, radius),
-            Button(-1, screenWidth - 50, 50, 100)};
-
-        layout = Layout(defaultLayout);
-    } else {
-        Button defaultLayout[11] = {
-            Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.85 + space / 2,
-                   screenHeight * 0.50 + space, radius),
-            Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.85 - space / 2,
-                   screenHeight * 0.50 + space, radius),
-
-            Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
-                   screenWidth * 0.85 + space / 2,
-                   screenHeight * 0.50 + space * 2, radius),
-            Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
-                   screenWidth * 0.85 + space / 2, screenHeight * 0.50, radius),
-
-            Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.20,
-                   screenHeight * 0.50, radius),
-            Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.20,
-                   screenHeight * 0.50 + space * 2, radius),
-            Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.20 - space,
-                   screenHeight * 0.50 + space, radius),
-            Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.20 + space,
-                   screenHeight * 0.50 + space, radius),
-
-            Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth * 0.05 - space / 2,
-                   screenHeight * 0.20 - space / 2, radius),
-            Button(SDL_CONTROLLER_BUTTON_START, screenWidth * 0.05 + space / 2,
-                   screenHeight * 0.20 - space / 2, radius),
-            Button(-1, screenWidth - 50, 50, 100)};
-
-        layout = Layout(defaultLayout);
+        setLayout();
     }
 
     int offsetx = 0, offsety = 0;
@@ -930,5 +881,71 @@ void vibrationDeinit() {
         vibrateCancelMethodId = 0; // Reset the cancel method ID
         SDL_Log("Vibration service cleaned up");
     }
+}
+
+#define SPACE 210
+#define RADIUS 95
+
+std::vector<Layout> getDefaultLayouts() {
+
+    Button portraitButtons[11] = {
+        Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.75 + SPACE / 2,
+               screenHeight * 0.70 + SPACE, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.75 - SPACE / 2,
+               screenHeight * 0.70 + SPACE, RADIUS),
+
+        Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+               screenWidth * 0.75 + SPACE / 2, screenHeight * 0.70 + SPACE * 2,
+               RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+               screenWidth * 0.75 + SPACE / 2, screenHeight * 0.70, RADIUS),
+
+        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.30,
+               screenHeight * 0.70, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.30,
+               screenHeight * 0.70 + SPACE * 2, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.30 - SPACE,
+               screenHeight * 0.70 + SPACE, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.30 + SPACE,
+               screenHeight * 0.70 + SPACE, RADIUS),
+
+        Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth * 0.25 - SPACE / 2,
+               screenHeight * 0.60 - SPACE / 2, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_START, screenWidth * 0.25 + SPACE / 2,
+               screenHeight * 0.60 - SPACE / 2, RADIUS),
+        Button(-1, screenWidth - 50, 50, 100)};
+
+    Button landscapeButtons[11] = {
+        Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.85 + SPACE / 2,
+               screenHeight * 0.50 + SPACE, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.85 - SPACE / 2,
+               screenHeight * 0.50 + SPACE, RADIUS),
+
+        Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+               screenWidth * 0.85 + SPACE / 2, screenHeight * 0.50 + SPACE * 2,
+               RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+               screenWidth * 0.85 + SPACE / 2, screenHeight * 0.50, RADIUS),
+
+        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.20,
+               screenHeight * 0.50, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.20,
+               screenHeight * 0.50 + SPACE * 2, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.20 - SPACE,
+               screenHeight * 0.50 + SPACE, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.20 + SPACE,
+               screenHeight * 0.50 + SPACE, RADIUS),
+
+        Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth * 0.05 - SPACE / 2,
+               screenHeight * 0.20 - SPACE / 2, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_START, screenWidth * 0.05 + SPACE / 2,
+               screenHeight * 0.20 - SPACE / 2, RADIUS),
+        Button(-1, screenWidth - 50, 50, 100)};
+
+    return {Layout(portraitButtons), Layout(landscapeButtons)};
+}
+
+void setLayout() {
+    layout = savefile->settings.onScreenLayouts[(screenWidth > screenHeight)];
 }
 #endif
