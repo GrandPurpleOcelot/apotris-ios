@@ -554,7 +554,7 @@ void setDefaults(Save* save, int depth) {
         save->settings.rumbleCartType = 0; // Use ROM GPIO as default Rumble Cart type, most common and least likely to cause issues.
         save->settings.rumbleUpdateRate = 0; // Set to Auto (for ROM GPIO, it'll be 1024hz).
 
-        save->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_DONT_SET; // Use Medium strength as default.
+        save->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_IGNORE; // By default, 3-in-1 support should be disabled.
 #endif
 
     }

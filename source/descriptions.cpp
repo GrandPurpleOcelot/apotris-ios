@@ -83,16 +83,16 @@ std::string getDescription(std::string element) {
         return "Strength of rumble on compatible hardware.";
 
     } else if (element == "Zone Rumble Mode") {
-        return "Mode A - Continuous background rumble, Mode B - Ripple Rumble on Drop.";
+        return "Optionally enable Zone rumble and select either continuous in background, or rippling on piece drop.";
 
     } else if (element == "Enable GBP Support") {
         return "Enable Game Boy Player handshake for GameCube Controller rumble. (REQUIRES RESTART!)";
 
-    } else if (element == "Rumble Update Rate") {
+    } else if (element == "Patt. Update Rate") {
         return "Advanced: Set the update rate of the rumble patterns.";
 
     } else if (element == "Rumble Cart Type") {
-        return "Set Cartridge Rumble hardware type. A: ROM GPIO (most common!) | B: DS Rumble Pak | C: EZ Flash, etc.";
+        return "Set Cartridge Rumble hardware type. A: ROM GPIO (most common!) | B: DS Rumble Pak | C: EZFlash and others.";
 
     } else if (element == "EZFlash Motor") {
         return "Optionally send motor strength command to EZFlash rumble carts. "

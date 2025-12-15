@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gba-rumble-cart.h"
+#include "rumblePatterns.hpp"
 #include "scene.hpp"
 
 class ABHoldElement : public Element {
@@ -367,13 +368,25 @@ public:
             rumbleStart(RUMBLE_OCTORIS);
             break;
         case 7:
-            rumbleStart(RUMBLE_LONG_ZONE);
+            if (savefile->settings.zoneRumbleMode == 1) {
+                rumbleStart(RUMBLE_LONG_ZONE);
+            } else if (savefile->settings.zoneRumbleMode == 2) {
+                rumbleStart(RUMBLE_TSPIN_MINI, 0);
+            }
             break;
         case 8:
-            rumbleStart(RUMBLE_LONG_ZONE_2);
+            if (savefile->settings.zoneRumbleMode == 1) {
+                rumbleStart(RUMBLE_LONG_ZONE_2);
+            } else if (savefile->settings.zoneRumbleMode == 2) {
+                rumbleStart(RUMBLE_TSPIN_MINI, 1);
+            }
             break;
         case 9:
-            rumbleStart(RUMBLE_LONG_ZONE_3);
+            if (savefile->settings.zoneRumbleMode == 1) {
+                rumbleStart(RUMBLE_LONG_ZONE_3);
+            } else if (savefile->settings.zoneRumbleMode == 2) {
+                rumbleStart(RUMBLE_TSPIN_MINI, 2);
+            }
             break;
         default:
             rumbleStart(RUMBLE_PLACE);
@@ -385,7 +398,7 @@ public:
     }
 
     std::string getCurrentOption() override {
-        return "PATT #" + std::to_string(rumbleTestPattern);
+        return "PATT #" + std::to_string(rumbleTestPattern + 1);
     }
 private:
     u8 rumbleTestPattern = 0;
@@ -429,9 +442,9 @@ public:
             case 0:
                 return "OFF";
             case 1:
-                return "MODE A";
+                return "CONT.";
             case 2:
-                return "MODE B";
+                return "RIPPLE";
 
             default:
                 return "???";
@@ -488,7 +501,7 @@ public:
 };
 class RumbleUpdateRateElement : public Element {
 public:
-    std::string getLabel() override { return "Rumble Update Rate"; }
+    std::string getLabel() override { return "Patt. Update Rate"; }
 
     std::string getCursor(std::string text) override {
         std::string result;
@@ -549,7 +562,7 @@ public:
 
     std::string getCursor(std::string text) override {
         std::string result;
-        if (savefile->settings.ezFlash3in1Strength > EZFLASH_RUMBLE_DONT_SET)
+        if (savefile->settings.ezFlash3in1Strength > EZFLASH_RUMBLE_IGNORE)
             result += "<";
         else
             result += " ";
@@ -563,8 +576,8 @@ public:
     }
 
     void action(int dir) override {
-        if (savefile->settings.ezFlash3in1Strength < EZFLASH_RUMBLE_DONT_SET || savefile->settings.ezFlash3in1Strength > EZFLASH_MAX_RUMBLE) {
-            savefile->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_DONT_SET;
+        if (savefile->settings.ezFlash3in1Strength < EZFLASH_RUMBLE_IGNORE || savefile->settings.ezFlash3in1Strength > EZFLASH_MAX_RUMBLE) {
+            savefile->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_IGNORE;
             sfx(SFX_MENUMOVE);
             return;
         }
@@ -574,7 +587,7 @@ public:
                 sfx(SFX_MENUMOVE);
             }
         } else {
-            if (savefile->settings.ezFlash3in1Strength > EZFLASH_RUMBLE_DONT_SET) {
+            if (savefile->settings.ezFlash3in1Strength > EZFLASH_RUMBLE_IGNORE) {
                 savefile->settings.ezFlash3in1Strength--;
                 sfx(SFX_MENUMOVE);
             }
@@ -590,8 +603,8 @@ public:
             case EZFLASH_MAX_RUMBLE:
                 return "MAX";
 
-            case EZFLASH_RUMBLE_DONT_SET:
-                return "DON'T";
+            case EZFLASH_RUMBLE_IGNORE:
+                return "IGNORE";
 
             default:
                 return "???";

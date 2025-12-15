@@ -123,7 +123,7 @@ INLINE bool sleep_combo_check(u32 keys) {
 }
 void initRumbleCart();
 
-#define EZFLASH_RUMBLE_DONT_SET (EZFLASH_MIN_RUMBLE - 1)
+#define EZFLASH_RUMBLE_IGNORE (EZFLASH_MIN_RUMBLE - 1)
 
 extern OBJ_AFFINE* obj_aff_buffer;
 

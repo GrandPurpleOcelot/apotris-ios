@@ -224,7 +224,7 @@ void GameScene::checkSounds() {
         if (game->zoneTimer) {
             sfxRate(SFX_PLACE, 0.5);
 
-            // Zone Rumble Mode B
+            // Zone Rumble Mode B, Ripple on piece Drop
             if (savefile->settings.zoneRumbleMode == 2) {
                 u8 zoneStrengthMod = 0;
                 switch (game->zonedLines) {
@@ -249,7 +249,7 @@ void GameScene::checkSounds() {
                 }
                 rumbleStartLowPri(RUMBLE_TSPIN_MINI, zoneStrengthMod);
             } else {
-                // Zone Rumble Mode A/Off
+                // Zone Rumble Mode A (Continuous/Off)
                 rumbleStartLowPri(RUMBLE_PLACE);
             }
 
