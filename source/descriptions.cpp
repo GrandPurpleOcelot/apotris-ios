@@ -76,6 +76,9 @@ std::string getDescription(std::string element) {
     } else if (element == "Rumble") {
         return "Configure rumble strength, modes, and more.";
 
+    } else if (element == "Adv. Rumble") {
+        return "Advanced options such as rumble cart type, update rate, etc.";
+
     } else if (element == "Test Rumble") {
         return "Test Rumble with patterns: Drop, Clear 1-4, B2B Clear 4, Clear 8, Zone 1-3";
 
@@ -89,10 +92,13 @@ std::string getDescription(std::string element) {
         return "Enable Game Boy Player handshake for GameCube Controller rumble. (REQUIRES RESTART!)";
 
     } else if (element == "Patt. Update Rate") {
-        return "Advanced: Set the update rate of the rumble patterns.";
+        return "Set the update rate of the rumble patterns.";
 
     } else if (element == "Rumble Cart Type") {
         return "Set Cartridge Rumble hardware type. A: ROM GPIO (most common!) | B: DS Rumble Pak | C: EZFlash and others.";
+
+    } else if (element == "Rumble Style") {
+        return "Select between Dynamic rumble or Simple (old) rumble styles.";
 
     } else if (element == "EZFlash Motor") {
         return "Optionally send motor strength command to EZFlash rumble carts. "

@@ -321,6 +321,56 @@ public:
     }
 };
 
+class RumbleStyleElement : public Element {
+public:
+    std::string getLabel() override { return "Rumble Style"; }
+
+    std::string getCursor(std::string text) override {
+        std::string result;
+        if (savefile->settings.rumbleStyle > 0)
+            result += "<";
+        else
+            result += " ";
+
+        result += text;
+
+        if (savefile->settings.rumbleStyle < 1)
+            result += ">";
+
+        return result;
+    }
+
+    void action(int dir) override {
+        if (savefile->settings.rumbleStyle > 1) {
+            savefile->settings.rumbleStyle = 1;
+            sfx(SFX_MENUMOVE);
+            return;
+        }
+        if (dir > 0) {
+            if (savefile->settings.rumbleStyle < 1) {
+                savefile->settings.rumbleStyle++;
+                sfx(SFX_MENUMOVE);
+            }
+        } else {
+            if (savefile->settings.rumbleStyle > 0) {
+                savefile->settings.rumbleStyle--;
+                sfx(SFX_MENUMOVE);
+            }
+        }
+    }
+
+    std::string getCurrentOption() override {
+        switch (savefile->settings.rumbleStyle) {
+            case 0:
+                return "SIMPLE";
+            case 1:
+                return "DYNAMIC";
+            default:
+                return "ERROR";
+        }
+    }
+};
+
 class TestRumbleElement : public Element {
 public:
     std::string getLabel() override { return "Test Rumble"; }
@@ -350,44 +400,45 @@ public:
             rumbleStart(RUMBLE_PLACE);
             break;
         case 1:
-            rumbleStart(RUMBLE_SINGLE);
+            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_DOUBLE) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
             break;
         case 2:
-            rumbleStart(RUMBLE_DOUBLE);
+            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_DOUBLE) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
             break;
         case 3:
-            rumbleStart(RUMBLE_TRIPLE);
+            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_TRIPLE) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
             break;
         case 4:
-            rumbleStart(RUMBLE_QUAD);
+            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_QUAD) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
             break;
         case 5:
-            rumbleStart(RUMBLE_QUAD_B2B);
+            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_QUAD_B2B) : rumbleStart(RUMBLE_CLASSIC_CLEAR, 1);
             break;
         case 6:
-            rumbleStart(RUMBLE_OCTORIS);
+            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_OCTORIS) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
             break;
         case 7:
             if (savefile->settings.zoneRumbleMode == 1) {
                 rumbleStart(RUMBLE_LONG_ZONE);
             } else if (savefile->settings.zoneRumbleMode == 2) {
-                rumbleStart(RUMBLE_TSPIN_MINI, 0);
+                rumbleStart(RUMBLE_ZONE_RIPPLE, 0);
             }
             break;
         case 8:
             if (savefile->settings.zoneRumbleMode == 1) {
                 rumbleStart(RUMBLE_LONG_ZONE_2);
             } else if (savefile->settings.zoneRumbleMode == 2) {
-                rumbleStart(RUMBLE_TSPIN_MINI, 1);
+                rumbleStart(RUMBLE_ZONE_RIPPLE, 1);
             }
             break;
         case 9:
             if (savefile->settings.zoneRumbleMode == 1) {
                 rumbleStart(RUMBLE_LONG_ZONE_3);
             } else if (savefile->settings.zoneRumbleMode == 2) {
-                rumbleStart(RUMBLE_TSPIN_MINI, 2);
+                rumbleStart(RUMBLE_ZONE_RIPPLE, 2);
             }
             break;
+
         default:
             rumbleStart(RUMBLE_PLACE);
         }
@@ -424,6 +475,11 @@ public:
     }
 
     void action(int dir) override {
+        if (savefile->settings.zoneRumbleMode > 2) {
+            savefile->settings.zoneRumbleMode = 2;
+            sfx(SFX_MENUMOVE);
+            return;
+        }
         if (dir > 0) {
             if (savefile->settings.zoneRumbleMode < 2) {
                 savefile->settings.zoneRumbleMode++;
@@ -447,7 +503,7 @@ public:
                 return "RIPPLE";
 
             default:
-                return "???";
+                return "ERROR";
         }
     }
 };
@@ -472,6 +528,11 @@ public:
     }
 
     void action(int dir) override {
+        if (savefile->settings.rumbleCartType > 2) {
+            savefile->settings.rumbleCartType = 2;
+            sfx(SFX_MENUMOVE);
+            return;
+        }
         if (dir > 0) {
             if (savefile->settings.rumbleCartType < 2) {
                 savefile->settings.rumbleCartType++;
@@ -495,7 +556,7 @@ public:
                 return "TYPE C";
 
             default:
-                return "???";
+                return "ERROR";
         }
     }
 };
@@ -512,20 +573,20 @@ public:
 
         result += text;
 
-        if (savefile->settings.rumbleUpdateRate < 5)
+        if (savefile->settings.rumbleUpdateRate < 4)
             result += ">";
 
         return result;
     }
 
     void action(int dir) override {
-        if (savefile->settings.rumbleUpdateRate > 5) {
-            savefile->settings.rumbleUpdateRate = 5;
+        if (savefile->settings.rumbleUpdateRate > 4) {
+            savefile->settings.rumbleUpdateRate = 4;
             sfx(SFX_MENUMOVE);
             return;
         }
         if (dir > 0) {
-            if (savefile->settings.rumbleUpdateRate < 5) {
+            if (savefile->settings.rumbleUpdateRate < 4) {
                 savefile->settings.rumbleUpdateRate++;
                 sfx(SFX_MENUMOVE);
             }
@@ -540,19 +601,17 @@ public:
     std::string getCurrentOption() override {
         switch (savefile->settings.rumbleUpdateRate) {
             case 0:
-                return "Auto";
-            case 1:
-                return "1024Hz";
-            case 2:
-                return "512Hz";
-            case 3:
-                return "256Hz";
-            case 4:
-                return "128Hz";
-            case 5:
                 return "60Hz";
+            case 1:
+                return "128Hz";
+            case 2:
+                return "256Hz";
+            case 3:
+                return "512Hz";
+            case 4:
+                return "1024Hz";
             default:
-                return "???";
+                return "ERROR";
         }
     }
 };
@@ -607,7 +666,7 @@ public:
                 return "IGNORE";
 
             default:
-                return "???";
+                return "ERROR";
         }
     }
 };
@@ -653,9 +712,22 @@ public:
     }
 };
 
-class RumbleElement : public Element {
+class RumbleMenuElement : public Element {
 public:
     std::string getLabel() override { return "Rumble"; }
+
+    std::string getCursor(std::string text) override {
+        return "[" + text + "]";
+    }
+
+    bool action() override;
+
+    std::string getCurrentOption() override { return "..."; }
+};
+
+class AdvancedRumbleMenuElement : public Element {
+public:
+    std::string getLabel() override { return "Adv. Rumble"; }
 
     std::string getCursor(std::string text) override {
         return "[" + text + "]";
@@ -686,7 +758,7 @@ public:
         list.push_back(new QuickResetElement());
 
 #if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC)
-        list.push_back(new RumbleElement());
+        list.push_back(new RumbleMenuElement());
 #endif
 
 #if defined(PC) || defined(WEB)
@@ -711,23 +783,46 @@ public:
     Scene* previousScene() { return new SettingsScene(); };
 };
 
-class RumbleOptionScene : public OptionListScene {
+#if defined(GBA)
+class AdvancedRumbleOptionScene : public OptionListScene {
 public:
-    std::string name() { return "Rumble"; };
+    std::string name() { return "Adv. Rumble"; };
     std::list<Element*> getElementList() {
         std::list<Element*> list;
 
-#if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC)
-        list.push_back(new TestRumbleElement());
-        list.push_back(new RumbleStrengthElement());
-        list.push_back(new ZoneRumbleElement());
-#endif
+    list.push_back(new TestRumbleElement());
+    list.push_back(new RumbleStrengthElement());
+    list.push_back(new ZoneRumbleElement());
+    list.push_back(new RumbleStyleElement());
 
 #if defined(GBA)
         list.push_back(new GBPSupportElement());
         list.push_back(new RumbleCartTypeElement());
         list.push_back(new EZFlashStrengthElement());
         list.push_back(new RumbleUpdateRateElement());
+#endif
+
+        return list;
+    };
+
+    Scene* previousScene() { return new ControlOptionScene(); };
+};
+#endif
+
+class RumbleOptionScene : public OptionListScene {
+public:
+    std::string name() { return "Rumble"; };
+    std::list<Element*> getElementList() {
+        std::list<Element*> list;
+
+    list.push_back(new TestRumbleElement());
+    list.push_back(new RumbleStrengthElement());
+    list.push_back(new ZoneRumbleElement());
+    list.push_back(new RumbleStyleElement());
+
+#if defined(GBA)
+        list.push_back(new GBPSupportElement());
+        list.push_back(new AdvancedRumbleMenuElement());
 #endif
 
         return list;

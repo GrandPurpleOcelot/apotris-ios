@@ -247,7 +247,7 @@ void GameScene::checkSounds() {
                         zoneStrengthMod = 3;
                         break;
                 }
-                rumbleStartLowPri(RUMBLE_TSPIN_MINI, zoneStrengthMod);
+                rumbleStartLowPri(RUMBLE_ZONE_RIPPLE, zoneStrengthMod);
             } else {
                 // Zone Rumble Mode A (Continuous/Off)
                 rumbleStartLowPri(RUMBLE_PLACE);
@@ -3634,7 +3634,7 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
-        rumbleStart(RUMBLE_SINGLE, game->comboCounter);
+        rumbleStart(savefile->settings.rumbleStyle == 1 ? RUMBLE_SINGLE : RUMBLE_CLASSIC_CLEAR, game->comboCounter);
         clearTimer = 0;
         updateText();
     }

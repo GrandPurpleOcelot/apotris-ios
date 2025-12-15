@@ -171,7 +171,7 @@ typedef struct Settings {
     bool pauseCountdown;
     bool interruptCountdown;
     u8   rumbleUpdateRate;
-    bool _unused;
+    u8   rumbleStyle;
     int clearText;
     int randomizer;
 

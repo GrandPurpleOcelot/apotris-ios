@@ -19,9 +19,18 @@ bool ControlOptionScene::control() {
     return false;
 }
 
-bool RumbleElement::action() {
+bool RumbleMenuElement::action() {
     sfx(SFX_MENUCONFIRM);
     changeScene(new RumbleOptionScene(), Transitions::FADE);
+
+    return true;
+}
+
+bool AdvancedRumbleMenuElement::action() {
+    sfx(SFX_MENUCONFIRM);
+    if (path.size())
+        path.pop_back();
+    changeScene(new AdvancedRumbleOptionScene(), Transitions::FADE);
 
     return true;
 }

@@ -426,12 +426,7 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
 }
 
 INLINE bool usingVBlankForRumbleISR() {
-    if (savefile->settings.rumbleUpdateRate == 0 && savefile->settings.rumbleCartType == 2) {
-        return true;
-    } else if (savefile->settings.rumbleUpdateRate == 5) { // Manually selected 60Hz
-        return true;
-    }
-    return false;
+    return savefile->settings.rumbleUpdateRate == 0;
 }
 
 void initRumbleCart() {
@@ -459,14 +454,15 @@ void initRumbleCart() {
         gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
     }
 
-    if (!usingVBlankForRumbleISR()) {
+    if (!usingVBlankForRumbleISR()) { // True if rumbleUpdateRate == 0
         // Setup rumble PWM with one of the hardware timers (any of 0-3)
         interrupt_set_handler(INTR_TIMER2, rumbleISR);
 
-        u16 timerReloadVal = 8 << savefile->settings.rumbleUpdateRate; // Expecting vals 0-5, but 1-4 are the only valid ones.
+        u16 timerReloadVal = 8 << 1; // 1024hz, further shifts will half the rate.
 
-        if (timerReloadVal <= 8 || timerReloadVal >= 8 << 5) { // Sanity check.
-            timerReloadVal = 8 << 1;
+        if (savefile->settings.rumbleUpdateRate >= 1 && savefile->settings.rumbleUpdateRate <= 4) { // Expecting vals 0-4, but 0-4 are the only valid ones.
+            u16 timerShiftFactor = 4 - savefile->settings.rumbleUpdateRate;
+            timerReloadVal <<= timerShiftFactor;
         }
 
         REG_TM2D   = -timerReloadVal; // Set negative val in timer reload reg

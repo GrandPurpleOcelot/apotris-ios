@@ -1,7 +1,6 @@
 #include "rumblePatterns.hpp"
 #include "def.h"
 #include "gba-rumble.h"
-#include "rumble.h"
 #include "save.h"
 #include "tonc_types.h"
 
@@ -34,8 +33,23 @@ struct RumbleSequenceData {
         .len = sizeof(_rumbleseq_##name##_partdata) / sizeof(RumbleSequencePart) \
     }
 
+// TODO re-add RUMBLE_
+
 DEFINE_RUMBLE_SEQUENCE_DATA(PLACE,
     RumbleSequencePart{4, 5},
+);
+
+DEFINE_RUMBLE_SEQUENCE_DATA(CLASSIC_CLEAR,
+    RumbleSequencePart{6, 6},
+);
+
+DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_RIPPLE,
+    RumbleSequencePart{1, 0},
+    RumbleSequencePart{4, 3},
+    RumbleSequencePart{1, 0},
+    RumbleSequencePart{4, 5},
+    RumbleSequencePart{1, 0},
+    RumbleSequencePart{4, 3},
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(SINGLE,
@@ -426,6 +440,12 @@ static u8 s_newStrengthMod = 0;
 
 void rumbleStart(const RumbleSequence sequence, u8 strength_mod)
 {
+    // If Classic Style selected and it's not a classic rumble, skip it.
+    // Bit of a hack but also simple enough for now.
+    if (!savefile->settings.rumbleStyle && sequence > RUMBLE_CLASSIC_CLEAR) {
+        return;
+    }
+
     s_currentSequence = RUMBLE_NONE;
     s_newSequence = sequence;
     if (strength_mod > 8)
