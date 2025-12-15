@@ -45,11 +45,12 @@ DEFINE_RUMBLE_SEQUENCE_DATA(CLASSIC_CLEAR,
 
 DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_RIPPLE,
     RumbleSequencePart{1, 0},
-    RumbleSequencePart{4, 3},
+    RumbleSequencePart{3, 3},
+    RumbleSequencePart{3, 5},
     RumbleSequencePart{1, 0},
-    RumbleSequencePart{4, 5},
+    RumbleSequencePart{3, 3},
     RumbleSequencePart{1, 0},
-    RumbleSequencePart{4, 3},
+    RumbleSequencePart{1, 1},
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(SINGLE,
