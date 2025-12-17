@@ -733,13 +733,15 @@ int GameScene::pauseMenu() {
             optionsCounter++;
         };
 
-        #ifdef GBA
+#ifdef GBA
+        if (!multiplayer) {
             std::string keyString = (sleep_combo == 0) ? "Unbound" : getStringFromKey(sleep_combo);
 
             std::replace(keyString.begin(), keyString.end(), ' ', '+');
 
             aprints("Sleep/Wake: " + keyString, 0, 140, 2);
-        #endif
+        }
+#endif
 
         if (!onStates) {
 
