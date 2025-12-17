@@ -425,7 +425,7 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
     }
 }
 
-INLINE bool usingVBlankForRumbleISR() {
+INLINE bool usingVBlankForRumblePatternISR() {
     return savefile->settings.rumbleUpdateRate == 0;
 }
 
@@ -454,9 +454,9 @@ void initRumbleCart() {
         gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
     }
 
-    if (!usingVBlankForRumbleISR()) { // True if rumbleUpdateRate == 0
+    if (!usingVBlankForRumblePatternISR()) { // True if rumbleUpdateRate == 0
         // Setup rumble PWM with one of the hardware timers (any of 0-3)
-        interrupt_set_handler(INTR_TIMER2, rumbleISR);
+        interrupt_set_handler(INTR_TIMER2, rumblePatternISR);
 
         u16 timerReloadVal = 8 << 1; // 1024hz, further shifts will half the rate.
 
@@ -598,7 +598,7 @@ void sleep() {
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_VBLANK);
 
-    if (!usingVBlankForRumbleISR()) {
+    if (!usingVBlankForRumblePatternISR()) {
         interrupt_enable(INTR_TIMER2);
     }
 
@@ -652,8 +652,8 @@ IWRAM_CODE void onVBlank() {
     mmVBlank();
     LINK_UNIVERSAL_ISR_VBLANK();
 
-    if (usingVBlankForRumbleISR()) {
-        rumbleISR();
+    if (usingVBlankForRumblePatternISR()) {
+        rumblePatternISR();
     }
 
     if (disableHBlank) {

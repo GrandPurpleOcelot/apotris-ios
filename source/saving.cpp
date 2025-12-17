@@ -548,17 +548,16 @@ void setDefaults(Save* save, int depth) {
         save->settings.rumbleStyle = 1; // Set to new Dynamic rumble!
         save->settings.rumbleStrength = save->settings.rumbleStrength * 2; // Scale old value to new scale (0-4 -> 0-8)
 
-#ifdef GBA
+        // -- GBA Specific-settings
         save->settings.sleep.autosleepDelay = 0; // Disable Autosleep
         save->settings.sleep.autosleepWakeCombo = 1; // Use any button to wake from Autosleep
         save->settings.sleep.sleepWakeCombo = 1; // Use L+R+Select as default Sleep/Wake combo.
 
         save->settings.rumbleCartType = 0; // Use ROM GPIO as default Rumble Cart type, most common and least likely to cause issues.
-        save->settings.rumbleUpdateRate = 0; // Set to 60hz by default.
+        save->settings.rumbleUpdateRate = 0; // Default to using VBlank for Rumble Pattern ISR
 
         save->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_IGNORE; // By default, 3-in-1 support should be disabled.
-#endif
-
+        // -- End of GBA-specifics
     }
 
 }

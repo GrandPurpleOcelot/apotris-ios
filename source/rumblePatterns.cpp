@@ -503,7 +503,7 @@ INLINE void getNewRumble()
 #ifdef GBA
 // EWRAM_CODE
 #endif
-void rumbleISR()
+void rumblePatternISR()
 {
     // profiler hello world
     // for (int i = 0; i < 300; ++i)

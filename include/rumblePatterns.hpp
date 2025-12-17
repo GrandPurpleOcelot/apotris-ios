@@ -53,4 +53,4 @@ void rumbleStart(const RumbleSequence sequence, u8 strength_mod = 0);
 void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mod = 0);
 void rumbleStop();
 const RumbleSequence rumbleGetCurrent();
-void rumbleISR();
+void rumblePatternISR();
