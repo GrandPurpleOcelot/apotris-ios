@@ -35,15 +35,15 @@ struct RumbleSequenceData {
 
 // TODO re-add RUMBLE_
 
-DEFINE_RUMBLE_SEQUENCE_DATA(PLACE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_PLACE,
     RumbleSequencePart{4, 5},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(CLASSIC_CLEAR,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_CLASSIC_CLEAR,
     RumbleSequencePart{6, 6},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_RIPPLE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ZONE_RIPPLE,
     RumbleSequencePart{1, 0},
     RumbleSequencePart{3, 3},
     RumbleSequencePart{3, 5},
@@ -53,35 +53,35 @@ DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_RIPPLE,
     RumbleSequencePart{1, 1},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(SINGLE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_SINGLE,
     RumbleSequencePart{4, 6},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(DOUBLE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_DOUBLE,
     RumbleSequencePart{4, 6},
     RumbleSequencePart{2, 0},
     RumbleSequencePart{4, 2},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(TRIPLE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_TRIPLE,
     RumbleSequencePart{4, 6},
     RumbleSequencePart{2, 0},
     RumbleSequencePart{4, 3},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(QUAD,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_QUAD,
     RumbleSequencePart{4, 6},
     RumbleSequencePart{2, 0},
     RumbleSequencePart{4, 4},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(QUAD_B2B,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_QUAD_B2B,
     RumbleSequencePart{4, 6},
     RumbleSequencePart{2, 0},
     RumbleSequencePart{4, 6},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(PERFECT_CLEAR,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_PERFECT_CLEAR,
     RumbleSequencePart{3, 2},
     RumbleSequencePart{3, 4},
     RumbleSequencePart{3, 6},
@@ -94,7 +94,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(PERFECT_CLEAR,
     RumbleSequencePart{3, 4},
     RumbleSequencePart{3, 6},
     RumbleSequencePart{3, 0},
-    RumbleSequencePart{3, 0},
+    RumbleSequencePart{3, 0}    ,
     RumbleSequencePart{3, 2},
     RumbleSequencePart{3, 4},
     RumbleSequencePart{3, 6},
@@ -105,60 +105,60 @@ DEFINE_RUMBLE_SEQUENCE_DATA(PERFECT_CLEAR,
     RumbleSequencePart{3, 0},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(TSPIN,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_TSPIN,
     RumbleSequencePart{4, 4},
     RumbleSequencePart{4, 6},
     RumbleSequencePart{4, 4},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(TSPIN_B2B,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_TSPIN_B2B,
     RumbleSequencePart{4, 4},
     RumbleSequencePart{4, 8},
     RumbleSequencePart{4, 4},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(TSPIN_MINI,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_TSPIN_MINI,
     RumbleSequencePart{4, 3},
     RumbleSequencePart{4, 5},
     RumbleSequencePart{4, 3},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(LEVEL_UP,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_LEVEL_UP,
     RumbleSequencePart{3, 3},
     RumbleSequencePart{3, 5},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ZONE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ZONE,
     RumbleSequencePart{3, 1},
     RumbleSequencePart{1, 0},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_2,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ZONE_2,
     RumbleSequencePart{3, 2},
     RumbleSequencePart{3, 1},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_3,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ZONE_3,
     RumbleSequencePart{3, 2},
     RumbleSequencePart{1, 1},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_4,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ZONE_4,
     RumbleSequencePart{3, 4},
     RumbleSequencePart{1, 1},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_5,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ZONE_5,
     RumbleSequencePart{3, 5},
     RumbleSequencePart{1, 1},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ZONE_6,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ZONE_6,
     RumbleSequencePart{3, 6},
     RumbleSequencePart{1, 1},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_LONG_ZONE,
     RumbleSequencePart{3, 1},
     RumbleSequencePart{1, 0},
     RumbleSequencePart{3, 1},
@@ -173,7 +173,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE,
     RumbleSequencePart{1, 0},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE_2,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_LONG_ZONE_2,
     RumbleSequencePart{3, 2},
     RumbleSequencePart{3, 1},
     RumbleSequencePart{3, 2},
@@ -188,7 +188,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE_2,
     RumbleSequencePart{3, 1},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE_3,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_LONG_ZONE_3,
     RumbleSequencePart{3, 2},
     RumbleSequencePart{1, 1},
     RumbleSequencePart{3, 2},
@@ -203,7 +203,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(LONG_ZONE_3,
     RumbleSequencePart{1, 1},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(REGRET,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_REGRET,
     RumbleSequencePart{4, 6},
     RumbleSequencePart{4, 5},
     RumbleSequencePart{4, 4},
@@ -211,7 +211,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(REGRET,
     RumbleSequencePart{8, 2},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(COOL,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_COOL,
     RumbleSequencePart{4, 1},
     RumbleSequencePart{4, 2},
     RumbleSequencePart{4, 3},
@@ -220,7 +220,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(COOL,
     RumbleSequencePart{4, 6},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(OCTORIS,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_OCTORIS,
     RumbleSequencePart{4, 6},
     RumbleSequencePart{1, 5},
     RumbleSequencePart{3, 4},
@@ -235,7 +235,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(OCTORIS,
     RumbleSequencePart{3, 5},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(DODECATRIS,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_DODECATRIS,
     RumbleSequencePart{4, 6},
     RumbleSequencePart{1, 5},
     RumbleSequencePart{3, 4},
@@ -252,7 +252,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(DODECATRIS,
     RumbleSequencePart{1, 3},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(DECAHEXATRIS,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_DECAHEXATRIS,
     RumbleSequencePart{4, 8},
     RumbleSequencePart{1, 5},
     RumbleSequencePart{3, 4},
@@ -270,7 +270,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(DECAHEXATRIS,
     RumbleSequencePart{1, 4},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(PERFECTRIS,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_PERFECTRIS,
     RumbleSequencePart{4, 7},
     RumbleSequencePart{1, 5},
     RumbleSequencePart{3, 4},
@@ -291,7 +291,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(PERFECTRIS,
     RumbleSequencePart{10, 4},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ULTIMATRIS,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ULTIMATRIS,
     RumbleSequencePart{4, 8},
     RumbleSequencePart{1, 5},
     RumbleSequencePart{3, 4},
@@ -312,14 +312,14 @@ DEFINE_RUMBLE_SEQUENCE_DATA(ULTIMATRIS,
     RumbleSequencePart{10, 8},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ERR_2,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ERR_2,
     RumbleSequencePart{6, 3},
     RumbleSequencePart{3, 0},
     RumbleSequencePart{6, 3},
     RumbleSequencePart{3, 0},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(ERR_4,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ERR_4,
     RumbleSequencePart{6, 3},
     RumbleSequencePart{3, 0},
     RumbleSequencePart{6, 3},
@@ -330,7 +330,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(ERR_4,
     RumbleSequencePart{3, 0},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(YOUWIN,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_YOUWIN,
     RumbleSequencePart{5, 3},
     RumbleSequencePart{5, 0},
     RumbleSequencePart{5, 5},
@@ -344,7 +344,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(YOUWIN,
      RumbleSequencePart{10, 6},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(YOULOSE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_YOULOSE,
     RumbleSequencePart{5, 2},
     RumbleSequencePart{5, 0},
     RumbleSequencePart{5, 4},
@@ -358,7 +358,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(YOULOSE,
      RumbleSequencePart{15, 3},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(SECRET,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_SECRET,
     RumbleSequencePart{15, 6},
     RumbleSequencePart{15, 0},
     RumbleSequencePart{7, 4},
@@ -374,7 +374,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(SECRET,
     RumbleSequencePart{15, 6},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(TEST_DOUBLE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_TEST_DOUBLE,
     RumbleSequencePart{2, 0},
     RumbleSequencePart{2, 2},
     RumbleSequencePart{2, 4},
@@ -387,7 +387,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(TEST_DOUBLE,
     RumbleSequencePart{4, 6},
 );
 
-DEFINE_RUMBLE_SEQUENCE_DATA(TEST_TRIPLE,
+DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_TEST_TRIPLE,
     RumbleSequencePart{2, 0},
     RumbleSequencePart{2, 2},
     RumbleSequencePart{2, 4},
