@@ -84,6 +84,8 @@ void await_key_release(u32 keys, int timeout_secs) {
 }
 
 bool sleep_combo_check(u32 keys) {
+    if (game && !paused && !demo)
+        return false;
     if (multiplayer)
         return false;
 

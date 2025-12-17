@@ -221,7 +221,7 @@ std::string getDescription(std::string element) {
     } else if (element == "Autosleep Wake") {
         return "Choose to allow waking from Autosleep with any button or only the Sleep Combo.";
     } else if (element == "Sleep Combo") {
-        return "Button combination to Sleep/Wake the console at any time.";
+        return "Button combination to Sleep/Wake the console while paused or in a menu.";
     }
 
     return "";
