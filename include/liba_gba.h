@@ -1,6 +1,8 @@
 #pragma once
 #include "audio_files.h"
 #include "interrupt.h"
+#include "gba-rumble.h"
+#include "gba-rumble-cart.h"
 #include "mm_types.h"
 #include <stdint.h>
 #include <string>
@@ -62,6 +64,21 @@ INLINE void setSpriteTileRow(int index, int y, int n) {
 
     tile->data[y] |= n;
 }
+
+extern u32 sleep_combo;
+
+u16 get_sleep_combo(u32 index);
+
+u32 get_autosleep_mins(u32 index);
+
+// Hard waits until all keys in the supplied mask are released, with an optional timeout.
+void await_key_release(u32 keys, int timeout_secs);
+
+bool sleep_combo_check(u32 keys);
+
+void initRumbleCart();
+
+#define EZFLASH_RUMBLE_IGNORE (EZFLASH_MIN_RUMBLE - 1)
 
 extern OBJ_AFFINE* obj_aff_buffer;
 

@@ -74,6 +74,7 @@ class GameScene : public Scene {
     void showReadyPlayers();
 
     bool counted = false;
+    bool preventLayeredCountdowns = false; // TODO I feel like this can be done better
     bool skipSong = false;
 
     int timesPaused = 0;
@@ -375,6 +376,8 @@ public:
 
 #ifndef GBA
         result.push_front("Video");
+#else
+        result.push_back("Sleep");
 #endif
 
         return result;

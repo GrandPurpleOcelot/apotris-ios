@@ -1,7 +1,7 @@
 project('Apotris',
         'c', 'cpp',
-        version : '4.1.0',
-        license : 'GPL3', meson_version : '>=0.60.0',
+        version : '4.1.1b',
+        license : 'AGPL-3.0', meson_version : '>=0.60.0',
         default_options : ['buildtype=debugoptimized', 'cpp_std=c++17', 'default_library=static', 'warning_level=0', 'b_lto=false'])
 
 
@@ -48,7 +48,7 @@ sources = files(
     src_dir / 'music.cpp',
     src_dir / 'prng.cpp',
     src_dir / 'qrcodegen.c',
-    src_dir / 'rumble.c',
+    src_dir / 'rumblePatterns.cpp',
     src_dir / 'saving.cpp',
     src_dir / 'scene.cpp',
     src_dir / 'screenAudio.cpp',
@@ -610,6 +610,7 @@ else
         dependency('gbfs'),
         dependency('maxmod'),
         dependency('gba-link-connection'),
+        dependency('gba-rumble'),
     ]
 
     #dependencies_multi = [

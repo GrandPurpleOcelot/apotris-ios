@@ -2,6 +2,8 @@
 #include "def.h"
 #include "logging.h"
 #include "menu.h"
+#include "platform.hpp"
+#include "rumblePatterns.hpp"
 #include "sprites.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -219,10 +221,42 @@ void GameScene::checkSounds() {
         sfx(SFX_SHIFT2);
 
     if (game->sounds.place) {
-        if (!game->zoneTimer) {
-            sfx(SFX_PLACE);
-        } else {
+        if (game->zoneTimer) {
             sfxRate(SFX_PLACE, 0.5);
+
+            // Zone Rumble Mode B, Ripple on piece Drop
+            if (savefile->settings.zoneRumbleMode == 2) {
+                u8 zoneStrengthMod = 0;
+                switch (game->zonedLines) {
+                    case 0 ... 3:
+                        zoneStrengthMod = 0;
+                        break;
+                    case 4 ... 7:
+                        zoneStrengthMod = 1;
+                        break;
+                    case 8 ... 11:
+                        zoneStrengthMod = 2;
+                        break;
+                    case 12 ... 15:
+                        zoneStrengthMod = 2;
+                        break;
+                    case 16 ... 19:
+                        zoneStrengthMod = 3;
+                        break;
+                    default:
+                        zoneStrengthMod = 3;
+                        break;
+                }
+                rumbleStartLowPri(RUMBLE_ZONE_RIPPLE, zoneStrengthMod);
+            } else {
+                // Zone Rumble Mode A (Continuous/Off)
+                rumbleStartLowPri(RUMBLE_PLACE);
+            }
+
+        } else {
+            sfx(SFX_PLACE);
+
+            rumbleStartLowPri(RUMBLE_PLACE);
         }
 
         if (savefile->settings.screenShakeType == 0) {
@@ -238,13 +272,11 @@ void GameScene::checkSounds() {
         if (!game->sounds.finesse && game->trainingMode)
             for (int i = 0; i < 3; i++)
                 sprite_hide(moveSprites[i]);
-
-        rumbleStart(rumbleMax * savefile->settings.rumble);
     }
 
     if (game->sounds.invalid) {
         sfx(SFX_INVALID);
-        rumbleStart(rumbleMax * savefile->settings.rumble);
+        rumbleStart(RUMBLE_PLACE);
     }
 
     if (game->sounds.rotate)
@@ -258,12 +290,11 @@ void GameScene::checkSounds() {
     }
 
     if (game->sounds.clear) {
+        int speed = game->comboCounter;
+        if (speed > 10)
+            speed = 10;
 
         if (game->previousClear.linesCleared <= 4) {
-            int speed = game->comboCounter;
-            if (speed > 10)
-                speed = 10;
-
             sfxRate(SFX_LEVELUP,
                     (1.0 + (float)speed / 10) / (1 + (game->zoneTimer != 0)));
         } else {
@@ -279,12 +310,16 @@ void GameScene::checkSounds() {
             soundEffect = SFX_PERFECTCLEAR;
             clearTypeText = "perfect clear";
             effectList.push_back(Effect(0));
+            rumbleStart(RUMBLE_PERFECT_CLEAR, speed);
         } else if (game->previousClear.isTSpin == 2) {
             if (game->previousClear.isBackToBack == 1)
+            {
                 soundEffect = SFX_BACKTOBACKTSPIN;
-            else
+                rumbleStart(RUMBLE_TSPIN_B2B, speed);
+            } else {
                 soundEffect = SFX_TSPIN;
-
+                rumbleStart(RUMBLE_TSPIN, speed);
+            }
             if (game->previousClear.linesCleared == 1) {
                 clearTypeText = "t-spin single";
             } else if (game->previousClear.linesCleared == 2) {
@@ -296,39 +331,52 @@ void GameScene::checkSounds() {
             soundEffect = SFX_TSPINMINI;
 
             clearTypeText = "t-spin mini";
+            rumbleStart(RUMBLE_TSPIN_MINI, speed);
         } else if (game->previousClear.linesCleared > 4) {
             int n = game->previousClear.linesCleared;
             if (n < 8) {
                 clearTypeText = "quad";
                 soundEffect = SFX_QUAD;
+                rumbleStart(RUMBLE_QUAD, speed);
             } else if (n < 12) {
                 clearTypeText = "octo";
                 soundEffect = SFX_OCTORIS;
+                rumbleStart(RUMBLE_OCTORIS, speed);
             } else if (n < 16) {
                 clearTypeText = "dodeca";
                 soundEffect = SFX_DODECATRIS;
+                rumbleStart(RUMBLE_DODECATRIS, speed);
             } else if (n < 18) {
                 clearTypeText = "decahexa";
                 soundEffect = SFX_DECAHEXATRIS;
+                rumbleStart(RUMBLE_DECAHEXATRIS, speed);
             } else if (n < 20) {
                 clearTypeText = "perfectus";
                 soundEffect = SFX_PERFECTRIS;
+                rumbleStart(RUMBLE_PERFECTRIS, speed);
             } else {
                 clearTypeText = "ultimus";
                 soundEffect = SFX_ULTIMATRIS;
+                rumbleStart(RUMBLE_ULTIMATRIS, speed);
             }
         } else if (game->previousClear.linesCleared == 4) {
-            if (game->previousClear.isBackToBack == 1)
+            if (game->previousClear.isBackToBack == 1) {
                 soundEffect = SFX_BACKTOBACKQUAD;
-            else
+                rumbleStart(RUMBLE_QUAD_B2B, speed);
+            } else {
                 soundEffect = SFX_QUAD;
+                rumbleStart(RUMBLE_QUAD, speed);
+            }
             clearTypeText = "quad";
+            // rumbleStart(testQuad);
         } else if (game->previousClear.linesCleared == 3) {
             soundEffect = SFX_TRIPLE;
             clearTypeText = "triple";
+            rumbleStart(RUMBLE_TRIPLE, speed);
         } else if (game->previousClear.linesCleared == 2) {
             soundEffect = SFX_DOUBLE;
             clearTypeText = "double";
+            rumbleStart(RUMBLE_DOUBLE, speed);
         }
 
         if (savefile->settings.clearText == 2 && clearTypeText != "")
@@ -346,15 +394,18 @@ void GameScene::checkSounds() {
             zoneFlash();
             refreshSkin = true;
             sfx(SFX_LEVELUPSOUND);
+            rumbleStartLowPri(RUMBLE_LEVEL_UP, speed);
         }
     } else if (game->sounds.tspin != 0) {
         int sound = 0;
         if (game->sounds.tspin == 1) {
             clearTypeText = "t-spin mini";
             sound = SFX_TSPINMINI;
+            rumbleStart(RUMBLE_TSPIN_MINI);
         } else {
             clearTypeText = "t-spin";
             sound = SFX_TSPIN;
+            rumbleStart(RUMBLE_TSPIN);
         }
 
         if (savefile->settings.announcer)
@@ -366,6 +417,7 @@ void GameScene::checkSounds() {
 
     if (game->sounds.levelUp) {
         sfx(SFX_LEVELUPSOUND);
+        rumbleStartLowPri(RUMBLE_LEVEL_UP);
 
         if (savefile->settings.colors == 3) {
             int n = getClassicPalette();
@@ -391,13 +443,16 @@ void GameScene::checkSounds() {
     case -1:
         sectionText = "regret!!";
         sfx(SFX_REGRET);
+        rumbleStart(RUMBLE_REGRET);
         break;
     case 1:
         sectionText = "cool!!";
         sfx(SFX_COOL);
+        rumbleStart(RUMBLE_COOL);
         break;
     case 2:
         sfx(SFX_SECRET);
+        rumbleStart(RUMBLE_SECRET);
         break;
     }
 
@@ -488,6 +543,33 @@ void GameScene::checkSounds() {
         }
 
         refreshSkin = true;
+    }
+
+    const RumbleSequence currentRumble = rumbleGetCurrent();
+
+    bool doZoneRumbleModeA = game->zoneTimer && (currentRumble == RUMBLE_NONE || (currentRumble >= RUMBLE_ZONE && currentRumble <= RUMBLE_ZONE_6));
+
+    if (doZoneRumbleModeA && savefile->settings.zoneRumbleMode == 1) {
+        switch (game->zonedLines) {
+            case 0 ... 3:
+                rumbleStartLowPri(RUMBLE_ZONE);
+                break;
+            case 4 ... 7:
+                rumbleStartLowPri(RUMBLE_ZONE_2);
+                break;
+            case 8 ... 11:
+                rumbleStartLowPri(RUMBLE_ZONE_3);
+                break;
+            case 12 ... 15:
+                rumbleStartLowPri(RUMBLE_ZONE_4);
+                break;
+            case 16 ... 19:
+                rumbleStartLowPri(RUMBLE_ZONE_5);
+                break;
+            default:
+                rumbleStartLowPri(RUMBLE_ZONE_6);
+                break;
+        }
     }
 
     game->resetSounds();
@@ -1168,7 +1250,7 @@ bool GameScene::control() {
         return true;
     }
 
-    Keys k = savefile->settings.keys;
+    GameKeys k = savefile->settings.keys;
     MenuKeys m = savefile->settings.menuKeys;
 
     if (handlingTest && key_hit(m.pause)) {
@@ -1427,7 +1509,7 @@ void GameScene::showText() {
         wordSprites[4].show(9 * 8 - wordSprites[4].width, 18 * 8, 15);
     }
 
-    if (gm != BATTLE && gm != BLITZ && !(gm == SPRINT && game->subMode == 1) &&
+    if (gm != BATTLE && gm != BLITZ && gm != ZEN && !(gm == SPRINT && game->subMode == 1) &&
         !(gm == MASTER || gm == DEATH)) {
         wordSprites[6].setText("Lines");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
@@ -1468,6 +1550,18 @@ void GameScene::showText() {
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
 
         wordSprites[7].setTextNum(game->linesSent);
+        wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
+    } else if (gm == ZEN) {
+        wordSprites[4].setText("Lines");
+        wordSprites[4].show(9 * 8 - wordSprites[4].width, 14 * 8, 15);
+
+        wordSprites[5].setTextNum(game->linesCleared);
+        wordSprites[5].show(9 * 8 - wordSprites[5].width, 15 * 8, 15);
+
+        wordSprites[6].setText("Total");
+        wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
+
+        wordSprites[7].setTextNum(game->linesCleared + savefile->boards.zenLines);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
     }
 
@@ -1679,6 +1773,7 @@ void GameScene::countdown() {
     showShadow();
     showSpawn();
     showZoneMeter();
+    showGoalLine();
 
     showSprites(128);
 
@@ -1689,10 +1784,72 @@ void GameScene::countdown() {
 
     paused = true;
 
+    GameKeys k = savefile->settings.keys;
+    MenuKeys m = savefile->settings.menuKeys;
+
+    bool interrupted = false;
+
     while (closed() && timer++ < timerMax - 1) {
         canDraw = true;
         vsync();
         key_poll();
+
+        if (!multiplayer && !replaying && !interrupted && !demo && savefile->settings.interruptCountdown && (timer < 2 * timerMax / 3) && key_hit(k.rotateCW | k.rotateCCW | k.rotate180)) {
+            interrupted = true;
+            timer = timerMax - 30;
+            sfx(SFX_GO);
+        } else if (key_hit(KEY_FULL & ~(KEY_SELECT))) {
+            if (demo) {
+                exitGame = true;
+                demo = false;
+                break;
+            } else if (!multiplayer && savefile->settings.interruptCountdown && key_hit(m.pause)) { // TODO maybe add the n3ds::wasAppPaused check here too?
+                sfx(SFX_MENUCONFIRM);
+                paused = true;
+                pauseSong();
+                clearText();
+                updateText();
+                preventLayeredCountdowns = true;
+
+                if (pauseMenu()) {
+                    paused = false;
+                    preventLayeredCountdowns = false;
+                    return;
+                } else {
+                    timer = 0;
+                    paused = true;
+                    preventLayeredCountdowns = false;
+                    clearText();
+                    updateText();
+
+                    // drawFrame(0);
+                    // if (game->zoneTimer)
+                    //     frameSnow(0);
+                    //
+                    // showBackground(0);
+                    // resetSmallText();
+                    // clearText();
+                    // setSmallTextArea(110, 3, 7, 9, 10);
+                    // showText();
+
+                    showTimer();
+                    showQueue(0);
+                    showHold();
+                    showPawn();
+                    showShadow();
+                    showSpawn();
+                    showZoneMeter();
+                    showGoalLine();
+
+                    showSprites(128);
+
+                    if (!game->zoneTimer)
+                        gradient(1);
+
+                    showBackground(0);
+                }
+            }
+        }
 
         if (timer < timerMax / 3) {
             aprint("READY?", 12, 10);
@@ -1708,7 +1865,7 @@ void GameScene::countdown() {
             }
         } else {
             aprint("  GO  ", 12, 10);
-            if (timer == 2 * timerMax / 3 && savefile->settings.announcer)
+            if (timer == 2 * timerMax / 3 && savefile->settings.announcer && !interrupted)
                 sfx(SFX_GO);
         }
 #ifdef GBA
@@ -1730,8 +1887,6 @@ void GameScene::countdown() {
     if (replaying) {
         replayControl();
     } else {
-        Keys k = savefile->settings.keys;
-
         if (key_is_down(k.hold))
             game->hold(1);
         if (key_is_down(k.rotateCW))
@@ -3479,7 +3634,7 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
-        rumbleStart(rumbleMax * 2 * savefile->settings.rumble);
+        rumbleStart(savefile->settings.rumbleStyle == 1 ? RUMBLE_SINGLE : RUMBLE_CLASSIC_CLEAR, game->comboCounter);
         clearTimer = 0;
         updateText();
     }

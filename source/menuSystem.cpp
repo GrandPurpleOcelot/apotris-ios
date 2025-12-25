@@ -12,6 +12,7 @@
 #include "sceneSaving.hpp"
 #include "sceneStats.hpp"
 #include "sceneWindow.hpp"
+#include "sceneSleep.hpp"
 #include "skinEditor.hpp"
 #include <string>
 
@@ -169,6 +170,10 @@ void sceneSwitcher(std::string str) {
         changeScene(new SavingOptionScene(), Transitions::FADE);
     } else if (str == "Video") {
         changeScene(new WindowOptionScene(), Transitions::FADE);
+    } else if (str == "Sleep") {
+        changeScene(new SleepOptionScene(), Transitions::FADE);
+    } else if (str == "Rumble") {
+        changeScene(new RumbleOptionScene(), Transitions::FADE);
     } else if (str == "Marathon") {
         changeScene(new MarathonScene(), Transitions::FADE);
     } else if (str == "Sprint") {

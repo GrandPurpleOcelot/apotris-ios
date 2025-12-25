@@ -1,4 +1,5 @@
 #include "logging.h"
+#include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "sceneModes.hpp"
 #include "sprites.h"
@@ -275,7 +276,7 @@ void PlayOptionScene::start() {
     newOptions.mode = getMode();
 
     if (newOptions.mode == BlockEngine::BLITZ)
-        goal = 2 * 3600;
+        goal = 2 * FRAMES_PER_MIN;
 
     if (newOptions.mode == BlockEngine::CLASSIC) {
         newOptions.rotationSystem = BlockEngine::NRS;
@@ -866,6 +867,9 @@ void PlayOptionScene::resetScoreboard() {
 
         if (timer < 200) {
             timer++;
+        } else if (timer == 200) {
+            timer++;
+            rumbleStart(RUMBLE_ERR_2);
         } else {
             aprint(" YES      NO ", 8, 15);
 
@@ -941,6 +945,7 @@ void PlayOptionScene::resetScoreboard() {
             memset32_fast(board, 0, sizeof(EntryBoard) / 4);
         } else {
             savefile->boards.zen = 0;
+            savefile->boards.zenLines = 0;
         }
 
         saveSavefile();

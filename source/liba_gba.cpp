@@ -15,13 +15,14 @@
 #include "logging.h"
 #include "maxmod.h"
 #include "rumble.h"
+#include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "text.h"
 
 // #include <string>
 // #include "scene.hpp"
 // #include "main.hpp"
-bool unlock_gbp();
+bool detect_gbp();
 void loadAudio();
 void onKeyInterrupt();
 
@@ -39,6 +40,62 @@ bool inaccurateEmulator = false;
 bool emulatorPrompted = false;
 
 Songs songs;
+
+u32 sleep_combo = 0;
+
+u16 get_sleep_combo(u32 index) {
+    switch (index) {
+        case 0: // Disabled
+            return 0;
+        case 1:
+            return KEY_L | KEY_R | KEY_SELECT;
+        case 2:
+            return KEY_START | KEY_SELECT;
+        default:
+            return 0;
+    }
+}
+
+
+u32 get_autosleep_mins(u32 index) {
+    switch (index) {
+        case 0: // Disabled
+            return 0;
+        case 1:
+            return 1;
+        case 2:
+            return 3;
+        default: // 5 minute intervals, starting from 5
+            return (index - 2) * 5;
+    }
+}
+
+void await_key_release(u32 keys, int timeout_secs) {
+    int timer = 0;
+    int timeout_frames = timeout_secs * 60;
+    do {
+        if (timer > timeout_frames && timeout_frames != 0) {
+            break;
+        }
+        VBlankIntrWait();
+        key_poll();
+        timer++;
+    } while ( key_curr_state() != ((~keys) & KEY_FULL) );
+}
+
+bool sleep_combo_check(u32 keys) {
+    if (game && !paused && !demo)
+        return false;
+    if (multiplayer)
+        return false;
+
+    if (sleep_combo && keys == sleep_combo) {
+        sleep();
+        return true;
+    } else {
+        return false;
+    }
+}
 
 void onHBlank() {
     if (REG_VCOUNT < 160)
@@ -197,9 +254,7 @@ void platformInit() {
     interrupt_init();
     interrupt_unmask();
     REG_DISPSTAT |= (1 << 3) | (1 << 4);
-    interrupt_enable(INTR_VBLANK);
-    interrupt_enable(INTR_SERIAL);
-    interrupt_enable(INTR_TIMER3);
+
 
 #ifndef NO_DIAGNOSE
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
@@ -213,6 +268,10 @@ void platformInit() {
     interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
 
     // interrupt_add(INTR_HBLANK, onHBlank);
+
+    interrupt_enable(INTR_VBLANK);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_enable(INTR_TIMER3);
 
     loadAudio();
 
@@ -258,17 +317,44 @@ void setUpLinkUniversal(bool detectEmus) {
 
 void deinitialize() {}
 
-static int rumbleTimer = 0;
+// static int rumbleTimer = 0;
+
+static u32 autosleepTimer = 0;
+
+void sleep_checks() {
+    if (multiplayer)
+        return;
+
+    const u32 autosleep_wait_frames = get_autosleep_mins(savefile->settings.sleep.autosleepDelay) * FRAMES_PER_MIN;
+
+    const bool no_user_input = savefile->settings.sleep.autosleepWakeCombo == 2 ? !key_is_down(KEY_FULL & ~(KEY_L | KEY_R)) : !key_is_down(KEY_FULL);
+
+    if (no_user_input) {
+        autosleepTimer++;
+
+        if (autosleep_wait_frames && autosleepTimer > autosleep_wait_frames) {
+            sleep();
+            autosleepTimer = 0;
+        }
+    } else if (sleep_combo && key_curr_state() == sleep_combo) {
+        autosleepTimer = 0;
+        sleep_combo_check(key_curr_state());
+    } else {
+        autosleepTimer = 0;
+    }
+}
 
 bool closed() {
-    rumble_update();
-    if (rumbleTimer > 0) {
-        rumbleTimer--;
+    sleep_checks();
 
-        rumble_set_state(rumble_start);
-    } else {
-        rumble_set_state(rumble_hard_stop);
-    }
+    gba_rumble_loop();
+    // if (rumbleTimer > 0) {
+    //     rumbleTimer--;
+
+    //     rumble_set_state(rumble_start);
+    // } else {
+    //     rumble_set_state(rumble_hard_stop);
+    // }
     return true;
 }
 
@@ -393,29 +479,85 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
     }
 }
 
-void initRumble() {
-    if (!savefile->settings.rumble)
-        return;
+INLINE bool usingVBlankForRumblePatternISR() {
+    return savefile->settings.rumbleUpdateRate == 0;
+}
 
-    rumbleInitialized = true;
-    RegisterRamReset(RESET_VRAM);
-    REG_DISPCNT = DCNT_MODE0 | DCNT_BG0;
-    *((volatile u16*)0x4000008) = 0x0088;
+void initRumbleCart() {
+    interrupt_disable(INTR_TIMER2);
+    REG_TM2CNT = 0;
 
-    if (unlock_gbp()) {
+    enum GBARumbleCartType cart_type = gba_rumble_cart_uninitialized;
 
-        RumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
-            interrupt_enable(INTR_SERIAL);
-            interrupt_set_handler(INTR_SERIAL, rumble_isr);
-        }};
+    switch (savefile->settings.rumbleCartType) {
+        case 0: // "Type A", ROM GPIO
+            cart_type = gba_rumble_cart_rio;
+            break;
+        case 1: // "Type B", DS Rumble Pak
+            cart_type = gba_rumble_cart_ds;
+            break;
+        case 2: // "Type C", EZ-Flash Omega DE/3-in-1
+            cart_type = gba_rumble_cart_ezflash;
+            break;
+        default:
+            return;
+    }
+    gba_rumble_init_cart(cart_type);
 
-        rumble_init(&conf);
+    if (savefile->settings.ezFlash3in1Strength >= EZFLASH_MIN_RUMBLE && savefile->settings.ezFlash3in1Strength <= EZFLASH_MAX_RUMBLE) {
+        gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
+    }
+
+    if (!usingVBlankForRumblePatternISR()) { // True if rumbleUpdateRate == 0
+        // Setup rumble PWM with one of the hardware timers (any of 0-3)
+        interrupt_set_handler(INTR_TIMER2, rumblePatternISR);
+
+        u16 timerReloadVal = 8 << 1; // 1024hz, further shifts will half the rate.
+
+        if (savefile->settings.rumbleUpdateRate >= 1 && savefile->settings.rumbleUpdateRate <= 4) { // Expecting vals 0-4, but 0-4 are the only valid ones.
+            u16 timerShiftFactor = 4 - savefile->settings.rumbleUpdateRate;
+            timerReloadVal <<= timerShiftFactor;
+        }
+
+        REG_TM2D   = -timerReloadVal; // Set negative val in timer reload reg
+        REG_TM2CNT = TM_FREQ_1024 | TM_IRQ | TM_ENABLE; // 1024-cycle prescaler -> 16.384 kHz, 61.04 μs per timer tick
+
+        interrupt_enable(INTR_TIMER2);
     } else {
-        rumble_init(nullptr);
+        // We'll be relying on VBlank
+        // interrupt_disable(INTR_TIMER2);
     }
 }
 
-bool unlock_gbp() {
+void initRumble() {
+    if (savefile->settings.gameBoyPlayerSupport) {
+        RegisterRamReset(RESET_VRAM);
+        REG_DISPCNT = DCNT_MODE0 | DCNT_BG0;
+        *((volatile u16*)0x4000008) = 0x0088;
+
+        if (detect_gbp()) {
+            GBARumbleGBPConfig conf{[](void (*rumble_isr)(void)) {
+                interrupt_enable(INTR_SERIAL);
+                interrupt_set_handler(INTR_SERIAL, rumble_isr);
+            }};
+
+            gba_rumble_init_gbp(conf);
+        } else {
+            initRumbleCart();
+        }
+        gbpChecked = true;
+    } else {
+        initRumbleCart();
+    }
+
+    RegisterRamReset(RESET_VRAM);
+
+    REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
+    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
+    REG_WAITCNT = 0x4317;
+}
+
+bool detect_gbp() {
     bool gbp_detected = false;
 
     memcpy16_fast((u16*)0x6008000, gbp_logo_pixels,
@@ -432,16 +574,23 @@ bool unlock_gbp() {
         VBlankIntrWait();
     }
 
-    RegisterRamReset(RESET_VRAM);
-
-    REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
-    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
-    REG_WAITCNT = 0x4317;
-
     return gbp_detected;
 }
 
 void sleep() {
+    int timer = 0;
+
+    const u32 autosleep_wait_frames = get_autosleep_mins(savefile->settings.sleep.autosleepDelay) * FRAMES_PER_MIN;
+    const bool is_autosleep = (autosleep_wait_frames && autosleepTimer > autosleep_wait_frames);
+
+    const bool use_combo_for_wake = !is_autosleep || (is_autosleep && sleep_combo && savefile->settings.sleep.autosleepWakeCombo == 0);
+
+    // Wait for keys to be released so the console doesn't
+    // insta-wake due to the interrupt combo already being active.
+    await_key_release(KEY_FULL, 2);
+
+    SoundBias(0);
+
     int display_value = REG_DISPCNT;
 
     bool prevGradient = gradientEnabled;
@@ -463,16 +612,35 @@ void sleep() {
         linkConnection->deactivate();
 
     interrupt_disable(INTR_TIMER3);
-    interrupt_disable(INTR_TIMER2);
     interrupt_disable(INTR_SERIAL);
 
-    REG_P1CNT = 0b1100001100000100;
+    interrupt_disable(INTR_TIMER2);
+    rumbleStop();
+
+    if (use_combo_for_wake) {
+        // Using the same keys used to put manually to sleep.
+        REG_P1CNT = sleep_combo | BIT(14) | BIT(15);
+    } else if (savefile->settings.sleep.autosleepWakeCombo == 2) {
+        // Any key except shoulder L and R (bits 8 and 9) should be able to wake the console.
+        REG_P1CNT = static_cast<cu16>(~(BIT(15) | BIT(8) | BIT(9) | BIT(10) | BIT(11) | BIT(12) | BIT(13)));
+    } else {
+        // Setting bit 15 to 0 allows any single key in the active mask to wake the console.
+        // 10-13 are unused bits in the register
+        REG_P1CNT = static_cast<cu16>(~(BIT(15) | BIT(10) | BIT(11) | BIT(12) | BIT(13)));
+    }
+
     interrupt_enable(INTR_KEYPAD);
     interrupt_set_handler(INTR_KEYPAD, nullptr);
 
+    // while (REG_SNDBIAS != 0) {}
+
     Stop();
 
+    interrupt_disable(INTR_KEYPAD);
+    REG_P1CNT = 0;
+
     REG_DISPCNT = display_value;
+    SoundBias(0x200);
     REG_SNDSTAT = stat_value;
     REG_SNDDSCNT = dsc_value;
     REG_SNDDMGCNT = dmg_value;
@@ -481,12 +649,18 @@ void sleep() {
         linkConnection->activate();
 
     interrupt_enable(INTR_TIMER3);
-    interrupt_enable(INTR_TIMER2);
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_VBLANK);
 
+    if (!usingVBlankForRumblePatternISR()) {
+        interrupt_enable(INTR_TIMER2);
+    }
+
     if (prevGradient)
         gradient(1);
+
+    // Wait for waking keys to be released so they don't trigger menu/game actions.
+    await_key_release(KEY_FULL, 3);
 }
 
 void sfx(int s) {
@@ -531,6 +705,10 @@ IWRAM_CODE void onVBlank() {
 
     mmVBlank();
     LINK_UNIVERSAL_ISR_VBLANK();
+
+    if (usingVBlankForRumblePatternISR()) {
+        rumblePatternISR();
+    }
 
     if (disableHBlank) {
         interrupt_disable(INTR_HBLANK);
@@ -760,7 +938,7 @@ IWRAM_CODE void onKeyInterrupt() {
     SoftReset();
 }
 
-void rumbleStart(int length) { rumbleTimer = length; }
+// void rumbleStart(int length) {}
 
-void rumbleStop() { rumbleTimer = 0; }
+// void rumbleStop() { rumbleStop(); }
 #endif

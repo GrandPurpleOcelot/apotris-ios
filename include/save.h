@@ -25,7 +25,7 @@ typedef struct Gradeboard {
     s8 grade[5];
 } ALIGN(4) Gradeboard;
 
-typedef struct Keys {
+typedef struct GameKeys {
     int moveLeft;
     int moveRight;
     int rotateCCW;
@@ -37,7 +37,7 @@ typedef struct Keys {
     int zone;
 
     int placeHolder[19];
-} ALIGN(4) Keys;
+} ALIGN(4) GameKeys;
 
 typedef struct MenuKeys {
     int up;
@@ -95,6 +95,12 @@ typedef struct SongDisabling {
     int gameBits[4];
 } ALIGN(4) SongDisabling;
 
+typedef struct GBASleepOptions {
+    u32 autosleepDelay;
+    u32 autosleepWakeCombo;
+    u32 sleepWakeCombo;
+} ALIGN(4) GBASleepOptions;
+
 typedef struct Settings {
     bool announcer;
     bool finesse;
@@ -123,13 +129,13 @@ typedef struct Settings {
     int dropProtectionFrames;
     bool abHold;
 
-    Keys keys;
+    GameKeys keys;
 
     int clearEffect;
     bool resetHoldType;
     bool placeEffect;
     bool resetHoldToggle;
-    int rumble;
+    int rumbleStrength;
     int diagonalType;
     bool delaySoftDrop;
     int backgroundGradient;
@@ -162,7 +168,10 @@ typedef struct Settings {
 #endif
     int peek;
     int moveSfx;
-    int pauseCountdown;
+    bool pauseCountdown;
+    bool interruptCountdown;
+    u8   rumbleUpdateRate;
+    u8   rumbleStyle;
     int clearText;
     int randomizer;
 
@@ -185,7 +194,13 @@ typedef struct Settings {
 #endif
     int shaders;
 
-    int placeHolder[29];
+    GBASleepOptions sleep;
+    bool gameBoyPlayerSupport;
+    u8 rumbleCartType;
+    u8 ezFlash3in1Strength;
+    u8 zoneRumbleMode;
+
+    int placeHolder[25];
 
 } ALIGN(4) Settings;
 
@@ -265,6 +280,7 @@ typedef struct ModeBoards {
     EntryBoard zone[4];
     u32 zen;
     EntryBoard death[2];
+    u32 zenLines;
 } ALIGN(4) ModeBoards;
 
 class Save {
@@ -277,7 +293,7 @@ public:
 
     ModeBoards boards;
 
-    int placeHolder[963];
+    int placeHolder[962];
 
     TotalStats stats;
 
