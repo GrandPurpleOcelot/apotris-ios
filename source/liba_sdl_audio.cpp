@@ -68,7 +68,22 @@ void loadAudio(std::string pathPrefix) {
             hasSuffix(entry->d_name, ".flac") ||
             hasSuffix(entry->d_name, ".wav") ||
             hasSuffix(entry->d_name, ".xm")) {
-            songPaths.push_back(entry->d_name);
+
+            bool found = false;
+            if (hasSuffix(entry->d_name, ".wav")) {
+                for (int i = 0; i < SFX_COUNT; i++) {
+                    std::string str = (std::string)SoundEffectPaths[i];
+
+                    if (hasSuffix(str, entry->d_name)) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!found) {
+                songPaths.push_back(entry->d_name);
+            }
         }
     }
 

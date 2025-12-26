@@ -462,7 +462,7 @@ void OptionListScene::init() {
     selection = 0;
 
     auto it = elementList.begin();
-    while (!elementList.empty() && (*it)->getCurrentOption() == "\n") {
+    while (!elementList.empty() && !(*it)->isSelectable()) {
         selection++;
         it++;
     }
@@ -774,7 +774,7 @@ bool OptionListScene::control() {
             }
 
             --it;
-        } while ((*it)->getCurrentOption() == "\n");
+        } while (!(*it)->isSelectable());
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
@@ -799,7 +799,7 @@ bool OptionListScene::control() {
 
             if (++it == elementList.end())
                 it = elementList.begin();
-        } while ((*it)->getCurrentOption() == "\n");
+        } while (!(*it)->isSelectable());
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
@@ -822,7 +822,7 @@ bool OptionListScene::control() {
                 auto it = elementList.begin();
                 std::advance(it, n);
 
-                if ((*it)->getCurrentOption() == "\n") {
+                if (!(*it)->isSelectable()) {
                     if (n + dir >= 0 && n + dir <= options - 1) {
                         n += dir;
                     } else {

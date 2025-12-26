@@ -763,13 +763,51 @@ void Game::place() {
         }
     }
 
+    // Zen Tower Hole Check
+    if (gameMode == ZEN && subMode == 1) {
+        const int holeY = checkIntegrity();
+
+        if (holeY != -1) {
+            const int linesToRemove = lengthY - holeY;
+            for (int y = lengthY - 1; y >= stackHeight; y--) {
+                if (y >= linesToRemove) {
+                    const int srcY = y - linesToRemove;
+
+                    memcpy32_fast(board[y], board[srcY], 10);
+
+                    if (disappearing) {
+                        memcpy32_fast(disappearTimers[y], disappearTimers[srcY],
+                                      10);
+                    }
+
+                    bitboard[y] = bitboard[srcY];
+                } else {
+                    memset32_fast(board[y], 0, 10);
+
+                    if (disappearing)
+                        memset32_fast(disappearTimers[y], 0, 10);
+
+                    bitboard[y] = 0;
+                }
+            }
+
+            for (int x = 0; x < lengthX; x++) {
+                columnHeights[x] = max(columnHeights[x] - linesToRemove, 0);
+            }
+
+            stackHeight += linesToRemove;
+        }
+    }
+
     toEndZone = false;
     if ((pawn.y + pawn.lowestBlock[pawn.rotation]) <= (lengthY / 2 - 1)) {
         if (zoneTimer)
             toEndZone = true;
         else if (gameMode == TRAINING)
             clearBoard();
-        else {
+        // Tower: wait for the scroll before game over
+        else if (!((gameMode == MARATHON && subMode == 2) ||
+                   (gameMode == ZEN && subMode == 1))) {
             lost = 1;
             return;
         }
@@ -894,6 +932,11 @@ void Game::place() {
 
     moveHistory.clear();
 
+    if (gameMode == MARATHON && subMode == 2 && goal > 0 &&
+        (towerScrollCount + (lengthY - stackHeight)) >= goal) {
+        setWin();
+    }
+
     if (zoneTimer == 1 || toEndZone)
         endZone();
 
@@ -977,7 +1020,19 @@ int Game::clear(const Drop& drop) {
         bool toClear = (bitboard[i] == fullLine);
 
         if (toClear) {
-            if (!zoneTimer) {
+            if ((gameMode == MARATHON && subMode == 2) ||
+                (gameMode == ZEN && subMode == 1)) {
+                // In tower mode, the line doesn't
+                // disappear but is still counted for level progression
+                linesCleared++;
+                score += 100 * level; // bonus
+
+                if (gameMode != ZEN && linesCleared % 10 == 0) {
+                    level++;
+                    sounds.levelUp = 1;
+                    setSpeed();
+                }
+            } else if (!zoneTimer) {
                 linesToClear.push_back(i);
                 lineClearArray[i] = true;
                 clearCount++;
@@ -985,6 +1040,32 @@ int Game::clear(const Drop& drop) {
                     garbageToRemove++;
             } else {
                 linesToMove.push_back(i);
+            }
+        }
+    }
+
+    // Tower
+    if ((gameMode == MARATHON && subMode == 2) ||
+        (gameMode == ZEN && subMode == 1)) {
+        if (gameMode == MARATHON && checkIntegrity() != -1) {
+            lost = 1;
+            sounds.invalid = 1;
+            return 0;
+        } else {
+            const int limit = (lengthY / 2) + 4;
+
+            if (stackHeight <= limit && !towerClearingPhase &&
+                bitboard[lengthY - 1] == fullLine) {
+                towerClearingPhase = true;
+                sounds.towerScroll = 1;
+            }
+
+            if (towerClearingPhase) {
+                if (bitboard[lengthY - 1] == fullLine) {
+                    scrollTower();
+                } else {
+                    towerClearingPhase = false;
+                }
             }
         }
     }
@@ -2109,8 +2190,9 @@ void Game::setSubMode(int sm) {
 }
 
 void Game::setSpeed() {
-    if ((gameMode == MARATHON || gameMode == TRAINING) &&
-        !(subMode && zoneTimer)) {
+    if ((gameMode == MARATHON || gameMode == TRAINING ||
+         (gameMode == ZEN && subMode == 1)) &&
+        !(subMode == 1 && zoneTimer)) {
         if (level)
             speed = gravity[(level < 19) ? level - 1 : 18];
         else
@@ -2554,6 +2636,11 @@ Game::Game(int gm, int sd, bool big) {
     gameMode = gm;
     initSeed = sd;
     setRandomSeed(sd);
+    towerScrollCount = 0;
+    towerClearingPhase = false;
+    towerMediumClearing = false;
+    towerMediumTimer = 0;
+    towerMediumDelay = 0;
 
     for (int i = 0; i < 40; i++) {
         bitboard[i] = 0;
@@ -2588,6 +2675,7 @@ Game::Game(int gm, int sd, bool big) {
 
     if (big) {
         lengthY /= 2;
+        stackHeight = lengthY;
         lengthX /= 2;
         boardOffset = lengthY / 2;
         fullLine >>= 5;
@@ -2682,11 +2770,11 @@ Game::Game(Game* oldGame) {
     score = oldGame->score;
     comboCounter = oldGame->comboCounter;
     linesCleared = oldGame->linesCleared;
-    clearLock = oldGame->clearLock;
-    gameMode = oldGame->gameMode;
-    previousClear = Score(oldGame->previousClear);
-    timer = oldGame->timer;
-    inGameTimer = oldGame->inGameTimer;
+    towerScrollCount = oldGame->towerScrollCount;
+    towerClearingPhase = oldGame->towerClearingPhase;
+    towerMediumClearing = oldGame->towerMediumClearing;
+    towerMediumTimer = oldGame->towerMediumTimer;
+    towerMediumDelay = oldGame->towerMediumDelay;
     refresh = oldGame->refresh;
     won = oldGame->won;
     lost = oldGame->lost;
@@ -2786,9 +2874,13 @@ void Game::setupPawnSpawn() {
                 if (!toEndZone)
                     endZone();
             } else if (gameMode == TRAINING || gameMode == NO_MODE ||
-                       gameMode == ZEN)
+                       gameMode == ZEN) {
                 clearBoard();
-            else {
+
+                if (gameMode == ZEN && subMode) {
+                    towerClearingPhase = false;
+                }
+            } else {
                 lost = 1;
             }
         }
@@ -2931,4 +3023,92 @@ int Game::setRandomSeed(int newSeed) {
         randomSeed = randNext2();
     }
     return old;
+}
+
+void Game::scrollTower() {
+    towerScrollCount++;
+
+    if (gameMode == MARATHON && subMode == 2 && goal > 0 &&
+        (towerScrollCount + (lengthY - stackHeight)) >= goal) {
+        setWin();
+    }
+
+    // 1. Shift the board down
+    for (int y = lengthY - 1; y > 0; y--) {
+        for (int x = 0; x < lengthX; x++) {
+            board[y][x] = board[y - 1][x];
+            disappearTimers[y][x] = disappearTimers[y - 1][x];
+        }
+        bitboard[y] = bitboard[y - 1];
+    }
+
+    // 2. Clear the top line
+    memset32_fast(board[0], 0, 10);
+    if (disappearing)
+        memset32_fast(disappearTimers[0], 0, 10);
+    bitboard[0] = 0;
+
+    // 3. Update stack and column heights
+    stackHeight++;
+    for (int x = 0; x < lengthX; x++) {
+        columnHeights[x] = max(columnHeights[x] - 1, 0);
+    }
+
+    if (stackHeight == lengthY) {
+        score += 3500 * level;
+        sounds.clear = 1;
+        previousClear = Score(0, 0, -1, 0, 1, 0, 0, Drop());
+    }
+
+    refresh = 1;
+}
+
+int Game::checkIntegrity() {
+    // Simple flood fill to check for air bubbles
+    u32 visited[40] = {0};
+    std::vector<u32> toCheck;
+
+    // Start from stackHeight - 1
+    for (int x = 0; x < lengthX; x++) {
+        if (board[stackHeight - 1][x] == 0) {
+            toCheck.push_back(x + ((stackHeight - 1) << 16));
+        }
+    }
+
+    const int dx[] = {0, 0, -1, 1};
+    const int dy[] = {-1, 1, 0, 0};
+
+    while (!toCheck.empty()) {
+        const u32 pair = toCheck.back();
+        toCheck.pop_back();
+        const int x = pair & 0xffff;
+        const int y = (pair >> 16) & 0xffff;
+
+        if (visited[y] & (1 << x))
+            continue;
+
+        visited[y] |= 1 << x;
+
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+
+            if (nx >= 0 && nx < lengthX && ny >= stackHeight && ny < lengthY) {
+                if (board[ny][nx] == 0 && (visited[ny] & (1 << nx)) == 0) {
+                    toCheck.push_back(nx + (ny << 16));
+                }
+            }
+        }
+    }
+
+    // If any empty block was not visited, it's an enclosed bubble -> Loss
+    for (int y = stackHeight; y < lengthY; y++) {
+        for (int x = 0; x < lengthX; x++) {
+            if (board[y][x] == 0 && (visited[y] & (1 << x)) == 0) {
+                return y;
+            }
+        }
+    }
+
+    return -1;
 }

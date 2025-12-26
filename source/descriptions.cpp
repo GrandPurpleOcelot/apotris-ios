@@ -198,6 +198,8 @@ std::string getDescription(std::string mode, std::string element,
             } else if (option == "Zone") {
                 return "Clearing lines charges the Zone meter. Activate Zone "
                        "to slow time and clear as many times as you can.";
+            } else if (option == "Tower") {
+                return "Build as high as possible leaving no empty space.";
             }
         } else if (element == "Level") {
             return "Starting Level.";

@@ -2,6 +2,7 @@
 #include "def.h"
 #include "logging.h"
 #include "menu.h"
+#include "sprite60tiles_bin.h"
 #include "sprites.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -46,6 +47,7 @@ void setJourneyGraphics(Save* save, int level);
 void replayControl();
 void checkPeek();
 void showSpawn();
+void showTowerScrollIndicator();
 static void screenShake();
 
 INLINE int prep(int n);
@@ -107,6 +109,8 @@ static int rainbowTimer = 1;
 static bool rainbowIncreasing = 0;
 
 static u16 rainbow[5];
+
+static int wiggleTimer = 0;
 
 static bool creditRefresh = false;
 static u16 fullMeterTimer = 0;
@@ -276,8 +280,14 @@ void GameScene::checkSounds() {
         if (game->zoneTimer) {
 
         } else if (game->previousClear.isPerfectClear == 1) {
-            soundEffect = SFX_PERFECTCLEAR;
-            clearTypeText = "perfect clear";
+            if ((game->gameMode == MARATHON && game->subMode == 2) ||
+                (game->gameMode == ZEN && game->subMode == 1)) {
+                soundEffect = SFX_PERFECTSCROLL;
+                clearTypeText = "perfect scroll";
+            } else {
+                soundEffect = SFX_PERFECTCLEAR;
+                clearTypeText = "perfect clear";
+            }
             effectList.push_back(Effect(0));
         } else if (game->previousClear.isTSpin == 2) {
             if (game->previousClear.isBackToBack == 1)
@@ -378,6 +388,16 @@ void GameScene::checkSounds() {
 
         if (game->gameMode == MASTER || game->gameMode == DEATH) {
             maxClearTimer = game->maxClearDelay;
+        }
+
+        if (((game->gameMode == MARATHON && game->subMode == 2) || // Tower Explore
+             (game->gameMode == ZEN && game->subMode == 1)) &&
+            (demo || savefile->settings.journey)) {
+            flashTimer = flashTimerMax;
+            setJourneyGraphics(savefile, game->linesCleared / 10);
+            setPalette();
+            zoneFlash();
+            refreshSkin = true;
         }
     }
 
@@ -488,6 +508,12 @@ void GameScene::checkSounds() {
         }
 
         refreshSkin = true;
+    }
+
+    if (game->sounds.towerScroll) {
+        sfx(SFX_TOWERSCROLL);
+        if (savefile->settings.clearText == 2)
+            floatingList.push_back(FloatText("Tower Scroll"));
     }
 
     game->resetSounds();
@@ -1188,6 +1214,7 @@ bool GameScene::control() {
     if (shouldPause && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
         paused = true;
+        showTowerScrollIndicator();
         pauseSong();
         clearText();
         updateText();
@@ -1273,7 +1300,7 @@ bool GameScene::control() {
         restartTimer = 0;
     }
 
-    if (key_hit(k.zone) && game->gameMode == MARATHON && game->subMode &&
+    if (key_hit(k.zone) && game->gameMode == MARATHON && game->subMode == 1 &&
         !game->zoneTimer) {
         game->activateZone(1);
     }
@@ -1347,31 +1374,42 @@ void GameScene::showText() {
     int gm = game->gameMode;
 
     if (gm == MARATHON || gm == ULTRA || gm == BLITZ || gm == CLASSIC ||
-        gm == ZEN) {
+        gm == ZEN || (gm == MARATHON && game->subMode == 2)) {
 
-        wordSprites[0].setText("Score");
-        wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
+        if (gm == ZEN && game->subMode == 1) {
+            wordSprites[0].setText("Height");
+            wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
 
-        int score = game->score;
-        std::string unit = "";
+            int height =
+                game->towerScrollCount + (game->lengthY - game->stackHeight);
 
-        if (savefile->settings.aspectRatio == 1) {
-            int unitCount = 0;
+            wordSprites[1].setText(std::to_string(height));
+            wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8, 15);
+        } else {
+            wordSprites[0].setText("Score");
+            wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
 
-            while (score >= 1000000 && unitCount < 3) {
-                score /= 1000;
-                unit = units[unitCount++];
+            int score = game->score;
+            std::string unit = "";
+
+            if (savefile->settings.aspectRatio == 1) {
+                int unitCount = 0;
+
+                while (score >= 1000000 && unitCount < 3) {
+                    score /= 1000;
+                    unit = units[unitCount++];
+                }
             }
-        }
 
-        wordSprites[1].setText(std::to_string(score) + unit);
-        wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8, 15);
+            wordSprites[1].setText(std::to_string(score) + unit);
+            wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8, 15);
 
-        if (gm != ULTRA && gm != ZEN) {
-            wordSprites[2].setText("Level");
-            wordSprites[2].show(9 * 8 - wordSprites[2].width, 14 * 8, 15);
-            wordSprites[3].setTextNum(game->level);
-            wordSprites[3].show(9 * 8 - wordSprites[3].width, 15 * 8, 15);
+            if (gm != ULTRA && gm != ZEN) {
+                wordSprites[2].setText("Level");
+                wordSprites[2].show(9 * 8 - wordSprites[2].width, 14 * 8, 15);
+                wordSprites[3].setTextNum(game->level);
+                wordSprites[3].show(9 * 8 - wordSprites[3].width, 15 * 8, 15);
+            }
         }
 
     } else if (gm == TRAINING) {
@@ -1428,15 +1466,27 @@ void GameScene::showText() {
     }
 
     if (gm != BATTLE && gm != BLITZ && !(gm == SPRINT && game->subMode == 1) &&
-        !(gm == MASTER || gm == DEATH)) {
-        wordSprites[6].setText("Lines");
+        !(gm == MASTER || gm == DEATH) && !(gm == ZEN && game->subMode == 1)) {
+
+        // Show "Height" for TOWER mode
+        if ((gm == MARATHON && game->subMode == 2) ||
+            (gm == ZEN && game->subMode == 1)) {
+            wordSprites[6].setText("Height");
+        } else {
+            wordSprites[6].setText("Lines");
+        }
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
 
         int n = 0;
-        if (gm == DIG)
+        if (gm == DIG) {
             n = game->garbageCleared;
-        else
+        } else if ((gm == MARATHON && game->subMode == 2) ||
+                   (gm == ZEN && game->subMode == 1)) {
+            // Calculate Height = (Scrolls) + (Current Stack Height)
+            n = game->towerScrollCount + (game->lengthY - game->stackHeight);
+        } else {
             n = game->linesCleared;
+        }
 
         wordSprites[7].setTextNum(n);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
@@ -1527,7 +1577,7 @@ void GameScene::showComboStreak() {
 
             // aprintf(game->comboCounter, 28, clearTextHeight - 1);
             wordSprites[9].setText("x" + std::to_string(game->comboCounter));
-            wordSprites[9].show(21 * 8 + 4, (clearTextHeight) * 8, 15);
+            wordSprites[9].show(21 * 8 + 4, (clearTextHeight)*8, 15);
         } else {
             // aprintClearArea(20, clearTextHeight - 1, 10, 1);
             wordSprites[8].hide();
@@ -1571,7 +1621,7 @@ void showClearText() {
             else
                 height = (30 * (float)(index->timer) / maxClearTextTimer) - 15;
 
-            if (text.size() <= 10) {
+            if (text.size() <= 13) {
                 aprint(text, 15 - text.size() / 2, 15 - height);
 
             } else {
@@ -1890,6 +1940,8 @@ void drawFrame(int layer) {
     progressBar(layer);
 
     drawGrid();
+
+    showTowerScrollIndicator();
 }
 
 const u8 queueBGLengths[5] = {32, 42, 60, 78, 96};
@@ -2157,7 +2209,8 @@ void drawGrid() {
 }
 
 void progressBar(int layer) {
-    if (game == nullptr || game->goal == 0 || game->zoneTimer)
+    if (game == nullptr || game->goal == 0 || game->zoneTimer ||
+        (game->gameMode == ZEN && game->subMode == 1))
         return;
 
     int l = 25 + layer;
@@ -2165,7 +2218,9 @@ void progressBar(int layer) {
     int current = 0;
     int max = game->goal;
 
-    if (game->gameMode == DIG)
+    if (game->gameMode == MARATHON && game->subMode == 2)
+        current = game->towerScrollCount + (game->lengthY - game->stackHeight);
+    else if (game->gameMode == DIG)
         current = game->garbageCleared;
     else if (game->gameMode == ULTRA || game->gameMode == BLITZ)
         current = game->timer;
@@ -2683,7 +2738,7 @@ INLINE int getBoard(int x, int y) {
 }
 
 void showZoneMeter() {
-    if (!(game->gameMode == MARATHON && game->subMode))
+    if (!(game->gameMode == MARATHON && game->subMode == 1))
         return;
 
     OBJ_ATTR* sprite = &obj_buffer[23];
@@ -2720,6 +2775,34 @@ void showZoneMeter() {
         else
             setPaletteColor(12 + 16, 4 + i, anticolor, 1);
     }
+}
+
+void showTowerScrollIndicator() {
+    OBJ_ATTR* sprite = &obj_buffer[30];
+
+    if (!game->towerClearingPhase || paused || ended) {
+        sprite_hide(sprite);
+        wiggleTimer = 0;
+        return;
+    }
+
+    loadSpriteTiles(1008, sprite61tiles_bin, 2, 2);
+
+    sprite_set_attr(sprite, ShapeSquare, 1, 1008, 15, 0);
+
+    int wiggleOffset = 0;
+    if (wiggleTimer < 120) {
+        int phase = (wiggleTimer / 8) % 4;
+        if (phase == 1)
+            wiggleOffset = 1;
+        else if (phase == 3)
+            wiggleOffset = -1;
+        wiggleTimer++;
+    }
+
+    sprite_set_pos(sprite, 19, 77 + wiggleOffset);
+
+    sprite_unhide(sprite, 0);
 }
 
 void zoneFlash() {
@@ -3486,6 +3569,7 @@ void GameScene::update() {
 
     if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)) {
         paused = true;
+        showTowerScrollIndicator();
 
         endScreen();
 
@@ -3613,6 +3697,9 @@ void showGoalLine() {
         goal = game->garbageCleared;
     } else if (gm == SPRINT && game->subMode) {
         goal = game->linesSent;
+    } else if ((gm == MARATHON && game->subMode == 2) ||
+               (gm == ZEN && game->subMode == 1)) {
+        goal = game->towerScrollCount;
     } else if (gm != SURVIVAL) {
         goal = game->linesCleared;
     } else {

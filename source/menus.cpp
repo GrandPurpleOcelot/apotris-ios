@@ -458,6 +458,9 @@ void showScore() {
         if (game->gameMode == DIG) {
             if (game->subMode == 1)
                 score = std::to_string(game->pieceCounter);
+        } else if (game->gameMode == ZEN && game->subMode == 1) {
+            score = std::to_string(game->towerScrollCount +
+                                   (game->lengthY - game->stackHeight));
         } else if (game->gameMode != COMBO)
             score = std::to_string(game->score);
         else
@@ -537,6 +540,13 @@ void GameScene::showStats(bool moreStats, std::string time, std::string pps,
         aprints("Score: " + std::to_string(game->score), 0, 7 * counter++, 2);
     } else if (g == MASTER || g == DEATH) {
         aprints("Level: " + std::to_string(game->level), 0, 7 * counter++, 2);
+    }
+
+    if ((g == MARATHON && game->subMode == 2) ||
+        (g == ZEN && game->subMode == 1)) {
+        int height =
+            game->towerScrollCount + (game->lengthY - game->stackHeight);
+        aprints("Height: " + std::to_string(height), 0, 7 * counter++, 2);
     }
 
     aprints("Lines: " + std::to_string(game->linesCleared), 0, 7 * counter++,
@@ -985,8 +995,10 @@ int onRecord() {
         if (subMode == 0) {
             place =
                 saveRecord(savefile->boards.marathon[mode], game->score, -1);
-        } else {
+        } else if (subMode == 1) {
             place = saveRecord(savefile->boards.zone[mode], game->score, -1);
+        } else if (subMode == 2) {
+            place = saveRecord(savefile->boards.tower[mode], game->score, -1);
         }
     } else if (game->gameMode == SPRINT && game->won == 1) {
         if (subMode == 0) {
@@ -1105,7 +1117,12 @@ void GameScene::showModeText() {
             if (game->trainingMode)
                 str = "Finesse";
         } else {
-            if (game->gameMode == BATTLE && mode >= 0)
+            if (game->gameMode == ZEN) {
+                if (game->subMode == 1)
+                    str = "Tower";
+                else
+                    str = "Normal";
+            } else if (game->gameMode == BATTLE && mode >= 0)
                 str = modeOptionStrings[game->gameMode - 1][mode - 1];
             else if (game->gameMode != CLASSIC && game->gameMode != MASTER)
                 str = modeOptionStrings[game->gameMode - 1][mode];
@@ -1126,7 +1143,10 @@ void GameScene::showModeText() {
         if (game->subMode) {
             switch (game->gameMode) {
             case MARATHON:
-                str = "Zone";
+                if (game->subMode == 2)
+                    str = "Tower";
+                else
+                    str = "Zone";
                 break;
             case SPRINT:
                 str = "Attack";
@@ -1490,7 +1510,15 @@ void addGameStats() {
         savefile->stats.maxLevel = game->level;
 
     if (game->gameMode == ZEN) {
-        savefile->boards.zen = game->score;
+        if (game->subMode == 1) {
+            int height =
+                game->towerScrollCount + (game->lengthY - game->stackHeight);
+
+            if (height > (int)savefile->boards.zenTower)
+                savefile->boards.zenTower = height;
+        } else {
+            savefile->boards.zen = game->score;
+        }
 
         saveSavefile();
     }
