@@ -30,7 +30,10 @@ bool AdvancedRumbleMenuElement::action() {
     sfx(SFX_MENUCONFIRM);
     if (path.size())
         path.pop_back();
+
+#ifdef GBA
     changeScene(new AdvancedRumbleOptionScene(), Transitions::FADE);
+#endif
 
     return true;
 }

@@ -1,7 +1,10 @@
 #pragma once
 
+#ifdef GBA
 #include "gba-rumble-cart.h"
 #include "rumblePatterns.hpp"
+#endif
+
 #include "scene.hpp"
 
 class ABHoldElement : public Element {
@@ -394,7 +397,10 @@ public:
     }
 
     bool action() override {
+#ifdef GBA
         initRumbleCart();
+#endif
+
         switch (rumbleTestPattern) {
         case 0:
             rumbleStart(RUMBLE_PLACE);

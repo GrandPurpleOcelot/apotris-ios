@@ -2,6 +2,8 @@
 
 #include "scene.hpp"
 
+#ifdef GBA
+
 class AutoSleepElement : public Element {
 public:
     std::string getLabel() override { return "Autosleep Time"; }
@@ -155,3 +157,5 @@ public:
 
     Scene* previousScene() { return new SettingsScene(); };
 };
+
+#endif
