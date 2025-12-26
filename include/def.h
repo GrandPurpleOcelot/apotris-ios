@@ -105,6 +105,11 @@ public:
 
 #define ENABLE_FLASH_SAVE 1
 
+#ifndef EZFLASH_MIN_RUMBLE
+#define EZFLASH_MIN_RUMBLE 1
+#endif
+#define EZFLASH_RUMBLE_IGNORE (EZFLASH_MIN_RUMBLE - 1)
+
 // Assuming locked at 60fps.
 #define FRAMES_PER_MIN 3600
 

@@ -1,5 +1,7 @@
-#include "rumblePatterns.hpp"
 #include "def.h"
+
+#ifdef GBA
+#include "rumblePatterns.hpp"
 #include "gba-rumble.h"
 #include "save.h"
 #include "tonc_types.h"
@@ -565,3 +567,14 @@ void rumblePatternISR()
     s_state.partTick++;
     s_state.lastRumble = rumble;
 }
+
+#else
+void rumbleStart(const RumbleSequence sequence, u8 strength_mod) {
+    rumbleStart(1);
+}
+
+void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mode) {
+    rumbleStart(1);
+}
+
+#endif

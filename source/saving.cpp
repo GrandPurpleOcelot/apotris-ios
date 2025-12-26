@@ -61,7 +61,7 @@ void loadSave() {
     if (savefile->newGame >= 0x50 && savefile->newGame <= 0x51) {
 #if defined(PC) || defined(WEB)
 
-        Keys keys = savefile->settings.keys;
+        GameKeys keys = savefile->settings.keys;
 
         savefile->settings.keys = {
             .moveLeft = (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) |

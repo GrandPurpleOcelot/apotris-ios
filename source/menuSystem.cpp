@@ -171,7 +171,9 @@ void sceneSwitcher(std::string str) {
     } else if (str == "Video") {
         changeScene(new WindowOptionScene(), Transitions::FADE);
     } else if (str == "Sleep") {
+#ifdef GBA
         changeScene(new SleepOptionScene(), Transitions::FADE);
+#endif
     } else if (str == "Rumble") {
         changeScene(new RumbleOptionScene(), Transitions::FADE);
     } else if (str == "Marathon") {
