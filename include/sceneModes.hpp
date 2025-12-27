@@ -389,7 +389,7 @@ public:
         return {
             new TupleSelectorElement(
                 "Minutes",
-                {{3 * 3600, "3"}, {5 * 3600, "5"}, {10 * 3600, "10"}}),
+                {{3 * FRAMES_PER_MIN, "3"}, {5 * FRAMES_PER_MIN, "5"}, {10 * FRAMES_PER_MIN, "10"}}),
         };
     };
 
@@ -413,7 +413,7 @@ public:
     std::string name() { return "Blitz"; };
 
     BlitzScene() {
-        goal = 2 * 3600;
+        goal = 2 * FRAMES_PER_MIN;
         level = 1;
     }
 };
@@ -532,18 +532,32 @@ public:
     std::string getCursor(std::string text) override { return text; }
 };
 
+class ZenLinesElement : public Element {
+    std::string getLabel() override { return "Lines Cleared"; }
+
+    std::string getCurrentOption() override {
+        return std::to_string(savefile->boards.zenLines);
+    }
+
+    bool isSelectable() override { return false; }
+
+    std::string getCursor(std::string text) override { return text; }
+};
+
 class ZenScene : public PlayOptionScene {
 public:
     BlockEngine::Modes getMode() { return BlockEngine::ZEN; };
 
     std::list<Element*> getElementList() {
-        StringSelectorElement* sel =
-            new StringSelectorElement("Type", {"Normal", "Tower"});
+        StringSelectorElement* sel = new StringSelectorElement("Type", {"Normal", "Tower"});
         return {
             sel,
             new ZenScoreElement(sel),
+            new ZenLinesElement(),
         };
     };
+
+    void update();
 
     std::string name() { return "Zen"; };
 };

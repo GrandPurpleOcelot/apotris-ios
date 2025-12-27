@@ -5,6 +5,7 @@
 #include "blockEngine.hpp"
 #include "menu.h"
 #include "platform.hpp"
+#include "rumblePatterns.hpp"
 #include "save.h"
 #include "text.h"
 #include <memory>
@@ -100,9 +101,17 @@ public:
 #define GRADIENT_COLOR 0x71a6
 
 #define SHOW_FINESSE 1
-#define SAVE_TAG 0x52
+#define SAVE_TAG 0x53
 
 #define ENABLE_FLASH_SAVE 1
+
+#ifndef EZFLASH_MIN_RUMBLE
+#define EZFLASH_MIN_RUMBLE 1
+#endif
+#define EZFLASH_RUMBLE_IGNORE (EZFLASH_MIN_RUMBLE - 1)
+
+// Assuming locked at 60fps.
+#define FRAMES_PER_MIN 3600
 
 extern void sfx(int);
 extern void gameLoop();
@@ -192,7 +201,7 @@ extern std::string getStringFromKey(int key);
 
 extern void checkPeek();
 extern MenuKeys getDefaultMenuKeys();
-extern Keys getDefaultGameKeys();
+extern GameKeys getDefaultGameKeys();
 extern void setDefaultHandling(Save* save);
 extern void setDefaultGameplay(Save* save);
 
@@ -271,7 +280,10 @@ extern bool goToOptions;
 
 extern int rumbleMax;
 
-extern bool rumbleInitialized;
+#ifdef GBA
+extern bool gbpChecked;
+#endif
+
 extern bool bigMode;
 
 extern TILE* customSkin;

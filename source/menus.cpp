@@ -1,6 +1,7 @@
 #include "def.h"
 #include "platform.hpp"
 #include "rumble.h"
+#include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "tetromino.hpp"
 // #include "soundbank.h"
@@ -27,8 +28,6 @@ std::string nameInput(int);
 void qrScene();
 
 void saveReplay();
-
-void sleepMenu();
 
 int mode = 0;
 bool showingStats = false;
@@ -97,23 +96,37 @@ void GameScene::endScreen() {
 
     if (savefile->settings.announcer) {
         if (game->gameMode == ULTRA || game->gameMode == BLITZ) {
-            if (game->won == 1)
+            if (game->won == 1) {
                 sfx(SFX_TIME);
-            else if (game->lost == 1)
+                rumbleStart(RUMBLE_TSPIN);
+            } else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
+                rumbleStart(RUMBLE_YOULOSE);
+            }
         } else if (game->gameMode != BATTLE) {
             if (game->gameMode == MASTER && game->won == 1 &&
                 game->level / 100 == 5)
+            {
                 sfx(SFX_TIME);
-            else if (game->won == 1)
+                rumbleStart(RUMBLE_TSPIN);
+            }
+            else if (game->won == 1) {
                 sfx(SFX_CLEAR);
-            else if (game->lost == 1)
+                rumbleStart(RUMBLE_YOUWIN);
+            }
+            else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
+                rumbleStart(RUMBLE_YOULOSE);
+            }
         } else {
             if (game->won == 1)
+            {
                 sfx(SFX_YOUWIN);
-            else if (game->lost == 1)
+                rumbleStart(RUMBLE_YOUWIN);
+            } else if (game->lost == 1) {
                 sfx(SFX_YOULOSE);
+                rumbleStart(RUMBLE_YOULOSE);
+            }
         }
     }
 
@@ -625,7 +638,7 @@ int GameScene::pauseMenu() {
     timesPaused++;
 
     clearText();
-    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 12, 20);
 
     for (int i = 0; i < MAX_WORD_SPRITES; i++)
         wordSprites[i].hide();
@@ -676,14 +689,9 @@ int GameScene::pauseMenu() {
 
     bool shown = false;
 
-    bool showSleep = false;
     bool skipped = false;
 
     bool count = true;
-
-#ifdef GBA
-    showSleep = true;
-#endif
 
     int cursorFloat = 0;
     OBJ_ATTR* cursorSprites[2];
@@ -700,10 +708,8 @@ int GameScene::pauseMenu() {
 
     while (closed()) {
         if (!onStates) {
-            maxSelection = 5;
+            maxSelection = 4;
             if (game->gameMode != TRAINING)
-                maxSelection--;
-            if (!showSleep)
                 maxSelection--;
 
             if (maxSelection == 3) {
@@ -714,6 +720,13 @@ int GameScene::pauseMenu() {
 
         vsync();
         key_poll();
+        #ifdef GBA
+            if (sleep_combo_check(key_curr_state())) {
+                // Re-poll keys to avoid triggering stats/track skip.
+                // I'm not a fan of this but it works with the current scene infrastructure.
+                key_poll();
+            }
+        #endif
 
         wordSprites[0].setText("PAUSE!");
         wordSprites[0].show(15 * 8 - wordSprites[0].width / 2, 4 * 8, 15);
@@ -730,6 +743,16 @@ int GameScene::pauseMenu() {
             optionsCounter++;
         };
 
+#ifdef GBA
+        if (!multiplayer) {
+            std::string keyString = (sleep_combo == 0) ? "Unbound" : getStringFromKey(sleep_combo);
+
+            std::replace(keyString.begin(), keyString.end(), ' ', '+');
+
+            aprints("Sleep/Wake: " + keyString, 0, 140, 2);
+        }
+#endif
+
         if (!onStates) {
 
             showOption("Resume");
@@ -738,16 +761,11 @@ int GameScene::pauseMenu() {
             if (game->gameMode == TRAINING)
                 showOption("Saves");
 
-            if (showSleep)
-                showOption("Sleep");
-
             showOption("Quit");
 
             if (key_hit(k.confirm)) {
                 int n = selection;
                 if (!(game->gameMode == TRAINING) && selection >= 2)
-                    n++;
-                if (!showSleep && n >= 3)
                     n++;
 
                 if (n == 0) {
@@ -768,14 +786,6 @@ int GameScene::pauseMenu() {
                     selection = 0;
                     clearText();
                 } else if (n == 3) {
-                    sleepMenu();
-                    showStats(showingStats, totalTime, ppsStr, false);
-                    showModeText();
-                    showQueue(1);
-                    showHold();
-                    hideMinos();
-                    continue;
-                } else if (n == 4) {
                     enableBlend(prevBld);
                     sfx(SFX_MENUCANCEL);
                     buildBG(3, 0, 27, 0, 1, true);
@@ -950,10 +960,11 @@ int GameScene::pauseMenu() {
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 
-    if (count && savefile->settings.pauseCountdown)
+    if (count && savefile->settings.pauseCountdown && !preventLayeredCountdowns)
         countdown();
 
-    resumeSong();
+    if (!preventLayeredCountdowns)
+        resumeSong();
 
     return 0;
 }
@@ -1453,52 +1464,6 @@ void qrScene() {
     // delete [] tempBuffer;
 }
 
-void sleepMenu() {
-    toggleBG(1, false);
-    toggleBG(2, false);
-    toggleBG(3, false);
-
-    clearText();
-
-    clearSprites(128);
-    showSprites(128);
-
-    MenuKeys k = savefile->settings.menuKeys;
-
-    while (closed()) {
-        aprint("Entering sleep...", 7, 4);
-        aprint("Press", 13, 8);
-        aprint("L + R + SELECT", 9, 10);
-        aprint("to leave sleep", 8, 12);
-
-        aprint("A: Sleep      B: Cancel", 4, 17);
-
-        vsync();
-
-        key_poll();
-
-        if (key_hit(k.confirm)) {
-            clearText();
-            break;
-        }
-
-        if (key_hit(k.cancel)) {
-            toggleBG(2, true);
-            toggleBG(1, true);
-            toggleBG(3, true);
-            clearText();
-            sfx(SFX_MENUCANCEL);
-            return;
-        }
-    }
-
-    sleep();
-
-    toggleBG(1, true);
-    toggleBG(2, true);
-    toggleBG(3, true);
-}
-
 void addGameStats() {
     savefile->stats.timePlayed += frameCounter;
     frameCounter = 1;
@@ -1518,6 +1483,7 @@ void addGameStats() {
                 savefile->boards.zenTower = height;
         } else {
             savefile->boards.zen = game->score;
+            savefile->boards.zenLines = savefile->boards.zenLines + game->linesCleared;
         }
 
         saveSavefile();

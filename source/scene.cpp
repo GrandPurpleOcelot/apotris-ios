@@ -529,7 +529,7 @@ void OptionListScene::init() {
         }
 
         if (found) {
-            int n = path.size() - count;
+            unsigned int n = path.size() - (count + 1);
             for (int i = 0; i < n; i++)
                 path.pop_back();
         } else {
