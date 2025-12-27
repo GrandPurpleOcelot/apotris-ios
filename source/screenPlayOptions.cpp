@@ -95,15 +95,32 @@ bool PlayOptionScene::control() {
 
         bool sound = true;
 
-        if (onScore && !elementList.empty()) {
+        if ((onScore || onStart) && !elementList.empty()) {
             onScore = false;
             onStart = false;
             refreshText = true;
-        } else if (onStart && !elementList.empty()) {
-            onStart = false;
-        } else {
-            if (selection > 0)
+
+            selection = options;
+            auto it = elementList.end();
+            do {
                 selection--;
+                it--;
+            } while (it != elementList.begin() && !(*it)->isSelectable());
+
+        } else {
+            if (selection > 0) {
+                auto it = elementList.begin();
+                std::advance(it, selection);
+
+                do {
+                    if (selection > 0) {
+                        selection--;
+                        it--;
+                    } else {
+                        break;
+                    }
+                } while (!(*it)->isSelectable());
+            }
 
             if (elementList.empty())
                 sound = false;
@@ -127,13 +144,25 @@ bool PlayOptionScene::control() {
         if (!onScore) {
             movingDirection = 1;
 
-            if (selection == options - 1) {
+            auto it = elementList.begin();
+            std::advance(it, selection);
+
+            bool found = false;
+            while (selection < options - 1) {
+                selection++;
+                it++;
+                if ((*it)->isSelectable()) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
                 if (getBoard(subMode, goal) != nullptr)
                     movingScore = true;
                 else
                     onStart = true;
-            } else
-                selection++;
+            }
 
             if (selection == 0)
                 listStart = 0;
@@ -360,7 +389,7 @@ void PlayOptionScene::draw() {
             const int index = (i + listStart) % (elementMax + 2);
 
             if (refreshOption || refreshText) {
-                if (counter == selection)
+                if (counter == selection && option->isSelectable())
                     wordSprites[index]->setText(
                         option->getCursor(opt)); // draw option with text cursor
                 else
@@ -374,18 +403,19 @@ void PlayOptionScene::draw() {
             const int x = (endX) * 8 - getVariableWidth(opt);
             const int y = startY + 8 * (space + 1) * i + verticalOffset;
 
+            const int selected = (counter != selection || !option->isSelectable()) +
+                      (i == elementMax + 1 || (listStart && i == 0));
+
             wordSprites[index]->setPriority(0);
             wordSprites[index]->show(
                 x, y,
-                15 - (counter != selection) -
-                    (i == elementMax + 1 || (listStart && i == 0)));
+                15 - selected);
 
             labels[index]->show(
                 startX, y,
-                15 - ((counter != selection) +
-                      (i == elementMax + 1 || (listStart && i == 0))));
+                15 - selected);
 
-            if (counter == selection) { // draw sprite cursor
+            if (counter == selection && !onStart) { // draw sprite cursor
                 currentOption = opt;
                 currentElement = option->getLabel();
                 for (int i = 0; i < 2; i++) {
@@ -618,6 +648,27 @@ void ClassicScene::update() {
         if (elementList.back()->getLabel() != "Height") {
             elementList.push_back(
                 new IntSelectorElement("Height", {0, 1, 2, 3, 4, 5}));
+            refreshText = true;
+            options++;
+        }
+    }
+
+    PlayOptionScene::update();
+}
+
+void ZenScene::update() {
+    if (subMode) {
+        if (elementList.back()->getLabel() == "Lines Cleared") {
+
+            Element* e = elementList.back();
+            elementList.pop_back();
+
+            delete e;
+            options--;
+        }
+    } else {
+        if (elementList.back()->getLabel() != "Lines Cleared") {
+            elementList.push_back(new ZenLinesElement());
             refreshText = true;
             options++;
         }
@@ -944,8 +995,12 @@ void PlayOptionScene::resetScoreboard() {
 
             memset32_fast(board, 0, sizeof(EntryBoard) / 4);
         } else {
-            savefile->boards.zen = 0;
-            savefile->boards.zenLines = 0;
+            if (subMode == 0) {
+                savefile->boards.zen = 0;
+                savefile->boards.zenLines = 0;
+            } else {
+                savefile->boards.zenTower = 0;
+            }
         }
 
         saveSavefile();

@@ -558,6 +558,10 @@ void setDefaults(Save* save, int depth) {
 
         save->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_IGNORE; // By default, 3-in-1 support should be disabled.
         // -- End of GBA-specifics
+
+        memset32_fast(savefile->boards.tower, 0, sizeof(EntryBoard) * 4 / 4);
+        savefile->boards.zenLines = 0;
+        savefile->boards.zenTower = 0;
     }
 
 }

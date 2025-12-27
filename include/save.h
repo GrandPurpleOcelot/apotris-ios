@@ -280,6 +280,8 @@ typedef struct ModeBoards {
     EntryBoard zone[4];
     u32 zen;
     EntryBoard death[2];
+    EntryBoard tower[4];
+    u32 zenTower;
     u32 zenLines;
 } ALIGN(4) ModeBoards;
 
@@ -293,7 +295,7 @@ public:
 
     ModeBoards boards;
 
-    int placeHolder[962];
+    int placeHolder[881];
 
     TotalStats stats;
 

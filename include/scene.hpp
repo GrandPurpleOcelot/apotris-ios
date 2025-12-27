@@ -231,6 +231,7 @@ public:
     virtual bool action() { return false; };
     virtual int getValue() { return 0; };
     virtual std::string getCurrentOption() { return ""; };
+    virtual bool isSelectable() { return true; };
 
     Element() {}
 
@@ -534,6 +535,8 @@ public:
     std::string getLabel() override { return label; }
 
     std::string getCurrentOption() override { return "\n"; }
+
+    bool isSelectable() override { return false; }
 
     LabelElement(std::string l) { label = l; }
 };

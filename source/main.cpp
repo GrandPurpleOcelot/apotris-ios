@@ -1,3 +1,4 @@
+#include "sceneModes.hpp"
 #include <string>
 
 #include "blockEngine.hpp"
@@ -1082,7 +1083,12 @@ void startGame(BlockEngine::Options options, int seed) {
     }
 
     if (options.mode == BlockEngine::ZEN) {
-        game->score = savefile->boards.zen;
+        if (game->subMode == 1) {
+            game->score = savefile->boards.zenTower;
+            game->towerScrollCount = savefile->boards.zenTower;
+        }else {
+            game->score = savefile->boards.zen;
+        }
     }
 
     status.startGame();

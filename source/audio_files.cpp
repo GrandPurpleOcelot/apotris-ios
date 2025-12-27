@@ -43,10 +43,12 @@ const char* SoundEffectPaths[] = {
     "assets/youWin.wav",
     "assets/zoneStart.wav",
     "assets/quad.wav",
+    "assets/towerScroll.wav",
+    "assets/perfectScroll.wav",
 };
 
 int SoundEffectIds[] = {
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
