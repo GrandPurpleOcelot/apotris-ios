@@ -102,6 +102,9 @@ void windowInit() {
 
     SDL_Init(SDL_INIT_VIDEO);
 
+    // Disables the default accelerometer "joystick" on android
+    SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+
     window = SDL_CreateWindow("Apotris Android", SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight,
                               SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL |
@@ -198,6 +201,9 @@ void handleInput() {
             unpressKey(key, InputType::CONTROLLER);
             break;
         case SDL_FINGERDOWN:
+            if (controllerCount > 0)
+                break;
+
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
 
@@ -227,6 +233,9 @@ void handleInput() {
 
             break;
         case SDL_FINGERMOTION:
+            if (controllerCount > 0)
+                break;
+
             dx = event.tfinger.dx * screenWidth;
             dy = event.tfinger.dy * screenHeight;
 
@@ -270,6 +279,9 @@ void handleInput() {
 
             break;
         case SDL_FINGERUP:
+            if (controllerCount > 0)
+                break;
+
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
 
@@ -437,23 +449,25 @@ void updateWindow(uint8_t* framebuffer) {
             SDL_RenderFillRect(renderer, &rect);
         }
 
-        for (auto const& button : layout.buttons) {
-            if (!controlsUnlocked) {
-                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 100);
-            } else {
-                SDL_SetRenderDrawColor(renderer, 180, 255, 180, 100);
+        if (controllerCount == 0) {
+            for (auto const& button : layout.buttons) {
+                if (!controlsUnlocked) {
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 100);
+                } else {
+                    SDL_SetRenderDrawColor(renderer, 180, 255, 180, 100);
+                }
+
+                SDL_Rect r;
+                r.x = button.x - button.radius;
+                r.y = button.y - button.radius;
+                r.w = button.radius * 2;
+                r.h = button.radius * 2;
+
+                // Render rect
+                SDL_RenderFillRect(renderer, &r);
             }
-
-            SDL_Rect r;
-            r.x = button.x - button.radius;
-            r.y = button.y - button.radius;
-            r.w = button.radius * 2;
-            r.h = button.radius * 2;
-
-            // Render rect
-            SDL_RenderFillRect(renderer, &r);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         }
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 
         rects.clear();
 
@@ -559,7 +573,7 @@ bool closed() {
 
 void toggleRendering(bool r) { render = r; }
 
-void initRumble() {};
+void initRumble(){};
 
 std::string getSavefilePath() {
     char* path = SDL_GetPrefPath("akouzoukos", "Apotris");
