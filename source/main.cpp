@@ -1249,7 +1249,7 @@ std::string getStringFromKey(int key) {
 
     return keyToString[key];
 
-#elif defined(WEB) || defined(PC)
+#elif defined(WEB) || defined(PC) || defined(ANDROID)
 
     return stringFromKey(key);
 
