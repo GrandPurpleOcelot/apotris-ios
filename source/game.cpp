@@ -52,6 +52,20 @@ void showSpawn();
 void showTowerScrollIndicator();
 static void screenShake();
 
+Position gameLayout[(int)GameElements::LENGTH] = {
+    Position(0, 0),          // NONE
+    Position(10 * 8, 0),     // FIELD (must be *8)
+    Position(5 * 8, 10 * 8), // HOLD
+    Position(173, 12),       // QUEUE
+};
+
+Position altLayout[(int)GameElements::LENGTH] = {
+    Position(0, 0),           // NONE
+    Position(7 * 8, -32),     // FIELD (must be *8)
+    Position(7 * 8 - 3, -56), // HOLD
+    Position(173 - 29, -32),  // QUEUE
+};
+
 INLINE int prep(int n);
 IWRAM_CODE void updateGrid();
 
@@ -483,6 +497,8 @@ void GameScene::checkSounds() {
         disappear();
     }
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (game->sounds.zone == 1) {
         clearText();
         gradient(0);
@@ -504,12 +520,12 @@ void GameScene::checkSounds() {
 
         for (int layer = 0; layer < 2; layer++) {
             for (int i = 0; i < 20; i++) {
-                setTile(25 + layer, 9, i, 0);
-                setTile(25, 20, i, 0);
+                setTile(25 + layer, pos.x / 8 - 1, pos.y / 8 + i, 0);
+                setTile(25, pos.x / i + 10, pos.y / 8 + i, 0);
             }
 
             for (int i = 0; i < 12; i++) {
-                setTile(25 + layer, 9 + i, 20, 0);
+                setTile(25 + layer, pos.x / 8 - 1 + i, pos.y / 8 + 20, 0);
             }
         }
 
@@ -537,7 +553,7 @@ void GameScene::checkSounds() {
         }
 
     } else if (game->sounds.zone == -1) {
-        aprintClearArea(10, 0, 10, 20);
+        aprintClearArea(pos.x / 8, pos.y / 8, 10, 20);
         resetZonePalette();
 
         flashTimer = flashTimerMax;
@@ -622,6 +638,8 @@ void showBackground(int offset) {
     const int clearTile =
         tileBuild(3, false, false, savefile->settings.lightMode);
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (!game->pawn.big) {
         for (int i = startY; i < game->lengthY && (i - 20 + offset) < 20; i++) {
             int y = i - 20 + offset;
@@ -629,7 +647,7 @@ void showBackground(int offset) {
             if (game->bitboard[i] == 0 &&
                 !(i < game->lengthY - 1 && game->bitboard[i + 1] != 0)) {
                 for (int j = 0; j < 10; j++)
-                    setTile(25, 10 + j, y, 0);
+                    setTile(25, pos.x / 8 + j, pos.y / 8 + y, 0);
                 continue;
             }
 
@@ -645,7 +663,7 @@ void showBackground(int offset) {
                 if (!b || game->lineClearArray[i] ||
                     game->disappearTimers[i][j] == 1) {
                     if (!showEdges) {
-                        setTile(25, 10 + j, y, 0);
+                        setTile(25, pos.x / 8 + j, pos.y / 8 + y, 0);
                         continue;
                     }
 
@@ -669,7 +687,7 @@ void showBackground(int offset) {
 
                     int count = (up << 3) + (left << 2) + (right << 1) + down;
 
-                    setTile(25, 10 + j, y,
+                    setTile(25, pos.x / 8 + j, pos.y / 8 + y,
                             tileBuild(edges[count] +
                                       (savefile->settings.lightMode * 0x1000)));
                     continue;
@@ -688,10 +706,11 @@ void showBackground(int offset) {
 
                 if (n != 8)
                     setTile(
-                        25, 10 + j, y,
+                        25, pos.x / 8 + j, pos.y / 8 + y,
                         tileBuild(offset, false, false, n * !game->zoneTimer));
                 else
-                    setTile(25, 10 + j, y, tileBuild(3, false, false, 0));
+                    setTile(25, pos.x / 8 + j, pos.y / 8 + y,
+                            tileBuild(3, false, false, 0));
             }
         }
 
@@ -705,20 +724,20 @@ void showBackground(int offset) {
             if (savefile->settings.clearDirection == 0) {
                 for (int j = 0; j < 5; j++) {
                     if (clearTimer < maxClearTimer - 10 + j * 2)
-                        setTile(25, 10 + j, y, clearTile);
+                        setTile(25, pos.x / 8 + j, pos.y / 8 + y, clearTile);
                 }
                 for (int j = 5; j < 10; j++) {
                     if (clearTimer < maxClearTimer - 10 + (9 - j) * 2)
-                        setTile(25, 10 + j, y, clearTile);
+                        setTile(25, pos.x / 8 + j, pos.y / 8 + y, clearTile);
                 }
             } else if (savefile->settings.clearDirection == 1) {
                 for (int j = 0; j < 5; j++) {
                     if (clearTimer < maxClearTimer - 10 + (4 - j) * 2)
-                        setTile(25, 10 + j, y, clearTile);
+                        setTile(25, pos.x / 8 + j, pos.y / 8 + y, clearTile);
                 }
                 for (int j = 5; j < 10; j++) {
                     if (clearTimer < maxClearTimer - 10 + (j - 5) * 2)
-                        setTile(25, 10 + j, y, clearTile);
+                        setTile(25, pos.x / 8 + j, pos.y / 8 + y, clearTile);
                 }
             }
         }
@@ -731,7 +750,7 @@ void showBackground(int offset) {
                 !(i / 2 < game->lengthY - 1 &&
                   game->bitboard[i / 2 + 1] != 0)) {
                 for (int j = 0; j < 10; j++)
-                    setTile(25, 10 + j, y, 0);
+                    setTile(25, pos.x / 8 + j, pos.y / 8 + y, 0);
                 continue;
             }
 
@@ -748,7 +767,7 @@ void showBackground(int offset) {
                 if (!b || game->lineClearArray[i / 2] ||
                     game->disappearTimers[i / 2][j / 2] == 1) {
                     if (!showEdges) {
-                        setTile(25, 10 + j, y, 0);
+                        setTile(25, pos.x / 8 + j, pos.y / 8 + y, 0);
                         continue;
                     }
 
@@ -776,7 +795,7 @@ void showBackground(int offset) {
 
                     int count = (up << 3) + (left << 2) + (right << 1) + down;
 
-                    setTile(25, 10 + j, y,
+                    setTile(25, pos.x / 8 + j, pos.y / 8 + y,
                             tileBuild(edges[count] +
                                       (savefile->settings.lightMode * 0x1000)));
                     continue;
@@ -795,10 +814,11 @@ void showBackground(int offset) {
 
                 if (n != 8)
                     setTile(
-                        25, 10 + j, y,
+                        25, pos.x / 8 + j, pos.y / 8 + y,
                         tileBuild(offset, false, false, n * !game->zoneTimer));
                 else
-                    setTile(25, 10 + j, y, tileBuild(3, false, false, 0));
+                    setTile(25, pos.x / 8 + j, pos.y / 8 + y,
+                            tileBuild(3, false, false, 0));
             }
         }
 
@@ -813,20 +833,24 @@ void showBackground(int offset) {
                 if (savefile->settings.clearDirection == 0) {
                     for (int j = 0; j < 5; j++) {
                         if (clearTimer < maxClearTimer - 10 + j * 2)
-                            setTile(25, 10 + j, y, clearTile);
+                            setTile(25, pos.x / 8 + j, pos.y / 8 + y,
+                                    clearTile);
                     }
                     for (int j = 5; j < 10; j++) {
                         if (clearTimer < maxClearTimer - 10 + (9 - j) * 2)
-                            setTile(25, 10 + j, y, clearTile);
+                            setTile(25, pos.x / 8 + j, pos.y / 8 + y,
+                                    clearTile);
                     }
                 } else if (savefile->settings.clearDirection == 1) {
                     for (int j = 0; j < 5; j++) {
                         if (clearTimer < maxClearTimer - 10 + (4 - j) * 2)
-                            setTile(25, 10 + j, y, clearTile);
+                            setTile(25, pos.x / 8 + j, pos.y / 8 + y,
+                                    clearTile);
                     }
                     for (int j = 5; j < 10; j++) {
                         if (clearTimer < maxClearTimer - 10 + (j - 5) * 2)
-                            setTile(25, 10 + j, y, clearTile);
+                            setTile(25, pos.x / 8 + j, pos.y / 8 + y,
+                                    clearTile);
                     }
                 }
             }
@@ -902,6 +926,8 @@ void showPawn() {
         setPawnPalette(11, n, blend, false);
     }
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (!game->pawn.big) {
         if (game->pawn.y + peek < 16) {
             sprite_hide(pawnSprite);
@@ -911,9 +937,9 @@ void showPawn() {
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16 * 7, 11, 2);
         sprite_enable_mosaic(pawnSprite);
         sprite_set_pos(pawnSprite,
-                       (10 + game->pawn.x) * 8 +
+                       pos.x + game->pawn.x * 8 +
                            push * savefile->settings.shake,
-                       (game->pawn.y - game->boardOffset + peek) * 8 +
+                       pos.y + (game->pawn.y - game->boardOffset + peek) * 8 +
                            shake * savefile->settings.shake + peekShift);
     } else {
         if ((game->pawn.y + peek) * 2 < 14) {
@@ -924,11 +950,11 @@ void showPawn() {
         sprite_enable_mosaic(pawnSprite);
         sprite_enable_affine(pawnSprite, 31, true);
         sprite_set_size(pawnSprite, 1 << 7, 31);
-        sprite_set_pos(pawnSprite,
-                       (10 + game->pawn.x * 2) * 8 +
-                           push * savefile->settings.shake,
-                       (game->pawn.y - game->boardOffset + peek) * 8 * 2 +
-                           shake * savefile->settings.shake + peekShift);
+        sprite_set_pos(
+            pawnSprite,
+            pos.x + (game->pawn.x * 2) * 8 + push * savefile->settings.shake,
+            pos.y + (game->pawn.y - game->boardOffset + peek) * 8 * 2 +
+                shake * savefile->settings.shake + peekShift);
     }
 }
 
@@ -1022,6 +1048,8 @@ void showShadow() {
         setPawnPalette(10, n, 14 * bld, flip);
     }
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (!game->pawn.big) {
         if (game->pawn.y + peek < 16) {
             sprite_hide(pawnShadow);
@@ -1033,9 +1061,9 @@ void showShadow() {
                                    savefile->settings.shadow == 7)),
                         10, 2);
         sprite_set_pos(pawnShadow,
-                       (10 + game->pawn.x) * 8 +
+                       pos.x + game->pawn.x * 8 +
                            push * savefile->settings.shake,
-                       (game->lowest() - game->boardOffset + peek) * 8 +
+                       pos.y + (game->lowest() - game->boardOffset + peek) * 8 +
                            shake * savefile->settings.shake + peekShift);
     } else {
         if ((game->pawn.y + peek) * 2 < 14) {
@@ -1050,11 +1078,11 @@ void showShadow() {
         sprite_enable_affine(pawnShadow, 30, true);
         sprite_set_size(pawnShadow, 1 << 7, 30);
 
-        sprite_set_pos(pawnShadow,
-                       (10 + game->pawn.x * 2) * 8 +
-                           push * savefile->settings.shake,
-                       (game->lowest() - game->boardOffset + peek) * 2 * 8 +
-                           shake * savefile->settings.shake + peekShift);
+        sprite_set_pos(
+            pawnShadow,
+            pos.x + (game->pawn.x * 2) * 8 + push * savefile->settings.shake,
+            pos.y + (game->lowest() - game->boardOffset + peek) * 2 * 8 +
+                shake * savefile->settings.shake + peekShift);
     }
 }
 
@@ -1063,16 +1091,18 @@ void showHold() {
     holdFrameSprite = &obj_buffer[115];
     OBJ_ATTR* background = &obj_buffer[116];
 
+    Position pos = gameLayout[(int)GameElements::HOLD];
+
     if (game->gameMode != CLASSIC && !game->zoneTimer) {
         sprite_unhide(holdFrameSprite, 0);
         sprite_set_attr(holdFrameSprite, ShapeSquare, 2, 512, 8, 3);
-        sprite_set_pos(holdFrameSprite, 4 * 8 + 7 + (push < 0) * push,
-                       9 * 8 - 2);
+        sprite_set_pos(holdFrameSprite, pos.x - 1 + (push < 0) * push,
+                       pos.y - 10);
 
         sprite_unhide(background, 0);
         sprite_set_attr(background, ShapeSquare, 2, 512 + 400, 8, 3);
         sprite_enable_blend(background);
-        sprite_set_pos(background, 4 * 8 + 7 + (push < 0) * push, 9 * 8 - 2);
+        sprite_set_pos(background, pos.x - 1 + (push < 0) * push, pos.y - 10);
     } else {
         sprite_hide(holdFrameSprite);
         sprite_hide(background);
@@ -1105,9 +1135,8 @@ void showHold() {
                         palette * (game->zoneTimer == 0), 3);
 
         sprite_set_pos(
-            holdSprite, (5) * 8 + add * 3 + 3 + (push < 0) * push,
-            (10) * 8 -
-                3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS)) +
+            holdSprite, pos.x + add * 3 + 3 + (push < 0) * push,
+            pos.y - 3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS)) +
                 yoffset +
                 3 * ((rs == ARS || rs == BARS) && game->held == PIECE_I));
     } else {
@@ -1125,9 +1154,8 @@ void showHold() {
         sprite_set_size(holdSprite, size, 5);
 
         sprite_set_pos(
-            holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push,
-            (10) * 8 -
-                3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS)) +
+            holdSprite, pos.x + add * 3 + 3 - 4 + (push < 0) * push,
+            pos.y - 3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS)) +
                 yoffset +
                 3 * ((rs == ARS || rs == BARS) && game->held == PIECE_I) - 4);
     }
@@ -1154,6 +1182,8 @@ void showQueue(bool offsetSpriteIndex) {
     for (int i = 0; i < 3; i++)
         background[i] = &obj_buffer[frameIndex + 3 + i];
 
+    Position pos = gameLayout[(int)GameElements::QUEUE];
+
     if (game->zoneTimer) {
         for (int i = 0; i < 3; i++) {
             sprite_hide(queueFrameSprites[i]);
@@ -1164,25 +1194,26 @@ void showQueue(bool offsetSpriteIndex) {
             sprite_unhide(queueFrameSprites[i], 0);
             sprite_set_attr(queueFrameSprites[i], ShapeSquare, 2,
                             512 + 16 + 16 * i, 8, 3);
-            sprite_set_pos(queueFrameSprites[i], 173 + (push > 0) * push,
-                           12 + 32 * i - (i * 9 * (5 - maxQueue)));
+            sprite_set_pos(queueFrameSprites[i], pos.x + (push > 0) * push,
+                           pos.y + 32 * i - (i * 9 * (5 - maxQueue)));
 
             sprite_unhide(background[i], 0);
             sprite_set_attr(background[i], ShapeSquare, 2, 512 + 416 + i * 16,
                             8, 3);
             sprite_enable_blend(background[i]);
-            sprite_set_pos(background[i], 173 + (push > 0) * push, 12 + 32 * i);
+            sprite_set_pos(background[i], pos.x + (push > 0) * push,
+                           pos.y + 32 * i);
         }
     } else {
         sprite_unhide(queueFrameSprites[0], 0);
         sprite_set_attr(queueFrameSprites[0], ShapeSquare, 2, 512, 8, 3);
         sprite_enable_mosaic(queueFrameSprites[0]);
-        sprite_set_pos(queueFrameSprites[0], 173 + (push > 0) * push, 12);
+        sprite_set_pos(queueFrameSprites[0], pos.x + (push > 0) * push, pos.y);
 
         sprite_unhide(background[0], 0);
         sprite_set_attr(background[0], ShapeSquare, 2, 512 + 416, 8, 3);
         sprite_enable_blend(background[0]);
-        sprite_set_pos(background[0], 173 + (push > 0) * push, 12);
+        sprite_set_pos(background[0], pos.x + (push > 0) * push, pos.y);
 
         for (int i = 1; i < 3; i++) {
             sprite_hide(queueFrameSprites[i]);
@@ -1198,12 +1229,12 @@ void showQueue(bool offsetSpriteIndex) {
     }
 #endif
 
-    int startX = 22 * 8 + 1;
+    int startX = pos.x + 4;
     const int skin = savefile->settings.skin;
     const int rs = game->rotationSystem;
 
     int yoffset =
-        4 * (maxQueue == 1) -
+        pos.y + 4 * (maxQueue == 1) -
         (6 * (rs != SRS && (skin >= 7 && !(skin == 9 || skin == 10))));
 
     for (int k = 0; k < 5; k++) {
@@ -1240,7 +1271,7 @@ void showQueue(bool offsetSpriteIndex) {
 
             sprite_set_pos(queueSprites[k],
                            startX + add * 3 + (push > 0) * push - 4,
-                           (3 + (k * 3)) * 6 - 3 * (rs != ARS && n == PIECE_I) -
+                           (1 + (k * 3)) * 6 - 3 * (rs != ARS && n == PIECE_I) -
                                4 + yoffset + 8 * (rs == BARS && n == PIECE_I));
         }
     }
@@ -1909,22 +1940,23 @@ void GameScene::countdown() {
             }
         }
 
+        Position pos = gameLayout[(int)GameElements::FIELD];
+
         if (timer < timerMax / 3) {
-            aprint("READY?", 12, 10);
+            aprint("READY?", pos.x / 8 + 2, pos.y / 8 + 10);
             if (timer == 1 && savefile->settings.announcer) {
                 sfx(SFX_READY);
             }
         } else if (timer < 2 * timerMax / 3) {
-            aprint("READY?", 12, 10);
+            aprint("READY?", pos.x / 8 + 2, pos.y / 8 + 10);
             if ((key_is_down(KEY_L) && key_is_down(KEY_R)) ||
                 key_is_down(savefile->settings.menuKeys.reset)) {
                 playAgain = true;
                 break;
             }
         } else {
-            aprint("  GO  ", 12, 10);
-            if (timer == 2 * timerMax / 3 && savefile->settings.announcer &&
-                !interrupted)
+            aprint("  GO  ", pos.x / 8 + 2, pos.y / 8 + 10);
+            if (timer == 2 * timerMax / 3 && savefile->settings.announcer && !interrupted)
                 sfx(SFX_GO);
         }
 #ifdef GBA
@@ -1983,11 +2015,14 @@ void screenShake() {
     setLayerScroll(1, -push, -(shake + peekShift));
     setLayerScroll(2, -push, -(shake + peekShift));
 
-    enableLayerWindow(1, 0, shake, 240, 160 + shake, false);
-    enableLayerWindow(2, 0, shake, 240, 160 + shake, false);
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
+    enableLayerWindow(1, 0, pos.y + shake, 240, pos.y + 160 + shake, false);
+    enableLayerWindow(2, 0, pos.y + shake, 240, pos.y + 160 + shake, false);
 
 #if defined(TE) || defined(N3DS)
-    setSpriteMaskRegion(shake);
+    // allows for partially obsured ghost piece during peek
+    setSpriteMaskRegion(pos.y + shake);
 #endif
 
     if (savefile->settings.screenShakeType == 0) {
@@ -2041,23 +2076,28 @@ void drawFrame(int layer) {
     if (game->zoneTimer)
         p = 0;
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (layer >= 0) {
         for (int i = 0; i < 20; i++) {
             for (int j = 0; j < 2; j++) {
-                setTile(l, j * 11 + 9, i, tileBuild(0x4, (j > 0), false, p));
+                setTile(l, j * 11 + (pos.x) / 8 - 1, pos.y / 8 + i,
+                        tileBuild(0x4, (j > 0), false, p));
             }
         }
 
 #if defined(TE) || defined(N3DS)
 
         if (!game->zoneTimer) {
-            setTile(l, 20, 20,
-                    tileBuild(29, true, true, p)); // right bottom frame corner
-            setTile(l, 9, 20,
+            setTile(l, (pos.x) / 8 - 1, pos.y / 8 + 20,
                     tileBuild(29, false, true, p)); // left bottom frame corner
+            setTile(l, (pos.x) / 8 + 10, pos.y / 8 + 20,
+                    tileBuild(29, true, true, p)); // right bottom frame corner
 
+            // lower frame
             for (int i = 0; i < 10; i++)
-                setTile(l, 10 + i, 20, tileBuild(28, false, true, p));
+                setTile(l, pos.x / 8 + i, pos.y / 8 + 20,
+                        tileBuild(28, false, true, p));
         }
 
 #endif
@@ -2074,8 +2114,9 @@ void drawFrame(int layer) {
             OBJ_ATTR* frameSprite = &obj_buffer[77 + i];
             sprite_unhide(frameSprite, 0);
             sprite_set_attr(frameSprite, ShapeTall, 1, 200 + i * 4, p, 1);
-            sprite_set_pos(frameSprite, 9 * 8 + push * savefile->settings.shake,
-                           i * 32 + frameShake);
+            sprite_set_pos(frameSprite,
+                           pos.x - 8 + push * savefile->settings.shake,
+                           pos.y + i * 32 + frameShake);
         }
 
         // right
@@ -2085,8 +2126,8 @@ void drawFrame(int layer) {
             sprite_set_attr(frameSprite, ShapeTall, 1, 220 + i * 4, p, 1);
             sprite_enable_flip(frameSprite, true, false);
             sprite_set_pos(frameSprite,
-                           20 * 8 + push * savefile->settings.shake,
-                           i * 32 + frameShake);
+                           pos.x + 10 * 8 + push * savefile->settings.shake,
+                           pos.y + i * 32 + frameShake);
         }
 
         // bottom
@@ -2096,8 +2137,8 @@ void drawFrame(int layer) {
             sprite_set_attr(frameSprite, ShapeWide, 1, 240 + i * 4, p, 1);
             sprite_enable_flip(frameSprite, false, true);
             sprite_set_pos(frameSprite,
-                           9 * 8 + i * 32 + push * savefile->settings.shake,
-                           20 * 8 + frameShake);
+                           pos.x - 8 + i * 32 + push * savefile->settings.shake,
+                           pos.y + 20 * 8 + frameShake);
         }
     }
 
@@ -2304,12 +2345,14 @@ void drawGrid() {
 
     bool wrap = false;
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
 #ifdef GBA
-    setTiles(26, 31 * 32 + 10, 10,
+    setTiles(26, 31 * 32 + pos.x / 8, pos.y / 8 + 10,
              tileBuild(gridTile, false, false,
                        palOffset *
                            (savefile->settings.lightMode && !game->zoneTimer)));
-    setTiles(26, 20 * 32 + 10, 10,
+    setTiles(26, 20 * 32 + pos.x / 8, pos.y / 8 + 10,
              tileBuild(gridTile, false, false,
                        palOffset *
                            (savefile->settings.lightMode && !game->zoneTimer)));
@@ -2330,15 +2373,17 @@ void drawGrid() {
                         glow[i][j]--;
 
                     if (peekValue)
-                        setTile(26, 10 + j, i + ((wrap && i < 0) ? 32 : 0),
+                        setTile(26, pos.x / 8 + j,
+                                pos.y / 8 + i + ((wrap && i < 0) ? 32 : 0),
                                 tileBuild(gridTile, false, false, 15));
                     else
-                        setTile(26, 10 + j, (32 + i) & 31, t);
+                        setTile(26, pos.x / 8 + j, pos.y / 8 + (32 + i) & 31,
+                                t);
                 } else if (glow[i][j] == 0 || !savefile->settings.effects) {
-                    setTile(26, 10 + j, i, t);
+                    setTile(26, pos.x / 8 + j, pos.y / 8 + i, t);
                 } else if (i >= 0 && glow[i][j] > glowDuration) {
                     glow[i][j]--;
-                    setTile(26, 10 + j, i, t);
+                    setTile(26, pos.x / 8 + j, pos.y / 8 + i, t);
                 } else if (i >= 0 && glow[i][j] > 0) {
                     glow[i][j]--;
                     int color = 0;
@@ -2349,7 +2394,7 @@ void drawGrid() {
                     else if (glow[i][j] >= glowDuration * 1 / 4)
                         color = 1;
                     setTile(
-                        26, 10 + j, i,
+                        26, pos.x / 8 + j, pos.y / 8 + i,
                         tileBuild(gridTile, false, false,
                                   color + (palOffset) *
                                               (savefile->settings.lightMode &&
@@ -2361,10 +2406,10 @@ void drawGrid() {
         for (int i = -2; i < 20; i++) {
             for (int j = 0; j < 10; j++) {
                 if (i < peekAmount)
-                    setTile(26, j + 10, i,
+                    setTile(26, j + pos.x / 8, pos.y / 8 + i,
                             tileBuild(gridTile, false, false, 15));
                 else
-                    setTile(26, j + 10, i,
+                    setTile(26, j + pos.x / 8, pos.y / 8 + i,
                             tileBuild(gridTile, false, false,
                                       prep(current[i + 1][j + 1])));
             }
@@ -2393,15 +2438,17 @@ void progressBar(int layer) {
     else if (game->gameMode != SURVIVAL)
         current = game->linesCleared;
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (game->gameMode != BATTLE) {
-        showBar(current, max, 20, 8, layer);
+        showBar(current, max, pos.x / 8 + 10, 8, layer);
 
         if (layer >= 0) {
-            setTile(
-                l, 20, 20,
-                tileBuild(33, false, false, 8)); // right bottom frame corner
-            setTile(l, 9, 20,
+            setTile(l, pos.x / 8 - 1, pos.y / 8 + 20,
                     tileBuild(29, false, true, 8)); // left bottom frame corner
+            setTile(
+                l, pos.x / 8 + 10, pos.y / 8 + 20,
+                tileBuild(33, false, false, 8)); // right bottom frame corner
         } else {
 
             u32* src = (u32*)sprite42tiles_bin;
@@ -2429,10 +2476,10 @@ void progressBar(int layer) {
         }
 
         // attack bar
-        showBar(game->getIncomingGarbage(), 20, 9, 8, layer);
+        showBar(game->getIncomingGarbage(), 20, pos.x / 8 - 1, 8, layer);
 
         if (layer >= 0) {
-            setTile(l, 9, 20,
+            setTile(l, pos.x / 8 - 1, pos.y / 8 + 20,
                     tileBuild(33, true, false, 8)); // left bottom frame corner
         } else {
             u32* src = (u32*)sprite54tiles_bin;
@@ -2461,6 +2508,8 @@ void showBar(int current, int max, int x, int palette, int layer) {
     int edge = pixels - segments * 8 + 1 * (segments != 0);
     int t = 0;
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (layer >= 0) {
         // top
         t = 6;
@@ -2483,7 +2532,7 @@ void showBar(int current, int max, int x, int palette, int layer) {
             t = 8;
         }
 
-        setTile(l, x, 0, tileBuild(t, false, false, palette));
+        setTile(l, x, pos.y / 8, tileBuild(t, false, false, palette));
 
         // bottom
         t = 8;
@@ -2507,7 +2556,7 @@ void showBar(int current, int max, int x, int palette, int layer) {
             }
         }
 
-        setTile(l, x, 19, tileBuild(t, false, true, palette));
+        setTile(l, x, pos.y / 8 + 19, tileBuild(t, false, true, palette));
 
         // middle
         for (int i = 1; i < 19; i++) {
@@ -2525,7 +2574,7 @@ void showBar(int current, int max, int x, int palette, int layer) {
                 }
             }
 
-            setTile(l, x, i, tileBuild(t, false, false, palette));
+            setTile(l, x, pos.y / 8 + i, tileBuild(t, false, false, palette));
         }
     } else {
         TILE temp;
@@ -2819,9 +2868,11 @@ void addPlaceEffect(BlockEngine::Drop drop) {
         game->pawn.big)
         return;
 
-    placeEffectList.push_back(
-        PlaceEffect(drop.x, drop.y, drop.dx, drop.dy, drop.piece, drop.rotation,
-                    drop.rotating * (game->gameMode != CLASSIC)));
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
+    placeEffectList.push_back(PlaceEffect(
+        pos.x + drop.x, pos.y + drop.y, drop.dx, drop.dy, drop.piece,
+        drop.rotation, drop.rotating * (game->gameMode != CLASSIC)));
 }
 
 void hideMinos() {
@@ -2880,6 +2931,8 @@ void disappear() {
 
     bool found = false;
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     while (!game->toDisappear.empty()) {
         coords = game->toDisappear.front();
 
@@ -2887,7 +2940,7 @@ void disappear() {
         int y = std::get<1>(coords);
 
         // clearTiles(25,(y-20)*32 + x + 10,1);
-        setTile(25, x + 10, y - 20, 0);
+        setTile(25, x + pos.x / 8, pos.y / 8 + y - 20, 0);
 
         found = true;
 
@@ -3033,14 +3086,16 @@ void resetZonePalette() {
     if (game->lost)
         return;
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     for (int layer = 0; layer < 2; layer++) {
         for (int i = 0; i < 20; i++) {
-            setTile(25 + layer, 9, i, 0);
-            setTile(25, 20, i, 0);
+            setTile(25 + layer, pos.x / 8 - 1, pos.y / 8 + i, 0);
+            setTile(25, pos.x / 8 + 10, pos.y / 8 + i, 0);
         }
 
         for (int i = 0; i < 12; i++) {
-            setTile(25 + layer, 9 + i, 20, 0);
+            setTile(25 + layer, pos.x / 8 - 1 + i, pos.y / 8 + 20, 0);
         }
     }
 
@@ -3092,30 +3147,35 @@ void frameSnow(int layer) {
     loadTiles(0, 4, dest, 1);
     loadTiles(0, 46, topTile, 1);
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (layer >= 0) {
         int l = 25 + layer;
 
         int i;
         for (i = 0; i < 20 - ((20 * game->zoneTimer) / game->zoneStart); i++) {
-            setTile(l, 9, i, 0);
-            setTile(l, 20, i, 0);
+            setTile(l, pos.x / 8 - 1, pos.y / 8 + i, 0);
+            setTile(l, pos.x / 8 + 10, pos.y / 8 + i, 0);
         }
 
         if (i == 20)
             i = 19;
 
-        setTile(l, 9, i, tileBuild(46, false, false, 0));
-        setTile(l, 20, i, tileBuild(46, true, false, 0));
+        setTile(l, pos.x / 8 - 1, pos.y / 8 + i,
+                tileBuild(46, false, false, 0));
+        setTile(l, pos.x / 8 + 10, pos.y / 8 + i,
+                tileBuild(46, true, false, 0));
 
 #if defined(TE) || defined(N3DS)
 
-        setTile(l, 20, 20,
+        setTile(l, pos.x / 8 + 10, pos.y / 8 + 20,
                 tileBuild(29, true, true, 0)); // right bottom frame corner
-        setTile(l, 9, 20,
+        setTile(l, pos.x / 8 - 19, pos.y / 8 + 20,
                 tileBuild(29, false, true, 0)); // left bottom frame corner
 
         for (i = 0; i < 10; i++)
-            setTile(l, 10 + i, 20, tileBuild(28, false, true, 0));
+            setTile(l, pos.x / 8 + i, pos.y / 8 + 20,
+                    tileBuild(28, false, true, 0));
 
 #endif
     } else {
@@ -3185,7 +3245,9 @@ void showZoneText() {
     if (game->zonedLines == 0)
         return;
 
-    aprintClearArea(10, 0, 10, 20);
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
+    aprintClearArea(pos.x / 8, pos.y / 8, 10, 20);
 
     int height = (game->lengthY - game->zonedLines) / 2;
 
@@ -3213,7 +3275,7 @@ void showZoneText() {
         loadPalette(13, 2, pal[1], 2);
     }
 
-    aprintColor(text, 15 - text.size() / 2, height, 2);
+    aprintColor(text, pos.x / 8 + 5 - text.size() / 2, pos.y / 8 + height, 2);
 }
 
 static FIXED creditCurrentHeight = int2fx(SCREEN_HEIGHT);
@@ -3503,8 +3565,15 @@ void GameScene::init() {
     // for(int i = 0; i < 1024; i++)
     //     loadSpriteTiles(i, &d, 1, 1);
 
+    // memcpy(gameLayout, altLayout, sizeof(Position) *
+    // (int)GameElements::LENGTH);
+
 #if defined(TE) || defined(N3DS)
     buildBG(2, 0, 25, 0, 0, true);
+#endif
+
+#if defined(ANDROID)
+    setGameWindowScale();
 #endif
 
     reset();
@@ -3901,14 +3970,16 @@ void showGoalLine() {
     for (int i = 0; i < 4; i++)
         loadSpriteTiles(280 + i, &d, 1, 1);
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     for (int i = 0; i < 3; i++) {
         OBJ_ATTR* sprite = &obj_buffer[100 + i];
 
         sprite_unhide(sprite, 0);
         sprite_set_attr(sprite, ShapeWide, 2, 280, 8, 1);
         sprite_set_pos(
-            sprite, (10 + 3 * i) * 8 + push * savefile->settings.shake,
-            goalLineHeight * 8 - 1 + shake * savefile->settings.shake +
+            sprite, pos.x + (3 * i) * 8 + push * savefile->settings.shake,
+            pos.y + goalLineHeight * 8 - 1 + shake * savefile->settings.shake +
                 peekShift + peek * 8);
     }
 }
@@ -3967,10 +4038,10 @@ void showSpawn() {
     bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS ||
                 game->rotationSystem == BARS || game->rotationSystem == SDRS);
 
-    std::tuple<int, int> pos = game->getSpawnPosition();
+    std::tuple<int, int> spawnPosition = game->getSpawnPosition();
 
-    int x = std::get<0>(pos);
-    int y = std::get<1>(pos) + add;
+    int x = std::get<0>(spawnPosition);
+    int y = std::get<1>(spawnPosition) + add;
 
     const int tile = 288;
 
@@ -3986,12 +4057,14 @@ void showSpawn() {
 
     delete[] b;
 
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
     if (!game->pawn.big) {
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
         sprite_enable_mosaic(sprite);
         sprite_set_pos(
-            sprite, (10 + x) * 8 + push * savefile->settings.shake,
-            (y - game->boardOffset + peek) * 8 +
+            sprite, pos.x + x * 8 + push * savefile->settings.shake,
+            pos.y + (y - game->boardOffset + peek) * 8 +
                 shake * savefile->settings.shake + peekShift -
                 8 * (game->rotationSystem == BARS && piece != PIECE_I || game->rotationSystem == SDRS));
     } else {
@@ -4000,8 +4073,8 @@ void showSpawn() {
         sprite_enable_affine(sprite, 29, true);
         sprite_set_size(sprite, 1 << 7, 29);
         sprite_set_pos(
-            sprite, (10 + x * 2) * 8 + push * savefile->settings.shake,
-            (y - game->boardOffset + peek) * 8 * 2 +
+            sprite, pos.x + (x * 2) * 8 + push * savefile->settings.shake,
+            pos.y + (y - game->boardOffset + peek) * 8 * 2 +
                 shake * savefile->settings.shake + peekShift -
                 16 * (game->rotationSystem == BARS && piece != PIECE_I || game->rotationSystem == SDRS));
     }

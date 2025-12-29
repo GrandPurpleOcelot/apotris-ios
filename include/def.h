@@ -77,7 +77,7 @@ public:
     PlaceEffect() {}
     PlaceEffect(int _x, int _y, int _dx, int _dy, int _piece, int _rotation,
                 int _rotating) {
-        x = (_x + 10) * 8 - 16 - 32;
+        x = (_x) * 8 - 16 - 32;
         y = _y * 8 - 16;
         dx = _dx;
         dy = _dy;

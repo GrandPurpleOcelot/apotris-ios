@@ -29,6 +29,23 @@ extern std::string getDescription(std::string element);
 extern std::string getDescription(std::string mode, std::string element,
                                   std::string option);
 
+enum class GameElements { NONE, FIELD, HOLD, QUEUE, TIMER, LENGTH };
+
+class Position {
+public:
+    s16 x = 0;
+    s16 y = 0;
+
+    Position() {}
+
+    Position(s16 x, s16 y) {
+        this->x = x;
+        this->y = y;
+    }
+};
+
+extern Position gameLayout[(int)GameElements::LENGTH];
+
 class Scene {
 public:
     virtual void draw() = 0;
@@ -38,9 +55,9 @@ public:
     virtual void deinit() = 0;
     virtual Scene* previousScene() = 0;
 
-    Scene() {};
+    Scene(){};
 
-    virtual ~Scene() {};
+    virtual ~Scene(){};
 };
 
 extern Scene* scene;
@@ -107,7 +124,7 @@ class TitleScene : public Scene {
     const int flashMax = 48;
 
     int demoTimer = 0;
-    const int demoMax = 60 * 10;
+    const int demoMax = 60 * 2;
 
     bool testDraw = false;
 

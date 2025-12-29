@@ -271,11 +271,6 @@ uint32_t keys_raw() {
 }
 
 void updateWindow(uint8_t* framebuffer) {
-    drawRect(0, screenHeight * 0.25, screenWidth, 10);
-    drawRect(0, screenHeight * 0.50, screenWidth, 10);
-    drawRect(0, screenHeight * 0.75, screenWidth, 10);
-    drawRect(screenWidth / 2, 0, 10, screenHeight);
-
     const int in_width = 512;
     const int in_height = 512;
 

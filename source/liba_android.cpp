@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
+#include <jni.h>
 #include <sys/stat.h>
 #include <unordered_set>
 
@@ -14,8 +15,17 @@
 
 #include "nanotime.h"
 
+static jobject vibrateService = nullptr;
+static jmethodID vibrateMethodId = 0;
+static jmethodID vibrateCancelMethodId = 0;
+
 void handleAnalogInput(int axis, int value);
 void handleInput();
+
+bool vibrationInit();
+void vibrationStart(int durationMS);
+void vibrationStop();
+void vibrationDeinit();
 
 std::unordered_set<uint32_t> currentKeys;
 std::unordered_set<uint32_t> previousKeys;
@@ -58,6 +68,8 @@ int screenHeight = 720;
 
 float windowScale = 3;
 
+float gameWindowScale = 6;
+
 InputType lastInputType = InputType::KEYBOARD;
 
 nanotime_step_data stepper;
@@ -65,6 +77,10 @@ nanotime_step_data stepper;
 ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
 
 SDL_Point touchLocation = {0, 0};
+
+bool controlsUnlocked = false;
+
+int moving = 0;
 
 #define DEADZONE 12000
 
@@ -98,6 +114,8 @@ void windowInit() {
         controllerCount = SDL_NumJoysticks();
     }
 
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
     SDL_ShowCursor(SDL_DISABLE);
 
     refreshWindowSize();
@@ -106,6 +124,8 @@ void windowInit() {
 
     nanotime_step_init(&stepper, (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
+
+    vibrationInit();
 }
 
 void pressKey(int key, InputType type) {
@@ -126,6 +146,7 @@ void handleInput() {
     SDL_Event event;
 
     int x = 0, y = 0, k = 0, dx = 0, dy = 0;
+    int index = 0;
 
     while (SDL_PollEvent(&event)) {
         int key = 0;
@@ -177,8 +198,19 @@ void handleInput() {
                     y > button.y - button.radius &&
                     y < button.y + button.radius) {
 
-                    pressKey(button.key, InputType::CONTROLLER);
+                    if (button.key == -1) {
+                        controlsUnlocked = !controlsUnlocked;
+                        continue;
+                    }
+
+                    if (!controlsUnlocked) {
+                        pressKey(button.key, InputType::TOUCH);
+                        vibrationStart(16);
+                    } else {
+                        moving = index;
+                    }
                 }
+                index++;
             }
 
             break;
@@ -189,55 +221,58 @@ void handleInput() {
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
 
-            for (auto const& button : layout.buttons) {
-                if (!(x > button.x - button.radius &&
-                      x < button.x + button.radius &&
-                      y > button.y - button.radius &&
-                      y < button.y + button.radius) &&
-                    ((x - dx) > button.x - button.radius &&
-                     (x - dx) < button.x + button.radius &&
-                     (y - dy) > button.y - button.radius &&
-                     (y - dy) < button.y + button.radius)) {
+            if (!controlsUnlocked) {
+                for (auto const& button : layout.buttons) {
+                    if (!(x > button.x - button.radius &&
+                          x < button.x + button.radius &&
+                          y > button.y - button.radius &&
+                          y < button.y + button.radius) &&
+                        ((x - dx) > button.x - button.radius &&
+                         (x - dx) < button.x + button.radius &&
+                         (y - dy) > button.y - button.radius &&
+                         (y - dy) < button.y + button.radius)) {
 
-                    unpressKey(button.key, InputType::CONTROLLER);
-                } else if ((x > button.x - button.radius &&
-                            x < button.x + button.radius &&
-                            y > button.y - button.radius &&
-                            y < button.y + button.radius) &&
-                           !((x - dx) > button.x - button.radius &&
-                             (x - dx) < button.x + button.radius &&
-                             (y - dy) > button.y - button.radius &&
-                             (y - dy) < button.y + button.radius)) {
+                        unpressKey(button.key, InputType::TOUCH);
+                    } else if ((x > button.x - button.radius &&
+                                x < button.x + button.radius &&
+                                y > button.y - button.radius &&
+                                y < button.y + button.radius) &&
+                               !((x - dx) > button.x - button.radius &&
+                                 (x - dx) < button.x + button.radius &&
+                                 (y - dy) > button.y - button.radius &&
+                                 (y - dy) < button.y + button.radius)) {
 
-                    pressKey(button.key, InputType::CONTROLLER);
+                        if (!controlsUnlocked) {
+                            pressKey(button.key, InputType::TOUCH);
+                            vibrationStart(16);
+                        }
+                    }
+                }
+            } else {
+
+                if (moving >= 0) {
+                    layout.buttons[moving].x = x;
+                    layout.buttons[moving].y = y;
                 }
             }
-
-            // if (abs(dy) > abs(dx)) {
-            //     if (dy > 0) {
-            //         pressKey(SDL_CONTROLLER_BUTTON_DPAD_DOWN,
-            //                  InputType::CONTROLLER);
-            //     } else if (dy < 0) {
-            //         pressKey(SDL_CONTROLLER_BUTTON_DPAD_UP,
-            //                  InputType::CONTROLLER);
-            //     }
-            // } else {
-
-            // }
 
             break;
         case SDL_FINGERUP:
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
 
-            for (auto const& button : layout.buttons) {
-                if (x > button.x - button.radius &&
-                    x < button.x + button.radius &&
-                    y > button.y - button.radius &&
-                    y < button.y + button.radius) {
+            if (!controlsUnlocked) {
+                for (auto const& button : layout.buttons) {
+                    if (x > button.x - button.radius &&
+                        x < button.x + button.radius &&
+                        y > button.y - button.radius &&
+                        y < button.y + button.radius) {
 
-                    unpressKey(button.key, InputType::CONTROLLER);
+                        unpressKey(button.key, InputType::TOUCH);
+                    }
                 }
+            } else {
+                moving = -1;
             }
             break;
         case SDL_QUIT:
@@ -384,8 +419,6 @@ void updateWindow(uint8_t* framebuffer) {
         }
 
         for (auto const& rect : rects) {
-
-            // Set render color to blue ( rect will be rendered in this color )
             SDL_SetRenderDrawColor(renderer, 0, 0, 255, 0);
 
             // Render rect
@@ -393,18 +426,22 @@ void updateWindow(uint8_t* framebuffer) {
         }
 
         for (auto const& button : layout.buttons) {
-            // Set render color to blue ( rect will be rendered in this color )
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 100);
+            if (!controlsUnlocked) {
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 100);
+            } else {
+                SDL_SetRenderDrawColor(renderer, 180, 255, 180, 100);
+            }
 
             SDL_Rect r;
-            r.x = button.x - button.radius / 2;
-            r.y = button.y - button.radius / 2;
-            r.w = button.radius;
-            r.h = button.radius;
+            r.x = button.x - button.radius;
+            r.y = button.y - button.radius;
+            r.w = button.radius * 2;
+            r.h = button.radius * 2;
 
             // Render rect
             SDL_RenderFillRect(renderer, &r);
         }
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 
         rects.clear();
 
@@ -490,36 +527,77 @@ void refreshWindowSize() {
     }
 
     int space = 210;
-    int radius = 190;
+    int radius = 95;
 
-    Button defaultLayout[10] = {
-        Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.75 + space / 2,
-               screenHeight * 0.75 + space, radius),
-        Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.75 - space / 2,
-               screenHeight * 0.75 + space, radius),
-        Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
-               screenWidth * 0.75 - space / 2, screenHeight * 0.75 - space / 2,
-               radius),
-        Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
-               screenWidth * 0.75 + space / 2, screenHeight * 0.75 - space / 2,
-               radius),
+    if (screenWidth < screenHeight) {
+        Button defaultLayout[11] = {
+            Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.75 + space / 2,
+                   screenHeight * 0.70 + space, radius),
+            Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.75 - space / 2,
+                   screenHeight * 0.70 + space, radius),
 
-        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.30,
-               screenHeight * 0.65, radius),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.30,
-               screenHeight * 0.65 + space * 2, radius),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.30 - space,
-               screenHeight * 0.65 + space, radius),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.30 + space,
-               screenHeight * 0.65 + space, radius),
+            Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+                   screenWidth * 0.75 + space / 2,
+                   screenHeight * 0.70 + space * 2, radius),
+            Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+                   screenWidth * 0.75 + space / 2, screenHeight * 0.70, radius),
 
-        Button(SDL_CONTROLLER_BUTTON_START, screenWidth / 2 + space,
-               screenHeight - space, radius),
-        Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth / 2 - space,
-               screenHeight - space, radius),
-    };
+            Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.30,
+                   screenHeight * 0.70, radius),
+            Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.30,
+                   screenHeight * 0.70 + space * 2, radius),
+            Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.30 - space,
+                   screenHeight * 0.70 + space, radius),
+            Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.30 + space,
+                   screenHeight * 0.70 + space, radius),
 
-    layout = Layout(defaultLayout);
+            Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth * 0.25 - space / 2,
+                   screenHeight * 0.60 - space / 2, radius),
+            Button(SDL_CONTROLLER_BUTTON_START, screenWidth * 0.25 + space / 2,
+                   screenHeight * 0.60 - space / 2, radius),
+            Button(-1, screenWidth - 50, 50, 100)};
+
+        layout = Layout(defaultLayout);
+    } else {
+        Button defaultLayout[11] = {
+            Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.85 + space / 2,
+                   screenHeight * 0.50 + space, radius),
+            Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.85 - space / 2,
+                   screenHeight * 0.50 + space, radius),
+
+            Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+                   screenWidth * 0.85 + space / 2,
+                   screenHeight * 0.50 + space * 2, radius),
+            Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+                   screenWidth * 0.85 + space / 2, screenHeight * 0.50, radius),
+
+            Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.20,
+                   screenHeight * 0.50, radius),
+            Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.20,
+                   screenHeight * 0.50 + space * 2, radius),
+            Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.20 - space,
+                   screenHeight * 0.50 + space, radius),
+            Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.20 + space,
+                   screenHeight * 0.50 + space, radius),
+
+            Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth * 0.05 - space / 2,
+                   screenHeight * 0.20 - space / 2, radius),
+            Button(SDL_CONTROLLER_BUTTON_START, screenWidth * 0.05 + space / 2,
+                   screenHeight * 0.20 - space / 2, radius),
+            Button(-1, screenWidth - 50, 50, 100)};
+
+        layout = Layout(defaultLayout);
+    }
+
+    int offsetx = 0, offsety = 0;
+    if (screenWidth > screenHeight) {
+        offsetx = (SCREEN_WIDTH - 240) / 2;
+        offsety = (SCREEN_HEIGHT - 160) / 2;
+    } else {
+        offsetx = (SCREEN_WIDTH - 240) * 0.5;
+        offsety = (SCREEN_HEIGHT - 160) * 0.35;
+    }
+    setScreenOffset(offsetx, offsety);
 }
 
 bool closed() {
@@ -585,6 +663,7 @@ void saveSavefile() {
 }
 
 void quit() {
+    vibrationDeinit();
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -702,5 +781,154 @@ void drawRect(int x, int y, int w, int h) {
     r.h = h;
 
     rects.push_back(r);
+}
+
+void setGameWindowScale() {
+    windowScale = gameWindowScale;
+    rowStart = (SCREEN_HEIGHT - (screenHeight / windowScale)) / 2;
+    rowEnd = (SCREEN_HEIGHT + (screenHeight / windowScale)) / 2;
+
+    if (rowStart < 0)
+        rowStart = 0;
+
+    if (rowEnd > SCREEN_HEIGHT)
+        rowEnd = SCREEN_HEIGHT;
+
+    if (savefile != nullptr) {
+        setGradient(savefile->settings.backgroundGradient);
+
+        if (savefile->settings.shaders != 0) {
+            refreshShaderResolution(screenWidth, screenHeight, windowScale);
+        }
+    }
+}
+
+bool vibrationInit() {
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (!env) {
+        SDL_Log("Failed to get JNI environment");
+        return false;
+    }
+
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    if (!activity) {
+        SDL_Log("Failed to get SDL Activity");
+        return false;
+    }
+
+    jclass clazz = env->GetObjectClass(activity);
+    if (!clazz) {
+        SDL_Log("Failed to get Activity class");
+        env->DeleteLocalRef(activity);
+        return false;
+    }
+
+    jmethodID getSystemService_id = env->GetMethodID(
+        clazz, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+    if (!getSystemService_id) {
+        SDL_Log("Failed to get getSystemService method ID");
+        env->DeleteLocalRef(clazz);
+        env->DeleteLocalRef(activity);
+        return false;
+    }
+
+    jstring service_name = env->NewStringUTF("vibrator");
+    jobject vibrator_service_local =
+        env->CallObjectMethod(activity, getSystemService_id, service_name);
+    if (!vibrator_service_local) {
+        SDL_Log("Failed to get Vibrator service");
+        env->DeleteLocalRef(service_name);
+        env->DeleteLocalRef(clazz);
+        env->DeleteLocalRef(activity);
+        return false;
+    }
+
+    vibrateService = env->NewGlobalRef(vibrator_service_local);
+    if (!vibrateService) {
+        SDL_Log("Failed to create global ref for Vibrator service");
+        env->DeleteLocalRef(vibrator_service_local);
+        env->DeleteLocalRef(service_name);
+        env->DeleteLocalRef(clazz);
+        env->DeleteLocalRef(activity);
+        return false;
+    }
+
+    jclass vibrator_class = env->GetObjectClass(vibrateService);
+    if (!vibrator_class) {
+        SDL_Log("Failed to get Vibrator class");
+        env->DeleteGlobalRef(vibrateService);
+        vibrateService = nullptr;
+        // Clean up other local refs
+        env->DeleteLocalRef(vibrator_service_local);
+        env->DeleteLocalRef(service_name);
+        env->DeleteLocalRef(clazz);
+        env->DeleteLocalRef(activity);
+        return false;
+    }
+
+    // Get the method IDs for vibrate and cancel
+    vibrateMethodId = env->GetMethodID(vibrator_class, "vibrate", "(J)V");
+    vibrateCancelMethodId = env->GetMethodID(vibrator_class, "cancel", "()V");
+
+    // Clean up all local references
+    env->DeleteLocalRef(activity);
+    env->DeleteLocalRef(clazz);
+    env->DeleteLocalRef(service_name);
+    env->DeleteLocalRef(vibrator_service_local);
+    env->DeleteLocalRef(vibrator_class);
+
+    if (!vibrateMethodId || !vibrateCancelMethodId) {
+        SDL_Log("Failed to get vibrate or cancel method ID");
+        env->DeleteGlobalRef(vibrateService);
+        vibrateService = nullptr;
+        return false;
+    }
+
+    SDL_Log("Vibration service initialized successfully");
+    return true;
+}
+
+void vibrationStart(int durationMS) {
+    if (!vibrateService || !vibrateMethodId) {
+        SDL_Log("Vibration service not initialized");
+        return;
+    }
+
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (!env) {
+        SDL_Log("Failed to get JNI environment for vibrate call");
+        return;
+    }
+
+    jlong duration = durationMS;
+    env->CallVoidMethod(vibrateService, vibrateMethodId, duration);
+}
+
+void vibrationStop() {
+    if (!vibrateService || !vibrateCancelMethodId) {
+        SDL_Log("Vibration service not initialized");
+        return;
+    }
+
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (!env) {
+        SDL_Log("Failed to get JNI environment for cancel call");
+        return;
+    }
+
+    env->CallVoidMethod(vibrateService, vibrateCancelMethodId);
+}
+
+void vibrationDeinit() {
+    if (vibrateService) {
+        JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+        if (env) {
+            env->DeleteGlobalRef(vibrateService);
+        }
+        vibrateService = nullptr;
+        vibrateMethodId = 0;
+        vibrateCancelMethodId = 0; // Reset the cancel method ID
+        SDL_Log("Vibration service cleaned up");
+    }
 }
 #endif

@@ -56,7 +56,7 @@ extern std::map<int, std::string> keyToString;
 
 std::string stringFromKey(uint32_t key);
 
-enum class InputType { KEYBOARD, CONTROLLER };
+enum class InputType { KEYBOARD, CONTROLLER, TOUCH };
 
 extern InputType lastInputType;
 
@@ -87,11 +87,13 @@ public:
 
 class Layout {
 public:
-    Button buttons[10];
+    Button buttons[11];
 
     Layout(Button* buttons) {
-        memcpy(this->buttons, buttons, sizeof(Button) * 10);
+        memcpy(this->buttons, buttons, sizeof(Button) * 11);
     }
 
     Layout() {}
 };
+
+extern void setGameWindowScale();

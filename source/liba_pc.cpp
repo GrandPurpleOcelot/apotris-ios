@@ -3,8 +3,8 @@
 
 #if defined(PC) || defined(ANDROID)
 
-#include "liba_pc.h"
 #include "def.h"
+#include "liba_pc.h"
 #include "logging.h"
 #include "scene.hpp"
 #include "stdarg.h"
@@ -17,8 +17,13 @@
 
 #include <map>
 
+#if defined(ANDROID)
+static int offsetx = (SCREEN_WIDTH - 240) * 0.5;
+static int offsety = (SCREEN_HEIGHT - 160) * 0.35;
+#else
 static int offsetx = (SCREEN_WIDTH - 240) / 2;
 static int offsety = (SCREEN_HEIGHT - 160) / 2;
+#endif
 
 int spriteVOffset = 0;
 
@@ -67,10 +72,12 @@ static inline int rgb5to8(u16 color) {
 class LayerInfo {
 public:
     int id = -1;
-    bool enabled = true;
+    bool enabled = false;
     int priority = -1;
     int sbb = 0;
     int cbb = 0;
+    int x = 0;
+    int y = 0;
 };
 
 TLN_Palette palettes[32];
@@ -387,6 +394,9 @@ void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start,
 void setLayerScroll(int layer, int x, int y) {
     if (!layerInfo[layer].enabled)
         return;
+
+    layerInfo[layer].x = x;
+    layerInfo[layer].y = y;
 
     TLN_SetLayerPosition(layerInfo[layer].id, x - offsetx, y - offsety);
 }
@@ -915,9 +925,17 @@ void showFPS() {
 
 void setSpriteMaskRegion(int shift) {
     const int top = offsety + 164 + shift;
-    const int bot = offsety + shift;
 
-    TLN_SetSpritesMaskRegion(top, bot);
+    TLN_SetSpritesMaskRegion(top, 0);
+}
+
+void setScreenOffset(int x, int y) {
+    offsetx = x;
+    offsety = y;
+
+    for (int i = 0; i < 4; i++) {
+        setLayerScroll(i, layerInfo[i].x, layerInfo[i].y);
+    }
 }
 
 #endif
