@@ -202,7 +202,11 @@ typedef struct Settings {
 
     int placeHolder[25];
 
+#ifdef ANDROID
     Layout onScreenLayouts[2];
+#else
+    int layoutPlaceHolder[11 * 2 * sizeof(int)];
+#endif
 
 } ALIGN(4) Settings;
 

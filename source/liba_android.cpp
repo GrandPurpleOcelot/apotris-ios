@@ -15,6 +15,9 @@
 
 #include "nanotime.h"
 
+static bool inBackground = false;
+static bool pendingBackground = false;
+
 static jobject vibrateService = nullptr;
 static jmethodID vibrateMethodId = 0;
 static jmethodID vibrateCancelMethodId = 0;
@@ -155,12 +158,29 @@ void saveLayout() {
 }
 
 void handleInput() {
+    if (pendingBackground) {
+        inBackground = true;
+        pendingBackground = false;
+        render = false;
+    }
+
     SDL_Event event;
 
     int x = 0, y = 0, k = 0, dx = 0, dy = 0;
     int index = 0;
 
-    while (SDL_PollEvent(&event)) {
+    bool eventAvailable = true;
+
+    while (eventAvailable) {
+        if (inBackground) {
+            eventAvailable = SDL_WaitEvent(&event);
+        } else {
+            eventAvailable = SDL_PollEvent(&event);
+        }
+
+        if (!eventAvailable)
+            break;
+
         int key = 0;
         auto it = currentlyPressed.begin();
         bool found = false;
@@ -297,6 +317,31 @@ void handleInput() {
                 }
             } else {
                 moving = -1;
+            }
+            break;
+        case SDL_APP_WILLENTERBACKGROUND:
+            paused = true;
+            vibrationStop();
+            break;
+        case SDL_APP_DIDENTERBACKGROUND:
+            pendingBackground = true;
+            break;
+        case SDL_APP_WILLENTERFOREGROUND:
+            inBackground = false;
+            pendingBackground = false;
+            render = true;
+            break;
+        case SDL_APP_DIDENTERFOREGROUND:
+            inBackground = false;
+            pendingBackground = false;
+            render = true;
+            break;
+        case SDL_APP_TERMINATING:
+        case SDL_APP_LOWMEMORY:
+            addGameStats();
+            saveSavefile();
+            if (event.type == SDL_APP_TERMINATING) {
+                quit();
             }
             break;
         case SDL_QUIT:
