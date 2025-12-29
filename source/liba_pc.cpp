@@ -34,6 +34,7 @@ int blendInfo = 0;
 void onHBlank(int line);
 uint8_t customBlend(uint8_t a, uint8_t b);
 void showFPS();
+void showBattery();
 
 std::list<float> fpsHistory;
 
@@ -52,7 +53,7 @@ public:
     }
 
     ColorSplit(u16 c) {
-        b = (((c) & 0x1f) << 3);
+        b = (((c)&0x1f) << 3);
         g = (((c >> 5) & 0x1f) << (3));
         r = (((c >> 10) & 0x1f) << (3));
     }
@@ -65,7 +66,7 @@ public:
 };
 
 static inline int rgb5to8(u16 color) {
-    return (((color) & 0x1f) << 3) + (((color >> 5) & 0x1f) << (3 + 8)) +
+    return (((color)&0x1f) << 3) + (((color >> 5) & 0x1f) << (3 + 8)) +
            (((color >> 10) & 0x1f) << (3 + 16));
 }
 
@@ -217,6 +218,7 @@ void vsync() {
     onVBlank();
 
     showFPS();
+    showBattery();
 
     TLN_UpdateFrame(0);
 
@@ -684,7 +686,7 @@ void color_adj_MEM(COLOR* dst, const COLOR* src, u32 count, u32 bright) {
     for (ii = 0; ii < count; ii++) {
         clr = src[ii];
 
-        rr = ((clr) & 31) + bright;
+        rr = ((clr)&31) + bright;
         gg = ((clr >> 5) & 31) + bright;
         bb = ((clr >> 10) & 31) + bright;
 
@@ -709,7 +711,7 @@ void clr_grayscale(COLOR* dst, const COLOR* src, u32 nclrs) {
         clr = *src++;
 
         // Do RGB conversion in .8 fixed point
-        rr = ((clr) & 31) * 0x4C;       // 29.7%
+        rr = ((clr)&31) * 0x4C;         // 29.7%
         gg = ((clr >> 5) & 31) * 0x96;  // 58.6%
         bb = ((clr >> 10) & 31) * 0x1E; // 11.7%
         gray = (rr + gg + bb + 0x80) >> 8;
@@ -723,7 +725,7 @@ void clr_rgbscale(COLOR* dst, const COLOR* src, uint nclrs, COLOR clr) {
     u32 rr, gg, bb, scale, gray;
 
     // Normalize target color
-    rr = (clr) & 31;
+    rr = (clr)&31;
     gg = (clr >> 5) & 31;
     bb = (clr >> 10) & 31;
 
@@ -744,7 +746,7 @@ void clr_rgbscale(COLOR* dst, const COLOR* src, uint nclrs, COLOR clr) {
         clr = *src++;
 
         // Grayscaly in 5.8f
-        gray = ((clr) & 31) * 0x4C;        // 29.7%
+        gray = ((clr)&31) * 0x4C;          // 29.7%
         gray += ((clr >> 5) & 31) * 0x96;  // 58.6%
         gray += ((clr >> 10) & 31) * 0x1E; // 11.7%
 
@@ -785,7 +787,7 @@ void clearTilemapEntries(int tilemap, int index, int count) {
     }
 }
 
-void stopDMA() {};
+void stopDMA(){};
 void setMosaic(int sx, int sy) {
     for (int i = 0; i < 4; i++) {
         if (!sx || !sy)
@@ -795,8 +797,8 @@ void setMosaic(int sx, int sy) {
     }
 };
 
-void sleep() {};
-void rumble_set_state(int n) {};
+void sleep(){};
+void rumble_set_state(int n){};
 
 void onVBlank() {
     if (canDraw) {
@@ -921,6 +923,19 @@ void showFPS() {
         const int width = 30 - 2 * (savefile->settings.aspectRatio == 1);
         aprintColor(buff, width - 4, 0, 1);
     }
+}
+
+void showBattery() {
+#if defined(PC) || defined(ANDROID)
+    if (batteryPercentage == -1)
+        return;
+
+    char buff[8];
+    snprintf(buff, 8, "%d", batteryPercentage);
+
+    const int width = 30 - 2 * (savefile->settings.aspectRatio == 1);
+    aprintColor(buff, width - 4, 1, 1);
+#endif
 }
 
 void setSpriteMaskRegion(int shift) {

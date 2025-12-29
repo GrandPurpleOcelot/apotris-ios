@@ -31,6 +31,7 @@ std::string savefileDir() {
 
 void handleAnalogInput(int axis, int value);
 void handleInput();
+void updateBatteryInfo();
 
 std::unordered_set<uint32_t> currentKeys;
 std::unordered_set<uint32_t> previousKeys;
@@ -54,6 +55,9 @@ uint32_t start_time = 0;
 uint32_t frame_time = 0;
 
 float fps = 0;
+
+int batteryPercentage = -1;
+bool charging = false;
 
 SDL_Window* window;
 SDL_Renderer* renderer;
@@ -380,6 +384,8 @@ void updateWindow(uint8_t* framebuffer) {
 
         controllerCount = SDL_NumJoysticks();
     }
+
+    updateBatteryInfo();
 }
 
 void refreshWindowSize() {
@@ -433,7 +439,7 @@ bool closed() {
 
 void toggleRendering(bool r) { render = r; }
 
-void initRumble() {};
+void initRumble(){};
 
 std::string getSavefilePath() {
 #ifdef __APPLE__
@@ -685,5 +691,16 @@ void drawRect(int x, int y, int w, int h) {
     r.h = h;
 
     rects.push_back(r);
+}
+
+void updateBatteryInfo() {
+    SDL_PowerState state = SDL_GetPowerInfo(NULL, &batteryPercentage);
+
+    charging = false;
+    if (state == SDL_POWERSTATE_CHARGING) {
+        charging = true;
+    } else if (state != SDL_POWERSTATE_ON_BATTERY) {
+        batteryPercentage = -1;
+    }
 }
 #endif

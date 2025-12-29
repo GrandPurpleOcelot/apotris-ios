@@ -210,3 +210,5 @@ extern void deinitialize();
 extern void refreshWindowSize();
 
 extern float fps;
+
+extern int batteryPercentage;
