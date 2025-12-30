@@ -4,7 +4,6 @@
 #include "menu.h"
 #include "platform.hpp"
 #include "rumblePatterns.hpp"
-#include "sprite60tiles_bin.h"
 #include "sprites.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -226,6 +225,10 @@ void GameScene::updateText() {
         showFinesseCombo();
         showPPS();
     }
+
+#if defined(PC) || defined(ANDROID)
+    showBattery();
+#endif
 }
 
 void GameScene::checkSounds() {
@@ -1859,6 +1862,10 @@ void GameScene::countdown() {
     showZoneMeter();
     showGoalLine();
 
+#if defined(PC) || defined(ANDROID)
+    showBattery();
+#endif
+
     showSprites(128);
 
     if (!game->zoneTimer)
@@ -1956,7 +1963,8 @@ void GameScene::countdown() {
             }
         } else {
             aprint("  GO  ", pos.x / 8 + 2, pos.y / 8 + 10);
-            if (timer == 2 * timerMax / 3 && savefile->settings.announcer && !interrupted)
+            if (timer == 2 * timerMax / 3 && savefile->settings.announcer &&
+                !interrupted)
                 sfx(SFX_GO);
         }
 #ifdef GBA

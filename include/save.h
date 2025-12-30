@@ -200,7 +200,9 @@ typedef struct Settings {
     u8 ezFlash3in1Strength;
     u8 zoneRumbleMode;
 
-    int placeHolder[25];
+    int batteryDisplay;
+
+    int placeHolder[24];
 
 #ifdef ANDROID
     Layout onScreenLayouts[2];

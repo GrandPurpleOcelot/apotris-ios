@@ -15,6 +15,10 @@
 #include <fstream>
 #include <list>
 
+#include "sprite62tiles_bin.h"
+#include "sprite63tiles_bin.h"
+#include "sprite64tiles_bin.h"
+
 #include <map>
 
 #if defined(ANDROID)
@@ -218,7 +222,6 @@ void vsync() {
     onVBlank();
 
     showFPS();
-    showBattery();
 
     TLN_UpdateFrame(0);
 
@@ -927,14 +930,32 @@ void showFPS() {
 
 void showBattery() {
 #if defined(PC) || defined(ANDROID)
-    if (batteryPercentage == -1)
+    OBJ_ATTR* sprite = &obj_buffer[127];
+
+    if (savefile->settings.batteryDisplay < 0 && batteryPercentage == -1) {
+        sprite_hide(sprite);
         return;
+    }
 
     char buff[8];
-    snprintf(buff, 8, "%d", batteryPercentage);
+    snprintf(buff, 8, "%d%%", batteryPercentage);
 
-    const int width = 30 - 2 * (savefile->settings.aspectRatio == 1);
-    aprintColor(buff, width - 4, 1, 1);
+    u8* src = (u8*)sprite62tiles_bin;
+
+    if (charging) {
+        src = (u8*)sprite64tiles_bin;
+    } else if (batteryPercentage <= 15) {
+        src = (u8*)sprite63tiles_bin;
+    }
+
+    loadSpriteTiles(1022, src, 1, 1);
+
+    clearSpriteTiles(1020, 2, 1);
+    aprintsSprite(buff, 4, 0, 1020);
+
+    sprite_set_attr(sprite, ShapeWide, 1, 1020, 15, 0);
+    sprite_set_pos(sprite, 21 * 8 + 1, 152);
+    sprite_unhide(sprite, 0);
 #endif
 }
 

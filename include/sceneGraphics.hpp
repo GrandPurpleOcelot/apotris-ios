@@ -674,6 +674,29 @@ public:
     }
 };
 
+class BatteryDisplayElement : public Element {
+public:
+    std::string getLabel() override { return "Battery Info"; }
+
+    std::string getCursor(std::string text) override {
+        return "[" + text + "]";
+    }
+
+    void action(int dir) override {
+        savefile->settings.batteryDisplay = !savefile->settings.batteryDisplay;
+        clearText();
+
+        sfx(SFX_MENUCONFIRM);
+    }
+
+    std::string getCurrentOption() override {
+        if (savefile->settings.batteryDisplay == 0)
+            return "OFF";
+        else
+            return "ON";
+    }
+};
+
 class ExploreElement : public Element {
 public:
     std::string getLabel() override { return "Explore"; }
@@ -778,6 +801,9 @@ class GraphicsScene : public Scene {
         l.push_back(new ScreenShakeElement());
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
+        #if defined(PC) || defined(ANDROID)
+        l.push_back(new BatteryDisplayElement());
+        #endif
         l.push_back(new AspectRatioElement());
         l.push_back(new ExploreElement());
         l.push_back(new RandomGraphicsElement());

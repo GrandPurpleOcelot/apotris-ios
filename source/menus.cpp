@@ -660,6 +660,7 @@ int GameScene::pauseMenu() {
     sprite_hide(&obj_buffer[23]); // hide meter
     sprite_hide(&obj_buffer[24]); // hide finesse combo counter
     sprite_hide(&obj_buffer[25]); // hide enemyBoard
+    sprite_hide(&obj_buffer[127]); // hide battery sprite
     for (int i = 0; i < 3; i++)
         sprite_hide(&obj_buffer[16 + i]);
 

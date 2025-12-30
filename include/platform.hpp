@@ -208,7 +208,9 @@ extern void quit();
 
 extern void deinitialize();
 extern void refreshWindowSize();
+extern void showBattery();
 
 extern float fps;
 
 extern int batteryPercentage;
+extern bool charging;
