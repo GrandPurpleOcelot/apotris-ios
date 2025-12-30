@@ -118,7 +118,7 @@ void initialize() {
 
 #endif
 
-#if defined(PC) || defined(PORTMASTER)
+#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
     if (savefile->settings.shaders != 0) {
         shaderInit(savefile->settings.shaders);
     }

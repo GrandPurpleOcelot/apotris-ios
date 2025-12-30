@@ -8,12 +8,26 @@
 #include <jni.h>
 #include <sys/stat.h>
 #include <unordered_set>
+#include <android/log.h>
+#include <glad/gles2.h>
+
+#define LOG_TAG "ApotrisAndroid"
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 #include "def.h"
 
 #include "shader.h"
 
 #include "nanotime.h"
+
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
+#include "imgui_impl_opengl3.h"
+
+static bool imguiInited = false;
+static bool imguiGLInited = false;
 
 static bool inBackground = false;
 static bool pendingBackground = false;
@@ -104,10 +118,12 @@ int KEY_SELECT = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(SDLK_3);
 int KEY_START = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(SDLK_ESCAPE);
 
 void windowInit() {
+    SDL_Log("windowInit: start");
     // Initialize SDL
     window = nullptr;
 
     SDL_Init(SDL_INIT_VIDEO);
+    SDL_Log("windowInit: SDL_Init VIDEO done");
 
     // Disables the default accelerometer "joystick" on android
     SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
@@ -116,8 +132,10 @@ void windowInit() {
                               SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight,
                               SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL |
                                   SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE);
+    SDL_Log("windowInit: SDL_CreateWindow done");
 
     renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_Log("windowInit: SDL_CreateRenderer done");
 
     SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
     if (SDL_NumJoysticks() > 0) {
@@ -130,13 +148,36 @@ void windowInit() {
     SDL_ShowCursor(SDL_DISABLE);
 
     refreshWindowSize();
+    SDL_Log("windowInit: refreshWindowSize done");
 
     loadAudio("");
 
     nanotime_step_init(&stepper, (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    ImGui::StyleColorsDark();
+
+    // Scale font size for high-density screens
+    io.FontGlobalScale = 4.0f;
+
+    // Init SDL2 backend (platform)
+    ImGui_ImplSDL2_InitForOpenGL(window, nullptr);
+    SDL_Log("windowInit: ImGui_ImplSDL2_InitForOpenGL done");
+
+    // Init SDLRenderer2 backend (renderer)
+    ImGui_ImplSDLRenderer2_Init(renderer);
+    SDL_Log("windowInit: ImGui_ImplSDLRenderer2_Init done");
+
+    imguiInited = true;
+
     vibrationInit();
+    SDL_Log("windowInit: vibrationInit done");
 }
 
 void pressKey(int key, InputType type) {
@@ -181,6 +222,9 @@ void handleInput() {
         } else {
             eventAvailable = SDL_PollEvent(&event);
         }
+
+        if (imguiInited)
+            ImGui_ImplSDL2_ProcessEvent(&event);
 
         if (!eventAvailable)
             break;
@@ -431,6 +475,8 @@ uint32_t keys_raw() {
 }
 
 void updateWindow(uint8_t* framebuffer) {
+    static int logCounter = 0;
+    if (logCounter++ % 60 == 0) SDL_Log("updateWindow start (frame %d)", logCounter);
     const int in_width = 512;
     const int in_height = 512;
 
@@ -441,7 +487,76 @@ void updateWindow(uint8_t* framebuffer) {
 
     if (img == NULL) {
         printf("Failed to create SDL_Surface: %s\n", SDL_GetError());
+        SDL_Log("updateWindow: Failed to create SDL_Surface");
         return;
+    }
+    SDL_Log("updateWindow: SDL_Surface created");
+
+    // Start ImGui Frame
+    if (imguiInited) {
+        // SDL_Log("updateWindow: ImGui inited check passed");
+        if (shaderStatus == ShaderStatus::OK && savefile->settings.shaders != 0) {
+            // SDL_Log("updateWindow: Shaders enabled");
+            if (!imguiGLInited) {
+                LOGI("Switching to ImGui OpenGL3 backend");
+                ImGui_ImplSDLRenderer2_Shutdown();
+
+                makeShaderContextCurrent(window);
+                
+                const char* version = (const char*)glGetString(GL_VERSION);
+                if (version == NULL) {
+                    LOGE("CRITICAL: glGetString(GL_VERSION) returned NULL! Context not current?");
+                } else {
+                    LOGI("Current GL Version: %s", version);
+                }
+
+                ImGui_ImplOpenGL3_Init("#version 300 es");
+                imguiGLInited = true;
+                LOGI("ImGui OpenGL3 initialized");
+            }
+            ImGui_ImplOpenGL3_NewFrame();
+            // SDL_Log("updateWindow: ImGui_ImplOpenGL3_NewFrame done");
+            ImGui_ImplSDL2_NewFrame();
+            // SDL_Log("updateWindow: ImGui_ImplSDL2_NewFrame done (GL path)");
+        } else {
+            // SDL_Log("updateWindow: Shaders disabled");
+            if (imguiGLInited) {
+                LOGI("Switching to ImGui SDLRenderer2 backend");
+                ImGui_ImplOpenGL3_Shutdown();
+                ImGui_ImplSDLRenderer2_Init(renderer);
+                imguiGLInited = false;
+            }
+
+            ImGui_ImplSDLRenderer2_NewFrame();
+            ImGui_ImplSDL2_NewFrame();
+            // SDL_Log("updateWindow: ImGui SDL2/Renderer2 NewFrame done");
+        }
+        ImGui::NewFrame();
+
+        // Create a simple debug window
+        ImGui::Begin("Apotris Android Debug");
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::End();
+
+        if (controllerCount == 0) {
+            ImDrawList* draw_list = ImGui::GetForegroundDrawList();
+            for (auto const& button : layout.buttons) {
+                ImU32 color;
+                if (!controlsUnlocked) {
+                    color = IM_COL32(255, 255, 255, 100);
+                } else {
+                    color = IM_COL32(180, 255, 180, 100);
+                }
+
+                draw_list->AddRectFilled(
+                    ImVec2(button.x - button.radius, button.y - button.radius),
+                    ImVec2(button.x + button.radius, button.y + button.radius),
+                    color);
+            }
+        }
+
+        ImGui::Render();
+        SDL_Log("updateWindow: ImGui::Render done");
     }
 
     if (shaderStatus != ShaderStatus::OK || savefile->settings.shaders == 0) {
@@ -498,32 +613,29 @@ void updateWindow(uint8_t* framebuffer) {
             SDL_RenderFillRect(renderer, &rect);
         }
 
-        if (controllerCount == 0) {
-            for (auto const& button : layout.buttons) {
-                if (!controlsUnlocked) {
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 100);
-                } else {
-                    SDL_SetRenderDrawColor(renderer, 180, 255, 180, 100);
-                }
-
-                SDL_Rect r;
-                r.x = button.x - button.radius;
-                r.y = button.y - button.radius;
-                r.w = button.radius * 2;
-                r.h = button.radius * 2;
-
-                // Render rect
-                SDL_RenderFillRect(renderer, &r);
-            }
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-        }
-
         rects.clear();
+
+        if (imguiInited)
+            ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
 
         SDL_RenderPresent(renderer);
     } else {
         if (render) {
-            drawWithShaders(window, img, true);
+            drawWithShaders(window, img, true, false); // Don't swap
+
+            if (imguiInited && imguiGLInited) {
+                ImDrawData* draw_data = ImGui::GetDrawData();
+                if (draw_data) {
+                    static int logCounter2 = 0;
+                    if (logCounter2++ % 60 == 0)
+                        LOGI("ImGui RenderDrawData: CmdLists=%d, TotalVtx=%d", draw_data->CmdListsCount, draw_data->TotalVtxCount);
+                    ImGui_ImplOpenGL3_RenderDrawData(draw_data);
+                } else {
+                    LOGE("ImGui DrawData is NULL");
+                }
+            }
+
+            SDL_GL_SwapWindow(window);
         }
     }
 
@@ -679,6 +791,12 @@ void saveSavefile() {
 }
 
 void quit() {
+    if (imguiInited) {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDLRenderer2_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+    }
     vibrationDeinit();
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
@@ -814,7 +932,9 @@ void setGameWindowScale() {
         setGradient(savefile->settings.backgroundGradient);
 
         if (savefile->settings.shaders != 0) {
+            LOGI("Refreshing shader resolution...");
             refreshShaderResolution(screenWidth, screenHeight, windowScale);
+            LOGI("Shader resolution refreshed.");
         }
     }
 }
@@ -1011,7 +1131,9 @@ std::vector<Layout> getDefaultLayouts() {
 }
 
 void setLayout() {
+    LOGI("setLayout: start");
     layout = savefile->settings.onScreenLayouts[(screenWidth > screenHeight)];
+    LOGI("setLayout: end");
 }
 
 void updateBatteryInfo() {

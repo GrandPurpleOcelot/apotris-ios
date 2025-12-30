@@ -16,6 +16,8 @@
 
 #ifdef ANDROID
 #include <android/log.h>
+#include <jni.h>
+#include <SDL_system.h>
 #define LOG_TAG "ApotrisShader"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -131,7 +133,7 @@ uint loadShaderFromFile(std::string path, int type) {
         std::string line;
         while (getline(buffer_in, line)) {
             if (line.find("pragma") == std::string::npos) {
-                buffer_out +=
+                buffer_out += 
                     translateLine(line, type == GL_VERTEX_SHADER) + "\n";
             }
         }
@@ -266,50 +268,58 @@ void initShaders(SDL_Window* window, int index) {
 
     int res_out = glGetUniformLocation(shaderProgram, "OutputSize");
     if (res_out == -1) {
-        log("ERROR: OutputSize");
-        LOGE("ERROR: OutputSize");
-        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
-        return;
+        LOGI("WARNING: OutputSize uniform not found (optimized out?)");
+    } else {
+        glUniform2f(res_out, (float)width, (float)height);
     }
-
-    glUniform2f(res_out, (float)width, (float)height);
 
     int res_in = glGetUniformLocation(shaderProgram, "InputSize");
     if (res_in == -1) {
-
-        log("ERROR: InputSize");
-        LOGE("ERROR: InputSize");
-        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
-        return;
+        LOGI("WARNING: InputSize uniform not found (optimized out?)");
+    } else {
+        glUniform2f(res_in, (float)width, (float)height);
     }
-
-    glUniform2f(res_in, (float)width, (float)height);
 
     int res_tex = glGetUniformLocation(shaderProgram, "TextureSize");
     if (res_tex == -1) {
-        log("ERROR: TextureSize");
-        LOGE("ERROR: TextureSize");
-        shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
-        return;
+        LOGI("WARNING: TextureSize uniform not found (optimized out?)");
+    } else {
+        glUniform2f(res_tex, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
     }
 
-    glUniform2f(res_tex, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
-
     glUseProgram(shaderProgram);
+    LOGI("Shader program used");
 
     glGenBuffers(1, &vbo);
+    LOGI("Generated VBO: %u", vbo);
     glGenBuffers(1, &ebo);
-    glGenVertexArrays(1, &vao);
-    glGenTextures(1, &shaderTexture);
+    LOGI("Generated EBO: %u", ebo);
 
-    glBindVertexArray(vao);
+    if (glad_glGenVertexArrays == NULL) {
+        LOGE("CRITICAL: glGenVertexArrays is NULL!");
+    } else {
+        glGenVertexArrays(1, &vao);
+        LOGI("Generated VAO: %u", vao);
+    }
+    
+    glGenTextures(1, &shaderTexture);
+    LOGI("Generated Texture: %u", shaderTexture);
+
+    if (glad_glBindVertexArray == NULL) {
+        LOGE("CRITICAL: glBindVertexArray is NULL!");
+    } else {
+        glBindVertexArray(vao);
+        LOGI("Bound VAO");
+    }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    LOGI("Buffer Data VBO set");
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
                  GL_STATIC_DRAW);
+    LOGI("Buffer Data EBO set");
 
     int position = glGetAttribLocation(shaderProgram, "VertexCoord");
     if (position == -1) {
@@ -318,10 +328,12 @@ void initShaders(SDL_Window* window, int index) {
         shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
         return;
     }
+    LOGI("VertexCoord location: %d", position);
 
     glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                           (void*)0);
     glEnableVertexAttribArray(position);
+    LOGI("Vertex Attrib Pointer set");
 
     int texCoord = glGetAttribLocation(shaderProgram, "TexCoord");
     if (texCoord == -1) {
@@ -330,14 +342,20 @@ void initShaders(SDL_Window* window, int index) {
         shaderStatus = ShaderStatus::SHADER_FILE_ERROR;
         return;
     }
+    LOGI("TexCoord location: %d", texCoord);
 
     glVertexAttribPointer(texCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                           (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(texCoord);
+    LOGI("TexCoord Attrib Pointer set");
 
-    glm::mat4 def = glm::mat4();
+    glm::mat4 def = glm::mat4(1.0f); // Identity matrix
+    LOGI("Created identity matrix");
+
     unsigned int transformLoc =
         glGetUniformLocation(shaderProgram, "MVPMatrix");
+    LOGI("Got MVPMatrix location: %u", transformLoc);
+
     if (transformLoc == -1) {
         log("ERROR: MVP");
         LOGE("ERROR: MVP");
@@ -349,36 +367,52 @@ void initShaders(SDL_Window* window, int index) {
     //     return;
 
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(def));
+    LOGI("Set MVPMatrix uniform");
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, shaderTexture);
+    LOGI("Bound Texture0");
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    LOGI("Set Texture Parameters");
 
     shaderStatus = ShaderStatus::OK;
+    LOGI("Shader initialization complete");
 }
 
 void drawWithShaders(SDL_Window* window, SDL_Surface* img,
-                     bool shadersEnabled) {
+                     bool shadersEnabled, bool swap) {
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    LOGI("Cleared Color Buffer");
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, shaderTexture);
+    LOGI("Bound Texture for Draw");
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0,
                  GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
+    LOGI("Updated Texture Image");
 
     if (shadersEnabled) {
         glUseProgram(shaderProgram);
+        LOGI("Used Shader Program");
     }
 
-    glBindVertexArray(vao);
+    if (glad_glBindVertexArray) {
+        glBindVertexArray(vao);
+    }
+    LOGI("Bound VAO for Draw");
+    
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    LOGI("Drew Elements");
 
-    SDL_GL_SwapWindow(window);
+    if (swap)
+        SDL_GL_SwapWindow(window);
 }
 
 void freeShaders() {
@@ -399,11 +433,17 @@ void freeShaders() {
 }
 
 void refreshShaderResolution(int w, int h, float s) {
+    if (shaderStatus != ShaderStatus::OK) {
+        LOGE("refreshShaderResolution called but shaders not initialized!");
+        return;
+    }
+    LOGI("refreshShaderResolution start");
     width = w;
     height = h;
     scale = s;
 
     glViewport(0, 0, width, height);
+    LOGI("Set Viewport");
 
     int res_out = glGetUniformLocation(shaderProgram, "OutputSize");
     glUniform2f(res_out, (float)width, (float)height);
@@ -413,6 +453,7 @@ void refreshShaderResolution(int w, int h, float s) {
 
     int res_tex = glGetUniformLocation(shaderProgram, "TextureSize");
     glUniform2f(res_tex, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+    LOGI("Set Uniforms");
 
     float offsetX = (1.0 - ((width / scale) / SCREEN_WIDTH)) / 2;
     float offsetY = (1.0 - ((height / scale) / SCREEN_HEIGHT)) / 2;
@@ -431,6 +472,7 @@ void refreshShaderResolution(int w, int h, float s) {
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    LOGI("refreshShaderResolution end");
 }
 
 static bool hasSuffix(const std::string& s, const std::string& suffix) {
@@ -443,30 +485,48 @@ std::vector<std::string> findShaders() {
     std::vector<std::string> shaderPaths;
 
 #ifdef ANDROID
-    size_t listSize;
-    void* listData = SDL_LoadFile("assets/file_list.txt", &listSize);
-    if (listData) {
-        std::string listStr((char*)listData, listSize);
-        SDL_free(listData);
-
-        std::stringstream ss(listStr);
-        std::string line;
-        while (std::getline(ss, line)) {
-            // Trim whitespace
-            line.erase(line.find_last_not_of(" \n\r\t") + 1);
-            if (hasSuffix(line, ".glsl")) {
-                // file_list.txt contains "shaders/foo.glsl"
-                // We want "assets/shaders/foo.glsl"
-                shaderPaths.push_back("assets/" + line);
+    // Use JNI to list assets
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    
+    if (env && activity) {
+        // Get AssetManager from Activity
+        jclass activityClass = env->GetObjectClass(activity);
+        jmethodID getAssetsMethod = env->GetMethodID(activityClass, "getAssets", "()Landroid/content/res/AssetManager;");
+        jobject assetManager = env->CallObjectMethod(activity, getAssetsMethod);
+        
+        // List files in "shaders" directory (relative to assets root)
+        jclass assetManagerClass = env->GetObjectClass(assetManager);
+        jmethodID listMethod = env->GetMethodID(assetManagerClass, "list", "(Ljava/lang/String;)[Ljava/lang/String;");
+        
+        jstring pathArg = env->NewStringUTF("assets/shaders"); 
+        jobjectArray fileList = (jobjectArray)env->CallObjectMethod(assetManager, listMethod, pathArg);
+        
+        if (fileList) {
+            int count = env->GetArrayLength(fileList);
+            for (int i = 0; i < count; i++) {
+                jstring fileNameStr = (jstring)env->GetObjectArrayElement(fileList, i);
+                const char* fileName = env->GetStringUTFChars(fileNameStr, 0);
+                
+                std::string name(fileName);
+                if (hasSuffix(name, ".glsl")) {
+                    shaderPaths.push_back(shaderPath + "/" + name);
+                }
+                
+                env->ReleaseStringUTFChars(fileNameStr, fileName);
+                env->DeleteLocalRef(fileNameStr);
             }
         }
+        
+        env->DeleteLocalRef(pathArg);
+        env->DeleteLocalRef(assetManager);
+        env->DeleteLocalRef(activityClass);
+        env->DeleteLocalRef(assetManagerClass);
     }
-    return shaderPaths;
 #else
-
     DIR* dir = opendir(shaderPath.c_str());
     if (!dir) {
-        log("couldn't open dir");
+        log("couldn't open dir: " + shaderPath);
         return {};
     }
 
@@ -478,8 +538,14 @@ std::vector<std::string> findShaders() {
     }
 
     closedir(dir);
+#endif
 
     return shaderPaths;
-#endif
+}
+
+void makeShaderContextCurrent(SDL_Window* window) {
+    if (shaderStatus == ShaderStatus::OK && shaderContext != NULL) {
+        SDL_GL_MakeCurrent(window, shaderContext);
+    }
 }
 #endif
