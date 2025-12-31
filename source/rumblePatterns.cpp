@@ -35,13 +35,13 @@ struct RumbleSequenceData {
         .len = sizeof(_rumbleseq_##name##_partdata) / sizeof(RumbleSequencePart) \
     }
 
-// TODO re-add RUMBLE_
-
 DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_PLACE,
+    RumbleSequencePart{1, 0},
     RumbleSequencePart{4, 5},
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_CLASSIC_CLEAR,
+    RumbleSequencePart{1, 0},
     RumbleSequencePart{6, 6},
 );
 
@@ -56,28 +56,33 @@ DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_ZONE_RIPPLE,
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_SINGLE,
+    RumbleSequencePart{1, 0},
     RumbleSequencePart{4, 6},
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_DOUBLE,
+    RumbleSequencePart{1, 0},
     RumbleSequencePart{4, 6},
     RumbleSequencePart{2, 0},
     RumbleSequencePart{4, 2},
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_TRIPLE,
+    RumbleSequencePart{1, 0},
     RumbleSequencePart{4, 6},
     RumbleSequencePart{2, 0},
     RumbleSequencePart{4, 3},
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_QUAD,
+    RumbleSequencePart{1, 0},
     RumbleSequencePart{4, 6},
     RumbleSequencePart{2, 0},
     RumbleSequencePart{4, 4},
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_QUAD_B2B,
+    RumbleSequencePart{1, 0},
     RumbleSequencePart{4, 6},
     RumbleSequencePart{2, 0},
     RumbleSequencePart{4, 6},
@@ -126,6 +131,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_TSPIN_MINI,
 );
 
 DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_LEVEL_UP,
+    RumbleSequencePart{1, 0},
     RumbleSequencePart{3, 3},
     RumbleSequencePart{3, 5},
 );
