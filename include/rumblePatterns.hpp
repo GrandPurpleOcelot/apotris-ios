@@ -49,8 +49,8 @@ enum RumbleSequence : int
     RUMBLE_NONE
 };
 
-void rumbleStart(const RumbleSequence sequence, u8 strength_mod = 0);
-void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mod = 0);
+void rumbleStart(const RumbleSequence sequence, int strength_mod = 0);
+void rumbleStartLowPri(const RumbleSequence sequence, int strength_mod = 0);
 void rumbleStop();
 const RumbleSequence rumbleGetCurrent();
 void rumblePatternISR();

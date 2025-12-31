@@ -96,7 +96,7 @@ DEFINE_RUMBLE_SEQUENCE_DATA(RUMBLE_PERFECT_CLEAR,
     RumbleSequencePart{3, 4},
     RumbleSequencePart{3, 6},
     RumbleSequencePart{3, 0},
-    RumbleSequencePart{3, 0}    ,
+    RumbleSequencePart{3, 0},
     RumbleSequencePart{3, 2},
     RumbleSequencePart{3, 4},
     RumbleSequencePart{3, 6},
@@ -441,7 +441,7 @@ static RumbleSequence s_currentSequence = RUMBLE_NONE;
 static RumbleSequence s_newSequence = RUMBLE_NONE;
 static u8 s_newStrengthMod = 0;
 
-void rumbleStart(const RumbleSequence sequence, u8 strength_mod)
+void rumbleStart(const RumbleSequence sequence, int strength_mod)
 {
     // If Classic Style selected and it's not a classic rumble, skip it.
     // Bit of a hack but also simple enough for now.
@@ -451,13 +451,15 @@ void rumbleStart(const RumbleSequence sequence, u8 strength_mod)
 
     s_currentSequence = RUMBLE_NONE;
     s_newSequence = sequence;
-    if (strength_mod > 8)
-        s_newStrengthMod = 8;
+    if (strength_mod >= 3)
+        s_newStrengthMod = 3;
+    else if (strength_mod <= 0)
+        s_newStrengthMod = 0;
     else
         s_newStrengthMod = strength_mod;
 }
 
-void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mod)
+void rumbleStartLowPri(const RumbleSequence sequence, int strength_mod)
 {
     if (s_newSequence == RUMBLE_NONE || sequence > s_newSequence) {
         rumbleStart(sequence, strength_mod);
@@ -569,11 +571,11 @@ void rumblePatternISR()
 }
 
 #else
-void rumbleStart(const RumbleSequence sequence, u8 strength_mod) {
+void rumbleStart(const RumbleSequence sequence, int strength_mod) {
     rumbleStart(1);
 }
 
-void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mode) {
+void rumbleStartLowPri(const RumbleSequence sequence, int strength_mod) {
     rumbleStart(1);
 }
 

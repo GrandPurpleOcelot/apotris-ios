@@ -938,7 +938,4 @@ IWRAM_CODE void onKeyInterrupt() {
     SoftReset();
 }
 
-// void rumbleStart(int length) {}
-
-// void rumbleStop() { rumbleStop(); }
 #endif
