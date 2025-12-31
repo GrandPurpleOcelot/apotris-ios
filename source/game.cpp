@@ -3730,7 +3730,7 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
-        rumbleStart(savefile->settings.rumbleStyle == 1 ? RUMBLE_SINGLE
+        rumbleStartLowPri(savefile->settings.rumbleStyle == 1 ? RUMBLE_SINGLE
                                                         : RUMBLE_CLASSIC_CLEAR,
                     game->comboCounter);
         clearTimer = 0;
