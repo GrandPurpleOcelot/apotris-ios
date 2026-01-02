@@ -376,7 +376,7 @@ void endAnimation() {
     enableLayerWindow(1, 0, 0, 240, 160, false);
     enableLayerWindow(2, 0, 0, 240, 160, false);
 
-    rumbleStop();
+    rumblePatternStop();
 
     sfx(SFX_END);
 
@@ -665,7 +665,7 @@ int GameScene::pauseMenu() {
 
     showSprites(128);
 
-    rumbleStop();
+    rumblePatternStop();
 
     // calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);

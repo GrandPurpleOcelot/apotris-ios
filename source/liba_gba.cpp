@@ -628,7 +628,7 @@ void sleep() {
     interrupt_disable(INTR_SERIAL);
 
     interrupt_disable(INTR_TIMER2);
-    rumbleStop();
+    rumblePatternStop();
 
     if (use_combo_for_wake) {
         // Using the same keys used to put manually to sleep.

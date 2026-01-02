@@ -472,8 +472,10 @@ void rumblePatternLowPri(const RumbleSequence sequence, int strength_mod)
 
 void rumblePatternStop()
 {
+    // Clear any active pattern,
     s_newSequence = RUMBLE_NONE;
     s_newStrengthMod = 0;
+    // and disable motor if it's running.
     rumbleStop();
 }
 
@@ -519,8 +521,7 @@ void rumblePatternLoop()
 
     if (s_currentSequence == RUMBLE_NONE || !savefile->settings.rumbleStrength)
     {
-        s_newSequence = RUMBLE_NONE;
-        rumbleStop();
+        rumblePatternStop();
         return;
     }
 
@@ -531,8 +532,7 @@ void rumblePatternLoop()
 
         if (s_state.partIndex >= s_state.sequenceLen)
         {
-            s_newSequence = RUMBLE_NONE;
-            rumbleStop();
+            rumblePatternStop();
             return;
         }
         else
