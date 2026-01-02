@@ -1612,7 +1612,7 @@ void Game::hold(int dir) {
     }
 
     if (!canHold) {
-        rumbleStart(RUMBLE_ERR_2);
+        rumblePattern(RUMBLE_ERR_2);
         return;
     }
 

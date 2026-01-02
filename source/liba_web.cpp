@@ -387,6 +387,8 @@ void refreshWindowSize() {
 bool closed() {
     emscripten_sleep(0);
     songEndHandler();
+    rumblePatternLoop();
+
     // // Cap to 60 FPS
 
     // //show fps
@@ -527,11 +529,13 @@ void unbindDuplicateKey(int& dest, uint32_t key) {
     }
 }
 
-void rumbleStart(int length) {
+void rumbleOutput(int strength) {
     if (lastInputType != InputType::CONTROLLER)
         return;
 
-    SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
+    uint16_t sdl_strength = strength * 0xFFFF / 8;
+    sdl_strength = std::min(0xFFFF, sdl_strength); // Cap to 0xFFFF
+    SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 
 void rumbleStop() { SDL_GameControllerRumble(controller, 0, 0, 1); }

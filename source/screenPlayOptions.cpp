@@ -920,7 +920,7 @@ void PlayOptionScene::resetScoreboard() {
             timer++;
         } else if (timer == 200) {
             timer++;
-            rumbleStart(RUMBLE_ERR_2);
+            rumblePattern(RUMBLE_ERR_2);
         } else {
             aprint(" YES      NO ", 8, 15);
 

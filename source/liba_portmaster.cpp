@@ -68,7 +68,7 @@ nanotime_step_data stepper;
 
 ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
 
-static int rumbleTimer = 0;
+// static int rumbleTimer = 0;
 
 void windowInit() {
     // Initialize SDL
@@ -327,11 +327,7 @@ bool closed() {
 }
 
 void rumbleUpdate() {
-    if (rumbleTimer > 0) {
-        rumbleTimer--;
-    } else {
-        rumbleStop();
-    }
+    rumblePatternLoop();
 }
 
 void toggleRendering(bool r) { render = r; }
@@ -395,10 +391,11 @@ void saveSavefile() {
     output.close();
 }
 
-void rumbleStart(int length) {
+void rumbleOutput(int strength) {
+    uint16_t sdl_strength = strength * 0xFFFF / 8;
+    sdl_strength = std::min(0xFFFF, sdl_strength); // Cap to 0xFFFF
     set_rumble(RUMBLE_STRONG);
-    rumbleTimer = length;
-    SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
+    SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 
 void rumbleStop() {

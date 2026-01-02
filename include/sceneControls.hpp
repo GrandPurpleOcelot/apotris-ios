@@ -403,50 +403,50 @@ public:
 
         switch (rumbleTestPattern) {
         case 0:
-            rumbleStart(RUMBLE_PLACE);
+            rumblePattern(RUMBLE_PLACE);
             break;
         case 1:
-            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_DOUBLE) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
+            savefile->settings.rumbleStyle == 1 ? rumblePattern(RUMBLE_DOUBLE) : rumblePattern(RUMBLE_CLASSIC_CLEAR);
             break;
         case 2:
-            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_DOUBLE) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
+            savefile->settings.rumbleStyle == 1 ? rumblePattern(RUMBLE_DOUBLE) : rumblePattern(RUMBLE_CLASSIC_CLEAR);
             break;
         case 3:
-            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_TRIPLE) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
+            savefile->settings.rumbleStyle == 1 ? rumblePattern(RUMBLE_TRIPLE) : rumblePattern(RUMBLE_CLASSIC_CLEAR);
             break;
         case 4:
-            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_QUAD) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
+            savefile->settings.rumbleStyle == 1 ? rumblePattern(RUMBLE_QUAD) : rumblePattern(RUMBLE_CLASSIC_CLEAR);
             break;
         case 5:
-            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_QUAD_B2B) : rumbleStart(RUMBLE_CLASSIC_CLEAR, 1);
+            savefile->settings.rumbleStyle == 1 ? rumblePattern(RUMBLE_QUAD_B2B) : rumblePattern(RUMBLE_CLASSIC_CLEAR, 1);
             break;
         case 6:
-            savefile->settings.rumbleStyle == 1 ? rumbleStart(RUMBLE_OCTORIS) : rumbleStart(RUMBLE_CLASSIC_CLEAR);
+            savefile->settings.rumbleStyle == 1 ? rumblePattern(RUMBLE_OCTORIS) : rumblePattern(RUMBLE_CLASSIC_CLEAR);
             break;
         case 7:
             if (savefile->settings.zoneRumbleMode == 1) {
-                rumbleStart(RUMBLE_LONG_ZONE);
+                rumblePattern(RUMBLE_LONG_ZONE);
             } else if (savefile->settings.zoneRumbleMode == 2) {
-                rumbleStart(RUMBLE_ZONE_RIPPLE, 0);
+                rumblePattern(RUMBLE_ZONE_RIPPLE, 0);
             }
             break;
         case 8:
             if (savefile->settings.zoneRumbleMode == 1) {
-                rumbleStart(RUMBLE_LONG_ZONE_2);
+                rumblePattern(RUMBLE_LONG_ZONE_2);
             } else if (savefile->settings.zoneRumbleMode == 2) {
-                rumbleStart(RUMBLE_ZONE_RIPPLE, 1);
+                rumblePattern(RUMBLE_ZONE_RIPPLE, 1);
             }
             break;
         case 9:
             if (savefile->settings.zoneRumbleMode == 1) {
-                rumbleStart(RUMBLE_LONG_ZONE_3);
+                rumblePattern(RUMBLE_LONG_ZONE_3);
             } else if (savefile->settings.zoneRumbleMode == 2) {
-                rumbleStart(RUMBLE_ZONE_RIPPLE, 2);
+                rumblePattern(RUMBLE_ZONE_RIPPLE, 2);
             }
             break;
 
         default:
-            rumbleStart(RUMBLE_PLACE);
+            rumblePattern(RUMBLE_PLACE);
         }
 
         sfx(SFX_MENUCONFIRM);

@@ -867,7 +867,7 @@ void stopDMA() {};
 
 void sleep() {};
 
-void rumbleStart(int length) {}
+void rumbleOutput(int strength) {}
 void rumbleStop() {}
 
 void onVBlank() {
