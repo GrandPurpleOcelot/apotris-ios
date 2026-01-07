@@ -544,7 +544,7 @@ void setDefaults(Save* save, int depth) {
     }
 
     if (depth < 9) {
-        save->settings.zoneRumbleMode = 1; // Set to Mode A (continuous)
+        save->settings.zoneRumbleMode = 1; // Set to Continuous Zone Rumble
         save->settings.rumbleStyle = 1; // Set to new Dynamic rumble!
         save->settings.rumbleStrength = save->settings.rumbleStrength * 2; // Scale old value to new scale (0-4 -> 0-8)
 

@@ -228,7 +228,7 @@ void GameScene::checkSounds() {
         if (game->zoneTimer) {
             sfxRate(SFX_PLACE, 0.5);
 
-            // Zone Rumble Mode B, Ripple on piece Drop
+            // Ripple Zone Rumble mode, Ripples on piece Drop
             if (savefile->settings.zoneRumbleMode == 2) {
                 u8 zoneStrengthMod = 0;
                 switch (game->zonedLines) {
@@ -253,7 +253,7 @@ void GameScene::checkSounds() {
                 }
                 rumblePatternLowPri(RUMBLE_ZONE_RIPPLE, zoneStrengthMod);
             } else {
-                // Zone Rumble Mode A (Continuous/Off)
+                // Zone Rumble Continuous/Off
                 rumblePatternLowPri(RUMBLE_PLACE);
             }
 
@@ -573,12 +573,12 @@ void GameScene::checkSounds() {
 
     const RumbleSequence currentRumble = rumbleGetCurrent();
 
-    bool doZoneRumbleModeA =
+    bool doContinuousZoneRumble =
         game->zoneTimer &&
         (currentRumble == RUMBLE_NONE ||
          (currentRumble >= RUMBLE_ZONE && currentRumble <= RUMBLE_ZONE_6));
 
-    if (doZoneRumbleModeA && savefile->settings.zoneRumbleMode == 1) {
+    if (doContinuousZoneRumble && savefile->settings.zoneRumbleMode == 1) {
         switch (game->zonedLines) {
         case 0 ... 3:
             rumblePatternLowPri(RUMBLE_ZONE);
