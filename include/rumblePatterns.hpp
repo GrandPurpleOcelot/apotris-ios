@@ -13,6 +13,7 @@
     RUMBLE_SEQUENCE( RUMBLE_LONG_ZONE ), \
     RUMBLE_SEQUENCE( RUMBLE_LONG_ZONE_2 ), \
     RUMBLE_SEQUENCE( RUMBLE_LONG_ZONE_3 ), \
+    RUMBLE_SEQUENCE( RUMBLE_LEVEL_UP ), \
     RUMBLE_SEQUENCE( RUMBLE_PLACE ), \
     RUMBLE_SEQUENCE( RUMBLE_ZONE_RIPPLE ), \
     RUMBLE_SEQUENCE( RUMBLE_CLASSIC_CLEAR ), \
@@ -25,7 +26,6 @@
     RUMBLE_SEQUENCE( RUMBLE_TSPIN_B2B ), \
     RUMBLE_SEQUENCE( RUMBLE_TSPIN_MINI ), \
     RUMBLE_SEQUENCE( RUMBLE_PERFECT_CLEAR ), \
-    RUMBLE_SEQUENCE( RUMBLE_LEVEL_UP ), \
     RUMBLE_SEQUENCE( RUMBLE_COOL ), \
     RUMBLE_SEQUENCE( RUMBLE_REGRET ), \
     RUMBLE_SEQUENCE( RUMBLE_OCTORIS ), \
@@ -49,8 +49,8 @@ enum RumbleSequence : int
     RUMBLE_NONE
 };
 
-void rumbleStart(const RumbleSequence sequence, u8 strength_mod = 0);
-void rumbleStartLowPri(const RumbleSequence sequence, u8 strength_mod = 0);
+void rumbleStart(const RumbleSequence sequence, int strength_mod = 0);
+void rumbleStartLowPri(const RumbleSequence sequence, int strength_mod = 0);
 void rumbleStop();
 const RumbleSequence rumbleGetCurrent();
 void rumblePatternISR();

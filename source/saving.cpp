@@ -200,7 +200,7 @@ void loadSave() {
         (savefile->settings.lightMode != 1))
         savefile->settings.lightMode = false;
 
-    if ((savefile->settings.rumbleStrength < 0) || (savefile->settings.rumbleStrength > 4))
+    if ((savefile->settings.rumbleStrength < 0) || (savefile->settings.rumbleStrength > 8))
         savefile->settings.rumbleStrength = 0;
 
     if (savefile->settings.irs < 0 || savefile->settings.irs > 1)
