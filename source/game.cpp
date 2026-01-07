@@ -571,16 +571,12 @@ void GameScene::checkSounds() {
             floatingList.push_back(FloatText("Tower Scroll"));
     }
 
-#ifdef GBA
     const RumbleSequence currentRumble = rumbleGetCurrent();
 
     bool doZoneRumbleModeA =
         game->zoneTimer &&
         (currentRumble == RUMBLE_NONE ||
          (currentRumble >= RUMBLE_ZONE && currentRumble <= RUMBLE_ZONE_6));
-#else
-    bool doZoneRumbleModeA = false;
-#endif
 
     if (doZoneRumbleModeA && savefile->settings.zoneRumbleMode == 1) {
         switch (game->zonedLines) {

@@ -2,7 +2,6 @@
 
 #ifdef GBA
 #include "gba-rumble-cart.h"
-#include "rumblePatterns.hpp"
 #endif
 
 #include "scene.hpp"

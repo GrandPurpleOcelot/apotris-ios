@@ -407,6 +407,7 @@ void refreshWindowSize() {
 
 bool closed() {
     songEndHandler();
+    rumblePatternLoop();
 
     return true;
 }
@@ -615,7 +616,7 @@ void unbindDuplicateKey(int& dest, uint32_t key) {
 }
 
 void rumbleOutput(uint16_t strength) {
-    if (lastInputType != InputType::CONTROLLER || strength <= 0)
+    if (lastInputType != InputType::CONTROLLER)
         return;
 
     uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
