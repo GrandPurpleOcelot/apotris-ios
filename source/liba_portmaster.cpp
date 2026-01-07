@@ -391,9 +391,8 @@ void saveSavefile() {
     output.close();
 }
 
-void rumbleOutput(int strength) {
-    uint16_t sdl_strength = strength * 0xFFFF / 8;
-    sdl_strength = std::min(0xFFFF, sdl_strength); // Cap to 0xFFFF
+void rumbleOutput(uint16_t strength) {
+    uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
     set_rumble(RUMBLE_STRONG);
     SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }

@@ -529,12 +529,11 @@ void unbindDuplicateKey(int& dest, uint32_t key) {
     }
 }
 
-void rumbleOutput(int strength) {
+void rumbleOutput(uint16_t strength) {
     if (lastInputType != InputType::CONTROLLER)
         return;
 
-    uint16_t sdl_strength = strength * 0xFFFF / 8;
-    sdl_strength = std::min(0xFFFF, sdl_strength); // Cap to 0xFFFF
+    uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
     SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 

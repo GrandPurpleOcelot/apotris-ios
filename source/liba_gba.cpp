@@ -1,7 +1,7 @@
-#include "gba-rumble.h"
 #include "platform.hpp"
 
 #ifdef GBA
+#include "gba-rumble.h"
 #include "LinkCableMultiboot.hpp"
 #include "LinkUniversal.hpp"
 #include "achievementStructure.h"
@@ -558,7 +558,7 @@ void initRumble() {
     REG_WAITCNT = 0x4317;
 }
 
-void rumbleOutput(int strength) {
+void rumbleOutput(uint16_t strength) {
     if (strength) {
         gba_rumble_start();
     } else {

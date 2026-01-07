@@ -369,7 +369,7 @@ void saveSavefile() {
     output.close();
 }
 
-void rumbleOutput(int strength) {
+void rumbleOutput(uint16_t strength) {
     if (!R_SUCCEEDED(rc))
         return;
 
