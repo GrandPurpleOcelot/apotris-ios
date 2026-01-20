@@ -280,7 +280,7 @@ void GameScene::checkSounds() {
 
     if (game->sounds.invalid) {
         sfx(SFX_INVALID);
-        rumblePattern(RUMBLE_PLACE);
+        rumblePatternLowPri(RUMBLE_PLACE);
     }
 
     if (game->sounds.rotate)
