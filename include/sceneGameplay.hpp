@@ -145,7 +145,7 @@ public:
 
         result += text;
 
-        if (savefile->settings.rotationSystem < BlockEngine::BARS)
+        if (savefile->settings.rotationSystem < BlockEngine::SDRS)
             result += ">";
 
         return result;
@@ -153,7 +153,7 @@ public:
 
     void action(int dir) override {
         if (dir > 0) {
-            if (savefile->settings.rotationSystem < BlockEngine::BARS) {
+            if (savefile->settings.rotationSystem < BlockEngine::SDRS) {
                 savefile->settings.rotationSystem++;
                 sfx(SFX_MENUMOVE);
             }
@@ -173,6 +173,8 @@ public:
             return "ARS";
         case BlockEngine::BARS:
             return "BARS";
+        case BlockEngine::SDRS:
+            return "SDRS";
         default:
             return "SRS";
         }

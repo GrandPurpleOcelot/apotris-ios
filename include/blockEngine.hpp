@@ -130,6 +130,7 @@ enum RotationSystems {
     NRS,
     ARS,
     BARS,
+    SDRS,
     A_SRS,
 };
 

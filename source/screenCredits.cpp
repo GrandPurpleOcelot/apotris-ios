@@ -87,7 +87,7 @@ std::list<std::string> creditsText = {
     "     (@luigi___)",
     "",
     " - Custom rotation",
-    "   system (BARS)",
+    "   system (BARS, SDRS)",
     "  by CreeperCraft",
     "",
     " - Explore option",

@@ -242,6 +242,39 @@ void Game::rotate(int dir, int on) {
             }
         }
 
+    } else if (rotationSystem == SDRS) {
+        for (int i = 0; i < 10 + (dir > 1); i++) {
+            int dx;
+            int dy;
+            if (dir <= 1) {
+                dx = sdrsKicks[(pawn.current == 0)][(dir < 0)][pawn.rotation][i]
+                              [0];
+                dy = sdrsKicks[(pawn.current == 0)][(dir < 0)][pawn.rotation][i]
+                              [1];
+            } else {
+                // SDRS uses BARS' 180 kicks because they're identical
+                dx = barsKickTwice[pawn.rotation][i][0];
+                dy = barsKickTwice[pawn.rotation][i][1];
+            }
+
+            if (checkRotation(dx, dy, r)) {
+                specialTspin = (pawn.current == 5 && (abs(dx) + abs(dy) >= 2));
+                lastMoveRotation = dir;
+
+                if (dy < 0)
+                    verticalKick++;
+
+                if (verticalKick >= verticalKickMax)
+                    hardDrop();
+
+                rotatePlace(dir, dx, dy, r);
+                return;
+
+            } else {
+                sounds.invalid = 1;
+            }
+        }
+
     } else if (rotationSystem == NRS) {
         if (checkRotation(0, 0, r)) {
             rotatePlace(dir, dx, dy, r);
@@ -1671,6 +1704,9 @@ int* BlockEngine::getShape(int n, int r, int rotationSystem) {
     case BARS:
         source = (int*)bars[n][r];
         break;
+    case SDRS:
+        source = (int*)sdrs[n][r];
+        break;
     default:
         source = (int*)tetrominos[n][r];
         break;
@@ -1682,7 +1718,7 @@ int* BlockEngine::getShape(int n, int r, int rotationSystem) {
 
 void Game::lockCheck() {
     if (pawn.lowest == pawn.y && lockMoveCounter > 0 &&
-        (rotationSystem == SRS || rotationSystem == BARS)) {
+        (rotationSystem == SRS || rotationSystem == BARS || rotationSystem == SDRS)) {
         lockTimer = maxLockTimer;
         lockMoveCounter--;
     }
@@ -2833,6 +2869,12 @@ void Game::setupPawnSpawn() {
 
     if (rotationSystem == BARS) {
         if (pawn.current != PIECE_I)
+            pawn.y--;
+    }
+
+    if (rotationSystem == ARS || (rotationSystem == NRS && gameMode != CLASSIC)|| rotationSystem == SDRS) {
+        pawn.y--;
+        if (rotationSystem == NRS && pawn.current == PIECE_I && gameMode != CLASSIC)
             pawn.y--;
     }
 
