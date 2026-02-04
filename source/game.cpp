@@ -1016,9 +1016,9 @@ void showHold() {
         sprite_set_pos(
             holdSprite, (5) * 8 + add * 3 + 3 - 4 + (push < 0) * push,
             (10) * 8 -
-                3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS || rs == SDRS)) +
+                3 * (game->held == PIECE_I && !(rs == ARS || rs == BARS)) +
                 yoffset +
-                3 * ((rs == ARS || rs == BARS || rs == SDRS) && game->held == PIECE_I) - 4);
+                3 * ((rs == ARS || rs == BARS) && game->held == PIECE_I) - 4);
     }
 }
 
