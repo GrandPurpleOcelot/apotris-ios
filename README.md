@@ -269,6 +269,26 @@ To build the CIA, you will need to install [`bannertool`](https://github.com/Epi
 meson compile -C build-n3ds cia
 ```
 
+### Android
+You will need the Android NDK installed and configured.
+
+#### Prerequisites
+
+1.  **Android NDK:** Ensure you have the Android NDK installed.
+2.  **Environment Variables:**
+    *   Set `ANDROID_NDK_HOME` to your NDK installation directory.
+    *   Add the NDK toolchain bin directory to your `PATH`.
+        ```bash
+        export PATH=$PATH:$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$(uname -s | tr '[:upper:]' '[:lower:]')-x86_64/bin
+        ```
+
+#### Building
+
+    ```bash
+    meson setup --cross-file=meson/android.ini build-android 
+    meson compile -C build-android
+    ```
+
 **Metadata**:
 
 * Unique ID: `0xA9715`

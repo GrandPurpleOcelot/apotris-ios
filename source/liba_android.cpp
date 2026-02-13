@@ -577,6 +577,9 @@ uint32_t keys_raw() {
 }
 
 void updateWindow(uint8_t* framebuffer) {
+    const int in_width = SCREEN_WIDTH;
+    const int in_height = SCREEN_HEIGHT;
+
     // Create the SDL_Surface from the framebuffer
     SDL_Surface* img = SDL_CreateRGBSurfaceFrom(
         framebuffer, in_width, in_height, 32, in_width * 4, 0x0000ff, 0x00ff00,

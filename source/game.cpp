@@ -1708,7 +1708,7 @@ void GameScene::showComboStreak() {
 
             // aprintf(game->comboCounter, 28, clearTextHeight - 1);
             wordSprites[9].setText("x" + std::to_string(game->comboCounter));
-            wordSprites[9].show(21 * 8 + 4, (clearTextHeight)*8, 15);
+            wordSprites[9].show(21 * 8 + 4, (clearTextHeight) * 8, 15);
         } else {
             // aprintClearArea(20, clearTextHeight - 1, 10, 1);
             wordSprites[8].hide();
@@ -3573,8 +3573,7 @@ void GameScene::init() {
     // for(int i = 0; i < 1024; i++)
     //     loadSpriteTiles(i, &d, 1, 1);
 
-    // memcpy(gameLayout, altLayout, sizeof(Position) *
-    // (int)GameElements::LENGTH);
+    memcpy(gameLayout, altLayout, sizeof(Position) * (int)GameElements::LENGTH);
 
 #if defined(TE) || defined(N3DS)
     buildBG(2, 0, 25, 0, 0, true);

@@ -383,6 +383,25 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             link_args : link_args,
             name_prefix : 'lib',
         )
+
+        # Android APK packaging
+        deploy_script = files('tools/android_deploy.py')
+
+        apk = custom_target(
+            'android-apk',
+            output : 'Apotris.apk',
+            command : [
+                py3, deploy_script,
+                '--build-dir', meson.current_build_dir(),
+                '--source-dir', meson.current_source_dir(),
+                            '--libmain', binary,
+                            '--output', '@OUTPUT@',
+                            '--compiler', meson.get_compiler('cpp').cmd_array(),
+                        ],            depends : binary,
+            build_by_default : true,
+        )
+
+        alias_target('apk', apk)
     else
         binary = executable(
             name,
