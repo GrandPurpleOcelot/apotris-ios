@@ -59,12 +59,12 @@ EOF
 echo "Generated meson/android-aarch64.ini"
 
 # Setup Meson
-echo "Running Meson Setup..."
-if [ -d "build-android" ]; then
-    meson setup --reconfigure build-android --cross-file meson/android-aarch64.ini -Dbuildtype=debugoptimized
-else
-    meson setup build-android --cross-file meson/android-aarch64.ini -Dbuildtype=debugoptimized
-fi
+# echo "Running Meson Setup..."
+# if [ -d "build-android" ]; then
+#     meson setup --reconfigure build-android --cross-file meson/android-aarch64.ini -Dbuildtype=debugoptimized
+# else
+#     meson setup build-android --cross-file meson/android-aarch64.ini -Dbuildtype=debugoptimized
+# fi
 
 SDL_JAVA_SRC="$(find subprojects -type d -path "*/SDL2-*/android-project/app/src/main/java/org/libsdl/app" -print -quit)"
 

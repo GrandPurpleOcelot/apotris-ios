@@ -1,15 +1,17 @@
 #ifdef ANDROID
 
 #include "liba_android.h"
+#include <algorithm>
+#include <android/log.h>
+#include <cmath>
 #include <cstdio>
 #include <dirent.h>
 #include <fstream>
+#include <glad/gles2.h>
 #include <iostream>
 #include <jni.h>
 #include <sys/stat.h>
 #include <unordered_set>
-#include <android/log.h>
-#include <glad/gles2.h>
 
 #define LOG_TAG "ApotrisAndroid"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
@@ -22,12 +24,13 @@
 #include "nanotime.h"
 
 #include "imgui.h"
+#include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
-#include "imgui_impl_opengl3.h"
 
 static bool imguiInited = false;
 static bool imguiGLInited = false;
+static bool imguiSDLInited = false;
 
 static bool inBackground = false;
 static bool pendingBackground = false;
@@ -103,8 +106,13 @@ SDL_Point touchLocation = {0, 0};
 bool controlsUnlocked = false;
 
 int moving = 0;
+int resizing = -1;
+int resizeCorner = -1;
+int resizeFixedX = 0;
+int resizeFixedY = 0;
 
 #define DEADZONE 12000
+#define CORNER_GRAB_RADIUS 60
 
 int KEY_A = (SDL_CONTROLLER_BUTTON_A << 16) | packKey(SDLK_RETURN);
 int KEY_B = (SDL_CONTROLLER_BUTTON_B << 16) | packKey(SDLK_BACKSPACE);
@@ -131,8 +139,11 @@ void windowInit() {
     window = SDL_CreateWindow("Apotris Android", SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight,
                               SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL |
-                                  SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE);
+                                  SDL_WINDOW_RESIZABLE);
     SDL_Log("windowInit: SDL_CreateWindow done");
+
+    SDL_GetWindowSize(window, &screenWidth, &screenHeight);
+    SDL_Log("windowInit: Window size: %dx%d", screenWidth, screenHeight);
 
     renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_Log("windowInit: SDL_CreateRenderer done");
@@ -141,6 +152,8 @@ void windowInit() {
     if (SDL_NumJoysticks() > 0) {
         controller = SDL_GameControllerOpen(0);
         controllerCount = SDL_NumJoysticks();
+
+        controllerCount = 0;
     }
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -158,7 +171,8 @@ void windowInit() {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     ImGui::StyleColorsDark();
@@ -172,6 +186,7 @@ void windowInit() {
 
     // Init SDLRenderer2 backend (renderer)
     ImGui_ImplSDLRenderer2_Init(renderer);
+    imguiSDLInited = true;
     SDL_Log("windowInit: ImGui_ImplSDLRenderer2_Init done");
 
     imguiInited = true;
@@ -276,10 +291,10 @@ void handleInput() {
             y = touchLocation.y = event.tfinger.y * screenHeight;
 
             for (auto const& button : layout.buttons) {
-                if (x > button.x - button.radius &&
-                    x < button.x + button.radius &&
-                    y > button.y - button.radius &&
-                    y < button.y + button.radius) {
+                if (x > button.x - button.w / 2 &&
+                    x < button.x + button.w / 2 &&
+                    y > button.y - button.h / 2 &&
+                    y < button.y + button.h / 2) {
 
                     if (button.key == -1) {
                         controlsUnlocked = !controlsUnlocked;
@@ -294,6 +309,43 @@ void handleInput() {
                         vibrationStart(16);
                     } else {
                         moving = index;
+                        resizing = -1;
+                        resizeCorner = -1;
+
+                        int l = (button.x - button.w / 2 + 5) / 10 * 10;
+                        int r = (button.x + button.w / 2 + 5) / 10 * 10;
+                        int t = (button.y - button.h / 2 + 5) / 10 * 10;
+                        int b = (button.y + button.h / 2 + 5) / 10 * 10;
+
+                        if (abs(x - l) < CORNER_GRAB_RADIUS &&
+                            abs(y - t) < CORNER_GRAB_RADIUS) {
+                            resizing = index;
+                            resizeCorner = 0; // TL
+                            resizeFixedX = r;
+                            resizeFixedY = b;
+                            moving = -1;
+                        } else if (abs(x - r) < CORNER_GRAB_RADIUS &&
+                                   abs(y - t) < CORNER_GRAB_RADIUS) {
+                            resizing = index;
+                            resizeCorner = 1; // TR
+                            resizeFixedX = l;
+                            resizeFixedY = b;
+                            moving = -1;
+                        } else if (abs(x - r) < CORNER_GRAB_RADIUS &&
+                                   abs(y - b) < CORNER_GRAB_RADIUS) {
+                            resizing = index;
+                            resizeCorner = 2; // BR
+                            resizeFixedX = l;
+                            resizeFixedY = t;
+                            moving = -1;
+                        } else if (abs(x - l) < CORNER_GRAB_RADIUS &&
+                                   abs(y - b) < CORNER_GRAB_RADIUS) {
+                            resizing = index;
+                            resizeCorner = 3; // BL
+                            resizeFixedX = r;
+                            resizeFixedY = t;
+                            moving = -1;
+                        }
                     }
                 }
                 index++;
@@ -312,24 +364,24 @@ void handleInput() {
 
             if (!controlsUnlocked) {
                 for (auto const& button : layout.buttons) {
-                    if (!(x > button.x - button.radius &&
-                          x < button.x + button.radius &&
-                          y > button.y - button.radius &&
-                          y < button.y + button.radius) &&
-                        ((x - dx) > button.x - button.radius &&
-                         (x - dx) < button.x + button.radius &&
-                         (y - dy) > button.y - button.radius &&
-                         (y - dy) < button.y + button.radius)) {
+                    if (!(x > button.x - button.w / 2 &&
+                          x < button.x + button.w / 2 &&
+                          y > button.y - button.h / 2 &&
+                          y < button.y + button.h / 2) &&
+                        ((x - dx) > button.x - button.w / 2 &&
+                         (x - dx) < button.x + button.w / 2 &&
+                         (y - dy) > button.y - button.h / 2 &&
+                         (y - dy) < button.y + button.h / 2)) {
 
                         unpressKey(button.key, InputType::TOUCH);
-                    } else if ((x > button.x - button.radius &&
-                                x < button.x + button.radius &&
-                                y > button.y - button.radius &&
-                                y < button.y + button.radius) &&
-                               !((x - dx) > button.x - button.radius &&
-                                 (x - dx) < button.x + button.radius &&
-                                 (y - dy) > button.y - button.radius &&
-                                 (y - dy) < button.y + button.radius)) {
+                    } else if ((x > button.x - button.w / 2 &&
+                                x < button.x + button.w / 2 &&
+                                y > button.y - button.h / 2 &&
+                                y < button.y + button.h / 2) &&
+                               !((x - dx) > button.x - button.w / 2 &&
+                                 (x - dx) < button.x + button.w / 2 &&
+                                 (y - dy) > button.y - button.h / 2 &&
+                                 (y - dy) < button.y + button.h / 2)) {
 
                         if (!controlsUnlocked) {
                             pressKey(button.key, InputType::TOUCH);
@@ -339,12 +391,41 @@ void handleInput() {
                 }
             } else {
 
-                if (moving >= 0) {
-                    layout.buttons[moving].x = x;
-                    layout.buttons[moving].y = y;
+                if (resizing >= 0) {
+                    Button& b = layout.buttons[resizing];
+
+                    int currentX = (x + 5) / 10 * 10;
+                    int currentY = (y + 5) / 10 * 10;
+
+                    // Clamp minimum size by adjusting currentX/Y if too close
+                    // to fixedX/Y
+                    if (abs(currentX - resizeFixedX) < 40) {
+                        if (currentX < resizeFixedX)
+                            currentX = resizeFixedX - 40;
+                        else
+                            currentX = resizeFixedX + 40;
+                    }
+                    if (abs(currentY - resizeFixedY) < 40) {
+                        if (currentY < resizeFixedY)
+                            currentY = resizeFixedY - 40;
+                        else
+                            currentY = resizeFixedY + 40;
+                    }
+
+                    b.w = abs(currentX - resizeFixedX);
+                    b.h = abs(currentY - resizeFixedY);
+                    b.x = (resizeFixedX + currentX) / 2;
+                    b.y = (resizeFixedY + currentY) / 2;
+                } else if (moving >= 0) {
+                    Button& b = layout.buttons[moving];
+                    int tlX = x - b.w / 2;
+                    int tlY = y - b.h / 2;
+                    int snappedTLX = (tlX + 5) / 10 * 10;
+                    int snappedTLY = (tlY + 5) / 10 * 10;
+                    b.x = snappedTLX + b.w / 2;
+                    b.y = snappedTLY + b.h / 2;
                 }
             }
-
             break;
         case SDL_FINGERUP:
             if (controllerCount > 0)
@@ -355,16 +436,18 @@ void handleInput() {
 
             if (!controlsUnlocked) {
                 for (auto const& button : layout.buttons) {
-                    if (x > button.x - button.radius &&
-                        x < button.x + button.radius &&
-                        y > button.y - button.radius &&
-                        y < button.y + button.radius) {
+                    if (x > button.x - button.w / 2 &&
+                        x < button.x + button.w / 2 &&
+                        y > button.y - button.h / 2 &&
+                        y < button.y + button.h / 2) {
 
                         unpressKey(button.key, InputType::TOUCH);
                     }
                 }
             } else {
                 moving = -1;
+                resizing = -1;
+                resizeCorner = -1;
             }
             break;
         case SDL_APP_WILLENTERBACKGROUND:
@@ -411,6 +494,25 @@ int splitKey(uint32_t key) {
         return unpackKey(key & 0xffff);
     } else {
         return (key & 0xffff0000) >> 16;
+    }
+}
+
+static const char* getButtonLabel(int key) {
+    switch (key) {
+    case SDL_CONTROLLER_BUTTON_A:
+        return "A";
+    case SDL_CONTROLLER_BUTTON_B:
+        return "B";
+    case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+        return "L";
+    case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+        return "R";
+    case SDL_CONTROLLER_BUTTON_START:
+        return "Start";
+    case SDL_CONTROLLER_BUTTON_BACK:
+        return "Select";
+    default:
+        return nullptr;
     }
 }
 
@@ -475,11 +577,6 @@ uint32_t keys_raw() {
 }
 
 void updateWindow(uint8_t* framebuffer) {
-    static int logCounter = 0;
-    if (logCounter++ % 60 == 0) SDL_Log("updateWindow start (frame %d)", logCounter);
-    const int in_width = 512;
-    const int in_height = 512;
-
     // Create the SDL_Surface from the framebuffer
     SDL_Surface* img = SDL_CreateRGBSurfaceFrom(
         framebuffer, in_width, in_height, 32, in_width * 4, 0x0000ff, 0x00ff00,
@@ -490,22 +587,26 @@ void updateWindow(uint8_t* framebuffer) {
         SDL_Log("updateWindow: Failed to create SDL_Surface");
         return;
     }
-    SDL_Log("updateWindow: SDL_Surface created");
 
     // Start ImGui Frame
     if (imguiInited) {
         // SDL_Log("updateWindow: ImGui inited check passed");
-        if (shaderStatus == ShaderStatus::OK && savefile->settings.shaders != 0) {
+        if (shaderStatus == ShaderStatus::OK &&
+            savefile->settings.shaders != 0) {
             // SDL_Log("updateWindow: Shaders enabled");
             if (!imguiGLInited) {
                 LOGI("Switching to ImGui OpenGL3 backend");
-                ImGui_ImplSDLRenderer2_Shutdown();
+                if (imguiSDLInited) {
+                    ImGui_ImplSDLRenderer2_Shutdown();
+                    imguiSDLInited = false;
+                }
 
                 makeShaderContextCurrent(window);
-                
+
                 const char* version = (const char*)glGetString(GL_VERSION);
                 if (version == NULL) {
-                    LOGE("CRITICAL: glGetString(GL_VERSION) returned NULL! Context not current?");
+                    LOGE("CRITICAL: glGetString(GL_VERSION) returned NULL! "
+                         "Context not current?");
                 } else {
                     LOGI("Current GL Version: %s", version);
                 }
@@ -525,18 +626,19 @@ void updateWindow(uint8_t* framebuffer) {
                 ImGui_ImplOpenGL3_Shutdown();
                 ImGui_ImplSDLRenderer2_Init(renderer);
                 imguiGLInited = false;
+                imguiSDLInited = true;
             }
 
             ImGui_ImplSDLRenderer2_NewFrame();
             ImGui_ImplSDL2_NewFrame();
             // SDL_Log("updateWindow: ImGui SDL2/Renderer2 NewFrame done");
         }
+
         ImGui::NewFrame();
 
-        // Create a simple debug window
-        ImGui::Begin("Apotris Android Debug");
-        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-        ImGui::End();
+        // ImGui::Begin("Apotris Android Debug");
+        // ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        // ImGui::End();
 
         if (controllerCount == 0) {
             ImDrawList* draw_list = ImGui::GetForegroundDrawList();
@@ -548,15 +650,44 @@ void updateWindow(uint8_t* framebuffer) {
                     color = IM_COL32(180, 255, 180, 100);
                 }
 
-                draw_list->AddRectFilled(
-                    ImVec2(button.x - button.radius, button.y - button.radius),
-                    ImVec2(button.x + button.radius, button.y + button.radius),
-                    color);
+                draw_list->AddRect(
+                    ImVec2(button.x - button.w / 2, button.y - button.h / 2),
+                    ImVec2(button.x + button.w / 2, button.y + button.h / 2),
+                    color, 30.0f, 0, 10.0f);
+
+                const char* label = getButtonLabel(button.key);
+                if (label) {
+                    ImVec2 textSize = ImGui::CalcTextSize(label);
+                    draw_list->AddText(ImVec2(button.x - textSize.x / 2,
+                                              button.y - textSize.y / 2),
+                                       color, label);
+                } else {
+                    float sz = std::min(button.w, button.h) * 0.25f;
+                    float cx = (float)button.x;
+                    float cy = (float)button.y;
+
+                    if (button.key == SDL_CONTROLLER_BUTTON_DPAD_UP) {
+                        draw_list->AddTriangleFilled(
+                            ImVec2(cx, cy - sz), ImVec2(cx - sz, cy + sz),
+                            ImVec2(cx + sz, cy + sz), color);
+                    } else if (button.key == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {
+                        draw_list->AddTriangleFilled(
+                            ImVec2(cx, cy + sz), ImVec2(cx - sz, cy - sz),
+                            ImVec2(cx + sz, cy - sz), color);
+                    } else if (button.key == SDL_CONTROLLER_BUTTON_DPAD_LEFT) {
+                        draw_list->AddTriangleFilled(
+                            ImVec2(cx - sz, cy), ImVec2(cx + sz, cy - sz),
+                            ImVec2(cx + sz, cy + sz), color);
+                    } else if (button.key == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {
+                        draw_list->AddTriangleFilled(
+                            ImVec2(cx + sz, cy), ImVec2(cx - sz, cy - sz),
+                            ImVec2(cx - sz, cy + sz), color);
+                    }
+                }
             }
         }
 
         ImGui::Render();
-        SDL_Log("updateWindow: ImGui::Render done");
     }
 
     if (shaderStatus != ShaderStatus::OK || savefile->settings.shaders == 0) {
@@ -616,7 +747,8 @@ void updateWindow(uint8_t* framebuffer) {
         rects.clear();
 
         if (imguiInited)
-            ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
+            ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(),
+                                                  renderer);
 
         SDL_RenderPresent(renderer);
     } else {
@@ -628,7 +760,9 @@ void updateWindow(uint8_t* framebuffer) {
                 if (draw_data) {
                     static int logCounter2 = 0;
                     if (logCounter2++ % 60 == 0)
-                        LOGI("ImGui RenderDrawData: CmdLists=%d, TotalVtx=%d", draw_data->CmdListsCount, draw_data->TotalVtxCount);
+                        LOGI("ImGui RenderDrawData: CmdLists=%d, TotalVtx=%d",
+                             draw_data->CmdListsCount,
+                             draw_data->TotalVtxCount);
                     ImGui_ImplOpenGL3_RenderDrawData(draw_data);
                 } else {
                     LOGE("ImGui DrawData is NULL");
@@ -669,6 +803,7 @@ void updateWindow(uint8_t* framebuffer) {
         }
 
         controllerCount = SDL_NumJoysticks();
+        controllerCount = 0;
     }
 
     updateBatteryInfo();
@@ -715,6 +850,7 @@ void refreshWindowSize() {
         }
 
         setLayout();
+        setFullscreen((screenWidth > screenHeight));
     }
 
     int offsetx = 0, offsety = 0;
@@ -736,7 +872,7 @@ bool closed() {
 
 void toggleRendering(bool r) { render = r; }
 
-void initRumble(){};
+void initRumble() {};
 
 std::string getSavefilePath() {
     char* path = SDL_GetPrefPath("akouzoukos", "Apotris");
@@ -883,7 +1019,15 @@ void setFullscreen(bool state) {
     }
 }
 
-void shaderInit(int index) { initShaders(window, index); }
+void shaderInit(int index) {
+    if (imguiGLInited) {
+        makeShaderContextCurrent(window);
+        ImGui_ImplOpenGL3_Shutdown();
+        imguiGLInited = false;
+    }
+    freeShaders();
+    initShaders(window, index);
+}
 
 void shaderDeinit() { freeShaders(); }
 
@@ -1069,71 +1213,91 @@ void vibrationDeinit() {
 }
 
 #define SPACE 210
-#define RADIUS 95
+#define BTN_W 190
+#define BTN_H 190
 
 std::vector<Layout> getDefaultLayouts() {
+    SDL_DisplayMode DM;
+    SDL_GetCurrentDisplayMode(0, &DM);
+    screenWidth = DM.w;
+    screenHeight = DM.h;
+
+    int portraitWidth, portraitHeight, landscapeWidth, landscapeHeight;
+
+    if (screenWidth > screenHeight) {
+        portraitHeight = landscapeWidth = screenWidth;
+        portraitWidth = landscapeHeight = screenHeight;
+    } else {
+        portraitHeight = landscapeWidth = screenHeight;
+        portraitWidth = landscapeHeight = screenWidth;
+    }
 
     Button portraitButtons[11] = {
-        Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.75 + SPACE / 2,
-               screenHeight * 0.70 + SPACE, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.75 - SPACE / 2,
-               screenHeight * 0.70 + SPACE, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_A, portraitWidth * 0.75 + SPACE / 2,
+               portraitHeight * 0.70 + SPACE, BTN_W, BTN_H),
+        Button(SDL_CONTROLLER_BUTTON_B, portraitWidth * 0.75 - SPACE / 2,
+               portraitHeight * 0.70 + SPACE, BTN_W, BTN_H),
 
         Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
-               screenWidth * 0.75 + SPACE / 2, screenHeight * 0.70 + SPACE * 2,
-               RADIUS),
+               portraitWidth * 0.75 + SPACE / 2,
+               portraitHeight * 0.70 + SPACE * 2, BTN_W, BTN_H),
         Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
-               screenWidth * 0.75 + SPACE / 2, screenHeight * 0.70, RADIUS),
+               portraitWidth * 0.75 + SPACE / 2, portraitHeight * 0.70, BTN_W,
+               BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.30,
-               screenHeight * 0.70, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.30,
-               screenHeight * 0.70 + SPACE * 2, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.30 - SPACE,
-               screenHeight * 0.70 + SPACE, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.30 + SPACE,
-               screenHeight * 0.70 + SPACE, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, portraitWidth * 0.25,
+               portraitHeight * 0.70, BTN_W * 0.70, BTN_H * 0.70),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, portraitWidth * 0.25,
+               portraitHeight * 0.70 + SPACE * 2 * 0.70, BTN_W * 0.70,
+               BTN_H * 0.70),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT,
+               portraitWidth * 0.25 - SPACE * 0.70,
+               portraitHeight * 0.70 + SPACE * 0.70, BTN_W * 0.70,
+               BTN_H * 0.70),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
+               portraitWidth * 0.25 + SPACE * 0.70,
+               portraitHeight * 0.70 + SPACE * 0.70, BTN_W * 0.70,
+               BTN_H * 0.70),
 
-        Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth * 0.25 - SPACE / 2,
-               screenHeight * 0.60 - SPACE / 2, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_START, screenWidth * 0.25 + SPACE / 2,
-               screenHeight * 0.60 - SPACE / 2, RADIUS),
-        Button(-1, screenWidth - 50, 50, 100)};
+        Button(SDL_CONTROLLER_BUTTON_BACK, portraitWidth * 0.25 - SPACE / 2,
+               portraitHeight * 0.96 - SPACE / 2, BTN_W, BTN_H / 2),
+        Button(SDL_CONTROLLER_BUTTON_START, portraitWidth * 0.25 + SPACE / 2,
+               portraitHeight * 0.96 - SPACE / 2, BTN_W, BTN_H / 2),
+        Button(-1, portraitWidth - 50, 50, 50, 50)};
 
     Button landscapeButtons[11] = {
-        Button(SDL_CONTROLLER_BUTTON_A, screenWidth * 0.85 + SPACE / 2,
-               screenHeight * 0.50 + SPACE, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_B, screenWidth * 0.85 - SPACE / 2,
-               screenHeight * 0.50 + SPACE, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_A, landscapeWidth * 0.85 + SPACE / 2,
+               landscapeHeight * 0.50 + SPACE, BTN_W, BTN_H),
+        Button(SDL_CONTROLLER_BUTTON_B, landscapeWidth * 0.85 - SPACE / 2,
+               landscapeHeight * 0.50 + SPACE, BTN_W, BTN_H),
 
         Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
-               screenWidth * 0.85 + SPACE / 2, screenHeight * 0.50 + SPACE * 2,
-               RADIUS),
+               landscapeWidth * 0.85 + SPACE / 2,
+               landscapeHeight * 0.50 + SPACE * 2, BTN_W, BTN_H),
         Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
-               screenWidth * 0.85 + SPACE / 2, screenHeight * 0.50, RADIUS),
+               landscapeWidth * 0.85 + SPACE / 2, landscapeHeight * 0.50, BTN_W,
+               BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, screenWidth * 0.20,
-               screenHeight * 0.50, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, screenWidth * 0.20,
-               screenHeight * 0.50 + SPACE * 2, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, screenWidth * 0.20 - SPACE,
-               screenHeight * 0.50 + SPACE, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, screenWidth * 0.20 + SPACE,
-               screenHeight * 0.50 + SPACE, RADIUS),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, landscapeWidth * 0.20,
+               landscapeHeight * 0.50, BTN_W, BTN_H),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, landscapeWidth * 0.20,
+               landscapeHeight * 0.50 + SPACE * 2, BTN_W, BTN_H),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, landscapeWidth * 0.20 - SPACE,
+               landscapeHeight * 0.50 + SPACE, BTN_W, BTN_H),
+        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, landscapeWidth * 0.20 + SPACE,
+               landscapeHeight * 0.50 + SPACE, BTN_W, BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_BACK, screenWidth * 0.05 - SPACE / 2,
-               screenHeight * 0.20 - SPACE / 2, RADIUS),
-        Button(SDL_CONTROLLER_BUTTON_START, screenWidth * 0.05 + SPACE / 2,
-               screenHeight * 0.20 - SPACE / 2, RADIUS),
-        Button(-1, screenWidth - 50, 50, 100)};
+        Button(SDL_CONTROLLER_BUTTON_BACK, landscapeWidth * 0.05 - SPACE / 2,
+               landscapeHeight * 0.20 - SPACE / 2, BTN_W, BTN_H),
+        Button(SDL_CONTROLLER_BUTTON_START, landscapeWidth * 0.05 + SPACE / 2,
+               landscapeHeight * 0.20 - SPACE / 2, BTN_W, BTN_H),
+        Button(-1, landscapeWidth - 50, 50, 50, 50)};
 
     return {Layout(portraitButtons), Layout(landscapeButtons)};
 }
 
 void setLayout() {
-    LOGI("setLayout: start");
     layout = savefile->settings.onScreenLayouts[(screenWidth > screenHeight)];
-    LOGI("setLayout: end");
 }
 
 void updateBatteryInfo() {

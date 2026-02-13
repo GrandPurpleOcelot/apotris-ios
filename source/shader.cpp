@@ -388,28 +388,22 @@ void drawWithShaders(SDL_Window* window, SDL_Surface* img,
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    LOGI("Cleared Color Buffer");
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, shaderTexture);
-    LOGI("Bound Texture for Draw");
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0,
                  GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
-    LOGI("Updated Texture Image");
 
     if (shadersEnabled) {
         glUseProgram(shaderProgram);
-        LOGI("Used Shader Program");
     }
 
     if (glad_glBindVertexArray) {
         glBindVertexArray(vao);
     }
-    LOGI("Bound VAO for Draw");
     
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    LOGI("Drew Elements");
 
     if (swap)
         SDL_GL_SwapWindow(window);

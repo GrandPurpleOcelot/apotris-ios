@@ -72,14 +72,16 @@ class Button {
 public:
     int x = 0;
     int y = 0;
-    int radius = 0;
+    int w = 0;
+    int h = 0;
     int key = 0;
 
-    Button(int key, int x, int y, int radius) {
+    Button(int key, int x, int y, int w, int h) {
         this->key = key;
         this->x = x;
         this->y = y;
-        this->radius = radius;
+        this->w = w;
+        this->h = h;
     };
 
     Button() {}

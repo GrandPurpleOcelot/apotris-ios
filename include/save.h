@@ -170,8 +170,8 @@ typedef struct Settings {
     int moveSfx;
     bool pauseCountdown;
     bool interruptCountdown;
-    u8   rumbleUpdateRate;
-    u8   rumbleStyle;
+    u8 rumbleUpdateRate;
+    u8 rumbleStyle;
     int clearText;
     int randomizer;
 
@@ -207,7 +207,7 @@ typedef struct Settings {
 #ifdef ANDROID
     Layout onScreenLayouts[2];
 #else
-    int layoutPlaceHolder[11 * 2 * sizeof(int)];
+    int layoutPlaceHolder[11 * 2 * 5 * sizeof(int)];
 #endif
 
 } ALIGN(4) Settings;
