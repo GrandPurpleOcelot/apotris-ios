@@ -312,7 +312,7 @@ void TitleScene::draw() {
 bool TitleScene::control() {
     if (key_hit(KEY_FULL)) {
         sfx(SFX_MENUCONFIRM);
-        rumbleStart(RUMBLE_PLACE);
+        rumblePattern(RUMBLE_PLACE);
         changeScene(new MainMenuScene(), Transitions::FADE);
         return true;
     }

@@ -1,10 +1,8 @@
 #include "def.h"
 
-#ifdef GBA
 #include "rumblePatterns.hpp"
-#include "gba-rumble.h"
+#include "platform.hpp"
 #include "save.h"
-#include "tonc_types.h"
 
 // Each part of a pattern's strength ranges from 0..=8 (inclusive),
 // representing the target active duty cycle for those frames.
@@ -447,7 +445,7 @@ static RumbleSequence s_currentSequence = RUMBLE_NONE;
 static RumbleSequence s_newSequence = RUMBLE_NONE;
 static u8 s_newStrengthMod = 0;
 
-void rumbleStart(const RumbleSequence sequence, int strength_mod)
+void rumblePattern(const RumbleSequence sequence, int strength_mod)
 {
     // If Classic Style selected and it's not a classic rumble, skip it.
     // Bit of a hack but also simple enough for now.
@@ -465,18 +463,20 @@ void rumbleStart(const RumbleSequence sequence, int strength_mod)
         s_newStrengthMod = strength_mod;
 }
 
-void rumbleStartLowPri(const RumbleSequence sequence, int strength_mod)
+void rumblePatternLowPri(const RumbleSequence sequence, int strength_mod)
 {
     if (s_newSequence == RUMBLE_NONE || sequence > s_newSequence) {
-        rumbleStart(sequence, strength_mod);
+        rumblePattern(sequence, strength_mod);
     }
 }
 
-void rumbleStop()
+void rumblePatternStop()
 {
+    // Clear any active pattern,
     s_newSequence = RUMBLE_NONE;
     s_newStrengthMod = 0;
-    gba_rumble_stop();
+    // and disable motor if it's running.
+    rumbleStop();
 }
 
 const RumbleSequence rumbleGetCurrent() {
@@ -510,10 +510,7 @@ INLINE void getNewRumble()
     s_currentSequence = s_newSequence;
 }
 
-#ifdef GBA
-// EWRAM_CODE
-#endif
-void rumblePatternISR()
+void rumblePatternLoop()
 {
     // profiler hello world
     // for (int i = 0; i < 300; ++i)
@@ -524,8 +521,7 @@ void rumblePatternISR()
 
     if (s_currentSequence == RUMBLE_NONE || !savefile->settings.rumbleStrength)
     {
-        s_newSequence = RUMBLE_NONE;
-        gba_rumble_stop();
+        rumblePatternStop();
         return;
     }
 
@@ -536,8 +532,7 @@ void rumblePatternISR()
 
         if (s_state.partIndex >= s_state.sequenceLen)
         {
-            s_newSequence = RUMBLE_NONE;
-            gba_rumble_stop();
+            rumblePatternStop();
             return;
         }
         else
@@ -565,24 +560,19 @@ void rumblePatternISR()
 
     const bool rumble = partStrength != 0 && tickStrength < partStrength;
 
+    #if defined(SWITCH) || defined(PORTMASTER) || defined(WEB) || defined(PC)
+    // SDL2 can just recieve the part's strength directly, sending the final (user-scaled) strength to our output func.
+    rumbleOutput(partStrength);
+    #else
+    // Other platforms (like GBA) need the full PWM approach.
     if (rumble) {
         if (!s_state.lastRumble)
-            gba_rumble_start();
+            rumbleOutput(partStrength);
     } else {
-        gba_rumble_stop();
+        rumbleStop();
     }
+    #endif
 
     s_state.partTick++;
     s_state.lastRumble = rumble;
 }
-
-#else
-void rumbleStart(const RumbleSequence sequence, int strength_mod) {
-    rumbleStart(1);
-}
-
-void rumbleStartLowPri(const RumbleSequence sequence, int strength_mod) {
-    rumbleStart(1);
-}
-
-#endif

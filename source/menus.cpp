@@ -98,34 +98,34 @@ void GameScene::endScreen() {
         if (game->gameMode == ULTRA || game->gameMode == BLITZ) {
             if (game->won == 1) {
                 sfx(SFX_TIME);
-                rumbleStart(RUMBLE_TSPIN);
+                rumblePattern(RUMBLE_TSPIN);
             } else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
-                rumbleStart(RUMBLE_YOULOSE);
+                rumblePattern(RUMBLE_YOULOSE);
             }
         } else if (game->gameMode != BATTLE) {
             if (game->gameMode == MASTER && game->won == 1 &&
                 game->level / 100 == 5)
             {
                 sfx(SFX_TIME);
-                rumbleStart(RUMBLE_TSPIN);
+                rumblePattern(RUMBLE_TSPIN);
             }
             else if (game->won == 1) {
                 sfx(SFX_CLEAR);
-                rumbleStart(RUMBLE_YOUWIN);
+                rumblePattern(RUMBLE_YOUWIN);
             }
             else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
-                rumbleStart(RUMBLE_YOULOSE);
+                rumblePattern(RUMBLE_YOULOSE);
             }
         } else {
             if (game->won == 1)
             {
                 sfx(SFX_YOUWIN);
-                rumbleStart(RUMBLE_YOUWIN);
+                rumblePattern(RUMBLE_YOUWIN);
             } else if (game->lost == 1) {
                 sfx(SFX_YOULOSE);
-                rumbleStart(RUMBLE_YOULOSE);
+                rumblePattern(RUMBLE_YOULOSE);
             }
         }
     }
@@ -376,7 +376,7 @@ void endAnimation() {
     enableLayerWindow(1, 0, 0, 240, 160, false);
     enableLayerWindow(2, 0, 0, 240, 160, false);
 
-    rumbleStop();
+    rumblePatternStop();
 
     sfx(SFX_END);
 
@@ -665,7 +665,7 @@ int GameScene::pauseMenu() {
 
     showSprites(128);
 
-    rumbleStop();
+    rumblePatternStop();
 
     // calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);

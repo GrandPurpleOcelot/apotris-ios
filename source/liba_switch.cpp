@@ -18,7 +18,7 @@ std::unordered_set<uint32_t> previousKeys;
 
 std::unordered_set<uint32_t> currentlyPressed;
 
-static int rumbleTimer = 0;
+// static int rumbleTimer = 0;
 
 int rowStart = 0;
 int rowEnd = SCREEN_HEIGHT;
@@ -369,16 +369,14 @@ void saveSavefile() {
     output.close();
 }
 
-void rumbleStart(int length) {
+void rumbleOutput(uint16_t strength) {
     if (!R_SUCCEEDED(rc))
         return;
-
-    rumbleTimer = length;
 
     float factor = 1;
 
     if (savefile != nullptr) {
-        factor *= (float)savefile->settings.rumbleStrength / 4.0f;
+        factor *= (float)savefile->settings.rumbleStrength / 8.0f;
     }
 
     VibrationValue.amp_low = 1.0f * factor;
@@ -399,12 +397,7 @@ void rumbleStart(int length) {
 }
 
 void rumbleUpdate() {
-    if (rumbleTimer > 0) {
-        rumbleTimer--;
-
-    } else {
-        rumbleStop();
-    }
+    rumblePatternLoop();
 }
 
 void rumbleStop() {

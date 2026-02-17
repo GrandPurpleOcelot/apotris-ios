@@ -241,7 +241,7 @@ void reset() {
     floatingList.clear();
     placeEffectList.clear();
 
-    rumbleStop();
+    rumblePatternStop();
 
     resetZonePalette();
 

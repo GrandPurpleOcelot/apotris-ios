@@ -536,7 +536,7 @@ bool GameScene::reconnect() {
 
     showSprites(128);
 
-    rumbleStop();
+    rumblePatternStop();
 
     int cursorFloat = 0;
     OBJ_ATTR* cursorSprites[2];

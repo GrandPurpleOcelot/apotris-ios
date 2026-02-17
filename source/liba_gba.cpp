@@ -1,6 +1,7 @@
 #include "platform.hpp"
 
 #ifdef GBA
+#include "gba-rumble.h"
 #include "LinkCableMultiboot.hpp"
 #include "LinkUniversal.hpp"
 #include "achievementStructure.h"
@@ -479,7 +480,7 @@ void addColorToPalette(int palette, int index, COLOR color, int count) {
     }
 }
 
-INLINE bool usingVBlankForRumblePatternISR() {
+INLINE bool usingVBlankForRumblePatternLoop() {
     return savefile->settings.rumbleUpdateRate == 0;
 }
 
@@ -508,9 +509,9 @@ void initRumbleCart() {
         gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
     }
 
-    if (!usingVBlankForRumblePatternISR()) { // True if rumbleUpdateRate == 0
+    if (!usingVBlankForRumblePatternLoop()) { // True if rumbleUpdateRate == 0
         // Setup rumble PWM with one of the hardware timers (any of 0-3)
-        interrupt_set_handler(INTR_TIMER2, rumblePatternISR);
+        interrupt_set_handler(INTR_TIMER2, rumblePatternLoop);
 
         u16 timerReloadVal = 8 << 1; // 1024hz, further shifts will half the rate.
 
@@ -555,6 +556,18 @@ void initRumble() {
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
     REG_WAITCNT = 0x4317;
+}
+
+void rumbleOutput(uint16_t strength) {
+    if (strength) {
+        gba_rumble_start();
+    } else {
+        gba_rumble_stop();
+    }
+}
+
+void rumbleStop() {
+    gba_rumble_stop();
 }
 
 bool detect_gbp() {
@@ -615,7 +628,7 @@ void sleep() {
     interrupt_disable(INTR_SERIAL);
 
     interrupt_disable(INTR_TIMER2);
-    rumbleStop();
+    rumblePatternStop();
 
     if (use_combo_for_wake) {
         // Using the same keys used to put manually to sleep.
@@ -652,7 +665,7 @@ void sleep() {
     interrupt_enable(INTR_SERIAL);
     interrupt_enable(INTR_VBLANK);
 
-    if (!usingVBlankForRumblePatternISR()) {
+    if (!usingVBlankForRumblePatternLoop()) {
         interrupt_enable(INTR_TIMER2);
     }
 
@@ -706,8 +719,8 @@ IWRAM_CODE void onVBlank() {
     mmVBlank();
     LINK_UNIVERSAL_ISR_VBLANK();
 
-    if (usingVBlankForRumblePatternISR()) {
-        rumblePatternISR();
+    if (usingVBlankForRumblePatternLoop()) {
+        rumblePatternLoop();
     }
 
     if (disableHBlank) {
