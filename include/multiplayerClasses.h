@@ -350,16 +350,16 @@ struct MultiplayerStates {
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
         void OnEnter() override {
 #ifdef GBA
-            if (Owner().universal->currentPlayerId() && nextSeed) {
+            if (Owner().universal->currentPlayerId())
+                return;
+
+            if (nextSeed) {
                 Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
                 return;
             }
 
-            if (Owner().universal->currentPlayerId())
-                return;
-
             if (!nextSeed)
-                nextSeed = (int)randNext() % (SEND_SEED - 1);
+                nextSeed = randNext() % (SEND_SEED - 1);
 
             Owner().players[Owner().universal->currentPlayerId()].seeded = true;
             Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
@@ -580,12 +580,12 @@ struct MultiplayerStates {
         void OnEnter() override {
             Owner().broadcastState(UPDATE_STATE + I_WON);
             updateRank();
-        }
-
-        Transition GetTransition() override {
             Owner().playing = false;
             Owner().resetPlayers();
             Owner().playAgain = true;
+        }
+
+        Transition GetTransition() override {
             return SiblingTransition<GameOver>();
         }
     };
@@ -641,12 +641,16 @@ struct MultiplayerStates {
             }
         }
 
-        Transition GetTransition() override {
-            if (!Owner().allOver(Owner().playingPlayerCount))
-                return NoTransition();
+        void OnExit() override {
             Owner().playing = false;
             Owner().resetPlayers();
             Owner().playAgain = true;
+        }
+
+        Transition GetTransition() override {
+            if (!Owner().allOver(Owner().playingPlayerCount))
+                return NoTransition();
+
             return SiblingTransition<GameOver>();
         }
     };
