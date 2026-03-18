@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 int lastSeed = 0;
+std::list<std::string> debugConnection;
 
 template <typename T> void clearQueue(std::queue<T>& q) {
     std::queue<T> empty;
@@ -105,12 +106,14 @@ bool MultiplayerLink::sync() {
         }
     }
 
-    return !stateMachine.IsInState<MultiplayerStates::ConnectionInitializing>() &&
-        universal->playerCount() == this->playingPlayerCount;
+    return !stateMachine
+                .IsInState<MultiplayerStates::ConnectionInitializing>() &&
+           universal->playerCount() == this->playingPlayerCount;
 }
 
 /**
- * For sending events such as attack and acknowledge attack that must never be dropped.
+ * For sending events such as attack and acknowledge attack that must never be
+ * dropped.
  */
 void MultiplayerLink::sendEvent(u16 packet) {
     bool sent = universal->send(packet);
@@ -119,8 +122,9 @@ void MultiplayerLink::sendEvent(u16 packet) {
 }
 
 /**
- * Does not insert members into the queue on transport send fail to prevent flooding the queue.
- * Logic managing states should handle its own re-try concerns.
+ * Does not insert members into the queue on transport send fail to prevent
+ * flooding the queue. Logic managing states should handle its own re-try
+ * concerns.
  */
 void MultiplayerLink::broadcastState(u16 packet) const {
     universal->send(packet);

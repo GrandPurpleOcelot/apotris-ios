@@ -197,7 +197,7 @@ void GameScene::endScreen() {
 
     bool shownOptions = false;
     while (closed()) {
-        if (handleMultiplayer(0)) {
+        if (handleMultiplayer(false)) {
             return;
         }
 
@@ -1649,12 +1649,12 @@ void GameScene::showReadyPlayers() {
         wordSprites[7].setText("Won!");
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     } else if (multiplayerLink->stateMachine
-                   .IsInState<MultiplayerStates::PlayersPresent>()) {
-        wordSprites[7].setText("Syncing...");
-        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
-    } else if (multiplayerLink->stateMachine
                    .IsInState<MultiplayerStates::PlayersSeeding>()) {
         wordSprites[7].setText("Seeding...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::PlayersPresent>()) {
+        wordSprites[7].setText("Syncing...");
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     } else if (multiplayerLink->stateMachine
                    .IsInState<MultiplayerStates::Activated>()) {
@@ -1707,44 +1707,6 @@ void MultBattleScene::showReadyPlayers() {
         counter++;
     }
 #endif
-
-    if (multiplayerLink->players[multiplayerLink->universal->currentPlayerId()]
-            .ready &&
-        !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
-        wordSprites[7]->setText("Ready!");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    } else if (multiplayerLink->stateMachine
-                   .IsInState<MultiplayerStates::PlayersAwaitReady>()) {
-        wordSprites[7]->setText("Not Ready");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    } else if (multiplayerLink->stateMachine
-                   .IsInState<MultiplayerStates::Playing>()) {
-        wordSprites[7]->setText("Starting!");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    } else if (multiplayerLink->stateMachine
-                   .IsInState<MultiplayerStates::Lost>()) {
-        wordSprites[7]->setText("Waiting...");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    } else if (multiplayerLink->stateMachine
-                   .IsInState<MultiplayerStates::Won>()) {
-        wordSprites[7]->setText("Won!");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    } else if (multiplayerLink->stateMachine
-                   .IsInState<MultiplayerStates::PlayersPresent>()) {
-        wordSprites[7]->setText("Syncing...");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    } else if (multiplayerLink->stateMachine
-                   .IsInState<MultiplayerStates::PlayersSeeding>()) {
-        wordSprites[7]->setText("Seeding...");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    } else if (multiplayerLink->stateMachine
-                   .IsInState<MultiplayerStates::Activated>()) {
-        wordSprites[7]->setText("Reconnecting...");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    } else {
-        wordSprites[7]->setText("Connecting...");
-        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
-    }
 }
 
 void MultBattleScene::hideReadyPlayers() {

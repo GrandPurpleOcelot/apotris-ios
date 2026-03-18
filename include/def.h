@@ -389,3 +389,5 @@ COLOR hsv2rgb(HSV_COLOR hsv);
 HSV_COLOR rgb2hsv(int r, int g, int b);
 
 extern std::string updateAvailable;
+
+extern std::list<std::string> debugConnection;

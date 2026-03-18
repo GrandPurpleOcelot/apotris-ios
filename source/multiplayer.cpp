@@ -63,7 +63,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
     bool playersPresent = multiplayerLink->sync();
 
     // Exit early for a later update if bad state (e.g. some player disconnects)
-    if (!playersPresent) {
+    if (!playersPresent && duringGame) {
         // If reconnect returns false, we got a connection back with all players
         if (reconnect()) {
             // Get potential new playerId
@@ -79,6 +79,13 @@ int GameScene::handleMultiplayer(bool duringGame) {
         }
     }
 
+    if (!duringGame && multiplayerLink->universal->playerCount() <
+                           multiplayerLink->playingPlayerCount) {
+        // If reconnect returns false, we got a connection back with all players
+
+        return !reconnect();
+    }
+
     if (multiplayerStart)
         return 0;
 
@@ -92,7 +99,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
             // Encode and send out attack
             u8 targetId = weightedRandomPlayerSelection();
             multiplayerLink->sendEvent(
-                    (u16) (ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
+                (u16)(ENCODE(SEND_ATTACK) + (targetId << 4) + atck.amount));
             ownPower += atck.amount;
         } else {
             if (duringGame) {
@@ -153,14 +160,14 @@ int weightedRandomPlayerSelection() {
 
     // Pick randomly if no power
     if (!totalAttackPower) {
-        u8 randomPlayer =
-            static_cast<u8>((int)randNext() % multiplayerLink->playingPlayerCount);
+        u8 randomPlayer = static_cast<u8>((int)randNext() %
+                                          multiplayerLink->playingPlayerCount);
         while (randomPlayer == multiplayerLink->universal->currentPlayerId() &&
                loseIndex[randomPlayer].over) {
             // get another random value if it equals the current player's id or
             // they lost
-            randomPlayer =
-                static_cast<u8>((int)randNext() % multiplayerLink->playingPlayerCount);
+            randomPlayer = static_cast<u8>((int)randNext() %
+                                           multiplayerLink->playingPlayerCount);
         }
         return randomPlayer;
     }
@@ -198,7 +205,7 @@ void acknowledgeGarbage(BlockEngine::Game* sourceGame,
                         BlockEngine::Garbage garbage) {
     if (multiplayer) {
         multiplayerLink->sendEvent(ENCODE(ACK_ATTACK) + (garbage.id << 4) +
-                              garbage.amount);
+                                   garbage.amount);
     } else {
         if (sourceGame == botGame) {
             attackAnimationTimers[0] = animationMax * garbage.amount;

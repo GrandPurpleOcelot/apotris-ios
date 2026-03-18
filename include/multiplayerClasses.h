@@ -5,8 +5,8 @@
 #ifdef GBA
 
 #ifndef MULTIBOOT
-#include "LinkWirelessMultiboot.hpp"
 #include "LinkCableMultiboot.hpp"
+#include "LinkWirelessMultiboot.hpp"
 #endif
 #include "LinkUniversal.hpp"
 #include "def.h"
@@ -84,6 +84,17 @@ public:
     explicit Player(u8 lId) { linkId = lId; }
 
     explicit Player() { linkId = -1; }
+
+    [[nodiscard]] std::string toString() const {
+        std::string result;
+
+        result += (seeded ? "1 " : "0 ");
+        result += (ready ? "1 " : "0 ");
+        result += (over ? "1 " : "0 ");
+        result += (reconnected ? "1 " : "0 ");
+
+        return result;
+    }
 };
 
 class MultiplayerLink {
@@ -315,19 +326,17 @@ struct MultiplayerStates {
 #endif
         }
 
-        void Update() override {
-            seenPlayerCount = Owner().universal->playerCount();
-        }
-
         // In MultiplayerStates::PlayersPresent
         Transition GetTransition() override {
             if (Owner().playing) {
                 // A player has dropped, wait for them to come back.
-                if (Owner().playingPlayerCount > Owner().universal->playerCount()) {
+                if (Owner().playingPlayerCount >
+                    Owner().universal->playerCount()) {
                     return SiblingTransition<ConnectionInitializing>();
                 }
                 // The player is back! Go right back to the game.
-                else if (Owner().playingPlayerCount <= Owner().universal->playerCount()) {
+                else if (Owner().playingPlayerCount <=
+                         Owner().universal->playerCount()) {
                     return SiblingTransition<Playing>();
                 }
             }
@@ -388,7 +397,8 @@ struct MultiplayerStates {
                         Owner().playingPlayerCount = newPlayerCount;
 #ifdef GBA
                     } else if (packet.packet & SEND_SEED) {
-                        // Host logic: Mark players as seeded if they have the correct seed.
+                        // Host logic: Mark players as seeded if they have the
+                        // correct seed.
                         if (Owner().universal->currentPlayerId() == 0) {
                             if ((packet.packet & (SEND_SEED - 1)) == nextSeed) {
                                 Owner().players[packet.playerId].seeded = true;
@@ -412,13 +422,13 @@ struct MultiplayerStates {
             process_queue(seedQueue);
 
             if (nextSeed) {
-                Owner().players[Owner().universal->currentPlayerId()].seeded = true;
+                Owner().players[Owner().universal->currentPlayerId()].seeded =
+                    true;
 #ifdef GBA
                 Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
 #endif
             }
         }
-
 
         Transition GetTransition() override {
             if (Owner().allSeeded(Owner().universal->playerCount())) {
@@ -701,7 +711,6 @@ struct MultiplayerStates {
             Owner().broadcastState(UPDATE_STATE + GAME_OVER);
             Owner().resetPlayers();
             Owner().playing = false;
-            Owner().playingPlayerCount = 0;
 #ifndef GBA
             lastSeed += 1;
             nextSeed = lastSeed;

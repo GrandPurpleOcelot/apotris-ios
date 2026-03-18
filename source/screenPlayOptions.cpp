@@ -18,8 +18,10 @@
 bool lostConnection = true;
 
 #if defined(GBA) && !defined(MULTIBOOT)
-LinkWirelessMultiboot::Async* linkWirelessMultibootAsync = new LinkWirelessMultiboot::Async("Apotris");
-LinkCableMultiboot::Async* linkCableMultibootAsync = new LinkCableMultiboot::Async();
+LinkWirelessMultiboot::Async* linkWirelessMultibootAsync =
+    new LinkWirelessMultiboot::Async("Apotris");
+LinkCableMultiboot::Async* linkCableMultibootAsync =
+    new LinkCableMultiboot::Async();
 #endif
 
 void PlayOptionScene::init() {
@@ -666,7 +668,8 @@ void MultBattleScene::init() {
 
     enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
     if (LinkWireless::isWirelessMultibootRom()) {
-        multiplayerLink->universal->setProtocol(LinkUniversal::Protocol::WIRELESS_AUTO);
+        multiplayerLink->universal->setProtocol(
+            LinkUniversal::Protocol::WIRELESS_AUTO);
     } else {
         multiplayerLink->universal->setProtocol(LinkUniversal::Protocol::CABLE);
     }
@@ -710,10 +713,66 @@ void MultBattleScene::handleConnectionDisplay() {
     else
         state = 3;
 
+    if (multiplayerLink->players[multiplayerLink->universal->currentPlayerId()]
+            .ready &&
+        !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
+        wordSprites[7]->setText("Ready!");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::PlayersAwaitReady>()) {
+        wordSprites[7]->setText("Not Ready");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::Playing>()) {
+        wordSprites[7]->setText("Starting!");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::Lost>()) {
+        wordSprites[7]->setText("Waiting...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::Won>()) {
+        wordSprites[7]->setText("Won!");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::PlayersSeeding>()) {
+        wordSprites[7]->setText("Seeding...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::PlayersPresent>()) {
+        wordSprites[7]->setText("Syncing...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::Activated>()) {
+        wordSprites[7]->setText("Reconnecting...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    } else {
+        wordSprites[7]->setText("Connecting...");
+        wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
+    }
+
     if (multiplayerLink->universal->isConnected())
         showReadyPlayers();
-    else
-        hideReadyPlayers();
+    // else
+    //     hideReadyPlayers();
+
+    while (debugConnection.size() > 10)
+        debugConnection.pop_front();
+
+    int c = 0;
+    for (auto const& player : multiplayerLink->players) {
+        std::string txt =
+            ((player.first == multiplayerLink->universal->currentPlayerId())
+                 ? ">"
+                 : " ") +
+            std::to_string(player.first) + " " + player.second.toString();
+        aprint(txt, 3, 3 + c++);
+    }
+
+    c = 0;
+    for (auto const& str : debugConnection) {
+        aprint(str, 3, 8 + c++);
+    }
 
     if (lastState == state)
         return;
@@ -770,11 +829,13 @@ bool MultBattleScene::control() {
             movingDirection = -1;
             listStart = 0;
         }
-    } else if (multiplayerLink->stateMachine
+    } else if (multiplayerLink
+                   ->stateMachine
 #else
-    if (multiplayerLink->stateMachine
+    if (multiplayerLink
+            ->stateMachine
 #endif
-                    .IsInState<MultiplayerStates::PlayersAwaitReady>() &&
+                   .IsInState<MultiplayerStates::PlayersAwaitReady>() &&
                !multiplayerLink
                     ->players[multiplayerLink->universal->currentPlayerId()]
                     .ready &&
@@ -833,7 +894,8 @@ void SinglePakWirelessScene::pumpMultibootFeed() {
     }
     if (multibootState == MultibootState::FAILED_INIT) {
         // Re-try in case adapter becomes live
-        bool result = linkWirelessMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
+        bool result = linkWirelessMultibootAsync->sendRom(
+            Apotris_multi_gba, Apotris_multi_gba_size);
         if (result)
             multibootState = MultibootState::NOT_READY;
         return;
@@ -843,17 +905,22 @@ void SinglePakWirelessScene::pumpMultibootFeed() {
     }
     u8 progress = linkWirelessMultibootAsync->getPercentage();
     u8 playerCount = linkWirelessMultibootAsync->playerCount();
-    if (lastResult == Link::AsyncMultiboot::Result::NONE && (lastProgress != progress || lastPlayerCount != playerCount)) {
+    if (lastResult == Link::AsyncMultiboot::Result::NONE &&
+        (lastProgress != progress || lastPlayerCount != playerCount)) {
         clearText();
-        naprint("Uploading game to " + std::to_string(playerCount - 1) + " players...", 0, 9 * 8);
-        naprint("Transfer " + std::to_string(progress) + "% complete...", 0, 11 * 8);
+        naprint("Uploading game to " + std::to_string(playerCount - 1) +
+                    " players...",
+                0, 9 * 8);
+        naprint("Transfer " + std::to_string(progress) + "% complete...", 0,
+                11 * 8);
         refreshText = true;
         lastProgress = progress;
         lastPlayerCount = playerCount;
         return;
     }
     // Attempt to persist a result of success
-    Link::AsyncMultiboot::Result result = linkWirelessMultibootAsync->getResult(false);
+    Link::AsyncMultiboot::Result result =
+        linkWirelessMultibootAsync->getResult(false);
     if (result != Link::AsyncMultiboot::Result::SUCCESS) {
         // Clear result if not a success result
         linkWirelessMultibootAsync->getResult();
@@ -867,21 +934,21 @@ void SinglePakWirelessScene::pumpMultibootFeed() {
     }
     clearText();
     switch (result) {
-        case Link::AsyncMultiboot::Result::INVALID_DATA:
-            naprint("Invalid data", 3 * 8, 11 * 8);
-            break;
-        case Link::AsyncMultiboot::Result::FAILURE:
-            naprint("Send failure", 3 * 8, 11 * 8);
-            break;
-        case Link::AsyncMultiboot::Result::INIT_FAILED:
-            naprint("Init failure", 3 * 8, 11 * 8);
-            break;
-        default:
-        case Link::AsyncMultiboot::Result::NONE:
-            break;
-        case Link::AsyncMultiboot::Result::SUCCESS:
-            naprint("Successful!", 3 * 8, 11 * 8);
-            break;
+    case Link::AsyncMultiboot::Result::INVALID_DATA:
+        naprint("Invalid data", 3 * 8, 11 * 8);
+        break;
+    case Link::AsyncMultiboot::Result::FAILURE:
+        naprint("Send failure", 3 * 8, 11 * 8);
+        break;
+    case Link::AsyncMultiboot::Result::INIT_FAILED:
+        naprint("Init failure", 3 * 8, 11 * 8);
+        break;
+    default:
+    case Link::AsyncMultiboot::Result::NONE:
+        break;
+    case Link::AsyncMultiboot::Result::SUCCESS:
+        naprint("Successful!", 3 * 8, 11 * 8);
+        break;
     }
 }
 
@@ -905,7 +972,8 @@ bool SinglePakWirelessScene::control() {
         return true;
     }
     if (key_hit(k.confirm)) {
-        if (multibootState == MultibootState::NOT_READY && linkWirelessMultibootAsync->playerCount() > 1) {
+        if (multibootState == MultibootState::NOT_READY &&
+            linkWirelessMultibootAsync->playerCount() > 1) {
             sfx(SFX_MENUCONFIRM);
             multibootState = MultibootState::READY;
             linkWirelessMultibootAsync->markReady();
@@ -928,33 +996,35 @@ void SinglePakWirelessScene::draw() {
     fallingBlocks();
 
     switch (multibootState) {
-        case READY:
-            break;
-        case NOT_READY: {
-            u8 playerCount = linkWirelessMultibootAsync->playerCount();
-            if (lastPlayerCount == playerCount) {
-                return;
-            }
-            lastPlayerCount = playerCount;
-            if (playerCount > 1) {
-                clearText();
-                sfx(SFX_SECRET);
-                naprint("Ready to send game to " + std::to_string(playerCount - 1) + " players!", 0, 9 * 8);
-                naprint("Press A to send multiboot!", 2 * 8, 10 * 8);
-            } else {
-                clearText();
-                sfx(SFX_HOLD);
-                naprint("      Waiting for others...     ", 0, 9 * 8);
-            }
-            break;
+    case READY:
+        break;
+    case NOT_READY: {
+        u8 playerCount = linkWirelessMultibootAsync->playerCount();
+        if (lastPlayerCount == playerCount) {
+            return;
         }
-        case NONE:
-            break;
-        default:
-        case FAILED_INIT:
+        lastPlayerCount = playerCount;
+        if (playerCount > 1) {
             clearText();
-            naprint("No wireless adapter detected...", 2 * 8, 10 * 8);
-            break;
+            sfx(SFX_SECRET);
+            naprint("Ready to send game to " + std::to_string(playerCount - 1) +
+                        " players!",
+                    0, 9 * 8);
+            naprint("Press A to send multiboot!", 2 * 8, 10 * 8);
+        } else {
+            clearText();
+            sfx(SFX_HOLD);
+            naprint("      Waiting for others...     ", 0, 9 * 8);
+        }
+        break;
+    }
+    case NONE:
+        break;
+    default:
+    case FAILED_INIT:
+        clearText();
+        naprint("No wireless adapter detected...", 2 * 8, 10 * 8);
+        break;
     }
     showSprites(128);
 }
@@ -966,10 +1036,12 @@ void SinglePakWirelessScene::startMultibootTransfer() {
     linkWirelessMultibootAsync->config.timerId = 1;
     linkWirelessMultibootAsync->config.waitForReadySignal = true;
     linkWirelessMultibootAsync->config.userName = savefile->latestName;
-    interrupt_set_handler(INTR_SERIAL, LINK_WIRELESS_MULTIBOOT_ASYNC_ISR_SERIAL);
+    interrupt_set_handler(INTR_SERIAL,
+                          LINK_WIRELESS_MULTIBOOT_ASYNC_ISR_SERIAL);
     interrupt_set_handler(INTR_TIMER1, LINK_WIRELESS_MULTIBOOT_ASYNC_ISR_TIMER);
     linkVBlankHandler = LINK_WIRELESS_MULTIBOOT_ASYNC_ISR_VBLANK;
-    bool result = linkWirelessMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
+    bool result = linkWirelessMultibootAsync->sendRom(Apotris_multi_gba,
+                                                      Apotris_multi_gba_size);
     if (!result)
         multibootState = MultibootState::FAILED_INIT;
 }
@@ -997,7 +1069,8 @@ void SinglePakWiredScene::pumpMultibootFeed() {
     }
     if (multibootState == MultibootState::FAILED_INIT) {
         // Re-try in case adapter becomes live
-        bool result = linkCableMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
+        bool result = linkCableMultibootAsync->sendRom(Apotris_multi_gba,
+                                                       Apotris_multi_gba_size);
         if (result)
             multibootState = MultibootState::NOT_READY;
         return;
@@ -1007,17 +1080,22 @@ void SinglePakWiredScene::pumpMultibootFeed() {
     }
     u8 progress = linkCableMultibootAsync->getPercentage();
     u8 playerCount = linkCableMultibootAsync->playerCount();
-    if (lastResult == Link::AsyncMultiboot::Result::NONE && (lastProgress != progress || lastPlayerCount != playerCount)) {
+    if (lastResult == Link::AsyncMultiboot::Result::NONE &&
+        (lastProgress != progress || lastPlayerCount != playerCount)) {
         clearText();
-        naprint("Uploading game to " + std::to_string(playerCount - 1) + " players...", 0, 9 * 8);
-        naprint("Transfer " + std::to_string(progress) + "% complete...", 0, 11 * 8);
+        naprint("Uploading game to " + std::to_string(playerCount - 1) +
+                    " players...",
+                0, 9 * 8);
+        naprint("Transfer " + std::to_string(progress) + "% complete...", 0,
+                11 * 8);
         refreshText = true;
         lastProgress = progress;
         lastPlayerCount = playerCount;
         return;
     }
     // Attempt to persist a result of success
-    Link::AsyncMultiboot::Result result = linkCableMultibootAsync->getResult(false);
+    Link::AsyncMultiboot::Result result =
+        linkCableMultibootAsync->getResult(false);
     if (result != Link::AsyncMultiboot::Result::SUCCESS) {
         // Clear result if not a success result
         linkCableMultibootAsync->getResult();
@@ -1031,21 +1109,21 @@ void SinglePakWiredScene::pumpMultibootFeed() {
     }
     clearText();
     switch (result) {
-        case Link::AsyncMultiboot::Result::INVALID_DATA:
-            naprint("Invalid data", 3 * 8, 11 * 8);
-            break;
-        case Link::AsyncMultiboot::Result::FAILURE:
-            naprint("Send failure", 3 * 8, 11 * 8);
-            break;
-        case Link::AsyncMultiboot::Result::INIT_FAILED:
-            naprint("Init failure", 3 * 8, 11 * 8);
-            break;
-        default:
-        case Link::AsyncMultiboot::Result::NONE:
-            break;
-        case Link::AsyncMultiboot::Result::SUCCESS:
-            naprint("Successful!", 3 * 8, 11 * 8);
-            break;
+    case Link::AsyncMultiboot::Result::INVALID_DATA:
+        naprint("Invalid data", 3 * 8, 11 * 8);
+        break;
+    case Link::AsyncMultiboot::Result::FAILURE:
+        naprint("Send failure", 3 * 8, 11 * 8);
+        break;
+    case Link::AsyncMultiboot::Result::INIT_FAILED:
+        naprint("Init failure", 3 * 8, 11 * 8);
+        break;
+    default:
+    case Link::AsyncMultiboot::Result::NONE:
+        break;
+    case Link::AsyncMultiboot::Result::SUCCESS:
+        naprint("Successful!", 3 * 8, 11 * 8);
+        break;
     }
 }
 
@@ -1069,7 +1147,8 @@ bool SinglePakWiredScene::control() {
         return true;
     }
     if (key_hit(k.confirm)) {
-        if (multibootState == MultibootState::NOT_READY && linkCableMultibootAsync->playerCount() > 1) {
+        if (multibootState == MultibootState::NOT_READY &&
+            linkCableMultibootAsync->playerCount() > 1) {
             sfx(SFX_MENUCONFIRM);
             multibootState = MultibootState::READY;
             linkCableMultibootAsync->markReady();
@@ -1092,33 +1171,35 @@ void SinglePakWiredScene::draw() {
     fallingBlocks();
 
     switch (multibootState) {
-        case READY:
-            break;
-        case NOT_READY: {
-            u8 playerCount = linkCableMultibootAsync->playerCount();
-            if (lastPlayerCount == playerCount) {
-                return;
-            }
-            lastPlayerCount = playerCount;
-            if (playerCount > 1) {
-                clearText();
-                sfx(SFX_SECRET);
-                naprint("Ready to send game to " + std::to_string(playerCount - 1) + " players!", 0, 9 * 8);
-                naprint("Press A to send multiboot!", 2 * 8, 10 * 8);
-            } else {
-                clearText();
-                sfx(SFX_HOLD);
-                naprint("      Waiting for others...     ", 0, 9 * 8);
-            }
-            break;
+    case READY:
+        break;
+    case NOT_READY: {
+        u8 playerCount = linkCableMultibootAsync->playerCount();
+        if (lastPlayerCount == playerCount) {
+            return;
         }
-        case NONE:
-            break;
-        default:
-        case FAILED_INIT:
+        lastPlayerCount = playerCount;
+        if (playerCount > 1) {
             clearText();
-            naprint("No cable detected...", 2 * 8, 10 * 8);
-            break;
+            sfx(SFX_SECRET);
+            naprint("Ready to send game to " + std::to_string(playerCount - 1) +
+                        " players!",
+                    0, 9 * 8);
+            naprint("Press A to send multiboot!", 2 * 8, 10 * 8);
+        } else {
+            clearText();
+            sfx(SFX_HOLD);
+            naprint("      Waiting for others...     ", 0, 9 * 8);
+        }
+        break;
+    }
+    case NONE:
+        break;
+    default:
+    case FAILED_INIT:
+        clearText();
+        naprint("No cable detected...", 2 * 8, 10 * 8);
+        break;
     }
     showSprites(128);
 }
@@ -1129,7 +1210,8 @@ void SinglePakWiredScene::startMultibootTransfer() {
     linkCableMultibootAsync->config.waitForReadySignal = true;
     interrupt_set_handler(INTR_SERIAL, LINK_CABLE_MULTIBOOT_ASYNC_ISR_SERIAL);
     linkVBlankHandler = LINK_CABLE_MULTIBOOT_ASYNC_ISR_VBLANK;
-    bool result = linkCableMultibootAsync->sendRom(Apotris_multi_gba, Apotris_multi_gba_size);
+    bool result = linkCableMultibootAsync->sendRom(Apotris_multi_gba,
+                                                   Apotris_multi_gba_size);
     if (!result)
         multibootState = MultibootState::FAILED_INIT;
 }
@@ -1140,9 +1222,11 @@ void SinglePakWiredScene::init() {
 
     key_poll();
     if (key_held(KEY_L) || key_held(KEY_R)) {
-        linkCableMultibootAsync->config.mode = LinkCableMultiboot::TransferMode::SPI;
+        linkCableMultibootAsync->config.mode =
+            LinkCableMultiboot::TransferMode::SPI;
     } else {
-        linkCableMultibootAsync->config.mode = LinkCableMultiboot::TransferMode::MULTI_PLAY;
+        linkCableMultibootAsync->config.mode =
+            LinkCableMultiboot::TransferMode::MULTI_PLAY;
     }
 
     startMultibootTransfer();
