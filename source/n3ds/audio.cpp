@@ -15,6 +15,7 @@
 #include <fstream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include <3ds.h>
@@ -31,6 +32,11 @@
 //
 // Based on http://soundfile.sapp.org/doc/WaveFormat/
 namespace wav {
+
+struct __attribute((packed)) WavUnknownSubchunk {
+    u32 SubchunkID;
+    u32 SubchunkSize; // size of the the rest of the chunk following this field
+};
 
 struct __attribute__((packed)) WavSubchunk1 {
     u32 Subchunk1ID;   // "fmt ", 0x20746d66
@@ -52,10 +58,8 @@ struct __attribute((packed)) WavSubchunk2 {
 struct __attribute__((packed)) WavFile {
     u32 ChunkID;   // "RIFF", 0x46464952
     u32 ChunkSize; // size of the the rest of the chunk following this field
-                   // (file size - 8)
     u32 Format;    // "WAVE", 0x45564157
-    WavSubchunk1 subchunk1;
-    WavSubchunk2 subchunk2;
+    u8 SubchunkData[];
 };
 
 constexpr u32 MAGIC_CHUNK_ID = 0x46464952;
@@ -66,50 +70,103 @@ constexpr u32 MAGIC_SUBCHUNK2_ID = 0x61746164;
 constexpr u32 SIZE_SUBCHUNK1_PCM = 16;
 constexpr u16 AUDIO_FORMAT_PCM = 1;
 
-bool is_valid(const WavFile* wav_file, size_t file_size) {
+std::optional<std::tuple<const WavSubchunk1*, const WavSubchunk2*>>
+check_file(const WavFile* wav_file, size_t file_size) {
     if (file_size <= sizeof(WavFile)) {
-        return false;
+        return std::nullopt;
     }
-
-    const WavSubchunk1& subchunk1 = wav_file->subchunk1;
-    const WavSubchunk2& subchunk2 = wav_file->subchunk2;
 
     if (wav_file->ChunkID != MAGIC_CHUNK_ID ||
-        wav_file->Format != MAGIC_FORMAT ||
-        subchunk1.Subchunk1ID != MAGIC_SUBCHUNK1_ID ||
-        subchunk1.Subchunk1Size != SIZE_SUBCHUNK1_PCM ||
-        subchunk1.AudioFormat != AUDIO_FORMAT_PCM ||
-        subchunk2.Subchunk2ID != MAGIC_SUBCHUNK2_ID) {
-        return false;
+        wav_file->Format != MAGIC_FORMAT) {
+        return std::nullopt;
     }
 
-    if (wav_file->ChunkSize + 8 > file_size) {
-        return false;
+    if (wav_file->ChunkSize + sizeof(WavUnknownSubchunk) > file_size) {
+        return std::nullopt;
     }
 
-    if (subchunk1.NumChannels != 1 && subchunk1.NumChannels != 2) {
-        return false;
+    const u8* const file_end =
+        reinterpret_cast<const u8*>(wav_file) + file_size;
+
+    const u8* cursor = wav_file->SubchunkData;
+    std::optional<const WavSubchunk1*> wav_subchunk1;
+    std::optional<const WavSubchunk2*> wav_subchunk2;
+
+    while (1) {
+        if (cursor + sizeof(WavUnknownSubchunk) > file_end) {
+            break;
+        }
+
+        const WavUnknownSubchunk* const subchunk =
+            reinterpret_cast<const WavUnknownSubchunk*>(cursor);
+        if (cursor + sizeof(WavUnknownSubchunk) + subchunk->SubchunkSize >
+            file_end) {
+            // Don't treat incomplete last chunk as an error.
+            break;
+        }
+
+        switch (subchunk->SubchunkID) {
+        case MAGIC_SUBCHUNK1_ID: {
+            if (wav_subchunk1) {
+                // duplicated chunk
+                return std::nullopt;
+            }
+
+            if (subchunk->SubchunkSize != SIZE_SUBCHUNK1_PCM) {
+                return std::nullopt;
+            }
+
+            const WavSubchunk1& subchunk1 =
+                *reinterpret_cast<const WavSubchunk1*>(cursor);
+
+            if (subchunk1.AudioFormat != AUDIO_FORMAT_PCM) {
+                return std::nullopt;
+            }
+
+            if (subchunk1.NumChannels != 1 && subchunk1.NumChannels != 2) {
+                return std::nullopt;
+            }
+
+            if (subchunk1.BitsPerSample != 8 && subchunk1.BitsPerSample != 16) {
+                return std::nullopt;
+            }
+
+            if (subchunk1.ByteRate != subchunk1.SampleRate *
+                                          subchunk1.NumChannels *
+                                          (subchunk1.BitsPerSample / 8)) {
+                return std::nullopt;
+            }
+
+            if (subchunk1.BlockAlign !=
+                subchunk1.NumChannels * (subchunk1.BitsPerSample / 8)) {
+                return std::nullopt;
+            }
+
+            wav_subchunk1 = &subchunk1;
+        } break;
+
+        case MAGIC_SUBCHUNK2_ID: {
+            if (wav_subchunk2) {
+                // duplicated chunk
+                return std::nullopt;
+            }
+
+            wav_subchunk2 = reinterpret_cast<const WavSubchunk2*>(cursor);
+        } break;
+
+        default:
+            // Ignore any unknown chunks.
+            break;
+        }
+
+        cursor += sizeof(WavUnknownSubchunk) + subchunk->SubchunkSize;
     }
 
-    if (subchunk1.BitsPerSample != 8 && subchunk1.BitsPerSample != 16) {
-        return false;
+    if (!wav_subchunk1 || !wav_subchunk2) {
+        return std::nullopt;
     }
 
-    if (subchunk1.ByteRate != subchunk1.SampleRate * subchunk1.NumChannels *
-                                  (subchunk1.BitsPerSample / 8)) {
-        return false;
-    }
-
-    if (subchunk1.BlockAlign !=
-        subchunk1.NumChannels * (subchunk1.BitsPerSample / 8)) {
-        return false;
-    }
-
-    if (subchunk2.Subchunk2Size + sizeof(WavFile) > file_size) {
-        return false;
-    }
-
-    return true;
+    return {{*wav_subchunk1, *wav_subchunk2}};
 }
 
 } /* namespace wav */
@@ -150,20 +207,24 @@ public:
         }
 
         const wav::WavFile* wav_file = (const wav::WavFile*)file_data.data();
-        if (!wav::is_valid(wav_file, len)) {
+        auto wav_checked = wav::check_file(wav_file, len);
+        if (!wav_checked) {
             return false;
         }
+        const wav::WavSubchunk1* wav_subchunk1;
+        const wav::WavSubchunk2* wav_subchunk2;
+        std::tie(wav_subchunk1, wav_subchunk2) = *wav_checked;
 
-        size_t audio_size = wav_file->subchunk2.Subchunk2Size;
+        size_t audio_size = wav_subchunk2->Subchunk2Size;
 
         ctru::linear::ptr<u8[]> audio_data =
             ctru::linear::make_ptr_nothrow_for_overwrite<u8[]>(audio_size);
 
-        memcpy(audio_data.get(), wav_file->subchunk2.Data, audio_size);
+        memcpy(audio_data.get(), wav_subchunk2->Data, audio_size);
 
         this->m_size = audio_size;
         this->m_data = std::move(audio_data);
-        this->m_wav_info = wav_file->subchunk1;
+        this->m_wav_info = *wav_subchunk1;
         return true;
     }
 
