@@ -428,13 +428,40 @@ void loadAudio(std::string pathPrefix) {
     if (failed_sfx_count > 0) {
         errorConf err;
         errorInit(&err, ERROR_TEXT_WORD_WRAP, CFG_LANGUAGE_EN);
-        char buf[256];
-        snprintf(buf, 256,
-                 "Failed to load %d sfx audio assets. Please make sure the "
-                 "files has been placed on the SD card under `" DATA_DIR_BASE
-                 "/assets`.",
-                 failed_sfx_count);
-        errorText(&err, buf);
+        std::array<char, 1536> buf;
+        char* cursor = buf.begin();
+        int result = snprintf(
+            cursor, buf.end() - cursor,
+            "Failed to load %d sfx audio assets. Please make sure the "
+            "files has been placed on the SD card under `" DATA_DIR_BASE
+            "/assets`, and that they are in the correct file format.\n\n",
+            failed_sfx_count);
+        if (result > 0) {
+            cursor += result;
+        }
+        for (int i = 0; i < SFX_COUNT; i++) {
+            if (!sound_effects[i]) {
+                result = snprintf(cursor, buf.end() - cursor, "- %s\n",
+                                  SoundEffectPaths[i]);
+                if (result > 0) {
+                    cursor += result;
+                    if (cursor >= buf.end() - 1) {
+                        // Not enough room.
+                        cursor = buf.end() - 1;
+                        break;
+                    }
+                    failed_sfx_count--;
+                }
+            }
+        }
+        if (failed_sfx_count > 0) {
+            // Not enough room to list all missing SFX files, so replace last
+            // 3 characters with an ellipsis.
+            for (int i = 1; i <= 3; i++) {
+                *(cursor - i) = '.';
+            }
+        }
+        errorText(&err, buf.data());
         errorDisp(&err);
     }
 
