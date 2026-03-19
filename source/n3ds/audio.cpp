@@ -16,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <variant>
 #include <vector>
 
 #include <3ds.h>
@@ -23,6 +24,9 @@
 #include "def.h"
 
 #include <xmp.h>
+
+#include <tremor/ivorbiscodec.h>
+#include <tremor/ivorbisfile.h>
 
 #ifdef TRACY_ENABLE
 #include <tracy/Tracy.hpp>
@@ -303,6 +307,35 @@ public:
     }
 };
 
+enum class MusicStreamedFormats {
+    Invalid,
+    Vorbis,
+};
+
+class MusicStreamed {
+    std::filesystem::path m_path{};
+    MusicStreamedFormats m_format{};
+
+public:
+    void load(std::filesystem::path path, MusicStreamedFormats format) {
+        m_path = std::move(path);
+        m_format = format;
+    }
+
+    inline void unload() {
+        m_path.clear();
+        m_format = MusicStreamedFormats::Invalid;
+    }
+
+    inline operator bool() const {
+        return !m_path.empty() && m_format != MusicStreamedFormats::Invalid;
+    }
+
+    inline const std::filesystem::path& path() const { return m_path; }
+
+    inline MusicStreamedFormats format() const { return m_format; }
+};
+
 class MusicSource {
 public:
     virtual ~MusicSource() = default;
@@ -388,6 +421,153 @@ size_t MusicSourceXMP::get_samples(u8* buffer, size_t len) {
     return len;
 }
 
+class MusicSourceVorbis final : public MusicSource {
+    OggVorbis_File m_vorbis_file{};
+    float m_playback_rate;
+    int m_current_bitstream{0};
+    ogg_int64_t m_current_bitstream_end_pos{};
+
+public:
+    inline MusicSourceVorbis() {}
+
+    ~MusicSourceVorbis() override { ov_clear(&m_vorbis_file); }
+
+    MusicSourceVorbis(const MusicSourceVorbis&) = delete;
+    MusicSourceVorbis(MusicSourceVorbis&&) = delete;
+    MusicSourceVorbis& operator=(const MusicSourceVorbis&) = delete;
+    MusicSourceVorbis& operator=(MusicSourceVorbis&&) = delete;
+
+    bool try_load(const std::filesystem::path& path);
+    void unload() override;
+    void set_loop_count(int loop) override;
+    bool set_playback_rate(float rate) override;
+    int get_sample_rate() override;
+    bool get_is_stereo() override;
+    size_t get_samples(u8* buffer, size_t len) override;
+
+    static constexpr MusicStreamedFormats FORMAT = MusicStreamedFormats::Vorbis;
+
+    static bool test(const std::filesystem::path& path);
+};
+
+bool MusicSourceVorbis::test(const std::filesystem::path& path) {
+    FILE* fd = fopen(path.c_str(), "rb");
+    if (!fd) {
+        fprintf(stderr, "Failed to open file: %s\n", path.c_str());
+        return false;
+    }
+
+    OggVorbis_File vf;
+    auto res = ov_test(fd, &vf, nullptr, 0);
+    if (res != 0) {
+        fprintf(stderr, "Vorbis open failed: %d\n", res);
+        fclose(fd);
+        return false;
+    }
+
+    ov_clear(&vf);
+    return true;
+}
+
+bool MusicSourceVorbis::try_load(const std::filesystem::path& path) {
+    FILE* fd = fopen(path.c_str(), "rb");
+    if (!fd) {
+        fprintf(stderr, "Failed to open file: %s\n", path.c_str());
+        return false;
+    }
+
+    // If `ov_open` succeeded, `ov_clear` closes the file for us.
+    auto res = ov_open(fd, &m_vorbis_file, nullptr, 0);
+    if (res != 0) {
+        fprintf(stderr, "Vorbis open failed: %d\n", res);
+        fclose(fd);
+        return false;
+    }
+
+    m_current_bitstream = 0;
+    m_current_bitstream_end_pos =
+        ov_pcm_total(&m_vorbis_file, m_current_bitstream);
+
+#ifndef NDEBUG
+    const vorbis_info* info = ov_info(&m_vorbis_file, 0);
+    printf("bitstream %d rate %lu channels %d\n", 0, info->rate,
+           info->channels);
+    printf("bitstream end pos: %lld\n", m_current_bitstream_end_pos);
+#endif
+
+    return true;
+}
+
+void MusicSourceVorbis::unload() { ov_clear(&m_vorbis_file); }
+
+void MusicSourceVorbis::set_loop_count(int loop) {
+    // TODO
+}
+
+bool MusicSourceVorbis::set_playback_rate(float rate) {
+    m_playback_rate = rate;
+    return false;
+}
+
+int MusicSourceVorbis::get_sample_rate() {
+    const vorbis_info* info = ov_info(&m_vorbis_file, m_current_bitstream);
+    return info->rate * m_playback_rate;
+}
+
+bool MusicSourceVorbis::get_is_stereo() {
+    const vorbis_info* info = ov_info(&m_vorbis_file, m_current_bitstream);
+    return info->channels == 2;
+}
+
+size_t MusicSourceVorbis::get_samples(u8* buffer, size_t len) {
+    const vorbis_info* info = ov_info(&m_vorbis_file, 0);
+    if (info->channels > 2) {
+        fprintf(stderr, "Files with more than 2 channels are not supported\n.");
+        return 0;
+    }
+
+    size_t totalRead = 0;
+    int bitstream;
+    do {
+        long read = ov_read(&m_vorbis_file, (char*)buffer + totalRead,
+                            len - totalRead, &bitstream);
+        if (read == 0)
+            break;
+        if (read < 0) {
+            fprintf(stderr, "Vorbis error decoding samples: %ld\n", read);
+            break;
+        }
+
+        if (bitstream != m_current_bitstream) {
+            fprintf(stderr, "Unexpected change of vorbis bitstream.\n");
+            return 0;
+        }
+
+        totalRead += read;
+
+        auto current_pcm = ov_pcm_tell(&m_vorbis_file);
+        if (current_pcm >= m_current_bitstream_end_pos) {
+#ifndef NDEBUG
+            printf("Reached end of bitstream %d at %lld\n", bitstream,
+                   current_pcm);
+#endif
+            if (m_current_bitstream + 1 < m_vorbis_file.links) {
+                m_current_bitstream++;
+                m_current_bitstream_end_pos +=
+                    ov_pcm_total(&m_vorbis_file, m_current_bitstream);
+            } else {
+#ifndef NDEBUG
+                printf("End of file\n");
+#endif
+            }
+            break;
+        }
+
+    } while (totalRead < len);
+
+    return totalRead;
+}
+
 class NdspAudioThread {
     // The inter-thread communication state. Only the data in this struct
     // should be touched from any non-audio threads.
@@ -412,6 +592,7 @@ class NdspAudioThread {
     // The following fields must only be accessed from the audio thread.
 
     std::optional<MusicSourceXMP> m_mus_xmp{};
+    std::optional<MusicSourceVorbis> m_mus_vorbis{};
     MusicSource* m_mus_current{nullptr};
     int m_current_sample_rate{};
     bool m_current_is_stereo{};
@@ -497,7 +678,7 @@ static int music_next_buf_idx = 0;
 
 static float music_volume = 1.f;
 
-static std::vector<MusicMod> song_modules{};
+static std::vector<std::variant<MusicMod, MusicStreamed>> song_list{};
 static std::vector<std::string> songNameList;
 
 Songs songs;
@@ -647,47 +828,73 @@ void loadAudio(std::string pathPrefix) {
         wave_buf.nsamples = MUSIC_BUFFER_SAMPLE_COUNT;
     }
 
-    std::map<std::string, MusicMod> sorted_music;
+    std::map<std::string, std::variant<MusicMod, MusicStreamed>> sorted_music;
 
     for (const auto& entry : dir_it) {
         if (!entry.is_regular_file()) {
             continue;
         }
 
-        for (const auto& ext : {".it", ".mod", ".xm", ".s3m"}) {
-            if (strcasecmp(entry.path().extension().c_str(), ext) == 0) {
-                MusicMod mod;
-                if (!mod.load(entry.path())) {
-                    continue;
+        // Test for module music:
+        auto is_module_ext = [](const char* file_ext) {
+            for (const auto& ext : {".it", ".mod", ".xm", ".s3m"}) {
+                if (strcasecmp(file_ext, ext) == 0) {
+                    return true;
                 }
-
-                auto name = entry.path().filename().string();
-#ifndef NDEBUG
-                fprintf(stderr, "Found music '%s'\n", entry.path().c_str());
-#endif
-                sorted_music.emplace(std::move(name), std::move(mod));
             }
+            return false;
+        };
+        if (is_module_ext(entry.path().extension().c_str())) {
+            MusicMod mod;
+            if (!mod.load(entry.path())) {
+                continue;
+            }
+
+            auto name = entry.path().filename().string();
+#ifndef NDEBUG
+            fprintf(stderr, "Found module music '%s'\n", entry.path().c_str());
+#endif
+            sorted_music.emplace(std::move(name), std::move(mod));
+            continue;
+        }
+
+        // Test for streamed formats:
+        if (strcasecmp(entry.path().extension().c_str(), ".ogg") == 0) {
+            MusicStreamed mus;
+            if (MusicSourceVorbis::test(entry.path())) {
+                mus.load(entry.path(), MusicSourceVorbis::FORMAT);
+            } else {
+                continue;
+            }
+
+            auto name = entry.path().filename().string();
+#ifndef NDEBUG
+            fprintf(stderr, "Found streamed music '%s', format: %d\n",
+                    entry.path().c_str(), (int)mus.format());
+#endif
+            sorted_music.emplace(std::move(name), std::move(mus));
+            continue;
         }
     }
 
-    song_modules.reserve(sorted_music.size());
+    song_list.reserve(sorted_music.size());
     songNameList.reserve(sorted_music.size());
 
-    for (auto& [name, mod] : sorted_music) {
+    for (auto& [name, mus] : sorted_music) {
         if (name.find("MENU_") != std::string::npos) {
-            songs.menu.push_back(song_modules.size());
+            songs.menu.push_back(song_list.size());
 #ifndef NDEBUG
-            fprintf(stderr, "Music %zd '%s' is menu %zd\n", song_modules.size(),
+            fprintf(stderr, "Music %zd '%s' is menu %zd\n", song_list.size(),
                     name.c_str(), songs.menu.size());
 #endif
         } else {
-            songs.game.push_back(song_modules.size());
+            songs.game.push_back(song_list.size());
 #ifndef NDEBUG
-            fprintf(stderr, "Music %zd '%s' is game %zd\n", song_modules.size(),
+            fprintf(stderr, "Music %zd '%s' is game %zd\n", song_list.size(),
                     name.c_str(), songs.game.size());
 #endif
         }
-        song_modules.emplace_back(std::move(mod));
+        song_list.emplace_back(std::move(mus));
         std::string asciiName = name;
         std::replace_if(
             asciiName.begin(), asciiName.end(),
@@ -716,7 +923,7 @@ void freeAudio() {
 
     songs.menu.clear();
     songs.game.clear();
-    song_modules.clear();
+    song_list.clear();
 
     for (auto& sfx : sound_effects) {
         sfx.unload();
@@ -1030,6 +1237,7 @@ void NdspAudioThread::audio_thread() {
 #endif
 
     m_mus_xmp.emplace();
+    m_mus_vorbis.emplace();
 
     ndspSetCallback(ndsp_callback, this);
 
@@ -1084,6 +1292,7 @@ void NdspAudioThread::audio_thread() {
     ndspSetCallback(nullptr, nullptr);
 
     stop_song();
+    m_mus_vorbis.reset();
     m_mus_xmp.reset();
 }
 
@@ -1094,20 +1303,35 @@ bool NdspAudioThread::start_song(int song_id, bool loop) {
 
     stop_song();
 
-    auto& song_mod = song_modules[song_id];
-    if (!song_mod) {
-        return false;
+    if (MusicMod* song_mod = std::get_if<MusicMod>(&song_list[song_id])) {
+        if (!*song_mod) {
+            return false;
+        }
+
+        auto [mod_data, mod_size] = song_mod->module_data();
+
+        if (!m_mus_xmp->try_load(mod_data, mod_size)) {
+            fprintf(stderr, "Failed to load song module %d\n", song_id);
+            song_mod->unload();
+            return false;
+        }
+
+        m_mus_current = &*m_mus_xmp;
+    } else if (MusicStreamed* mus =
+                   std::get_if<MusicStreamed>(&song_list[song_id])) {
+
+        if (!m_mus_vorbis->try_load(mus->path())) {
+            fprintf(stderr, "Failed to load streamed song %d\n", song_id);
+            mus->unload();
+            return false;
+        }
+
+        m_mus_current = &*m_mus_vorbis;
     }
 
-    auto [mod_data, mod_size] = song_mod.module_data();
-
-    if (!m_mus_xmp->try_load(mod_data, mod_size)) {
-        fprintf(stderr, "Failed to load song module %d\n", song_id);
-        song_mod.unload();
+    if (!m_mus_current) {
         return false;
     }
-
-    m_mus_current = &*m_mus_xmp;
 
     m_mus_current->set_playback_rate(m_music_playback_rate);
     m_mus_current->set_loop_count(loop ? 0 : 1);
