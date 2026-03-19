@@ -553,7 +553,7 @@ void PlayOptionScene::draw() {
     if (refreshText || refreshOption) {
         setOptions();
         std::string next =
-            getDescription(name(), currentElement, currentOption);
+            ::getDescription(name(), currentElement, currentOption);
 
         if (next == "" || next != scrollText) {
             scrollText = next;

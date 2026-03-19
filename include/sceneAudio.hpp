@@ -309,6 +309,8 @@ public:
 
     Scene* previousScene() { return new AudioOptionScene(); };
 
+    std::string getDescription();
+
     TrackListScene() {
         previous = savefile->settings.cycleSongs;
 

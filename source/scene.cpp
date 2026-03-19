@@ -224,7 +224,7 @@ void SimpleListScene::draw() {
     }
 
     if (refreshText) {
-        scrollText = getDescription(currentOption);
+        scrollText = getDescription();
         clearSpriteTiles(672, 144, 1);
         if (scrollText != "") {
             scrollTextLength = getVariableWidth(scrollText);
@@ -665,7 +665,7 @@ void OptionListScene::draw() {
     const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
 
     if (refreshText) {
-        scrollText = getDescription(currentOption);
+        scrollText = getDescription();
         clearSpriteTiles(672, 144, 1);
         if (scrollText != "") {
             scrollTextLength = getVariableWidth(scrollText);
