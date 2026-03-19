@@ -309,6 +309,16 @@ public:
     virtual void unload() = 0;
     virtual void set_loop_count(int loop) = 0;
     virtual bool set_playback_rate(float rate) = 0;
+    /**
+     * Get the sample rate of the upcoming samples filled by `get_samples`. This
+     * is allowed to change mid-file.
+     */
+    virtual int get_sample_rate() = 0;
+    /**
+     * Get whether the upcoming samples filled by `get_samples` is stereo. This
+     * is allowed to change mid-file.
+     */
+    virtual bool get_is_stereo() = 0;
     virtual size_t get_samples(u8* buffer, size_t len) = 0;
 };
 
@@ -330,6 +340,8 @@ public:
     void unload() override;
     void set_loop_count(int loop) override;
     bool set_playback_rate(float rate) override;
+    int get_sample_rate() override;
+    bool get_is_stereo() override;
     size_t get_samples(u8* buffer, size_t len) override;
 };
 
@@ -360,6 +372,10 @@ bool MusicSourceXMP::set_playback_rate(float rate) {
     xmp_set_tempo_factor(m_xmp_ctx, 1.0 / rate);
     return true;
 }
+
+int MusicSourceXMP::get_sample_rate() { return NDSP_SAMPLE_RATE; }
+
+bool MusicSourceXMP::get_is_stereo() { return true; }
 
 size_t MusicSourceXMP::get_samples(u8* buffer, size_t len) {
     auto res = xmp_play_buffer(m_xmp_ctx, buffer, len, m_loop_count);
@@ -397,6 +413,8 @@ class NdspAudioThread {
 
     std::optional<MusicSourceXMP> m_mus_xmp{};
     MusicSource* m_mus_current{nullptr};
+    int m_current_sample_rate{};
+    bool m_current_is_stereo{};
     float m_music_playback_rate{1.f};
     int m_loop_count{};
 
@@ -409,6 +427,7 @@ class NdspAudioThread {
     void stop_song();
 
     bool fill_buffer();
+    bool fill_buffer_impl();
 
     static void ndsp_callback(void* ctx);
 
@@ -1029,6 +1048,10 @@ void NdspAudioThread::audio_thread() {
                 if (start_song(song_id, loop)) {
                     m_state.out_song_ended.store(false,
                                                  std::memory_order_release);
+                    // It may have taken us a bit of time to load the song, so
+                    // we should jump back to the beginning of the loop to check
+                    // for stop song request.
+                    continue;
                 } else {
                     m_state.out_song_ended.store(true,
                                                  std::memory_order_release);
@@ -1117,6 +1140,54 @@ bool NdspAudioThread::fill_buffer() {
         return true;
     }
 
+    int new_sample_rate = m_mus_current->get_sample_rate();
+    bool new_is_stereo = m_mus_current->get_is_stereo();
+    if (new_sample_rate != m_current_sample_rate ||
+        new_is_stereo != m_current_is_stereo) {
+
+        // Wait until the other buffer is also drained, since we do not want to
+        // mess with the sample rate or format when there is still existing
+        // audio being played...
+        status = ndsp_wave_buf_music[(music_next_buf_idx + 1) % 2].status;
+        if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
+            return true;
+        }
+
+        ndspChnSetRate(CH_NDSP_MUSIC, new_sample_rate);
+        if (new_is_stereo) {
+            ndspChnSetFormat(CH_NDSP_MUSIC, NDSP_FORMAT_STEREO_PCM16);
+        } else {
+            ndspChnSetFormat(CH_NDSP_MUSIC, NDSP_FORMAT_MONO_PCM16);
+        }
+
+#ifndef NDEBUG
+        printf("Set music format - sample rate: %d, stereo: %d\n",
+               new_sample_rate, new_is_stereo);
+#endif
+
+        m_current_sample_rate = new_sample_rate;
+        m_current_is_stereo = new_is_stereo;
+    }
+
+    if (!fill_buffer_impl()) {
+        return false;
+    }
+
+    // Also fill the second buffer if it isn't already filled:
+
+    status = ndsp_wave_buf_music[music_next_buf_idx].status;
+    if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
+        return true;
+    }
+
+    return fill_buffer_impl();
+}
+
+bool NdspAudioThread::fill_buffer_impl() {
+#ifdef TRACY_ENABLE
+    ZoneScoped;
+#endif
+
 #ifdef TRACY_ENABLE
     ZoneNamedN(zonefill, "Filling buffer", true);
     ZoneColorV(zonefill,
@@ -1135,6 +1206,7 @@ bool NdspAudioThread::fill_buffer() {
 
     DSP_FlushDataCache(buffer, MUSIC_BUFFER_SIZE);
 
+    wave_buf.nsamples = len / 2 / (m_current_is_stereo ? 2 : 1);
     ndspChnWaveBufAdd(CH_NDSP_MUSIC, &wave_buf);
 
     music_next_buf_idx = (music_next_buf_idx + 1) % 2;
