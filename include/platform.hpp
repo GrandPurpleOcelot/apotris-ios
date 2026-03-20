@@ -175,6 +175,7 @@ extern void startSong(int song, bool loop);
 extern void stopSong();
 extern void pauseSong();
 extern void resumeSong();
+extern std::string getSongName(int song);
 
 extern void loadSavefile();
 extern void saveSavefile();

@@ -24,6 +24,7 @@ std::vector<SoLoud::AudioSource*> musicArray;
 SoLoud::handle currentSongHandle;
 
 std::vector<std::string> songList;
+std::vector<std::string> songNameList;
 
 int currentSong = -1;
 int sfxVolume = 1024;
@@ -93,6 +94,7 @@ void loadAudio(std::string pathPrefix) {
 
     for (auto str : songPaths) {
         songList.push_back(path + "/" + str);
+        songNameList.push_back(str);
 
         if (str.find("MENU_") != std::string::npos) {
             songs.menu.push_back(counter++);
@@ -210,5 +212,7 @@ void sfxRate(int n, float rate) {
 }
 
 void pauseSong() { gSoloud.setPause(currentSongHandle, 1); }
+
+std::string getSongName(int song) { return songNameList[song]; }
 
 #endif

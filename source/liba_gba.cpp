@@ -794,6 +794,8 @@ void pauseSong() { mmPause(); }
 
 void resumeSong() { mmResume(); }
 
+std::string getSongName(int song) { return {}; }
+
 void clearTilemapEntries(int tilemap, int index, int count) {
     u16* dst = (u16*)&se_mem[tilemap];
 

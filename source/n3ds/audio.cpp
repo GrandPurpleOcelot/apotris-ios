@@ -410,6 +410,7 @@ static int music_next_buf_idx = 0;
 static float music_volume = 1.f;
 
 static std::vector<MusicMod> song_modules{};
+static std::vector<std::string> songNameList;
 
 Songs songs;
 
@@ -581,6 +582,9 @@ void loadAudio(std::string pathPrefix) {
         }
     }
 
+    song_modules.reserve(sorted_music.size());
+    songNameList.reserve(sorted_music.size());
+
     for (auto& [name, mod] : sorted_music) {
         if (name.find("MENU_") != std::string::npos) {
             songs.menu.push_back(song_modules.size());
@@ -596,6 +600,7 @@ void loadAudio(std::string pathPrefix) {
 #endif
         }
         song_modules.emplace_back(std::move(mod));
+        songNameList.push_back(name);
     }
 
     if (!NdspAudioThread::start_thread()) {
@@ -827,6 +832,8 @@ void setMusicTempo(int tempo) {
 
     NdspAudioThread::send_set_tempo(music_tempo_factor);
 }
+
+std::string getSongName(int song) { return songNameList[song]; }
 
 // Audio thread functions:
 

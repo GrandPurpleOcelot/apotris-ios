@@ -181,6 +181,10 @@ public:
     void deinit();
     Scene* previousScene() { return NULL; };
 
+    virtual std::string getDescription() {
+        return ::getDescription(currentOption);
+    };
+
     ~SimpleListScene() { deinit(); };
 };
 
@@ -304,6 +308,10 @@ public:
     void init();
     void deinit();
     virtual Scene* previousScene() { return NULL; };
+
+    virtual std::string getDescription() {
+        return ::getDescription(currentOption);
+    };
 
     ~OptionListScene() { deinit(); };
 };
