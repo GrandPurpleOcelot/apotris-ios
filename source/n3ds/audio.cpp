@@ -757,6 +757,7 @@ class MusicSourceMpg123 final : public MusicSource {
 
     std::unique_ptr<mpg123_handle, Mpg123_Deleter> m_mh{};
     float m_playback_rate;
+    std::array<char, 65536> m_filebuf;
 
     static void configure_mpg123(mpg123_handle* mh) {
         auto res = mpg123_param2(mh, MPG123_ADD_FLAGS, MPG123_NO_RESYNC, 0);
@@ -778,6 +779,30 @@ class MusicSourceMpg123 final : public MusicSource {
         res = mpg123_format2(mh, 0, MPG123_STEREO, MPG123_ENC_SIGNED_16);
         if (res != MPG123_OK) {
             fprintf(stderr, "Failed to set mpg123 format %d, err: %d\n", 1,
+                    res);
+        }
+
+        static const auto my_read = [](void* fp, void* buf,
+                                       size_t nbyte) -> ssize_t {
+            auto res = fread(buf, 1, nbyte, (FILE*)fp);
+            if (res == 0 && ferror((FILE*)fp)) {
+                return -1;
+            }
+            return res;
+        };
+        static const auto my_lseek = [](void* fp, off_t offset,
+                                        int whence) -> off_t {
+            auto res = fseek((FILE*)fp, offset, whence);
+            if (res != 0) {
+                return -1;
+            }
+            return ftell((FILE*)fp);
+        };
+        static const auto my_cleanup = [](void* fp) { fclose((FILE*)fp); };
+
+        res = mpg123_replace_reader_handle(mh, my_read, my_lseek, my_cleanup);
+        if (res != MPG123_OK) {
+            fprintf(stderr, "Failed to set mpg123 reader handle, err: %d\n",
                     res);
         }
     }
@@ -831,6 +856,7 @@ bool MusicSourceMpg123::test(const std::filesystem::path& path) {
     // We feed mpg123 manually in 64k blocks. Otherwise if we let mpg123 read
     // the file directly, it decides to do single-byte reads when it sees an
     // invalid file, which can take a couple of minutes before bailing out.
+    // Even using fopen and a 64k buffer is still 5x slower than feeding.
 
     res = mpg123_open_feed(mh.get());
     if (res != MPG123_OK) {
@@ -875,9 +901,12 @@ bool MusicSourceMpg123::test(const std::filesystem::path& path) {
 }
 
 bool MusicSourceMpg123::try_load(const std::filesystem::path& path) {
-    auto res = mpg123_open(m_mh.get(), path.c_str());
+    FILE* fp = fopen(path.c_str(), "rb");
+    setvbuf(fp, m_filebuf.data(), _IOFBF, m_filebuf.size());
+    auto res = mpg123_open_handle(m_mh.get(), fp);
     if (res != MPG123_OK) {
         fprintf(stderr, "mpg123 open failed, err: %d\n", res);
+        fclose(fp);
         return false;
     }
 
@@ -1258,6 +1287,8 @@ void loadAudio(std::string pathPrefix) {
 #endif
 
             MusicStreamed mus;
+            // Mpg123 should be the last one to test since it is relatively
+            // slower to bail out than the other formats.
             if (MusicSourceVorbis::test(entry.path())) {
                 mus.load(entry.path(), MusicSourceVorbis::FORMAT);
             } else if (MusicSourceOpus::test(entry.path())) {
