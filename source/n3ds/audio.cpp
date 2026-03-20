@@ -28,6 +28,8 @@
 #include <tremor/ivorbiscodec.h>
 #include <tremor/ivorbisfile.h>
 
+#include <opusfile.h>
+
 #include <mpg123.h>
 
 #ifdef TRACY_ENABLE
@@ -312,6 +314,7 @@ public:
 enum class MusicStreamedFormats {
     Invalid,
     Vorbis,
+    Opus,
     Mpg123,
 };
 
@@ -571,6 +574,167 @@ size_t MusicSourceVorbis::get_samples(u8* buffer, size_t len) {
     return totalRead;
 }
 
+class MusicSourceOpus final : public MusicSource {
+    struct Opus_Deleter {
+        void operator()(OggOpusFile* ptr) { op_free(ptr); }
+    };
+
+    std::unique_ptr<OggOpusFile, Opus_Deleter> m_opus_file{};
+    float m_playback_rate;
+    int m_current_bitstream{0};
+    ogg_int64_t m_current_bitstream_end_pos{};
+    std::array<char, 65536> m_filebuf;
+
+public:
+    inline MusicSourceOpus() {}
+
+    ~MusicSourceOpus() override {}
+
+    MusicSourceOpus(const MusicSourceOpus&) = delete;
+    MusicSourceOpus(MusicSourceOpus&&) = delete;
+    MusicSourceOpus& operator=(const MusicSourceOpus&) = delete;
+    MusicSourceOpus& operator=(MusicSourceOpus&&) = delete;
+
+    bool try_load(const std::filesystem::path& path);
+    void unload() override;
+    void set_loop_count(int loop) override;
+    bool set_playback_rate(float rate) override;
+    int get_sample_rate() override;
+    bool get_is_stereo() override;
+    size_t get_samples(u8* buffer, size_t len) override;
+
+    static constexpr MusicStreamedFormats FORMAT = MusicStreamedFormats::Opus;
+
+    static bool test(const std::filesystem::path& path);
+};
+
+bool MusicSourceOpus::test(const std::filesystem::path& path) {
+    int error;
+    OpusFileCallbacks cb;
+    FILE* fp = (FILE*)op_fopen(&cb, path.c_str(), "rb");
+    setvbuf(fp, nullptr, _IOFBF, 65536);
+    std::unique_ptr<OggOpusFile, Opus_Deleter> opus_file{
+        op_test_callbacks(fp, &cb, nullptr, 0, &error)};
+    if (!opus_file) {
+        fprintf(stderr, "OpusFile open failed: %d\n", error);
+        fclose(fp);
+        return false;
+    }
+
+    return true;
+}
+
+bool MusicSourceOpus::try_load(const std::filesystem::path& path) {
+    // Notes on file buffering:
+    // Reading from sdmc in HOS has very high overhead. A single small
+    // unbuffered `fread` can take an average of 10 ms, sometimes up to 15 ms.
+    // The worst part is that dka/libctru `fopen` has no buffering by default.
+    // Therefore, calling `setvbuf` is after fopen is a must. A 64k buffer seems
+    // appropriate.
+
+    int error;
+    OpusFileCallbacks cb;
+    FILE* fp = (FILE*)op_fopen(&cb, path.c_str(), "rb");
+    setvbuf(fp, m_filebuf.data(), _IOFBF, m_filebuf.size());
+    m_opus_file.reset(op_open_callbacks(fp, &cb, nullptr, 0, &error));
+    if (!m_opus_file) {
+        fprintf(stderr, "OpusFile open failed: %d\n", error);
+        fclose(fp);
+        return false;
+    }
+
+    error = op_set_gain_offset(m_opus_file.get(), OP_TRACK_GAIN, 0);
+    if (error < 0) {
+#ifndef NDEBUG
+        fprintf(stderr, "OpusFile set gain offset error: %d\n", error);
+#endif
+    }
+
+    m_current_bitstream = 0;
+    m_current_bitstream_end_pos =
+        op_pcm_total(m_opus_file.get(), m_current_bitstream);
+
+#ifndef NDEBUG
+    int channels = op_channel_count(m_opus_file.get(), m_current_bitstream);
+    printf("bitstream %d channels %d\n", 0, channels);
+    printf("bitstream end pos: %lld\n", m_current_bitstream_end_pos);
+#endif
+
+    return true;
+}
+
+void MusicSourceOpus::unload() { m_opus_file.reset(); }
+
+void MusicSourceOpus::set_loop_count(int loop) {
+    // TODO
+}
+
+bool MusicSourceOpus::set_playback_rate(float rate) {
+    m_playback_rate = rate;
+    return false;
+}
+
+int MusicSourceOpus::get_sample_rate() { return 48000 * m_playback_rate; }
+
+bool MusicSourceOpus::get_is_stereo() {
+    int channels = op_channel_count(m_opus_file.get(), m_current_bitstream);
+    return channels == 2;
+}
+
+size_t MusicSourceOpus::get_samples(u8* buffer, size_t len) {
+    int channels = op_channel_count(m_opus_file.get(), m_current_bitstream);
+    if (channels > 2) {
+        fprintf(stderr, "Files with more than 2 channels are not supported\n.");
+        return 0;
+    }
+
+    size_t totalRead = 0;
+    int bitstream;
+    do {
+        // Note: op_read request buf_size in total samples count, but returns
+        // the samples count _per channel_.
+        int read_samples_per_channel =
+            op_read(m_opus_file.get(), (opus_int16*)(buffer + totalRead),
+                    (len - totalRead) / 2, &bitstream);
+        if (read_samples_per_channel == 0)
+            break;
+        if (read_samples_per_channel < 0) {
+            fprintf(stderr, "OpusFile error decoding samples: %d\n",
+                    read_samples_per_channel);
+            break;
+        }
+
+        if (bitstream != m_current_bitstream) {
+            fprintf(stderr, "Unexpected change of vorbis bitstream.\n");
+            return 0;
+        }
+
+        size_t read = (size_t)read_samples_per_channel * (size_t)channels * 2u;
+        totalRead += read;
+
+        auto current_pcm = op_pcm_tell(m_opus_file.get());
+        if (current_pcm >= m_current_bitstream_end_pos) {
+#ifndef NDEBUG
+            printf("Reached end of bitstream %d at %lld\n", bitstream,
+                   current_pcm);
+#endif
+            if (m_current_bitstream + 1 < op_link_count(m_opus_file.get())) {
+                m_current_bitstream++;
+                m_current_bitstream_end_pos +=
+                    op_pcm_total(m_opus_file.get(), m_current_bitstream);
+            } else {
+#ifndef NDEBUG
+                printf("End of file\n");
+#endif
+            }
+            break;
+        }
+
+    } while (totalRead < len);
+
+    return totalRead;
+}
+
 class MusicSourceMpg123 final : public MusicSource {
     struct Mpg123_Deleter {
         void operator()(mpg123_handle* ptr) { mpg123_delete(ptr); }
@@ -789,6 +953,7 @@ class NdspAudioThread {
 
     std::optional<MusicSourceXMP> m_mus_xmp{};
     std::optional<MusicSourceVorbis> m_mus_vorbis{};
+    std::optional<MusicSourceOpus> m_mus_opus{};
     std::optional<MusicSourceMpg123> m_mus_mpg123{};
     MusicSource* m_mus_current{nullptr};
     int m_current_sample_rate{};
@@ -1057,7 +1222,7 @@ void loadAudio(std::string pathPrefix) {
 
         // Test for streamed formats:
         auto is_streamed_ext = [](const char* file_ext) {
-            for (const auto& ext : {".ogg", ".mp3"}) {
+            for (const auto& ext : {".ogg", ".opus", ".mp3"}) {
                 if (strcasecmp(file_ext, ext) == 0) {
                     return true;
                 }
@@ -1068,6 +1233,8 @@ void loadAudio(std::string pathPrefix) {
             MusicStreamed mus;
             if (MusicSourceVorbis::test(entry.path())) {
                 mus.load(entry.path(), MusicSourceVorbis::FORMAT);
+            } else if (MusicSourceOpus::test(entry.path())) {
+                mus.load(entry.path(), MusicSourceOpus::FORMAT);
             } else if (MusicSourceMpg123::test(entry.path())) {
                 mus.load(entry.path(), MusicSourceMpg123::FORMAT);
             } else {
@@ -1445,6 +1612,7 @@ void NdspAudioThread::audio_thread() {
 
     m_mus_xmp.emplace();
     m_mus_vorbis.emplace();
+    m_mus_opus.emplace();
     m_mus_mpg123.emplace();
 
     ndspSetCallback(ndsp_callback, this);
@@ -1501,6 +1669,7 @@ void NdspAudioThread::audio_thread() {
 
     stop_song();
     m_mus_mpg123.reset();
+    m_mus_opus.reset();
     m_mus_vorbis.reset();
     m_mus_xmp.reset();
 }
@@ -1537,6 +1706,15 @@ bool NdspAudioThread::start_song(int song_id, bool loop) {
             }
 
             m_mus_current = &*m_mus_vorbis;
+        } break;
+        case MusicStreamedFormats::Opus: {
+            if (!m_mus_opus->try_load(mus->path())) {
+                fprintf(stderr, "Failed to load streamed song %d\n", song_id);
+                mus->unload();
+                return false;
+            }
+
+            m_mus_current = &*m_mus_opus;
         } break;
         case MusicStreamedFormats::Mpg123: {
             if (!m_mus_mpg123->try_load(mus->path())) {
