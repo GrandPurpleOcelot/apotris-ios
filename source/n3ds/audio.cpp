@@ -432,6 +432,7 @@ class MusicSourceVorbis final : public MusicSource {
     float m_playback_rate;
     int m_current_bitstream{0};
     ogg_int64_t m_current_bitstream_end_pos{};
+    std::array<char, 65536> m_filebuf;
 
 public:
     inline MusicSourceVorbis() {}
@@ -457,17 +458,18 @@ public:
 };
 
 bool MusicSourceVorbis::test(const std::filesystem::path& path) {
-    FILE* fd = fopen(path.c_str(), "rb");
-    if (!fd) {
+    FILE* fp = fopen(path.c_str(), "rb");
+    if (!fp) {
         fprintf(stderr, "Failed to open file: %s\n", path.c_str());
         return false;
     }
+    setvbuf(fp, nullptr, _IOFBF, 65536);
 
     OggVorbis_File vf;
-    auto res = ov_test(fd, &vf, nullptr, 0);
+    auto res = ov_test(fp, &vf, nullptr, 0);
     if (res != 0) {
         fprintf(stderr, "Vorbis open failed: %d\n", res);
-        fclose(fd);
+        fclose(fp);
         return false;
     }
 
@@ -476,17 +478,18 @@ bool MusicSourceVorbis::test(const std::filesystem::path& path) {
 }
 
 bool MusicSourceVorbis::try_load(const std::filesystem::path& path) {
-    FILE* fd = fopen(path.c_str(), "rb");
-    if (!fd) {
+    FILE* fp = fopen(path.c_str(), "rb");
+    if (!fp) {
         fprintf(stderr, "Failed to open file: %s\n", path.c_str());
         return false;
     }
+    setvbuf(fp, m_filebuf.data(), _IOFBF, m_filebuf.size());
 
     // If `ov_open` succeeded, `ov_clear` closes the file for us.
-    auto res = ov_open(fd, &m_vorbis_file, nullptr, 0);
+    auto res = ov_open(fp, &m_vorbis_file, nullptr, 0);
     if (res != 0) {
         fprintf(stderr, "Vorbis open failed: %d\n", res);
-        fclose(fd);
+        fclose(fp);
         return false;
     }
 
