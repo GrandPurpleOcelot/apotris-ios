@@ -458,6 +458,12 @@ public:
 };
 
 bool MusicSourceVorbis::test(const std::filesystem::path& path) {
+#ifdef TRACY_ENABLE
+    ZoneScopedNC("MusicSourceVorbis::test", tracy::Color::Lime);
+    auto filename = path.filename().string();
+    ZoneText(filename.c_str(), filename.size());
+#endif
+
     FILE* fp = fopen(path.c_str(), "rb");
     if (!fp) {
         fprintf(stderr, "Failed to open file: %s\n", path.c_str());
@@ -612,6 +618,12 @@ public:
 };
 
 bool MusicSourceOpus::test(const std::filesystem::path& path) {
+#ifdef TRACY_ENABLE
+    ZoneScopedNC("MusicSourceOpus::test", tracy::Color::Lime);
+    auto filename = path.filename().string();
+    ZoneText(filename.c_str(), filename.size());
+#endif
+
     int error;
     OpusFileCallbacks cb;
     FILE* fp = (FILE*)op_fopen(&cb, path.c_str(), "rb");
@@ -796,6 +808,12 @@ public:
 };
 
 bool MusicSourceMpg123::test(const std::filesystem::path& path) {
+#ifdef TRACY_ENABLE
+    ZoneScopedNC("MusicSourceMpg123::test", tracy::Color::Lime);
+    auto filename = path.filename().string();
+    ZoneText(filename.c_str(), filename.size());
+#endif
+
     // XXX: Maybe refactor to not need to new/delete every single time?
 
     std::unique_ptr<mpg123_handle, Mpg123_Deleter> mh{
@@ -1233,6 +1251,12 @@ void loadAudio(std::string pathPrefix) {
             return false;
         };
         if (is_streamed_ext(entry.path().extension().c_str())) {
+#ifdef TRACY_ENABLE
+            ZoneScopedNC("loadAudio,streamed", tracy::Color::Chartreuse);
+            auto filename = entry.path().filename().string();
+            ZoneText(filename.c_str(), filename.size());
+#endif
+
             MusicStreamed mus;
             if (MusicSourceVorbis::test(entry.path())) {
                 mus.load(entry.path(), MusicSourceVorbis::FORMAT);
