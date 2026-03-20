@@ -145,6 +145,8 @@ public:
     bool playing = false;
     bool active = false;
     bool playAgain = false;
+    int wins = 0;
+    int losses = 0;
 
     u32 enemyPower[4] = {1, 1, 1, 1};
 
@@ -161,6 +163,7 @@ public:
 
     void reset() {
         playingPlayerCount = 0;
+        wins = losses = 0;
         playing = false;
         universal->sync();
         nextSeed = 0;
@@ -598,6 +601,7 @@ struct MultiplayerStates {
             Owner().playing = false;
             Owner().resetPlayers();
             Owner().playAgain = true;
+            Owner().wins++;
         }
 
         Transition GetTransition() override {
@@ -617,6 +621,7 @@ struct MultiplayerStates {
             Owner().broadcastState(UPDATE_STATE + I_LOST);
             updateRank();
             Owner().players[Owner().universal->currentPlayerId()].over = true;
+            Owner().losses++;
         }
 
         void Update() override {

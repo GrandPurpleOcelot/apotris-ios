@@ -1612,6 +1612,7 @@ void GameScene::showEndScreenOptions() {
         counter += 3;
     } else {
         showReadyPlayers();
+        showScoreboard();
     }
 #ifndef MULTIBOOT
     wordSprites[5].setText("Main");
@@ -1672,6 +1673,13 @@ void GameScene::showReadyPlayers() {
         wordSprites[7].setText("Connecting...");
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     }
+}
+
+void GameScene::showScoreboard() {
+    std::string score = std::to_string(multiplayerLink->wins) + "W - " +
+                        std::to_string(multiplayerLink->losses) + "L";
+    wordSprites[9].setText(score);
+    wordSprites[9].show(4, 160 - 12, 14);
 }
 
 void MultBattleScene::showReadyPlayers() {
