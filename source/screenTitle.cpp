@@ -43,6 +43,9 @@ const int bgGridHeight = 30;
 const int bgGridHeight = 42;
 #endif
 
+#ifdef GBA
+__attribute((section(".ewram.data")))
+#endif
 u16 backgroundArray[bgGridHeight][30];
 
 int bgSpawnBlock = 0;
@@ -65,14 +68,12 @@ const std::list<std::string> menuOptions = {
     "Play",        "Settings",     "Stats",  "Links",
     "Skin Editor", "Color Editor", "Credits"};
 const std::list<std::string> gameOptions = {
-    "Marathon", "Sprint",       "Dig",        "Ultra",   "Blitz",
-    "Combo",    "Survival",     "Classic",    "Master",  "Death",
-    "Zen",      "Multi Battle",
+    "Marathon",     "Sprint",    "Dig",    "Ultra", "Blitz", "Combo",
+    "Survival",     "Classic",   "Master", "Death", "Zen",   "Multi Battle",
 #ifdef GBA
-    "Wireless Pak",
-    "Wired Pak",
+    "Wireless Pak", "Wired Pak",
 #endif
-    "CPU Battle", "Training"};
+    "CPU Battle",   "Training"};
 const std::list<std::string> settingsOptions = {
     "Graphics", "Audio", "Controls", "Handling", "Gameplay", "Saving"};
 
@@ -169,7 +170,7 @@ void fallingBlocks() {
     if (bgSpawnBlock > bgSpawnBlockMax) {
 
         int n = (int)(randNext() % 7);
-        int* p =
+        uint16_t* p =
             BlockEngine::getShape(n, (int)(randNext() % 4), BlockEngine::SRS);
 
         bool found = false;

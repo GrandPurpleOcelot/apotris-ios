@@ -697,7 +697,7 @@ void setSkin(int rotation) {
     loadTiles(0, 1, blockSprite, 1);
     loadTiles(2, 97, blockSprite, 1);
 
-    int* board;
+    uint16_t* board;
     for (int i = 0; i < 7; i++) {
         int n;
         if (game == nullptr)
@@ -947,7 +947,7 @@ void buildMini(TILE* customSkin) {
     }
 
     for (int i = 0; i < 7; i++) {
-        int* p = getShape(i, 0, rs);
+        uint16_t* p = getShape(i, 0, rs);
         int tileStart = 9 * 16 + i * 8;
 
         for (int y = 0; y < 2; y++) {

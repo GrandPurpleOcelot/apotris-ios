@@ -180,7 +180,7 @@ endif
 if build_type.startswith('release') or build_type.startswith('minsize')
     add_project_arguments('-DNO_DIAGNOSE', language: ['c', 'cpp'])
 elif build_type.startswith('debug')
-    add_project_arguments('-DHSM_DEBUG=1', language: ['c', 'cpp'])
+    add_project_arguments('-DHSM_DEBUG=0', language: ['c', 'cpp'])
 endif
 
 # Various helper libraries, subprojects, and scripts common to all builds

@@ -75,7 +75,7 @@ void Pawn::setBlock(int system) {
     memset32_fast(lowestBlock, 0, 4);
 
     for (int r = 0; r < 4; r++) {
-        int* shape = getShape(current, r, system);
+        u16* shape = getShape(current, r, system);
 
         for (int iy = 0; iy < 4; iy++) {
             for (int ix = 0; ix < 4; ix++) {
@@ -1563,31 +1563,31 @@ void Game::hold(int dir) {
     statTracker.holds++;
 }
 
-int* BlockEngine::getShape(int n, int r, int rotationSystem) {
-    int* result;
-    result = new int[4 * 4];
+uint16_t* BlockEngine::getShape(int n, int r, int rotationSystem) {
+    uint16_t* result;
+    result = new uint16_t[4 * 4];
 
-    int* source;
+    uint16_t* source;
 
     switch (rotationSystem) {
     case SRS:
-        source = (int*)tetrominos[n][r];
+        source = (uint16_t*)tetrominos[n][r];
         break;
     case NRS:
-        source = (int*)classic[n][r];
+        source = (uint16_t*)classic[n][r];
         break;
     case ARS:
-        source = (int*)ars[n][r];
+        source = (uint16_t*)ars[n][r];
         break;
     case BARS:
-        source = (int*)bars[n][r];
+        source = (uint16_t*)bars[n][r];
         break;
     default:
-        source = (int*)tetrominos[n][r];
+        source = (uint16_t*)tetrominos[n][r];
         break;
     }
 
-    memcpy32_fast(result, source, 16);
+    memcpy32_fast(result, source, 8);
     return result;
 }
 

@@ -744,8 +744,8 @@ void showPawn() {
 
     sprite_unhide(pawnSprite, 0);
 
-    int* b = BlockEngine::getShape(game->activePiece, game->pawn.rotation,
-                                   game->rotationSystem);
+    uint16_t* b = BlockEngine::getShape(game->activePiece, game->pawn.rotation,
+                                        game->rotationSystem);
 
     clearSpriteTiles(16 * 7, 4, 4);
     for (int i = 0; i < 4; i++) {
@@ -883,8 +883,8 @@ void showShadow() {
 
     sprite_unhide(pawnShadow, 0);
 
-    int* b = BlockEngine::getShape(game->activePiece, game->pawn.rotation,
-                                   game->rotationSystem);
+    uint16_t* b = BlockEngine::getShape(game->activePiece, game->pawn.rotation,
+                                        game->rotationSystem);
 
     clearSpriteTiles(16 * 8, 4, 4);
     for (int i = 0; i < 4; i++) {
@@ -3736,7 +3736,7 @@ void showSpawn() {
     sprite_unhide(sprite, 0);
 
     int piece = game->queue.front();
-    int* b =
+    uint16_t* b =
         BlockEngine::getShape(game->queue.front(), 0, game->rotationSystem);
 
     bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS ||

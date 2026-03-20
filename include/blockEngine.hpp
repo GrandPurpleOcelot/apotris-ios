@@ -106,7 +106,7 @@ namespace BlockEngine {
 
 extern const uint16_t connectedConversion[24];
 extern const uint16_t connectedFix[3][24];
-extern int* getShape(int piece, int rotation, int rotationSystem);
+extern uint16_t* getShape(int piece, int rotation, int rotationSystem);
 
 enum Modes {
     NO_MODE,
@@ -620,11 +620,9 @@ public:
     int lengthY = 40;
     int board[40][10]{};
 
-
     uint16_t bitboard[40]{};
 
     int columnHeights[10]{};
-
 
     Pawn pawn = Pawn(0, 0);
     int held = -1;
