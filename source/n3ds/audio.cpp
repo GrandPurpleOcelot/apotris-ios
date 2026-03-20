@@ -1284,26 +1284,25 @@ void loadAudio(std::string pathPrefix) {
             }
             return false;
         };
-        if (is_streamed_ext(entry.path().extension().c_str())) {
-#ifdef TRACY_ENABLE
-            ZoneScopedNC("loadAudio,streamed", tracy::Color::Chartreuse);
-            auto filename = entry.path().filename().string();
-            ZoneText(filename.c_str(), filename.size());
-#endif
-
-            MusicStreamed mus;
-            // Mpg123 should be the last one to test since it is relatively
-            // slower to bail out than the other formats.
+        MusicStreamed mus;
+        if (strcasecmp(entry.path().extension().c_str(), ".opus") == 0) {
+            if (MusicSourceOpus::test(entry.path())) {
+                mus.load(entry.path(), MusicSourceOpus::FORMAT);
+            }
+        } else if (strcasecmp(entry.path().extension().c_str(), ".ogg") == 0) {
             if (MusicSourceVorbis::test(entry.path())) {
                 mus.load(entry.path(), MusicSourceVorbis::FORMAT);
             } else if (MusicSourceOpus::test(entry.path())) {
                 mus.load(entry.path(), MusicSourceOpus::FORMAT);
-            } else if (MusicSourceMpg123::test(entry.path())) {
-                mus.load(entry.path(), MusicSourceMpg123::FORMAT);
-            } else {
-                continue;
             }
-
+        } else if (strcasecmp(entry.path().extension().c_str(), ".mp3") == 0) {
+            // Mpg123 should be the last one to test since it is relatively
+            // slower to bail out than the other formats.
+            if (MusicSourceMpg123::test(entry.path())) {
+                mus.load(entry.path(), MusicSourceMpg123::FORMAT);
+            }
+        }
+        if (mus) {
             auto name = entry.path().filename().string();
 #ifndef NDEBUG
             fprintf(stderr, "Found streamed music '%s', format: %d\n",
