@@ -347,6 +347,11 @@ public:
     virtual ~MusicSource() = default;
     virtual void unload() = 0;
     virtual void set_loop_count(int loop) = 0;
+    /**
+     * Change the playback rate. Returns true if the music source supports
+     * true tempo changes; returns false otherwise to indicate that the source
+     * fakes playback rate change by scaling the sample rate.
+     */
     virtual bool set_playback_rate(float rate) = 0;
     /**
      * Get the sample rate of the upcoming samples filled by `get_samples`. This
@@ -1708,8 +1713,43 @@ void NdspAudioThread::audio_thread() {
             float new_playback_rate =
                 m_state.in_music_playback_rate.load(std::memory_order_consume);
             if (new_playback_rate != m_music_playback_rate) {
+                bool real_tempo =
+                    m_mus_current->set_playback_rate(new_playback_rate);
+
+                if (!real_tempo) {
+                    // Streamed music may change sample rate to alter speed. If
+                    // this is the case, change the ndsp sample rate
+                    // immediately, bypassing the normal switchover procedure in
+                    // `fill_buffer` (which waits until all buffers have been
+                    // drained).
+
+                    int new_sample_rate = m_mus_current->get_sample_rate();
+
+                    int source_sample_rate_old =
+                        m_current_sample_rate / m_music_playback_rate;
+                    int source_sample_rate_new =
+                        new_sample_rate / new_playback_rate;
+                    if (source_sample_rate_old == source_sample_rate_new) {
+
+                        ndspChnSetRate(CH_NDSP_MUSIC, new_sample_rate);
+                        m_current_sample_rate = new_sample_rate;
+
+#ifndef NDEBUG
+                        printf("Playback rate change causes immediate sample "
+                               "rate change - sample rate: %d\n",
+                               new_sample_rate);
+#endif
+                    } else {
+#ifndef NDEBUG
+                        printf("Playback rate change _not_ causing immediate "
+                               "sample rate change - source sample rate: %d -> "
+                               "%d\n",
+                               source_sample_rate_old, source_sample_rate_new);
+#endif
+                    }
+                }
+
                 m_music_playback_rate = new_playback_rate;
-                m_mus_current->set_playback_rate(m_music_playback_rate);
             }
         }
 
