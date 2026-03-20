@@ -32,6 +32,11 @@ bool TrackListScene::control() {
     if (OptionListScene::control())
         return true;
 
+    if (key_hit(savefile->settings.menuKeys.special3)) {
+        setMusicTempo(slow ? 1024 : 512);
+        slow = !slow;
+    }
+
     if (selection != previous) {
         auto it = elementList.begin();
         std::advance(it, selection);
