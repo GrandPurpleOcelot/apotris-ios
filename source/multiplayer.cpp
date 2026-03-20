@@ -15,7 +15,6 @@
 
 using namespace BlockEngine;
 
-void drawEnemyBoard();
 int weightedRandomPlayerSelection();
 
 u8 enemyBoard[4][20][10];
@@ -47,11 +46,13 @@ int botIncomingHeight = 0;
 #define ENCODE(x) ((x) << 13)
 
 void clearEnemyBoard() {
-    memset32_fast((u32*)enemyBoard, 0, sizeof(enemyBoard) / 4);
+    memset32_fast((u32*)enemyBoard, 0, sizeof(enemyBoard));
     clearSpriteTiles(boardTile, 8, 8);
 
     for (auto& timer : attackAnimationTimers)
         timer = 0;
+
+    clearSpriteTiles(boardTile, 2, 4);
 }
 
 // returns true if we should terminate the game
@@ -85,9 +86,6 @@ int GameScene::handleMultiplayer(bool duringGame) {
 
         return !reconnect();
     }
-
-    if (multiplayerStart)
-        return 0;
 
     if (!game->lost) {
         // Attacks take priority over block state
@@ -231,47 +229,15 @@ void GameScene::UpdateEnemyBoard(int command, int value, u8 linkPlayerId) {
     }
 }
 
-void startMultiplayerGame(int seed) {
-    clearSpriteTiles(boardTile, 2, 4);
-    clearText();
-    if (playAgain)
-        clearSmallText();
+void resetMultiplayerGame() {
 
-    for (int i = 0; i < 20; i++)
-        for (int j = 0; j < 10; j++)
-            for (auto& k : enemyBoard)
-                k[i][j] = 0;
-
-    delete game;
-    game = new Game(BATTLE, seed & (SEND_SEED - 1), false);
-
-    if (previousGameOptions == nullptr)
-        previousGameOptions = new BlockEngine::Options();
-
-    game->setOptions(*previousGameOptions);
-    game->setTuning(getTuning());
-    game->setLevel(1);
-    game->setGoal(250);
-    multiplayer = true;
     clearEnemyBoard();
-    game->won = false;
 
-    nextSeed = 0;
-    multiplayerStart = true;
-#ifndef MULTIBOOT
-    botThinkingSpeed = 8 + multiplayerLink->universal->currentPlayerId();
-#endif
     for (auto& i : multiplayerLink->enemyPower)
         i = 1;
-    ended = false;
+
     rank = 0;
     ownPower = 1;
-#ifndef MULTIBOOT
-    delete testBot;
-    if (enableBot) {
-        testBot = new BlockEngine::Bot(game);
-    }
-#endif
 }
 
 void drawEnemyBoard() {
@@ -328,7 +294,6 @@ void drawEnemyBoard() {
             attackAnimationTimers[i]--;
     }
 
-    std::map<u8, bool> lost;
     for (auto i = 0; i < multiplayerLink->playingPlayerCount; i++) {
         if (i == multiplayerLink->universal->currentPlayerId())
             continue;

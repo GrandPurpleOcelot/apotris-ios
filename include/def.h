@@ -130,7 +130,7 @@ extern void hideMinos();
 extern void reset();
 
 extern void handleMultiplayer(int state);
-extern void startMultiplayerGame(int);
+extern void resetMultiplayerGame();
 extern void acknowledgeGarbage(BlockEngine::Game*, BlockEngine::Garbage);
 extern void progressBar(int layer);
 
@@ -323,6 +323,7 @@ extern int gridUpdateTimerMax;
 extern int damp;
 extern int dampTimer;
 extern int dampTimerMax;
+extern void drawEnemyBoard();
 
 extern int peek;
 extern FIXED peekValue;

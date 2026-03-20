@@ -1080,11 +1080,9 @@ void gradient(int state) {
 }
 
 void startGame(BlockEngine::Options options, int seed) {
-    if (!multiplayer) {
-        delete game;
-        game = new Game(options.mode, seed, options.bigMode);
-        game->setOptions(options);
-    }
+    delete game;
+    game = new Game(options.mode, seed, options.bigMode);
+    game->setOptions(options);
 
     if (!demo)
         savefile->stats.gamesStarted++;
@@ -1131,7 +1129,6 @@ void startGame() {
 
 #ifndef MULTIBOOT
 void startBotGame(int seed) {
-    startMultiplayerGame(seed);
     multiplayer = false;
 
     delete botGame;

@@ -250,7 +250,10 @@ void GameScene::endScreen() {
         wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8,
                             14 + (selection == 1 + !multiplayer));
 
-        if (playAgain && multiplayer) {
+        if (multiplayerStart) {
+            multiplayerStart = false;
+            startGame(nextSeed);
+            changeScene(new GameScene());
             break;
         }
 
@@ -780,7 +783,12 @@ int GameScene::pauseMenu() {
                     buildBG(3, 0, 27, 0, 1, true);
                     addGameStats();
                     playSongRandom(0);
+
+#ifdef MULTIBOOT
                     changeScene(new MultBattleScene(), Transitions::FADE);
+#else
+                    changeScene(new MainMenuScene(), Transitions::FADE);
+#endif
                     return 1;
                 }
             }

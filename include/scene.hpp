@@ -41,7 +41,7 @@ public:
 
     Scene() = default;
 
-    virtual ~Scene() {};
+    virtual ~Scene(){};
 };
 
 extern Scene* scene;
@@ -71,6 +71,7 @@ class GameScene : public Scene {
     bool reconnect();
     int handleMultiplayer(bool duringGame);
     int endScreenSetup();
+    void showScoreboard();
 
     bool counted = false;
     bool skipSong = false;
@@ -460,7 +461,8 @@ public:
     bool control();
     void init();
     void deinit();
-    Scene* previousScene();;
+    Scene* previousScene();
+    ;
 
     ~MultiplayerExceptionScene() { deinit(); };
 };
@@ -586,7 +588,6 @@ public:
 #endif
 };
 #endif
-
 
 class LabelElement : public Element {
     std::string label;

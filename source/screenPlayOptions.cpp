@@ -802,11 +802,6 @@ void MultBattleScene::handleConnectionDisplay() {
 }
 
 bool MultBattleScene::control() {
-    if (multiplayerStart) {
-        multiplayerStart = false;
-        changeScene(new GameScene(), Transitions::FADE);
-        return true;
-    }
     MenuKeys k = savefile->settings.menuKeys;
 #ifndef MULTIBOOT
     if (key_hit(k.cancel)) {
@@ -853,6 +848,12 @@ void MultBattleScene::update() {
     if (!multiplayerLink->active)
         return;
 
+    if (multiplayerStart) {
+        multiplayerStart = false;
+        start();
+        return;
+    }
+
     if (multiplayerLink->sync()) {
 #ifndef MULTIBOOT
         if (lostConnection) {
@@ -872,10 +873,25 @@ void MultBattleScene::update() {
     }
 }
 
+void MultBattleScene::start() {
+    multiplayer = true;
+
+    BlockEngine::Options newOptions;
+
+    newOptions.mode = BlockEngine::BATTLE;
+    newOptions.level = 1;
+    newOptions.goal = 250;
+    newOptions.tuning = getTuning();
+
+    startGame(newOptions, nextSeed & (SEND_SEED - 1));
+    nextSeed = 0;
+
+    gameLoop();
+}
+
 void MultBattleScene::deinit() {
 #ifdef GBA
     PlayOptionScene::deinit();
-    playAgain = false;
     multiplayerLink->deactivate(false);
     if (rumbleHandler)
         interrupt_set_handler(INTR_SERIAL, rumbleHandler);

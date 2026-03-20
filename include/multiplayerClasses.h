@@ -399,13 +399,12 @@ struct MultiplayerStates {
                     } else if (packet.packet & SEND_SEED) {
                         // Host logic: Mark players as seeded if they have the
                         // correct seed.
-                        if (Owner().universal->currentPlayerId() == 0) {
-                            if ((packet.packet & (SEND_SEED - 1)) == nextSeed) {
-                                Owner().players[packet.playerId].seeded = true;
-                            }
+                        if ((packet.packet & (SEND_SEED - 1)) == nextSeed) {
+                            Owner().players[packet.playerId].seeded = true;
                         }
+
                         // Client logic: Only accept a seed from the host.
-                        else {
+                        if (Owner().universal->currentPlayerId() != 0) {
                             if (packet.playerId == 0) {
                                 nextSeed = packet.packet & (SEND_SEED - 1);
                                 Owner().players[packet.playerId].seeded = true;
@@ -465,7 +464,7 @@ struct MultiplayerStates {
      */
     struct PlayersAwaitReady : StateWithOwner<MultiplayerLink> {
         bool sentReady = false;
-        int readyTimeout = 3 * 60;
+        // int readyTimeout = 3 * 60;
 
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
@@ -509,10 +508,9 @@ struct MultiplayerStates {
         Transition GetTransition() override {
             if (Owner().allReady(Owner().playingPlayerCount)) {
                 return SiblingTransition<Playing>();
-            } else if (readyTimeout) {
-            } else {
-                return NoTransition();
             }
+
+            return NoTransition();
         }
     };
 
@@ -524,17 +522,21 @@ struct MultiplayerStates {
      */
     struct Playing : StateWithOwner<MultiplayerLink> {
         int echoCounter = 0;
+        int countdownTimeout = 120;
 
         void OnEnter() override {
             bool wasPlaying = Owner().playing;
             if (!wasPlaying) {
                 Owner().playing = true;
                 playAgain = Owner().playAgain;
-                startMultiplayerGame(nextSeed);
+                multiplayerStart = true;
             }
         }
 
         void Update() override {
+            if (countdownTimeout-- > 0)
+                return;
+
             std::queue<Packet> queue = Owner().readPackets();
             while (!queue.empty()) {
                 Packet packet = queue.front();
@@ -572,6 +574,9 @@ struct MultiplayerStates {
         }
 
         Transition GetTransition() override {
+            if (countdownTimeout > 0)
+                return NoTransition();
+
             if (game->lost) {
                 return SiblingTransition<Lost>();
             } else if (game->won) {

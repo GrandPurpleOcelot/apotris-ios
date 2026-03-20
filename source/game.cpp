@@ -1141,11 +1141,6 @@ void showQueue(bool offsetSpriteIndex) {
 }
 
 bool GameScene::control() {
-    if (multiplayerStart) {
-        changeScene(new GameScene());
-        multiplayerStart = false;
-        return true;
-    }
     if (paused || !counted)
         return false;
 
@@ -1707,7 +1702,7 @@ void GameScene::countdown() {
 
     paused = true;
 
-    while (closed() && timer++ < timerMax - 1 && !multiplayerStart) {
+    while (closed() && timer++ < timerMax - 1) {
         canDraw = true;
         vsync();
         key_poll();
@@ -1730,9 +1725,9 @@ void GameScene::countdown() {
                 sfx(SFX_GO);
         }
 #ifdef GBA
-        if (multiplayerLink->active && !multiplayerLink->sync()) {
-            if (multiplayer)
-                clearText();
+        if (multiplayerLink->active && !multiplayerLink->sync() &&
+            multiplayer) {
+            clearText();
             break;
         }
 #endif
@@ -3276,6 +3271,10 @@ void GameScene::init() {
 
     reset();
 
+    if (multiplayer) {
+        resetMultiplayerGame();
+    }
+
     setPreviousSettings(savefile->settings);
 
     // hold frame tiles
@@ -3375,6 +3374,10 @@ void GameScene::init() {
 
     showZoneMeter();
 
+    if (game->gameMode == BATTLE) {
+        drawEnemyBoard();
+    }
+
     ended = false;
 }
 
@@ -3443,7 +3446,7 @@ void GameScene::update() {
         game->update();
     }
 
-    if (handleMultiplayer(1)) {
+    if (handleMultiplayer(true)) {
         return;
     }
 
@@ -3522,12 +3525,7 @@ void GameScene::update() {
         endScreen();
 
         paused = false;
-        if (!(playAgain && multiplayer)) {
-            return;
-        } else {
-            playAgain = false;
-            counted = false;
-        }
+        return;
     }
 
     if (paused) {
@@ -3543,10 +3541,6 @@ void GameScene::update() {
         addGameStats();
         paused = true;
         startGame();
-        if (multiplayer) {
-            paused = false;
-            return;
-        }
         changeScene(new GameScene());
         return;
     }

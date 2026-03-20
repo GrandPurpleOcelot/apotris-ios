@@ -47,8 +47,7 @@ void changeScene(Scene* newScene, Transitions transition) {
     scene = newScene;
     scene->init();
 
-    if (!multiplayerStart)
-        vsync();
+    vsync();
     toggleRendering(true);
 
     switch (transition) {
@@ -117,7 +116,7 @@ void sceneSwitcher(const std::string& str) {
     if (str == "Play") {
         changeScene(new ModeListScene(), Transitions::FADE);
     } else if (str == "Settings") {
-        if(previousSettings == nullptr)
+        if (previousSettings == nullptr)
             previousSettings = std::make_unique<Settings>();
         *previousSettings = savefile->settings;
         menuKeys = savefile->settings.menuKeys;

@@ -292,13 +292,13 @@ public:
     explicit TupleSelectorElement(
         std::list<std::tuple<int, std::string>> list) {
         optionList = std::move(list);
-        options = (int) optionList.size();
+        options = (int)optionList.size();
     }
 
     TupleSelectorElement(std::string newLabel,
                          std::list<std::tuple<int, std::string>> list) {
         optionList = std::move(list);
-        options = (int) optionList.size();
+        options = (int)optionList.size();
         label = std::move(newLabel);
     }
 };
@@ -563,6 +563,7 @@ public:
     void update() override;
     void deinit() override;
     void draw() override;
+    void start() override;
 
     std::string name() override { return "Multi Battle"; };
 
@@ -592,16 +593,13 @@ private:
 #ifdef GBA
 class SinglePakWirelessScene : public PlayOptionScene {
 private:
-    enum MultibootState {
-        NOT_READY,
-        READY,
-        FAILED_INIT,
-        NONE
-    };
+    enum MultibootState { NOT_READY, READY, FAILED_INIT, NONE };
     MultibootState multibootState = NOT_READY;
     u8 lastPlayerCount = 255;
     u8 lastProgress = 255;
-    Link::AsyncMultiboot::Result lastResult = Link::AsyncMultiboot::Result::NONE;
+    Link::AsyncMultiboot::Result lastResult =
+        Link::AsyncMultiboot::Result::NONE;
+
 public:
     BlockEngine::Modes getMode() override { return BlockEngine::BATTLE; };
 
@@ -617,21 +615,17 @@ public:
 
     void pumpMultibootFeed();
     void startMultibootTransfer();
-
 };
 
 class SinglePakWiredScene : public PlayOptionScene {
 private:
-    enum MultibootState {
-        NOT_READY,
-        READY,
-        FAILED_INIT,
-        NONE
-    };
+    enum MultibootState { NOT_READY, READY, FAILED_INIT, NONE };
     MultibootState multibootState = NOT_READY;
     u8 lastPlayerCount = 255;
     u8 lastProgress = 255;
-    Link::AsyncMultiboot::Result lastResult = Link::AsyncMultiboot::Result::NONE;
+    Link::AsyncMultiboot::Result lastResult =
+        Link::AsyncMultiboot::Result::NONE;
+
 public:
     BlockEngine::Modes getMode() override { return BlockEngine::BATTLE; };
 
@@ -647,7 +641,6 @@ public:
 
     void pumpMultibootFeed();
     void startMultibootTransfer();
-
 };
 #endif
 
