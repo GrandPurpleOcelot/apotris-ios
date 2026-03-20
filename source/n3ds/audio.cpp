@@ -28,6 +28,8 @@
 #include <tremor/ivorbiscodec.h>
 #include <tremor/ivorbisfile.h>
 
+#include <mpg123.h>
+
 #ifdef TRACY_ENABLE
 #include <tracy/Tracy.hpp>
 #endif
@@ -310,6 +312,7 @@ public:
 enum class MusicStreamedFormats {
     Invalid,
     Vorbis,
+    Mpg123,
 };
 
 class MusicStreamed {
@@ -568,6 +571,199 @@ size_t MusicSourceVorbis::get_samples(u8* buffer, size_t len) {
     return totalRead;
 }
 
+class MusicSourceMpg123 final : public MusicSource {
+    struct Mpg123_Deleter {
+        void operator()(mpg123_handle* ptr) { mpg123_delete(ptr); }
+    };
+
+    std::unique_ptr<mpg123_handle, Mpg123_Deleter> m_mh{};
+    float m_playback_rate;
+
+    static void configure_mpg123(mpg123_handle* mh) {
+        auto res = mpg123_param2(mh, MPG123_ADD_FLAGS, MPG123_NO_RESYNC, 0);
+        if (res != MPG123_OK) {
+            fprintf(stderr, "Failed to set mpg123 flags, err: %d\n", res);
+        }
+
+        res = mpg123_param2(mh, MPG123_RVA, MPG123_RVA_MIX, 0);
+        if (res != MPG123_OK) {
+            fprintf(stderr, "Failed to set mpg123 rva, err: %d\n", res);
+        }
+
+        mpg123_format_none(mh);
+        res = mpg123_format2(mh, 0, MPG123_MONO, MPG123_ENC_SIGNED_16);
+        if (res != MPG123_OK) {
+            fprintf(stderr, "Failed to set mpg123 format %d, err: %d\n", 0,
+                    res);
+        }
+        res = mpg123_format2(mh, 0, MPG123_STEREO, MPG123_ENC_SIGNED_16);
+        if (res != MPG123_OK) {
+            fprintf(stderr, "Failed to set mpg123 format %d, err: %d\n", 1,
+                    res);
+        }
+    }
+
+public:
+    inline MusicSourceMpg123() : m_mh(mpg123_new(nullptr, nullptr)) {
+        configure_mpg123(m_mh.get());
+    }
+
+    ~MusicSourceMpg123() override {}
+
+    MusicSourceMpg123(const MusicSourceMpg123&) = delete;
+    MusicSourceMpg123(MusicSourceMpg123&&) = delete;
+    MusicSourceMpg123& operator=(const MusicSourceMpg123&) = delete;
+    MusicSourceMpg123& operator=(MusicSourceMpg123&&) = delete;
+
+    bool try_load(const std::filesystem::path& path);
+    void unload() override;
+    void set_loop_count(int loop) override;
+    bool set_playback_rate(float rate) override;
+    int get_sample_rate() override;
+    bool get_is_stereo() override;
+    size_t get_samples(u8* buffer, size_t len) override;
+
+    static constexpr MusicStreamedFormats FORMAT = MusicStreamedFormats::Mpg123;
+
+    static bool test(const std::filesystem::path& path);
+};
+
+bool MusicSourceMpg123::test(const std::filesystem::path& path) {
+    // XXX: Maybe refactor to not need to new/delete every single time?
+
+    std::unique_ptr<mpg123_handle, Mpg123_Deleter> mh{
+        mpg123_new(nullptr, nullptr)};
+
+    configure_mpg123(mh.get());
+
+    auto res =
+        mpg123_param2(mh.get(), MPG123_ADD_FLAGS, MPG123_NO_FRANKENSTEIN, 0);
+    if (res != MPG123_OK) {
+        fprintf(stderr, "mpg123 param failed, err: %d\n", res);
+        return false;
+    }
+
+    // We feed mpg123 manually in 64k blocks. Otherwise if we let mpg123 read
+    // the file directly, it decides to do single-byte reads when it sees an
+    // invalid file, which can take a couple of minutes before bailing out.
+
+    res = mpg123_open_feed(mh.get());
+    if (res != MPG123_OK) {
+        fprintf(stderr, "mpg123 open failed, err: %d\n", res);
+        return false;
+    }
+
+    std::fstream fs(path, std::ios::binary | std::ios::in);
+    if (!fs.is_open()) {
+        return false;
+    }
+
+    std::unique_ptr<u8[]> file_data = std::make_unique<u8[]>(65536);
+    while (true) {
+        fs.read((char*)file_data.get(), 65536);
+        if (fs.gcount() == 0) {
+#ifndef NDEBUG
+            printf("End of file\n");
+#endif
+            return false;
+        }
+
+        res = mpg123_feed(mh.get(), file_data.get(), fs.gcount());
+        if (res != MPG123_OK) {
+            fprintf(stderr, "Failed to feed mpg123 data, err: %d\n", res);
+            return false;
+        }
+
+        long rate;
+        int channels;
+        int encoding;
+        res = mpg123_getformat2(mh.get(), &rate, &channels, &encoding, false);
+        if (res == MPG123_OK) {
+            break;
+        } else if (res != MPG123_NEED_MORE) {
+            fprintf(stderr, "Failed to get mpg123 format, err: %d\n", res);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool MusicSourceMpg123::try_load(const std::filesystem::path& path) {
+    auto res = mpg123_open(m_mh.get(), path.c_str());
+    if (res != MPG123_OK) {
+        fprintf(stderr, "mpg123 open failed, err: %d\n", res);
+        return false;
+    }
+
+    return true;
+}
+
+void MusicSourceMpg123::unload() { mpg123_close(m_mh.get()); }
+
+void MusicSourceMpg123::set_loop_count(int loop) {
+    // TODO
+}
+
+bool MusicSourceMpg123::set_playback_rate(float rate) {
+    m_playback_rate = rate;
+    return false;
+}
+
+int MusicSourceMpg123::get_sample_rate() {
+    long rate;
+    int channels;
+    int encoding;
+    auto res = mpg123_getformat2(m_mh.get(), &rate, &channels, &encoding, true);
+    if (res != MPG123_OK) {
+        fprintf(stderr, "Failed to get format, err: %d\n", res);
+        return NDSP_SAMPLE_RATE;
+    }
+    return rate * m_playback_rate;
+}
+
+bool MusicSourceMpg123::get_is_stereo() {
+    long rate;
+    int channels;
+    int encoding;
+    auto res =
+        mpg123_getformat2(m_mh.get(), &rate, &channels, &encoding, false);
+    if (res != MPG123_OK) {
+        return NDSP_SAMPLE_RATE;
+    }
+    return channels == MPG123_STEREO;
+}
+
+size_t MusicSourceMpg123::get_samples(u8* buffer, size_t len) {
+    size_t totalRead = 0;
+    int bitstream;
+    do {
+        size_t read = 0;
+        auto res =
+            mpg123_read(m_mh.get(), buffer + totalRead, len - totalRead, &read);
+        if (res != MPG123_OK && res != MPG123_NEW_FORMAT) {
+            if (res == MPG123_DONE) {
+                break;
+            }
+            fprintf(stderr, "mpg123 read error: %d\n", res);
+            return 0;
+        }
+        if (read == 0)
+            break;
+
+        totalRead += read;
+
+        if (res == MPG123_NEW_FORMAT) {
+#ifndef NDEBUG
+            printf("MPG123_NEW_FORMAT\n");
+#endif
+            break;
+        }
+    } while (totalRead < len);
+
+    return totalRead;
+}
+
 class NdspAudioThread {
     // The inter-thread communication state. Only the data in this struct
     // should be touched from any non-audio threads.
@@ -593,6 +789,7 @@ class NdspAudioThread {
 
     std::optional<MusicSourceXMP> m_mus_xmp{};
     std::optional<MusicSourceVorbis> m_mus_vorbis{};
+    std::optional<MusicSourceMpg123> m_mus_mpg123{};
     MusicSource* m_mus_current{nullptr};
     int m_current_sample_rate{};
     bool m_current_is_stereo{};
@@ -859,10 +1056,20 @@ void loadAudio(std::string pathPrefix) {
         }
 
         // Test for streamed formats:
-        if (strcasecmp(entry.path().extension().c_str(), ".ogg") == 0) {
+        auto is_streamed_ext = [](const char* file_ext) {
+            for (const auto& ext : {".ogg", ".mp3"}) {
+                if (strcasecmp(file_ext, ext) == 0) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        if (is_streamed_ext(entry.path().extension().c_str())) {
             MusicStreamed mus;
             if (MusicSourceVorbis::test(entry.path())) {
                 mus.load(entry.path(), MusicSourceVorbis::FORMAT);
+            } else if (MusicSourceMpg123::test(entry.path())) {
+                mus.load(entry.path(), MusicSourceMpg123::FORMAT);
             } else {
                 continue;
             }
@@ -1238,6 +1445,7 @@ void NdspAudioThread::audio_thread() {
 
     m_mus_xmp.emplace();
     m_mus_vorbis.emplace();
+    m_mus_mpg123.emplace();
 
     ndspSetCallback(ndsp_callback, this);
 
@@ -1292,6 +1500,7 @@ void NdspAudioThread::audio_thread() {
     ndspSetCallback(nullptr, nullptr);
 
     stop_song();
+    m_mus_mpg123.reset();
     m_mus_vorbis.reset();
     m_mus_xmp.reset();
 }
@@ -1319,14 +1528,29 @@ bool NdspAudioThread::start_song(int song_id, bool loop) {
         m_mus_current = &*m_mus_xmp;
     } else if (MusicStreamed* mus =
                    std::get_if<MusicStreamed>(&song_list[song_id])) {
+        switch (mus->format()) {
+        case MusicStreamedFormats::Vorbis: {
+            if (!m_mus_vorbis->try_load(mus->path())) {
+                fprintf(stderr, "Failed to load streamed song %d\n", song_id);
+                mus->unload();
+                return false;
+            }
 
-        if (!m_mus_vorbis->try_load(mus->path())) {
-            fprintf(stderr, "Failed to load streamed song %d\n", song_id);
-            mus->unload();
-            return false;
+            m_mus_current = &*m_mus_vorbis;
+        } break;
+        case MusicStreamedFormats::Mpg123: {
+            if (!m_mus_mpg123->try_load(mus->path())) {
+                fprintf(stderr, "Failed to load streamed song %d\n", song_id);
+                mus->unload();
+                return false;
+            }
+
+            m_mus_current = &*m_mus_mpg123;
+        } break;
+        case MusicStreamedFormats::Invalid:
+        default:
+            break;
         }
-
-        m_mus_current = &*m_mus_vorbis;
     }
 
     if (!m_mus_current) {
