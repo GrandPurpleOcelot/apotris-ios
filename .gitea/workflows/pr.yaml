@@ -2,7 +2,7 @@ name: Clang-Format Check
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [master, main]
 
 jobs:
   format-check:
@@ -12,18 +12,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Get base commit hash (push)
+        if: ${{github.event_name == 'push'}}
+        run: echo "BASE_SHA=${{github.event.before}}" >> "$GITHUB_ENV"
+
+      - name: Get base commit hash (PR)
+        if: ${{github.event_name == 'pull_request'}}
+        run: echo "BASE_SHA=${{github.event.pull_request.base.sha}}" >> "$GITHUB_ENV"
+
+      - name: Fetch base commit
+        run: git fetch origin "${BASE_SHA}"
+
       - name: Install clang-format
         run: sudo apt-get update && sudo apt-get install -y clang-format
 
       - name: Run clang-format
         run: |
-          find source include \
-          \( \
-          \( -path "include/glm/*" -prune \) -o \
-          \( -path "include/glad/*" -prune \) -o \
-          \( -path "include/KHR/*" -prune \) -o \
-          \( -type f -and \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) -print \) \
-          \) | xargs clang-format -i
+          echo "Running git clang-format ${BASE_SHA}:"
+          git clang-format --verbose "${BASE_SHA}"
       - name: Check for changes
         id: git-check
         run: |
@@ -33,7 +39,7 @@ jobs:
       - name: Fail if formatting issues found
         if: steps.git-check.outputs.modified == 'true'
         run: |
-          echo "Formatting issues found. Please run clang-format locally and commit the changes."
+          echo "Formatting issues found. Please run git clang-format locally and commit the changes."
           exit 1
 
       - name: Pass if no formatting issues
