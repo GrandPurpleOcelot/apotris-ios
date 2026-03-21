@@ -129,7 +129,7 @@ public:
                 playerIdToName[playerStringToId[message[FROM]]] = message[NAME];
             }
             if (type == SEED) {
-                nextSeed = stoi(id);
+                nextSeed = stoi(id) & ((0x1000) - 1);
                 lastSeed = nextSeed;
                 return;
             }

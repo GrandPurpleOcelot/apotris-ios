@@ -398,7 +398,6 @@ struct MultiplayerStates {
                         Owner().universal->activate();
                         Owner().universal->sync();
                         Owner().playingPlayerCount = newPlayerCount;
-#ifdef GBA
                     } else if (packet.packet & SEND_SEED) {
                         // Host logic: Mark players as seeded if they have the
                         // correct seed.
@@ -406,6 +405,7 @@ struct MultiplayerStates {
                             Owner().players[packet.playerId].seeded = true;
                         }
 
+#ifdef GBA
                         // Client logic: Only accept a seed from the host.
                         if (Owner().universal->currentPlayerId() != 0) {
                             if (packet.playerId == 0) {
@@ -426,9 +426,7 @@ struct MultiplayerStates {
             if (nextSeed) {
                 Owner().players[Owner().universal->currentPlayerId()].seeded =
                     true;
-#ifdef GBA
                 Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
-#endif
             }
         }
 
