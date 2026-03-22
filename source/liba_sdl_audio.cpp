@@ -40,53 +40,21 @@ bool hasSuffix(const std::string& s, const std::string& suffix) {
 }
 
 void loadAudio(std::string pathPrefix) {
+
     gSoloud.init();
 
     for (int i = 0; i < SFX_COUNT; i++) {
         std::string str = pathPrefix + (std::string)SoundEffectPaths[i];
-
-#ifdef ANDROID
-        size_t size;
-        void* data = SDL_LoadFile(str.c_str(), &size);
-        if (data) {
-             soundEffects[i].loadMem((unsigned char*)data, size, true, false);
-             SDL_free(data);
-        }
-#else
         soundEffects[i].load(str.c_str());
-#endif
     }
 
     int counter = 0;
-
     std::string path = pathPrefix + "assets";
     std::vector<std::string> songPaths;
 
-#ifdef ANDROID
-    size_t listSize;
-    void* listData = SDL_LoadFile((path + "/file_list.txt").c_str(), &listSize);
-    if (listData) {
-        std::string listStr((char*)listData, listSize);
-        SDL_free(listData);
-
-        std::stringstream ss(listStr);
-        std::string line;
-        while (std::getline(ss, line)) {
-            // Trim whitespace
-            line.erase(line.find_last_not_of(" \n\r\t") + 1);
-            if (hasSuffix(line, ".it") ||
-                hasSuffix(line, ".mod") ||
-                hasSuffix(line, ".s3m") ||
-                hasSuffix(line, ".S3M") ||
-                hasSuffix(line, ".xm")) {
-                songPaths.push_back(line);
-            }
-        }
-    }
-#else
     DIR* dir = opendir(path.c_str());
     if (!dir) {
-        log("couldn't open dir");
+        log("couldn't open dir: " + path);
         return;
     }
 
@@ -119,11 +87,8 @@ void loadAudio(std::string pathPrefix) {
             }
         }
     }
-
     closedir(dir);
-
     sort(songPaths.begin(), songPaths.end());
-#endif
 
     for (auto str : songPaths) {
         songList.push_back(path + "/" + str);
@@ -140,25 +105,6 @@ void loadAudio(std::string pathPrefix) {
         SoLoud::result loaded;
         std::string songPath = songList.at(i);
 
-#ifdef ANDROID
-        size_t size;
-        void* data = SDL_LoadFile(songPath.c_str(), &size);
-        if (data) {
-             if (hasSuffix(songPath, ".mp3") || hasSuffix(songPath, ".ogg") ||
-                hasSuffix(songPath, ".flac") || hasSuffix(songPath, ".wav")) {
-                SoLoud::WavStream* wavstream = new SoLoud::WavStream;
-                loaded = wavstream->loadMem((unsigned char*)data, size, true, false);
-                musicArray.push_back((SoLoud::AudioSource*)wavstream);
-            } else {
-                SoLoud::Openmpt* openmpt = new SoLoud::Openmpt;
-                loaded = openmpt->loadMem((unsigned char*)data, size, true, false);
-                musicArray.push_back((SoLoud::AudioSource*)openmpt);
-            }
-            SDL_free(data);
-        } else {
-            loaded = SoLoud::FILE_NOT_FOUND;
-        }
-#else
         if (hasSuffix(songPath, ".mp3") || hasSuffix(songPath, ".ogg") ||
             hasSuffix(songPath, ".flac") || hasSuffix(songPath, ".wav")) {
             SoLoud::WavStream* wavstream = new SoLoud::WavStream;
@@ -169,7 +115,6 @@ void loadAudio(std::string pathPrefix) {
             loaded = openmpt->load(songPath.c_str());
             musicArray.push_back((SoLoud::AudioSource*)openmpt);
         }
-#endif
 
         if (loaded != SoLoud::SO_NO_ERROR) {
             log("couldn't load: " + songList.at(i) + " " +

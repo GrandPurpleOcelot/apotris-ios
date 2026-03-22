@@ -10,6 +10,7 @@
 #include <glad/gles2.h>
 #include <iostream>
 #include <jni.h>
+#include <sstream>
 #include <sys/stat.h>
 #include <unordered_set>
 
@@ -125,6 +126,68 @@ int KEY_RIGHT = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(SDLK_d);
 int KEY_SELECT = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(SDLK_3);
 int KEY_START = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(SDLK_ESCAPE);
 
+void extractAssets(const std::string& pathPrefix) {
+    std::string assetsDir = pathPrefix + "assets";
+    mkdir(assetsDir.c_str(), 0777); // Try to create directory
+
+    std::string markerPath = pathPrefix + "assets/extracted.txt";
+    FILE* marker = fopen(markerPath.c_str(), "r");
+    if (marker) {
+        fclose(marker);
+        return; // Already extracted
+    }
+
+    log("Extracting assets to " + assetsDir);
+
+    FILE* outMarker = fopen(markerPath.c_str(), "w");
+    if (outMarker) {
+        fprintf(outMarker, "1\n");
+        fclose(outMarker);
+    }
+
+    for (int i = 0; i < SFX_COUNT; i++) {
+        std::string srcPath = (std::string)SoundEffectPaths[i];
+        size_t size;
+        void* data = SDL_LoadFile(srcPath.c_str(), &size);
+        if (data) {
+            std::string destPath = pathPrefix + srcPath;
+            FILE* out = fopen(destPath.c_str(), "wb");
+            if (out) {
+                fwrite(data, 1, size, out);
+                fclose(out);
+            }
+            SDL_free(data);
+        }
+    }
+
+    size_t listSize;
+    void* listData = SDL_LoadFile("assets/file_list.txt", &listSize);
+    if (listData) {
+        std::string listStr((char*)listData, listSize);
+        SDL_free(listData);
+
+        std::stringstream ss(listStr);
+        std::string line;
+        while (std::getline(ss, line)) {
+            line.erase(line.find_last_not_of(" \n\r\t") + 1);
+            if (line.empty()) continue;
+            
+            std::string srcPath = "assets/" + line;
+            size_t size;
+            void* data = SDL_LoadFile(srcPath.c_str(), &size);
+            if (data) {
+                std::string destPath = pathPrefix + srcPath;
+                FILE* out = fopen(destPath.c_str(), "wb");
+                if (out) {
+                    fwrite(data, 1, size, out);
+                    fclose(out);
+                }
+                SDL_free(data);
+            }
+        }
+    }
+}
+
 void windowInit() {
     SDL_Log("windowInit: start");
     // Initialize SDL
@@ -163,7 +226,11 @@ void windowInit() {
     refreshWindowSize();
     SDL_Log("windowInit: refreshWindowSize done");
 
-    loadAudio("");
+    char* path = SDL_GetPrefPath("akouzoukos", "Apotris");
+    std::string basePath = path ? std::string(path) : "";
+    if (path) SDL_free(path);
+    extractAssets(basePath);
+    loadAudio(basePath);
 
     nanotime_step_init(&stepper, (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
