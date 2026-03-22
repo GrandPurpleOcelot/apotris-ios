@@ -181,6 +181,9 @@ void updateRank() {
 void Command::execute() const {
     int targetId = (value >> 4) & 0xFF;
     int attackValue = value & 0xF;
+    if (playerId.index >= 4)
+        return;
+
     switch (command) {
     case SEND_ATTACK:
         // Record this attack to judge relative multiplayer rank

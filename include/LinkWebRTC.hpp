@@ -253,7 +253,7 @@ public:
     void makeOffer(std::shared_ptr<rtc::PeerConnection> pc,
                    const std::string& remoteId) {
         // We are the offerer if we have a lower ID
-        if (playerId < playerStringToId[remoteId] && playerId != -1) {
+        if (localId < remoteId) {
             return;
         }
         std::stringstream ss;

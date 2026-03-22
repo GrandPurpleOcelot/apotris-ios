@@ -651,12 +651,14 @@ void ConfirmSaveScene::deinit() {
 }
 
 void MainMenuScene::update() {
-    SimpleListScene::update();
-
-    if (updateAvailable != "" && !showingUpdateNotification) {
-        aprint("Update available: " + updateAvailable, 0, 0);
+    if (!updateAvailable.empty() && !showingUpdateNotification) {
+        wordSprites[10]->setText("Update available: " + updateAvailable);
+        wordSprites[10]->show(0,0,14);
+        wordSprites[11]->show(12 * 8,0,14);
         showingUpdateNotification = true;
     }
+
+    SimpleListScene::update();
 }
 
 void MainMenuScene::init() {
@@ -698,8 +700,6 @@ void MainMenuScene::init() {
 }
 
 void MainMenuScene::deinit() {
-    SimpleListScene::deinit();
-
     resetSmallText();
     clearText();
 }

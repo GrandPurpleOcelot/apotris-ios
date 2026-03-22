@@ -751,28 +751,28 @@ void MultBattleScene::handleConnectionDisplay() {
         wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
     }
 
-    if (multiplayerLink->universal->isConnected())
+    if (multiplayerLink->universal->isConnected() && state != 3)
         showReadyPlayers();
-    // else
-    //     hideReadyPlayers();
+    else
+        hideReadyPlayers();
 
     while (debugConnection.size() > 10)
         debugConnection.pop_front();
 
-    int c = 0;
-    for (auto const& player : multiplayerLink->players) {
-        std::string txt =
-            ((player.first == multiplayerLink->universal->currentPlayerId())
-                 ? ">"
-                 : " ") +
-            std::to_string(player.first) + " " + player.second.toString();
-        aprint(txt, 3, 3 + c++);
-    }
+    // int c = 0;
+    // for (auto const& player : multiplayerLink->players) {
+    //     std::string txt =
+    //         ((player.first == multiplayerLink->universal->currentPlayerId())
+    //              ? ">"
+    //              : " ") +
+    //         std::to_string(player.first) + " " + player.second.toString();
+    //     aprint(txt, 3, 3 + c++);
+    // }
 
-    c = 0;
-    for (auto const& str : debugConnection) {
-        aprint(str, 3, 8 + c++);
-    }
+    // c = 0;
+    // for (auto const& str : debugConnection) {
+    //     aprint(str, 3, 8 + c++);
+    // }
 
     if (lastState == state)
         return;

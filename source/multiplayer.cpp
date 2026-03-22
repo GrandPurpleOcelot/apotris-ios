@@ -46,13 +46,15 @@ int botIncomingHeight = 0;
 #define ENCODE(x) ((x) << 13)
 
 void clearEnemyBoard() {
-    memset32_fast((u32*)enemyBoard, 0, sizeof(enemyBoard));
+    memset32_fast((u32*)enemyBoard, 0, sizeof(enemyBoard) / 4);
     clearSpriteTiles(boardTile, 8, 8);
 
     for (auto& timer : attackAnimationTimers)
         timer = 0;
 
     clearSpriteTiles(boardTile, 2, 4);
+
+    enemyBoardUpdates.clear();
 }
 
 // returns true if we should terminate the game
@@ -219,7 +221,7 @@ void GameScene::UpdateEnemyBoard(int command, int value, u8 linkPlayerId) {
     // Calculate the row to be updated
     int row = (value >> 10) + baseHeight;
     // If the row is within the board's height
-    if (row < 20) {
+    if (row < 20 && remotePlayerId.index < 4) {
         // Loop through each column in the row
         for (int j = 0; j < 10; j++)
             // Update the cell in the enemy board based on the value
@@ -464,7 +466,7 @@ bool GameScene::reconnect() {
                 playSongRandom(0);
                 buildBG(3, 0, 27, 0, 1, true);
 #ifndef MULTIBOOT
-                changeScene(new TitleScene(), Transitions::FADE);
+                changeScene(new MainMenuScene(), Transitions::FADE);
 #else
                 changeScene(new MultBattleScene(), Transitions::FADE);
 #endif
