@@ -1,6 +1,7 @@
 #ifdef ANDROID
 
 #include "liba_android.h"
+#include <SDL_system.h>
 #include <algorithm>
 #include <android/log.h>
 #include <cmath>
@@ -126,9 +127,59 @@ int KEY_RIGHT = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(SDLK_d);
 int KEY_SELECT = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(SDLK_3);
 int KEY_START = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(SDLK_ESCAPE);
 
+
+#include <jni.h>
+
+std::string getDocumentsPath() {
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (!env) return "/storage/emulated/0/Documents/Apotris/";
+    
+    jclass envClass = env->FindClass("android/os/Environment");
+    if (!envClass) return "/storage/emulated/0/Documents/Apotris/";
+    
+    jfieldID dirDocsField = env->GetStaticFieldID(envClass, "DIRECTORY_DOCUMENTS", "Ljava/lang/String;");
+    if (!dirDocsField) return "/storage/emulated/0/Documents/Apotris/";
+    jstring dirDocsStr = (jstring)env->GetStaticObjectField(envClass, dirDocsField);
+    
+    jmethodID getExtStoragePublicDirMethod = env->GetStaticMethodID(envClass, "getExternalStoragePublicDirectory", "(Ljava/lang/String;)Ljava/io/File;");
+    if (!getExtStoragePublicDirMethod) return "/storage/emulated/0/Documents/Apotris/";
+    jobject fileObj = env->CallStaticObjectMethod(envClass, getExtStoragePublicDirMethod, dirDocsStr);
+    
+    if (!fileObj) return "/storage/emulated/0/Documents/Apotris/";
+    
+    jclass fileClass = env->GetObjectClass(fileObj);
+    jmethodID getPathMethod = env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
+    if (!getPathMethod) return "/storage/emulated/0/Documents/Apotris/";
+    jstring pathStr = (jstring)env->CallObjectMethod(fileObj, getPathMethod);
+    
+    const char* path = env->GetStringUTFChars(pathStr, nullptr);
+    std::string result = std::string(path) + "/Apotris/";
+    env->ReleaseStringUTFChars(pathStr, path);
+    
+    env->DeleteLocalRef(pathStr);
+    env->DeleteLocalRef(fileObj);
+    env->DeleteLocalRef(fileClass);
+    env->DeleteLocalRef(dirDocsStr);
+    env->DeleteLocalRef(envClass);
+    
+    return result;
+}
+
+static void make_directory_recursive(const std::string& path) {
+    size_t pos = 0;
+    while ((pos = path.find_first_of('/', pos)) != std::string::npos) {
+        std::string subpath = path.substr(0, pos);
+        if (!subpath.empty()) {
+            mkdir(subpath.c_str(), 0777);
+        }
+        pos++;
+    }
+    mkdir(path.c_str(), 0777);
+}
+
 void extractAssets(const std::string& pathPrefix) {
     std::string assetsDir = pathPrefix + "assets";
-    mkdir(assetsDir.c_str(), 0777); // Try to create directory
+    mkdir(assetsDir.c_str(), 0777);
 
     std::string markerPath = pathPrefix + "assets/extracted.txt";
     FILE* marker = fopen(markerPath.c_str(), "r");
@@ -137,29 +188,37 @@ void extractAssets(const std::string& pathPrefix) {
         return; // Already extracted
     }
 
-    log("Extracting assets to " + assetsDir);
+    SDL_Log("Extracting assets to %s", assetsDir.c_str());
+    bool hasError = false;
 
-    FILE* outMarker = fopen(markerPath.c_str(), "w");
-    if (outMarker) {
-        fprintf(outMarker, "1\n");
-        fclose(outMarker);
-    }
-
+    // Extract SFX
     for (int i = 0; i < SFX_COUNT; i++) {
         std::string srcPath = (std::string)SoundEffectPaths[i];
         size_t size;
         void* data = SDL_LoadFile(srcPath.c_str(), &size);
         if (data) {
-            std::string destPath = pathPrefix + srcPath;
-            FILE* out = fopen(destPath.c_str(), "wb");
+                std::string destPath = pathPrefix + srcPath;
+                size_t last_slash = destPath.find_last_of('/');
+                if (last_slash != std::string::npos) {
+                    make_directory_recursive(destPath.substr(0, last_slash));
+                }
+                FILE* out = fopen(destPath.c_str(), "wb");
             if (out) {
-                fwrite(data, 1, size, out);
+                size_t written = fwrite(data, 1, size, out);
+                if (written != size) hasError = true;
                 fclose(out);
+            } else {
+                SDL_Log("Failed to open file for writing: %s", destPath.c_str());
+                hasError = true;
             }
             SDL_free(data);
+        } else {
+            SDL_Log("Failed to load SFX from APK: %s", srcPath.c_str());
+            hasError = true;
         }
     }
 
+    // Extract Music
     size_t listSize;
     void* listData = SDL_LoadFile("assets/file_list.txt", &listSize);
     if (listData) {
@@ -177,14 +236,44 @@ void extractAssets(const std::string& pathPrefix) {
             void* data = SDL_LoadFile(srcPath.c_str(), &size);
             if (data) {
                 std::string destPath = pathPrefix + srcPath;
+                size_t last_slash = destPath.find_last_of('/');
+                if (last_slash != std::string::npos) {
+                    make_directory_recursive(destPath.substr(0, last_slash));
+                }
                 FILE* out = fopen(destPath.c_str(), "wb");
                 if (out) {
-                    fwrite(data, 1, size, out);
+                    size_t written = fwrite(data, 1, size, out);
+                    if (written != size) hasError = true;
                     fclose(out);
+                } else {
+                    SDL_Log("Failed to open music file for writing: %s", destPath.c_str());
+                    hasError = true;
                 }
                 SDL_free(data);
+            } else {
+                SDL_Log("Failed to load music from APK: %s", srcPath.c_str());
+                hasError = true;
             }
         }
+    } else {
+        SDL_Log("Failed to load file_list.txt from APK");
+        hasError = true;
+    }
+
+    // Only write the marker file if extraction was 100% successful
+    if (!hasError) {
+        FILE* outMarker = fopen(markerPath.c_str(), "w");
+        if (outMarker) {
+            fprintf(outMarker, "1\n");
+            fclose(outMarker);
+        }
+        SDL_Log("Asset extraction completed successfully.");
+    } else {
+        SDL_Log("Asset extraction completed with errors. Marker not saved.");
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                 "Audio Files Missing",
+                                 "Some audio files failed to extract or are missing. The game will continue, but audio might not play correctly.",
+                                 NULL);
     }
 }
 
@@ -226,9 +315,12 @@ void windowInit() {
     refreshWindowSize();
     SDL_Log("windowInit: refreshWindowSize done");
 
-    char* path = SDL_GetPrefPath("akouzoukos", "Apotris");
-    std::string basePath = path ? std::string(path) : "";
-    if (path) SDL_free(path);
+        SDL_AndroidRequestPermission("android.permission.READ_EXTERNAL_STORAGE");
+    SDL_AndroidRequestPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+    SDL_AndroidRequestPermission("android.permission.READ_MEDIA_AUDIO");
+    
+    std::string basePath = getDocumentsPath();
+    if (!basePath.empty() && basePath.back() != '/') basePath += "/";
     extractAssets(basePath);
     loadAudio(basePath);
 
@@ -946,12 +1038,8 @@ void toggleRendering(bool r) { render = r; }
 void initRumble() {};
 
 std::string getSavefilePath() {
-    char* path = SDL_GetPrefPath("akouzoukos", "Apotris");
-    if (!path) {
-        return "Apotris.sav";
-    }
-    std::string s = std::string(path) + "Apotris.sav";
-    SDL_free(path);
+        std::string path = getDocumentsPath();
+    std::string s = path + "Apotris.sav";
     return s;
 }
 
@@ -1380,5 +1468,14 @@ void updateBatteryInfo() {
     } else if (state != SDL_POWERSTATE_ON_BATTERY) {
         batteryPercentage = -1;
     }
+}
+
+void rumbleOutput(uint16_t strength) {
+    if (lastInputType != InputType::CONTROLLER)
+        return;
+
+    uint16_t sdl_strength =
+        std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
+    SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 #endif

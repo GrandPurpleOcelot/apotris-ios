@@ -45,7 +45,13 @@ void loadAudio(std::string pathPrefix) {
 
     for (int i = 0; i < SFX_COUNT; i++) {
         std::string str = pathPrefix + (std::string)SoundEffectPaths[i];
-        soundEffects[i].load(str.c_str());
+        FILE* sfxFile = fopen(str.c_str(), "r");
+        if (sfxFile) {
+            fclose(sfxFile);
+            soundEffects[i].load(str.c_str());
+        } else {
+            log("Warning: SFX file not found: " + str);
+        }
     }
 
     int counter = 0;
@@ -57,7 +63,7 @@ void loadAudio(std::string pathPrefix) {
         log("couldn't open dir: " + path);
         return;
     }
-
+    
     dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         if (hasSuffix(entry->d_name, ".it") ||
@@ -105,6 +111,13 @@ void loadAudio(std::string pathPrefix) {
         SoLoud::result loaded;
         std::string songPath = songList.at(i);
 
+        FILE* musicFile = fopen(songPath.c_str(), "r");
+        if (!musicFile) {
+            log("Warning: Music file not found: " + songPath);
+            continue;
+        }
+        fclose(musicFile);
+
         if (hasSuffix(songPath, ".mp3") || hasSuffix(songPath, ".ogg") ||
             hasSuffix(songPath, ".flac") || hasSuffix(songPath, ".wav")) {
             SoLoud::WavStream* wavstream = new SoLoud::WavStream;
@@ -135,7 +148,7 @@ void songEndHandler() {
     if (musicVolume == 0)
         return;
 
-    if (currentSong != -1 &&
+    if (currentSong != -1 && currentSong < (int)musicArray.size() &&
         !musicQueue.isCurrentlyPlaying(*musicArray.at(currentSong))) {
         if (savefile->settings.cycleSongs == 1) { // CYCLE
             playNextSong();
@@ -146,18 +159,21 @@ void songEndHandler() {
 }
 
 void sfx(int n) {
+    if (n < 0 || n >= SFX_COUNT) return;
     soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
     gSoloud.play(soundEffects[n]);
 }
 
 void startSong(int song, bool loop) {
+    if (song < 0 || song >= (int)musicArray.size()) return;
+
     if (song == currentSong && !gSoloud.getPause(currentSongHandle) &&
-        (currentSong != -1 &&
+        (currentSong != -1 && currentSong < (int)musicArray.size() &&
          musicQueue.isCurrentlyPlaying(*musicArray.at(currentSong)))) {
         return;
     }
 
-    if (currentSong != -1 &&
+    if (currentSong != -1 && currentSong < (int)musicArray.size() &&
         musicQueue.isCurrentlyPlaying(*musicArray.at(currentSong))) {
         musicQueue.stop();
         musicQueue.skip();
@@ -204,6 +220,7 @@ void setMusicTempo(int tempo) {
 }
 
 void sfxRate(int n, float rate) {
+    if (n < 0 || n >= SFX_COUNT) return;
     soundEffects[n].setVolume((float)savefile->settings.sfxVolume / 10);
     int s = gSoloud.play(soundEffects[n]);
     gSoloud.setRelativePlaySpeed(s, rate);
@@ -211,6 +228,9 @@ void sfxRate(int n, float rate) {
 
 void pauseSong() { gSoloud.setPause(currentSongHandle, 1); }
 
-std::string getSongName(int song) { return songNameList[song]; }
+std::string getSongName(int song) { 
+    if (song < 0 || song >= (int)songNameList.size()) return "Unknown";
+    return songNameList[song]; 
+}
 
 #endif
