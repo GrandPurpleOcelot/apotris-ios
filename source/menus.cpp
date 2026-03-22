@@ -1726,6 +1726,11 @@ void MultBattleScene::showReadyPlayers() {
 }
 
 void MultBattleScene::hideReadyPlayers() {
+    for(int i = 0; i < 5; i++){
+        labels[i]->hide();
+        wordSprites[i]->hide();
+    }
+
     wordSprites[7]->hide();
     wordSprites[8]->hide();
 }
