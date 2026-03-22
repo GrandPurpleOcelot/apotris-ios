@@ -215,6 +215,7 @@ void saveLayout() {
     }
 
     savefile->settings.onScreenLayouts[screenWidth > screenHeight] = layout;
+    saveSavefile();
 }
 
 void handleInput() {
