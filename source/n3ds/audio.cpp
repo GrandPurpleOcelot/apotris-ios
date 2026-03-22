@@ -600,7 +600,11 @@ void loadAudio(std::string pathPrefix) {
 #endif
         }
         song_modules.emplace_back(std::move(mod));
-        songNameList.push_back(name);
+        std::string asciiName = name;
+        std::replace_if(
+            asciiName.begin(), asciiName.end(),
+            [](char c) { return c < 32 || c >= 127; }, '?');
+        songNameList.push_back(std::move(asciiName));
     }
 
     if (!NdspAudioThread::start_thread()) {
