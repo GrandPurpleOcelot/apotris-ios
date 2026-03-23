@@ -147,14 +147,13 @@ def main():
     print("Running Gradle...")
     # Check for gradlew
     gradlew = os.path.join(android_project_dir, 'gradlew')
-    if not os.path.exists(gradlew):
-        print("Gradle wrapper not found. Skipping build.")
-        sys.exit(1)
-    
-    # Make executable
-    os.chmod(gradlew, 0o755)
-    
-    run_command([gradlew, 'assembleDebug'], cwd=android_project_dir)
+    if os.path.exists(gradlew) and os.path.exists(os.path.join(android_project_dir, 'gradle', 'wrapper', 'gradle-wrapper.jar')):
+        # Make executable
+        os.chmod(gradlew, 0o755)
+        run_command([gradlew, 'assembleDebug'], cwd=android_project_dir)
+    else:
+        print("Gradle wrapper not found or incomplete. Falling back to system gradle.")
+        run_command(['gradle', 'assembleDebug'], cwd=android_project_dir)
 
     # 8. Copy Output APK
     apk_out = os.path.join(android_project_dir, 'app/build/outputs/apk/debug/app-debug.apk')

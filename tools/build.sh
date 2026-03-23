@@ -27,6 +27,10 @@ ninja -C build-web
 meson setup --reconfigure --cross-file=meson/n3ds.ini --buildtype=release build-n3ds && \
 meson compile -C build-n3ds 3dsx cia
 
+# Android
+meson setup --reconfigure --cross-file=meson/android.ini --buildtype=release build-android && \
+meson compile -C build-android
+
 # Dist
 short_hash=$(git rev-parse --short HEAD)
 current_branch=$(git branch | grep '*' | sed 's/* //')
@@ -36,6 +40,7 @@ nsw=Apotris-Switch-$current_branch-$short_hash.zip
 lin=Apotris-Linux-x64-$current_branch-$short_hash.zip
 win=Apotris-Windows-x64-$current_branch-$short_hash.zip
 n3ds=Apotris-3DS-$current_branch-$short_hash.zip
+and=Apotris-Android-$current_branch-$short_hash.zip
 
 cp tools/README_LINUX.txt build-linux/README.txt
 cd build-linux && \
@@ -93,4 +98,9 @@ cp -r ../license-n3ds 3ds/Apotris/license && \
 cp Apotris.3dsx 3ds/Apotris/ && \
 cp Apotris.cia 3ds/Apotris/ && \
 zip -r $n3ds.zip 3ds/Apotris && \
+cd ..
+
+cd build-android && \
+cp -r ../license . && \
+zip $and Apotris.apk license/* && \
 cd ..
