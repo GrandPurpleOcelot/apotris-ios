@@ -26,22 +26,13 @@ jobs:
       - name: Install clang-format
         run: sudo apt-get update && sudo apt-get install -y clang-format
 
-      - name: Run clang-format
+      - name: Run clang-format and check for changes
         run: |
+          git config --local color.ui always
           echo "Running git clang-format ${BASE_SHA}:"
-          git clang-format --verbose "${BASE_SHA}"
-      - name: Check for changes
-        id: git-check
-        run: |
-          git diff --exit-code
-          echo "::set-output name=modified::$(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi)"
-
-      - name: Fail if formatting issues found
-        if: steps.git-check.outputs.modified == 'true'
-        run: |
-          echo "Formatting issues found. Please run git clang-format locally and commit the changes."
-          exit 1
-
-      - name: Pass if no formatting issues
-        if: steps.git-check.outputs.modified == 'false'
-        run: echo "Code formatting check passed."
+          if git clang-format --verbose --diff "${BASE_SHA}"; then
+            echo "Code formatting check passed."
+          else
+            echo "Formatting issues found. Please run git clang-format locally and commit the changes."
+            exit 1
+          fi

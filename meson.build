@@ -413,6 +413,15 @@ elif host_machine.system() == 'n3ds'
     libxmp = dependency('libxmp', static : true)
     dependencies += libxmp
 
+    libvorbisidec = dependency('vorbisidec', static : true)
+    dependencies += libvorbisidec
+
+    libmpg123 = dependency('libmpg123', static : true)
+    dependencies += libmpg123
+
+    libopusfile = dependency('opusfile', static : true)
+    dependencies += libopusfile
+
     if enable_profiling
         tracy = dependency('tracy', static : true, default_options : ['default_library=static']) #, fallback : ['Tilengine', 'tilengine_dep'])
         dependencies += tracy
