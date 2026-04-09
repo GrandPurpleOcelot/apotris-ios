@@ -135,3 +135,8 @@ void checkSongs() {
         set->game = (u8)songs.game.size();
     }
 }
+
+void stopMusic() {
+    currentlyPlayingSong = -1;
+    stopSong();
+}

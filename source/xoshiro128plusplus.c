@@ -35,8 +35,10 @@ static inline uint32_t rotl(const uint32_t x, int k) {
 
 // One must set the state such that some bit is non-zero
 static uint32_t state[4] = {0x0, 0x0, 0x0, 0x1};
+static uint32_t state2[4] = {0x0, 0x0, 0x0, 0x1};
 
 void setXoshiroSeed(uint32_t seed) { state[0] = seed; }
+void setXoshiroSeed2(uint32_t seed) { state2[0] = seed; }
 
 void setXoshiroState(uint32_t seed) {
     state[0] = seed;
@@ -45,6 +47,15 @@ void setXoshiroState(uint32_t seed) {
     state[1] = 0x0;
     state[2] = 0x0;
     state[3] = 0x1;
+}
+
+void setXoshiroState2(uint32_t seed) {
+    state2[0] = seed;
+    // We additionally clobber the rest of the state to the default to allow
+    // reproducibility of seeded results within game sessions.
+    state2[1] = 0x0;
+    state2[2] = 0x0;
+    state2[3] = 0x1;
 }
 
 uint32_t nextXoshiro(void) {
@@ -60,6 +71,23 @@ uint32_t nextXoshiro(void) {
     state[2] ^= t;
 
     state[3] = rotl(state[3], 11);
+
+    return result;
+}
+
+uint32_t nextXoshiro2(void) {
+    const uint32_t result = rotl(state2[0] + state2[3], 7) + state2[0];
+
+    const uint32_t t = state2[1] << 9;
+
+    state2[2] ^= state2[0];
+    state2[3] ^= state2[1];
+    state2[1] ^= state2[2];
+    state2[0] ^= state2[3];
+
+    state2[2] ^= t;
+
+    state2[3] = rotl(state2[3], 11);
 
     return result;
 }

@@ -79,7 +79,35 @@ std::string getDescription(const std::string& element) {
         return "Press/Hold L and R to restart the game.";
 
     } else if (element == "Rumble") {
-        return "Enables rumble on compatible hardware (REQUIRES RESTART!)";
+        return "Configure rumble strength, modes, and more.";
+
+    } else if (element == "Adv. Rumble") {
+        return "Advanced options such as rumble cart type, update rate, etc.";
+
+    } else if (element == "Test Rumble") {
+        return "Test Rumble with patterns: Drop, Clear 1-4, B2B Clear 4, Clear 8, Zone 1-3";
+
+    } else if (element == "Rumble Strength") {
+        return "Strength of rumble on compatible hardware.";
+
+    } else if (element == "Zone Rumble Mode") {
+        return "Optionally enable Zone rumble and select either continuous in background, or rippling on piece drop.";
+
+    } else if (element == "Enable GBP Support") {
+        return "Enable Game Boy Player handshake for GameCube Controller rumble. (REQUIRES RESTART!)";
+
+    } else if (element == "Patt. Update Rate") {
+        return "Set the update rate of the rumble patterns.";
+
+    } else if (element == "Rumble Cart Type") {
+        return "Set Cartridge Rumble hardware type. A: ROM GPIO (most common!) | B: DS Rumble Pak | C: EZFlash and others.";
+
+    } else if (element == "Rumble Style") {
+        return "Select between Dynamic rumble or Simple (old) rumble styles.";
+
+    } else if (element == "EZFlash Motor") {
+        return "Optionally send motor strength command to EZFlash rumble carts. "
+               "(EZ3-in-1/EZODE Only! Separate from Rumble Strength setting!)";
 
     } else if (element == "Reset Controls") {
         return "Set bindings back to default.";
@@ -150,8 +178,11 @@ std::string getDescription(const std::string& element) {
         return "Moves the camera up when trying to place near the top of the "
                "field.";
 
-    } else if (element == "Unpause Countdown") {
+    } else if (element == "Countdown on Unpause") {
         return "Enables a grace period countdown when unpausing.";
+
+    } else if (element == "Interrupt Countdown") {
+        return "Allow interrupting the countdown with a rotation input (1P only).";
 
         // SAVING
         // ------------------------------------------------------------------------------
@@ -188,6 +219,14 @@ std::string getDescription(const std::string& element) {
                "vertically same as \"1.5x sharp\". "
                "Old 2DS not supported.";
 #endif
+        // Sleep
+        // ------------------------------------------------------------------------------
+    } else if (element == "Autosleep Time") {
+        return "Put the console to sleep if no input is detected for the chosen duration.";
+    } else if (element == "Autosleep Wake") {
+        return "Choose to allow waking from Autosleep with any button or only the Sleep Combo.";
+    } else if (element == "Sleep Combo") {
+        return "Button combination to Sleep/Wake the console while paused or in a menu.";
     }
 
     return "";
@@ -203,6 +242,8 @@ std::string getDescription(const std::string& mode, const std::string& element,
             } else if (option == "Zone") {
                 return "Clearing lines charges the Zone meter. Activate Zone "
                        "to slow time and clear as many times as you can.";
+            } else if (option == "Tower") {
+                return "Build as high as possible leaving no empty space.";
             }
         } else if (element == "Level") {
             return "Starting Level.";

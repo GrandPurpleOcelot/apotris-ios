@@ -177,12 +177,14 @@ extern void startSong(int song, bool loop);
 extern void stopSong();
 extern void pauseSong();
 extern void resumeSong();
+extern std::string getSongName(int song);
 
 extern void loadSavefile();
-#ifdef __APPLE__
-extern std::string initSavefileDir();
-#endif
 extern void saveSavefile();
+#ifdef __APPLE__
+extern const char* homeDir;
+extern std::string savefileDir();
+#endif
 
 extern s16 sinLut(int angle);
 
@@ -192,7 +194,7 @@ extern void mirrorPalettes(int index, int count);
 
 extern void toggleRendering(bool r);
 extern void initRumble();
-extern void rumbleStart(int length);
+extern void rumbleOutput(uint16_t strength);
 extern void rumbleStop();
 
 extern void quit();

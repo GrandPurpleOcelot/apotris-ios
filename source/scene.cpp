@@ -225,7 +225,7 @@ void SimpleListScene::draw() {
     }
 
     if (refreshText) {
-        scrollText = getDescription(currentOption);
+        scrollText = getDescription();
         clearSpriteTiles(672, 144, 1);
         if (!scrollText.empty()) {
             scrollTextLength = getVariableWidth(scrollText);
@@ -467,7 +467,7 @@ void OptionListScene::init() {
     selection = 0;
 
     auto it = elementList.begin();
-    while (!elementList.empty() && (*it)->getCurrentOption() == "\n") {
+    while (!elementList.empty() && !(*it)->isSelectable()) {
         selection++;
         it++;
     }
@@ -534,7 +534,7 @@ void OptionListScene::init() {
         }
 
         if (found) {
-            int n = path.size() - count;
+            unsigned int n = path.size() - (count + 1);
             for (int i = 0; i < n; i++)
                 path.pop_back();
         } else {
@@ -670,7 +670,7 @@ void OptionListScene::draw() {
     const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
 
     if (refreshText) {
-        scrollText = getDescription(currentOption);
+        scrollText = getDescription();
         clearSpriteTiles(672, 144, 1);
         if (!scrollText.empty()) {
             scrollTextLength = getVariableWidth(scrollText);
@@ -779,7 +779,7 @@ bool OptionListScene::control() {
             }
 
             --it;
-        } while ((*it)->getCurrentOption() == "\n");
+        } while (!(*it)->isSelectable());
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
@@ -804,7 +804,7 @@ bool OptionListScene::control() {
 
             if (++it == elementList.end())
                 it = elementList.begin();
-        } while ((*it)->getCurrentOption() == "\n");
+        } while (!(*it)->isSelectable());
 
         sfx(SFX_MENUMOVE);
         refreshText = true;
@@ -827,7 +827,7 @@ bool OptionListScene::control() {
                 auto it = elementList.begin();
                 std::advance(it, n);
 
-                if ((*it)->getCurrentOption() == "\n") {
+                if (!(*it)->isSelectable()) {
                     if (n + dir >= 0 && n + dir <= options - 1) {
                         n += dir;
                     } else {

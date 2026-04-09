@@ -1,6 +1,6 @@
 [wrap-git]
-url = https://github.com/devkitPro/mmutil
-revision = v1.10.1
+url = https://github.com/blocksds/mmutil
+revision = eedbb4a
 patch_directory = mmutil
 
 [provide]

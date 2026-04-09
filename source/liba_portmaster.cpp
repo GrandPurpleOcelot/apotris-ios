@@ -5,7 +5,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
-#include <list>
+#include <unordered_set>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -29,8 +29,12 @@ void rumbleUpdate();
 void cleanup_handler(int signum);
 int set_rumble(int strength);
 
-std::list<uint32_t> currentKeys;
-std::list<uint32_t> previousKeys;
+void handleInput();
+
+std::unordered_set<uint32_t> currentKeys;
+std::unordered_set<uint32_t> previousKeys;
+
+std::unordered_set<uint32_t> currentlyPressed;
 
 // int rowStart = (288 - 288) / 2;
 // int rowEnd = rowStart + 288;
@@ -55,8 +59,6 @@ SDL_Texture* texture;
 
 bool render = true;
 
-std::list<uint32_t> currentlyPressed;
-
 int screenWidth = 1280;
 int screenHeight = 720;
 
@@ -66,7 +68,7 @@ nanotime_step_data stepper;
 
 ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
 
-static int rumbleTimer = 0;
+// static int rumbleTimer = 0;
 
 void windowInit() {
     // Initialize SDL
@@ -102,10 +104,9 @@ void windowInit() {
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
 }
 
-void key_poll() {
-    previousKeys = currentKeys;
-    currentKeys.clear();
+void key_poll() {}
 
+void handleInput() {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
@@ -122,36 +123,30 @@ void key_poll() {
         for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++) {
             if (SDL_GameControllerGetButton(
                     controller, static_cast<SDL_GameControllerButton>(i))) {
-                currentKeys.push_back(i);
+                currentlyPressed.insert(i);
             }
         }
     }
 
-    // currentKeys = currentlyPressed;
+    previousKeys = currentKeys;
+    currentKeys.clear();
+
+    currentKeys = currentlyPressed;
 }
 
 uint32_t key_is_down(uint32_t key) {
     if (key == KEY_FULL)
         return (!currentKeys.empty());
 
-    auto it = currentKeys.begin();
-
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-
-    return (it != currentKeys.end());
+    return currentKeys.count(key);
 }
 
 uint32_t key_hit(uint32_t key) {
     if (key == KEY_FULL)
         return (previousKeys.empty() && !currentKeys.empty());
 
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(), previousKeys.end(), key);
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-    bool curr = (it != currentKeys.end());
+    bool prev = previousKeys.count(key);
+    bool curr = currentKeys.count(key);
 
     return (!prev && curr);
 }
@@ -160,13 +155,8 @@ uint32_t key_released(uint32_t key) {
     if (key == KEY_FULL)
         return (!previousKeys.empty() && currentKeys.empty());
 
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(), previousKeys.end(), key);
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-    bool curr = (it != currentKeys.end());
+    bool prev = previousKeys.count(key);
+    bool curr = currentKeys.count(key);
 
     return (prev && !curr);
 }
@@ -176,9 +166,7 @@ uint32_t key_first() {
         return KEY_FULL - 1;
 
     for (auto key : currentKeys) {
-        auto it = previousKeys.begin();
-        it = std::find(previousKeys.begin(), previousKeys.end(), key);
-        bool prev = (it != previousKeys.end());
+        bool prev = previousKeys.count(key);
 
         if (!prev) {
             return key;
@@ -269,6 +257,8 @@ void updateWindow(uint8_t* framebuffer) {
     }
     SDL_FreeSurface(img); // Free the surface after use
 
+    handleInput();
+
     // Cap FPS
     nanotime_step(&stepper);
 
@@ -337,11 +327,7 @@ bool closed() {
 }
 
 void rumbleUpdate() {
-    if (rumbleTimer > 0) {
-        rumbleTimer--;
-    } else {
-        rumbleStop();
-    }
+    rumblePatternLoop();
 }
 
 void toggleRendering(bool r) { render = r; }
@@ -405,10 +391,10 @@ void saveSavefile() {
     output.close();
 }
 
-void rumbleStart(int length) {
+void rumbleOutput(uint16_t strength) {
+    uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
     set_rumble(RUMBLE_STRONG);
-    rumbleTimer = length;
-    SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
+    SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 
 void rumbleStop() {

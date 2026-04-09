@@ -57,10 +57,12 @@ void loadSave() {
     const int pmSettings = 540;
     const int pmSave = 3876;
 
+    // 0x50-0x51, re-pack desktop keys into mask?
+    // This'll skip upgrading saves for 0x50 and 0x51, was this intended to be SAVE_TAG?
     if (savefile->newGame >= 0x50 && savefile->newGame <= 0x51) {
 #if defined(PC) || defined(WEB)
 
-        Keys keys = savefile->settings.keys;
+        GameKeys keys = savefile->settings.keys;
 
         savefile->settings.keys = {
             .moveLeft = (SDL_CONTROLLER_BUTTON_DPAD_LEFT << 16) |
@@ -137,37 +139,8 @@ void loadSave() {
         memcpy32_fast(savefile, temp, pmSave / 4);
 
         delete temp;
-    } else if (savefile->newGame != SAVE_TAG) {
-        savefile = new Save();
-
-        setDefaults(savefile, 0);
-
-        setDefaultKeys();
-
-        resetSkins(savefile);
-
-        savefile->newGame = SAVE_TAG;
-        // Set initial seed deterministic to save file (sampling will change it)
-        savefile->seed = (int)hashSave();
-    }
-
-    // fix invalid values, since I messed up conversion at some point
-    if ((savefile->settings.lightMode != 0) &&
-        (savefile->settings.lightMode != 1))
-        savefile->settings.lightMode = false;
-
-    if ((savefile->settings.rumble < 0) || (savefile->settings.rumble > 4))
-        savefile->settings.rumble = 0;
-
-    if (savefile->settings.irs < 0 || savefile->settings.irs > 1)
-        savefile->settings.irs = 1;
-    if (savefile->settings.ihs < 0 || savefile->settings.ihs > 1)
-        savefile->settings.ihs = 1;
-    if (savefile->settings.initialType < 0 ||
-        savefile->settings.initialType > 1)
-        savefile->settings.initialType = 1;
-
-    if (savefile->newGame != SAVE_TAG) {
+    } else if (savefile->newGame != SAVE_TAG && savefile->newGame >= 0x4b && savefile->newGame < SAVE_TAG) {
+        // Upgrade old saves
         Save* temp = new Save();
         u8* tmp = (u8*)temp;
 
@@ -180,12 +153,13 @@ void loadSave() {
         delete temp;
 
         switch (savefile->newGame) {
+        case 0x52:
+            setDefaults(savefile, 8);
+            break;
         case 0x51:
             setDefaults(savefile, 7);
             break;
         case 0x50:
-            setDefaults(savefile, 6);
-            break;
         case 0x4f:
             setDefaults(savefile, 6);
             break;
@@ -206,7 +180,37 @@ void loadSave() {
         }
 
         savefile->newGame = SAVE_TAG;
+    } else if (savefile->newGame != SAVE_TAG) {
+        // No tag recognized, create fresh save file.
+        // (this can be trigger-happy if misconfigured, maybe a prompt is in order to protect against errant triggers?)
+        savefile = new Save();
+
+        setDefaults(savefile, 0);
+
+        setDefaultKeys();
+
+        resetSkins(savefile);
+
+        savefile->newGame = SAVE_TAG;
+        // Set initial seed deterministic to save file (sampling will change it)
+        savefile->seed = (int)hashSave();
     }
+
+    // fix invalid values, since I messed up conversion at some point
+    if ((savefile->settings.lightMode != 0) &&
+        (savefile->settings.lightMode != 1))
+        savefile->settings.lightMode = false;
+
+    if ((savefile->settings.rumbleStrength < 0) || (savefile->settings.rumbleStrength > 8))
+        savefile->settings.rumbleStrength = 0;
+
+    if (savefile->settings.irs < 0 || savefile->settings.irs > 1)
+        savefile->settings.irs = 1;
+    if (savefile->settings.ihs < 0 || savefile->settings.ihs > 1)
+        savefile->settings.ihs = 1;
+    if (savefile->settings.initialType < 0 ||
+        savefile->settings.initialType > 1)
+        savefile->settings.initialType = 1;
 
     if (savefile->platform != PLATFORM) {
         auto oldPlatform = savefile->platform;
@@ -231,14 +235,15 @@ void loadSave() {
 
 #ifdef GBA
 #ifndef MULTIBOOT
+    sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
     status.update(&savefile->settings);
 #endif
 #endif
     saveSavefile();
 }
 
-Keys getDefaultGameKeys() {
-    Keys k;
+GameKeys getDefaultGameKeys() {
+    GameKeys k;
 
 #if defined(PC) || defined(WEB)
     k = {
@@ -390,7 +395,7 @@ void setDefaults(Save* save, int depth) {
     }
 
     if (depth < 4) {
-        save->settings.rumble = 0;
+        save->settings.rumbleStrength = 0;
     }
 
     if (depth < 5) {
@@ -540,6 +545,28 @@ void setDefaults(Save* save, int depth) {
             saveToProfile(&save->settings.profiles[i], &save->settings);
         }
     }
+
+    if (depth < 9) {
+        save->settings.zoneRumbleMode = 1; // Set to Continuous Zone Rumble
+        save->settings.rumbleStyle = 1; // Set to new Dynamic rumble!
+        save->settings.rumbleStrength = save->settings.rumbleStrength * 2; // Scale old value to new scale (0-4 -> 0-8)
+
+        // -- GBA Specific-settings
+        save->settings.sleep.autosleepDelay = 0; // Disable Autosleep
+        save->settings.sleep.autosleepWakeCombo = 1; // Use any button to wake from Autosleep
+        save->settings.sleep.sleepWakeCombo = 1; // Use L+R+Select as default Sleep/Wake combo.
+
+        save->settings.rumbleCartType = 0; // Use ROM GPIO as default Rumble Cart type, most common and least likely to cause issues.
+        save->settings.rumbleUpdateRate = 0; // Default to using VBlank for Rumble Pattern ISR
+
+        save->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_IGNORE; // By default, 3-in-1 support should be disabled.
+        // -- End of GBA-specifics
+
+        memset32_fast(savefile->boards.tower, 0, sizeof(EntryBoard) * 4 / 4);
+        savefile->boards.zenLines = 0;
+        savefile->boards.zenTower = 0;
+    }
+
 }
 
 bool compareVersion(const SaveChange& first, const SaveChange& second) {
@@ -758,7 +785,7 @@ void autosave() {
     if (!savefile->settings.autosave || multiplayer)
         return;
 
-    if (framesSinceLastSave < savefile->settings.autosave * 5 * 3600)
+    if (framesSinceLastSave < savefile->settings.autosave * 5 * FRAMES_PER_MIN)
         return;
 
     saveSavefile();

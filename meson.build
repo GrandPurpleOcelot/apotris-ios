@@ -58,7 +58,7 @@ sources = files(
     src_dir / 'music.cpp',
     src_dir / 'prng.cpp',
     src_dir / 'qrcodegen.c',
-    src_dir / 'rumble.c',
+    src_dir / 'rumblePatterns.cpp',
     src_dir / 'saving.cpp',
     src_dir / 'scene.cpp',
     src_dir / 'screenAudio.cpp',
@@ -552,6 +552,15 @@ elif host_machine.system() == 'n3ds'
     libxmp = dependency('libxmp', static: true)
     dependencies += libxmp
 
+    libvorbisidec = dependency('vorbisidec', static : true)
+    dependencies += libvorbisidec
+
+    libmpg123 = dependency('libmpg123', static : true)
+    dependencies += libmpg123
+
+    libopusfile = dependency('opusfile', static : true)
+    dependencies += libopusfile
+
     if enable_profiling
         tracy = dependency('tracy', static: true, default_options: ['default_library=static']) #, fallback : ['Tilengine', 'tilengine_dep'])
         dependencies += tracy
@@ -778,6 +787,7 @@ else
         dependency('gbfs'),
         dependency('maxmod'),
         dependency('gba-link-connection'),
+        dependency('gba-rumble'),
     ]
 
     dependencies_multi = [

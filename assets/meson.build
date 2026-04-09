@@ -41,6 +41,8 @@ audio_files = files(
     'tSpin.wav',
     'tSpinMini.wav',
     'time.wav',
+    'towerScroll.wav',
+    'perfectScroll.wav',
     'triple.wav',
     'ultimatris.wav',
     'win.wav',

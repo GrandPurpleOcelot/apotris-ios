@@ -33,6 +33,11 @@ bool TrackListScene::control() {
     if (OptionListScene::control())
         return true;
 
+    if (key_hit(savefile->settings.menuKeys.special3)) {
+        setMusicTempo(slow ? 1024 : 512);
+        slow = !slow;
+    }
+
     if (selection != previous) {
         auto it = elementList.begin();
         std::advance(it, selection);
@@ -43,5 +48,34 @@ bool TrackListScene::control() {
     }
 
     return false;
+}
+
+std::string TrackListScene::getDescription() {
+    SongElement* song;
+    {
+        auto it = elementList.begin();
+        std::advance(it, selection);
+
+        song = (SongElement*)*it;
+    }
+
+    std::list<int>* songList;
+
+    if (song->menu == 0) {
+        songList = &songs.menu;
+    } else if (song->menu == 1) {
+        songList = &songs.game;
+    } else {
+        return {};
+    }
+
+    if (song->index > (int)songList->size())
+        return {};
+
+    auto it = songList->begin();
+    std::advance(it, song->index);
+
+    int songIndex = *it;
+    return getSongName(songIndex);
 }
 #endif

@@ -1,5 +1,7 @@
 #include "def.h"
+#include "platform.hpp"
 #include "rumble.h"
+#include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "sceneModes.hpp"
 #include "tetromino.hpp"
@@ -28,8 +30,6 @@ std::string nameInput(int);
 void qrScene();
 
 void saveReplay();
-
-void sleepMenu();
 
 int mode = 0;
 bool showingStats = false;
@@ -89,7 +89,7 @@ void GameScene::endScreen() {
 
     std::string totalTime = timeToString(gameSeconds, false);
 
-    stopSong();
+    stopMusic();
 
     int prevBld = blendInfo;
 
@@ -106,23 +106,37 @@ void GameScene::endScreen() {
 
     if (savefile->settings.announcer) {
         if (game->gameMode == ULTRA || game->gameMode == BLITZ) {
-            if (game->won == 1)
+            if (game->won == 1) {
                 sfx(SFX_TIME);
-            else if (game->lost == 1)
+                rumblePattern(RUMBLE_TSPIN);
+            } else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
+                rumblePattern(RUMBLE_YOULOSE);
+            }
         } else if (game->gameMode != BATTLE) {
             if (game->gameMode == MASTER && game->won == 1 &&
                 game->level / 100 == 5)
+            {
                 sfx(SFX_TIME);
-            else if (game->won == 1)
+                rumblePattern(RUMBLE_TSPIN);
+            }
+            else if (game->won == 1) {
                 sfx(SFX_CLEAR);
-            else if (game->lost == 1)
+                rumblePattern(RUMBLE_YOUWIN);
+            }
+            else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
+                rumblePattern(RUMBLE_YOULOSE);
+            }
         } else {
             if (game->won == 1)
+            {
                 sfx(SFX_YOUWIN);
-            else if (game->lost == 1)
+                rumblePattern(RUMBLE_YOUWIN);
+            } else if (game->lost == 1) {
                 sfx(SFX_YOULOSE);
+                rumblePattern(RUMBLE_YOULOSE);
+            }
         }
     }
 
@@ -373,7 +387,7 @@ void endAnimation() {
     setSpriteMaskRegion(shake);
 #endif
 
-    rumbleStop();
+    rumblePatternStop();
 
     sfx(SFX_END);
 
@@ -470,6 +484,9 @@ void showScore() {
         if (game->gameMode == DIG) {
             if (game->subMode == 1)
                 score = std::to_string(game->pieceCounter);
+        } else if (game->gameMode == ZEN && game->subMode == 1) {
+            score = std::to_string(game->towerScrollCount +
+                                   (game->lengthY - game->stackHeight));
         } else if (game->gameMode != COMBO)
             score = std::to_string(game->score);
         else
@@ -551,6 +568,13 @@ void GameScene::showStats(bool moreStats, const std::string& time,
         aprints("Level: " + std::to_string(game->level), 0, 7 * counter++, 2);
     }
 
+    if ((g == MARATHON && game->subMode == 2) ||
+        (g == ZEN && game->subMode == 1)) {
+        int height =
+            game->towerScrollCount + (game->lengthY - game->stackHeight);
+        aprints("Height: " + std::to_string(height), 0, 7 * counter++, 2);
+    }
+
     aprints("Lines: " + std::to_string(game->linesCleared), 0, 7 * counter++,
             2);
     aprints("Pieces: " + std::to_string(game->pieceCounter), 0, 7 * counter++,
@@ -627,7 +651,7 @@ int GameScene::pauseMenu() {
     timesPaused++;
 
     clearText();
-    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 12, 20);
 
     for (auto& wordSprite : wordSprites)
         wordSprite.hide();
@@ -654,7 +678,7 @@ int GameScene::pauseMenu() {
 
     showSprites(128);
 
-    rumbleStop();
+    rumblePatternStop();
 
     // calculate pps
     FIXED t = gameSeconds * float2fx(0.0167f);
@@ -678,14 +702,9 @@ int GameScene::pauseMenu() {
 
     bool shown = false;
 
-    bool showSleep = false;
     bool skipped = false;
 
     bool count = true;
-
-#ifdef GBA
-    showSleep = true;
-#endif
 
     int cursorFloat = 0;
     OBJ_ATTR* cursorSprites[2];
@@ -702,10 +721,8 @@ int GameScene::pauseMenu() {
 
     while (closed()) {
         if (!onStates) {
-            maxSelection = 5;
+            maxSelection = 4;
             if (game->gameMode != TRAINING)
-                maxSelection--;
-            if (!showSleep)
                 maxSelection--;
 
             if (maxSelection == 3) {
@@ -716,6 +733,13 @@ int GameScene::pauseMenu() {
 
         vsync();
         key_poll();
+        #ifdef GBA
+            if (sleep_combo_check(key_curr_state())) {
+                // Re-poll keys to avoid triggering stats/track skip.
+                // I'm not a fan of this but it works with the current scene infrastructure.
+                key_poll();
+            }
+        #endif
 
         wordSprites[0].setText("PAUSE!");
         wordSprites[0].show(15 * 8 - wordSprites[0].width / 2, 4 * 8, 15);
@@ -732,6 +756,16 @@ int GameScene::pauseMenu() {
             optionsCounter++;
         };
 
+#ifdef GBA
+        if (!multiplayer) {
+            std::string keyString = (sleep_combo == 0) ? "Unbound" : getStringFromKey(sleep_combo);
+
+            std::replace(keyString.begin(), keyString.end(), ' ', '+');
+
+            aprints("Sleep/Wake: " + keyString, 0, 140, 2);
+        }
+#endif
+
         if (!onStates) {
 
             showOption("Resume");
@@ -740,16 +774,11 @@ int GameScene::pauseMenu() {
             if (game->gameMode == TRAINING)
                 showOption("Saves");
 
-            if (showSleep)
-                showOption("Sleep");
-
             showOption("Quit");
 
             if (key_hit(k.confirm)) {
                 int n = selection;
                 if (!(game->gameMode == TRAINING) && selection >= 2)
-                    n++;
-                if (!showSleep && n >= 3)
                     n++;
 
                 if (n == 0) {
@@ -770,14 +799,6 @@ int GameScene::pauseMenu() {
                     selection = 0;
                     clearText();
                 } else if (n == 3) {
-                    sleepMenu();
-                    showStats(showingStats, totalTime, ppsStr, false);
-                    showModeText();
-                    showQueue(1);
-                    showHold();
-                    hideMinos();
-                    continue;
-                } else if (n == 4) {
                     enableBlend(prevBld);
                     sfx(SFX_MENUCANCEL);
                     buildBG(3, 0, 27, 0, 1, true);
@@ -959,10 +980,11 @@ int GameScene::pauseMenu() {
     setSmallTextArea(110, 3, 7, 9, 10);
     showText();
 
-    if (count && savefile->settings.pauseCountdown)
+    if (count && savefile->settings.pauseCountdown && !preventLayeredCountdowns)
         countdown();
 
-    resumeSong();
+    if (!preventLayeredCountdowns)
+        resumeSong();
 
     return 0;
 }
@@ -1010,8 +1032,10 @@ int onRecord() {
         if (subMode == 0) {
             place =
                 saveRecord(savefile->boards.marathon[mode], game->score, -1);
-        } else {
+        } else if (subMode == 1) {
             place = saveRecord(savefile->boards.zone[mode], game->score, -1);
+        } else if (subMode == 2) {
+            place = saveRecord(savefile->boards.tower[mode], game->score, -1);
         }
     } else if (game->gameMode == SPRINT && game->won == 1) {
         if (subMode == 0) {
@@ -1143,7 +1167,12 @@ void GameScene::showModeText() {
             if (game->trainingMode)
                 str = "Finesse";
         } else {
-            if (game->gameMode == BATTLE && mode >= 0)
+            if (game->gameMode == ZEN) {
+                if (game->subMode == 1)
+                    str = "Tower";
+                else
+                    str = "Normal";
+            } else if (game->gameMode == BATTLE && mode >= 0)
                 str = modeOptionStrings[game->gameMode - 1][mode - 1];
             else if (game->gameMode != CLASSIC && game->gameMode != MASTER)
                 str = modeOptionStrings[game->gameMode - 1][mode];
@@ -1164,7 +1193,10 @@ void GameScene::showModeText() {
         if (game->subMode) {
             switch (game->gameMode) {
             case MARATHON:
-                str = "Zone";
+                if (game->subMode == 2)
+                    str = "Tower";
+                else
+                    str = "Zone";
                 break;
             case SPRINT:
                 str = "Attack";
@@ -1217,6 +1249,9 @@ void GameScene::showModeText() {
                     break;
                 case BlockEngine::BARS:
                     text = "BARS";
+                    break;
+                case BlockEngine::SDRS:
+                    text = "SDRS";
                     break;
                 default:
                     text = "SRS";
@@ -1474,52 +1509,6 @@ void qrScene() {
     // delete [] tempBuffer;
 }
 
-void sleepMenu() {
-    toggleBG(1, false);
-    toggleBG(2, false);
-    toggleBG(3, false);
-
-    clearText();
-
-    clearSprites(128);
-    showSprites(128);
-
-    MenuKeys k = savefile->settings.menuKeys;
-
-    while (closed()) {
-        aprint("Entering sleep...", 7, 4);
-        aprint("Press", 13, 8);
-        aprint("L + R + SELECT", 9, 10);
-        aprint("to leave sleep", 8, 12);
-
-        aprint("A: Sleep      B: Cancel", 4, 17);
-
-        vsync();
-
-        key_poll();
-
-        if (key_hit(k.confirm)) {
-            clearText();
-            break;
-        }
-
-        if (key_hit(k.cancel)) {
-            toggleBG(2, true);
-            toggleBG(1, true);
-            toggleBG(3, true);
-            clearText();
-            sfx(SFX_MENUCANCEL);
-            return;
-        }
-    }
-
-    sleep();
-
-    toggleBG(1, true);
-    toggleBG(2, true);
-    toggleBG(3, true);
-}
-
 void addGameStats() {
     savefile->stats.timePlayed += frameCounter;
     frameCounter = 1;
@@ -1531,7 +1520,16 @@ void addGameStats() {
         savefile->stats.maxLevel = game->level;
 
     if (game->gameMode == ZEN) {
-        savefile->boards.zen = game->score;
+        if (game->subMode == 1) {
+            int height =
+                game->towerScrollCount + (game->lengthY - game->stackHeight);
+
+            if (height > (int)savefile->boards.zenTower)
+                savefile->boards.zenTower = height;
+        } else {
+            savefile->boards.zen = game->score;
+            savefile->boards.zenLines = savefile->boards.zenLines + game->linesCleared;
+        }
 
         saveSavefile();
     }

@@ -2,7 +2,7 @@ name: Clang-Format Check
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [master, main]
 
 jobs:
   format-check:
@@ -12,30 +12,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Get base commit hash (push)
+        if: ${{github.event_name == 'push'}}
+        run: echo "BASE_SHA=${{github.event.before}}" >> "$GITHUB_ENV"
+
+      - name: Get base commit hash (PR)
+        if: ${{github.event_name == 'pull_request'}}
+        run: echo "BASE_SHA=${{github.event.pull_request.base.sha}}" >> "$GITHUB_ENV"
+
+      - name: Fetch base commit
+        run: git fetch origin "${BASE_SHA}"
+
       - name: Install clang-format
         run: sudo apt-get update && sudo apt-get install -y clang-format
 
-      - name: Run clang-format
+      - name: Run clang-format and check for changes
         run: |
-          find source include \
-          \( \
-          \( -path "include/glm/*" -prune \) -o \
-          \( -path "include/glad/*" -prune \) -o \
-          \( -path "include/KHR/*" -prune \) -o \
-          \( -type f -and \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) -print \) \
-          \) | xargs clang-format -i
-      - name: Check for changes
-        id: git-check
-        run: |
-          git diff --exit-code
-          echo "::set-output name=modified::$(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi)"
-
-      - name: Fail if formatting issues found
-        if: steps.git-check.outputs.modified == 'true'
-        run: |
-          echo "Formatting issues found. Please run clang-format locally and commit the changes."
-          exit 1
-
-      - name: Pass if no formatting issues
-        if: steps.git-check.outputs.modified == 'false'
-        run: echo "Code formatting check passed."
+          git config --local color.ui always
+          echo "Running git clang-format ${BASE_SHA}:"
+          if git clang-format --verbose --diff "${BASE_SHA}"; then
+            echo "Code formatting check passed."
+          else
+            echo "Formatting issues found. Please run git clang-format locally and commit the changes."
+            exit 1
+          fi

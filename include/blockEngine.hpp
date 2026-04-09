@@ -130,6 +130,7 @@ enum RotationSystems {
     NRS,
     ARS,
     BARS,
+    SDRS,
     A_SRS,
 };
 
@@ -338,10 +339,12 @@ public:
     int initial = 0;
     int tspin = 0;
     int bone = 0;
+    int towerScroll = 0;
 
     SoundFlags() {}
     SoundFlags(const SoundFlags& oldFlags) {
         shift = oldFlags.shift;
+        shiftDas = oldFlags.shiftDas;
         rotate = oldFlags.rotate;
         place = oldFlags.place;
         invalid = oldFlags.invalid;
@@ -356,6 +359,7 @@ public:
         initial = oldFlags.initial;
         tspin = oldFlags.tspin;
         bone = oldFlags.bone;
+        towerScroll = oldFlags.towerScroll;
     }
 };
 
@@ -486,6 +490,8 @@ private:
     void calculatePeek();
     void deathGarbage();
     void toggleBigMode();
+    void scrollTower();
+    int checkIntegrity();
 
     int bigBag[35]{};
 
@@ -614,7 +620,7 @@ public:
     std::tuple<int, int> getSpawnPosition();
 
     const int randomMax = ((1 << 15) - 1);
-    int randomSeed = 0;
+    int randomSeed = randNext2();
 
     int lengthX = 10;
     int lengthY = 40;
@@ -720,6 +726,11 @@ public:
     int peek = 0;
 
     int deathGarbageCounter = 0;
+    int towerScrollCount = 0;
+    bool towerClearingPhase = false;
+    bool towerMediumClearing = false;
+    int towerMediumTimer = 0;
+    int towerMediumDelay = 0;
 
     List queue;
     List moveHistory;                // max 10

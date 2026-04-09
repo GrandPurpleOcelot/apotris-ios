@@ -146,7 +146,7 @@ public:
 
         result += text;
 
-        if (savefile->settings.rotationSystem < BlockEngine::BARS)
+        if (savefile->settings.rotationSystem < BlockEngine::SDRS)
             result += ">";
 
         return result;
@@ -154,7 +154,7 @@ public:
 
     void action(int dir) override {
         if (dir > 0) {
-            if (savefile->settings.rotationSystem < BlockEngine::BARS) {
+            if (savefile->settings.rotationSystem < BlockEngine::SDRS) {
                 savefile->settings.rotationSystem++;
                 sfx(SFX_MENUMOVE);
             }
@@ -174,6 +174,8 @@ public:
             return "ARS";
         case BlockEngine::BARS:
             return "BARS";
+        case BlockEngine::SDRS:
+            return "SDRS";
         default:
             return "SRS";
         }
@@ -250,7 +252,7 @@ public:
 
 class PauseCountdownElement : public Element {
 public:
-    std::string getLabel() override { return "Unpause Countdown"; }
+    std::string getLabel() override { return "Countdown on Unpause"; }
 
     std::string getCursor(std::string text) override {
         return "[" + text + "]";
@@ -264,6 +266,28 @@ public:
 
     std::string getCurrentOption() override {
         if (savefile->settings.pauseCountdown)
+            return "ON";
+        else
+            return "OFF";
+    }
+};
+
+class InterruptCountdownElement : public Element {
+public:
+    std::string getLabel() override { return "Interrupt Countdown"; }
+
+    std::string getCursor(std::string text) override {
+        return "[" + text + "]";
+    }
+
+    void action(int dir) override {
+        savefile->settings.interruptCountdown = !savefile->settings.interruptCountdown;
+
+        sfx(SFX_MENUCONFIRM);
+    }
+
+    std::string getCurrentOption() override {
+        if (savefile->settings.interruptCountdown)
             return "ON";
         else
             return "OFF";
@@ -319,7 +343,8 @@ public:
             new PeekElement(),           new GoalLineElement(),
             new SpawnElement(),          new RotationSystemElement(),
             new RandomizerElement(),     new BigModeElement(),
-            new PauseCountdownElement(), new ResetGameplayElement(),
+            new PauseCountdownElement(), new InterruptCountdownElement(),
+            new ResetGameplayElement(),
         };
     };
 

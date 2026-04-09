@@ -2,6 +2,9 @@
 #include "def.h"
 #include "logging.h"
 #include "menu.h"
+#include "platform.hpp"
+#include "rumblePatterns.hpp"
+#include "sprite60tiles_bin.h"
 #include "sprites.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -48,6 +51,7 @@ void setJourneyGraphics(Save* save, int level);
 void replayControl();
 
 void showSpawn();
+void showTowerScrollIndicator();
 static void screenShake();
 
 INLINE int prep(int n);
@@ -112,6 +116,8 @@ static int rainbowTimer = 1;
 static bool rainbowIncreasing = false;
 
 static u16 rainbow[5];
+
+static int wiggleTimer = 0;
 
 static bool creditRefresh = false;
 static u16 fullMeterTimer = 0;
@@ -224,10 +230,42 @@ void GameScene::checkSounds() {
         sfx(SFX_SHIFT2);
 
     if (game->sounds.place) {
-        if (!game->zoneTimer) {
-            sfx(SFX_PLACE);
-        } else {
+        if (game->zoneTimer) {
             sfxRate(SFX_PLACE, 0.5);
+
+            // Ripple Zone Rumble mode, Ripples on piece Drop
+            if (savefile->settings.zoneRumbleMode == 2) {
+                u8 zoneStrengthMod = 0;
+                switch (game->zonedLines) {
+                case 0 ... 3:
+                    zoneStrengthMod = 0;
+                    break;
+                case 4 ... 7:
+                    zoneStrengthMod = 1;
+                    break;
+                case 8 ... 11:
+                    zoneStrengthMod = 2;
+                    break;
+                case 12 ... 15:
+                    zoneStrengthMod = 2;
+                    break;
+                case 16 ... 19:
+                    zoneStrengthMod = 3;
+                    break;
+                default:
+                    zoneStrengthMod = 3;
+                    break;
+                }
+                rumblePatternLowPri(RUMBLE_ZONE_RIPPLE, zoneStrengthMod);
+            } else {
+                // Zone Rumble Continuous/Off
+                rumblePatternLowPri(RUMBLE_PLACE);
+            }
+
+        } else {
+            sfx(SFX_PLACE);
+
+            rumblePatternLowPri(RUMBLE_PLACE);
         }
 
         if (savefile->settings.screenShakeType == 0) {
@@ -243,13 +281,11 @@ void GameScene::checkSounds() {
         if (!game->sounds.finesse && game->trainingMode)
             for (auto& moveSprite : moveSprites)
                 sprite_hide(moveSprite);
-
-        rumbleStart(rumbleMax * savefile->settings.rumble);
     }
 
     if (game->sounds.invalid) {
         sfx(SFX_INVALID);
-        rumbleStart(rumbleMax * savefile->settings.rumble);
+        rumblePatternLowPri(RUMBLE_PLACE);
     }
 
     if (game->sounds.rotate)
@@ -263,12 +299,11 @@ void GameScene::checkSounds() {
     }
 
     if (game->sounds.clear) {
+        int speed = game->comboCounter;
+        if (speed > 10)
+            speed = 10;
 
         if (game->previousClear.linesCleared <= 4) {
-            int speed = game->comboCounter;
-            if (speed > 10)
-                speed = 10;
-
             sfxRate(SFX_LEVELUP,
                     (1.0 + (float)speed / 10) / (1 + (game->zoneTimer != 0)));
         } else {
@@ -281,15 +316,24 @@ void GameScene::checkSounds() {
         if (game->zoneTimer) {
 
         } else if (game->previousClear.isPerfectClear == 1) {
-            soundEffect = SFX_PERFECTCLEAR;
-            clearTypeText = "perfect clear";
-            effectList.emplace_back(0);
+            if ((game->gameMode == MARATHON && game->subMode == 2) ||
+                (game->gameMode == ZEN && game->subMode == 1)) {
+                soundEffect = SFX_PERFECTSCROLL;
+                clearTypeText = "perfect scroll";
+            } else {
+                soundEffect = SFX_PERFECTCLEAR;
+                clearTypeText = "perfect clear";
+            }
+            effectList.push_back(Effect(0));
+            rumblePattern(RUMBLE_PERFECT_CLEAR, speed);
         } else if (game->previousClear.isTSpin == 2) {
-            if (game->previousClear.isBackToBack == 1)
+            if (game->previousClear.isBackToBack == 1) {
                 soundEffect = SFX_BACKTOBACKTSPIN;
-            else
+                rumblePattern(RUMBLE_TSPIN_B2B, speed);
+            } else {
                 soundEffect = SFX_TSPIN;
-
+                rumblePattern(RUMBLE_TSPIN, speed);
+            }
             if (game->previousClear.linesCleared == 1) {
                 clearTypeText = "t-spin single";
             } else if (game->previousClear.linesCleared == 2) {
@@ -301,39 +345,52 @@ void GameScene::checkSounds() {
             soundEffect = SFX_TSPINMINI;
 
             clearTypeText = "t-spin mini";
+            rumblePattern(RUMBLE_TSPIN_MINI, speed);
         } else if (game->previousClear.linesCleared > 4) {
             int n = game->previousClear.linesCleared;
             if (n < 8) {
                 clearTypeText = "quad";
                 soundEffect = SFX_QUAD;
+                rumblePattern(RUMBLE_QUAD, speed);
             } else if (n < 12) {
                 clearTypeText = "octo";
                 soundEffect = SFX_OCTORIS;
+                rumblePattern(RUMBLE_OCTORIS, speed);
             } else if (n < 16) {
                 clearTypeText = "dodeca";
                 soundEffect = SFX_DODECATRIS;
+                rumblePattern(RUMBLE_DODECATRIS, speed);
             } else if (n < 18) {
                 clearTypeText = "decahexa";
                 soundEffect = SFX_DECAHEXATRIS;
+                rumblePattern(RUMBLE_DECAHEXATRIS, speed);
             } else if (n < 20) {
                 clearTypeText = "perfectus";
                 soundEffect = SFX_PERFECTRIS;
+                rumblePattern(RUMBLE_PERFECTRIS, speed);
             } else {
                 clearTypeText = "ultimus";
                 soundEffect = SFX_ULTIMATRIS;
+                rumblePattern(RUMBLE_ULTIMATRIS, speed);
             }
         } else if (game->previousClear.linesCleared == 4) {
-            if (game->previousClear.isBackToBack == 1)
+            if (game->previousClear.isBackToBack == 1) {
                 soundEffect = SFX_BACKTOBACKQUAD;
-            else
+                rumblePattern(RUMBLE_QUAD_B2B, speed);
+            } else {
                 soundEffect = SFX_QUAD;
+                rumblePattern(RUMBLE_QUAD, speed);
+            }
             clearTypeText = "quad";
+            // rumblePattern(testQuad);
         } else if (game->previousClear.linesCleared == 3) {
             soundEffect = SFX_TRIPLE;
             clearTypeText = "triple";
+            rumblePattern(RUMBLE_TRIPLE, speed);
         } else if (game->previousClear.linesCleared == 2) {
             soundEffect = SFX_DOUBLE;
             clearTypeText = "double";
+            rumblePattern(RUMBLE_DOUBLE, speed);
         }
 
         if (savefile->settings.clearText == 2 && !clearTypeText.empty())
@@ -351,15 +408,18 @@ void GameScene::checkSounds() {
             zoneFlash();
             refreshSkin = true;
             sfx(SFX_LEVELUPSOUND);
+            rumblePatternLowPri(RUMBLE_LEVEL_UP, speed);
         }
     } else if (game->sounds.tspin != 0) {
         int sound = 0;
         if (game->sounds.tspin == 1) {
             clearTypeText = "t-spin mini";
             sound = SFX_TSPINMINI;
+            rumblePattern(RUMBLE_TSPIN_MINI);
         } else {
             clearTypeText = "t-spin";
             sound = SFX_TSPIN;
+            rumblePattern(RUMBLE_TSPIN);
         }
 
         if (savefile->settings.announcer)
@@ -371,6 +431,7 @@ void GameScene::checkSounds() {
 
     if (game->sounds.levelUp) {
         sfx(SFX_LEVELUPSOUND);
+        rumblePatternLowPri(RUMBLE_LEVEL_UP);
 
         if (savefile->settings.colors == 3) {
             int n = getClassicPalette();
@@ -384,6 +445,17 @@ void GameScene::checkSounds() {
         if (game->gameMode == MASTER || game->gameMode == DEATH) {
             maxClearTimer = game->maxClearDelay;
         }
+
+        if (((game->gameMode == MARATHON &&
+              game->subMode == 2) || // Tower Explore
+             (game->gameMode == ZEN && game->subMode == 1)) &&
+            (demo || savefile->settings.journey)) {
+            flashTimer = flashTimerMax;
+            setJourneyGraphics(savefile, game->linesCleared / 10);
+            setPalette();
+            zoneFlash();
+            refreshSkin = true;
+        }
     }
 
     if (game->sounds.initial) {
@@ -396,13 +468,16 @@ void GameScene::checkSounds() {
     case -1:
         sectionText = "regret!!";
         sfx(SFX_REGRET);
+        rumblePattern(RUMBLE_REGRET);
         break;
     case 1:
         sectionText = "cool!!";
         sfx(SFX_COOL);
+        rumblePattern(RUMBLE_COOL);
         break;
     case 2:
         sfx(SFX_SECRET);
+        rumblePattern(RUMBLE_SECRET);
         break;
     }
 
@@ -493,6 +568,42 @@ void GameScene::checkSounds() {
         }
 
         refreshSkin = true;
+    }
+
+    if (game->sounds.towerScroll) {
+        sfx(SFX_TOWERSCROLL);
+        if (savefile->settings.clearText == 2)
+            floatingList.push_back(FloatText("Tower Scroll"));
+    }
+
+    const RumbleSequence currentRumble = rumbleGetCurrent();
+
+    bool doContinuousZoneRumble =
+        game->zoneTimer &&
+        (currentRumble == RUMBLE_NONE ||
+         (currentRumble >= RUMBLE_ZONE && currentRumble <= RUMBLE_ZONE_6));
+
+    if (doContinuousZoneRumble && savefile->settings.zoneRumbleMode == 1) {
+        switch (game->zonedLines) {
+        case 0 ... 3:
+            rumblePatternLowPri(RUMBLE_ZONE);
+            break;
+        case 4 ... 7:
+            rumblePatternLowPri(RUMBLE_ZONE_2);
+            break;
+        case 8 ... 11:
+            rumblePatternLowPri(RUMBLE_ZONE_3);
+            break;
+        case 12 ... 15:
+            rumblePatternLowPri(RUMBLE_ZONE_4);
+            break;
+        case 16 ... 19:
+            rumblePatternLowPri(RUMBLE_ZONE_5);
+            break;
+        default:
+            rumblePatternLowPri(RUMBLE_ZONE_6);
+            break;
+        }
     }
 
     game->resetSounds();
@@ -1118,7 +1229,7 @@ void showQueue(bool offsetSpriteIndex) {
             sprite_set_pos(queueSprites[k],
                            startX + add * 3 + (push > 0) * push,
                            (3 + (k * 3)) * 6 - 3 * (n == PIECE_I) + yoffset +
-                               8 * ((rs == ARS || rs == BARS) && n == PIECE_I));
+                               8 * ((rs == ARS || rs == BARS && n == PIECE_I)));
         } else {
             sprite_unhide(queueSprites[k], ATTR0_AFF);
             sprite_set_attr(queueSprites[k], ShapeSquare, 2, 16 * n,
@@ -1169,13 +1280,13 @@ bool GameScene::control() {
     if (replaying && key_hit(KEY_FULL)) {
         exitGame = true;
 
-        stopSong();
+        stopMusic();
         playSongRandom(0);
 
         return true;
     }
 
-    Keys k = savefile->settings.keys;
+    GameKeys k = savefile->settings.keys;
     MenuKeys m = savefile->settings.menuKeys;
 
     if (handlingTest && key_hit(m.pause)) {
@@ -1195,6 +1306,7 @@ bool GameScene::control() {
     if (shouldPause && !multiplayer && !eventPauseTimer && !flashTimer) {
         sfx(SFX_MENUCONFIRM);
         paused = true;
+        showTowerScrollIndicator();
         pauseSong();
         clearText();
         updateText();
@@ -1280,7 +1392,7 @@ bool GameScene::control() {
         restartTimer = 0;
     }
 
-    if (key_hit(k.zone) && game->gameMode == MARATHON && game->subMode &&
+    if (key_hit(k.zone) && game->gameMode == MARATHON && game->subMode == 1 &&
         !game->zoneTimer) {
         game->activateZone(1);
     }
@@ -1354,31 +1466,42 @@ void GameScene::showText() {
     int gm = game->gameMode;
 
     if (gm == MARATHON || gm == ULTRA || gm == BLITZ || gm == CLASSIC ||
-        gm == ZEN) {
+        gm == ZEN || (gm == MARATHON && game->subMode == 2)) {
 
-        wordSprites[0].setText("Score");
-        wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
+        if (gm == ZEN && game->subMode == 1) {
+            wordSprites[0].setText("Height");
+            wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
 
-        int score = game->score;
-        std::string unit;
+            int height =
+                game->towerScrollCount + (game->lengthY - game->stackHeight);
 
-        if (savefile->settings.aspectRatio == 1) {
-            int unitCount = 0;
+            wordSprites[1].setText(std::to_string(height));
+            wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8, 15);
+        } else {
+            wordSprites[0].setText("Score");
+            wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
 
-            while (score >= 1000000 && unitCount < 3) {
-                score /= 1000;
-                unit = units[unitCount++];
+            int score = game->score;
+            std::string unit = "";
+
+            if (savefile->settings.aspectRatio == 1) {
+                int unitCount = 0;
+
+                while (score >= 1000000 && unitCount < 3) {
+                    score /= 1000;
+                    unit = units[unitCount++];
+                }
             }
-        }
 
-        wordSprites[1].setText(std::to_string(score) + unit);
-        wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8, 15);
+            wordSprites[1].setText(std::to_string(score) + unit);
+            wordSprites[1].show(9 * 8 - wordSprites[1].width, 5 * 8, 15);
 
-        if (gm != ULTRA && gm != ZEN) {
-            wordSprites[2].setText("Level");
-            wordSprites[2].show(9 * 8 - wordSprites[2].width, 14 * 8, 15);
-            wordSprites[3].setTextNum(game->level);
-            wordSprites[3].show(9 * 8 - wordSprites[3].width, 15 * 8, 15);
+            if (gm != ULTRA && gm != ZEN) {
+                wordSprites[2].setText("Level");
+                wordSprites[2].show(9 * 8 - wordSprites[2].width, 14 * 8, 15);
+                wordSprites[3].setTextNum(game->level);
+                wordSprites[3].show(9 * 8 - wordSprites[3].width, 15 * 8, 15);
+            }
         }
 
     } else if (gm == TRAINING) {
@@ -1438,16 +1561,27 @@ void GameScene::showText() {
         wordSprites[4].show(9 * 8 - wordSprites[4].width, 18 * 8, 15);
     }
 
-    if (gm != BATTLE && gm != BLITZ && !(gm == SPRINT && game->subMode == 1) &&
+    if (gm != BATTLE && gm != BLITZ && gm != ZEN &&
+        !(gm == SPRINT && game->subMode == 1) &&
         !(gm == MASTER || gm == DEATH)) {
-        wordSprites[6].setText("Lines");
+
+        if ((gm == MARATHON && game->subMode == 2)) {
+            wordSprites[6].setText("Height");
+        } else {
+            wordSprites[6].setText("Lines");
+        }
+
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
 
         int n = 0;
-        if (gm == DIG)
+        if (gm == DIG) {
             n = game->garbageCleared;
-        else
+        } else if (gm == MARATHON && game->subMode == 2) {
+            // Calculate Height = (Scrolls) + (Current Stack Height)
+            n = game->towerScrollCount + (game->lengthY - game->stackHeight);
+        } else {
             n = game->linesCleared;
+        }
 
         wordSprites[7].setTextNum(n);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
@@ -1481,6 +1615,19 @@ void GameScene::showText() {
 #endif
 
         wordSprites[7].setTextNum(game->linesSent);
+        wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
+    } else if (gm == ZEN && game->subMode == 0) {
+        wordSprites[4].setText("Lines");
+        wordSprites[4].show(9 * 8 - wordSprites[4].width, 14 * 8, 15);
+
+        wordSprites[5].setTextNum(game->linesCleared);
+        wordSprites[5].show(9 * 8 - wordSprites[5].width, 15 * 8, 15);
+
+        wordSprites[6].setText("Total");
+        wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
+
+        wordSprites[7].setTextNum(game->linesCleared +
+                                  savefile->boards.zenLines);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
     }
 
@@ -1540,7 +1687,7 @@ void GameScene::showComboStreak() {
 
             // aprintf(game->comboCounter, 28, clearTextHeight - 1);
             wordSprites[9].setText("x" + std::to_string(game->comboCounter));
-            wordSprites[9].show(21 * 8 + 4, (clearTextHeight) * 8, 15);
+            wordSprites[9].show(21 * 8 + 4, (clearTextHeight)*8, 15);
         } else {
             // aprintClearArea(20, clearTextHeight - 1, 10, 1);
             wordSprites[8].hide();
@@ -1692,6 +1839,7 @@ void GameScene::countdown() {
     showShadow();
     showSpawn();
     showZoneMeter();
+    showGoalLine();
 
     showSprites(128);
 
@@ -1702,10 +1850,77 @@ void GameScene::countdown() {
 
     paused = true;
 
+    GameKeys k = savefile->settings.keys;
+    MenuKeys m = savefile->settings.menuKeys;
+
+    bool interrupted = false;
+
     while (closed() && timer++ < timerMax - 1) {
         canDraw = true;
         vsync();
         key_poll();
+
+        if (!multiplayer && !replaying && !interrupted && !demo &&
+            savefile->settings.interruptCountdown &&
+            (timer < 2 * timerMax / 3) &&
+            key_hit(k.rotateCW | k.rotateCCW | k.rotate180)) {
+            interrupted = true;
+            timer = timerMax - 30;
+            sfx(SFX_GO);
+        } else if (key_hit(KEY_FULL & ~(KEY_SELECT))) {
+            if (demo) {
+                exitGame = true;
+                demo = false;
+                break;
+            } else if (!multiplayer && savefile->settings.interruptCountdown &&
+                       key_hit(m.pause)) { // TODO maybe add the
+                                           // n3ds::wasAppPaused check here too?
+                sfx(SFX_MENUCONFIRM);
+                paused = true;
+                pauseSong();
+                clearText();
+                updateText();
+                preventLayeredCountdowns = true;
+
+                if (pauseMenu()) {
+                    paused = false;
+                    preventLayeredCountdowns = false;
+                    return;
+                } else {
+                    timer = 0;
+                    paused = true;
+                    preventLayeredCountdowns = false;
+                    clearText();
+                    updateText();
+
+                    // drawFrame(0);
+                    // if (game->zoneTimer)
+                    //     frameSnow(0);
+                    //
+                    // showBackground(0);
+                    // resetSmallText();
+                    // clearText();
+                    // setSmallTextArea(110, 3, 7, 9, 10);
+                    // showText();
+
+                    showTimer();
+                    showQueue(0);
+                    showHold();
+                    showPawn();
+                    showShadow();
+                    showSpawn();
+                    showZoneMeter();
+                    showGoalLine();
+
+                    showSprites(128);
+
+                    if (!game->zoneTimer)
+                        gradient(1);
+
+                    showBackground(0);
+                }
+            }
+        }
 
         if (timer < timerMax / 3) {
             aprint("READY?", 12, 10);
@@ -1721,7 +1936,8 @@ void GameScene::countdown() {
             }
         } else {
             aprint("  GO  ", 12, 10);
-            if (timer == 2 * timerMax / 3 && savefile->settings.announcer)
+            if (timer == 2 * timerMax / 3 && savefile->settings.announcer &&
+                !interrupted)
                 sfx(SFX_GO);
         }
 #ifdef GBA
@@ -1743,8 +1959,6 @@ void GameScene::countdown() {
     if (replaying) {
         replayControl();
     } else {
-        Keys k = savefile->settings.keys;
-
         if (key_is_down(k.hold))
             game->hold(1);
         if (key_is_down(k.rotateCW))
@@ -1904,6 +2118,8 @@ void drawFrame(int layer) {
     progressBar(layer);
 
     drawGrid();
+
+    showTowerScrollIndicator();
 }
 
 const u8 queueBGLengths[5] = {32, 42, 60, 78, 96};
@@ -2171,7 +2387,8 @@ void drawGrid() {
 }
 
 void progressBar(int layer) {
-    if (game == nullptr || game->goal == 0 || game->zoneTimer)
+    if (game == nullptr || game->goal == 0 || game->zoneTimer ||
+        (game->gameMode == ZEN && game->subMode == 1))
         return;
 
     int l = 25 + layer;
@@ -2179,7 +2396,9 @@ void progressBar(int layer) {
     int current = 0;
     int max = game->goal;
 
-    if (game->gameMode == DIG)
+    if (game->gameMode == MARATHON && game->subMode == 2)
+        current = game->towerScrollCount + (game->lengthY - game->stackHeight);
+    else if (game->gameMode == DIG)
         current = game->garbageCleared;
     else if (game->gameMode == ULTRA || game->gameMode == BLITZ)
         current = game->timer;
@@ -2470,7 +2689,7 @@ void showPlaceEffect() {
         switch (it->piece) {
         case 0:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n], 8, 3);
-            if (game->rotationSystem == NRS) {
+            if (game->rotationSystem == NRS || game->rotationSystem == SDRS) {
                 if (r % 2 == 1)
                     r = 1;
                 else
@@ -2486,7 +2705,7 @@ void showPlaceEffect() {
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 3], 8, 3);
             xoffset = yoffset = -4;
 
-            if (game->rotationSystem == ARS && r == 2)
+            if (game->rotationSystem == ARS && r == 2 || (game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
                 yoffset += 8;
 
             if (game->rotationSystem == NRS || game->rotationSystem == ARS)
@@ -2498,7 +2717,7 @@ void showPlaceEffect() {
             xoffset = yoffset = -4;
             flip = true;
 
-            if (game->rotationSystem == ARS && r == 2)
+            if (game->rotationSystem == ARS && r == 2 || (game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
                 yoffset += 8;
 
             if (game->rotationSystem == NRS || game->rotationSystem == ARS)
@@ -2507,7 +2726,7 @@ void showPlaceEffect() {
         case 3:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 6], 8, 3);
             yoffset = -4 + (game->rotationSystem == NRS ||
-                            game->rotationSystem == ARS) *
+                            game->rotationSystem == ARS || game->rotationSystem == SDRS) *
                                8;
             r = 0;
             break;
@@ -2521,12 +2740,15 @@ void showPlaceEffect() {
                 else
                     r = 2;
             }
+            if ((game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
+                yoffset += 8;
             break;
         case 5:
             loadSpriteTiles(tileStart + 32 * i, placeEffectTiles[n + 12], 8, 3);
             xoffset = yoffset = -4;
 
-            if (game->rotationSystem == ARS && r == 2)
+            if (game->rotationSystem == ARS && r == 2 || 
+            (game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
                 yoffset += 8;
 
             if (game->rotationSystem == NRS || game->rotationSystem == ARS)
@@ -2543,6 +2765,8 @@ void showPlaceEffect() {
                 else
                     r = 2;
             }
+            if ((game->rotationSystem == SDRS || game->rotationSystem == BARS) && r == 0)
+                yoffset += 8;
             break;
         default:
             break;
@@ -2697,7 +2921,7 @@ INLINE int getBoard(int x, int y) {
 }
 
 void showZoneMeter() {
-    if (!(game->gameMode == MARATHON && game->subMode))
+    if (!(game->gameMode == MARATHON && game->subMode == 1))
         return;
 
     OBJ_ATTR* sprite = &obj_buffer[23];
@@ -2734,6 +2958,34 @@ void showZoneMeter() {
         else
             setPaletteColor(12 + 16, 4 + i, anticolor, 1);
     }
+}
+
+void showTowerScrollIndicator() {
+    OBJ_ATTR* sprite = &obj_buffer[30];
+
+    if (!game->towerClearingPhase || paused || ended) {
+        sprite_hide(sprite);
+        wiggleTimer = 0;
+        return;
+    }
+
+    loadSpriteTiles(1008, sprite61tiles_bin, 2, 2);
+
+    sprite_set_attr(sprite, ShapeSquare, 1, 1008, 15, 0);
+
+    int wiggleOffset = 0;
+    if (wiggleTimer < 120) {
+        int phase = (wiggleTimer / 8) % 4;
+        if (phase == 1)
+            wiggleOffset = 1;
+        else if (phase == 3)
+            wiggleOffset = -1;
+        wiggleTimer++;
+    }
+
+    sprite_set_pos(sprite, 19, 77 + wiggleOffset);
+
+    sprite_unhide(sprite, 0);
 }
 
 void zoneFlash() {
@@ -3347,7 +3599,7 @@ void GameScene::init() {
     drawFrame(-1);
     drawFrameBackgrounds();
 
-    stopSong();
+    stopMusic();
 
     showHold();
 
@@ -3514,13 +3766,16 @@ void GameScene::update() {
             // (savefile->settings.shakeAmount) / 4)) / 2);
         }
 
-        rumbleStart(rumbleMax * 2 * savefile->settings.rumble);
+        rumblePatternLowPri(savefile->settings.rumbleStyle == 1 ? RUMBLE_SINGLE
+                                                        : RUMBLE_CLASSIC_CLEAR,
+                    game->comboCounter);
         clearTimer = 0;
         updateText();
     }
 
     if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)) {
         paused = true;
+        showTowerScrollIndicator();
 
         endScreen();
 
@@ -3646,6 +3901,9 @@ void showGoalLine() {
         goal = game->garbageCleared;
     } else if (gm == SPRINT && game->subMode) {
         goal = game->linesSent;
+    } else if ((gm == MARATHON && game->subMode == 2) ||
+               (gm == ZEN && game->subMode == 1)) {
+        goal = game->towerScrollCount;
     } else if (gm != SURVIVAL) {
         goal = game->linesCleared;
     } else {
@@ -3740,7 +3998,7 @@ void showSpawn() {
         BlockEngine::getShape(game->queue.front(), 0, game->rotationSystem);
 
     bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS ||
-                game->rotationSystem == BARS);
+                game->rotationSystem == BARS || game->rotationSystem == SDRS);
 
     std::tuple<int, int> pos = game->getSpawnPosition();
 
@@ -3768,7 +4026,7 @@ void showSpawn() {
             sprite, (10 + x) * 8 + push * savefile->settings.shake,
             (y - game->boardOffset + peek) * 8 +
                 shake * savefile->settings.shake + peekShift -
-                8 * (game->rotationSystem == BARS && piece != PIECE_I));
+                8 * (game->rotationSystem == BARS && piece != PIECE_I || game->rotationSystem == SDRS));
     } else {
         sprite_set_attr(sprite, ShapeWide, 2, tile, 15, 2);
         sprite_enable_mosaic(sprite);
@@ -3778,6 +4036,6 @@ void showSpawn() {
             sprite, (10 + x * 2) * 8 + push * savefile->settings.shake,
             (y - game->boardOffset + peek) * 8 * 2 +
                 shake * savefile->settings.shake + peekShift -
-                16 * (game->rotationSystem == BARS && piece != PIECE_I));
+                16 * (game->rotationSystem == BARS && piece != PIECE_I || game->rotationSystem == SDRS));
     }
 }

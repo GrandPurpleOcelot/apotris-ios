@@ -91,7 +91,7 @@ std::list<std::string> creditsText = {
     "     (@vagabondtruffle)",
     "",
     " - Custom rotation",
-    "   system (BARS)",
+    "   system (BARS, SDRS)",
     "  by CreeperCraft",
     "",
     " - Explore option",

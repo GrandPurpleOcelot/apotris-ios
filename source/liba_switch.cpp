@@ -2,7 +2,7 @@
 
 #include "liba_switch.h"
 #include <fstream>
-#include <list>
+#include <unordered_set>
 
 #include "def.h"
 #include "switch.h"
@@ -11,10 +11,14 @@
 
 void rumbleUpdate();
 
-static int rumbleTimer = 0;
+void handleInput();
 
-std::list<uint32_t> currentKeys;
-std::list<uint32_t> previousKeys;
+std::unordered_set<uint32_t> currentKeys;
+std::unordered_set<uint32_t> previousKeys;
+
+std::unordered_set<uint32_t> currentlyPressed;
+
+// static int rumbleTimer = 0;
 
 int rowStart = 0;
 int rowEnd = SCREEN_HEIGHT;
@@ -35,8 +39,6 @@ SDL_Renderer* renderer;
 SDL_Texture* texture;
 
 bool render = true;
-
-std::list<uint32_t> currentlyPressed;
 
 int screenWidth = 1280;
 int screenHeight = 720;
@@ -77,33 +79,23 @@ void windowInit() {
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
 }
 
-void key_poll() {
-    previousKeys = currentKeys;
-    currentKeys.clear();
+void key_poll() {}
 
+void handleInput() {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
         uint32_t key = 0;
-        auto it = currentlyPressed.begin();
         bool found = false;
 
         switch (event.type) {
         case SDL_JOYBUTTONDOWN:
             key = event.jbutton.button;
-            it = std::find(currentlyPressed.begin(), currentlyPressed.end(),
-                           key);
-            found = (it != currentlyPressed.end());
-            if (!found)
-                currentlyPressed.push_back(key);
+            currentlyPressed.insert(key);
             break;
         case SDL_JOYBUTTONUP:
             key = event.jbutton.button;
-            it = std::find(currentlyPressed.begin(), currentlyPressed.end(),
-                           key);
-            found = (it != currentlyPressed.end());
-            if (found)
-                currentlyPressed.remove(key);
+            currentlyPressed.erase(key);
             break;
         case SDL_QUIT:
             quit();
@@ -113,6 +105,9 @@ void key_poll() {
         }
     }
 
+    previousKeys = currentKeys;
+    currentKeys.clear();
+
     currentKeys = currentlyPressed;
 }
 
@@ -120,24 +115,15 @@ uint32_t key_is_down(uint32_t key) {
     if (key == KEY_FULL)
         return (!currentKeys.empty());
 
-    auto it = currentKeys.begin();
-
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-
-    return (it != currentKeys.end());
+    return currentKeys.count(key);
 }
 
 uint32_t key_hit(uint32_t key) {
     if (key == KEY_FULL)
         return (previousKeys.empty() && !currentKeys.empty());
 
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(), previousKeys.end(), key);
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-    bool curr = (it != currentKeys.end());
+    bool prev = previousKeys.count(key);
+    bool curr = currentKeys.count(key);
 
     return (!prev && curr);
 }
@@ -146,13 +132,8 @@ uint32_t key_released(uint32_t key) {
     if (key == KEY_FULL)
         return (!previousKeys.empty() && currentKeys.empty());
 
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(), previousKeys.end(), key);
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-    bool curr = (it != currentKeys.end());
+    bool prev = previousKeys.count(key);
+    bool curr = currentKeys.count(key);
 
     return (prev && !curr);
 }
@@ -162,9 +143,7 @@ uint32_t key_first() {
         return KEY_FULL - 1;
 
     for (auto key : currentKeys) {
-        auto it = previousKeys.begin();
-        it = std::find(previousKeys.begin(), previousKeys.end(), key);
-        bool prev = (it != previousKeys.end());
+        bool prev = previousKeys.count(key);
 
         if (!prev) {
             return key;
@@ -248,6 +227,8 @@ void updateWindow(uint8_t* framebuffer) {
     }
 
     SDL_RenderPresent(renderer);
+
+    handleInput();
 
     // Cap to 60 FPS
     nanotime_step(&stepper);
@@ -388,16 +369,14 @@ void saveSavefile() {
     output.close();
 }
 
-void rumbleStart(int length) {
+void rumbleOutput(uint16_t strength) {
     if (!R_SUCCEEDED(rc))
         return;
-
-    rumbleTimer = length;
 
     float factor = 1;
 
     if (savefile != nullptr) {
-        factor *= (float)savefile->settings.rumble / 4.0f;
+        factor *= (float)savefile->settings.rumbleStrength / 8.0f;
     }
 
     VibrationValue.amp_low = 1.0f * factor;
@@ -418,12 +397,7 @@ void rumbleStart(int length) {
 }
 
 void rumbleUpdate() {
-    if (rumbleTimer > 0) {
-        rumbleTimer--;
-
-    } else {
-        rumbleStop();
-    }
+    rumblePatternLoop();
 }
 
 void rumbleStop() {

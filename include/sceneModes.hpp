@@ -311,7 +311,7 @@ public:
 
     std::list<Element*> getElementList() {
         return {
-            new StringSelectorElement("Type", {"Normal", "Zone"}),
+            new StringSelectorElement("Type", {"Normal", "Zone", "Tower"}),
             new LevelSelectorElement(1, 20),
             new TupleSelectorElement("Lines",
                                      {
@@ -326,7 +326,8 @@ public:
     EntryBoard* getBoard(int submode, int goal) {
         if (submode == 0) {
             return &savefile->boards.marathon[goal];
-
+        } else if (submode == 2) {
+            return &savefile->boards.tower[goal];
         } else {
             return &savefile->boards.zone[goal];
         }
@@ -391,7 +392,7 @@ public:
         return {
             new TupleSelectorElement(
                 "Minutes",
-                {{3 * 3600, "3"}, {5 * 3600, "5"}, {10 * 3600, "10"}}),
+                {{3 * FRAMES_PER_MIN, "3"}, {5 * FRAMES_PER_MIN, "5"}, {10 * FRAMES_PER_MIN, "10"}}),
         };
     };
 
@@ -415,7 +416,7 @@ public:
     std::string name() { return "Blitz"; };
 
     BlitzScene() {
-        goal = 2 * 3600;
+        goal = 2 * FRAMES_PER_MIN;
         level = 1;
     }
 };
@@ -514,11 +515,34 @@ public:
 };
 
 class ZenScoreElement : public Element {
+    StringSelectorElement* selector;
+
+public:
+    ZenScoreElement(StringSelectorElement* s) : selector(s) {}
+
     std::string getLabel() override { return "Score"; }
 
     std::string getCurrentOption() override {
-        return std::to_string(savefile->boards.zen);
+        if ( selector->getValue() == 0) {
+            return std::to_string(savefile->boards.zen);
+        } else {
+            return std::to_string(savefile->boards.zenTower);
+        }
     }
+
+    bool isSelectable() override { return false; }
+
+    std::string getCursor(std::string text) override { return text; }
+};
+
+class ZenLinesElement : public Element {
+    std::string getLabel() override { return "Lines Cleared"; }
+
+    std::string getCurrentOption() override {
+        return std::to_string(savefile->boards.zenLines);
+    }
+
+    bool isSelectable() override { return false; }
 
     std::string getCursor(std::string text) override { return text; }
 };
@@ -528,10 +552,15 @@ public:
     BlockEngine::Modes getMode() { return BlockEngine::ZEN; };
 
     std::list<Element*> getElementList() {
+        StringSelectorElement* sel = new StringSelectorElement("Type", {"Normal", "Tower"});
         return {
-            new ZenScoreElement(),
+            sel,
+            new ZenScoreElement(sel),
+            new ZenLinesElement(),
         };
     };
+
+    void update();
 
     std::string name() { return "Zen"; };
 };

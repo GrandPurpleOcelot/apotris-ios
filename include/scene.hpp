@@ -74,6 +74,7 @@ class GameScene : public Scene {
     void showScoreboard();
 
     bool counted = false;
+    bool preventLayeredCountdowns = false; // TODO I feel like this can be done better
     bool skipSong = false;
 
     int timesPaused = 0;
@@ -180,6 +181,10 @@ public:
     void deinit();
     Scene* previousScene() { return NULL; };
 
+    virtual std::string getDescription() {
+        return ::getDescription(currentOption);
+    };
+
     ~SimpleListScene() { deinit(); };
 };
 
@@ -235,6 +240,7 @@ public:
     virtual bool action() { return false; };
     virtual int getValue() { return 0; };
     virtual std::string getCurrentOption() { return ""; };
+    virtual bool isSelectable() { return true; };
 
     Element() {}
 
@@ -308,8 +314,41 @@ public:
     void deinit();
     virtual Scene* previousScene() { return NULL; };
 
+    virtual std::string getDescription() {
+        return ::getDescription(currentOption);
+    };
+
     ~OptionListScene() { deinit(); };
 };
+
+#ifndef GBA
+class MatchMakingScene : public Scene {
+public:
+    int timer = 0;
+
+    bool playRandoms = true;
+
+    int cursorFloat = 0;
+
+    WordSprite wordSprites[2];
+
+    OBJ_ATTR* cursorSprites[2];
+
+    int lengths[2];
+
+    int pos[2];
+
+    std::string room;
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene() { return new MainMenuScene(); };
+    bool hideSprites;
+};
+#endif
 
 #ifndef MULTIBOOT
 class ConfirmSaveScene : public Scene {
@@ -343,35 +382,6 @@ public:
     ~ConfirmSaveScene() { deinit(); };
 };
 
-#ifndef GBA
-class MatchMakingScene : public Scene {
-public:
-    int timer = 0;
-
-    bool playRandoms = true;
-
-    int cursorFloat = 0;
-
-    WordSprite wordSprites[2];
-
-    OBJ_ATTR* cursorSprites[2];
-
-    int lengths[2];
-
-    int pos[2];
-
-    std::string room;
-
-    void draw();
-    void update();
-    bool control();
-    void init();
-    void deinit();
-    Scene* previousScene() { return new MainMenuScene(); };
-    bool hideSprites;
-};
-#endif
-
 class SettingsScene : public SimpleListScene {
 public:
     Scene* previousScene() {
@@ -386,6 +396,8 @@ public:
 
 #ifndef GBA
         result.push_front("Video");
+#else
+        result.push_back("Sleep");
 #endif
 
         return result;
@@ -596,6 +608,8 @@ public:
     std::string getLabel() override { return label; }
 
     std::string getCurrentOption() override { return "\n"; }
+
+    bool isSelectable() override { return false; }
 
     LabelElement(std::string l) { label = l; }
 };

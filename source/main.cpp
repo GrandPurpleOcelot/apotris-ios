@@ -1,3 +1,4 @@
+#include "sceneModes.hpp"
 #include <string>
 
 #include "blockEngine.hpp"
@@ -79,8 +80,6 @@ bool playingBotGame = false;
 std::string updateAvailable;
 bool rumble_enabled = false;
 
-bool rumbleInitialized = false;
-
 Scene* scene = nullptr;
 
 bool gradientEnabled = false;
@@ -88,6 +87,10 @@ bool gradientEnabled = false;
 Options* previousGameOptions = nullptr;
 
 #ifndef MULTIBOOT
+#ifdef GBA
+bool gbpChecked = false;
+#endif
+
 #ifdef GBA
 __attribute((section(".ewram.status")))
 #endif
@@ -197,7 +200,9 @@ int main() {
         if (!exceptionReason.empty()) {
             const std::string localReason = exceptionReason;
             exceptionReason = "";
+            #ifdef PC
             setUpPresentException(localReason);
+            #endif
         } else
             scene->update();
         sampleEntropy();
@@ -253,7 +258,7 @@ void reset() {
     floatingList.clear();
     placeEffectList.clear();
 
-    rumbleStop();
+    rumblePatternStop();
 
     resetZonePalette();
 
@@ -942,7 +947,7 @@ void buildMini(TILE* customSkin) {
     int rs = SRS;
     if (game != nullptr) {
         add = (game->rotationSystem == NRS || game->rotationSystem == ARS ||
-               game->rotationSystem == BARS);
+               game->rotationSystem == BARS || game->rotationSystem == SDRS);
         rs = game->rotationSystem;
     }
 
@@ -1104,7 +1109,12 @@ void startGame(BlockEngine::Options options, int seed) {
 #endif
 
     if (options.mode == BlockEngine::ZEN) {
-        game->score = savefile->boards.zen;
+        if (game->subMode == 1) {
+            game->score = savefile->boards.zenTower;
+            game->towerScrollCount = savefile->boards.zenTower;
+        }else {
+            game->score = savefile->boards.zen;
+        }
     }
 
 #ifndef MULTIBOOT
@@ -1246,15 +1256,12 @@ std::string getStringFromKey(int key) {
 
         u32 k = key;
 
-        int counter = 0;
-        do {
-            if (k & (1 << counter)) {
-                result += keyToString[1 << counter] + " ";
-                k &= ~(1 << counter);
+        for (int i = 31; i >= 0; --i) {
+            if (k & (1 << i)) {
+                result += keyToString[1 << i] + " ";
+                k &= ~(1 << i);
             }
-
-            counter++;
-        } while (k != 0);
+        }
 
         // remove trailing space
         result.pop_back();

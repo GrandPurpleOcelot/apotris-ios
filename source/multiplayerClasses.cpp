@@ -99,7 +99,9 @@ bool MultiplayerLink::sync() {
                     break;
                 }
                 if (!error.empty()) {
+#ifdef PC
                     setUpPresentException(error);
+#endif
                 }
 #endif
             }

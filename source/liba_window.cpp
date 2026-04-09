@@ -5,8 +5,8 @@
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
-#include <list>
 #include <sys/stat.h>
+#include <unordered_set>
 
 #include "def.h"
 
@@ -20,6 +20,8 @@
 #include <pwd.h>
 #include <string>
 #include <unistd.h>
+const char* homeDir = getenv("HOME");
+std::string savefileDir() { return std::string(homeDir) + "/Library/Application Support/Apotris"; }
 #else
 // For Linux directory save location
 #include <vector>
@@ -32,9 +34,12 @@
 
 void handleAnalogInput(int axis, int value);
 void checkLatestVersion();
+void handleInput();
 
-std::list<uint32_t> currentKeys;
-std::list<uint32_t> previousKeys;
+std::unordered_set<uint32_t> currentKeys;
+std::unordered_set<uint32_t> previousKeys;
+
+std::unordered_set<uint32_t> currentlyPressed;
 
 // int rowStart = (288 - 288) / 2;
 // int rowEnd = rowStart + 288;
@@ -62,8 +67,6 @@ int controllerCount = 0;
 bool fullscreen = false;
 
 bool render = true;
-
-std::list<uint32_t> currentlyPressed;
 
 int screenWidth = 1280;
 int screenHeight = 720;
@@ -131,29 +134,22 @@ void windowInit() {
 void pressKey(int key, InputType type) {
     lastInputType = type;
 
-    auto it = currentlyPressed.begin();
-    it = std::find(currentlyPressed.begin(), currentlyPressed.end(), key);
-    if (it == currentlyPressed.end())
-        currentlyPressed.push_back(key);
+    currentlyPressed.insert(key);
 }
 
 void unpressKey(int key, InputType type) {
     lastInputType = type;
 
-    auto it = currentlyPressed.begin();
-    it = std::find(currentlyPressed.begin(), currentlyPressed.end(), key);
-    if (it != currentlyPressed.end())
-        currentlyPressed.remove(key);
+    currentlyPressed.erase(key);
 }
 
-void key_poll() {
-    previousKeys = currentKeys;
-    currentKeys.clear();
+void key_poll() {}
 
+void handleInput() {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
-        uint32_t key = 0;
+        int key = 0;
         auto it = currentlyPressed.begin();
         bool found = false;
 
@@ -186,19 +182,11 @@ void key_poll() {
             break;
         case SDL_JOYBUTTONDOWN:
             key = event.jbutton.button;
-            it = std::find(currentlyPressed.begin(), currentlyPressed.end(),
-                           key);
-            found = (it != currentlyPressed.end());
-            if (!found)
-                currentlyPressed.push_back(key);
+            pressKey(key, InputType::CONTROLLER);
             break;
         case SDL_JOYBUTTONUP:
             key = event.jbutton.button;
-            it = std::find(currentlyPressed.begin(), currentlyPressed.end(),
-                           key);
-            found = (it != currentlyPressed.end());
-            if (found)
-                currentlyPressed.remove(key);
+            unpressKey(key, InputType::CONTROLLER);
             break;
         case SDL_QUIT:
             quit();
@@ -207,6 +195,9 @@ void key_poll() {
             break;
         }
     }
+
+    previousKeys = currentKeys;
+    currentKeys.clear();
 
     currentKeys = currentlyPressed;
 }
@@ -225,11 +216,7 @@ uint32_t key_is_down(uint32_t key) {
 
     key = splitKey(key);
 
-    auto it = currentKeys.begin();
-
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-
-    return (it != currentKeys.end());
+    return currentKeys.count(key);
 }
 
 uint32_t key_hit(uint32_t key) {
@@ -238,13 +225,8 @@ uint32_t key_hit(uint32_t key) {
 
     key = splitKey(key);
 
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(), previousKeys.end(), key);
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-    bool curr = (it != currentKeys.end());
+    bool prev = previousKeys.count(key);
+    bool curr = currentKeys.count(key);
 
     return (!prev && curr);
 }
@@ -255,13 +237,8 @@ uint32_t key_released(uint32_t key) {
 
     key = splitKey(key);
 
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(), previousKeys.end(), key);
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-    bool curr = (it != currentKeys.end());
+    bool prev = previousKeys.count(key);
+    bool curr = currentKeys.count(key);
 
     return (prev && !curr);
 }
@@ -271,9 +248,7 @@ uint32_t key_first() {
         return KEY_FULL - 1;
 
     for (auto key : currentKeys) {
-        auto it = previousKeys.begin();
-        it = std::find(previousKeys.begin(), previousKeys.end(), key);
-        bool prev = (it != previousKeys.end());
+        bool prev = previousKeys.count(key);
 
         if (!prev) {
             return key;
@@ -365,6 +340,8 @@ void updateWindow(uint8_t* framebuffer) {
 
     SDL_FreeSurface(img);
 
+    handleInput();
+
     // Cap FPS
     nanotime_step(&stepper);
     Uint64 end = SDL_GetPerformanceCounter();
@@ -438,6 +415,7 @@ void refreshWindowSize() {
 
 bool closed() {
     songEndHandler();
+    rumblePatternLoop();
 
     return true;
 }
@@ -449,17 +427,15 @@ void initRumble() {};
 std::string getSavefilePath() {
 #ifdef __APPLE__
     // Get the user's home directory
-    const char* homeDir = getenv("HOME");
     if (!homeDir) {
         struct passwd* pw = getpwuid(getuid());
         homeDir = pw->pw_dir;
     }
 
     // Build the path: ~/Library/Application Support/Apotris/
-    std::string savefileDir = std::string(homeDir) + "/Library/Application Support/Apotris";
     // Create directory if it doesn't exist
-    mkdir(savefileDir.c_str(), 0755);
-    return savefileDir + "/Apotris.sav";
+    mkdir(savefileDir().c_str(), 0755);
+    return savefileDir() + "/Apotris.sav";
 #else
     // Build list of possible save file locations in priority order
     std::vector<std::string> possibleSaveDirs;
@@ -483,11 +459,11 @@ std::string getSavefilePath() {
     std::string saveFileDir = possibleSaveDirs.at(0);
 
     if (saveFileDir != ".") {
-        // Create directory if it doesn't exist
-#ifndef WINDOWS
-        mkdir(saveFileDir.c_str(), 0755);
-#else
+// Create directory if it doesn't exist
+#ifdef WIN32
         mkdir(saveFileDir.c_str());
+#else
+        mkdir(saveFileDir.c_str(), 0755);
 #endif
     }
 
@@ -656,11 +632,12 @@ void unbindDuplicateKey(int& dest, uint32_t key) {
     }
 }
 
-void rumbleStart(int length) {
-    if (lastInputType != InputType::CONTROLLER || length <= 0)
+void rumbleOutput(uint16_t strength) {
+    if (lastInputType != InputType::CONTROLLER)
         return;
 
-    SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
+    uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
+    SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 
 void rumbleStop() { SDL_GameControllerRumble(controller, 0, 0, 1); }

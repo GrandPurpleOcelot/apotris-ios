@@ -34,6 +34,11 @@ meson setup --cross-file=meson/mingw.ini build-windows && meson compile -C build
 # Linux
 meson setup build-linux && meson compile -C build-linux
 
+# NOTE: If you're trying to produce a build exactly like the released builds, you want to add flags as well like below
+# Some emulators and platforms will behave differently without these flags (e.g. a debug build)
+meson setup -Db_lto=true -Db_lto_mode=thin --buildtype=release ...
+# Also note that some builds (specifically the Windows build) may fail with the LTO-related flags, so remove those if the sources no longer compile
+
 # Built executables are now in the Docker environment's apotris/build-*/ folders
 ```
 
@@ -259,10 +264,10 @@ meson compile -C build-pm
 
 Compiling the 3DS build requires you to install the devkitARM toolchain from devkitPro. You can refer to the [3DBrew](https://www.3dbrew.org/wiki/Setting_up_Development_Environment) and [devkitPro](https://devkitpro.org/wiki/Getting_Started) guides to set it up. Following the guide, you should install all packages in the package group `3ds-dev` using `pacman` (or `dkp-pacman`).
 
-You will also need to install the library `libxmp` using `pacman` (or `dkp-pacman`):
+You will also need to install the library `libmpg123`, `libvorbisidec`, `libxmp` and `opusfile` using `pacman` (or `dkp-pacman`):
 
 ```bash
-pacman -S 3ds-libxmp
+pacman -S 3ds-mpg123 3ds-libvorbisidec 3ds-libxmp 3ds-opusfile
 ```
 
 To perform the cross build:

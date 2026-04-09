@@ -47,7 +47,7 @@ struct StatusData {
     // Methods for updating
     void update(Settings* settings) {
         tuning = getTuning();
-        UnpauseCountdown = &settings->pauseCountdown;
+        UnpauseCountdown = reinterpret_cast<int*>(&settings->pauseCountdown);
         Randomizer = &settings->randomizer;
     }
     void startGame() {

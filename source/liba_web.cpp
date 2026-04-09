@@ -2,7 +2,7 @@
 
 #include "liba_web.h"
 #include <fstream>
-#include <list>
+#include <unordered_set>
 
 #include "def.h"
 #include "nanotime.h"
@@ -13,11 +13,12 @@
 void resizeWindow(int width, int height);
 
 void handleAnalogInput(int axis, int value);
+void handleInput();
 
-std::list<uint32_t> currentKeys;
-std::list<uint32_t> previousKeys;
+std::unordered_set<uint32_t> currentKeys;
+std::unordered_set<uint32_t> previousKeys;
 
-std::list<uint32_t> currentlyPressed;
+std::unordered_set<uint32_t> currentlyPressed;
 
 int rowStart = (240 - 240) / 2;
 int rowEnd = rowStart + 240;
@@ -123,33 +124,18 @@ void windowInit() {
 void pressKey(int key, InputType type) {
     lastInputType = type;
 
-    auto it = currentlyPressed.begin();
-    it = std::find(currentlyPressed.begin(), currentlyPressed.end(), key);
-    if (it == currentlyPressed.end())
-        currentlyPressed.push_back(key);
+    currentlyPressed.insert(key);
 }
 
 void unpressKey(int key, InputType type) {
     lastInputType = type;
 
-    auto it = currentlyPressed.begin();
-    it = std::find(currentlyPressed.begin(), currentlyPressed.end(), key);
-    if (it != currentlyPressed.end())
-        currentlyPressed.remove(key);
+    currentlyPressed.erase(key);
 }
 
-void key_poll() {
-    previousKeys = currentKeys;
-    currentKeys.clear();
+void key_poll() {}
 
-    // if(windowWidth != getWindowWidth() || windowHeight != getWindowHeight()){
-
-    //     windowWidth = getWindowWidth();
-    //     windowHeight = getWindowHeight();
-
-    //     resizeWindow(windowWidth, windowHeight);
-    // }
-
+void handleInput() {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
@@ -192,6 +178,9 @@ void key_poll() {
         }
     }
 
+    previousKeys = currentKeys;
+    currentKeys.clear();
+
     currentKeys = currentlyPressed;
 }
 
@@ -209,11 +198,7 @@ uint32_t key_is_down(uint32_t key) {
 
     key = splitKey(key);
 
-    auto it = currentKeys.begin();
-
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-
-    return (it != currentKeys.end());
+    return currentKeys.count(key);
 }
 
 uint32_t key_hit(uint32_t key) {
@@ -222,13 +207,8 @@ uint32_t key_hit(uint32_t key) {
 
     key = splitKey(key);
 
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(), previousKeys.end(), key);
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-    bool curr = (it != currentKeys.end());
+    bool prev = previousKeys.count(key);
+    bool curr = currentKeys.count(key);
 
     return (!prev && curr);
 }
@@ -239,13 +219,8 @@ uint32_t key_released(uint32_t key) {
 
     key = splitKey(key);
 
-    auto it = previousKeys.begin();
-    it = std::find(previousKeys.begin(), previousKeys.end(), key);
-    bool prev = (it != previousKeys.end());
-
-    it = currentKeys.begin();
-    it = std::find(currentKeys.begin(), currentKeys.end(), key);
-    bool curr = (it != currentKeys.end());
+    bool prev = previousKeys.count(key);
+    bool curr = currentKeys.count(key);
 
     return (prev && !curr);
 }
@@ -255,9 +230,7 @@ uint32_t key_first() {
         return KEY_FULL - 1;
 
     for (auto key : currentKeys) {
-        auto it = previousKeys.begin();
-        it = std::find(previousKeys.begin(), previousKeys.end(), key);
-        bool prev = (it != previousKeys.end());
+        bool prev = previousKeys.count(key);
 
         if (!prev) {
             return key;
@@ -342,6 +315,8 @@ void updateWindow(uint8_t* framebuffer) {
 
     SDL_RenderPresent(renderer);
 
+    handleInput();
+
     // Cap FPS
     nanotime_step(&stepper);
 
@@ -412,6 +387,8 @@ void refreshWindowSize() {
 bool closed() {
     emscripten_sleep(0);
     songEndHandler();
+    rumblePatternLoop();
+
     // // Cap to 60 FPS
 
     // //show fps
@@ -552,11 +529,12 @@ void unbindDuplicateKey(int& dest, uint32_t key) {
     }
 }
 
-void rumbleStart(int length) {
+void rumbleOutput(uint16_t strength) {
     if (lastInputType != InputType::CONTROLLER)
         return;
 
-    SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
+    uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
+    SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 
 void rumbleStop() { SDL_GameControllerRumble(controller, 0, 0, 1); }

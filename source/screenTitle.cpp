@@ -2,6 +2,7 @@
 #include "def.h"
 #include "flashSaves.h"
 #include "menu.h"
+#include "rumblePatterns.hpp"
 #include "sceneColorEditor.hpp"
 #include "skinEditor.hpp"
 #include "sprite41tiles_bin.h"
@@ -440,6 +441,7 @@ void TitleScene::draw() {
 bool TitleScene::control() {
     if (key_hit(KEY_FULL)) {
         sfx(SFX_MENUCONFIRM);
+        rumblePattern(RUMBLE_PLACE);
         changeScene(new MainMenuScene(), Transitions::FADE);
         return true;
     }
@@ -619,6 +621,11 @@ bool ConfirmSaveScene::control() {
         setFullscreen(savefile->settings.fullscreen);
 #endif
 
+#ifdef GBA
+        sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
+        initRumbleCart();
+#endif
+
         changeScene(new MainMenuScene(), Transitions::FADE);
 
         return true;
@@ -693,8 +700,8 @@ void MainMenuScene::init() {
 #endif
 
 #ifdef GBA
-    if (!rumbleInitialized && savefile->settings.rumble) {
-        naprint("Reboot to enable rumble.", 4, 4);
+    if (!gbpChecked && savefile->settings.gameBoyPlayerSupport) {
+        naprint("Reboot to enable GBP Rumble!", 4, 4);
     }
 #endif
 }

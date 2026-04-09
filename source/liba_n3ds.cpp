@@ -440,7 +440,11 @@ void deinitialize() {
     romfsExit();
 
     if (link3dsSocket >= 0) {
-        close(link3dsSocket);
+        // FIXME: Despite the docs for `link3dsConnectToHost` claiming that the
+        // socket should be closed during application cleanup, doing it may
+        // cause a crash on exit. This may have been a regression introduced to
+        // devkitARM between 2025 and early 2026...
+        // close(link3dsSocket);
     }
     socExit();
 }
@@ -867,7 +871,7 @@ void stopDMA() {};
 
 void sleep() {};
 
-void rumbleStart(int length) {}
+void rumbleOutput(uint16_t strength) {}
 void rumbleStop() {}
 
 void onVBlank() {

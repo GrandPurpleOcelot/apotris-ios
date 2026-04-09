@@ -14,6 +14,8 @@ extern const uint16_t bars[7][4][4][4];
 
 extern const uint16_t classic[7][4][4][4];
 
+extern const uint16_t sdrs[7][4][4][4];
+
 extern const uint16_t ars[7][4][4][4];
 
 extern const int kickTwice[4][6][2];
@@ -23,6 +25,8 @@ extern const int barsKickTwice[4][8][2];
 extern const int8_t kicks[2][2][4][5][2];
 
 extern const int8_t barsKicks[2][2][4][7][2];
+
+extern const int sdrsKicks[2][2][4][10][2];
 
 extern const int arikaKicks[];
 

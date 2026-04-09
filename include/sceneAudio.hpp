@@ -273,6 +273,7 @@ public:
 class TrackListScene : public OptionListScene {
 public:
     int previous = 0;
+    bool slow = false;
     std::string name() { return "Track List"; };
 
     std::list<Element*> getElementList() {
@@ -301,7 +302,8 @@ public:
 
     void deinit() {
         savefile->settings.cycleSongs = previous;
-        stopSong();
+        stopMusic();
+        setMusicTempo(1024);
         playSongRandom(0);
     }
 
@@ -309,6 +311,8 @@ public:
     bool control();
 
     Scene* previousScene() { return new AudioOptionScene(); };
+
+    std::string getDescription();
 
     TrackListScene() {
         previous = savefile->settings.cycleSongs;
