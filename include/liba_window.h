@@ -7,7 +7,6 @@
 
 #include "SDL.h"
 #include "SDL_gamecontroller.h"
-#include "SDL_mixer.h"
 #include "glad/gl.h"
 
 #include <map>

@@ -1,31 +1,52 @@
 #include "platform.hpp"
 
 #ifdef GBA
-#include "gba-rumble.h"
-#include "LinkCableMultiboot.hpp"
 #include "LinkUniversal.hpp"
 #include "achievementStructure.h"
 #include "aeabi.h"
 #include "agbabi.h"
 #include "detectEmulators.h"
 #include "flashSaves.h"
+#ifndef MULTIBOOT
+#include "LinkCableMultiboot.hpp"
 #include "gba_flash.h"
+#include "gba-rumble.h"
 #include "gba_sram.h"
+#include "maxmod.h"
+#else
+#include "vgm.h"
+#include "Bump_bin.h"
+#include "Cancel_bin.h"
+#include "Click_bin.h"
+#include "Confirm_bin.h"
+#include "Evil_Laugh_bin.h"
+#include "Jump_bin.h"
+#include "Menu_In_bin.h"
+#include "Powerup_bin.h"
+#define AGB_ROM ((u8*)0x8000000)
+#endif
 #include "gbfs.h"
 #include "gbp_logo.hpp"
 #include "logging.h"
-#include "maxmod.h"
+#include "multiplayerClasses.h"
 #include "rumble.h"
 #include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "text.h"
+#include "LinkWirelessMultiboot.hpp"
 
+LinkUniversal::Protocol multiplayerProtocol = LinkUniversal::Protocol::AUTODETECT;
 // #include <string>
 // #include "scene.hpp"
 // #include "main.hpp"
 bool detect_gbp();
 void loadAudio();
 void onKeyInterrupt();
+
+interrupt_vector linkVBlankHandler = nullptr;
+
+MultiplayerLink* multiplayerLink = nullptr;
+std::string exceptionReason;
 
 int spriteVOffset = 0;
 
@@ -36,9 +57,7 @@ int musicVolume = 0;
 
 bool disableHBlank = true;
 bool disableDMA = true;
-
-bool inaccurateEmulator = false;
-bool emulatorPrompted = false;
+bool superCardDetected = false;
 
 Songs songs;
 
@@ -103,11 +122,19 @@ void onHBlank() {
         pal_bg_mem[0] = gradientTable[REG_VCOUNT];
 }
 
-LinkUniversal* linkUniversal;
-LinkUniversal* linkConnection;
+LinkUniversal* linkUniversal = nullptr;
+LinkUniversal* linkConnection = nullptr;
+
+#ifndef MULTIBOOT
+extern struct FlashInfo gFlashInfo;
+struct FlashInfo flashInfo;
+struct SramInfo sramInfo;
+u8 bootleg_type = 0;
+#endif
 
 OBJ_AFFINE* obj_aff_buffer = (OBJ_AFFINE*)obj_buffer;
 
+#ifndef MULTIBOOT
 mm_word myEventHandler(mm_word msg, mm_word param) {
     if (msg == MMCB_SONGMESSAGE)
         return 0;
@@ -120,6 +147,39 @@ mm_word myEventHandler(mm_word msg, mm_word param) {
 
     return 0;
 }
+
+#define SC_REG_ENABLE       (*(volatile uint16_t *)0x9FFFFFE)
+#define SC_ENABLE_MAGIC     0xA55A
+
+#define SC_ENABLE_PSRAM     BIT(0)
+#define SC_ENABLE_CARD      BIT(1)
+#define SC_ENABLE_WRITE     BIT(2)
+
+__attribute__((section(".text")))
+static volatile bool sentinel = false;
+
+static void superCardUnlock(uint16_t sc_mode)
+{
+    SC_REG_ENABLE = SC_ENABLE_MAGIC;
+    SC_REG_ENABLE = SC_ENABLE_MAGIC;
+    SC_REG_ENABLE = sc_mode;
+    SC_REG_ENABLE = sc_mode;
+}
+
+/**
+ * SuperCard detection routine from Asie. The idea is that we attempt to unlock the "ROM" area for writes, then test if
+ * our flip of sentinel, in "ROM" from "false" to "true" was registered by the card. If it was, we're executing on a
+ * SuperCard. If it was not flipped, the card providing "ROM" is not a SuperCard. Required for safe "fast ROM waitstate"
+ */
+bool isRunningOnSuperCard()
+{
+    superCardUnlock(SC_ENABLE_PSRAM | SC_ENABLE_WRITE);
+    sentinel = true;
+    superCardUnlock(SC_ENABLE_PSRAM);
+    return sentinel;
+}
+
+#endif
 
 void toggleBG(int layer, bool state) {
     if (state) {
@@ -179,24 +239,10 @@ void showSprites(int count) {
     obj_aff_copy(obj_aff_mem, obj_aff_buffer, 32);
 }
 
-unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait) {
-    // Calculate the duration of one transfer in milliseconds
-    float transferDurationMs = (float)interval * 61.04f / 1000.0f;
-    // Calculate the total duration for the specified number of frames in
-    // milliseconds
-    float totalDurationMs = (float)framesToWait * 16.67f;
-    // Calculate how many transfers can occur in the total duration
-    u32 transfers = (u32)((float)totalDurationMs / transferDurationMs);
-    return transfers;
-}
-
-extern struct FlashInfo gFlashInfo;
-struct FlashInfo flashInfo;
-struct SramInfo sramInfo;
-
 void testSaveMedia() {
-    const int testRegion = 0x7FFF;
-    const int testMirror = 0xFFFF;
+#ifndef MULTIBOOT
+    const int testRegion = SAVE_32K_END;
+    const int testMirror = SAVE_64K_END;
     flashInfo.size = 0;
     int err;
     // Test SRAM
@@ -219,9 +265,10 @@ void testSaveMedia() {
             sramInfo.size = testRegion;
             break;
         }
+#ifdef ENABLE_ROM_SAVE
         // Detect bootlegs
-        if (ENABLE_FLASH_SAVE)
-            detect_rom_backed_flash();
+        detect_rom_backed_flash();
+#endif
         return;
     }
 
@@ -236,6 +283,7 @@ void testSaveMedia() {
     if (err)
         return; // EEPROM or no save media, no luck
     flashInfo = gFlashInfo;
+#endif
 }
 
 void platformInit() {
@@ -246,16 +294,29 @@ void platformInit() {
     while (REG_VCOUNT != 161)
         ;
 
-    testSaveMedia();
-
 #ifndef NO_DIAGNOSE
     logInitMgba();
+#endif
+
+#ifndef MULTIBOOT
+    testSaveMedia();
+    loadAudio();
+
+    mmInitDefault((mm_addr)soundbank, 12);
+    mmSetEventHandler((mm_callback)myEventHandler);
 #endif
 
     interrupt_init();
     interrupt_unmask();
     REG_DISPSTAT |= (1 << 3) | (1 << 4);
+    linkVBlankHandler = LINK_UNIVERSAL_ISR_VBLANK;
+    interrupt_set_handler(INTR_VBLANK, onVBlank);
+    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
+    interrupt_set_handler(INTR_TIMER1, LINK_UNIVERSAL_ISR_TIMER);
 
+    interrupt_enable(INTR_VBLANK);
+    interrupt_enable(INTR_SERIAL);
+    interrupt_enable(INTR_TIMER1);
 
 #ifndef NO_DIAGNOSE
     REG_KEYCNT = KEY_A | KEY_B | KEY_SELECT | KEY_START | BIT(14) | BIT(15);
@@ -263,57 +324,46 @@ void platformInit() {
     interrupt_enable(INTR_KEYPAD);
 #endif
 
-    interrupt_set_handler(INTR_VBLANK, onVBlank);
-
-    interrupt_set_handler(INTR_SERIAL, LINK_UNIVERSAL_ISR_SERIAL);
-    interrupt_set_handler(INTR_TIMER3, LINK_UNIVERSAL_ISR_TIMER);
-
-    // interrupt_add(INTR_HBLANK, onHBlank);
-
-    interrupt_enable(INTR_VBLANK);
-    interrupt_enable(INTR_SERIAL);
-    interrupt_enable(INTR_TIMER3);
-
-    loadAudio();
-
-    mmInitDefault((mm_addr)soundbank, 12);
-    mmSetEventHandler((mm_callback)myEventHandler);
-
     REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
 
     REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
 
-    REG_WAITCNT = 0x4317;
+#ifndef MULTIBOOT
+    superCardDetected = isRunningOnSuperCard();
+    if (!superCardDetected) {
+        // SuperCard cannot handle fast ROM waitstates in a stable way
+        REG_WAITCNT = 0x4317;
+    }
+#endif
 
-    setUpLinkUniversal(false);
+    setUpLinkUniversal();
 }
 
-void setUpLinkUniversal(bool detectEmus) {
-    const bool inaccurateEmulator =
-        detectEmus ? detect_inaccurate_emulator() : true;
-    const u32 wirelessTimeout = inaccurateEmulator ? 45 : 15;
-    const u32 wirelessInterval =
-        150; // 50 usually works but some devices needed 150...
-    const u32 wiredInterval =
-        300; // 150 usually works but some devices needed 300...
+void setUpLinkUniversal() {
+    const u32 timeout = 60;
+    const u32 wirelessInterval = 50; // No reason to go lower
+    const u32 wiredInterval = 300; // 150 usually works, but some devices need 300...
+    delete multiplayerLink;
     delete linkUniversal;
+
     linkUniversal = new LinkUniversal(
-        LinkUniversal::Protocol::WIRELESS_AUTO, "Apotris",
+        LinkUniversal::Protocol::AUTODETECT,
+        "Apotris",
         (LinkUniversal::CableOptions){
             .baudRate =
                 LinkCable::BaudRate::BAUD_RATE_3, // Baud 3 is required for
                                                   // enough b/w to send garbage
-            .timeout = LINK_CABLE_DEFAULT_TIMEOUT,
+            .timeout = timeout,
             .interval = wiredInterval,
-            .sendTimerId = LINK_CABLE_DEFAULT_SEND_TIMER_ID},
+            .sendTimerId = 1},
         (LinkUniversal::WirelessOptions){
             .forwarding = true,
             .retransmission = true,
             .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
-            .timeout = wirelessTimeout,
+            .timeout = timeout,
             .interval = wirelessInterval,
-            .sendTimerId = LINK_WIRELESS_DEFAULT_SEND_TIMER_ID});
-    linkConnection = linkUniversal;
+            .sendTimerId = 1});
+    multiplayerLink = new MultiplayerLink(linkUniversal);
 }
 
 void deinitialize() {}
@@ -346,9 +396,11 @@ void sleep_checks() {
 }
 
 bool closed() {
+#ifndef MULTIBOOT
     sleep_checks();
 
     gba_rumble_loop();
+#endif
     // if (rumbleTimer > 0) {
     //     rumbleTimer--;
 
@@ -485,6 +537,7 @@ INLINE bool usingVBlankForRumblePatternLoop() {
 }
 
 void initRumbleCart() {
+#ifndef MULTIBOOT
     interrupt_disable(INTR_TIMER2);
     REG_TM2CNT = 0;
 
@@ -528,8 +581,10 @@ void initRumbleCart() {
         // We'll be relying on VBlank
         // interrupt_disable(INTR_TIMER2);
     }
+#endif
 }
 
+#ifndef MULTIBOOT
 void initRumble() {
     if (savefile->settings.gameBoyPlayerSupport) {
         RegisterRamReset(RESET_VRAM);
@@ -587,8 +642,23 @@ bool detect_gbp() {
         VBlankIntrWait();
     }
 
+    RegisterRamReset(RESET_VRAM);
+
+    REG_DISPCNT = DCNT_OBJ_1D | DCNT_MODE0;
+    REG_BLDALPHA = BLD_EVA(31) | BLD_EVB(5);
+    if (!superCardDetected) {
+        REG_WAITCNT = 0x4317;
+    }
+
+    if (!superCardDetected) {
+        REG_WAITCNT = 0x4317;
+    }
     return gbp_detected;
 }
+#endif
+
+int display_value, stat_value, dsc_value, dmg_value;
+bool prevGradient, isLinked;
 
 void sleep() {
     int timer = 0;
@@ -602,33 +672,7 @@ void sleep() {
     // insta-wake due to the interrupt combo already being active.
     await_key_release(KEY_FULL, 2);
 
-    SoundBias(0);
-
-    int display_value = REG_DISPCNT;
-
-    bool prevGradient = gradientEnabled;
-    interrupt_disable(INTR_VBLANK);
-    gradient(0);
-
-    int stat_value = REG_SNDSTAT;
-    int dsc_value = REG_SNDDSCNT;
-    int dmg_value = REG_SNDDMGCNT;
-
-    REG_DISPCNT |= 0x0080;
-    REG_SNDSTAT = 0;
-    REG_SNDDSCNT = 0;
-    REG_SNDDMGCNT = 0;
-
-    bool isLinked = linkConnection->isActive();
-
-    if (isLinked)
-        linkConnection->deactivate();
-
-    interrupt_disable(INTR_TIMER3);
-    interrupt_disable(INTR_SERIAL);
-
-    interrupt_disable(INTR_TIMER2);
-    rumblePatternStop();
+    disableVolatileInterrupts(true);
 
     if (use_combo_for_wake) {
         // Using the same keys used to put manually to sleep.
@@ -642,13 +686,51 @@ void sleep() {
         REG_P1CNT = static_cast<cu16>(~(BIT(15) | BIT(10) | BIT(11) | BIT(12) | BIT(13)));
     }
 
+    Stop();
+
+    enableVolatileInterrupts(true);
+
+    // Wait for waking keys to be released so they don't trigger menu/game actions.
+    await_key_release(KEY_FULL, 3);
+}
+
+#ifndef MULTIBOOT
+void disableVolatileInterrupts(bool setDispCnt) {
+    SoundBias(0);
+    display_value = REG_DISPCNT;
+
+    prevGradient = gradientEnabled;
+    interrupt_disable(INTR_VBLANK);
+    gradient(0);
+
+    stat_value = REG_SNDSTAT;
+    dsc_value = REG_SNDDSCNT;
+    dmg_value = REG_SNDDMGCNT;
+
+    if (setDispCnt)
+        REG_DISPCNT |= 0x0080;
+    REG_SNDSTAT = 0;
+    REG_SNDDSCNT = 0;
+    REG_SNDDMGCNT = 0;
+
+    isLinked = multiplayerLink->universal->isActive();
+
+    if (isLinked)
+        multiplayerLink->universal->deactivate();
+
+    interrupt_disable(INTR_TIMER3);
+    interrupt_disable(INTR_SERIAL);
+
+    interrupt_disable(INTR_TIMER2);
+    rumblePatternStop();
+
     interrupt_enable(INTR_KEYPAD);
     interrupt_set_handler(INTR_KEYPAD, nullptr);
 
     // while (REG_SNDBIAS != 0) {}
+}
 
-    Stop();
-
+void enableVolatileInterrupts(bool setDispCnt) {
     interrupt_disable(INTR_KEYPAD);
     REG_P1CNT = 0;
 
@@ -659,7 +741,7 @@ void sleep() {
     REG_SNDDMGCNT = dmg_value;
 
     if (isLinked)
-        linkConnection->activate();
+        multiplayerLink->activate();
 
     interrupt_enable(INTR_TIMER3);
     interrupt_enable(INTR_SERIAL);
@@ -671,13 +753,11 @@ void sleep() {
 
     if (prevGradient)
         gradient(1);
-
-    // Wait for waking keys to be released so they don't trigger menu/game actions.
-    await_key_release(KEY_FULL, 3);
 }
+#endif
 
 void sfx(int s) {
-
+#ifndef MULTIBOOT
     int id = SoundEffectIds[s];
 
     if (id == -1)
@@ -685,9 +765,63 @@ void sfx(int s) {
 
     mm_sfxhand h = mmEffect(id);
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
+#else
+    const u8* sfxData = nullptr;
+    switch(s) {
+        case SFX_LEVELUP:
+        case SFX_DOUBLE:
+            sfxData = Confirm_vgm;
+            break;
+        case SFX_YOUWIN:
+        case SFX_SECRET:
+        case SFX_TSPIN:
+        case SFX_TSPINMINI:
+        case SFX_MULTICLEAR:
+        case SFX_PERFECTRIS:
+        case SFX_PERFECTCLEAR:
+        case SFX_ULTIMATRIS:
+        case SFX_TRIPLE:
+        case SFX_QUAD:
+        case SFX_BACKTOBACKQUAD:
+        case SFX_BACKTOBACKTSPIN:
+        case SFX_DODECATRIS:
+        case SFX_OCTORIS:
+            sfxData = Powerup_vgm;
+            break;
+        case SFX_HOLD:
+            sfxData = Jump_vgm;
+            break;
+        case SFX_GO:
+        case SFX_ROTATE:
+            sfxData = Menu_In_vgm;
+            break;
+        case SFX_INITIAL:
+        case SFX_MENUCANCEL:
+            sfxData = Cancel_vgm;
+            break;
+        case SFX_READY:
+        case SFX_PLACE:
+        case SFX_INVALID:
+            sfxData = Bump_vgm;
+            break;
+        case SFX_SHIFT:
+        case SFX_SHIFT2:
+        case SFX_MENUCONFIRM:
+        case SFX_GAMEOVER:
+            sfxData = Click_vgm;
+            break;
+        case SFX_YOULOSE:
+            sfxData = Evil_Laugh_vgm;
+            break;
+    }
+    if (sfxData) {
+        VgmPlay(sfxData, false);
+    }
+#endif
 }
 
 void sfxRate(int sound, float rate) {
+#ifndef MULTIBOOT
     int id = SoundEffectIds[sound];
 
     if (id == -1)
@@ -702,6 +836,7 @@ void sfxRate(int sound, float rate) {
     };
 
     mmEffectEx(&s);
+#endif
 }
 
 void stopDMA() { disableDMA = true; }
@@ -716,8 +851,13 @@ void clearTiles(int tileset, int index, int count) {
 
 IWRAM_CODE void onVBlank() {
 
+#ifndef MULTIBOOT
     mmVBlank();
-    LINK_UNIVERSAL_ISR_VBLANK();
+#else
+    VgmIntrVblank();
+#endif
+    if (linkVBlankHandler)
+        linkVBlankHandler();
 
     if (usingVBlankForRumblePatternLoop()) {
         rumblePatternLoop();
@@ -743,7 +883,9 @@ IWRAM_CODE void onVBlank() {
     }
 
     frameCounter++;
+#ifndef MULTIBOOT
     mmFrame();
+#endif
 }
 
 void sprite_enable_affine(OBJ_ATTR* sprite, int affineId, bool doubleSize) {
@@ -766,11 +908,17 @@ void sprite_rotscale(OBJ_ATTR* sprite, FIXED sizex, FIXED sizey, int angle,
     obj_aff_rotscale(&obj_aff_buffer[aff_id], sizex, sizey, angle);
 }
 
-void setMusicTempo(int tempo) { mmSetModuleTempo(tempo); }
+void setMusicTempo(int tempo) {
+#ifndef MULTIBOOT
+    mmSetModuleTempo(tempo);
+#endif
+}
 
 void setMusicVolume(int volume) {
     musicVolume = volume;
+#ifndef MULTIBOOT
     mmSetModuleVolume(volume);
+#endif
 }
 
 void startSong(int song, bool loop) {
@@ -779,20 +927,34 @@ void startSong(int song, bool loop) {
     if (n < 0)
         return;
 
+#ifndef MULTIBOOT
     mmStart(n, (!loop) ? MM_PLAY_ONCE : MM_PLAY_LOOP);
     mmSetModuleVolume(musicVolume);
+#endif
 }
 
-void stopSong() { mmStop(); }
+void stopSong() {
+#ifndef MULTIBOOT
+    mmStop();
+#endif
+}
 
 void setTiles(int tilemap, int index, int count, u32 tile) {
     u16* dst = (u16*)&se_mem[tilemap];
     memset16(&dst[index], tile, count);
 }
 
-void pauseSong() { mmPause(); }
+void pauseSong() {
+#ifndef MULTIBOOT
+    mmPause();
+#endif
+}
 
-void resumeSong() { mmResume(); }
+void resumeSong() {
+#ifndef MULTIBOOT
+    mmResume();
+#endif
+}
 
 std::string getSongName(int song) { return {}; }
 
@@ -803,6 +965,7 @@ void clearTilemapEntries(int tilemap, int index, int count) {
 }
 
 void loadSavefile() {
+#ifndef MULTIBOOT
     delete savefile;
 
     savefile = new Save();
@@ -812,18 +975,22 @@ void loadSavefile() {
     } else {
         __agbabi_memcpy1((u8*)savefile, sram_mem, sizeof(Save));
     }
+#endif
 }
 
 void saveSavefile() {
+#ifndef MULTIBOOT
     if (flashInfo.size != 0) {
         flash_write(0, (u8*)savefile, sizeof(Save));
     } else {
         __agbabi_memcpy1(sram_mem, savefile, sizeof(Save));
 
-        if (ENABLE_FLASH_SAVE)
-            save_sram_flash();
+#ifdef ENABLE_ROM_SAVE
+        save_sram_flash();
+#endif
     }
     status.update(&savefile->settings);
+#endif
 }
 
 void mirrorPalettes(int index, int count) {
@@ -938,9 +1105,13 @@ void toggleSpriteSorting(bool state) { sortSprites = state; }
 
 IWRAM_CODE void onKeyInterrupt() {
     // Soft reset on bootleg carts will destroy the save
+#ifndef MULTIBOOT
     if (bootleg_type)
         return;
     mmStop();
+#else
+    VgmStop();
+#endif
     REG_IME = 0;
     REG_DMA0CNT_H &= ~DMA_ENABLE;
     REG_DMA1CNT_H &= ~DMA_ENABLE;

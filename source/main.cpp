@@ -10,6 +10,7 @@
 
 #ifdef GBA
 #include "LinkUniversal.hpp"
+#include "sceneModes.hpp"
 #endif
 
 #include "achievementStructure.h"
@@ -21,6 +22,8 @@
 
 #include "rumble.h"
 #include <posprintf.h>
+#include <streambuf>
+#include <utility>
 
 #include "classic1tiles_bin.h"
 #include "classic_pal_bin.h"
@@ -34,6 +37,7 @@
 
 #include "font1tiles_bin.h"
 #include "font2tiles_bin.h"
+#include "multiplayerClasses.h"
 
 #include "sceneColorEditor.hpp"
 
@@ -61,8 +65,6 @@ bool canDraw = false;
 
 int profileResults[10];
 
-void addToResults(int input, int index);
-
 Save* savefile = nullptr;
 
 u8* blockSprite;
@@ -75,6 +77,7 @@ int nextSeed = 0;
 bool multiplayer = false;
 bool playingBotGame = false;
 
+std::string updateAvailable;
 bool rumble_enabled = false;
 
 Scene* scene = nullptr;
@@ -83,6 +86,7 @@ bool gradientEnabled = false;
 
 Options* previousGameOptions = nullptr;
 
+#ifndef MULTIBOOT
 #ifdef GBA
 bool gbpChecked = false;
 #endif
@@ -91,6 +95,7 @@ bool gbpChecked = false;
 __attribute((section(".ewram.status")))
 #endif
 StatusData status{};
+#endif
 
 #ifdef GBA
 u16 gradientTable[192 + 1];
@@ -174,7 +179,7 @@ void initialize() {
     checkSongs();
 }
 
-int main(void) {
+int main() {
     platformInit();
 
     loadSave();
@@ -182,12 +187,24 @@ int main(void) {
 
     initialize();
 
+#ifndef MULTIBOOT
     changeScene(new TitleScene());
+#else
+    changeScene(new MultBattleScene());
+#endif
 
     // start screen animation
     while (closed()) {
         vsync();
-        scene->update();
+        // This is here to be thread safe on PC
+        if (!exceptionReason.empty()) {
+            const std::string localReason = exceptionReason;
+            exceptionReason = "";
+            #ifdef PC
+            setUpPresentException(localReason);
+            #endif
+        } else
+            scene->update();
         sampleEntropy();
     }
 
@@ -214,7 +231,7 @@ std::string timeToString(int frames, bool small) {
     else
         posprintf(res, "%02d:%02d", minutes, seconds);
 
-    std::string result = "";
+    std::string result;
 
     result = res;
 
@@ -279,7 +296,7 @@ void reset() {
 
 std::string nameInput(int place) {
 
-    std::string result = savefile->latestName;
+    std::string result = place == -1 ? "         " : savefile->latestName;
     int cursor = 0;
 
     for (int i = 0; i < (int)result.size(); i++) {
@@ -329,6 +346,17 @@ std::string nameInput(int place) {
 
     while (closed()) {
         vsync();
+
+        if (place == -1) {
+            aprint("Pick a unique room to", 5, 5);
+            aprint("join/create", 7, 6);
+        }
+
+        if (place == -1) {
+            aprint("Room pass: ", 11, nameHeight - 2);
+        } else {
+            aprint("Name: ", 11, nameHeight - 2);
+        }
 
         aprint("DONE", 14, 16);
 
@@ -519,8 +547,10 @@ std::string nameInput(int place) {
                 sfx(SFX_MENUCANCEL);
             }
         }
-        updateFluid();
-        drawGrid();
+        if (place != -1) {
+            updateFluid();
+            drawGrid();
+        }
 
         if (onDone) {
             const int offset = (sinLut(cursorFloat) * 2) >> 12;
@@ -561,12 +591,6 @@ std::string nameInput(int place) {
 
     if (result.size() >= 8)
         result = result.substr(0, 8);
-
-    for (int i = 0; i < 8; i++)
-        savefile->latestName[i] = ' ';
-
-    for (int i = 0; i < result.size(); i++)
-        savefile->latestName[i] = result.at(i);
 
     return result;
 }
@@ -678,7 +702,7 @@ void setSkin(int rotation) {
     loadTiles(0, 1, blockSprite, 1);
     loadTiles(2, 97, blockSprite, 1);
 
-    int* board;
+    uint16_t* board;
     for (int i = 0; i < 7; i++) {
         int n;
         if (game == nullptr)
@@ -928,7 +952,7 @@ void buildMini(TILE* customSkin) {
     }
 
     for (int i = 0; i < 7; i++) {
-        int* p = getShape(i, 0, rs);
+        uint16_t* p = getShape(i, 0, rs);
         int tileStart = 9 * 16 + i * 8;
 
         for (int y = 0; y < 2; y++) {
@@ -1073,6 +1097,7 @@ void startGame(BlockEngine::Options options, int seed) {
 
     *previousGameOptions = options;
 
+#ifndef MULTIBOOT
     if (!replaying && enableBot) {
         log("starting bot!");
 
@@ -1081,6 +1106,7 @@ void startGame(BlockEngine::Options options, int seed) {
     } else if (options.mode == BATTLE && !multiplayer) {
         startBotGame(seed);
     }
+#endif
 
     if (options.mode == BlockEngine::ZEN) {
         if (game->subMode == 1) {
@@ -1091,8 +1117,10 @@ void startGame(BlockEngine::Options options, int seed) {
         }
     }
 
+#ifndef MULTIBOOT
     status.startGame();
     status.Options = previousGameOptions;
+#endif
 }
 
 void startGame(int seed) {
@@ -1109,13 +1137,13 @@ void startGame() {
     startGame(*previousGameOptions, (int)randNext());
 }
 
+#ifndef MULTIBOOT
 void startBotGame(int seed) {
-    startMultiplayerGame(seed);
     multiplayer = false;
 
     delete botGame;
 
-    botGame = new Game(BATTLE, seed & 0x1fff, false);
+    botGame = new Game(BATTLE, seed & (SEND_SEED - 1), false);
     botGame->setOptions(*previousGameOptions);
     botGame->setGoal(100);
     botGame->setLevel(1);
@@ -1129,6 +1157,7 @@ void startBotGame(int seed) {
     status.startGame();
     status.Options = previousGameOptions;
 }
+#endif
 
 void setPawnPalette(int dest, int n, int blend, bool flip) {
     dest += 16;
@@ -1270,8 +1299,8 @@ void genWidths() {
 
         int found = 0;
         for (int x = 7; x >= 0; x--) {
-            for (int y = 0; y < 8; y++) {
-                if ((t->data[y] >> (4 * x)) & 0xf) {
+            for (unsigned int y : t->data) {
+                if ((y >> (4 * x)) & 0xf) {
                     output[i][1] = x;
                     found = 1;
                 }
@@ -1289,8 +1318,8 @@ void genWidths() {
 
         int found = 0;
         for (int x = 0; x < 8; x++) {
-            for (int y = 0; y < 8; y++) {
-                if ((t->data[y] >> (4 * x)) & 0xf) {
+            for (unsigned int y : t->data) {
+                if ((y >> (4 * x)) & 0xf) {
                     output[i][0] = x;
                     found = 1;
                 }
@@ -1316,6 +1345,7 @@ void genWidths() {
         }
     }
 }
+
 COLOR hsv2rgb(HSV_COLOR hsv) {
     return hsv2rgb(hsv.hue, hsv.saturation, hsv.value);
 }

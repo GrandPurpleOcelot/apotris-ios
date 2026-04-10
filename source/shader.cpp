@@ -1,7 +1,9 @@
 #ifdef GL
 #include "shader.h"
+#include "liba_pc.h"
 
 #ifdef PC
+#include <glad/gl.h>
 #elif defined(PORTMASTER)
 #include <glad/gles2.h>
 #endif

@@ -44,8 +44,7 @@ void changeScene(Scene* newScene, Transitions transition) {
     if (preTransitionPalette != nullptr)
         loadPalette(0, 0, preTransitionPalette, 512);
 
-    if (scene != nullptr)
-        delete scene;
+    delete scene;
 
     scene = newScene;
     scene->init();
@@ -114,11 +113,14 @@ void fadeFromBlack() {
     }
 }
 
-void sceneSwitcher(std::string str) {
+void sceneSwitcher(const std::string& str) {
+#ifndef MULTIBOOT
     if (str == "Play") {
         changeScene(new ModeListScene(), Transitions::FADE);
     } else if (str == "Settings") {
-        setPreviousSettings(savefile->settings);
+        if (previousSettings == nullptr)
+            previousSettings = std::make_unique<Settings>();
+        *previousSettings = savefile->settings;
         menuKeys = savefile->settings.menuKeys;
 
         for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
@@ -129,7 +131,6 @@ void sceneSwitcher(std::string str) {
 
     } else if (str == "Stats") {
         changeScene(new StatScene(), Transitions::FADE);
-#ifndef MULTIBOOT
     } else if (str == "Links") {
         changeScene(new LinksScene(), Transitions::FADE);
     } else if (str == "Skin Editor") {
@@ -154,7 +155,6 @@ void sceneSwitcher(std::string str) {
         changeScene(new ColorSelectorScene(), Transitions::FADE);
     } else if (str == "Credits") {
         changeScene(new CreditsScene(), Transitions::FADE);
-#endif
     } else if (str == "Graphics") {
         changeScene(new GraphicsScene(), Transitions::FADE);
     } else if (str == "Audio") {
@@ -165,7 +165,6 @@ void sceneSwitcher(std::string str) {
         changeScene(new HandlingOptionScene(), Transitions::FADE);
     } else if (str == "Gameplay") {
         changeScene(new GameplayOptionScene(), Transitions::FADE);
-#ifndef MULTIBOOT
     } else if (str == "Saving") {
         changeScene(new SavingOptionScene(), Transitions::FADE);
     } else if (str == "Video") {
@@ -198,18 +197,20 @@ void sceneSwitcher(std::string str) {
         changeScene(new DeathScene(), Transitions::FADE);
     } else if (str == "Zen") {
         changeScene(new ZenScene(), Transitions::FADE);
-#endif
-    } else if (str == "2P Battle") {
+    } else if (str == "Multi Battle") {
 #ifdef GBA
-        if (emulatorPrompted) {
-            changeScene(new MultBattleScene(), Transitions::FADE);
-        } else {
-            changeScene(new ConfirmEmuScene(), Transitions::FADE);
-        }
-#else
-        changeScene(new MultBattleScene(), Transitions::FADE);
-#endif
+        changeScene(new MultiplayerProtocolScene(), Transitions::FADE);
 #ifndef MULTIBOOT
+    /*
+    } else if (str == "Wireless Pak") {
+        changeScene(new SinglePakWirelessScene(), Transitions::FADE);
+    } else if (str == "Wired Pak") {
+        changeScene(new SinglePakWiredScene(), Transitions::FADE);
+    */
+#endif
+#else
+        changeScene(new MatchMakingScene(), Transitions::FADE);
+#endif
     } else if (str == "CPU Battle" || str == "Battle") {
         changeScene(new CPUBattleScene(), Transitions::FADE);
     } else if (str == "Training") {
@@ -222,12 +223,12 @@ void sceneSwitcher(std::string str) {
         changeScene(new DonateLinkScene(), Transitions::FADE);
     } else if (str == "Discord") {
         changeScene(new DiscordLinkScene(), Transitions::FADE);
-#endif
     } else if (str == "Quit") {
         quit();
     } else {
         log("invalid option: " + str);
     }
+#endif
 }
 
 std::string modeToString(BlockEngine::Modes mode) {

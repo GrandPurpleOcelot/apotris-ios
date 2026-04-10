@@ -8,6 +8,7 @@
 #include "rumblePatterns.hpp"
 #include "save.h"
 #include "text.h"
+#include <list>
 #include <memory>
 
 #define glowDuration 12
@@ -15,8 +16,7 @@
 #include "LinkUniversal.hpp"
 extern LinkUniversal* linkConnection;
 extern bool disableHBlank;
-extern bool inaccurateEmulator;
-extern bool emulatorPrompted;
+extern LinkUniversal::Protocol multiplayerProtocol;
 #endif
 extern int initialPlayerCount;
 
@@ -141,7 +141,7 @@ extern void hideMinos();
 extern void reset();
 
 extern void handleMultiplayer(int state);
-extern void startMultiplayerGame(int);
+extern void resetMultiplayerGame();
 extern void acknowledgeGarbage(BlockEngine::Game*, BlockEngine::Garbage);
 extern void progressBar(int layer);
 
@@ -210,9 +210,11 @@ extern void toggleSong(int group, int index, bool state);
 extern void checkSongs();
 extern void stopMusic();
 
-extern int countClears(u16* board, int lengthX, int lengthY, int startY);
-extern IWRAM_CODE BlockEngine::Values
-evaluate(u16* board, int* columnHeights, int lengthX, int lengthY, int startY);
+extern int countClears(const u16* board, int lengthX, int lengthY, int startY);
+extern IWRAM_CODE BlockEngine::Values evaluate(u16* board,
+                                               const int* columnHeights,
+                                               int lengthX, int lengthY,
+                                               int startY);
 extern int findBestDrop(int ii, int jj, BlockEngine::Game* game,
                         std::list<BlockEngine::Move>& moves,
                         BlockEngine::Weights weights);
@@ -241,6 +243,7 @@ extern std::list<PlaceEffect> placeEffectList;
 extern s16 glow[20][10];
 
 extern int nextSeed;
+extern int lastSeed;
 
 extern int push;
 #define pushMax 4
@@ -249,15 +252,12 @@ extern bool canDraw;
 extern int gameSeconds;
 
 extern bool playAgain;
-class PlayerStateMutex;
-extern PlayerStateMutex* playAgainMutex;
 
 // extern bool resumeJourney;
 // extern bool journeyLevelUp;
 // extern bool journeySaveExists;
 // extern BlockEngine::Game* journeySave;
 
-extern int connected;
 extern bool multiplayerStart;
 
 extern int initialLevel;
@@ -266,9 +266,10 @@ extern int frameCounter;
 extern OBJ_ATTR* titleSprites[2];
 extern OBJ_ATTR* queueFrameSprites[3];
 
+#ifndef MULTIBOOT
 extern BlockEngine::Bot* testBot;
+#endif
 extern u8 enemyBoard[4][20][10];
-extern u8 currentPlayerId;
 
 extern int mode;
 
@@ -292,9 +293,11 @@ extern bool proMode;
 
 extern bool gradientEnabled;
 
+#ifndef MULTIBOOT
 extern int botThinkingSpeed;
 extern int botSleepDuration;
 extern int botStepMax;
+#endif
 
 extern int clearTimer;
 extern int maxClearTimer;
@@ -335,6 +338,7 @@ extern int gridUpdateTimerMax;
 extern int damp;
 extern int dampTimer;
 extern int dampTimerMax;
+extern void drawEnemyBoard();
 
 extern int peek;
 extern FIXED peekValue;
@@ -354,8 +358,40 @@ public:
     void (BlockEngine::Game::*gameFunction)(int);
 };
 
+struct Packet {
+#ifdef GBA
+    u8 playerId;
+    u16 packet;
+    Packet(u8 pId, u16 msg) {
+        playerId = pId;
+        packet = msg;
+    }
+#else
+    u8 playerId;
+    u16 packet;
+    Packet(u8 pId, u16 msg) {
+        playerId = pId;
+        packet = msg;
+    }
+#endif
+};
+
+#ifndef GBA
+extern std::string roomId;
+#endif
+#ifdef PC
+std::string getSavefilePath();
+#endif
+extern std::string exceptionReason;
+
+#ifndef MULTIBOOT
 struct StatusData;
 extern StatusData status;
+
+#endif
+#ifdef GBA
+extern interrupt_vector linkVBlankHandler;
+#endif
 
 typedef struct HSV_COLOR {
     int hue = 0;
@@ -367,3 +403,7 @@ COLOR hsv2rgb(int h, float s, float v);
 COLOR hsv2rgb(HSV_COLOR hsv);
 
 HSV_COLOR rgb2hsv(int r, int g, int b);
+
+extern std::string updateAvailable;
+
+extern std::list<std::string> debugConnection;

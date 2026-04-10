@@ -1,10 +1,13 @@
 #pragma once
 #include "audio_files.h"
 #include "interrupt.h"
-#include "gba-rumble.h"
+#ifndef MULTIBOOT
 #include "gba-rumble-cart.h"
 #include "mm_types.h"
-#include <stdint.h>
+#endif
+#include <map>
+#include <posprintf.h>
+#include <cstdint>
 #include <string>
 #include <tonc.h>
 /* #include "soundbank.h" */
@@ -80,9 +83,16 @@ void initRumbleCart();
 
 extern OBJ_AFFINE* obj_aff_buffer;
 
+#ifndef MULTIBOOT
 extern mm_word myEventHandler(mm_word msg, mm_word param);
+#endif
 
 #define blendInfo REG_BLDCNT
+#define SAVE_32K_END 0x7FFF
+#define SAVE_64K_END 0xFFFF
+
+void disableVolatileInterrupts(bool setDispCnt);
+void enableVolatileInterrupts(bool setDispCnt);
 
 IWRAM_CODE void memcpy16_fast(void* dest, const void* src, int hwCount);
 IWRAM_CODE void memcpy32_fast(void* dest, const void* src, int wCount);
@@ -98,5 +108,6 @@ extern std::map<int, std::string> keyToString;
 
 #define UNBOUND 0
 
+void setUpLinkUniversal();
+unsigned int calculateRemoteTimeout(u32 interval, u32 framesToWait);
 extern void toggleSpriteSorting(bool state);
-void setUpLinkUniversal(bool detectEmus);

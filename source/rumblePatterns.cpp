@@ -1,5 +1,6 @@
 #include "def.h"
 
+#ifndef MULTIBOOT
 #include "rumblePatterns.hpp"
 #include "platform.hpp"
 #include "save.h"
@@ -576,3 +577,11 @@ void rumblePatternLoop()
     s_state.partTick++;
     s_state.lastRumble = rumble;
 }
+#else
+void rumblePattern(const RumbleSequence sequence, int strength_mod) {}
+void rumblePatternLowPri(const RumbleSequence sequence, int strength_mod) {}
+void rumblePatternStop() {}
+const RumbleSequence rumbleGetCurrent() {}
+void rumblePatternLoop() {}
+void initRumble() {};
+#endif

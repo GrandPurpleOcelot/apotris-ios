@@ -13,7 +13,7 @@ jobs:
             build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
             # Add specific package details if needed
             package_name_suffix: GBA
-            package_files: "LINUX_or_MAC_build.sh WINDOWS_build.bat README.txt Apotris.gba tools/* audio/* license/*" # Files inside build-gba
+            package_files: "LINUX_or_MAC_build.sh WINDOWS_build.bat README.txt Apotris.gba patches/* tools/* audio/* license/*" # Files inside build-gba
             readme_src: tools/README.txt # Default GBA readme
             runs-on: ubuntu-latest
             container: akouzoukos/apotris:latest
@@ -103,6 +103,9 @@ jobs:
           elif [[ "${{ matrix.target }}" == "n3ds" ]]; then
             meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} $build_dir
             meson compile -C $build_dir 3dsx cia
+          elif [[ "${{ matrix.target }}" == "gba" ]]; then
+            meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} $build_dir
+            ninja -C $build_dir patches
           else
             cross_file_arg=""
             if [[ -n "${{ matrix.cross_file }}" ]]; then
@@ -141,8 +144,9 @@ jobs:
             cp ../tools/buildSongs.bat ./WINDOWS_build.bat
             cp ../tools/buildSongs.sh ./LINUX_or_MAC_build.sh
             chmod +x ./LINUX_or_MAC_build.sh
+            chmod +x ./tools/*.exe ./tools/ape.aarch64 ./tools/ape.x86_64
             # Zip GBA contents
-            zip "../$zip_name" ${{ matrix.package_files }}
+            zip -9 "../$zip_name" ${{ matrix.package_files }}
 
           elif [[ "${{ matrix.target }}" == "n3ds" ]]; then
             # 3DS specific structure

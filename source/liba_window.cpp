@@ -27,7 +27,13 @@ std::string savefileDir() { return std::string(homeDir) + "/Library/Application 
 #include <vector>
 #endif
 
+#include <string>
+
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+
 void handleAnalogInput(int axis, int value);
+void checkLatestVersion();
 void handleInput();
 
 std::unordered_set<uint32_t> currentKeys;
@@ -121,6 +127,8 @@ void windowInit() {
 
     SDL_FreeSurface(icon);
 #endif
+
+    checkLatestVersion();
 }
 
 void pressKey(int key, InputType type) {
@@ -545,6 +553,15 @@ void saveSavefile() {
     }
 
     output.close();
+
+    // cpr::Multipart multipart_data{{"save", cpr::File{"Apotris.sav"}}};
+
+    // auto r = cpr::Post(
+    //     cpr::Url{"https://api.apotris.com/v1/upload-save?userId=" + userId},
+    //     multipart_data);
+
+    // log("status " + r.status_code);
+    // log("response " + r.text);
 }
 
 void quit() {
@@ -655,5 +672,31 @@ void handleAnalogInput(int axis, int value) {
         unpressKey((key), InputType::CONTROLLER);
         unpressKey((key) | (1 << 5), InputType::CONTROLLER);
     }
+}
+
+void checkLatestVersion() {
+    cpr::Response r =
+        cpr::Get(cpr::Url{"https://api.apotris.com/v1/latest-version"});
+
+    cpr::GetCallback(
+        [updateAvailable = &updateAvailable](cpr::Response r) {
+            log("status: " + std::to_string(r.status_code));
+            log("text: " + r.text);
+            try {
+                auto json = nlohmann::json::parse(r.text);
+                if (json.contains("latestVersion") &&
+                    json["latestVersion"].is_string()) {
+                    std::string version =
+                        json["latestVersion"].get<std::string>();
+                    log("version " + version);
+
+                    if (version != "v" APOTRIS_VERSION)
+                        *updateAvailable = version;
+                }
+            } catch (const nlohmann::json::exception& e) {
+                std::cerr << "JSON parse error: " << e.what() << std::endl;
+            }
+        },
+        cpr::Url{"https://api.apotris.com/v1/latest-version"});
 }
 #endif

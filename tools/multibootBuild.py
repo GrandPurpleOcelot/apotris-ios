@@ -16,7 +16,7 @@ def main(argv):
     subprocess.run([padbin, pad_size, target_out])
 
     # Fix as valid ROM
-    subprocess.run([gbafix, target_out, '-tAPOTRIS', '-c2ATE', '-m00', '-r04', '-p'])
+    subprocess.run([gbafix, target_out, '-tAPOTRIS', '-c2ATE', '-m00', '-r04'])
 
 
 if __name__ == '__main__':

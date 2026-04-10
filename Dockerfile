@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
   && apt-get install -y --no-install-recommends \
     python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates zip unzip \
-    libsdl2-mixer-dev libopus-dev libvorbis-dev nodejs \
+    libsdl2-mixer-dev libopus-dev libvorbis-dev nodejs golang \
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \

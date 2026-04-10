@@ -7,7 +7,9 @@
 #ifdef GBA
 
 #include "liba_gba.h"
+#ifndef MULTIBOOT
 #include "maxmod.h"
+#endif
 #include "tonc.h"
 #include "util/random.h"
 #include "whisky.h"
@@ -90,7 +92,7 @@ extern int spriteVOffset;
 
 extern void toggleBG(int layer, bool state);
 extern void toggleSprites(bool state);
-extern void clearSprites(int count);
+extern void clearSprites(int n);
 
 extern void buildBG(int layer, int cbb, int sbb, int size, int prio, int mos);
 
@@ -160,9 +162,9 @@ extern void disableLayerWindow(int layer);
 
 extern void sleep();
 
-extern void sfx(int sound);
+extern void sfx(int n);
 
-extern void sfxRate(int sound, float rate);
+extern void sfxRate(int n, float rate);
 
 extern void stopDMA();
 extern void toggleHBlank(bool state);
@@ -190,7 +192,7 @@ extern void savePalette(COLOR* dst);
 
 extern void mirrorPalettes(int index, int count);
 
-extern void toggleRendering(bool state);
+extern void toggleRendering(bool r);
 extern void initRumble();
 extern void rumbleOutput(uint16_t strength);
 extern void rumbleStop();

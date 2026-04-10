@@ -2,7 +2,7 @@
 
 #include "scene.hpp"
 
-#ifdef GBA
+#if defined(GBA) && !defined(MULTIBOOT)
 
 class AutoSleepElement : public Element {
 public:

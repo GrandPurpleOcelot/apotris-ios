@@ -1,9 +1,8 @@
-#ifndef APOTRIS_SENDMULTIBOOT_H
-#define APOTRIS_SENDMULTIBOOT_H
+#pragma once
+#ifndef MULTIBOOT
 
-#include "LinkCableMultiboot.hpp"
 #include "platform.hpp"
+#include "LinkWirelessMultiboot.hpp"
+#include "Multiboot.h"
 
-LinkCableMultiboot::Result sendMultiboot();
-
-#endif // APOTRIS_SENDMULTIBOOT_H
+#endif

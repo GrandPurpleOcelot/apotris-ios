@@ -1,3 +1,4 @@
+#ifndef MULTIBOOT
 #include "sceneHandling.hpp"
 
 bool HandlingOptionScene::control() {
@@ -43,3 +44,4 @@ void HandlingOptionScene::deinit() {
     resetSmallText();
     OptionListScene::deinit();
 }
+#endif

@@ -2,7 +2,9 @@
 
 #include "platform.hpp"
 
+#ifndef MULTIBOOT
 #ifdef GBA
+#include <gba_sram.h>
 
 #define AGB_ROM ((u8*)0x8000000)
 #define AGB_SRAM ((u8*)0xE000000)
@@ -35,4 +37,5 @@ struct SramInfo {
 extern struct FlashInfo flashInfo;
 extern struct SramInfo sramInfo;
 
+#endif
 #endif

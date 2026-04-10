@@ -167,6 +167,28 @@ The built Apotris ROMs (.elf, .gba) will be in your `build-gba` directory.
 
 The built Apotris executable and its required `assets/` folder will be in your build directories for other builds.
 
+### Unique GBA builds
+
+GBA has a few unique targets for different flash carts and hardware platforms. Included is a table of all targets and
+their equivalent target invocation names:
+
+| Hardware | Meson ninja target |
+|----------|----------|
+| Analogue Pocket Rumble  | `Apotris-Pocket.gba` |
+| EZFlash Air | `Apotris-Air.gba` |
+
+To build one of these locally, in the final `meson compile` step replace the command with
+```sh
+ninja -C build-gba Apotris-pocket.gba
+```
+replacing the filename with the desired target.
+
+UPS patch files can be generated for all targets (for inclusion in a release .zip) via the `patches` alias, e.g.:
+```sh
+ninja -C build-gba patches
+```
+To generate UPS files, `go` must be present in the system path to build the `ups` patcher tool.
+
 ## Less common platforms
 
 ### Nintendo Switch

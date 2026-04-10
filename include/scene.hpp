@@ -2,7 +2,6 @@
 
 #include "blockEngine.hpp"
 #include "def.h"
-#include "multiplayerClasses.h"
 #ifdef GBA
 #include "LinkUniversal.hpp"
 #endif
@@ -11,10 +10,11 @@
 #include <map>
 #include <string>
 #include <tuple>
+#include <utility>
 
 extern int previousSelection;
 
-extern void sceneSwitcher(std::string str);
+extern void sceneSwitcher(const std::string& str);
 extern const std::list<std::string> menuOptions;
 extern const std::list<std::string> gameOptions;
 extern const std::list<std::string> settingsOptions;
@@ -25,9 +25,10 @@ static const int READY = 0xC0DE;
 
 static const int START = 0xBEEF;
 
-extern std::string getDescription(std::string element);
-extern std::string getDescription(std::string mode, std::string element,
-                                  std::string option);
+extern std::string getDescription(const std::string& element);
+extern std::string getDescription(const std::string& mode,
+                                  const std::string& element,
+                                  const std::string& option);
 
 class Scene {
 public:
@@ -38,9 +39,9 @@ public:
     virtual void deinit() = 0;
     virtual Scene* previousScene() = 0;
 
-    Scene() {};
+    Scene() = default;
 
-    virtual ~Scene() {};
+    virtual ~Scene(){};
 };
 
 extern Scene* scene;
@@ -52,7 +53,6 @@ class GameScene : public Scene {
     void init();
     void deinit();
 
-    WordSprite wordSprites[MAX_WORD_SPRITES];
     WordSprite creditSprites[3];
 
     void countdown();
@@ -62,16 +62,16 @@ class GameScene : public Scene {
     void showComboStreak();
     int pauseMenu();
     void endScreen();
-    void showModeText();
-    void showStats(bool, std::string, std::string, bool);
+    static void showModeText();
+    void showStats(bool, const std::string&, const std::string&, bool) const;
     void setupCredits();
     void showCredits();
     void refreshCredits();
-    void checkSounds();
+    static void checkSounds();
     bool reconnect();
     int handleMultiplayer(bool duringGame);
     int endScreenSetup();
-    void showReadyPlayers();
+    void showScoreboard();
 
     bool counted = false;
     bool preventLayeredCountdowns = false; // TODO I feel like this can be done better
@@ -83,18 +83,17 @@ class GameScene : public Scene {
 
     ~GameScene() { deinit(); };
 
-    static void ProcessMultiplayerPacket(u16 data,
-                                         RemotePlayerId remotePlayerId);
+    void showReadyPlayers();
 
-    static void ProcessGameUpdate(int command, int value,
-                                  RemotePlayerId remotePlayerId);
+public:
+    static void UpdateEnemyBoard(int command, int value, u8 linkPlayerId);
 
-    static void UpdateEnemyBoard(int command, int value,
-                                 RemotePlayerId remotePlayerId);
+    WordSprite wordSprites[MAX_WORD_SPRITES];
 
-    static void updateRank();
+    void showEndScreenOptions();
 };
 
+#ifndef MULTIBOOT
 class TitleScene : public Scene {
     WordSprite wordSprites[MAX_WORD_SPRITES];
 
@@ -120,6 +119,7 @@ class TitleScene : public Scene {
 
     ~TitleScene() { deinit(); };
 };
+#endif
 
 class SimpleListScene : public Scene {
 public:
@@ -188,10 +188,14 @@ public:
     ~SimpleListScene() { deinit(); };
 };
 
+#ifndef MULTIBOOT
 class MainMenuScene : public SimpleListScene {
 public:
     void init();
+    void update();
     void deinit();
+
+    bool showingUpdateNotification = false;
 
     Scene* previousScene();
     std::list<std::string> getOptionList() {
@@ -207,6 +211,7 @@ public:
     };
     std::string name() { return ""; };
 };
+#endif
 
 class ModeListScene : public SimpleListScene {
 public:
@@ -316,6 +321,36 @@ public:
     ~OptionListScene() { deinit(); };
 };
 
+#ifndef GBA
+class MatchMakingScene : public Scene {
+public:
+    int timer = 0;
+
+    bool playRandoms = true;
+
+    int cursorFloat = 0;
+
+    WordSprite wordSprites[2];
+
+    OBJ_ATTR* cursorSprites[2];
+
+    int lengths[2];
+
+    int pos[2];
+
+    std::string room;
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene() { return new MainMenuScene(); };
+    bool hideSprites;
+};
+#endif
+
+#ifndef MULTIBOOT
 class ConfirmSaveScene : public Scene {
 public:
     int timer = 0;
@@ -347,30 +382,6 @@ public:
     ~ConfirmSaveScene() { deinit(); };
 };
 
-class ConfirmEmuScene : public Scene {
-public:
-    int timer = 0;
-
-    bool cancel = true;
-
-    int cursorFloat = 0;
-
-    WordSprite wordSprites[2];
-
-    OBJ_ATTR* cursorSprites[2];
-
-    int lengths[2];
-
-    int pos[2];
-
-    void draw();
-    void update();
-    bool control();
-    void init();
-    void deinit();
-    Scene* previousScene() { return new MainMenuScene(); };
-};
-
 class SettingsScene : public SimpleListScene {
 public:
     Scene* previousScene() {
@@ -394,8 +405,6 @@ public:
 
     std::string name() { return "Settings"; };
 };
-
-#ifndef MULTIBOOT
 
 class CreditsScene : public Scene {
 public:
@@ -444,6 +453,32 @@ public:
 
     std::string name() { return "Links"; };
 };
+
+#endif
+
+class MultiplayerExceptionScene : public Scene {
+private:
+    std::string what;
+    const std::string name = "Multi error";
+
+public:
+    WordSprite* wordSprites[MAX_WORD_SPRITES];
+
+    explicit MultiplayerExceptionScene(std::string error) {
+        what = std::move(error);
+    }
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    Scene* previousScene();
+    ;
+
+    ~MultiplayerExceptionScene() { deinit(); };
+};
+#ifndef MULTIBOOT
 
 class QRScene : public Scene {
 public:
@@ -536,6 +571,36 @@ public:
 
 #endif
 
+#ifdef GBA
+class MultiplayerProtocolScene : public Scene {
+public:
+    int timer = 0;
+
+    bool cancel = true;
+
+    int cursorFloat = 0;
+
+    WordSprite wordSprites[2];
+
+    OBJ_ATTR* cursorSprites[2];
+
+    int lengths[2];
+
+    int pos[2];
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+#ifndef MULTIBOOT
+    Scene* previousScene() { return new MainMenuScene(); };
+#else
+    Scene* previousScene() { return new MultiplayerProtocolScene(); };
+#endif
+};
+#endif
+
 class LabelElement : public Element {
     std::string label;
 
@@ -555,3 +620,5 @@ extern void changeScene(Scene* newScene);
 extern void changeScene(Scene* newScene, Transitions transition);
 
 extern int rank;
+extern u8 attackAnimationTimers[4];
+const int animationMax = 15;

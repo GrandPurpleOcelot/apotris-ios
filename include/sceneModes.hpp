@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "scene.hpp"
 
 class PlayOptionScene : public OptionListScene {
@@ -19,7 +21,7 @@ public:
 
     WordSprite startSprite = WordSprite(0, 20, 150);
 
-    std::string currentElement = "";
+    std::string currentElement;
 
     virtual bool getIfTime() { return false; };
     virtual bool getIfGrade() { return false; };
@@ -30,12 +32,12 @@ public:
     void setOptions();
     void resetScoreboard();
 
-    void init();
-    bool control();
-    void draw();
-    void update();
+    void init() override;
+    bool control() override;
+    void draw() override;
+    void update() override;
 
-    Scene* previousScene() { return new ModeListScene(); };
+    Scene* previousScene() override { return new ModeListScene(); };
 };
 
 class LevelSelectorElement : public Element {
@@ -138,15 +140,15 @@ public:
         return *it;
     }
 
-    StringSelectorElement(std::list<std::string> list) {
-        optionList = list;
+    explicit StringSelectorElement(std::list<std::string> list) {
+        optionList = std::move(list);
         options = optionList.size();
     }
 
     StringSelectorElement(std::string newLabel, std::list<std::string> list) {
-        optionList = list;
+        optionList = std::move(list);
         options = optionList.size();
-        label = newLabel;
+        label = std::move(newLabel);
     }
 };
 
@@ -157,7 +159,7 @@ public:
     std::list<int> optionList;
     std::string label;
 
-    virtual int getValue() override {
+    int getValue() override {
         if (value > (int)optionList.size())
             return 0;
 
@@ -209,21 +211,21 @@ public:
         return std::to_string(*it);
     }
 
-    IntSelectorElement(std::list<int> list) {
-        optionList = list;
+    explicit IntSelectorElement(std::list<int> list) {
+        optionList = std::move(list);
         options = optionList.size();
     }
 
     IntSelectorElement(std::string newLabel, std::list<int> list) {
-        optionList = list;
+        optionList = std::move(list);
         options = optionList.size();
-        label = newLabel;
+        label = std::move(newLabel);
     }
 
     IntSelectorElement(std::string newLabel, std::list<int> list, int _value) {
-        optionList = list;
+        optionList = std::move(list);
         options = optionList.size();
-        label = newLabel;
+        label = std::move(newLabel);
         value = _value;
     }
 };
@@ -287,16 +289,17 @@ public:
         return std::get<1>(*it);
     }
 
-    TupleSelectorElement(std::list<std::tuple<int, std::string>> list) {
-        optionList = list;
-        options = optionList.size();
+    explicit TupleSelectorElement(
+        std::list<std::tuple<int, std::string>> list) {
+        optionList = std::move(list);
+        options = (int)optionList.size();
     }
 
     TupleSelectorElement(std::string newLabel,
                          std::list<std::tuple<int, std::string>> list) {
-        optionList = list;
-        options = optionList.size();
-        label = newLabel;
+        optionList = std::move(list);
+        options = (int)optionList.size();
+        label = std::move(newLabel);
     }
 };
 
@@ -580,24 +583,95 @@ public:
 
 class MultBattleScene : public PlayOptionScene {
 public:
-    BlockEngine::Modes getMode() { return BlockEngine::BATTLE; };
+    BlockEngine::Modes getMode() override { return BlockEngine::BATTLE; };
 
-    std::list<Element*> getElementList() { return {}; };
+    std::list<Element*> getElementList() override { return {}; };
 
-    void init();
-    bool control();
-    void update();
-    void deinit();
-    void draw();
+    void init() override;
+    bool control() override;
+    void update() override;
+    void deinit() override;
+    void draw() override;
+    void start() override;
 
-    std::string name() { return "2P Battle"; };
+    std::string name() override { return "Multi Battle"; };
+
+    void showReadyPlayers();
+    void handleConnectionDisplay();
+    void handleReadyStatus();
+
+    void hideReadyPlayers();
+
+#ifdef MULTIBOOT
+    Scene* previousScene() override { return new MultBattleScene(); };
+#endif
+
 #ifdef GBA
 private:
     interrupt_vector rumbleHandler = nullptr;
+#else
+    bool matchMake = false;
+
+    explicit MultBattleScene();
+    explicit MultBattleScene(std::string roomId);
 #endif
 };
 
 #ifndef MULTIBOOT
+
+#ifdef GBA
+class SinglePakWirelessScene : public PlayOptionScene {
+private:
+    enum MultibootState { NOT_READY, READY, FAILED_INIT, NONE };
+    MultibootState multibootState = NOT_READY;
+    u8 lastPlayerCount = 255;
+    u8 lastProgress = 255;
+    Link::AsyncMultiboot::Result lastResult =
+        Link::AsyncMultiboot::Result::NONE;
+
+public:
+    BlockEngine::Modes getMode() override { return BlockEngine::BATTLE; };
+
+    std::list<Element*> getElementList() override { return {}; };
+
+    void init() override;
+    bool control() override;
+    void update() override;
+    void deinit() override;
+    void draw() override;
+
+    std::string name() override { return "Wireless Pak"; };
+
+    void pumpMultibootFeed();
+    void startMultibootTransfer();
+};
+
+class SinglePakWiredScene : public PlayOptionScene {
+private:
+    enum MultibootState { NOT_READY, READY, FAILED_INIT, NONE };
+    MultibootState multibootState = NOT_READY;
+    u8 lastPlayerCount = 255;
+    u8 lastProgress = 255;
+    Link::AsyncMultiboot::Result lastResult =
+        Link::AsyncMultiboot::Result::NONE;
+
+public:
+    BlockEngine::Modes getMode() override { return BlockEngine::BATTLE; };
+
+    std::list<Element*> getElementList() override { return {}; };
+
+    void init() override;
+    bool control() override;
+    void update() override;
+    void deinit() override;
+    void draw() override;
+
+    std::string name() override { return "Wired Pak"; };
+
+    void pumpMultibootFeed();
+    void startMultibootTransfer();
+};
+#endif
 
 class CPUBattleScene : public PlayOptionScene {
 public:

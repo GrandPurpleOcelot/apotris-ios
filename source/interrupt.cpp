@@ -20,4 +20,6 @@ void interrupt_disable(interrupt_index index) { irqDisable(1 << index); }
 
 void interrupt_unmask() { irqUnmask(); }
 
+void interrupt_mask() { irqMask(); }
+
 #endif

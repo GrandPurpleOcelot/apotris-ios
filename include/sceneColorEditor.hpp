@@ -3,6 +3,7 @@
 #include "def.h"
 #include "scene.hpp"
 
+#ifndef MULTIBOOT
 class ColorSelectorScene : public Scene {
 private:
     int das = 0;
@@ -125,3 +126,4 @@ public:
     ColorEditorScene(int paletteIndex) { this->paletteIndex = paletteIndex; }
     ~ColorEditorScene() { deinit(); }
 };
+#endif

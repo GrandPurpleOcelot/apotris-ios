@@ -12,10 +12,14 @@
 #include <tuple>
 
 #ifdef GBA
+#include "multiplayerClasses.h"
+#include "sceneModes.hpp"
 #include <rumble.h>
 #endif // GBA
 
 #include "achievementStructure.h"
+#include "classic_pal_bin.h"
+#include "logging.h"
 #include "scene.hpp"
 #include "sceneHandling.hpp"
 #include <posprintf.h>
@@ -23,39 +27,40 @@
 using namespace BlockEngine;
 
 void diagnose();
-void clearGlow();
+
 void addGlow(Drop);
-void addPlaceEffect(Drop);
-void drawFrame(int layer);
-void drawFrameBackgrounds();
-void drawGrid();
-void progressBar(int layer);
+void addPlaceEffect(const Drop&);
+
 void showBar(int, int, int, int, int);
+
 void showBestMove();
 bool checkDiagonal(uint32_t);
 void showSpeedMeter(int);
-void hideMinos();
+
 void disappear();
 INLINE int getBoard(int, int);
 void zoneFlash();
-void resetZonePalette();
+
 void rainbowPalette();
-void frameSnow(int layer);
+
 void showZoneText();
 void showFullMeter();
 Function getActionFromKey(int key);
 void liftKeys();
 void setJourneyGraphics(Save* save, int level);
 void replayControl();
-void checkPeek();
+
 void showSpawn();
 void showTowerScrollIndicator();
 static void screenShake();
 
 INLINE int prep(int n);
-IWRAM_CODE void updateGrid();
 
+#ifdef GBA
+__attribute((section(".iwram.game")))
+#endif
 Game* game = nullptr;
+
 OBJ_ATTR* pawnSprite;
 OBJ_ATTR* pawnShadow;
 OBJ_ATTR* holdSprite;
@@ -72,7 +77,7 @@ int clearTimer = 0;
 
 int maxClearTimer = 20;
 
-std::string clearTypeText = "";
+std::string clearTypeText;
 #define maxClearTextTimer 100
 #define clearTextHeight 15
 
@@ -108,7 +113,7 @@ static int flashTimer = 0;
 COLOR* previousPalette = nullptr;
 
 static int rainbowTimer = 1;
-static bool rainbowIncreasing = 0;
+static bool rainbowIncreasing = false;
 
 static u16 rainbow[5];
 
@@ -274,8 +279,8 @@ void GameScene::checkSounds() {
         }
 
         if (!game->sounds.finesse && game->trainingMode)
-            for (int i = 0; i < 3; i++)
-                sprite_hide(moveSprites[i]);
+            for (auto& moveSprite : moveSprites)
+                sprite_hide(moveSprite);
     }
 
     if (game->sounds.invalid) {
@@ -388,8 +393,8 @@ void GameScene::checkSounds() {
             rumblePattern(RUMBLE_DOUBLE, speed);
         }
 
-        if (savefile->settings.clearText == 2 && clearTypeText != "")
-            floatingList.push_back(FloatText(clearTypeText));
+        if (savefile->settings.clearText == 2 && !clearTypeText.empty())
+            floatingList.emplace_back(clearTypeText);
 
         if (savefile->settings.announcer && soundEffect != -1)
             sfx(soundEffect);
@@ -421,7 +426,7 @@ void GameScene::checkSounds() {
             sfx(sound);
 
         if (savefile->settings.clearText == 2)
-            floatingList.push_back(FloatText(clearTypeText));
+            floatingList.emplace_back(clearTypeText);
     }
 
     if (game->sounds.levelUp) {
@@ -457,7 +462,7 @@ void GameScene::checkSounds() {
         sfx(SFX_INITIAL);
     }
 
-    std::string sectionText = "";
+    std::string sectionText;
 
     switch (game->sounds.section) {
     case -1:
@@ -476,8 +481,8 @@ void GameScene::checkSounds() {
         break;
     }
 
-    if (sectionText.size() && savefile->settings.clearText == 2)
-        floatingList.push_back(FloatText(sectionText));
+    if (!sectionText.empty() && savefile->settings.clearText == 2)
+        floatingList.emplace_back(sectionText);
 
     if (game->sounds.disappear) {
         disappear();
@@ -850,8 +855,8 @@ void showPawn() {
 
     sprite_unhide(pawnSprite, 0);
 
-    int* b = BlockEngine::getShape(game->activePiece, game->pawn.rotation,
-                                   game->rotationSystem);
+    uint16_t* b = BlockEngine::getShape(game->activePiece, game->pawn.rotation,
+                                        game->rotationSystem);
 
     clearSpriteTiles(16 * 7, 4, 4);
     for (int i = 0; i < 4; i++) {
@@ -989,8 +994,8 @@ void showShadow() {
 
     sprite_unhide(pawnShadow, 0);
 
-    int* b = BlockEngine::getShape(game->activePiece, game->pawn.rotation,
-                                   game->rotationSystem);
+    uint16_t* b = BlockEngine::getShape(game->activePiece, game->pawn.rotation,
+                                        game->rotationSystem);
 
     clearSpriteTiles(16 * 8, 4, 4);
     for (int i = 0; i < 4; i++) {
@@ -1192,8 +1197,8 @@ void showQueue(bool offsetSpriteIndex) {
 
 #ifdef TE
     if (flashTimer) {
-        for (int i = 0; i < 5; i++)
-            sprite_hide(queueSprites[i]);
+        for (auto& queueSprite : queueSprites)
+            sprite_hide(queueSprite);
         return;
     }
 #endif
@@ -1252,6 +1257,7 @@ bool GameScene::control() {
 
     key_poll();
 
+#ifndef MULTIBOOT
     if (demo && key_hit(KEY_FULL)) {
         if (key_hit(KEY_SELECT)) {
             if (botThinkingSpeed != 11) {
@@ -1269,6 +1275,7 @@ bool GameScene::control() {
             return true;
         }
     }
+#endif
 
     if (replaying && key_hit(KEY_FULL)) {
         exitGame = true;
@@ -1515,15 +1522,19 @@ void GameScene::showText() {
         if (gm == MASTER) {
             str = GameInfo::masterGrades[game->grade + game->coolCount];
 
+#ifndef MULTIBOOT
             status.gradeString = str;
             status.gradeIndex = game->grade + game->coolCount;
+#endif
         } else if (gm == DEATH) {
             const int index = game->level / 100 - game->regretCount;
 
             str = GameInfo::deathGrades[index];
 
+#ifndef MULTIBOOT
             status.gradeString = str;
             status.gradeIndex = index;
+#endif
         }
 
         wordSprites[1].setText(str);
@@ -1598,8 +1609,10 @@ void GameScene::showText() {
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
 
     } else if (gm == BATTLE || (gm == SPRINT && game->subMode == 1)) {
+#ifndef MULTIBOOT
         wordSprites[6].setText("Attack");
         wordSprites[6].show(9 * 8 - wordSprites[6].width, 17 * 8, 15);
+#endif
 
         wordSprites[7].setTextNum(game->linesSent);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
@@ -1642,14 +1655,14 @@ void showPPS() {
         pps = fxdiv(int2fx(game->pieceCounter), (t));
     }
 
-    std::string str = "";
+    std::string str;
 
     str += std::to_string(fx2int(pps)) + ".";
 
     int fractional = pps & 0xff;
     for (int i = 0; i < 2; i++) {
         fractional *= 10;
-        str += '0' + (fractional >> 8);
+        str += std::to_string('0' + (fractional >> 8));
         fractional &= 0xff;
     }
 
@@ -1722,7 +1735,7 @@ void showClearText() {
                 aprint(text, 15 - text.size() / 2, 15 - height);
 
             } else {
-                std::size_t pos = text.find(" ");
+                std::size_t pos = text.find(' ');
 
                 if (pos != std::string::npos) {
                     // aprint("            ", 9, 15 - height);
@@ -1799,9 +1812,9 @@ void addGlow(BlockEngine::Drop location) {
 }
 
 void clearGlow() {
-    for (int i = 0; i < 20; i++)
+    for (auto& i : glow)
         for (int j = 0; j < 10; j++)
-            glow[i][j] = 0;
+            i[j] = 0;
     drawGrid();
 }
 
@@ -1928,10 +1941,10 @@ void GameScene::countdown() {
                 sfx(SFX_GO);
         }
 #ifdef GBA
-        if (multiplayer) {
-            linkConnection->sync();
-            if (linkConnection->playerCount() != initialPlayerCount)
-                return;
+        if (multiplayerLink->active && !multiplayerLink->sync() &&
+            multiplayer) {
+            clearText();
+            break;
         }
 #endif
     }
@@ -1956,6 +1969,7 @@ void GameScene::countdown() {
             game->rotateTwice(1);
         if (key_is_down(k.hardDrop))
             game->keyDrop(1);
+
         if (key_is_down(k.moveLeft)) {
             game->keyLeft(1);
         } else if (key_is_down(k.moveRight)) {
@@ -2204,7 +2218,7 @@ void drawFrameBackgrounds() {
 
 INLINE int prep(int n) { return min(clamp((n + 500) / 8, 0, 255) / 16, 14); }
 
-IWRAM_CODE void updateGrid() {
+void updateGrid() {
     for (int i = 1; i < 21; i++) {
         for (int j = 1; j < 11; j++) {
             current[i][j] = (previous[i - 1][j] + previous[i + 1][j] +
@@ -2218,7 +2232,7 @@ IWRAM_CODE void updateGrid() {
 }
 
 void drawGrid() {
-    std::list<Effect>::iterator index = effectList.begin();
+    auto index = effectList.begin();
 
     for (int i = 0; i < (int)effectList.size() && (savefile->settings.effects);
          i++) {
@@ -2226,9 +2240,9 @@ void drawGrid() {
             switch (index->type) {
             case 0:
                 if (index->timer % glowDuration == 0) {
-                    for (int i = 0; i < 20; i++)
+                    for (auto& i : glow)
                         for (int j = 0; j < 10; j++)
-                            glow[i][j] = glowDuration;
+                            i[j] = glowDuration;
                 }
                 break;
             case 1:
@@ -2814,12 +2828,12 @@ void showPlaceEffect() {
     }
 }
 
-void addPlaceEffect(BlockEngine::Drop drop) {
+void addPlaceEffect(const BlockEngine::Drop& drop) {
     if ((int)placeEffectList.size() >= 3 || !savefile->settings.placeEffect ||
         game->pawn.big)
         return;
 
-    placeEffectList.push_back(
+    placeEffectList.emplace_back(
         PlaceEffect(drop.x, drop.y, drop.dx, drop.dy, drop.piece, drop.rotation,
                     drop.rotating * (game->gameMode != CLASSIC)));
 }
@@ -2830,8 +2844,8 @@ void hideMinos() {
     sprite_hide(holdSprite);
     sprite_hide(&obj_buffer[110]); // spawn sprite
 
-    for (int i = 0; i < 5; i++)
-        sprite_hide(queueSprites[i]);
+    for (auto& queueSprite : queueSprites)
+        sprite_hide(queueSprite);
 
     for (int i = 0; i < 3; i++)
         sprite_hide(&obj_buffer[19 + i]);
@@ -3232,7 +3246,7 @@ void GameScene::setupCredits() {
     std::advance(index, creditLastRead++);
 
     std::string text = *index;
-    std::size_t pos = text.find(" ");
+    std::size_t pos = text.find(' ');
 
     if (pos != std::string::npos) {
         std::string part1 = text.substr(0, pos);
@@ -3246,8 +3260,8 @@ void GameScene::setupCredits() {
 
     creditSprites[2].setText("akouzoukos");
 
-    for (int i = 0; i < 3; i++) {
-        creditSprites[i].setPriority(3);
+    for (auto& creditSprite : creditSprites) {
+        creditSprite.setPriority(3);
     }
 
 #ifdef GBA
@@ -3291,7 +3305,7 @@ void GameScene::refreshCredits() {
         creditLastRead++;
     }
 
-    std::size_t pos = text.find(" ");
+    std::size_t pos = text.find(' ');
 
     if (pos != std::string::npos) {
         std::string part1 = text.substr(0, pos);
@@ -3509,6 +3523,10 @@ void GameScene::init() {
 
     reset();
 
+    if (multiplayer) {
+        resetMultiplayerGame();
+    }
+
     setPreviousSettings(savefile->settings);
 
     // hold frame tiles
@@ -3608,6 +3626,10 @@ void GameScene::init() {
 
     showZoneMeter();
 
+    if (game->gameMode == BATTLE) {
+        drawEnemyBoard();
+    }
+
     ended = false;
 }
 
@@ -3641,18 +3663,25 @@ void GameScene::update() {
 
     if (exitGame) {
         if (handlingTest) {
+#ifndef MULTIBOOT
             handlingTest = false;
             changeScene(new HandlingOptionScene(), Transitions::FADE);
+#endif
         } else if (replaying) {
             replaying = false;
             path.clear();
-            path.push_back("Play");
+            path.emplace_back("Play");
             clearText();
             buildBG(3, 0, 27, 0, 1, true);
             sceneSwitcher(modeToString(previousGameOptions->mode));
         } else {
+            stopMusic();
+#ifndef MULTIBOOT
             enableBot = false;
             changeScene(new TitleScene(), Transitions::FADE);
+#else
+            changeScene(new MultBattleScene(), Transitions::FADE);
+#endif
         }
 
         for (auto& item : currentReplay)
@@ -3670,18 +3699,25 @@ void GameScene::update() {
         game->update();
     }
 
-    if (handleMultiplayer(1)) {
+    if (handleMultiplayer(true)) {
         return;
     }
 
     if (game->gameMode == BATTLE && !multiplayer) {
+#ifndef MULTIBOOT
         if (!botGame->clearLock) {
             testBot->run();
             botGame->update();
         }
         handleBotGame();
+#endif
     } else if (enableBot && !replaying) {
+#ifndef MULTIBOOT
         testBot->run();
+#endif
+#ifdef GBA
+        multiplayerLink->sync();
+#endif
     }
 
     if (creditRefresh && !game->clearLock)
@@ -3745,12 +3781,7 @@ void GameScene::update() {
         endScreen();
 
         paused = false;
-        if (!(playAgain && multiplayer)) {
-            return;
-        } else {
-            playAgain = false;
-            counted = false;
-        }
+        return;
     }
 
     if (paused) {
@@ -3796,10 +3827,13 @@ void GameScene::update() {
         showCredits();
     }
 
+#ifndef MULTIBOOT
     if (demo && game->timer > 60 * 60 * 60 * 3) {
+        stopMusic();
         changeScene(new TitleScene(), Transitions::FADE);
         return;
     }
+#endif
 
     if (flashTimer) {
         zoneFlash();
@@ -3833,6 +3867,7 @@ void GameScene::deinit() {
 
     resetSmallText();
     clearText();
+    playAgain = false;
 }
 
 void updateFluid() {
@@ -3961,7 +3996,7 @@ void showSpawn() {
     sprite_unhide(sprite, 0);
 
     int piece = game->queue.front();
-    int* b =
+    uint16_t* b =
         BlockEngine::getShape(game->queue.front(), 0, game->rotationSystem);
 
     bool add = (game->rotationSystem == ARS || game->rotationSystem == NRS ||

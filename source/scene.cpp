@@ -1,4 +1,5 @@
 #include "scene.hpp"
+#include "sceneModes.hpp"
 #include "def.h"
 #include "logging.h"
 #include <list>
@@ -17,7 +18,7 @@ void SimpleListScene::init() {
 
     int index = -1;
     int counter = 0;
-    for (auto option : optionList) {
+    for (const auto& option : optionList) {
         if (option == previousElement) {
             index = counter;
             break;
@@ -226,7 +227,7 @@ void SimpleListScene::draw() {
     if (refreshText) {
         scrollText = getDescription();
         clearSpriteTiles(672, 144, 1);
-        if (scrollText != "") {
+        if (!scrollText.empty()) {
             scrollTextLength = getVariableWidth(scrollText);
 
             const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
@@ -248,8 +249,8 @@ void SimpleListScene::draw() {
             }
 #endif
         } else {
-            for (int i = 0; i < 2; i++) {
-                sprite_hide(scrollSideSprites[i]);
+            for (auto& scrollSideSprite : scrollSideSprites) {
+                sprite_hide(scrollSideSprite);
             }
         }
     }
@@ -279,7 +280,7 @@ bool SimpleListScene::control() {
         previousElement = name();
         previousSelection = selection;
 
-        if (path.size())
+        if (!path.empty())
             path.pop_back();
 
         changeScene(previousScene(), Transitions::FADE);
@@ -370,7 +371,7 @@ bool SimpleListScene::control() {
 }
 
 void SimpleListScene::update() {
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     cursorFloat += 6;
@@ -429,11 +430,11 @@ void SimpleListScene::deinit() {
 
     clearText();
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for (auto& wordSprite : wordSprites)
+        delete wordSprite;
 
-    for (int i = 0; i < 3; i++)
-        delete scrollingText[i];
+    for (auto& i : scrollingText)
+        delete i;
 
 #ifdef N3DS
     // Reset scroll for falling blocks:
@@ -441,7 +442,11 @@ void SimpleListScene::deinit() {
 #endif
 }
 
+#ifndef MULTIBOOT
 Scene* ModeListScene::previousScene() { return new MainMenuScene(); }
+#else
+Scene* ModeListScene::previousScene() { return new MultBattleScene(); }
+#endif
 
 void OptionListScene::init() {
     loadTiles(2, 102, sprite37tiles_bin, sprite37tiles_bin_size / 32);
@@ -515,7 +520,7 @@ void OptionListScene::init() {
 
     enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
 
-    if (name() != "") {
+    if (!name().empty()) {
         bool found = false;
         int count = 0;
         auto it = path.begin();
@@ -667,7 +672,7 @@ void OptionListScene::draw() {
     if (refreshText) {
         scrollText = getDescription();
         clearSpriteTiles(672, 144, 1);
-        if (scrollText != "") {
+        if (!scrollText.empty()) {
             scrollTextLength = getVariableWidth(scrollText);
 
             endDelay = 0;
@@ -689,8 +694,8 @@ void OptionListScene::draw() {
         } else {
             scrollingText[0]->setTextSlow(scrollText);
 
-            for (int i = 0; i < 2; i++) {
-                sprite_hide(scrollSideSprites[i]);
+            for (auto& scrollSideSprite : scrollSideSprites) {
+                sprite_hide(scrollSideSprite);
             }
         }
     }
@@ -709,7 +714,7 @@ bool OptionListScene::control() {
         previousElement = name();
         previousSelection = selection;
 
-        if (path.size())
+        if (!path.empty())
             path.pop_back();
 
         changeScene(previousScene(), Transitions::FADE);
@@ -883,7 +888,7 @@ bool OptionListScene::control() {
 }
 
 void OptionListScene::update() {
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     toggleBG(3, true);
@@ -954,14 +959,14 @@ void OptionListScene::deinit() {
         it++;
     }
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for (auto& wordSprite : wordSprites)
+        delete wordSprite;
 
-    for (int i = 0; i < 7; i++)
-        delete labels[i];
+    for (auto& label : labels)
+        delete label;
 
-    for (int i = 0; i < 3; i++)
-        delete scrollingText[i];
+    for (auto& i : scrollingText)
+        delete i;
 
 #ifdef N3DS
     // Reset scroll for falling blocks:

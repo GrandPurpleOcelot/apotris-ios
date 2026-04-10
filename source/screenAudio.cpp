@@ -1,3 +1,4 @@
+#ifndef MULTIBOOT
 #include "logging.h"
 #include "sceneAudio.hpp"
 
@@ -7,7 +8,7 @@ bool TrackListElement::action() {
     return true;
 }
 
-void SongElement::select() {
+void SongElement::select() const {
     if (index < 0)
         return;
     playSong(menu, index);
@@ -77,3 +78,4 @@ std::string TrackListScene::getDescription() {
     int songIndex = *it;
     return getSongName(songIndex);
 }
+#endif
