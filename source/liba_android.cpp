@@ -15,6 +15,9 @@
 #include <sys/stat.h>
 #include <unordered_set>
 
+#include "version.h"
+#include <unistd.h>
+
 #define LOG_TAG "ApotrisAndroid"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -127,41 +130,52 @@ int KEY_RIGHT = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(SDLK_d);
 int KEY_SELECT = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(SDLK_3);
 int KEY_START = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(SDLK_ESCAPE);
 
-
 #include <jni.h>
 
 std::string getDocumentsPath() {
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-    if (!env) return "/storage/emulated/0/Documents/Apotris/";
-    
+    if (!env)
+        return "/storage/emulated/0/Documents/Apotris/";
+
     jclass envClass = env->FindClass("android/os/Environment");
-    if (!envClass) return "/storage/emulated/0/Documents/Apotris/";
-    
-    jfieldID dirDocsField = env->GetStaticFieldID(envClass, "DIRECTORY_DOCUMENTS", "Ljava/lang/String;");
-    if (!dirDocsField) return "/storage/emulated/0/Documents/Apotris/";
-    jstring dirDocsStr = (jstring)env->GetStaticObjectField(envClass, dirDocsField);
-    
-    jmethodID getExtStoragePublicDirMethod = env->GetStaticMethodID(envClass, "getExternalStoragePublicDirectory", "(Ljava/lang/String;)Ljava/io/File;");
-    if (!getExtStoragePublicDirMethod) return "/storage/emulated/0/Documents/Apotris/";
-    jobject fileObj = env->CallStaticObjectMethod(envClass, getExtStoragePublicDirMethod, dirDocsStr);
-    
-    if (!fileObj) return "/storage/emulated/0/Documents/Apotris/";
-    
+    if (!envClass)
+        return "/storage/emulated/0/Documents/Apotris/";
+
+    jfieldID dirDocsField = env->GetStaticFieldID(
+        envClass, "DIRECTORY_DOCUMENTS", "Ljava/lang/String;");
+    if (!dirDocsField)
+        return "/storage/emulated/0/Documents/Apotris/";
+    jstring dirDocsStr =
+        (jstring)env->GetStaticObjectField(envClass, dirDocsField);
+
+    jmethodID getExtStoragePublicDirMethod =
+        env->GetStaticMethodID(envClass, "getExternalStoragePublicDirectory",
+                               "(Ljava/lang/String;)Ljava/io/File;");
+    if (!getExtStoragePublicDirMethod)
+        return "/storage/emulated/0/Documents/Apotris/";
+    jobject fileObj = env->CallStaticObjectMethod(
+        envClass, getExtStoragePublicDirMethod, dirDocsStr);
+
+    if (!fileObj)
+        return "/storage/emulated/0/Documents/Apotris/";
+
     jclass fileClass = env->GetObjectClass(fileObj);
-    jmethodID getPathMethod = env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
-    if (!getPathMethod) return "/storage/emulated/0/Documents/Apotris/";
+    jmethodID getPathMethod =
+        env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
+    if (!getPathMethod)
+        return "/storage/emulated/0/Documents/Apotris/";
     jstring pathStr = (jstring)env->CallObjectMethod(fileObj, getPathMethod);
-    
+
     const char* path = env->GetStringUTFChars(pathStr, nullptr);
     std::string result = std::string(path) + "/Apotris/";
     env->ReleaseStringUTFChars(pathStr, path);
-    
+
     env->DeleteLocalRef(pathStr);
     env->DeleteLocalRef(fileObj);
     env->DeleteLocalRef(fileClass);
     env->DeleteLocalRef(dirDocsStr);
     env->DeleteLocalRef(envClass);
-    
+
     return result;
 }
 
@@ -177,45 +191,92 @@ static void make_directory_recursive(const std::string& path) {
     mkdir(path.c_str(), 0777);
 }
 
+bool scopedStorageError = false;
+
 void extractAssets(const std::string& pathPrefix) {
     std::string assetsDir = pathPrefix + "assets";
     mkdir(assetsDir.c_str(), 0777);
 
     std::string markerPath = pathPrefix + "assets/extracted.txt";
+
+    // Check version
     FILE* marker = fopen(markerPath.c_str(), "r");
+    bool needsUpdate = true;
     if (marker) {
+        char buffer[128];
+        if (fgets(buffer, sizeof(buffer), marker)) {
+            // Trim newline and whitespace
+            std::string ver = buffer;
+            ver.erase(ver.find_last_not_of(" \n\r\t") + 1);
+            if (ver == APOTRIS_VERSION) {
+                needsUpdate = false;
+            }
+        }
         fclose(marker);
-        return; // Already extracted
     }
 
-    SDL_Log("Extracting assets to %s", assetsDir.c_str());
+    if (!needsUpdate) {
+        FILE* f = fopen(markerPath.c_str(), "a");
+        if (f) {
+            fclose(f);
+        } else {
+            scopedStorageError = true;
+        }
+        return;
+    }
+
+    SDL_Log("Extracting assets to %s (Version: %s)", assetsDir.c_str(),
+            APOTRIS_VERSION);
     bool hasError = false;
+
+    // Helper lambda to extract file
+    auto extractFile = [&](const std::string& srcPath,
+                           const std::string& destPath) {
+        size_t size;
+        void* data = SDL_LoadFile(srcPath.c_str(), &size);
+        if (data) {
+            size_t last_slash = destPath.find_last_of('/');
+            if (last_slash != std::string::npos) {
+                make_directory_recursive(destPath.substr(0, last_slash));
+            }
+
+            // Try to open for writing (overwrite)
+            FILE* out = fopen(destPath.c_str(), "wb");
+            if (out) {
+                size_t written = fwrite(data, 1, size, out);
+                if (written != size) {
+                    SDL_Log("Failed to write full file: %s", destPath.c_str());
+                    hasError = true;
+                }
+                fclose(out);
+            } else {
+                // If failed to open, check if file exists (orphaned file case)
+                if (access(destPath.c_str(), F_OK) == 0) {
+                    scopedStorageError = true;
+                    // File exists but we can't write to it. Treat as success
+                    // (skip).
+                    SDL_Log("Warning: Could not overwrite existing asset: %s "
+                            "(Permission denied?)",
+                            destPath.c_str());
+                } else {
+                    // File doesn't exist and we can't create it. Real error.
+                    SDL_Log("Failed to open file for writing: %s",
+                            destPath.c_str());
+                    hasError = true;
+                }
+            }
+            SDL_free(data);
+        } else {
+            SDL_Log("Failed to load asset from APK: %s", srcPath.c_str());
+            hasError = true;
+        }
+    };
 
     // Extract SFX
     for (int i = 0; i < SFX_COUNT; i++) {
         std::string srcPath = (std::string)SoundEffectPaths[i];
-        size_t size;
-        void* data = SDL_LoadFile(srcPath.c_str(), &size);
-        if (data) {
-                std::string destPath = pathPrefix + srcPath;
-                size_t last_slash = destPath.find_last_of('/');
-                if (last_slash != std::string::npos) {
-                    make_directory_recursive(destPath.substr(0, last_slash));
-                }
-                FILE* out = fopen(destPath.c_str(), "wb");
-            if (out) {
-                size_t written = fwrite(data, 1, size, out);
-                if (written != size) hasError = true;
-                fclose(out);
-            } else {
-                SDL_Log("Failed to open file for writing: %s", destPath.c_str());
-                hasError = true;
-            }
-            SDL_free(data);
-        } else {
-            SDL_Log("Failed to load SFX from APK: %s", srcPath.c_str());
-            hasError = true;
-        }
+        std::string destPath = pathPrefix + srcPath;
+        extractFile(srcPath, destPath);
     }
 
     // Extract Music
@@ -229,51 +290,37 @@ void extractAssets(const std::string& pathPrefix) {
         std::string line;
         while (std::getline(ss, line)) {
             line.erase(line.find_last_not_of(" \n\r\t") + 1);
-            if (line.empty()) continue;
-            
+            if (line.empty())
+                continue;
+
             std::string srcPath = "assets/" + line;
-            size_t size;
-            void* data = SDL_LoadFile(srcPath.c_str(), &size);
-            if (data) {
-                std::string destPath = pathPrefix + srcPath;
-                size_t last_slash = destPath.find_last_of('/');
-                if (last_slash != std::string::npos) {
-                    make_directory_recursive(destPath.substr(0, last_slash));
-                }
-                FILE* out = fopen(destPath.c_str(), "wb");
-                if (out) {
-                    size_t written = fwrite(data, 1, size, out);
-                    if (written != size) hasError = true;
-                    fclose(out);
-                } else {
-                    SDL_Log("Failed to open music file for writing: %s", destPath.c_str());
-                    hasError = true;
-                }
-                SDL_free(data);
-            } else {
-                SDL_Log("Failed to load music from APK: %s", srcPath.c_str());
-                hasError = true;
-            }
+            std::string destPath = pathPrefix + srcPath;
+            extractFile(srcPath, destPath);
         }
     } else {
         SDL_Log("Failed to load file_list.txt from APK");
         hasError = true;
     }
 
-    // Only write the marker file if extraction was 100% successful
+    // Only write the marker file if extraction was successful (ignoring
+    // overwrite failures)
     if (!hasError) {
         FILE* outMarker = fopen(markerPath.c_str(), "w");
         if (outMarker) {
-            fprintf(outMarker, "1\n");
+            fprintf(outMarker, "%s\n", APOTRIS_VERSION);
             fclose(outMarker);
+            SDL_Log("Asset extraction completed successfully.");
+        } else {
+            SDL_Log("Warning: Could not write marker file: %s",
+                    markerPath.c_str());
         }
-        SDL_Log("Asset extraction completed successfully.");
     } else {
-        SDL_Log("Asset extraction completed with errors. Marker not saved.");
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Audio Files Missing",
-                                 "Some audio files failed to extract or are missing. The game will continue, but audio might not play correctly.",
-                                 NULL);
+        SDL_Log("Asset extraction completed with errors. Marker not updated.");
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR, "Audio Files Missing",
+            "Some audio files failed to extract or are missing. The game will "
+            "continue, but audio might not play correctly.",
+            NULL);
     }
 }
 
@@ -294,9 +341,6 @@ void windowInit() {
                                   SDL_WINDOW_RESIZABLE);
     SDL_Log("windowInit: SDL_CreateWindow done");
 
-    SDL_GetWindowSize(window, &screenWidth, &screenHeight);
-    SDL_Log("windowInit: Window size: %dx%d", screenWidth, screenHeight);
-
     renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_Log("windowInit: SDL_CreateRenderer done");
 
@@ -312,15 +356,17 @@ void windowInit() {
 
     SDL_ShowCursor(SDL_DISABLE);
 
+    SDL_GetWindowSize(window, &screenWidth, &screenHeight);
     refreshWindowSize();
     SDL_Log("windowInit: refreshWindowSize done");
 
-        SDL_AndroidRequestPermission("android.permission.READ_EXTERNAL_STORAGE");
+    SDL_AndroidRequestPermission("android.permission.READ_EXTERNAL_STORAGE");
     SDL_AndroidRequestPermission("android.permission.WRITE_EXTERNAL_STORAGE");
     SDL_AndroidRequestPermission("android.permission.READ_MEDIA_AUDIO");
-    
+
     std::string basePath = getDocumentsPath();
-    if (!basePath.empty() && basePath.back() != '/') basePath += "/";
+    if (!basePath.empty() && basePath.back() != '/')
+        basePath += "/";
     extractAssets(basePath);
     loadAudio(basePath);
 
@@ -352,6 +398,19 @@ void windowInit() {
 
     vibrationInit();
     SDL_Log("windowInit: vibrationInit done");
+
+    if (scopedStorageError) {
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_WARNING, "Storage Permission Error",
+            "Apotris cannot modify its files in your Documents folder (likely "
+            "due to reinstalling the game).\n\nA fallback to internal app "
+            "storage is active so you can play and save, but custom music from "
+            "Documents may be unavailable or outdated.\n\nTo fix this, please "
+            "use a File Manager app to DELETE the following "
+            "folder:\n\nInternal Storage/Documents/Apotris/\n\nAfter deleting "
+            "the folder, restart the game.",
+            window);
+    }
 }
 
 void pressKey(int key, InputType type) {
@@ -1038,8 +1097,21 @@ void toggleRendering(bool r) { render = r; }
 void initRumble() {};
 
 std::string getSavefilePath() {
-        std::string path = getDocumentsPath();
+    std::string path = getDocumentsPath();
     std::string s = path + "Apotris.sav";
+
+    FILE* test = fopen(s.c_str(), "a");
+    if (test) {
+        fclose(test);
+        return s;
+    } else {
+        scopedStorageError = true;
+        const char* extPath = SDL_AndroidGetExternalStoragePath();
+        if (extPath) {
+            std::string fallback = std::string(extPath) + "/Apotris.sav";
+            return fallback;
+        }
+    }
     return s;
 }
 
@@ -1376,19 +1448,24 @@ void vibrationDeinit() {
 #define BTN_H 190
 
 std::vector<Layout> getDefaultLayouts() {
-    SDL_DisplayMode DM;
-    SDL_GetCurrentDisplayMode(0, &DM);
-    screenWidth = DM.w;
-    screenHeight = DM.h;
+    int w, h;
+    if (window) {
+        SDL_GetWindowSize(window, &w, &h);
+    } else {
+        SDL_DisplayMode DM;
+        SDL_GetCurrentDisplayMode(0, &DM);
+        w = DM.w;
+        h = DM.h;
+    }
 
     int portraitWidth, portraitHeight, landscapeWidth, landscapeHeight;
 
-    if (screenWidth > screenHeight) {
-        portraitHeight = landscapeWidth = screenWidth;
-        portraitWidth = landscapeHeight = screenHeight;
+    if (w > h) {
+        portraitHeight = landscapeWidth = w;
+        portraitWidth = landscapeHeight = h;
     } else {
-        portraitHeight = landscapeWidth = screenHeight;
-        portraitWidth = landscapeHeight = screenWidth;
+        portraitHeight = landscapeWidth = h;
+        portraitWidth = landscapeHeight = w;
     }
 
     Button portraitButtons[11] = {
