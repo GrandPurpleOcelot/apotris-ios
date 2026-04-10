@@ -3,13 +3,13 @@
 #if defined(PC) || defined(PORTMASTER) || defined(WEB) || defined(SWITCH) ||   \
     defined(ANDROID)
 
+#include <SDL.h>
+#include <algorithm>
 #include <cstdio>
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <SDL.h>
-#include <algorithm>
 
 #include "soloud.h"
 #include "soloud_openmpt.h"
@@ -120,10 +120,31 @@ void loadAudio(std::string pathPrefix) {
         std::string line;
         while (std::getline(ss, line)) {
             line.erase(line.find_last_not_of(" \n\r\t") + 1);
-            if (line.empty()) continue;
+            if (line.empty())
+                continue;
 
-            if (std::find(songPaths.begin(), songPaths.end(), line) == songPaths.end()) {
-                songPaths.push_back(line);
+            if (hasSuffix(line, ".it") || hasSuffix(line, ".mod") ||
+                hasSuffix(line, ".s3m") || hasSuffix(line, ".S3M") ||
+                hasSuffix(line, ".mp3") || hasSuffix(line, ".ogg") ||
+                hasSuffix(line, ".flac") || hasSuffix(line, ".wav") ||
+                hasSuffix(line, ".xm")) {
+
+                bool found = false;
+                if (hasSuffix(line, ".wav")) {
+                    for (int i = 0; i < SFX_COUNT; i++) {
+                        std::string str = (std::string)SoundEffectPaths[i];
+
+                        if (hasSuffix(str, line)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found && std::find(songPaths.begin(), songPaths.end(),
+                                        line) == songPaths.end()) {
+                    songPaths.push_back(line);
+                }
             }
         }
     }
