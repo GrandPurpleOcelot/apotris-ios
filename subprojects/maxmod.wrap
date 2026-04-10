@@ -1,5 +1,5 @@
 [wrap-git]
-url = https://github.com/blocksds/maxmod
+url = https://codeberg.org/blocksds/maxmod
 revision = a7c8833
 patch_directory = maxmod
 

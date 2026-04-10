@@ -7,7 +7,7 @@
 #ifdef GBA
 #include "detectEmulators.h"
 #ifndef MULTIBOOT
-#include "sendMultiboot.h"
+//#include "sendMultiboot.h"
 #endif
 #else
 #include "LinkWebRTC.hpp"
@@ -18,7 +18,7 @@
 
 bool lostConnection = true;
 
-#if defined(GBA) && !defined(MULTIBOOT)
+#if defined(GBA) && !defined(MULTIBOOT) && false
 LinkWirelessMultiboot::Async* linkWirelessMultibootAsync =
     new LinkWirelessMultiboot::Async("Apotris");
 LinkCableMultiboot::Async* linkCableMultibootAsync =
@@ -949,6 +949,7 @@ MultBattleScene::MultBattleScene() { this->matchMake = true; }
 
 MultBattleScene::MultBattleScene(std::string room) { roomId = std::move(room); }
 #else
+/*
 #ifndef MULTIBOOT
 void SinglePakWirelessScene::pumpMultibootFeed() {
     if (lastResult == Link::AsyncMultiboot::Result::SUCCESS) {
@@ -1304,6 +1305,7 @@ void SinglePakWiredScene::deinit() {
     }
 }
 #endif
+*/
 #endif
 
 void PlayOptionScene::resetScoreboard() {

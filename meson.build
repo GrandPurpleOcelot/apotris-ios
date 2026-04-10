@@ -105,15 +105,8 @@ if host_machine.system() == 'gba'
     subdir('meson/toolchain')
     add_project_arguments('-Wno-incompatible-pointer-types', language: 'c')
     add_global_arguments('-Wno-implicit-function-declaration', language: 'c')
-    add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language: 'cpp')
-    # -O3 is too bloated to work right now, so release builds should use -O2
+    #add_project_arguments('-DLINK_WIRELESS_PUT_ISR_IN_IWRAM=1', language: 'cpp')
     if build_type == 'release'
-        # Add additional optimization flags that don't overbloat the IWRAM and kill stack space
-        add_global_arguments(['-O2', '-fgcse-after-reload', '-fipa-cp-clone', '-floop-interchange',
-                              '-floop-unroll-and-jam', '-fpeel-loops', '-fpredictive-commoning', '-fsplit-loops',
-                              '-fsplit-paths', '-ftree-loop-distribution', '-ftree-partial-pre', '-funswitch-loops',
-                              '-fvect-cost-model=dynamic', '-fversion-loops-for-strides'],
-                             language: ['c', 'cpp'])
         add_global_link_arguments('-s', language: ['c', 'cpp'])
     endif
 endif
@@ -753,6 +746,7 @@ else
     ##########################################
 
     # Check Wonderful Toolchain and Eden Toolchain
+    compiler = meson.get_compiler('c')
     cc_version_identifier = cc_ver.stdout().to_lower()
     have_eden = cc_version_identifier.contains('wonderful') or cc_version_identifier.contains('eden')
     # Check devkitARM
@@ -763,15 +757,18 @@ else
     sync_none = ['-specs=sync-none.specs']
 
     # Use correct toolchain .specs to start
+    if compiler.get_id().contains('gcc') and cc.version().version_compare('> 13')
+        sources += files('source/stubs.s')
+    endif
     if have_devkitarm # devkitARM
         link_args += sync_none
-        sources += files('source/stubs.s')
     elif not have_eden # e.g. generic arm.com
         link_args += ['-specs=nosys.specs']
+        sources += files('source/stubs.s')
     else # wf and eden
         link_args += sync_none
         link_args += ['-specs=picolibc.specs', '-lnosys']
-        sources += files('source/stubs.s', 'source/stubs.c')
+        sources += files('source/stubs.c')
     endif
 
     link_mb_args = link_args + ['-flto=auto']
@@ -790,6 +787,7 @@ else
         dependency('gba-rumble'),
     ]
 
+    '''
     dependencies_multi = [
         dependency('minrt-multiboot'),
         dependency('libseven'),
@@ -799,6 +797,7 @@ else
         dependency('posprintf'),
         dependency('gba-link-connection'),
     ]
+    '''
 
     # Suppress LinkWireless header warnings
     add_project_arguments('-Wno-format', language: 'cpp')
@@ -829,7 +828,7 @@ else
     buildSoundbank = files('tools/buildSoundbank.py')
     gbabuild = files('tools/gbaBuild.py')
     pocket_patch = files('tools/pocket.py')
-    multibootbuild = files('tools/multibootBuild.py')
+    #multibootbuild = files('tools/multibootBuild.py')
 
     soundbank_files = audio_files
     soundbank_bin = 'soundbank.bin'
@@ -915,6 +914,7 @@ else
     # Multiboot-specific build configuration #
     ##########################################
 
+    '''
     # The base multiboot elf binary
     multi = executable(
         name + '-multi',
@@ -955,6 +955,7 @@ else
     )
 
     generated_files += embedded_multiboot
+    '''
 
     # Flag enables bootleg save support
     rom_save = ['-DENABLE_ROM_SAVE']

@@ -72,7 +72,7 @@ const std::list<std::string> gameOptions = {
     "Marathon",     "Sprint",    "Dig",    "Ultra", "Blitz", "Combo",
     "Survival",     "Classic",   "Master", "Death", "Zen",   "Multi Battle",
 #ifdef GBA
-    "Wireless Pak", "Wired Pak",
+    //"Wireless Pak", "Wired Pak",
 #endif
     "CPU Battle",   "Training"};
 const std::list<std::string> settingsOptions = {

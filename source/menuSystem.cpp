@@ -200,10 +200,12 @@ void sceneSwitcher(const std::string& str) {
 #ifdef GBA
         changeScene(new MultiplayerProtocolScene(), Transitions::FADE);
 #ifndef MULTIBOOT
+    /*
     } else if (str == "Wireless Pak") {
         changeScene(new SinglePakWirelessScene(), Transitions::FADE);
     } else if (str == "Wired Pak") {
         changeScene(new SinglePakWiredScene(), Transitions::FADE);
+    */
 #endif
 #else
         changeScene(new MatchMakingScene(), Transitions::FADE);

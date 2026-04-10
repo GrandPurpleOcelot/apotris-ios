@@ -19,8 +19,8 @@
 	url = https://gitea.com/Apotris/libopenmpt.git
 	branch = main
 [submodule "subprojects/libsavgba"]
-	path = subprojects/libsavgba
-	url = https://github.com/aronson/libsavgba.git
+       path = subprojects/libsavgba
+       url = https://github.com/aronson/libsavgba.git
 [submodule "subprojects/datachannel-wasm"]
 	path = subprojects/datachannel-wasm
 	url = https://gitea.com/ApotrisAdditional/datachannel-wasm.git
