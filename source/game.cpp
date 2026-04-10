@@ -3675,6 +3675,7 @@ void GameScene::update() {
             buildBG(3, 0, 27, 0, 1, true);
             sceneSwitcher(modeToString(previousGameOptions->mode));
         } else {
+            stopMusic();
 #ifndef MULTIBOOT
             enableBot = false;
             changeScene(new TitleScene(), Transitions::FADE);
@@ -3828,6 +3829,7 @@ void GameScene::update() {
 
 #ifndef MULTIBOOT
     if (demo && game->timer > 60 * 60 * 60 * 3) {
+        stopMusic();
         changeScene(new TitleScene(), Transitions::FADE);
         return;
     }
