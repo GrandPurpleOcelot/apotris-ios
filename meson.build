@@ -128,7 +128,7 @@ if host_machine.system() == 'n3ds'
     # (https://github.com/devkitPro/gcc/issues/5)
     add_global_arguments(
         [
-            '-D_GLIBCXX_GTHREAD_USE_WEAK=1',
+            '-D_GLIBCXX_GTHREAD_USE_WEAK=0',
         ],
         language: ['cpp'],
     )
