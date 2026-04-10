@@ -518,6 +518,15 @@ elif host_machine.system() == 'n3ds'
     # Enable all 3DS-specific code
     add_project_arguments('-DN3DS', language: ['c', 'cpp'])
 
+    ctru_error_handler = static_library(
+        'ctru_error_handler',
+        files(
+            src_dir / 'n3ds/ctru_assert.c',
+            src_dir / 'n3ds/ctru_terminate.cpp',
+        ),
+        cpp_args: ['-fexceptions', '-D_GNU_SOURCE'],
+    )
+
     dependencies = []
 
     # System libraries
@@ -637,6 +646,7 @@ elif host_machine.system() == 'n3ds'
         include_directories: includes,
         dependencies: dependencies,
         link_args: link_args,
+        link_whole: [ctru_error_handler],
         name_suffix: 'elf',
     )
 
