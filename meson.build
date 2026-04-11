@@ -133,6 +133,13 @@ if host_machine.system() == 'n3ds'
         language: ['cpp'],
     )
 
+    add_global_arguments(
+        [
+            '-I' + get_option('devkitpro') / 'libctru/include',
+        ],
+        language: ['c', 'cpp'],
+    )
+
     if build_type == 'release' or build_type == 'minsize'
         add_global_arguments(['-ffunction-sections', '-fdata-sections'], language: ['c', 'cpp'])
         add_global_link_arguments(['-Wl,--gc-sections'], language: ['c', 'cpp'])
@@ -166,6 +173,33 @@ if host_machine.system() == 'n3ds'
             language: ['cpp'],
         )
     endif
+
+    libctru = declare_dependency(
+        include_directories: include_directories(
+            get_option('devkitpro') / 'libctru/include',
+        ),
+        link_args: [
+            '-L' + get_option('devkitpro') / 'libctru/lib',
+            '-lctru',
+        ],
+    )
+
+    if build_type.startswith('debug')
+        citro3d_lib = 'citro3dd'
+    else
+        citro3d_lib = 'citro3d'
+    endif
+
+    citro3d = declare_dependency(
+        include_directories: include_directories(
+            get_option('devkitpro') / 'libctru/include',
+        ),
+        link_args: [
+            '-L' + get_option('devkitpro') / 'libctru/lib',
+            '-l' + citro3d_lib,
+        ],
+        dependencies: [libctru],
+    )
 
 endif
 
@@ -527,15 +561,7 @@ elif host_machine.system() == 'n3ds'
         cpp_args: ['-fexceptions', '-D_GNU_SOURCE'],
     )
 
-    dependencies = []
-
-    # System libraries
-    compiler = meson.get_compiler('c')
-    if build_type == 'debug'
-        dependencies += compiler.find_library('citro3dd')
-    else
-        dependencies += compiler.find_library('citro3d')
-    endif
+    dependencies = [libctru, citro3d]
 
     if enable_debug_ui
         tilengine = dependency(
@@ -644,14 +670,14 @@ elif host_machine.system() == 'n3ds'
         shader_shbin_bin2s,
     ]
 
-    link_args = []
-
     elf = executable(
         name,
         generated_files + sources,
         include_directories: includes,
         dependencies: dependencies,
-        link_args: link_args,
+        link_args: [
+            '-Wl,-Map=' + name + '.map'
+        ],
         link_whole: [ctru_error_handler],
         name_suffix: 'elf',
     )
