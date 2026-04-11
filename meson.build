@@ -677,8 +677,14 @@ elif host_machine.system() == 'n3ds'
         ],
     )
 
+    if enable_profiling
+        output_name = name + '-prof'
+    else
+        output_name = name
+    endif
+
     rom_3dsx = custom_target(
-        output: name + '.3dsx',
+        output: output_name + '.3dsx',
         input: [elf, smdh],
         command: [
             '3dsxtool',
@@ -727,7 +733,7 @@ elif host_machine.system() == 'n3ds'
     version_array = meson.project_version().split('.')
 
     rom_cia = custom_target(
-        output: name + '.cia',
+        output: output_name + '.cia',
         input: [
             src_dir / 'n3ds/cia.rsf',
             elf,
