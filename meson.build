@@ -4,7 +4,7 @@ project(
     'cpp',
     version: '4.2.0a',
     license: 'AGPL3',
-    meson_version: '>=1.1.0',
+    meson_version: '>=1.2.0',
     default_options: [
         'buildtype=debugoptimized',
         'cpp_std=c++17',
@@ -135,7 +135,7 @@ if host_machine.system() == 'n3ds'
 
     add_global_arguments(
         [
-            '-I' + get_option('devkitpro') / 'libctru/include',
+            '-I' + meson.current_source_dir() / 'subprojects/libctru/libctru/include',
         ],
         language: ['c', 'cpp'],
     )
@@ -174,15 +174,12 @@ if host_machine.system() == 'n3ds'
         )
     endif
 
-    libctru = declare_dependency(
-        include_directories: include_directories(
-            get_option('devkitpro') / 'libctru/include',
-        ),
-        link_args: [
-            '-L' + get_option('devkitpro') / 'libctru/lib',
-            '-lctru',
-        ],
+    libctru_subproject = subproject(
+        'libctru',
+        required: true,
+        default_options: {'profiling': enable_profiling}
     )
+    libctru = libctru_subproject.get_variable('libctru_dep')
 
     if build_type.startswith('debug')
         citro3d_lib = 'citro3dd'
@@ -556,6 +553,7 @@ elif host_machine.system() == 'n3ds'
         'ctru_error_handler',
         files(
             src_dir / 'n3ds/ctru_assert.c',
+            src_dir / 'n3ds/ctru_debug_stderr.c',
             src_dir / 'n3ds/ctru_terminate.cpp',
         ),
         cpp_args: ['-fexceptions', '-D_GNU_SOURCE'],

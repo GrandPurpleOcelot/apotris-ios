@@ -374,16 +374,16 @@ void platformInit() {
     // consoleInit(GFX_BOTTOM, nullptr);
     consoleDebugInit(debugDevice_SVC);
 
-#ifdef TRACY_ENABLE
+#if 1
     if (true)
 #else
     if (__3dslink_host.s_addr != 0)
 #endif
     {
         constexpr size_t SOC_ALIGN = 0x1000;
-        constexpr size_t SOC_BUFFERSIZE = 0x100000;
+        constexpr size_t SOC_BUFFERSIZE = 2 * 1024 * 1024;
         static u32* SOC_buffer = (u32*)memalign(SOC_ALIGN, SOC_BUFFERSIZE);
-        socInit(SOC_buffer, SOC_BUFFERSIZE);
+        socInitMulti(SOC_buffer, SOC_BUFFERSIZE, 8);
     }
     if (__3dslink_host.s_addr != 0) {
         link3dsSocket = link3dsStdio();
