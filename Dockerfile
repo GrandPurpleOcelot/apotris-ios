@@ -34,7 +34,9 @@ RUN ln -sf /usr/share/arm-gnu-toolchain-*/bin/* /usr/bin/
 
 # Get missing windows deps and hack them in
 RUN curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-dlfcn-1.4.1-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/ && \
-    curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-curl-8.19.0-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/
+    curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-curl-8.19.0-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/ && \
+    sed -i 's|/mingw64|/usr/x86_64-w64-mingw32|g' /usr/x86_64-w64-mingw32/lib/pkgconfig/*.pc && \
+    sed -i '/^Requires.private:/d' /usr/x86_64-w64-mingw32/lib/pkgconfig/*.pc
 
 # Install latest meson 1.4.0
 ADD https://github.com/mesonbuild/meson/releases/download/1.4.0/meson-1.4.0.tar.gz .
