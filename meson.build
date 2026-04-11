@@ -319,7 +319,6 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
 
     dependencies = [
         dependency('threads'),
-        dependency('cpr'),
         json,
         ogg,
         openmpt,
@@ -357,6 +356,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         endif
 
         dependencies += dependency('gl')
+        dependencies += dependency('cpr')
     else
         add_project_arguments('-DWEB', language: ['cpp', 'c'])
     endif

@@ -87,7 +87,7 @@ jobs:
           fetch-depth: 1 # Keep for git hash
 
       - name: Install packaging tools
-        run: apt-get update && apt-get install -y zip git # Ensure zip and git are present
+        run: apt-get update && apt-get install -y zip git libcurl4-openssl-dev # Ensure zip, git and libcurl are present
 
       - name: Build for ${{ matrix.target }}
         shell: bash
