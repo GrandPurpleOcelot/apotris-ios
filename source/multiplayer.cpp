@@ -13,6 +13,10 @@
 #include <queue>
 #include <string>
 
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
+
 using namespace BlockEngine;
 
 int weightedRandomPlayerSelection();
@@ -61,6 +65,10 @@ void clearEnemyBoard() {
 int GameScene::handleMultiplayer(bool duringGame) {
     if (!multiplayer)
         return 0;
+
+#ifdef TRACY_ENABLE
+    ZoneScopedC(tracy::Color::AliceBlue);
+#endif
 
     // Update remote state and fetch incoming data
     bool playersPresent = multiplayerLink->sync();
@@ -243,6 +251,10 @@ void resetMultiplayerGame() {
 }
 
 void drawEnemyBoard() {
+#ifdef TRACY_ENABLE
+    ZoneScoped;
+#endif
+
     if (!multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>() &&
         (game->won || game->lost)) {
         return;

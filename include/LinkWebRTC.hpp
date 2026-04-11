@@ -7,6 +7,10 @@
 #include <queue>
 #include <sstream>
 
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
+
 constexpr char LINK_UNIVERSAL_MAX_PLAYERS = 5;
 constexpr char LINK_WIRELESS_QUEUE_SIZE = 30;
 #ifndef GBA
@@ -398,37 +402,93 @@ public:
     }
 
     bool send(u16 packet) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("link->send");
+        ZoneTextF("0x%04x", packet);
+#endif
         try {
             for (auto& it : dataChannelMap) {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("send_to_datachannel");
+                ZoneTextF("peer=%s", it.first.c_str());
+#endif
                 if (!it.second->isOpen()) {
                     std::cout << "DataChannel to " << it.first
-                              << " appears closed!";
+                              << " appears closed!" << std::endl;
+                    if (it.second->isClosed()) {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel closed");
+                        ZoneColor(tracy::Color::Red);
+#endif
+                    } else {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel not open");
+                        ZoneColor(tracy::Color::Orange);
+#endif
+                    }
                     return false;
                 }
                 if (!it.second->send(
                         reinterpret_cast<const std::byte*>(&packet),
-                        sizeof(u16)))
+                        sizeof(u16))) {
+#ifdef TRACY_ENABLE
+                    ZoneTextF("send returned false");
+                    ZoneColor(tracy::Color::Orange);
+#endif
                     return false;
+                }
             }
             return true;
         } catch (std::exception& e) {
+#ifdef TRACY_ENABLE
+            ZoneTextF("send err: %s", e.what());
+            ZoneColor(tracy::Color::Red);
+#endif
             printf("%s", e.what());
             return true;
         }
     }
     bool send(std::string msg) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("link->send(string)");
+        ZoneTextF("%s", msg.c_str());
+#endif
         try {
             for (auto& it : dataChannelMap) {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("send_to_datachannel");
+                ZoneTextF("peer=%s", it.first.c_str());
+#endif
                 if (!it.second->isOpen()) {
                     std::cout << "DataChannel to " << it.first
-                              << " appears closed!";
+                              << " appears closed!" << std::endl;
+                    if (it.second->isClosed()) {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel closed");
+                        ZoneColor(tracy::Color::Red);
+#endif
+                    } else {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel not open");
+                        ZoneColor(tracy::Color::Orange);
+#endif
+                    }
                     return false;
                 }
-                if (!it.second->send(msg))
+                if (!it.second->send(msg)) {
+#ifdef TRACY_ENABLE
+                    ZoneTextF("send returned false");
+                    ZoneColor(tracy::Color::Orange);
+#endif
                     return false;
+                }
             }
             return true;
         } catch (std::exception& e) {
+#ifdef TRACY_ENABLE
+            ZoneTextF("send err: %s", e.what());
+            ZoneColor(tracy::Color::Red);
+#endif
             printf("%s", e.what());
             return true;
         }
