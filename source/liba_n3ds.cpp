@@ -824,12 +824,17 @@ inline void ApotrisN3ds::render()
 
     audioProcess();
 
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("C3Di_RenderQueueWaitDone");
+#endif
+        // HACK: Make sure rendering has finished before waiting for vblank.
+        C3Di_RenderQueueWaitDone();
+    }
+    C3D_FrameSync();
 #ifdef TRACY_ENABLE
     FrameMark;
 #endif
-    // HACK: Make sure rendering has finished before waiting for vblank.
-    C3Di_RenderQueueWaitDone();
-    C3D_FrameSync();
 
     input().scan_input();
 
