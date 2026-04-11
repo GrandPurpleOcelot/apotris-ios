@@ -38,6 +38,15 @@
 #include <tracy/Tracy.hpp>
 #endif
 
+#include "LinkWebRTC.hpp"
+#include "multiplayerClasses.h"
+
+// TODO
+LinkUniversal* linkUniversal = nullptr;
+MultiplayerLink* multiplayerLink = nullptr;
+std::string roomId;
+std::string exceptionReason;
+
 extern "C" {
 
 // HACK: Use Citro3D internal API to wait for queue completion.
@@ -346,6 +355,7 @@ void platformInit() {
     // osSetSpeedupEnable(true);
 
     // Init libs
+    psInit();
     romfsInit();
     hidInit();
     gspInit();
@@ -416,6 +426,10 @@ void platformInit() {
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
     ApotrisN3ds::init();
+
+    // TODO: manage lifetime better
+    linkUniversal = new LinkUniversal();
+    multiplayerLink = new MultiplayerLink(linkUniversal);
 }
 
 void deinitialize() {
@@ -429,6 +443,15 @@ void deinitialize() {
         C3D_Fini();
     }
 
+    // TODO: manage lifetime better
+    delete multiplayerLink;
+    delete linkUniversal;
+
+    if (rtc::Cleanup().wait_for(std::chrono::seconds(10)) ==
+        std::future_status::timeout) {
+        fprintf(stderr, "datachannel cleanup timed out\n");
+    }
+
 #ifdef TRACY_ENABLE
     tracy::ShutdownProfiler();
 #endif
@@ -438,6 +461,7 @@ void deinitialize() {
     gspExit();
     hidExit();
     romfsExit();
+    psExit();
 
     if (link3dsSocket >= 0) {
         // FIXME: Despite the docs for `link3dsConnectToHost` claiming that the
@@ -1096,6 +1120,11 @@ uint32_t key_released(uint32_t key) {
 
 uint32_t keys_raw() {
     return ApotrisN3ds::instance().input().keys_raw();
+}
+
+void setUpPresentException(std::string error) {
+    multiplayerLink->deactivate(true);
+    changeScene(new MultiplayerExceptionScene(std::move(error)));
 }
 
 // ******************

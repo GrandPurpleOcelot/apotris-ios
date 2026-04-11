@@ -376,6 +376,8 @@ extern uint32_t keys_raw();
 
 extern std::map<int, std::string> keyToString;
 
+extern void setUpPresentException(std::string error);
+
 // ******************
 // N3DS-specific
 // ******************
