@@ -17,6 +17,7 @@ jobs:
             readme_src: tools/README.txt # Default GBA readme
             runs-on: ubuntu-latest
             container: akouzoukos/apotris:latest
+            pull_policy: always
           - target: switch
             platform: Nintendo Switch
             cross_file: meson/switch.ini
