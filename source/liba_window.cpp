@@ -21,13 +21,20 @@
 #include <string>
 #include <unistd.h>
 const char* homeDir = getenv("HOME");
-std::string savefileDir() { return std::string(homeDir) + "/Library/Application Support/Apotris"; }
+std::string savefileDir() {
+    return std::string(homeDir) + "/Library/Application Support/Apotris";
+}
 #else
 // For Linux directory save location
 #include <vector>
 #endif
 
 #include <string>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOGDI
+#endif
 
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
@@ -636,7 +643,8 @@ void rumbleOutput(uint16_t strength) {
     if (lastInputType != InputType::CONTROLLER)
         return;
 
-    uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
+    uint16_t sdl_strength =
+        std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
     SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 
