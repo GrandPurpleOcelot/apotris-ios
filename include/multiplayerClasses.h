@@ -139,7 +139,9 @@ public:
     std::map<u8, Player> players;
     StateMachine stateMachine;
     std::queue<u16> sendQueue;
+#ifdef GBA
     std::queue<Packet> seedQueue;
+#endif
 
     unsigned int playingPlayerCount = 0;
     bool playing = false;
@@ -420,8 +422,10 @@ struct MultiplayerStates {
             std::queue<Packet> readQueue = Owner().readPackets();
             process_queue(readQueue);
 
+#ifdef GBA
             std::queue<Packet> seedQueue = Owner().seedQueue;
             process_queue(seedQueue);
+#endif
 
             if (nextSeed) {
                 Owner().players[Owner().universal->currentPlayerId()].seeded =

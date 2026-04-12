@@ -156,7 +156,9 @@ void MultiplayerLink::deactivate(bool sendBye) {
 
 void MultiplayerLink::purgeQueues() {
     clearQueue(sendQueue);
+#ifdef GBA
     clearQueue(seedQueue);
+#endif
 }
 
 void MultiplayerLink::UpdateStateMachine() {
