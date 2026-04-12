@@ -44,6 +44,8 @@
 #define SEND_SEED 0x1000
 #define POWER_LEVEL 0x800
 
+std::string stringifyMultiplayerPacket(u16 packet);
+
 using namespace hsm;
 const int boardTile = 512 - 32 * 3 - 64 - 8;
 

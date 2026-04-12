@@ -24,6 +24,8 @@ using std::shared_ptr;
 using std::weak_ptr;
 template <class T> weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr) { return ptr; }
 
+std::string stringifyMultiplayerPacket(u16 packet);
+
 class LinkUniversal {
     static constexpr char STUN_SERVER[] = "stun:stun.l.google.com:19302";
     static constexpr char TYPE[] = "type";
@@ -405,6 +407,7 @@ public:
 #ifdef TRACY_ENABLE
         ZoneScopedN("link->send");
         ZoneTextF("0x%04x", packet);
+        ZoneTextF("%s", stringifyMultiplayerPacket(packet).c_str());
 #endif
         try {
             for (auto& it : dataChannelMap) {
