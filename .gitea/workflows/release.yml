@@ -88,7 +88,7 @@ jobs:
           fetch-depth: 1 # Keep for git hash
 
       - name: Install packaging tools
-        run: apt-get update && apt-get install -y zip git libcurl4-openssl-dev # Ensure zip, git and libcurl are present
+        run: apt-get update && apt-get install -y zip git libcurl4-openssl-dev pkg-config-mingw-w64-x86-64 # Ensure zip, git, libcurl and mingw pkg-config are present
 
       - name: Build for ${{ matrix.target }}
         shell: bash
