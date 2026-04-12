@@ -204,12 +204,18 @@ public:
     void activate();
 
     [[nodiscard]] std::queue<Packet> readPackets() const {
+#ifdef TRACY_ENABLE
+        ZoneScoped;
+#endif
         std::queue<Packet> queue;
         for (auto player : players) {
             int i = player.first;
             while (universal->canRead(i))
                 queue.emplace(i, universal->read(i));
         }
+#ifdef TRACY_ENABLE
+        ZoneTextF("count=%u", queue.size());
+#endif
         return queue;
     }
 

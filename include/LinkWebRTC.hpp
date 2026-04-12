@@ -280,9 +280,17 @@ public:
         } else {
             auto packet = std::get<rtc::binary>(data);
             if (packet.size() == 2) {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("recv_packet");
+                ZoneTextF("from=%s", peerId.c_str());
+#endif
                 std::byte foo = packet[0];
                 std::byte bar = packet[1];
                 u16 real = (u8)foo + ((u16)bar << 8);
+#ifdef TRACY_ENABLE
+                ZoneTextF("0x%04x", real);
+                ZoneTextF("%s", stringifyMultiplayerPacket(real).c_str());
+#endif
                 int realRemoteId = playerStringToId[peerId];
                 std::lock_guard<std::mutex> guard{readQueueLock};
                 readQueues[peerId].emplace((u8)(realRemoteId), real);
