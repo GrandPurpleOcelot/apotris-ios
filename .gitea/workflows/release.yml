@@ -99,7 +99,8 @@ jobs:
           build_dir="build-${{ matrix.target }}"
           if [[ "${{ matrix.target }}" == "web" ]]; then
             source "/root/emsdk/emsdk_env.sh"
-            meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} $build_dir
+            echo -e "[properties]\ncmake_toolchain_file = '/root/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake'" > ci_cross.ini
+            meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} --cross-file=ci_cross.ini $build_dir
             meson compile -C $build_dir
           elif [[ "${{ matrix.target }}" == "n3ds" ]]; then
             meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} $build_dir
