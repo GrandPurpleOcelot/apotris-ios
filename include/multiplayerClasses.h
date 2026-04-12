@@ -469,7 +469,6 @@ struct MultiplayerStates {
      */
     struct PlayersAwaitReady : StateWithOwner<MultiplayerLink> {
         bool sentReady = false;
-        // int readyTimeout = 3 * 60;
 
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
@@ -485,12 +484,6 @@ struct MultiplayerStates {
                     continue;
                 Owner().players[packet.playerId].ready = true;
             }
-            /*#if defined(GBA) && !defined(MULTIBOOT)
-            enableBot = true;
-            if (readyTimeout-- <= 0) {
-                Owner().readyUp();
-            }
-            #endif*/
 
             if (!sentReady &&
                 Owner().players[Owner().universal->currentPlayerId()].ready) {

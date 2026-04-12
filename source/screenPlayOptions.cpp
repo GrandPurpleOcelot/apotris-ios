@@ -763,10 +763,20 @@ void MultBattleScene::handleConnectionDisplay() {
             .ready &&
         !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
         wordSprites[7]->setText("Ready!");
+#if !defined(NO_DIAGNOSE) && !defined(MULTIBOOT)
+        if (enableBot) {
+            wordSprites[7]->setText("bot Ready!");
+        }
+#endif
         wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
     } else if (multiplayerLink->stateMachine
                    .IsInState<MultiplayerStates::PlayersAwaitReady>()) {
         wordSprites[7]->setText("Not Ready");
+#if !defined(NO_DIAGNOSE) && !defined(MULTIBOOT)
+        if (enableBot) {
+            wordSprites[7]->setText("botNot Ready");
+        }
+#endif
         wordSprites[7]->show(236 - wordSprites[7]->width, 160 - 12, 15);
     } else if (multiplayerLink->stateMachine
                    .IsInState<MultiplayerStates::Playing>()) {
@@ -884,6 +894,14 @@ bool MultBattleScene::control() {
         sfx(SFX_MENUCONFIRM);
         multiplayerLink->readyUp();
     }
+#if !defined(NO_DIAGNOSE) && !defined(MULTIBOOT)
+    if (key_hit(k.special3)) {
+        botThinkingSpeed = 1;
+        botSleepDuration = 10;
+        botStepMax = 1;
+        enableBot = !enableBot;
+    }
+#endif
 
     return false;
 }
