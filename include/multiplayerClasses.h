@@ -469,6 +469,7 @@ struct MultiplayerStates {
      */
     struct PlayersAwaitReady : StateWithOwner<MultiplayerLink> {
         bool sentReady = false;
+        bool multiplayerStarting = false;
 
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
@@ -494,17 +495,15 @@ struct MultiplayerStates {
                 Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
 #endif
             }
-        }
 
-        void OnExit() override {
-            if (!sentReady &&
-                Owner().players[Owner().universal->currentPlayerId()].ready) {
-                Owner().broadcastState(UPDATE_STATE + LETS_PLAY);
+            if (Owner().allReady(Owner().playingPlayerCount)) {
+                multiplayerStart = true;
+                multiplayerStarting = true;
             }
         }
 
         Transition GetTransition() override {
-            if (Owner().allReady(Owner().playingPlayerCount)) {
+            if (multiplayerStarting && !multiplayerStart) {
                 return SiblingTransition<Playing>();
             }
 
@@ -520,21 +519,15 @@ struct MultiplayerStates {
      */
     struct Playing : StateWithOwner<MultiplayerLink> {
         int echoCounter = 0;
-        int countdownTimeout = 120;
 
         void OnEnter() override {
             bool wasPlaying = Owner().playing;
             if (!wasPlaying) {
                 Owner().playing = true;
-                playAgain = Owner().playAgain;
-                multiplayerStart = true;
             }
         }
 
         void Update() override {
-            if (countdownTimeout-- > 0)
-                return;
-
             std::queue<Packet> queue = Owner().readPackets();
             while (!queue.empty()) {
                 Packet packet = queue.front();
@@ -572,9 +565,6 @@ struct MultiplayerStates {
         }
 
         Transition GetTransition() override {
-            if (countdownTimeout > 0)
-                return NoTransition();
-
             if (game->lost) {
                 return SiblingTransition<Lost>();
             } else if (game->won) {
