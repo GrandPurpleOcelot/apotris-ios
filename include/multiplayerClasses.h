@@ -386,6 +386,8 @@ struct MultiplayerStates {
      * before proceeding, so each client will have the same random state.
      */
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
+        int broadcastSeedCounter = 0;
+
         void OnEnter() override {
 #ifdef GBA
             if (Owner().universal->currentPlayerId())
@@ -454,12 +456,21 @@ struct MultiplayerStates {
             if (nextSeed) {
                 Owner().players[Owner().universal->currentPlayerId()].seeded =
                     true;
-                Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
+                // Prevent flooding weak clients like 3DS
+                if ((broadcastSeedCounter++) % 32 == 0) {
+                    Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
+                }
             }
         }
 
         Transition GetTransition() override {
             if (Owner().allSeeded(Owner().universal->playerCount())) {
+#ifndef GBA
+                // There can be a race condition in which we received SEND_SEED
+                // from all peers but we haven't sent SEND_SEED to the last
+                // peer, so send SEND_SEED one last time.
+                Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
+#endif
                 return SiblingTransition<PlayersSeeded>();
             }
             return NoTransition();
