@@ -431,8 +431,10 @@ public:
         peerConnectionMap.clear();
         playerStringToId.clear();
         playerIdToString.clear();
+        playerIdToName.clear();
         ws->close();
         localId = randomId(10);
+        playerId = -1;
     }
 
     [[nodiscard]] bool sync() const { return isConnected(); }

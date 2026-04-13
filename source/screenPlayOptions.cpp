@@ -815,15 +815,17 @@ void MultBattleScene::handleConnectionDisplay() {
     while (debugConnection.size() > 10)
         debugConnection.pop_front();
 
-    // int c = 0;
-    // for (auto const& player : multiplayerLink->players) {
-    //     std::string txt =
-    //         ((player.first == multiplayerLink->universal->currentPlayerId())
-    //              ? ">"
-    //              : " ") +
-    //         std::to_string(player.first) + " " + player.second.toString();
-    //     aprint(txt, 3, 3 + c++);
-    // }
+#ifndef NO_DIAGNOSE
+    int c = 0;
+    for (auto const& player : multiplayerLink->players) {
+        std::string txt =
+            ((player.first == multiplayerLink->universal->currentPlayerId())
+                 ? ">"
+                 : " ") +
+            std::to_string(player.first) + " " + player.second.toString();
+        aprint(txt, 3, 3 + c++);
+    }
+#endif
 
     // c = 0;
     // for (auto const& str : debugConnection) {

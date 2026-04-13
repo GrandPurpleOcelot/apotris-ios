@@ -172,6 +172,7 @@ public:
         universal->sync();
         nextSeed = 0;
         purgeQueues();
+        players.clear();
     }
 
     void initPlayer(u8 i) { players[i] = Player(i); }
