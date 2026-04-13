@@ -213,6 +213,22 @@ public:
             while (universal->canRead(i))
                 queue.emplace(i, universal->read(i));
         }
+#ifndef GBA
+        while (std::optional<BoardUpdatePacket> boardUpdate =
+                   universal->readBoardUpdate()) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("read_board_update");
+#endif
+
+            for (size_t i = 0; i < 20; i++) {
+                const u16 row_bitfield = boardUpdate->boardRows[i];
+                // ENCODE(SEND_ROW) == (SEND_ROW << 13) == 0xa000
+                const u16 packet = (u16)((SEND_ROW << 13) + ((i & 0x1f) << 10) +
+                                         (row_bitfield & 0x3ff));
+                queue.emplace(boardUpdate->playerId, packet);
+            }
+        }
+#endif
 #ifdef TRACY_ENABLE
         ZoneTextF("count=%u", queue.size());
 #endif

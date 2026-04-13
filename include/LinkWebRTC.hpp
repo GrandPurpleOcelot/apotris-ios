@@ -26,6 +26,12 @@ template <class T> weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr) { return ptr; }
 
 std::string stringifyMultiplayerPacket(u16 packet);
 
+struct BoardUpdatePacket {
+    u8 playerId;
+    u16 seq;
+    std::array<u16, 20> boardRows;
+};
+
 class LinkUniversal {
     static constexpr char STUN_SERVER[] = "stun:stun.l.google.com:19302";
     static constexpr char TYPE[] = "type";
@@ -46,6 +52,7 @@ class LinkUniversal {
 
     rtc::Configuration config;
     std::map<std::string, std::queue<Packet>> readQueues;
+    std::queue<BoardUpdatePacket> incomingBoardUpdates;
     bool active = false;
     shared_ptr<rtc::WebSocket> ws;
     int playerId = -1;
@@ -294,6 +301,41 @@ public:
                 int realRemoteId = playerStringToId[peerId];
                 std::lock_guard<std::mutex> guard{readQueueLock};
                 readQueues[peerId].emplace((u8)(realRemoteId), real);
+            } else if (packet.size() == 44 &&
+                       ((u16)packet[0] | ((u16)packet[1] << 8)) == 0x1c00) {
+                // 0x1c00 == ENCODE(SEND_ROW) + (0x1f << 10)
+#ifdef TRACY_ENABLE
+                ZoneScopedN("recv_packet(board)");
+                ZoneTextF("from=%s", peerId.c_str());
+#endif
+                int realRemoteId = playerStringToId[peerId];
+                const u16 seq = (u16)packet[2] | ((u16)packet[3] << 8);
+
+#ifdef TRACY_ENABLE
+                ZoneTextF("seq=%u", seq);
+#endif
+                std::lock_guard<std::mutex> guard{readQueueLock};
+                auto& boardUpdate =
+                    incomingBoardUpdates.emplace(BoardUpdatePacket{
+                        .playerId = (u8)realRemoteId,
+                        .seq = seq,
+                    });
+                for (size_t i = 0; i < 20; i++) {
+                    const u16 row_bitfield = (u16)packet[4 + i * 2] |
+                                             ((u16)packet[4 + i * 2 + 1] << 8);
+                    boardUpdate.boardRows[i] = row_bitfield;
+                }
+            } else {
+                fprintf(stderr, "Received unknown message of len=%d",
+                        packet.size());
+                for (size_t i = 0; i < packet.size(); i++) {
+                    fprintf(stderr, "%02X ",
+                            *((unsigned char*)packet.data() + i));
+                    if (i % 16 == 15 && i + 1 != packet.size()) {
+                        fputs("\n", stderr);
+                    }
+                }
+                fputs("\n", stderr);
             }
         }
     }
@@ -411,11 +453,35 @@ public:
         return front.packet;
     }
 
+    std::optional<BoardUpdatePacket> readBoardUpdate() {
+        std::lock_guard<std::mutex> guard{readQueueLock};
+        if (incomingBoardUpdates.empty()) {
+            return std::nullopt;
+        }
+        auto front = incomingBoardUpdates.front();
+        incomingBoardUpdates.pop();
+        return front;
+    }
+
     bool send(u16 packet) {
 #ifdef TRACY_ENABLE
-        ZoneScopedN("link->send");
+        ZoneScopedN("link->send(u16)");
         ZoneTextF("0x%04x", packet);
         ZoneTextF("%s", stringifyMultiplayerPacket(packet).c_str());
+#endif
+        return send(reinterpret_cast<const std::byte*>(&packet), sizeof(u16));
+    }
+    template <size_t N> bool send(const std::array<std::byte, N>& packet) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("link->send(array)");
+        ZoneTextF("len=%zu", packet.size());
+#endif
+        return send(packet.data(), packet.size());
+    }
+    bool send(const std::byte* data, size_t len) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("link->send(data, len)");
+        ZoneTextF("len=%zu", len);
 #endif
         try {
             for (auto& it : dataChannelMap) {
@@ -439,9 +505,7 @@ public:
                     }
                     return false;
                 }
-                if (!it.second->send(
-                        reinterpret_cast<const std::byte*>(&packet),
-                        sizeof(u16))) {
+                if (!it.second->send(data, len)) {
 #ifdef TRACY_ENABLE
                     ZoneTextF("send returned false");
                     ZoneColor(tracy::Color::Orange);

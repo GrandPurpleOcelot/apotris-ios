@@ -111,6 +111,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
             ownPower += atck.amount;
         } else {
             if (duringGame) {
+#ifdef GBA
                 int rowsToSend = 1;
                 u16 packet;
                 bool sent;
@@ -136,6 +137,38 @@ int GameScene::handleMultiplayer(bool duringGame) {
                     sent = multiplayerLink->universal->send(packet);
 
                 } while (rowsToSend-- && sent); // avoid flooding
+#else
+                // Send full board updates every 16 frames instead of sending
+                // two rows every frame because it is more efficient.
+                if (game->inGameTimer % 16 == 0) {
+                    // Packet format:
+                    // bytes 0-1: SEND_ROW with height = 0x1f
+                    // bytes 2-3: (framecount / 16) % 65536
+                    // bytes 4-5..42-43: u16 row bitfields from heights 0 to 19
+
+                    std::array<std::byte, 44> packet;
+
+                    constexpr u16 pkt_header = ENCODE(SEND_ROW) + (0x1f << 10);
+                    packet[0] = std::byte(pkt_header & 0xff);
+                    packet[1] = std::byte(pkt_header >> 8);
+
+                    const u16 pkt_seq = game->inGameTimer / 16;
+                    packet[2] = std::byte(pkt_seq & 0xff);
+                    packet[3] = std::byte(pkt_seq >> 8);
+
+                    for (size_t r = 0; r < 20; r++) {
+                        u16 row_bitfield = 0;
+                        for (int i = 0; i < 10; i++)
+                            if (game->board[r + 20][i])
+                                row_bitfield += 1 << i;
+
+                        packet[4 + r * 2] = std::byte(row_bitfield & 0xff);
+                        packet[4 + r * 2 + 1] = std::byte(row_bitfield >> 8);
+                    }
+
+                    multiplayerLink->universal->send(packet);
+                }
+#endif
             }
         }
     }
