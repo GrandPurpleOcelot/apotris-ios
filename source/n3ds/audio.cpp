@@ -422,13 +422,22 @@ int MusicSourceXMP::get_sample_rate() { return NDSP_SAMPLE_RATE; }
 bool MusicSourceXMP::get_is_stereo() { return true; }
 
 size_t MusicSourceXMP::get_samples(u8* buffer, size_t len) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("XMP::get_samples(xmp_play_buffer)");
+#endif
     auto res = xmp_play_buffer(m_xmp_ctx, buffer, len, m_loop_count);
+#ifdef TRACY_ENABLE
+    ZoneTextF("res=%d", res);
+#endif
     if (res == -XMP_END) {
         return 0;
     } else if (res != 0) {
         fprintf(stderr, "Failed to continue playing song.\n");
         return 0;
     }
+#ifdef TRACY_ENABLE
+    ZoneTextF("read=%zu", len);
+#endif
     return len;
 }
 
@@ -549,8 +558,14 @@ size_t MusicSourceVorbis::get_samples(u8* buffer, size_t len) {
     size_t totalRead = 0;
     int bitstream;
     do {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Vorbis::get_samples(ov_read)");
+#endif
         long read = ov_read(&m_vorbis_file, (char*)buffer + totalRead,
                             len - totalRead, &bitstream);
+#ifdef TRACY_ENABLE
+        ZoneTextF("read=%ld", read);
+#endif
         if (read == 0)
             break;
         if (read < 0) {
@@ -711,11 +726,17 @@ size_t MusicSourceOpus::get_samples(u8* buffer, size_t len) {
     size_t totalRead = 0;
     int bitstream;
     do {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Opus::get_samples(op_read)");
+#endif
         // Note: op_read request buf_size in total samples count, but returns
         // the samples count _per channel_.
         int read_samples_per_channel =
             op_read(m_opus_file.get(), (opus_int16*)(buffer + totalRead),
                     (len - totalRead) / 2, &bitstream);
+#ifdef TRACY_ENABLE
+        ZoneTextF("read_samples_per_channel=%d", read_samples_per_channel);
+#endif
         if (read_samples_per_channel == 0)
             break;
         if (read_samples_per_channel < 0) {
@@ -730,6 +751,9 @@ size_t MusicSourceOpus::get_samples(u8* buffer, size_t len) {
         }
 
         size_t read = (size_t)read_samples_per_channel * (size_t)channels * 2u;
+#ifdef TRACY_ENABLE
+        ZoneTextF("read=%zd", read);
+#endif
         totalRead += read;
 
         auto current_pcm = op_pcm_tell(m_opus_file.get());
@@ -957,9 +981,15 @@ size_t MusicSourceMpg123::get_samples(u8* buffer, size_t len) {
     size_t totalRead = 0;
     int bitstream;
     do {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Mpg123::get_samples(mpg123_read)");
+#endif
         size_t read = 0;
         auto res =
             mpg123_read(m_mh.get(), buffer + totalRead, len - totalRead, &read);
+#ifdef TRACY_ENABLE
+        ZoneTextF("res=%d", res);
+#endif
         if (res != MPG123_OK && res != MPG123_NEW_FORMAT) {
             if (res == MPG123_DONE) {
                 break;
@@ -967,6 +997,9 @@ size_t MusicSourceMpg123::get_samples(u8* buffer, size_t len) {
             fprintf(stderr, "mpg123 read error: %d\n", res);
             return 0;
         }
+#ifdef TRACY_ENABLE
+        ZoneTextF("read=%zu", read);
+#endif
         if (read == 0)
             break;
 
@@ -1774,6 +1807,7 @@ void NdspAudioThread::audio_thread() {
 bool NdspAudioThread::start_song(int song_id, bool loop) {
 #ifdef TRACY_ENABLE
     ZoneScoped;
+    ZoneTextF("song=%d", song_id);
 #endif
 
     stop_song();
