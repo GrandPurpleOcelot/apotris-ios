@@ -512,7 +512,10 @@ public:
                     ZoneTextF("send returned false");
                     ZoneColor(tracy::Color::Orange);
 #endif
-                    return false;
+                    // The return value of `send` seems unusable. `false` may
+                    // mean the message wasn't sent due to the DataChannel being
+                    // closed, but it could also mean the message has been
+                    // buffered... Anyway, we should not return false here.
                 }
             }
             return true;
@@ -557,7 +560,10 @@ public:
                     ZoneTextF("send returned false");
                     ZoneColor(tracy::Color::Orange);
 #endif
-                    return false;
+                    // The return value of `send` seems unusable. `false` may
+                    // mean the message wasn't sent due to the DataChannel being
+                    // closed, but it could also mean the message has been
+                    // buffered... Anyway, we should not return false here.
                 }
             }
             return true;
