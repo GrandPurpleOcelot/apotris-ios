@@ -14,8 +14,11 @@ extern "C" {
 // clang-format on
 }
 
+extern "C" {
 extern errorConf ctru_error;
 extern char ctru_err_buf[1024];
+extern int ctru_is_aborting;
+}
 
 static void mystrcat_s(char* dst, size_t sz, const char* src) {
     char* start = dst + strnlen(dst, sz);
@@ -49,6 +52,7 @@ static void terminate_handler() noexcept {
             errorDisp(&ctru_error);
         }
 
+        ctru_is_aborting = 1;
         abort();
     }
     terminating = true;
@@ -95,6 +99,7 @@ static void terminate_handler() noexcept {
         errorDisp(&ctru_error);
     }
 
+    ctru_is_aborting = 1;
     if (prev_terminate_handler) {
         prev_terminate_handler();
     }
