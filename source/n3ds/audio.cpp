@@ -1106,8 +1106,8 @@ constexpr int MUSIC_SAMPLING_RATE =
     NDSP_SAMPLE_RATE; // native 3DS DSP sampling rate.
 constexpr int MUSIC_NUM_CHANNELS = 2;
 constexpr int MUSIC_BITS_PER_SAMPLE = 16;
-// 0.1-second buffer
-constexpr size_t MUSIC_BUFFER_SAMPLE_COUNT = MUSIC_SAMPLING_RATE * 1 / 10;
+// Approximately 30 ms per buffer at native rate, or 20 ms at 48 kHz
+constexpr size_t MUSIC_BUFFER_SAMPLE_COUNT = 1024;
 constexpr size_t MUSIC_BUFFER_SIZE = MUSIC_BUFFER_SAMPLE_COUNT *
                                      MUSIC_NUM_CHANNELS *
                                      (MUSIC_BITS_PER_SAMPLE / 8);
@@ -1120,10 +1120,11 @@ static std::array<ndspWaveBuf, CH_NDSP_SFX_LAST - CH_NDSP_SFX_FIRST + 1>
     ndsp_wave_buf_sfx{};
 static std::list<int> sfx_use_order{};
 
-// Buffers for storing the music output, two of them to allow flipping
-// (therefore size is `MUSIC_BUFFER_SIZE * 2`).
+constexpr int MUSIC_BUFFER_COUNT = 4;
+// Buffers for storing the music output, 4 of them
+// (therefore size is `MUSIC_BUFFER_SIZE * 4`).
 static ctru::linear::ptr<u8[]> music_audio_buf{};
-static std::array<ndspWaveBuf, 2> ndsp_wave_buf_music{};
+static std::array<ndspWaveBuf, MUSIC_BUFFER_COUNT> ndsp_wave_buf_music{};
 static int music_next_buf_idx = 0;
 
 static float music_volume = 1.f;
@@ -1270,8 +1271,8 @@ void loadAudio(std::string pathPrefix) {
     ndspChnSetRate(CH_NDSP_MUSIC, MUSIC_SAMPLING_RATE);
     ndspChnSetFormat(CH_NDSP_MUSIC, NDSP_FORMAT_STEREO_PCM16);
 
-    music_audio_buf =
-        ctru::linear::make_ptr_nothrow<u8[]>(MUSIC_BUFFER_SIZE * 2);
+    music_audio_buf = ctru::linear::make_ptr_nothrow<u8[]>(MUSIC_BUFFER_SIZE *
+                                                           MUSIC_BUFFER_COUNT);
     for (auto& wave_buf : ndsp_wave_buf_music) {
         wave_buf.status = NDSP_WBUF_FREE;
         wave_buf.looping = false;
@@ -1902,12 +1903,15 @@ bool NdspAudioThread::fill_buffer() {
     if (new_sample_rate != m_current_sample_rate ||
         new_is_stereo != m_current_is_stereo) {
 
-        // Wait until the other buffer is also drained, since we do not want to
-        // mess with the sample rate or format when there is still existing
+        // Wait until the other buffers are also drained, since we do not want
+        // to mess with the sample rate or format when there is still existing
         // audio being played...
-        status = ndsp_wave_buf_music[(music_next_buf_idx + 1) % 2].status;
-        if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
-            return true;
+        for (int i = music_next_buf_idx + 1;
+             (i %= MUSIC_BUFFER_COUNT, i != music_next_buf_idx); i++) {
+            status = ndsp_wave_buf_music[i].status;
+            if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
+                return true;
+            }
         }
 
         ndspChnSetRate(CH_NDSP_MUSIC, new_sample_rate);
@@ -1927,6 +1931,9 @@ bool NdspAudioThread::fill_buffer() {
     }
 
     if (!fill_buffer_impl()) {
+#ifdef TRACY_ENABLE
+        ZoneText("Song ended", sizeof("Song ended"));
+#endif
         return false;
     }
 
@@ -1966,7 +1973,7 @@ bool NdspAudioThread::fill_buffer_impl() {
     wave_buf.nsamples = len / 2 / (m_current_is_stereo ? 2 : 1);
     ndspChnWaveBufAdd(CH_NDSP_MUSIC, &wave_buf);
 
-    music_next_buf_idx = (music_next_buf_idx + 1) % 2;
+    music_next_buf_idx = (music_next_buf_idx + 1) % MUSIC_BUFFER_COUNT;
 
     return true;
 }
