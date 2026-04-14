@@ -51,6 +51,8 @@ class LinkUniversal {
         dataChannelMap;
     std::unordered_map<u8, std::string> playerIdToName;
 
+    std::mutex readQueueLock;
+
 public:
     std::string localId;
     std::string localPlayerName;
@@ -276,6 +278,7 @@ public:
                 std::byte bar = packet[1];
                 u16 real = (u8)foo + ((u16)bar << 8);
                 int realRemoteId = playerStringToId[peerId];
+                std::lock_guard<std::mutex> guard{readQueueLock};
                 readQueues[peerId].emplace((u8)(realRemoteId), real);
             }
         }
@@ -382,11 +385,13 @@ public:
         if (pId == playerId)
             return false;
         std::string peerId = playerIdToString[pId];
+        std::lock_guard<std::mutex> guard{readQueueLock};
         return !readQueues[peerId].empty();
     }
 
     u16 read(u8 pId) {
         std::string realRemoteId = playerIdToString[pId];
+        std::lock_guard<std::mutex> guard{readQueueLock};
         auto front = readQueues[realRemoteId].front();
         readQueues[realRemoteId].pop();
         return front.packet;

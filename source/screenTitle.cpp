@@ -404,6 +404,10 @@ void TitleScene::init() {
 
     versionText.setText("v" APOTRIS_VERSION);
 
+#ifndef NO_DIAGNOSE
+    wordSprites[2].setText("DEBUG BUILD");
+#endif
+
     nameText.setText("akouzoukos");
 
     enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
@@ -421,6 +425,10 @@ void TitleScene::draw() {
     const int y = 160 - (1) * 8;
     versionText.show(0, y, 15);
     nameText.show(240 - nameText.width, y, 15);
+
+#ifndef NO_DIAGNOSE
+    wordSprites[2].show(0, y - 8, 15);
+#endif
 
     if (flashTimer < flashMax / 2) {
         int w = wordSprites[0].width + wordSprites[1].width + 6;
