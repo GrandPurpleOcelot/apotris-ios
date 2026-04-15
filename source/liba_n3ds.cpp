@@ -242,9 +242,11 @@ int blendInfo = 0;
 
 static void onHBlank(int line);
 uint8_t customBlend(uint8_t a, uint8_t b);
-static void showFPS();
+static void calcAndShowFPS(double elapsedMs);
 
-static std::list<float> fpsHistory;
+constexpr size_t FRAME_TIME_HISTORY_COUNT = 60;
+static std::queue<u32> frameTimeHistory;
+static u32 frameTimeHistorySum = 0;
 float fps = 0;
 
 static inline int rgb5to8(u16 color) {
@@ -869,12 +871,7 @@ inline void ApotrisN3ds::render()
 
     osTickCounterUpdate(&m_fps_tick_counter);
     double elapsedMS = osTickCounterRead(&m_fps_tick_counter);
-    fps = 1000.0f / elapsedMS;
-    if (fps < 59) {
-        // printf("fps stutter: %.2f (%.2f ms)\n", fps, elapsedMS);
-    }
-
-    showFPS();
+    calcAndShowFPS(elapsedMS);
 
 #ifdef DEBUG_UI
     dbg::sep("- C3D:");
@@ -941,33 +938,39 @@ s16 sinLut(int angle) {
 
 uint8_t customBlend(uint8_t a, uint8_t b) { return (a + b + b + b + b) / 5; }
 
-void showFPS() {
+void calcAndShowFPS(double elapsedMs) {
+    fps = 1000.0f / (float)elapsedMs;
+    if (fps < 59) {
+        // printf("fps stutter: %.2f (%.2f ms)\n", fps, elapsedMS);
+    }
+
     if (savefile->settings.showFPS) {
-        if (fpsHistory.size() > 9) {
-            fpsHistory.pop_front();
+        u32 poppedElapsed = 0;
+        if (frameTimeHistory.size() >= FRAME_TIME_HISTORY_COUNT) {
+            poppedElapsed = frameTimeHistory.front();
+            frameTimeHistory.pop();
         }
+        frameTimeHistorySum -= poppedElapsed;
 
-        fpsHistory.push_back(fps);
+        u32 elapsedUs = (u32)((float)elapsedMs * 1000);
+        frameTimeHistorySum += elapsedUs;
+        frameTimeHistory.push(elapsedUs);
 
-        float average = 0;
-
-        for (const float value : fpsHistory)
-            average += value;
-
-        average /= fpsHistory.size();
+        float averageFps =
+            1000000.f * FRAME_TIME_HISTORY_COUNT / (float)frameTimeHistorySum;
 
 #ifdef DEBUG_UI
-        dbg::show_fps(average);
+        dbg::show_fps(averageFps);
 #endif
 
         // HACK: Save and restore fill screen state (for credits letterboxing)
         const bool fillScreen = tng::bg_screenblock_fill_screen_p[29];
 
         char buff[8];
-        snprintf(buff, 8, "%.2f", average);
+        snprintf(buff, 8, "%c%.2f", (averageFps > 59) ? ' ' : '#', averageFps);
 
         const int width = 30 - 2 * (savefile->settings.aspectRatio == 1);
-        aprintColor(buff, width - 5, 0, 1);
+        aprintColor(buff, width - 6, 0, 1);
 
         tng::bg_screenblock_fill_screen_p[29] = fillScreen;
     }
