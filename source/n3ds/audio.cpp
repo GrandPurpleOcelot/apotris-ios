@@ -37,6 +37,9 @@
 #endif
 
 constexpr size_t STREAM_READ_BUFSIZE = 32768;
+// Decode music in chunks and yield in between to prevent blocking the main
+// thread
+constexpr size_t STREAM_DECODE_CHUNK_SAMPLES = 128;
 
 // --- Poor-man's WAV parser ---
 //
@@ -563,8 +566,10 @@ size_t MusicSourceVorbis::get_samples(u8* buffer, size_t len) {
 #ifdef TRACY_ENABLE
         ZoneScopedN("Vorbis::get_samples(ov_read)");
 #endif
+        auto to_read = std::min(len - totalRead, STREAM_DECODE_CHUNK_SAMPLES *
+                                                     2 * info->channels);
         long read = ov_read(&m_vorbis_file, (char*)buffer + totalRead,
-                            len - totalRead, &bitstream);
+                            (int)to_read, &bitstream);
 #ifdef TRACY_ENABLE
         ZoneTextF("read=%ld", read);
 #endif
@@ -600,6 +605,7 @@ size_t MusicSourceVorbis::get_samples(u8* buffer, size_t len) {
             break;
         }
 
+        svcSleepThread(0);
     } while (totalRead < len);
 
     return totalRead;
@@ -733,9 +739,11 @@ size_t MusicSourceOpus::get_samples(u8* buffer, size_t len) {
 #endif
         // Note: op_read request buf_size in total samples count, but returns
         // the samples count _per channel_.
+        auto to_read = std::min((len - totalRead) / 2,
+                                STREAM_DECODE_CHUNK_SAMPLES * channels);
         int read_samples_per_channel =
             op_read(m_opus_file.get(), (opus_int16*)(buffer + totalRead),
-                    (len - totalRead) / 2, &bitstream);
+                    (int)to_read, &bitstream);
 #ifdef TRACY_ENABLE
         ZoneTextF("read_samples_per_channel=%d", read_samples_per_channel);
 #endif
@@ -776,6 +784,7 @@ size_t MusicSourceOpus::get_samples(u8* buffer, size_t len) {
             break;
         }
 
+        svcSleepThread(0);
     } while (totalRead < len);
 
     return totalRead;
@@ -975,21 +984,23 @@ bool MusicSourceMpg123::get_is_stereo() {
     auto res =
         mpg123_getformat2(m_mh.get(), &rate, &channels, &encoding, false);
     if (res != MPG123_OK) {
-        return NDSP_SAMPLE_RATE;
+        return true;
     }
     return channels == MPG123_STEREO;
 }
 
 size_t MusicSourceMpg123::get_samples(u8* buffer, size_t len) {
+    int channels = get_is_stereo() ? 2 : 1;
     size_t totalRead = 0;
     int bitstream;
     do {
 #ifdef TRACY_ENABLE
         ZoneScopedN("Mpg123::get_samples(mpg123_read)");
 #endif
+        auto to_read = std::min((len - totalRead),
+                                STREAM_DECODE_CHUNK_SAMPLES * 2 * channels);
         size_t read = 0;
-        auto res =
-            mpg123_read(m_mh.get(), buffer + totalRead, len - totalRead, &read);
+        auto res = mpg123_read(m_mh.get(), buffer + totalRead, to_read, &read);
 #ifdef TRACY_ENABLE
         ZoneTextF("res=%d", res);
 #endif
@@ -1014,6 +1025,8 @@ size_t MusicSourceMpg123::get_samples(u8* buffer, size_t len) {
 #endif
             break;
         }
+
+        svcSleepThread(0);
     } while (totalRead < len);
 
     return totalRead;
