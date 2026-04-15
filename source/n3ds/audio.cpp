@@ -36,6 +36,8 @@
 #include <tracy/Tracy.hpp>
 #endif
 
+constexpr size_t STREAM_READ_BUFSIZE = 32768;
+
 // --- Poor-man's WAV parser ---
 //
 // Based on http://soundfile.sapp.org/doc/WaveFormat/
@@ -446,7 +448,7 @@ class MusicSourceVorbis final : public MusicSource {
     float m_playback_rate;
     int m_current_bitstream{0};
     ogg_int64_t m_current_bitstream_end_pos{};
-    std::array<char, 65536> m_filebuf;
+    std::array<char, STREAM_READ_BUFSIZE> m_filebuf;
 
 public:
     inline MusicSourceVorbis() {}
@@ -483,7 +485,7 @@ bool MusicSourceVorbis::test(const std::filesystem::path& path) {
         fprintf(stderr, "Failed to open file: %s\n", path.c_str());
         return false;
     }
-    setvbuf(fp, nullptr, _IOFBF, 65536);
+    setvbuf(fp, nullptr, _IOFBF, STREAM_READ_BUFSIZE);
 
     OggVorbis_File vf;
     auto res = ov_test(fp, &vf, nullptr, 0);
@@ -612,7 +614,7 @@ class MusicSourceOpus final : public MusicSource {
     float m_playback_rate;
     int m_current_bitstream{0};
     ogg_int64_t m_current_bitstream_end_pos{};
-    std::array<char, 65536> m_filebuf;
+    std::array<char, STREAM_READ_BUFSIZE> m_filebuf;
 
 public:
     inline MusicSourceOpus() {}
@@ -647,7 +649,7 @@ bool MusicSourceOpus::test(const std::filesystem::path& path) {
     int error;
     OpusFileCallbacks cb;
     FILE* fp = (FILE*)op_fopen(&cb, path.c_str(), "rb");
-    setvbuf(fp, nullptr, _IOFBF, 65536);
+    setvbuf(fp, nullptr, _IOFBF, STREAM_READ_BUFSIZE);
     std::unique_ptr<OggOpusFile, Opus_Deleter> opus_file{
         op_test_callbacks(fp, &cb, nullptr, 0, &error)};
     if (!opus_file) {
@@ -786,7 +788,7 @@ class MusicSourceMpg123 final : public MusicSource {
 
     std::unique_ptr<mpg123_handle, Mpg123_Deleter> m_mh{};
     float m_playback_rate;
-    std::array<char, 65536> m_filebuf;
+    std::array<char, STREAM_READ_BUFSIZE> m_filebuf;
 
     static void configure_mpg123(mpg123_handle* mh) {
         auto res = mpg123_param2(mh, MPG123_ADD_FLAGS, MPG123_NO_RESYNC, 0);
@@ -898,9 +900,10 @@ bool MusicSourceMpg123::test(const std::filesystem::path& path) {
         return false;
     }
 
-    std::unique_ptr<u8[]> file_data = std::make_unique<u8[]>(65536);
+    std::unique_ptr<u8[]> file_data =
+        std::make_unique<u8[]>(STREAM_READ_BUFSIZE);
     while (true) {
-        fs.read((char*)file_data.get(), 65536);
+        fs.read((char*)file_data.get(), STREAM_READ_BUFSIZE);
         if (fs.gcount() == 0) {
 #ifndef NDEBUG
             printf("End of file\n");
