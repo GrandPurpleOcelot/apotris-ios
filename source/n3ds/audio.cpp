@@ -1032,6 +1032,8 @@ class NdspAudioThread {
         std::atomic<bool> in_start_song{};
         int in_start_song_arg_song_id{};
         bool in_start_song_arg_loop{};
+        bool in_should_pause{};
+        bool in_process_requested{};
 
         std::atomic<float> in_music_playback_rate{1.0};
         static_assert(std::atomic<float>::is_always_lock_free);
@@ -1051,6 +1053,11 @@ class NdspAudioThread {
     bool m_current_is_stereo{};
     float m_music_playback_rate{1.f};
     int m_loop_count{};
+    bool m_paused{};
+
+    // If we are starting a new song or changing format, we should pause
+    // playback and fill all buffers before resuming.
+    bool m_filling_all_buffers{};
 
     void audio_thread();
     static void audio_thread_start(void* ctx) {
@@ -1082,6 +1089,8 @@ public:
     static void send_start_song(int song_id, bool loop);
     static void send_stop_song();
     static void send_set_playback_rate(float rate);
+    static void send_pause_unpause(bool should_pause);
+    static void send_process();
 
     static bool recv_song_ended();
 };
@@ -1123,7 +1132,7 @@ static std::array<ndspWaveBuf, CH_NDSP_SFX_LAST - CH_NDSP_SFX_FIRST + 1>
     ndsp_wave_buf_sfx{};
 static std::list<int> sfx_use_order{};
 
-constexpr int MUSIC_BUFFER_COUNT = 4;
+constexpr size_t MUSIC_BUFFER_COUNT = 4;
 // Buffers for storing the music output, 4 of them
 // (therefore size is `MUSIC_BUFFER_SIZE * 4`).
 static ctru::linear::ptr<u8[]> music_audio_buf{};
@@ -1437,6 +1446,8 @@ void audioProcess() {
             playSongRandom(currentMenu);
         }
     }
+
+    NdspAudioThread::send_process();
 }
 
 void sfx(int n) { sfxRate(n, 1.0); }
@@ -1547,11 +1558,6 @@ void startSong(int song, bool loop) {
         return;
     }
 
-    if (ndspChnIsPaused(CH_NDSP_MUSIC)) {
-        ndspChnWaveBufClear(CH_NDSP_MUSIC);
-        ndspChnSetPaused(CH_NDSP_MUSIC, false);
-    }
-
     NdspAudioThread::send_start_song(song, loop);
 }
 
@@ -1568,7 +1574,7 @@ void pauseSong() {
         return;
     }
 
-    ndspChnSetPaused(CH_NDSP_MUSIC, true);
+    NdspAudioThread::send_pause_unpause(true);
 }
 
 void resumeSong() {
@@ -1576,7 +1582,7 @@ void resumeSong() {
         return;
     }
 
-    ndspChnSetPaused(CH_NDSP_MUSIC, false);
+    NdspAudioThread::send_pause_unpause(false);
 }
 
 void setMusicVolume(int volume) {
@@ -1686,6 +1692,24 @@ void NdspAudioThread::send_set_playback_rate(float rate) {
     inst->m_state.in_music_playback_rate.store(rate, std::memory_order_release);
 }
 
+void NdspAudioThread::send_pause_unpause(bool should_pause) {
+    // This is called on the main thread.
+    auto* inst = s_instance.load(std::memory_order_relaxed);
+    assert(inst);
+
+    inst->m_state.in_should_pause = should_pause;
+    LightEvent_Signal(&inst->m_state.in_event);
+}
+
+void NdspAudioThread::send_process() {
+    // This is called on the main thread.
+    auto* inst = s_instance.load(std::memory_order_relaxed);
+    assert(inst);
+
+    inst->m_state.in_process_requested = true;
+    LightEvent_Signal(&inst->m_state.in_event);
+}
+
 bool NdspAudioThread::recv_song_ended() {
     // This is called on the main thread.
     auto* inst = s_instance.load(std::memory_order_relaxed);
@@ -1731,6 +1755,10 @@ void NdspAudioThread::audio_thread() {
                 if (start_song(song_id, loop)) {
                     m_state.out_song_ended.store(false,
                                                  std::memory_order_release);
+                    m_filling_all_buffers = true;
+                    // Also invalidate any process request since they would've
+                    // been long expired.
+                    m_state.in_process_requested = false;
                     // It may have taken us a bit of time to load the song, so
                     // we should jump back to the beginning of the loop to check
                     // for stop song request.
@@ -1742,6 +1770,13 @@ void NdspAudioThread::audio_thread() {
             } else {
                 fprintf(stderr,
                         "NdspAudioThread: new song request cancelled\n");
+            }
+        }
+
+        if (m_state.in_should_pause != m_paused) {
+            m_paused = m_state.in_should_pause;
+            if (!m_filling_all_buffers) {
+                ndspChnSetPaused(CH_NDSP_MUSIC, m_paused);
             }
         }
 
@@ -1795,6 +1830,12 @@ void NdspAudioThread::audio_thread() {
                 m_state.out_song_ended.store(true, std::memory_order_release);
             }
         }
+
+        // Assuming that `fill_buffer()` may have taken notable amount of
+        // time, we should clear the flag regardless of whether it was set
+        // before or during it to avoid potentially blocking the main
+        // thread.
+        m_state.in_process_requested = false;
 
         LightEvent_Wait(&m_state.in_event);
     }
@@ -1895,10 +1936,57 @@ bool NdspAudioThread::fill_buffer() {
     ZoneScoped;
 #endif
 
-    auto status = ndsp_wave_buf_music[music_next_buf_idx].status;
-    if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
+    const size_t empty_buffers_count = [&]() {
+        for (size_t i = 0; i < MUSIC_BUFFER_COUNT; i++) {
+            auto idx = (music_next_buf_idx + i) % MUSIC_BUFFER_COUNT;
+            auto status = ndsp_wave_buf_music[idx].status;
+            if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
+                return i;
+            }
+        }
+        return MUSIC_BUFFER_COUNT;
+    }();
+
+#ifdef TRACY_ENABLE
+    TracyPlot("Filled audio buffers count",
+              (int64_t)(MUSIC_BUFFER_COUNT - empty_buffers_count));
+#endif
+
+    if (empty_buffers_count <= 0) {
+#ifdef TRACY_ENABLE
+        ZoneText("Buffers full", sizeof("Buffers full"));
+#endif
         // Buffers already full.
         return true;
+    }
+
+    if (!m_state.in_process_requested) {
+        if (m_filling_all_buffers) {
+#ifdef TRACY_ENABLE
+            ZoneText("Skip (backoff)", sizeof("Skip (backoff)"));
+#endif
+            // We just opened the file, so there is no rush to start filling
+            // buffers.
+            return true;
+        }
+
+        // If `!in_process_requested`, check if more than one buffers are empty.
+        // This is to prevent the audio thread from unnecessarily blocking the
+        // main thread at the wrong time (e.g. when very close to VBlank).
+        // Under normal circumstances, we should never have more than one
+        // buffers empty except when `m_filling_all_buffers` is true.
+        if (empty_buffers_count <= 1) {
+#ifdef TRACY_ENABLE
+            ZoneText("Only one buffer empty", sizeof("Only one buffer empty"));
+#endif
+            // Only one buffer is empty, we don't need to fill all buffers just
+            // yet.
+            return true;
+        }
+    } else {
+#ifdef TRACY_ENABLE
+        ZoneText("Process requested", sizeof("Process requested"));
+#endif
     }
 
     int new_sample_rate = m_mus_current->get_sample_rate();
@@ -1906,15 +1994,15 @@ bool NdspAudioThread::fill_buffer() {
     if (new_sample_rate != m_current_sample_rate ||
         new_is_stereo != m_current_is_stereo) {
 
-        // Wait until the other buffers are also drained, since we do not want
-        // to mess with the sample rate or format when there is still existing
+        // Wait until all buffers have been drained, since we do not want to
+        // mess with the sample rate or format when there is still existing
         // audio being played...
-        for (int i = music_next_buf_idx + 1;
-             (i %= MUSIC_BUFFER_COUNT, i != music_next_buf_idx); i++) {
-            status = ndsp_wave_buf_music[i].status;
-            if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
-                return true;
-            }
+        if (empty_buffers_count < MUSIC_BUFFER_COUNT) {
+#ifdef TRACY_ENABLE
+            ZoneText("Waiting for all buffers drained",
+                     sizeof("Waiting for all buffers drained"));
+#endif
+            return true;
         }
 
         ndspChnSetRate(CH_NDSP_MUSIC, new_sample_rate);
@@ -1931,34 +2019,49 @@ bool NdspAudioThread::fill_buffer() {
 
         m_current_sample_rate = new_sample_rate;
         m_current_is_stereo = new_is_stereo;
+        m_filling_all_buffers = true;
+    }
+
+    if (m_filling_all_buffers) {
+        if (!ndspChnIsPaused(CH_NDSP_MUSIC)) {
+            // Wait until all buffers have been drained before pausing channel.
+            if (empty_buffers_count < MUSIC_BUFFER_COUNT) {
+                return true;
+            }
+            ndspChnSetPaused(CH_NDSP_MUSIC, true);
+        } else if (empty_buffers_count <= 1) {
+            // There are only one unfilled buffer which will be filled below, so
+            // we can start playing the song.
+            ndspChnSetPaused(CH_NDSP_MUSIC, m_paused);
+            m_filling_all_buffers = false;
+        }
     }
 
     if (!fill_buffer_impl()) {
 #ifdef TRACY_ENABLE
         ZoneText("Song ended", sizeof("Song ended"));
 #endif
+        m_filling_all_buffers = false;
         return false;
     }
 
-    // Also fill the second buffer if it isn't already filled:
-
-    status = ndsp_wave_buf_music[music_next_buf_idx].status;
-    if (status == NDSP_WBUF_QUEUED || status == NDSP_WBUF_PLAYING) {
+    if (m_filling_all_buffers) {
         return true;
     }
 
+    // If 2 or more buffers have been filled, we're done here.
+    if (MUSIC_BUFFER_COUNT - empty_buffers_count >= 1) {
+        return true;
+    }
+
+    // Try to keep at least 2 buffers filled:
     return fill_buffer_impl();
 }
 
 bool NdspAudioThread::fill_buffer_impl() {
 #ifdef TRACY_ENABLE
     ZoneScoped;
-#endif
-
-#ifdef TRACY_ENABLE
-    ZoneNamedN(zonefill, "Filling buffer", true);
-    ZoneColorV(zonefill,
-               music_next_buf_idx ? tracy::Color::Pink : tracy::Color::Lime);
+    ZoneColor(music_next_buf_idx ? tracy::Color::Pink : tracy::Color::Lime);
 #endif
 
     u8* buffer = music_audio_buf.get() + music_next_buf_idx * MUSIC_BUFFER_SIZE;
