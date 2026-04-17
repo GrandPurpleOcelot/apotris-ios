@@ -9,6 +9,10 @@
 #include <shared_mutex>
 #include <sstream>
 
+#ifdef N3DS
+#include "n3ds/networking.hpp"
+#endif
+
 #ifdef TRACY_ENABLE
 #include <tracy/Tracy.hpp>
 #endif
@@ -68,6 +72,11 @@ class LinkUniversal {
 
     std::mutex readQueueLock;
     std::shared_mutex multiplayerLock;
+
+#ifdef N3DS
+    std::mutex deferredSendQueueLock;
+    std::queue<rtc::message_variant> deferredSendQueue;
+#endif
 
 public:
     std::string localId;
@@ -234,6 +243,9 @@ public:
         if (active)
             return;
         active = true;
+#ifdef N3DS
+        n3ds::networking::start();
+#endif
         initWebSocketConfig();
 
 #ifndef WEB
@@ -448,6 +460,9 @@ public:
             return;
         active = false;
         send(2 << 13); // BYE
+#ifdef N3DS
+        n3ds::networking::process_wait_completion();
+#endif
 
         auto [pcs, dcs] = [&]() {
             std::unique_lock<std::shared_mutex> guard{multiplayerLock};
@@ -517,6 +532,14 @@ public:
         ZoneScopedN("link->send(data, len)");
         ZoneTextF("len=%zu", len);
 #endif
+#ifdef N3DS
+        {
+            std::lock_guard<std::mutex> guard{deferredSendQueueLock};
+            deferredSendQueue.emplace(rtc::binary{data, data + len});
+        }
+        n3ds::networking::process();
+        return true;
+#else /* N3DS */
         try {
             for (auto& it : dataChannelMap) {
 #ifdef TRACY_ENABLE
@@ -559,12 +582,21 @@ public:
             printf("%s", e.what());
             return true;
         }
+#endif /* N3DS */
     }
     bool send(std::string msg) {
 #ifdef TRACY_ENABLE
         ZoneScopedN("link->send(string)");
         ZoneTextF("%s", msg.c_str());
 #endif
+#ifdef N3DS
+        {
+            std::lock_guard<std::mutex> guard{deferredSendQueueLock};
+            deferredSendQueue.emplace(std::move(msg));
+        }
+        n3ds::networking::process();
+        return true;
+#else /* N3DS */
         try {
             for (auto& it : dataChannelMap) {
 #ifdef TRACY_ENABLE
@@ -607,7 +639,75 @@ public:
             printf("%s", e.what());
             return true;
         }
+#endif /* N3DS */
     }
+
+#ifdef N3DS
+    // This is intended to be called from the 3DS networking thread.
+    void sendDeferredMessages() {
+        {
+            std::lock_guard<std::mutex> guard{deferredSendQueueLock};
+            if (deferredSendQueue.empty()) {
+                return;
+            }
+        }
+
+#ifdef TRACY_ENABLE
+        ZoneScoped;
+        ZoneTextF("count=%d", deferredSendQueue.size());
+#endif
+
+        auto dataChannels = [&]() {
+            std::shared_lock<std::shared_mutex> guard{multiplayerLock};
+            return std::vector(dataChannelMap.begin(), dataChannelMap.end());
+        }();
+
+        auto tryPop = [&]() -> std::optional<rtc::message_variant> {
+            std::lock_guard<std::mutex> guard{deferredSendQueueLock};
+            if (deferredSendQueue.empty()) {
+                return std::nullopt;
+            }
+            rtc::message_variant msg = std::move(deferredSendQueue.front());
+            deferredSendQueue.pop();
+            return msg;
+        };
+
+        while (auto msg = tryPop()) {
+            for (auto& [id, dc] : dataChannels) {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("send_to_datachannel");
+                ZoneTextF("peer=%s", id.c_str());
+#endif
+                if (!dc->isOpen()) {
+                    std::cout << "DataChannel to " << id << " appears closed!"
+                              << std::endl;
+                    if (dc->isClosed()) {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel closed");
+                        ZoneColor(tracy::Color::Red);
+#endif
+                    } else {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel not open");
+                        ZoneColor(tracy::Color::Orange);
+#endif
+                    }
+                    continue;
+                }
+                try {
+                    dc->send(*msg);
+                } catch (std::exception& e) {
+#ifdef TRACY_ENABLE
+                    ZoneTextF("send err: %s", e.what());
+                    ZoneColor(tracy::Color::Red);
+#endif
+                    fprintf(stderr, "Failed to send to %s, err=%s", id.c_str(),
+                            e.what());
+                }
+            }
+        }
+    }
+#endif /* N3DS */
 
     [[nodiscard]] bool isConnected() const { return playerCount() > 1; }
 

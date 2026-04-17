@@ -598,6 +598,9 @@ ApotrisN3ds::ApotrisN3ds()
 
     loadAudio("sdmc:" DATA_DIR_BASE "/");
 
+    // Networking thread can be started on demand...
+    // n3ds::networking::start();
+
     checkSaveDir();
 
     aptHook(
@@ -612,6 +615,8 @@ ApotrisN3ds::ApotrisN3ds()
 
 ApotrisN3ds::~ApotrisN3ds() {
     aptUnhook(&m_pause_hook_cookie);
+
+    n3ds::networking::stop();
 
     freeAudio();
 

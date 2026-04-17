@@ -543,6 +543,7 @@ elif host_machine.system() == 'n3ds'
     sources += files(
         src_dir / 'liba_n3ds.cpp',
         src_dir / 'n3ds/audio.cpp',
+        src_dir / 'n3ds/networking.cpp',
         src_dir / 'n3ds/renderer.cpp',
     )
 
