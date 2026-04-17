@@ -140,7 +140,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
 #else
                 // Send full board updates every 16 frames instead of sending
                 // two rows every frame because it is more efficient.
-                if (game->inGameTimer % 16 == 0) {
+                if (game->timer % 16 == 0) {
                     // Packet format:
                     // bytes 0-1: SEND_ROW with height = 0x1f
                     // bytes 2-3: (framecount / 16) % 65536
@@ -152,7 +152,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
                     packet[0] = std::byte(pkt_header & 0xff);
                     packet[1] = std::byte(pkt_header >> 8);
 
-                    const u16 pkt_seq = game->inGameTimer / 16;
+                    const u16 pkt_seq = game->timer / 16;
                     packet[2] = std::byte(pkt_seq & 0xff);
                     packet[3] = std::byte(pkt_seq >> 8);
 
