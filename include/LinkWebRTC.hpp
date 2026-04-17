@@ -3,8 +3,10 @@
 #include "rtc/rtc.hpp"
 #include <algorithm>
 #include <future>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <queue>
+#include <shared_mutex>
 #include <sstream>
 
 #ifdef TRACY_ENABLE
@@ -65,6 +67,7 @@ class LinkUniversal {
     std::unordered_map<u8, std::string> playerIdToName;
 
     std::mutex readQueueLock;
+    std::shared_mutex multiplayerLock;
 
 public:
     std::string localId;
@@ -84,14 +87,19 @@ public:
     shared_ptr<rtc::PeerConnection>
     getOrCreatePeerConnection(const std::string& peerId,
                               const std::string& type) {
-        if (auto jt = peerConnectionMap.find(peerId);
-            jt != peerConnectionMap.end())
-            return jt->second;
-        else if (type == OFFER || type == MATCH)
+        {
+            std::shared_lock<std::shared_mutex> guard{multiplayerLock};
+            if (auto jt = peerConnectionMap.find(peerId);
+                jt != peerConnectionMap.end())
+                return jt->second;
+        }
+
+        if (type == OFFER || type == MATCH)
             return createPeerConnection(make_weak_ptr(ws), peerId);
-        else
-            return nullptr;
+
+        return nullptr;
     }
+
     void initWebSocketConfig() {
         localId = randomId(10);
         localPlayerName = savefile->latestName;
@@ -176,11 +184,21 @@ public:
             auto pc = getOrCreatePeerConnection(peerId, type);
 
             if (type == CLOSE) {
-                if (dataChannelMap.count(peerId)) {
-                    dataChannelMap[peerId]->close();
-                    dataChannelMap.erase(peerId);
-                }
-                peerConnectionMap.erase(peerId);
+                // Close the DataChannel without holding multiplayerLock to
+                // avoid deadlock
+                auto dc = [&]() -> std::shared_ptr<rtc::DataChannel> {
+                    std::unique_lock<std::shared_mutex> guard{multiplayerLock};
+                    peerConnectionMap.erase(peerId);
+                    if (auto it = dataChannelMap.find(peerId);
+                        it != dataChannelMap.end()) {
+                        auto dc = std::move(it->second);
+                        dataChannelMap.erase(it);
+                        return dc;
+                    }
+                    return nullptr;
+                }();
+                if (dc)
+                    dc->close();
 #ifndef WEB
                 if (pc)
                     pc->close();
@@ -193,16 +211,22 @@ public:
                 }
 
             } else if (type == MATCH && peerId != localId) {
+                std::shared_lock<std::shared_mutex> guard{multiplayerLock};
                 if (!pc || dataChannelMap.count(peerId))
                     return;
+                guard.unlock();
                 makeOffer(pc, peerId);
-            } else if (type == OFFER || type == ANSWER)
+            } else if (type == OFFER || type == ANSWER) {
+                if (!pc)
+                    return;
                 pc->setRemoteDescription(
                     rtc::Description(message[DESCRIPTION], type));
-            else if (type == CANDIDATE)
+            } else if (type == CANDIDATE) {
+                if (!pc)
+                    return;
                 pc->addRemoteCandidate(
                     rtc::Candidate(message[CANDIDATE], message[MID]));
-            else if (type == FULL)
+            } else if (type == FULL)
                 exceptionReason = "Room is full";
         });
     }
@@ -363,6 +387,7 @@ public:
                       << error << std::endl;
         });
 
+        std::unique_lock<std::shared_mutex> guard{multiplayerLock};
         dataChannelMap.emplace(peerId, dataChannel);
     }
 
@@ -412,6 +437,7 @@ public:
                 registerDataChannelHandlers(dataChannel, peerId);
             });
 
+        std::unique_lock<std::shared_mutex> guard{multiplayerLock};
         peerConnectionMap.emplace(peerId, pc);
         return pc;
     };
@@ -422,13 +448,19 @@ public:
             return;
         active = false;
         send(2 << 13); // BYE
-        dataChannelMap.clear();
+
+        auto [pcs, dcs] = [&]() {
+            std::unique_lock<std::shared_mutex> guard{multiplayerLock};
+            return std::pair{std::move(peerConnectionMap),
+                             std::move(dataChannelMap)};
+        }();
+        dcs.clear();
 #ifndef WEB
-        for (auto& it : peerConnectionMap)
+        for (auto& it : pcs)
             it.second->close();
 #endif
+        pcs.clear();
         readQueues.clear();
-        peerConnectionMap.clear();
         playerStringToId.clear();
         playerIdToString.clear();
         playerIdToName.clear();
