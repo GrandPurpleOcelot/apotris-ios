@@ -117,7 +117,13 @@ public:
         rtc::InitLogger(rtc::LogLevel::Debug);
 #endif
         config.iceServers.emplace_back(STUN_SERVER);
+#ifdef N3DS
+        ws = std::make_shared<rtc::WebSocket>(rtc::WebSocketConfiguration{
+            .caCertificatePemFile = "sdmc:/config/ssl/cacert.pem",
+        });
+#else
         ws = std::make_shared<rtc::WebSocket>();
+#endif
 
         ws->onClosed([]() { std::cout << "WebSocket closed" << std::endl; });
         ws->onMessage([this, wws = make_weak_ptr(ws)](auto data) {
