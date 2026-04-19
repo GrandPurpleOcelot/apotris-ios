@@ -576,7 +576,7 @@ elif host_machine.system() == 'n3ds'
         dependencies += imgui_dep
     endif
 
-    datachannel = dependency('libdatachannel', static: true, default_options: ['default_library=static', 'usrsctp:sctp_inet=false', 'usrsctp:sctp_inet6=false', 'usrsctp:sctp_build_programs=false'], fallback: ['libdatachannel', 'libdatachannel_dep'])
+    datachannel = dependency('libdatachannel', static: true, default_options: ['default_library=static'], fallback: ['libdatachannel', 'libdatachannel_dep'])
     dependencies += datachannel
 
     json = dependency('nlohmann_json', static: true, fallback: ['nlohmann_json', 'nlohmann_json_dep'])
