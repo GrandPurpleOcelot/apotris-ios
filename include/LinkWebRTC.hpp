@@ -282,7 +282,7 @@ public:
                 std::make_exception_ptr(std::runtime_error(s)));
         });
 #else
-        ws->onOpen([wws = make_weak_ptr(ws)]() {
+        ws->onOpen([this, wws = make_weak_ptr(ws)]() {
             std::cout << "WebSocket connected, signaling ready" << std::endl;
             if (auto shared_ws = wws.lock()) {
                 json playerInfo = {{ID, "broadcast"},
