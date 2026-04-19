@@ -11,6 +11,8 @@
 
 #ifdef N3DS
 #include "n3ds/networking.hpp"
+
+#include <3ds.h>
 #endif
 
 #ifdef TRACY_ENABLE
@@ -250,6 +252,9 @@ public:
             return;
         active = true;
 #ifdef N3DS
+        NDMU_EnterExclusiveState(NDM_EXCLUSIVE_STATE_INFRASTRUCTURE);
+        aptSetHomeAllowed(false);
+        aptSetSleepAllowed(false);
         n3ds::networking::start();
 #endif
         initWebSocketConfig();
@@ -468,6 +473,9 @@ public:
         send(2 << 13); // BYE
 #ifdef N3DS
         n3ds::networking::process_wait_completion();
+        aptSetHomeAllowed(true);
+        aptSetSleepAllowed(true);
+        NDMU_LeaveExclusiveState();
 #endif
 
         auto [pcs, dcs] = [&]() {

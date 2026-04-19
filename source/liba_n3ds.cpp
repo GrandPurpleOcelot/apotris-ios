@@ -361,6 +361,7 @@ void platformInit() {
     romfsInit();
     hidInit();
     gspInit();
+    ndmuInit();
 
     // Clear all of VRAM to prevent showing garbage.
     GX_MemoryFill((u32*)OS_VRAM_VADDR, 0,
@@ -459,6 +460,7 @@ void deinitialize() {
 #endif
 
     // Deinit libs
+    ndmuExit();
     gfxExit();
     gspExit();
     hidExit();
