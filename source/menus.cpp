@@ -1638,10 +1638,20 @@ void GameScene::showReadyPlayers() {
             .ready &&
         !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
         wordSprites[7].setText("Ready!");
+#if !defined(NO_DIAGNOSE) && !defined(MULTIBOOT)
+        if (enableBot) {
+            wordSprites[7].setText("bot Ready!");
+        }
+#endif
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     } else if (multiplayerLink->stateMachine
                    .IsInState<MultiplayerStates::PlayersAwaitReady>()) {
         wordSprites[7].setText("Not Ready");
+#if !defined(NO_DIAGNOSE) && !defined(MULTIBOOT)
+        if (enableBot) {
+            wordSprites[7].setText("botNot Ready");
+        }
+#endif
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     } else if (multiplayerLink->stateMachine
                    .IsInState<MultiplayerStates::Playing>()) {

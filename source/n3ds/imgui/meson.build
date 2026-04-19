@@ -37,7 +37,7 @@ imgui_3ds_inc = include_directories('ftpd', 'imgui_club')
 imgui_3ds = static_library(
     'imgui_3ds',
     imgui_3ds_generated_files + imgui_3ds_sources,
-    dependencies : imgui_dep,
+    dependencies : [imgui_dep, citro3d],
     include_directories : imgui_3ds_inc,
     cpp_args : ['-std=c++20']
 )

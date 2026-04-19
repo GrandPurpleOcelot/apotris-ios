@@ -38,6 +38,15 @@
 #include <tracy/Tracy.hpp>
 #endif
 
+#include "LinkWebRTC.hpp"
+#include "multiplayerClasses.h"
+
+// TODO
+LinkUniversal* linkUniversal = nullptr;
+MultiplayerLink* multiplayerLink = nullptr;
+std::string roomId;
+std::string exceptionReason;
+
 extern "C" {
 
 // HACK: Use Citro3D internal API to wait for queue completion.
@@ -233,9 +242,11 @@ int blendInfo = 0;
 
 static void onHBlank(int line);
 uint8_t customBlend(uint8_t a, uint8_t b);
-static void showFPS();
+static void calcAndShowFPS(double elapsedMs);
 
-static std::list<float> fpsHistory;
+constexpr size_t FRAME_TIME_HISTORY_COUNT = 60;
+static std::queue<u32> frameTimeHistory;
+static u32 frameTimeHistorySum = 0;
 float fps = 0;
 
 static inline int rgb5to8(u16 color) {
@@ -346,9 +357,11 @@ void platformInit() {
     // osSetSpeedupEnable(true);
 
     // Init libs
+    psInit();
     romfsInit();
     hidInit();
     gspInit();
+    ndmuInit();
 
     // Clear all of VRAM to prevent showing garbage.
     GX_MemoryFill((u32*)OS_VRAM_VADDR, 0,
@@ -364,16 +377,16 @@ void platformInit() {
     // consoleInit(GFX_BOTTOM, nullptr);
     consoleDebugInit(debugDevice_SVC);
 
-#ifdef TRACY_ENABLE
+#if 1
     if (true)
 #else
     if (__3dslink_host.s_addr != 0)
 #endif
     {
         constexpr size_t SOC_ALIGN = 0x1000;
-        constexpr size_t SOC_BUFFERSIZE = 0x100000;
+        constexpr size_t SOC_BUFFERSIZE = 2 * 1024 * 1024;
         static u32* SOC_buffer = (u32*)memalign(SOC_ALIGN, SOC_BUFFERSIZE);
-        socInit(SOC_buffer, SOC_BUFFERSIZE);
+        socInitMulti(SOC_buffer, SOC_BUFFERSIZE, 8);
     }
     if (__3dslink_host.s_addr != 0) {
         link3dsSocket = link3dsStdio();
@@ -416,6 +429,10 @@ void platformInit() {
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
     ApotrisN3ds::init();
+
+    // TODO: manage lifetime better
+    linkUniversal = new LinkUniversal();
+    multiplayerLink = new MultiplayerLink(linkUniversal);
 }
 
 void deinitialize() {
@@ -429,15 +446,26 @@ void deinitialize() {
         C3D_Fini();
     }
 
+    // TODO: manage lifetime better
+    delete multiplayerLink;
+    delete linkUniversal;
+
+    if (rtc::Cleanup().wait_for(std::chrono::seconds(10)) ==
+        std::future_status::timeout) {
+        fprintf(stderr, "datachannel cleanup timed out\n");
+    }
+
 #ifdef TRACY_ENABLE
     tracy::ShutdownProfiler();
 #endif
 
     // Deinit libs
+    ndmuExit();
     gfxExit();
     gspExit();
     hidExit();
     romfsExit();
+    psExit();
 
     if (link3dsSocket >= 0) {
         // FIXME: Despite the docs for `link3dsConnectToHost` claiming that the
@@ -572,6 +600,9 @@ ApotrisN3ds::ApotrisN3ds()
 
     loadAudio("sdmc:" DATA_DIR_BASE "/");
 
+    // Networking thread can be started on demand...
+    // n3ds::networking::start();
+
     checkSaveDir();
 
     aptHook(
@@ -586,6 +617,8 @@ ApotrisN3ds::ApotrisN3ds()
 
 ApotrisN3ds::~ApotrisN3ds() {
     aptUnhook(&m_pause_hook_cookie);
+
+    n3ds::networking::stop();
 
     freeAudio();
 
@@ -824,12 +857,17 @@ inline void ApotrisN3ds::render()
 
     audioProcess();
 
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("C3Di_RenderQueueWaitDone");
+#endif
+        // HACK: Make sure rendering has finished before waiting for vblank.
+        C3Di_RenderQueueWaitDone();
+    }
+    C3D_FrameSync();
 #ifdef TRACY_ENABLE
     FrameMark;
 #endif
-    // HACK: Make sure rendering has finished before waiting for vblank.
-    C3Di_RenderQueueWaitDone();
-    C3D_FrameSync();
 
     input().scan_input();
 
@@ -840,12 +878,7 @@ inline void ApotrisN3ds::render()
 
     osTickCounterUpdate(&m_fps_tick_counter);
     double elapsedMS = osTickCounterRead(&m_fps_tick_counter);
-    fps = 1000.0f / elapsedMS;
-    if (fps < 59) {
-        // printf("fps stutter: %.2f (%.2f ms)\n", fps, elapsedMS);
-    }
-
-    showFPS();
+    calcAndShowFPS(elapsedMS);
 
 #ifdef DEBUG_UI
     dbg::sep("- C3D:");
@@ -912,33 +945,39 @@ s16 sinLut(int angle) {
 
 uint8_t customBlend(uint8_t a, uint8_t b) { return (a + b + b + b + b) / 5; }
 
-void showFPS() {
+void calcAndShowFPS(double elapsedMs) {
+    fps = 1000.0f / (float)elapsedMs;
+    if (fps < 59) {
+        // printf("fps stutter: %.2f (%.2f ms)\n", fps, elapsedMS);
+    }
+
     if (savefile->settings.showFPS) {
-        if (fpsHistory.size() > 9) {
-            fpsHistory.pop_front();
+        u32 poppedElapsed = 0;
+        if (frameTimeHistory.size() >= FRAME_TIME_HISTORY_COUNT) {
+            poppedElapsed = frameTimeHistory.front();
+            frameTimeHistory.pop();
         }
+        frameTimeHistorySum -= poppedElapsed;
 
-        fpsHistory.push_back(fps);
+        u32 elapsedUs = (u32)((float)elapsedMs * 1000);
+        frameTimeHistorySum += elapsedUs;
+        frameTimeHistory.push(elapsedUs);
 
-        float average = 0;
-
-        for (const float value : fpsHistory)
-            average += value;
-
-        average /= fpsHistory.size();
+        float averageFps =
+            1000000.f * FRAME_TIME_HISTORY_COUNT / (float)frameTimeHistorySum;
 
 #ifdef DEBUG_UI
-        dbg::show_fps(average);
+        dbg::show_fps(averageFps);
 #endif
 
         // HACK: Save and restore fill screen state (for credits letterboxing)
         const bool fillScreen = tng::bg_screenblock_fill_screen_p[29];
 
         char buff[8];
-        snprintf(buff, 8, "%.2f", average);
+        snprintf(buff, 8, "%c%.2f", (averageFps > 59) ? ' ' : '#', averageFps);
 
         const int width = 30 - 2 * (savefile->settings.aspectRatio == 1);
-        aprintColor(buff, width - 5, 0, 1);
+        aprintColor(buff, width - 6, 0, 1);
 
         tng::bg_screenblock_fill_screen_p[29] = fillScreen;
     }
@@ -1091,6 +1130,11 @@ uint32_t key_released(uint32_t key) {
 
 uint32_t keys_raw() {
     return ApotrisN3ds::instance().input().keys_raw();
+}
+
+void setUpPresentException(std::string error) {
+    multiplayerLink->deactivate(true);
+    changeScene(new MultiplayerExceptionScene(std::move(error)));
 }
 
 // ******************

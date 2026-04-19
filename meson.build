@@ -128,9 +128,16 @@ if host_machine.system() == 'n3ds'
     # (https://github.com/devkitPro/gcc/issues/5)
     add_global_arguments(
         [
-            '-D_GLIBCXX_GTHREAD_USE_WEAK=1',
+            '-D_GLIBCXX_GTHREAD_USE_WEAK=0',
         ],
         language: ['cpp'],
+    )
+
+    add_global_arguments(
+        [
+            '-I' + meson.current_source_dir() / 'subprojects/libctru/libctru/include',
+        ],
+        language: ['c', 'cpp'],
     )
 
     if build_type == 'release' or build_type == 'minsize'
@@ -166,6 +173,30 @@ if host_machine.system() == 'n3ds'
             language: ['cpp'],
         )
     endif
+
+    libctru_subproject = subproject(
+        'libctru',
+        required: true,
+        default_options: ['profiling=' + enable_profiling.to_string()],
+    )
+    libctru = libctru_subproject.get_variable('libctru_dep')
+
+    if build_type.startswith('debug')
+        citro3d_lib = 'citro3dd'
+    else
+        citro3d_lib = 'citro3d'
+    endif
+
+    citro3d = declare_dependency(
+        include_directories: include_directories(
+            get_option('devkitpro') / 'libctru/include',
+        ),
+        link_args: [
+            '-L' + get_option('devkitpro') / 'libctru/lib',
+            '-l' + citro3d_lib,
+        ],
+        dependencies: [libctru],
+    )
 
 endif
 
@@ -512,21 +543,24 @@ elif host_machine.system() == 'n3ds'
     sources += files(
         src_dir / 'liba_n3ds.cpp',
         src_dir / 'n3ds/audio.cpp',
+        src_dir / 'n3ds/networking.cpp',
         src_dir / 'n3ds/renderer.cpp',
     )
 
     # Enable all 3DS-specific code
     add_project_arguments('-DN3DS', language: ['c', 'cpp'])
 
-    dependencies = []
+    ctru_error_handler = static_library(
+        'ctru_error_handler',
+        files(
+            src_dir / 'n3ds/ctru_assert.c',
+            src_dir / 'n3ds/ctru_debug_stderr.c',
+            src_dir / 'n3ds/ctru_terminate.cpp',
+        ),
+        cpp_args: ['-fexceptions', '-D_GNU_SOURCE'],
+    )
 
-    # System libraries
-    compiler = meson.get_compiler('c')
-    if build_type == 'debug'
-        dependencies += compiler.find_library('citro3dd')
-    else
-        dependencies += compiler.find_library('citro3d')
-    endif
+    dependencies = [libctru, citro3d]
 
     if enable_debug_ui
         tilengine = dependency(
@@ -541,6 +575,12 @@ elif host_machine.system() == 'n3ds'
         dependencies += imgui_3ds_dep
         dependencies += imgui_dep
     endif
+
+    datachannel = dependency('libdatachannel', static: true, default_options: ['default_library=static'], fallback: ['libdatachannel', 'libdatachannel_dep'])
+    dependencies += datachannel
+
+    json = dependency('nlohmann_json', static: true, fallback: ['nlohmann_json', 'nlohmann_json_dep'])
+    dependencies += json
 
     libxmp = dependency('libxmp', static: true)
     dependencies += libxmp
@@ -629,14 +669,15 @@ elif host_machine.system() == 'n3ds'
         shader_shbin_bin2s,
     ]
 
-    link_args = []
-
     elf = executable(
         name,
         generated_files + sources,
         include_directories: includes,
         dependencies: dependencies,
-        link_args: link_args,
+        link_args: [
+            '-Wl,-Map=' + name + '.map'
+        ],
+        link_whole: [ctru_error_handler],
         name_suffix: 'elf',
     )
 
@@ -667,8 +708,14 @@ elif host_machine.system() == 'n3ds'
         ],
     )
 
+    if enable_profiling
+        output_name = name + '-prof'
+    else
+        output_name = name
+    endif
+
     rom_3dsx = custom_target(
-        output: name + '.3dsx',
+        output: output_name + '.3dsx',
         input: [elf, smdh],
         command: [
             '3dsxtool',
@@ -717,7 +764,7 @@ elif host_machine.system() == 'n3ds'
     version_array = meson.project_version().split('.')
 
     rom_cia = custom_target(
-        output: name + '.cia',
+        output: output_name + '.cia',
         input: [
             src_dir / 'n3ds/cia.rsf',
             elf,

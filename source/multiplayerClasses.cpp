@@ -5,6 +5,98 @@
 int lastSeed = 0;
 std::list<std::string> debugConnection;
 
+std::string stringifyMultiplayerPacket(u16 packet) {
+    std::string str;
+    const u16 cmd = packet >> 13;
+    const u16 param = packet & ((1 << 13) - 1);
+    switch (cmd) {
+    case UPDATE_STATE >> 13: {
+        str = "UPDATE_STATE(";
+        switch (param) {
+        case BYE:
+            str += "BYE";
+            break;
+        case I_WON:
+            str += "I_WON";
+            break;
+        case HELLO:
+            str += "HELLO";
+            break;
+        case WELCOME_BACK:
+            str += "WELCOME_BACK";
+            break;
+        case LETS_PLAY:
+            str += "LETS_PLAY";
+            break;
+        case GAME_OVER:
+            str += "GAME_OVER";
+            break;
+        case I_LOST:
+            str += "I_LOST";
+            break;
+        default:
+            if (param & SEND_SEED) {
+                const u16 seed = param & (SEND_SEED - 1);
+                str += "SEND_SEED(";
+                str += std::to_string(seed);
+                str += ')';
+            } else if (param & POWER_LEVEL) {
+                const u16 power = param & (POWER_LEVEL - 1);
+                str += "POWER_LEVEL(";
+                str += std::to_string(power);
+                str += ')';
+            } else {
+                str += std::to_string(param);
+            }
+            break;
+        }
+        str += ')';
+    } break;
+    case SEND_ATTACK: {
+        const u16 target_id = param >> 4;
+        const u16 attack_amount = param & ((1 << 4) - 1);
+        str = "SEND_ATTACK(t=";
+        str += std::to_string(target_id);
+        str += ",a=";
+        str += std::to_string(attack_amount);
+        str += ')';
+    } break;
+    case ACK_ATTACK: {
+        const u16 garbage_id = param >> 4;
+        const u16 garbage_amount = param & ((1 << 4) - 1);
+        str = "ACK_ATTACK(i=";
+        str += std::to_string(garbage_id);
+        str += ",a=";
+        str += std::to_string(garbage_amount);
+        str += ')';
+    } break;
+    case SEND_ROW:
+    case SEND_ROW + 1:
+    case SEND_ROW + 2: {
+        // Calculate the base height based on the command
+        const u16 baseHeight = (cmd - SEND_ROW) * 8;
+        // Calculate the row to be updated
+        const u16 height = (param >> 10) + baseHeight;
+        const u16 row_bitfield = packet & 0x3ff;
+        str = "SEND_ROW(h=";
+        str += std::to_string(height);
+        str += ",r=";
+        for (size_t i = 0; i < 10; i++) {
+            str += (row_bitfield & (1 << (9 - i))) ? '1' : '0';
+        }
+        str += ")";
+    } break;
+    default:
+        str = "CMD?<";
+        str += std::to_string(cmd);
+        str += ">(";
+        str += std::to_string(param);
+        str += ')';
+        break;
+    }
+    return str;
+}
+
 template <typename T> void clearQueue(std::queue<T>& q) {
     std::queue<T> empty;
     std::swap(q, empty);
@@ -156,7 +248,9 @@ void MultiplayerLink::deactivate(bool sendBye) {
 
 void MultiplayerLink::purgeQueues() {
     clearQueue(sendQueue);
+#ifdef GBA
     clearQueue(seedQueue);
+#endif
 }
 
 void MultiplayerLink::UpdateStateMachine() {
