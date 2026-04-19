@@ -44,6 +44,8 @@
 #define SEND_SEED 0x1000
 #define POWER_LEVEL 0x800
 
+std::string stringifyMultiplayerPacket(u16 packet);
+
 using namespace hsm;
 const int boardTile = 512 - 32 * 3 - 64 - 8;
 
@@ -170,6 +172,7 @@ public:
         universal->sync();
         nextSeed = 0;
         purgeQueues();
+        players.clear();
     }
 
     void initPlayer(u8 i) { players[i] = Player(i); }
@@ -202,12 +205,34 @@ public:
     void activate();
 
     [[nodiscard]] std::queue<Packet> readPackets() const {
+#ifdef TRACY_ENABLE
+        ZoneScoped;
+#endif
         std::queue<Packet> queue;
         for (auto player : players) {
             int i = player.first;
             while (universal->canRead(i))
                 queue.emplace(i, universal->read(i));
         }
+#ifndef GBA
+        while (std::optional<BoardUpdatePacket> boardUpdate =
+                   universal->readBoardUpdate()) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("read_board_update");
+#endif
+
+            for (size_t i = 0; i < 20; i++) {
+                const u16 row_bitfield = boardUpdate->boardRows[i];
+                // ENCODE(SEND_ROW) == (SEND_ROW << 13) == 0xa000
+                const u16 packet = (u16)((SEND_ROW << 13) + ((i & 0x1f) << 10) +
+                                         (row_bitfield & 0x3ff));
+                queue.emplace(boardUpdate->playerId, packet);
+            }
+        }
+#endif
+#ifdef TRACY_ENABLE
+        ZoneTextF("count=%u", queue.size());
+#endif
         return queue;
     }
 
@@ -362,6 +387,8 @@ struct MultiplayerStates {
      * before proceeding, so each client will have the same random state.
      */
     struct PlayersSeeding : StateWithOwner<MultiplayerLink> {
+        int broadcastSeedCounter = 0;
+
         void OnEnter() override {
 #ifdef GBA
             if (Owner().universal->currentPlayerId())
@@ -430,12 +457,21 @@ struct MultiplayerStates {
             if (nextSeed) {
                 Owner().players[Owner().universal->currentPlayerId()].seeded =
                     true;
-                Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
+                // Prevent flooding weak clients like 3DS
+                if ((broadcastSeedCounter++) % 32 == 0) {
+                    Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
+                }
             }
         }
 
         Transition GetTransition() override {
             if (Owner().allSeeded(Owner().universal->playerCount())) {
+#ifndef GBA
+                // There can be a race condition in which we received SEND_SEED
+                // from all peers but we haven't sent SEND_SEED to the last
+                // peer, so send SEND_SEED one last time.
+                Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
+#endif
                 return SiblingTransition<PlayersSeeded>();
             }
             return NoTransition();

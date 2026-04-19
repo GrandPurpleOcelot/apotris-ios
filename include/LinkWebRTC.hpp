@@ -3,9 +3,21 @@
 #include "rtc/rtc.hpp"
 #include <algorithm>
 #include <future>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <queue>
+#include <shared_mutex>
 #include <sstream>
+
+#ifdef N3DS
+#include "n3ds/networking.hpp"
+
+#include <3ds.h>
+#endif
+
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
 
 constexpr char LINK_UNIVERSAL_MAX_PLAYERS = 5;
 constexpr char LINK_WIRELESS_QUEUE_SIZE = 30;
@@ -19,6 +31,14 @@ using nlohmann::json;
 using std::shared_ptr;
 using std::weak_ptr;
 template <class T> weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr) { return ptr; }
+
+std::string stringifyMultiplayerPacket(u16 packet);
+
+struct BoardUpdatePacket {
+    u8 playerId;
+    u16 seq;
+    std::array<u16, 20> boardRows;
+};
 
 class LinkUniversal {
     static constexpr char STUN_SERVER[] = "stun:stun.l.google.com:19302";
@@ -40,6 +60,7 @@ class LinkUniversal {
 
     rtc::Configuration config;
     std::map<std::string, std::queue<Packet>> readQueues;
+    std::queue<BoardUpdatePacket> incomingBoardUpdates;
     bool active = false;
     shared_ptr<rtc::WebSocket> ws;
     int playerId = -1;
@@ -52,6 +73,12 @@ class LinkUniversal {
     std::unordered_map<u8, std::string> playerIdToName;
 
     std::mutex readQueueLock;
+    std::shared_mutex multiplayerLock;
+
+#ifdef N3DS
+    std::mutex deferredSendQueueLock;
+    std::queue<rtc::message_variant> deferredSendQueue;
+#endif
 
 public:
     std::string localId;
@@ -71,14 +98,19 @@ public:
     shared_ptr<rtc::PeerConnection>
     getOrCreatePeerConnection(const std::string& peerId,
                               const std::string& type) {
-        if (auto jt = peerConnectionMap.find(peerId);
-            jt != peerConnectionMap.end())
-            return jt->second;
-        else if (type == OFFER || type == MATCH)
+        {
+            std::shared_lock<std::shared_mutex> guard{multiplayerLock};
+            if (auto jt = peerConnectionMap.find(peerId);
+                jt != peerConnectionMap.end())
+                return jt->second;
+        }
+
+        if (type == OFFER || type == MATCH)
             return createPeerConnection(make_weak_ptr(ws), peerId);
-        else
-            return nullptr;
+
+        return nullptr;
     }
+
     void initWebSocketConfig() {
         localId = randomId(10);
         localPlayerName = savefile->latestName;
@@ -87,7 +119,13 @@ public:
         rtc::InitLogger(rtc::LogLevel::Debug);
 #endif
         config.iceServers.emplace_back(STUN_SERVER);
+#ifdef N3DS
+        ws = std::make_shared<rtc::WebSocket>(rtc::WebSocketConfiguration{
+            .caCertificatePemFile = "sdmc:/config/ssl/cacert.pem",
+        });
+#else
         ws = std::make_shared<rtc::WebSocket>();
+#endif
 
         ws->onClosed([]() { std::cout << "WebSocket closed" << std::endl; });
         ws->onMessage([this, wws = make_weak_ptr(ws)](auto data) {
@@ -163,11 +201,21 @@ public:
             auto pc = getOrCreatePeerConnection(peerId, type);
 
             if (type == CLOSE) {
-                if (dataChannelMap.count(peerId)) {
-                    dataChannelMap[peerId]->close();
-                    dataChannelMap.erase(peerId);
-                }
-                peerConnectionMap.erase(peerId);
+                // Close the DataChannel without holding multiplayerLock to
+                // avoid deadlock
+                auto dc = [&]() -> std::shared_ptr<rtc::DataChannel> {
+                    std::unique_lock<std::shared_mutex> guard{multiplayerLock};
+                    peerConnectionMap.erase(peerId);
+                    if (auto it = dataChannelMap.find(peerId);
+                        it != dataChannelMap.end()) {
+                        auto dc = std::move(it->second);
+                        dataChannelMap.erase(it);
+                        return dc;
+                    }
+                    return nullptr;
+                }();
+                if (dc)
+                    dc->close();
 #ifndef WEB
                 if (pc)
                     pc->close();
@@ -180,16 +228,22 @@ public:
                 }
 
             } else if (type == MATCH && peerId != localId) {
+                std::shared_lock<std::shared_mutex> guard{multiplayerLock};
                 if (!pc || dataChannelMap.count(peerId))
                     return;
+                guard.unlock();
                 makeOffer(pc, peerId);
-            } else if (type == OFFER || type == ANSWER)
+            } else if (type == OFFER || type == ANSWER) {
+                if (!pc)
+                    return;
                 pc->setRemoteDescription(
                     rtc::Description(message[DESCRIPTION], type));
-            else if (type == CANDIDATE)
+            } else if (type == CANDIDATE) {
+                if (!pc)
+                    return;
                 pc->addRemoteCandidate(
                     rtc::Candidate(message[CANDIDATE], message[MID]));
-            else if (type == FULL)
+            } else if (type == FULL)
                 exceptionReason = "Room is full";
         });
     }
@@ -197,6 +251,12 @@ public:
         if (active)
             return;
         active = true;
+#ifdef N3DS
+        NDMU_EnterExclusiveState(NDM_EXCLUSIVE_STATE_INFRASTRUCTURE);
+        aptSetHomeAllowed(false);
+        aptSetSleepAllowed(false);
+        n3ds::networking::start();
+#endif
         initWebSocketConfig();
 
 #ifndef WEB
@@ -274,12 +334,55 @@ public:
         } else {
             auto packet = std::get<rtc::binary>(data);
             if (packet.size() == 2) {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("recv_packet");
+                ZoneTextF("from=%s", peerId.c_str());
+#endif
                 std::byte foo = packet[0];
                 std::byte bar = packet[1];
                 u16 real = (u8)foo + ((u16)bar << 8);
+#ifdef TRACY_ENABLE
+                ZoneTextF("0x%04x", real);
+                ZoneTextF("%s", stringifyMultiplayerPacket(real).c_str());
+#endif
                 int realRemoteId = playerStringToId[peerId];
                 std::lock_guard<std::mutex> guard{readQueueLock};
                 readQueues[peerId].emplace((u8)(realRemoteId), real);
+            } else if (packet.size() == 44 &&
+                       ((u16)packet[0] | ((u16)packet[1] << 8)) == 0x1c00) {
+                // 0x1c00 == ENCODE(SEND_ROW) + (0x1f << 10)
+#ifdef TRACY_ENABLE
+                ZoneScopedN("recv_packet(board)");
+                ZoneTextF("from=%s", peerId.c_str());
+#endif
+                int realRemoteId = playerStringToId[peerId];
+                const u16 seq = (u16)packet[2] | ((u16)packet[3] << 8);
+
+#ifdef TRACY_ENABLE
+                ZoneTextF("seq=%u", seq);
+#endif
+                std::lock_guard<std::mutex> guard{readQueueLock};
+                auto& boardUpdate =
+                    incomingBoardUpdates.emplace(BoardUpdatePacket{
+                        .playerId = (u8)realRemoteId,
+                        .seq = seq,
+                    });
+                for (size_t i = 0; i < 20; i++) {
+                    const u16 row_bitfield = (u16)packet[4 + i * 2] |
+                                             ((u16)packet[4 + i * 2 + 1] << 8);
+                    boardUpdate.boardRows[i] = row_bitfield;
+                }
+            } else {
+                fprintf(stderr, "Received unknown message of len=%d",
+                        packet.size());
+                for (size_t i = 0; i < packet.size(); i++) {
+                    fprintf(stderr, "%02X ",
+                            *((unsigned char*)packet.data() + i));
+                    if (i % 16 == 15 && i + 1 != packet.size()) {
+                        fputs("\n", stderr);
+                    }
+                }
+                fputs("\n", stderr);
             }
         }
     }
@@ -307,6 +410,7 @@ public:
                       << error << std::endl;
         });
 
+        std::unique_lock<std::shared_mutex> guard{multiplayerLock};
         dataChannelMap.emplace(peerId, dataChannel);
     }
 
@@ -356,6 +460,7 @@ public:
                 registerDataChannelHandlers(dataChannel, peerId);
             });
 
+        std::unique_lock<std::shared_mutex> guard{multiplayerLock};
         peerConnectionMap.emplace(peerId, pc);
         return pc;
     };
@@ -366,17 +471,31 @@ public:
             return;
         active = false;
         send(2 << 13); // BYE
-        dataChannelMap.clear();
+#ifdef N3DS
+        n3ds::networking::process_wait_completion();
+        aptSetHomeAllowed(true);
+        aptSetSleepAllowed(true);
+        NDMU_LeaveExclusiveState();
+#endif
+
+        auto [pcs, dcs] = [&]() {
+            std::unique_lock<std::shared_mutex> guard{multiplayerLock};
+            return std::pair{std::move(peerConnectionMap),
+                             std::move(dataChannelMap)};
+        }();
+        dcs.clear();
 #ifndef WEB
-        for (auto& it : peerConnectionMap)
+        for (auto& it : pcs)
             it.second->close();
 #endif
+        pcs.clear();
         readQueues.clear();
-        peerConnectionMap.clear();
         playerStringToId.clear();
         playerIdToString.clear();
+        playerIdToName.clear();
         ws->close();
         localId = randomId(10);
+        playerId = -1;
     }
 
     [[nodiscard]] bool sync() const { return isConnected(); }
@@ -397,42 +516,212 @@ public:
         return front.packet;
     }
 
+    std::optional<BoardUpdatePacket> readBoardUpdate() {
+        std::lock_guard<std::mutex> guard{readQueueLock};
+        if (incomingBoardUpdates.empty()) {
+            return std::nullopt;
+        }
+        auto front = incomingBoardUpdates.front();
+        incomingBoardUpdates.pop();
+        return front;
+    }
+
     bool send(u16 packet) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("link->send(u16)");
+        ZoneTextF("0x%04x", packet);
+        ZoneTextF("%s", stringifyMultiplayerPacket(packet).c_str());
+#endif
+        return send(reinterpret_cast<const std::byte*>(&packet), sizeof(u16));
+    }
+    template <size_t N> bool send(const std::array<std::byte, N>& packet) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("link->send(array)");
+        ZoneTextF("len=%zu", packet.size());
+#endif
+        return send(packet.data(), packet.size());
+    }
+    bool send(const std::byte* data, size_t len) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("link->send(data, len)");
+        ZoneTextF("len=%zu", len);
+#endif
+#ifdef N3DS
+        {
+            std::lock_guard<std::mutex> guard{deferredSendQueueLock};
+            deferredSendQueue.emplace(rtc::binary{data, data + len});
+        }
+        n3ds::networking::process();
+        return true;
+#else /* N3DS */
         try {
             for (auto& it : dataChannelMap) {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("send_to_datachannel");
+                ZoneTextF("peer=%s", it.first.c_str());
+#endif
                 if (!it.second->isOpen()) {
                     std::cout << "DataChannel to " << it.first
-                              << " appears closed!";
+                              << " appears closed!" << std::endl;
+                    if (it.second->isClosed()) {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel closed");
+                        ZoneColor(tracy::Color::Red);
+#endif
+                    } else {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel not open");
+                        ZoneColor(tracy::Color::Orange);
+#endif
+                    }
                     return false;
                 }
-                if (!it.second->send(
-                        reinterpret_cast<const std::byte*>(&packet),
-                        sizeof(u16)))
-                    return false;
+                if (!it.second->send(data, len)) {
+#ifdef TRACY_ENABLE
+                    ZoneTextF("send returned false");
+                    ZoneColor(tracy::Color::Orange);
+#endif
+                    // The return value of `send` seems unusable. `false` may
+                    // mean the message wasn't sent due to the DataChannel being
+                    // closed, but it could also mean the message has been
+                    // buffered... Anyway, we should not return false here.
+                }
             }
             return true;
         } catch (std::exception& e) {
+#ifdef TRACY_ENABLE
+            ZoneTextF("send err: %s", e.what());
+            ZoneColor(tracy::Color::Red);
+#endif
             printf("%s", e.what());
             return true;
         }
+#endif /* N3DS */
     }
     bool send(std::string msg) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("link->send(string)");
+        ZoneTextF("%s", msg.c_str());
+#endif
+#ifdef N3DS
+        {
+            std::lock_guard<std::mutex> guard{deferredSendQueueLock};
+            deferredSendQueue.emplace(std::move(msg));
+        }
+        n3ds::networking::process();
+        return true;
+#else /* N3DS */
         try {
             for (auto& it : dataChannelMap) {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("send_to_datachannel");
+                ZoneTextF("peer=%s", it.first.c_str());
+#endif
                 if (!it.second->isOpen()) {
                     std::cout << "DataChannel to " << it.first
-                              << " appears closed!";
+                              << " appears closed!" << std::endl;
+                    if (it.second->isClosed()) {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel closed");
+                        ZoneColor(tracy::Color::Red);
+#endif
+                    } else {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel not open");
+                        ZoneColor(tracy::Color::Orange);
+#endif
+                    }
                     return false;
                 }
-                if (!it.second->send(msg))
-                    return false;
+                if (!it.second->send(msg)) {
+#ifdef TRACY_ENABLE
+                    ZoneTextF("send returned false");
+                    ZoneColor(tracy::Color::Orange);
+#endif
+                    // The return value of `send` seems unusable. `false` may
+                    // mean the message wasn't sent due to the DataChannel being
+                    // closed, but it could also mean the message has been
+                    // buffered... Anyway, we should not return false here.
+                }
             }
             return true;
         } catch (std::exception& e) {
+#ifdef TRACY_ENABLE
+            ZoneTextF("send err: %s", e.what());
+            ZoneColor(tracy::Color::Red);
+#endif
             printf("%s", e.what());
             return true;
         }
+#endif /* N3DS */
     }
+
+#ifdef N3DS
+    // This is intended to be called from the 3DS networking thread.
+    void sendDeferredMessages() {
+        {
+            std::lock_guard<std::mutex> guard{deferredSendQueueLock};
+            if (deferredSendQueue.empty()) {
+                return;
+            }
+        }
+
+#ifdef TRACY_ENABLE
+        ZoneScoped;
+        ZoneTextF("count=%d", deferredSendQueue.size());
+#endif
+
+        auto dataChannels = [&]() {
+            std::shared_lock<std::shared_mutex> guard{multiplayerLock};
+            return std::vector(dataChannelMap.begin(), dataChannelMap.end());
+        }();
+
+        auto tryPop = [&]() -> std::optional<rtc::message_variant> {
+            std::lock_guard<std::mutex> guard{deferredSendQueueLock};
+            if (deferredSendQueue.empty()) {
+                return std::nullopt;
+            }
+            rtc::message_variant msg = std::move(deferredSendQueue.front());
+            deferredSendQueue.pop();
+            return msg;
+        };
+
+        while (auto msg = tryPop()) {
+            for (auto& [id, dc] : dataChannels) {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("send_to_datachannel");
+                ZoneTextF("peer=%s", id.c_str());
+#endif
+                if (!dc->isOpen()) {
+                    std::cout << "DataChannel to " << id << " appears closed!"
+                              << std::endl;
+                    if (dc->isClosed()) {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel closed");
+                        ZoneColor(tracy::Color::Red);
+#endif
+                    } else {
+#ifdef TRACY_ENABLE
+                        ZoneTextF("DataChannel not open");
+                        ZoneColor(tracy::Color::Orange);
+#endif
+                    }
+                    continue;
+                }
+                try {
+                    dc->send(*msg);
+                } catch (std::exception& e) {
+#ifdef TRACY_ENABLE
+                    ZoneTextF("send err: %s", e.what());
+                    ZoneColor(tracy::Color::Red);
+#endif
+                    fprintf(stderr, "Failed to send to %s, err=%s", id.c_str(),
+                            e.what());
+                }
+            }
+        }
+    }
+#endif /* N3DS */
 
     [[nodiscard]] bool isConnected() const { return playerCount() > 1; }
 
