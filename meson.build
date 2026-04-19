@@ -4,7 +4,7 @@ project(
     'cpp',
     version: '4.2.0a',
     license: 'AGPL3',
-    meson_version: '>=1.2.0',
+    meson_version: '>=1.1.0',
     default_options: [
         'buildtype=debugoptimized',
         'cpp_std=c++17',
@@ -177,7 +177,7 @@ if host_machine.system() == 'n3ds'
     libctru_subproject = subproject(
         'libctru',
         required: true,
-        default_options: {'profiling': enable_profiling}
+        default_options: ['profiling=' + enable_profiling.to_string()],
     )
     libctru = libctru_subproject.get_variable('libctru_dep')
 
