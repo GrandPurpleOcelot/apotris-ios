@@ -1257,7 +1257,7 @@ void showQueue(bool offsetSpriteIndex) {
 
             sprite_set_pos(queueSprites[k],
                            startX + add * 3 + (push > 0) * push,
-                           (3 + (k * 3)) * 6 - 3 * (n == PIECE_I) + yoffset +
+                           (1 + (k * 3)) * 6 - 3 * (n == PIECE_I) + yoffset +
                                8 * ((rs == ARS || rs == BARS && n == PIECE_I)));
         } else {
             sprite_unhide(queueSprites[k], ATTR0_AFF);
