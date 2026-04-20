@@ -264,10 +264,10 @@ meson compile -C build-pm
 
 Compiling the 3DS build requires you to install the devkitARM toolchain from devkitPro. You can refer to the [3DBrew](https://www.3dbrew.org/wiki/Setting_up_Development_Environment) and [devkitPro](https://devkitpro.org/wiki/Getting_Started) guides to set it up. Following the guide, you should install all packages in the package group `3ds-dev` using `pacman` (or `dkp-pacman`).
 
-You will also need to install the libraries `mbedtls`, `libmpg123`, `libvorbisidec`, `libxmp` and `opusfile` using `pacman` (or `dkp-pacman`):
+You will also need to install the libraries `mbedtls`, `libmpg123`, `libvorbisidec` and `libxmp` using `pacman` (or `dkp-pacman`):
 
 ```bash
-pacman -S 3ds-mbedtls 3ds-mpg123 3ds-libvorbisidec 3ds-libxmp 3ds-opusfile
+pacman -S 3ds-mbedtls 3ds-mpg123 3ds-libvorbisidec 3ds-libxmp
 ```
 
 To perform the cross build:

@@ -591,7 +591,28 @@ elif host_machine.system() == 'n3ds'
     libmpg123 = dependency('libmpg123', static : true)
     dependencies += libmpg123
 
-    libopusfile = dependency('opusfile', static : true)
+    # Build opus ourselves for better performance with fixed-point on 3DS.
+    libopus_subproject = subproject(
+        'opus',
+        required: true,
+        default_options: [
+            'fixed-point=true',
+            'float-api=false',
+            'rtcd=disabled',
+            'extra-programs=disabled',
+            'tests=disabled',
+            'docs=disabled',
+        ],
+    )
+    libopusfile_subproject = subproject(
+        'opusfile',
+        required: true,
+        default_options: [
+            'fixed-point=true',
+            'float-api=false',
+        ],
+    )
+    libopusfile = libopusfile_subproject.get_variable('opusfile_dep')
     dependencies += libopusfile
 
     if enable_profiling
