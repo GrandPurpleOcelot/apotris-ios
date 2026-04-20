@@ -3591,7 +3591,7 @@ void GameScene::init() {
 #endif
 
 #if defined(ANDROID)
-    setGameWindowScale();
+    // setGameWindowScale();
 #endif
 
     reset();

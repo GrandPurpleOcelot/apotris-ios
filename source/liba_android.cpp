@@ -96,7 +96,7 @@ bool render = true;
 int screenWidth = 1280;
 int screenHeight = 720;
 
-float windowScale = 3;
+float windowScale = 6;
 
 float gameWindowScale = 6;
 
@@ -519,6 +519,8 @@ void handleInput() {
                         controlsUnlocked = !controlsUnlocked;
                         if (!controlsUnlocked) {
                             saveLayout();
+                        } else {
+                            paused = true;
                         }
                         continue;
                     }
