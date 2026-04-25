@@ -860,6 +860,31 @@ void updateWindow(uint8_t* framebuffer) {
 
         ImGui::NewFrame();
 
+        static float globalScale = 1.0f;
+        static Layout baseLayout;
+        if (controlsUnlocked) {
+            ImGui::Begin("Edit Controls", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("Drag corners to resize buttons");
+            ImGui::Text("Drag centers to move buttons");
+            
+            bool changed = ImGui::SliderFloat("Global Scale", &globalScale, 0.5f, 2.0f);
+            if (ImGui::IsItemActivated()) {
+                baseLayout = layout;
+            }
+            if (changed) {
+                for (int i = 0; i < 11; i++) {
+                    if (layout.buttons[i].key == -1) continue;
+                    layout.buttons[i].w = (int)(baseLayout.buttons[i].w * globalScale);
+                    layout.buttons[i].h = (int)(baseLayout.buttons[i].h * globalScale);
+                }
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit() || ImGui::IsItemDeactivated()) {
+                globalScale = 1.0f;
+            }
+            
+            ImGui::End();
+        }
+
         // ImGui::Begin("Apotris Android Debug");
         // ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
         // ImGui::End();
