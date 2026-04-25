@@ -206,8 +206,9 @@ typedef struct Settings {
 
 #ifdef ANDROID
     Layout onScreenLayouts[2];
+    int touchSnapGrid;
 #else
-    int layoutPlaceHolder[11 * 2 * 5 * sizeof(int)];
+    int layoutPlaceHolder[10 * 2 * 5 * sizeof(int) + 4];
 #endif
 
 } ALIGN(4) Settings;

@@ -973,6 +973,7 @@ void setScreenOffset(int x, int y) {
     for (int i = 0; i < 4; i++) {
         setLayerScroll(i, layerInfo[i].x, layerInfo[i].y);
     }
+    TLN_SetSpritesMaskRegion(0, 0);
 }
 
 #endif

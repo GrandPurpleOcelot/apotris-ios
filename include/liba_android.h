@@ -89,10 +89,10 @@ public:
 
 class Layout {
 public:
-    Button buttons[11];
+    Button buttons[10];
 
     Layout(Button* buttons) {
-        memcpy(this->buttons, buttons, sizeof(Button) * 11);
+        memcpy(this->buttons, buttons, sizeof(Button) * 10);
     }
 
     Layout() {}
@@ -101,3 +101,8 @@ public:
 extern void setGameWindowScale();
 
 extern std::vector<Layout> getDefaultLayouts();
+
+extern void setLayout();
+
+extern bool touchEditMode;
+extern bool touchEditExitRequested;

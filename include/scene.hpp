@@ -91,7 +91,8 @@ class GameScene : public Scene {
     void showReadyPlayers();
 
     bool counted = false;
-    bool preventLayeredCountdowns = false; // TODO I feel like this can be done better
+    bool preventLayeredCountdowns =
+        false; // TODO I feel like this can be done better
     bool skipSong = false;
 
     int timesPaused = 0;
@@ -404,6 +405,12 @@ public:
         result.push_front("Video");
 #else
         result.push_back("Sleep");
+#endif
+
+#ifdef ANDROID
+        auto it = result.begin();
+        std::advance(it, 4);
+        result.insert(it, "Touch");
 #endif
 
         return result;

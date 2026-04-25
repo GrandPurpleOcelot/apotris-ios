@@ -3909,6 +3909,10 @@ void GameScene::deinit() {
     disableLayerWindow(1);
     disableLayerWindow(2);
 
+#if defined(TE) || defined(N3DS)
+    setSpriteMaskRegion(1000);
+#endif
+
     clearText();
 
     autosave();

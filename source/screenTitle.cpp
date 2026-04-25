@@ -492,6 +492,10 @@ bool ConfirmSaveScene::control() {
         setFullscreen(savefile->settings.fullscreen);
 #endif
 
+#ifdef ANDROID
+        setLayout();
+#endif
+
 #ifdef GBA
         sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
         initRumbleCart();
