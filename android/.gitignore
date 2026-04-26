@@ -5,6 +5,9 @@ app/build/
 
 # Local configuration file (sdk.dir is local to machine)
 local.properties
+keystore.properties
+*.jks
+*.keystore
 
 # Generated/Copied artifacts
 app/src/main/assets/

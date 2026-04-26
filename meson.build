@@ -394,10 +394,12 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
                 py3, deploy_script,
                 '--build-dir', meson.current_build_dir(),
                 '--source-dir', meson.current_source_dir(),
-                            '--libmain', binary,
-                            '--output', '@OUTPUT@',
-                            '--compiler', meson.get_compiler('cpp').cmd_array(),
-                        ],            depends : binary,
+                '--buildtype', get_option('buildtype'),
+                '--libmain', binary,
+                '--output', '@OUTPUT@',
+                '--compiler', meson.get_compiler('cpp').cmd_array(),
+            ],
+            depends : binary,
             build_by_default : true,
         )
 

@@ -955,7 +955,7 @@ void showBattery() {
     aprintsSprite(buff, 4, 0, 1020);
 
     sprite_set_attr(sprite, ShapeWide, 1, 1020, 15, 0);
-    sprite_set_pos(sprite, 21 * 8 + 1, 152);
+    sprite_set_pos(sprite, 21 * 8 + 1, 154);
     sprite_unhide(sprite, 0);
 #endif
 }

@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description='Android deploy script for Apotris')
     parser.add_argument('--build-dir', required=True, help='Meson build directory')
     parser.add_argument('--source-dir', required=True, help='Meson source directory')
+    parser.add_argument('--buildtype', required=True, help='Meson build type (debug, release, etc.)')
     parser.add_argument('--libmain', required=True, help='Path to built libmain.so')
     parser.add_argument('--compiler', required=True, nargs='+', help='C++ compiler command')
     parser.add_argument('--output', required=True, help='Output APK path')
@@ -145,18 +146,22 @@ def main():
 
     # 7. Run Gradle
     print("Running Gradle...")
+    build_type_task = 'assembleDebug' if args.buildtype == 'debug' else 'assembleRelease'
+    apk_out_dir = 'debug' if args.buildtype == 'debug' else 'release'
+    apk_out_name = 'app-debug.apk' if args.buildtype == 'debug' else 'app-release.apk'
+    
     # Check for gradlew
     gradlew = os.path.join(android_project_dir, 'gradlew')
     if os.path.exists(gradlew) and os.path.exists(os.path.join(android_project_dir, 'gradle', 'wrapper', 'gradle-wrapper.jar')):
         # Make executable
         os.chmod(gradlew, 0o755)
-        run_command([gradlew, 'assembleDebug'], cwd=android_project_dir)
+        run_command([gradlew, build_type_task], cwd=android_project_dir)
     else:
         print("Gradle wrapper not found or incomplete. Falling back to system gradle.")
-        run_command(['gradle', 'assembleDebug'], cwd=android_project_dir)
+        run_command(['gradle', build_type_task], cwd=android_project_dir)
 
     # 8. Copy Output APK
-    apk_out = os.path.join(android_project_dir, 'app/build/outputs/apk/debug/app-debug.apk')
+    apk_out = os.path.join(android_project_dir, 'app/build/outputs/apk', apk_out_dir, apk_out_name)
     if os.path.exists(apk_out):
         print(f"Copying APK to {args.output}")
         shutil.copy(apk_out, args.output)
