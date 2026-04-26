@@ -359,13 +359,16 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         sdl2_dep,
         soloud,
     ]
-    if host_machine.system() != 'emscripten'
+    if host_machine.system() != 'horizon'
+        dependencies += dependency('cpr')
+    endif
+    if host_machine.system() != 'emscripten' and host_machine.system() != 'horizon'
         datachannel = dependency(
             'libdatachannel',
             fallback: ['libdatachannel', 'libdatachannel_dep'],
         )
         dependencies += datachannel
-    else
+    elif host_machine.system() == 'emscripten'
         cmake = import('cmake')
         datachannel = cmake.subproject('datachannel-wasm')
         dependencies += datachannel.dependency('datachannel-wasm')
