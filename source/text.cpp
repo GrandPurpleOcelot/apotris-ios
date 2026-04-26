@@ -3,6 +3,7 @@
 #include "platform.hpp"
 #include <posprintf.h>
 #include <string>
+#include <utility>
 
 #include "font1tiles_bin.h"
 
@@ -11,13 +12,13 @@ const int allocateStart = 124;
 
 class TextArea {
 public:
-    int tileId;
-    int startX;
-    int startY;
-    int endX;
-    int endY;
+    int tileId{};
+    int startX{};
+    int startY{};
+    int endX{};
+    int endY{};
 
-    TextArea() {}
+    TextArea() = default;
     TextArea(int tid, int sx, int sy, int ex, int ey) {
         tileId = tid;
 

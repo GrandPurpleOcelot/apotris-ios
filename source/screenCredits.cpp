@@ -40,6 +40,10 @@ std::list<std::string> creditsText = {
     "  - schizofrenium_long",
     "        by panther, karl",
     "",
+    "Multiboot Sound-Effects:",
+    "  - Sweet Sounds!",
+    "   by Coffee 'Valen' Bat",
+    "",
     "",
     "",
     "Made with:",
@@ -82,9 +86,9 @@ std::list<std::string> creditsText = {
     "",
     "Code Contributors:",
     " - Toolchain",
-    " - Wireless multiplayer",
-    "  by Isaac Aronson",
-    "     (@luigi___)",
+    " - Multiplayer features",
+    "  by Heni (@aronson)",
+    "     (@vagabondtruffle)",
     "",
     " - Custom rotation",
     "   system (BARS, SDRS)",
@@ -179,13 +183,13 @@ void CreditsScene::draw() {
          ++option) {
         if (counter < listStart) {
             counter++;
-            if (*option == "")
+            if ((*option).empty())
                 gaps++;
 
             continue;
         }
 
-        if (*option == "") {
+        if ((*option).empty()) {
             height += space;
             continue;
         }
@@ -238,7 +242,7 @@ bool CreditsScene::control() {
 }
 
 void CreditsScene::update() {
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     if (delay < delayMax) {
@@ -271,8 +275,8 @@ void CreditsScene::deinit() {
 
     clearText();
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for (auto& wordSprite : wordSprites)
+        delete wordSprite;
 
     buildBG(0, 2, 29, 0, 0, true);
 

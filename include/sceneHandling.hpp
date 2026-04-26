@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #include "scene.hpp"
 
 class DASElement : public Element {
@@ -448,3 +449,4 @@ public:
     void init();
     void deinit();
 };
+#endif

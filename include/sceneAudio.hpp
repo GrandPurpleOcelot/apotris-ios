@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #include "scene.hpp"
 
 class MusicVolumeElement : public Element {
@@ -233,7 +234,7 @@ public:
         sfx(SFX_MENUMOVE);
     }
 
-    void select();
+    void select() const;
 
     SongElement(int m, int i) {
         menu = m;
@@ -321,3 +322,4 @@ public:
 
     ~TrackListScene() { deinit(); }
 };
+#endif

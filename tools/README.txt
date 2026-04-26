@@ -18,3 +18,11 @@ LINUX:
 
 MAC:
     Run the LINUX_or_MAC_build.sh to add any changes to the ROM.
+
+Patching for unique hardware:
+    IF YOU USE ONE OF THESE:
+    - EZFlash Air flash cart
+    - Analogue Pocket with a Rumble Cart
+    You will need to patch your 'Apotris.gba' (or 'audio/Apotris-base.gba' before running the script for custom music).
+    In the 'patches' folder are .ups files named for each target. You can use any tool that supports UPS patch format.
+    RomPatcherJS is a great option that works on both desktop and mobile: https://www.marcrobledo.com/RomPatcher.js/

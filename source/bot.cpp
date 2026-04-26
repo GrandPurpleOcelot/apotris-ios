@@ -1,3 +1,4 @@
+#ifndef MULTIBOOT
 #include "blockEngine.hpp"
 #include "def.h"
 #include "logging.h"
@@ -11,9 +12,9 @@ int botStepMax = 10;
 
 using namespace BlockEngine;
 
-void showTestBoard(u16* testBoard);
+void showTestBoard(const u16* testBoard);
 
-INLINE bool bitGet(u16* bitboard, int x, int y) {
+INLINE bool bitGet(const u16* bitboard, int x, int y) {
     return (bitboard[y] >> x) & 0b1;
 }
 
@@ -37,7 +38,7 @@ INLINE int countBits(u16 n) {
 
 INLINE int countTransitions(u16 a) { return countBits((a >> 1) ^ a); }
 
-IWRAM_CODE Values evaluate(u16* board, int* columnHeights, int lengthX,
+Values evaluate(u16* board, const int* columnHeights, int lengthX,
                            int lengthY, int startY) {
     int start = max(1, startY - 1);
 
@@ -107,7 +108,7 @@ IWRAM_CODE Values evaluate(u16* board, int* columnHeights, int lengthX,
     return result;
 }
 
-int countClears(u16* board, int lengthX, int lengthY, int startY) { // row
+int countClears(const u16* board, int lengthX, int lengthY, int startY) { // row
     int clears = 0;
     if (startY < 0)
         startY = 0;
@@ -209,7 +210,6 @@ void Bot::stopThinking() {
         testGame = new Game(game);
 
         moves.clear();
-
         return;
     }
 
@@ -279,7 +279,7 @@ void Bot::stopThinking() {
     moves.clear();
 }
 
-void Bot::executeMove(Move move) {
+void Bot::executeMove(const Move& move) const {
     if (testGame->pawn.current != move.piece) {
         if (testGame->held == move.piece ||
             testGame->queue.front() == move.piece) {
@@ -500,7 +500,7 @@ int findBestDrop(int ii, int jj, Game* game, std::list<Move>& moves,
     return 1;
 }
 
-void showTestBoard(u16* testBoard) {
+void showTestBoard(const u16* testBoard) {
     log("testboard: ");
     for (int i = 0; i < 20; i++) {
         std::string str;
@@ -534,3 +534,4 @@ void showTestBoard(u16* testBoard) {
     //     }
     // }
 }
+#endif

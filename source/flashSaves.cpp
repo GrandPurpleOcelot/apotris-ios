@@ -1,13 +1,15 @@
 #include "def.h"
 
+#ifndef MULTIBOOT
 #ifdef GBA
 #include "agbabi.h"
 #include "flashSaves.h"
 #include "logging.h"
+#include "multiplayerClasses.h"
 
 #include "text.h"
 
-#if ENABLE_FLASH_SAVE
+#ifdef ENABLE_ROM_SAVE
 
 #define FLASH_CODE __attribute__((noinline, section(".ewram.flash")))
 #define BYTECMP_CODE __attribute((section(".ewram.bytecmp")))
@@ -17,7 +19,6 @@ void flash_write(u8 flash_type, u32 sa);
 // static u32 total_rom_size = 0;
 u32 flash_size = 0;
 u32 flash_sram_area = 0;
-u8 bootleg_type = 0;
 bool escape = false;
 
 BYTECMP_CODE static int bytecmp(vu8* buf1, vu8* buf2, size_t count) {
@@ -324,45 +325,15 @@ void save_sram_flash() {
 
     aprint("Saving...", 21, 19);
 
-    bool isLinked = linkConnection->isActive();
-    if (isLinked)
-        linkConnection->deactivate();
-
-    int prev = gradientEnabled;
-    gradient(false);
-    vsync();
-    interrupt_disable(INTR_VBLANK);
-    int stat_value = REG_SNDSTAT;
-    int dsc_value = REG_SNDDSCNT;
-    int dmg_value = REG_SNDDMGCNT;
-
-    REG_SNDSTAT = 0;
-    REG_SNDDSCNT = 0;
-    REG_SNDDMGCNT = 0;
-
-    interrupt_disable(INTR_TIMER3);
-    interrupt_disable(INTR_TIMER2);
-    interrupt_disable(INTR_SERIAL);
+    disableVolatileInterrupts(false);
 
     flash_write(bootleg_type, flash_sram_area);
 
-    REG_SNDSTAT = stat_value;
-    REG_SNDDSCNT = dsc_value;
-    REG_SNDDMGCNT = dmg_value;
-
-    interrupt_enable(INTR_TIMER3);
-    interrupt_enable(INTR_TIMER2);
-    interrupt_enable(INTR_SERIAL);
-    interrupt_enable(INTR_VBLANK);
-
-    if (isLinked)
-        linkConnection->activate();
-
-    if (prev)
-        gradient(1);
+    enableVolatileInterrupts(false);
 
     aprint("   Saved!", 21, 19); // spaces necessary to "erase" the previous
                                  // text
 }
+#endif
 #endif
 #endif

@@ -3,6 +3,7 @@
 #include "rumble.h"
 #include "rumblePatterns.hpp"
 #include "scene.hpp"
+#include "sceneModes.hpp"
 #include "tetromino.hpp"
 // #include "soundbank.h"
 #include "blockEngine.hpp"
@@ -17,6 +18,7 @@
 #include <fstream>
 #endif
 
+#include "multiplayerClasses.h"
 #include "qrcodegen.h"
 
 using namespace BlockEngine;
@@ -34,12 +36,15 @@ bool showingStats = false;
 
 bool saveExists = false;
 BlockEngine::Game* quickSave = nullptr;
+#ifndef MULTIBOOT
 BlockEngine::Bot* testBot = nullptr;
+#endif
 
 int igt = 0;
 
 bool ended = false;
 
+#ifndef MULTIBOOT
 const std::string modeStrings[] = {
     "Marathon", "Sprint",  "Dig",    "Battle",   "Ultra", "Blitz", "Combo",
     "Survival", "Classic", "Master", "Training", "Zen",   "Death",
@@ -60,6 +65,7 @@ const std::string modeOptionStrings[][5] = {
     {""},
     {"Normal", "Classic"},
 };
+#endif
 
 void GameScene::endScreen() {
     const int optionsHeight = 11;
@@ -77,7 +83,7 @@ void GameScene::endScreen() {
     int fractional = pps & 0xff;
     for (int i = 0; i < 2; i++) {
         fractional *= 10;
-        ppsStr += '0' + (fractional >> 8);
+        ppsStr += std::to_string('0' + (fractional >> 8));
         fractional &= 0xff;
     }
 
@@ -90,7 +96,11 @@ void GameScene::endScreen() {
     int record = endScreenSetup();
 
     if (multiplayer)
+#ifndef MULTIBOOT
         max = 2;
+#else
+        max = 1;
+#endif
 
     playSongRandom(0);
 
@@ -199,15 +209,23 @@ void GameScene::endScreen() {
 
     MenuKeys k = savefile->settings.menuKeys;
 
+    bool shownOptions = false;
     while (closed()) {
-        if (handleMultiplayer(0)) {
+        if (handleMultiplayer(false)) {
             return;
         }
 
         vsync();
         key_poll();
 
-        showScore();
+        if (!multiplayerLink->stateMachine
+                 .IsInState<MultiplayerStates::Playing>()) {
+            if (!shownOptions) {
+                showEndScreenOptions();
+                shownOptions = true;
+            }
+            showScore();
+        }
 
         cursorFloat += 6;
         if (cursorFloat >= 512)
@@ -246,8 +264,9 @@ void GameScene::endScreen() {
         wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8,
                             14 + (selection == 1 + !multiplayer));
 
-        if (playAgain && multiplayer) {
-            startMultiplayerGame(nextSeed);
+        if (multiplayerStart) {
+            multiplayerStart = false;
+            startGame(nextSeed);
             changeScene(new GameScene());
             break;
         }
@@ -262,23 +281,11 @@ void GameScene::endScreen() {
                     changeScene(new GameScene());
                     break;
                 } else {
-                    if (connected == 1) {
-                        sfx(SFX_MENUCONFIRM);
+                    if (multiplayerLink->stateMachine.IsInState<
+                            MultiplayerStates::PlayersAwaitReady>()) {
                         // Mark that we are ready
-                        playAgainMutex->updatePlayerReady(currentPlayerId,
-                                                          true);
-                        if (!playAgainMutex->checkAllReady()) {
-#ifdef GBA
-                            nextSeed = (u16)randNext() % 0x1FFE;
-                            linkConnection->send((1 << 13) + nextSeed);
-#endif
-                        } else {
-#ifdef GBA
-                            linkConnection->send((1 << 13) + 0x1FFF);
-#endif
-                            multiplayerStart = true;
-                            playAgainMutex->clear();
-                        }
+                        sfx(SFX_MENUCONFIRM);
+                        multiplayerLink->readyUp();
                     } else {
                         sfx(SFX_MENUCANCEL);
                     }
@@ -287,18 +294,19 @@ void GameScene::endScreen() {
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
                 buildBG(3, 0, 27, 0, 1, true);
-#ifdef GBA
-                if (linkConnection->isActive())
-                    linkConnection->deactivate();
-#endif
+                multiplayerLink->deactivate(true);
                 multiplayer = false;
+#ifndef MULTIBOOT
                 changeScene(new MainMenuScene, Transitions::FADE);
+#else
+                changeScene(new MultiplayerProtocolScene, Transitions::FADE);
+#endif
                 return;
             } else if (selection == 1) {
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
                 path.clear();
-                path.push_back("Play");
+                path.emplace_back("Play");
                 clearText();
                 buildBG(3, 0, 27, 0, 1, true);
                 sceneSwitcher(modeToString(previousGameOptions->mode));
@@ -353,7 +361,6 @@ void GameScene::endScreen() {
 
     buildBG(3, 0, 27, 0, 1, true);
     enableBlend(prevBld);
-    return;
 }
 
 void endAnimation() {
@@ -376,11 +383,16 @@ void endAnimation() {
     enableLayerWindow(1, 0, 0, 240, 160, false);
     enableLayerWindow(2, 0, 0, 240, 160, false);
 
+#if defined(TE) || defined(N3DS)
+    setSpriteMaskRegion(shake);
+#endif
+
     rumblePatternStop();
 
     sfx(SFX_END);
 
     for (int i = 0; i < 40; i++) {
+        multiplayerLink->sync();
         closed();
         vsync();
         drawGrid();
@@ -397,6 +409,7 @@ void endAnimation() {
 
     int counter = 0;
     while (!floatingList.empty() && closed()) {
+        multiplayerLink->sync();
         vsync();
         showClearText();
 
@@ -501,8 +514,8 @@ void showScore() {
     }
 }
 
-void GameScene::showStats(bool moreStats, std::string time, std::string pps,
-                          bool end) {
+void GameScene::showStats(bool moreStats, const std::string& time,
+                          const std::string& pps, bool end) const {
     if (!moreStats) {
         aprints("Press " +
                     getStringFromKey(savefile->settings.menuKeys.special1),
@@ -640,8 +653,8 @@ int GameScene::pauseMenu() {
     clearText();
     setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 12, 20);
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
+    for (auto& wordSprite : wordSprites)
+        wordSprite.hide();
 
     int prevBld = blendInfo;
     enableBlend((1 << 6) + (0b11101 << 9) + (1 << 3));
@@ -679,7 +692,7 @@ int GameScene::pauseMenu() {
     int fractional = pps & 0xff;
     for (int i = 0; i < 2; i++) {
         fractional *= 10;
-        ppsStr += '0' + (fractional >> 8);
+        ppsStr += std::to_string('0' + (fractional >> 8));
         fractional &= 0xff;
     }
 
@@ -792,7 +805,12 @@ int GameScene::pauseMenu() {
                     buildBG(3, 0, 27, 0, 1, true);
                     addGameStats();
                     playSongRandom(0);
+
+#ifdef MULTIBOOT
+                    changeScene(new MultBattleScene(), Transitions::FADE);
+#else
                     changeScene(new MainMenuScene(), Transitions::FADE);
+#endif
                     return 1;
                 }
             }
@@ -819,10 +837,12 @@ int GameScene::pauseMenu() {
                         if (savefile->settings.colors == 3)
                             setPalette();
 
+#ifndef MULTIBOOT
                         if (enableBot) {
                             delete testBot;
                             testBot = new Bot(game);
                         }
+#endif
 
                         aprint("Loaded!",
                                22 - (savefile->settings.aspectRatio == 1), 18);
@@ -983,6 +1003,12 @@ int saveRecord(EntryBoard& board, int value, int dir) {
 
         std::string name = nameInput(i);
 
+        for (int j = 0; j < 8; j++)
+            savefile->latestName[j] = ' ';
+
+        for (int j = 0; j < name.size(); j++)
+            savefile->latestName[j] = name.at(j);
+
         board.entries[i].value = value;
 
         board.entries[i].pro = proMode;
@@ -1062,6 +1088,12 @@ int onRecord() {
 
             std::string name = nameInput(i);
 
+            for (int j = 0; j < 8; j++)
+                savefile->latestName[j] = ' ';
+
+            for (int j = 0; j < name.size(); j++)
+                savefile->latestName[j] = name.at(j);
+
             board.entries[i].value = gameSeconds;
             board.entries[i].grade = grade;
 
@@ -1090,6 +1122,12 @@ int onRecord() {
 
             std::string name = nameInput(i);
 
+            for (int j = 0; j < 8; j++)
+                savefile->latestName[j] = ' ';
+
+            for (int j = 0; j < name.size(); j++)
+                savefile->latestName[j] = name.at(j);
+
             board.entries[i].value = gameSeconds;
             board.entries[i].grade = grade;
 
@@ -1116,6 +1154,7 @@ void GameScene::showModeText() {
         std::string str;
         std::string str2;
 
+#ifndef MULTIBOOT
         str = modeStrings[game->gameMode - 1];
 
         if (game->gameMode == TRAINING)
@@ -1144,7 +1183,7 @@ void GameScene::showModeText() {
                 str = modeOptionStrings[game->gameMode - 1][0];
         }
 
-        if (str != "") {
+        if (!str.empty()) {
             naprintColor(str, width - 4 - getVariableWidth(str), counter * 8,
                          14);
             counter++;
@@ -1177,12 +1216,12 @@ void GameScene::showModeText() {
                 str = "A-Type";
         }
 
-        if (str != "") {
+        if (!str.empty()) {
             naprintColor(str, width - 4 - getVariableWidth(str), counter * 8,
                          14);
             counter++;
         }
-        if (str2 != "") {
+        if (!str2.empty()) {
             naprintColor(str2, width - 4 - getVariableWidth(str2), counter * 8,
                          14);
             counter++;
@@ -1193,6 +1232,7 @@ void GameScene::showModeText() {
                          counter * 8, 14);
             counter++;
         }
+#endif
 
         int mode = game->gameMode;
 
@@ -1292,7 +1332,8 @@ void saveReplay() {
 
 #ifdef PC
 #ifdef __APPLE__
-    std::string filePath = savefileDir() + "/replay.sav";
+    std::string filePath = getSavefilePath();
+    filePath.replace(filePath.find("Apotris.sav"), 11, "replay.sav");
     std::ofstream output(filePath, std::ios::binary | std::ios::out);
 #else
     std::ofstream output("replay.sav", std::ios::binary | std::ios::out);
@@ -1343,7 +1384,8 @@ void loadReplay() {
 #ifdef PC
 
 #ifdef __APPLE__
-    std::string filePath = savefileDir() + "/replay.sav";
+    std::string filePath = getSavefilePath();
+    filePath.replace(filePath.find("Apotris.sav"), 11, "replay.sav");
     std::ifstream input(filePath, std::ios::binary | std::ios::in);
 #else
     std::ifstream input("replay.sav", std::ios::binary | std::ios::in);
@@ -1495,10 +1537,12 @@ void addGameStats() {
 }
 
 int GameScene::endScreenSetup() {
+    resetSmallText();
     clearSmallText();
+    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        wordSprites[i].hide();
+    for (auto& wordSprite : wordSprites)
+        wordSprite.hide();
 
     if (!ended)
         endAnimation();
@@ -1536,8 +1580,16 @@ int GameScene::endScreenSetup() {
         record = onRecord();
     }
 
-    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
+#ifdef GBA
+    if (multiplayer &&
+        !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>())
+#endif
+        showEndScreenOptions();
 
+    return record;
+}
+
+void GameScene::showEndScreenOptions() {
     const int optionsHeight = 11;
 
     int counter = 0;
@@ -1546,8 +1598,9 @@ int GameScene::endScreenSetup() {
     wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[2].setText("Again");
     wordSprites[2].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
-
+#ifndef MULTIBOOT
     counter += 3;
+#endif
 
     if (!multiplayer) {
         wordSprites[3].setText("Change");
@@ -1558,31 +1611,135 @@ int GameScene::endScreenSetup() {
         counter += 3;
     } else {
         showReadyPlayers();
+        showScoreboard();
     }
-
+#ifndef MULTIBOOT
     wordSprites[5].setText("Main");
     wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14);
     wordSprites[6].setText("Menu");
     wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
+#endif
 
     showModeText();
-    return record;
 }
 
 void GameScene::showReadyPlayers() {
-    int readyPlayers = playAgainMutex->getReadyCount();
+    int readyCount = multiplayerLink->getReadyCount();
+    unsigned int playerCount = multiplayerLink->playingPlayerCount;
+    if (playerCount > 0) {
+        std::string readyText =
+            std::to_string(readyCount) + "/" + std::to_string(playerCount);
 
-    std::string readyText =
-        std::to_string(readyPlayers) + "/" + std::to_string(initialPlayerCount);
+        wordSprites[8].setText(readyText);
 
-    wordSprites[8].setText(readyText);
-    wordSprites[8].show(236 - wordSprites[8].width, 160 - 12 - 8, 14);
+        wordSprites[8].show(236 - wordSprites[8].width, 160 - 12 - 8, 14);
+    }
 
-    if (playAgainMutex->checkCurrentReady()) {
+    if (multiplayerLink->players[multiplayerLink->universal->currentPlayerId()]
+            .ready &&
+        !multiplayerLink->stateMachine.IsInState<MultiplayerStates::Lost>()) {
         wordSprites[7].setText("Ready!");
+#if !defined(NO_DIAGNOSE) && !defined(MULTIBOOT)
+        if (enableBot) {
+            wordSprites[7].setText("bot Ready!");
+        }
+#endif
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::PlayersAwaitReady>()) {
+        wordSprites[7].setText("Not Ready");
+#if !defined(NO_DIAGNOSE) && !defined(MULTIBOOT)
+        if (enableBot) {
+            wordSprites[7].setText("botNot Ready");
+        }
+#endif
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::Playing>()) {
+        wordSprites[7].setText("Starting!");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::Lost>()) {
+        wordSprites[7].setText("Waiting...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::Won>()) {
+        wordSprites[7].setText("Won!");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::PlayersSeeding>()) {
+        wordSprites[7].setText("Seeding...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::PlayersPresent>()) {
+        wordSprites[7].setText("Syncing...");
+        wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
+    } else if (multiplayerLink->stateMachine
+                   .IsInState<MultiplayerStates::Activated>()) {
+        wordSprites[7].setText("Reconnecting...");
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     } else {
-        wordSprites[7].setText("Not Ready");
+        wordSprites[7].setText("Connecting...");
         wordSprites[7].show(236 - wordSprites[7].width, 160 - 12, 15);
     }
+}
+
+void GameScene::showScoreboard() {
+    std::string score = std::to_string(multiplayerLink->wins) + "W - " +
+                        std::to_string(multiplayerLink->losses) + "L";
+    wordSprites[9].setText(score);
+    wordSprites[9].show(4, 160 - 12, 14);
+}
+
+void MultBattleScene::showReadyPlayers() {
+    int readyCount = multiplayerLink->getReadyCount();
+    unsigned int playerCount = multiplayerLink->playingPlayerCount;
+    if (playerCount > 0) {
+        std::string readyText =
+            std::to_string(readyCount) + "/" + std::to_string(playerCount);
+
+        wordSprites[8]->setText(readyText);
+
+        wordSprites[8]->show(236 - wordSprites[8]->width, 160 - 12 - 8, 14);
+    }
+
+#ifndef GBA
+    const int startX = 3 * 8;
+    const int endX = 30 - 4;
+
+    int verticalOffset = 0;
+
+    std::unordered_map<u8, std::string> playerNames =
+        multiplayerLink->getPlayerNames();
+
+    int counter = 0;
+    for (const std::pair<const u8, std::string>& pair : playerNames) {
+        const int y = startY + 8 * (1) * counter + verticalOffset;
+
+        char buff[12];
+        posprintf(buff, "%d. %s", counter + 1, (pair.second).c_str());
+
+        labels[counter]->setText(buff);
+        labels[counter]->show(startX, y, 15);
+
+        std::string str =
+            multiplayerLink->players[pair.first].ready ? "READY" : " ";
+
+        const int x = (endX) * 8 - getVariableWidth(str);
+        wordSprites[counter]->setText(str);
+        wordSprites[counter]->show(x, y, 15);
+
+        counter++;
+    }
+#endif
+}
+
+void MultBattleScene::hideReadyPlayers() {
+    for(int i = 0; i < 5; i++){
+        labels[i]->hide();
+        wordSprites[i]->hide();
+    }
+
+    wordSprites[7]->hide();
+    wordSprites[8]->hide();
 }

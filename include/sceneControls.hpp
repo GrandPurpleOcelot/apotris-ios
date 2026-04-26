@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #ifdef GBA
 #include "gba-rumble-cart.h"
 #endif
@@ -835,3 +836,4 @@ public:
 
     Scene* previousScene() { return new ControlOptionScene(); };
 };
+#endif

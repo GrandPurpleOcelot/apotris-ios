@@ -8,23 +8,23 @@
 namespace GameInfo {
 extern const int colors[7][3];
 
-extern const int tetrominos[7][4][4][4];
+extern const uint16_t tetrominos[7][4][4][4];
 
-extern const int bars[7][4][4][4];
+extern const uint16_t bars[7][4][4][4];
 
-extern const int sdrs[7][4][4][4];
+extern const uint16_t classic[7][4][4][4];
 
-extern const int classic[7][4][4][4];
+extern const uint16_t sdrs[7][4][4][4];
 
-extern const int ars[7][4][4][4];
+extern const uint16_t ars[7][4][4][4];
 
 extern const int kickTwice[4][6][2];
 
 extern const int barsKickTwice[4][8][2];
 
-extern const int kicks[2][2][4][5][2];
+extern const int8_t kicks[2][2][4][5][2];
 
-extern const int barsKicks[2][2][4][7][2];
+extern const int8_t barsKicks[2][2][4][7][2];
 
 extern const int sdrsKicks[2][2][4][10][2];
 
@@ -44,7 +44,7 @@ extern const int classicScoring[4];
 
 extern const int comboTable[20];
 
-extern const int finesse[7][4][10][4];
+extern const uint8_t finesse[7][4][10][4];
 
 extern const uint16_t masterDelays[9][5];
 

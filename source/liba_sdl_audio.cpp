@@ -153,7 +153,11 @@ void loadAudio(std::string pathPrefix) {
 
     for (auto str : songPaths) {
         songList.push_back(path + "/" + str);
-        songNameList.push_back(str);
+        std::string asciiName = str;
+        std::replace_if(
+            asciiName.begin(), asciiName.end(),
+            [](char c) { return c < 32 || c >= 127; }, '?');
+        songNameList.push_back(std::move(asciiName));
 
         if (str.find("MENU_") != std::string::npos) {
             songs.menu.push_back(counter++);

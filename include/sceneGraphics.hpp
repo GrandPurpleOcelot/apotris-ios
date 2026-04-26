@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #include "scene.hpp"
 
 class ProfileElement : public Element {
@@ -960,3 +961,4 @@ class GradientEditorScene : public Scene {
 
     ~GradientEditorScene() { deinit(); }
 };
+#endif

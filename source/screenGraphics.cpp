@@ -7,11 +7,11 @@
 #include "text.h"
 #include <posprintf.h>
 #include <string>
+#ifndef MULTIBOOT
 
 using namespace BlockEngine;
 
 static void screenShake();
-void setClearEffect();
 
 void GradientEditorScene::init() {
     toggleBG(0, true);
@@ -329,7 +329,7 @@ void GradientEditorScene::drawText() {
 }
 
 void GradientEditorScene::update() {
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     setGradient(c);
@@ -521,8 +521,8 @@ void GradientEditorScene::deinit() {
     resetSmallText();
     clearText();
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for (auto& wordSprite : wordSprites)
+        delete wordSprite;
 }
 
 bool GradientElement::action() {
@@ -582,7 +582,7 @@ void GraphicsScene::init() {
         sprite_hide(arrowSprites[i]);
     }
 
-    if (name() != "") {
+    if (!name().empty()) {
         bool found = false;
         int count = 0;
         auto it = path.begin();
@@ -767,14 +767,14 @@ void GraphicsScene::draw() {
 
             if (counter == selection) { // draw sprite cursor
                 currentOption = option->getLabel();
-                for (int i = 0; i < 2; i++) {
-                    sprite_unhide(cursorSprites[i], 0);
-                    sprite_enable_affine(cursorSprites[i], 10, true);
-                    sprite_set_size(cursorSprites[i], scale, 10);
+                for (auto& cursorSprite : cursorSprites) {
+                    sprite_unhide(cursorSprite, 0);
+                    sprite_enable_affine(cursorSprite, 10, true);
+                    sprite_set_size(cursorSprite, scale, 10);
 
                     int x = startX - ((8) + offset + 4) - 4;
 
-                    sprite_set_pos(cursorSprites[i], x, y - 5);
+                    sprite_set_pos(cursorSprite, x, y - 5);
                 }
             }
 
@@ -834,7 +834,7 @@ void GraphicsScene::draw() {
     if (refreshText) {
         scrollText = getDescription(currentOption);
         clearSpriteTiles(672 + 64, 144, 1);
-        if (scrollText != "") {
+        if (!scrollText.empty()) {
             scrollTextLength = getVariableWidth(scrollText);
 
             endDelay = 0;
@@ -857,7 +857,7 @@ void GraphicsScene::draw() {
 }
 
 void GraphicsScene::update() {
-    canDraw = 1;
+    canDraw = true;
     key_poll();
     gradient(1);
 
@@ -950,7 +950,7 @@ bool GraphicsScene::control() {
         previousElement = name();
         previousSelection = selection;
 
-        if (path.size())
+        if (!path.empty())
             path.pop_back();
 
         changeScene(previousScene(), Transitions::FADE);
@@ -1009,8 +1009,8 @@ bool GraphicsScene::control() {
                 labels[index]->hide();
             }
 
-            for (int i = 0; i < 2; i++)
-                sprite_hide(cursorSprites[i]);
+            for (auto& cursorSprite : cursorSprites)
+                sprite_hide(cursorSprite);
 
             int wordIndex = MAX_WORD_SPRITES - pathCount - 1;
             for (int i = 0; i < pathCount; i++)
@@ -1165,14 +1165,14 @@ void GraphicsScene::deinit() {
     gradient(false);
     spriteVOffset = 0;
 
-    for (int i = 0; i < MAX_WORD_SPRITES; i++)
-        delete wordSprites[i];
+    for (auto& wordSprite : wordSprites)
+        delete wordSprite;
 
-    for (int i = 0; i < 7; i++)
-        delete labels[i];
+    for (auto& label : labels)
+        delete label;
 
-    for (int i = 0; i < 3; i++)
-        delete scrollingText[i];
+    for (auto& i : scrollingText)
+        delete i;
 
     disableLayerWindow(1);
     disableLayerWindow(2);
@@ -1286,7 +1286,9 @@ void GraphicsScene::showClear() {
     }
 }
 
+#endif
 void setClearEffect() {
+#ifndef MULTIBOOT
     switch (savefile->settings.clearEffect) {
     case 0:
         loadTiles(0, 3, sprite4tiles_bin, sprite4tiles_bin_size / 32);
@@ -1301,7 +1303,10 @@ void setClearEffect() {
         clearTiles(0, 3, 1);
         break;
     default:
+#endif
         loadTiles(0, 3, sprite26tiles_bin, sprite26tiles_bin_size / 32);
+#ifndef MULTIBOOT
         break;
     }
+#endif
 }

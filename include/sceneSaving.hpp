@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #include "flashSaves.h"
 #include "scene.hpp"
 #ifdef GBA
@@ -18,7 +19,7 @@ public:
         std::string result;
 
 #ifdef GBA
-
+#ifndef MULTIBOOT
         if (bootleg_type)
             result = "ROM";
         else if (flashInfo.size)
@@ -27,7 +28,7 @@ public:
             result = "SRAM";
         else
             result = "ERROR!";
-
+#endif
 #endif
 
         return result;
@@ -46,16 +47,16 @@ public:
         std::string result;
 
 #ifdef GBA
-
+#ifndef MULTIBOOT
         if (flashInfo.size == FLASH_SIZE_64KB || sramInfo.size == 0xFFFF)
             result = "64KB";
         else if (flashInfo.size == FLASH_SIZE_128KB)
             result = "128KB";
-        else if (sramInfo.size == 0x7FFF)
+        else if (sramInfo.size == SAVE_32K_END)
             result = "32KB";
         else
             result = std::to_string(sizeof(Save)) + "B";
-
+#endif
 #endif
 
         return result;
@@ -123,3 +124,4 @@ public:
 
     Scene* previousScene() { return new SettingsScene(); };
 };
+#endif

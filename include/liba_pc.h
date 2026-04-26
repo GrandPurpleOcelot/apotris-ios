@@ -8,7 +8,9 @@
 #define TLN_EXCLUDE_WINDOW // needs to be before "Tilengine.h"
 
 #include "Tilengine.h"
+#include <chrono>
 #include <cstring>
+#include <random>
 
 #if defined(PC)
 
@@ -291,6 +293,7 @@ extern u16 gradientTable[SCREEN_HEIGHT + 1];
 extern void setSpriteMaskRegion(int shift);
 
 extern void setScreenOffset(int x, int y);
+void setUpPresentException(std::string error);
 
 #define UNBOUND -2
 

@@ -11,6 +11,8 @@ compile_args = [
   '-fdata-sections',            # Every global variable gets placed into its own section.
   '-mthumb',                    # Generate THUMB code by default.
   '-masm-syntax-unified',       # Use unified assembler syntax for inline assembly.
+  '-fno-exceptions',            # Do not generate exception stubs
+  '-frtti',       		# Use RTTI to improve codegen and speed for HSM in multiplayer
 ]
 
 if get_option('debug')
@@ -46,12 +48,3 @@ endif
 
 add_project_link_arguments(link_args, language: ['c', 'cpp'])
 
-if have_devkitarm
-  dka_rom_rt = declare_dependency(link_args: ['-specs=gba.specs'])
-  dka_mb_rt = declare_dependency(link_args: ['-specs=gba_mb.specs'])
-  dka_er_rt = declare_dependency(link_args: ['-specs=gba_er.specs'])
-
-  meson.override_dependency('dka-rom-rt', dka_rom_rt)
-  meson.override_dependency('dka-multiboot-rt', dka_mb_rt)
-  meson.override_dependency('dka-ereader-rt', dka_er_rt)
-endif

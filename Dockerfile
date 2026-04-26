@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update \
   && apt-get install -y --no-install-recommends \
     python3 ash zsh vim build-essential git make curl meson xxd zstd wget sudo ca-certificates zip unzip \
-    libsdl2-mixer-dev libopus-dev libvorbis-dev nodejs \
+    libsdl2-mixer-dev libopus-dev libvorbis-dev nodejs golang libcurl4-openssl-dev \
     pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
@@ -33,7 +33,10 @@ RUN /bin/bash -c 'set -ex && \
 RUN ln -sf /usr/share/arm-gnu-toolchain-*/bin/* /usr/bin/
 
 # Get missing windows deps and hack them in
-RUN curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-dlfcn-1.4.1-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/
+RUN curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-dlfcn-1.4.1-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/ && \
+    curl -L "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-curl-8.19.0-1-any.pkg.tar.zst" | tar --strip-components=1 -x --zstd -C /usr/x86_64-w64-mingw32/ && \
+    sed -i 's|/mingw64|/usr/x86_64-w64-mingw32|g' /usr/x86_64-w64-mingw32/lib/pkgconfig/*.pc && \
+    sed -i '/^Requires.private:/d' /usr/x86_64-w64-mingw32/lib/pkgconfig/*.pc
 
 # Install latest meson 1.4.0
 ADD https://github.com/mesonbuild/meson/releases/download/1.4.0/meson-1.4.0.tar.gz .

@@ -1,5 +1,6 @@
 #pragma once
 
+#ifndef MULTIBOOT
 #include "scene.hpp"
 
 class PlayTimeElement : public Element {
@@ -229,3 +230,4 @@ public:
 
     Scene* previousScene() { return new MainMenuScene(); };
 };
+#endif

@@ -1,6 +1,6 @@
 # GBA
 meson setup --reconfigure --cross-file=meson/gba.ini -Db_lto=true -Db_lto_mode=thin --buildtype=release build-gba && \
-ninja -C build-gba Apotris-pocket.gba
+ninja -C build-gba patches
 
 # Linux (native, actually)
 meson setup -Db_lto=true -Db_lto_mode=thin --reconfigure --buildtype=release build-linux && \
@@ -71,11 +71,12 @@ cp build-gba/Apotris-base.gba build-gba/tools/ && \
 cp tools/README.txt build-gba/ && \
 cp tools/buildSongs.bat build-gba/WINDOWS_build.bat && \
 cp tools/buildSongs.sh build-gba/LINUX_or_MAC_build.sh && \
+rm build-gba/audio/meson.build build-gba/audio/favicon32.bmp
 chmod +x build-gba/LINUX_or_MAC_build.sh
 chmod +x build-gba/mmutil.exe build-gba/gbfs.exe build-gba/padbin.exe build-gba/cat.exe build-gba/countchan.exe
 cd build-gba && \
 cp -r ../license . && \
-zip $gba LINUX_or_MAC_build.sh WINDOWS_build.bat README.txt Apotris.gba Apotris-pocket.gba tools/* audio/* license/* && \
+zip $gba LINUX_or_MAC_build.sh WINDOWS_build.bat README.txt Apotris.gba Apotris-pocket.gba patches/* tools/* audio/* license/* && \
 cd ..
 
 cd build-web && \

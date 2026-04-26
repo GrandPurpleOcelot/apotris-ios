@@ -49,6 +49,7 @@ u32 hashSave() {
 }
 
 void loadSave() {
+
     delete savefile;
 
     savefile = new Save();
@@ -251,8 +252,10 @@ void loadSave() {
     }
 
 #ifdef GBA
+#ifndef MULTIBOOT
     sleep_combo = get_sleep_combo(savefile->settings.sleep.sleepWakeCombo);
     status.update(&savefile->settings);
+#endif
 #endif
     saveSavefile();
 }
@@ -438,7 +441,7 @@ void setDefaults(Save* save, int depth) {
         save->settings.irs = true;
         save->settings.ihs = true;
         save->settings.initialType = 1;
-        save->settings.resetHoldToggle = 0;
+        save->settings.resetHoldToggle = false;
 
         // check if select is already bound - if not, bind it to zone activation
         int* keys = (int*)&save->settings.keys;

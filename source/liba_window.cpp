@@ -29,7 +29,18 @@ std::string savefileDir() {
 #include <vector>
 #endif
 
+#include <string>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOGDI
+#endif
+
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+
 void handleAnalogInput(int axis, int value);
+void checkLatestVersion();
 void handleInput();
 void updateBatteryInfo();
 
@@ -131,6 +142,8 @@ void windowInit() {
 
     SDL_FreeSurface(icon);
 #endif
+
+    checkLatestVersion();
 }
 
 void pressKey(int key, InputType type) {
@@ -439,7 +452,7 @@ bool closed() {
 
 void toggleRendering(bool r) { render = r; }
 
-void initRumble(){};
+void initRumble() {};
 
 std::string getSavefilePath() {
 #ifdef __APPLE__
@@ -570,6 +583,15 @@ void saveSavefile() {
     }
 
     output.close();
+
+    // cpr::Multipart multipart_data{{"save", cpr::File{"Apotris.sav"}}};
+
+    // auto r = cpr::Post(
+    //     cpr::Url{"https://api.apotris.com/v1/upload-save?userId=" + userId},
+    //     multipart_data);
+
+    // log("status " + r.status_code);
+    // log("response " + r.text);
 }
 
 void quit() {
@@ -644,7 +666,8 @@ void rumbleOutput(uint16_t strength) {
     if (lastInputType != InputType::CONTROLLER)
         return;
 
-    uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
+    uint16_t sdl_strength =
+        std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
     SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
 
@@ -682,17 +705,6 @@ void handleAnalogInput(int axis, int value) {
     }
 }
 
-void drawRect(int x, int y, int w, int h) {
-    // Creat a rect at pos ( 50, 50 ) that's 50 pixels wide and 50 pixels high.
-    SDL_Rect r;
-    r.x = x;
-    r.y = y;
-    r.w = w;
-    r.h = h;
-
-    rects.push_back(r);
-}
-
 void updateBatteryInfo() {
     SDL_PowerState state = SDL_GetPowerInfo(NULL, &batteryPercentage);
 
@@ -702,5 +714,31 @@ void updateBatteryInfo() {
     } else if (state != SDL_POWERSTATE_ON_BATTERY) {
         batteryPercentage = -1;
     }
+}
+
+void checkLatestVersion() {
+    cpr::Response r =
+        cpr::Get(cpr::Url{"https://api.apotris.com/v1/latest-version"});
+
+    cpr::GetCallback(
+        [updateAvailable = &updateAvailable](cpr::Response r) {
+            log("status: " + std::to_string(r.status_code));
+            log("text: " + r.text);
+            try {
+                auto json = nlohmann::json::parse(r.text);
+                if (json.contains("latestVersion") &&
+                    json["latestVersion"].is_string()) {
+                    std::string version =
+                        json["latestVersion"].get<std::string>();
+                    log("version " + version);
+
+                    if (version != "v" APOTRIS_VERSION)
+                        *updateAvailable = version;
+                }
+            } catch (const nlohmann::json::exception& e) {
+                std::cerr << "JSON parse error: " << e.what() << std::endl;
+            }
+        },
+        cpr::Url{"https://api.apotris.com/v1/latest-version"});
 }
 #endif

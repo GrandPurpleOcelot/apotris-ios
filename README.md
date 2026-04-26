@@ -167,6 +167,28 @@ The built Apotris ROMs (.elf, .gba) will be in your `build-gba` directory.
 
 The built Apotris executable and its required `assets/` folder will be in your build directories for other builds.
 
+### Unique GBA builds
+
+GBA has a few unique targets for different flash carts and hardware platforms. Included is a table of all targets and
+their equivalent target invocation names:
+
+| Hardware | Meson ninja target |
+|----------|----------|
+| Analogue Pocket Rumble  | `Apotris-Pocket.gba` |
+| EZFlash Air | `Apotris-Air.gba` |
+
+To build one of these locally, in the final `meson compile` step replace the command with
+```sh
+ninja -C build-gba Apotris-pocket.gba
+```
+replacing the filename with the desired target.
+
+UPS patch files can be generated for all targets (for inclusion in a release .zip) via the `patches` alias, e.g.:
+```sh
+ninja -C build-gba patches
+```
+To generate UPS files, `go` must be present in the system path to build the `ups` patcher tool.
+
 ## Less common platforms
 
 ### Nintendo Switch
@@ -242,10 +264,10 @@ meson compile -C build-pm
 
 Compiling the 3DS build requires you to install the devkitARM toolchain from devkitPro. You can refer to the [3DBrew](https://www.3dbrew.org/wiki/Setting_up_Development_Environment) and [devkitPro](https://devkitpro.org/wiki/Getting_Started) guides to set it up. Following the guide, you should install all packages in the package group `3ds-dev` using `pacman` (or `dkp-pacman`).
 
-You will also need to install the library `libxmp` using `pacman` (or `dkp-pacman`):
+You will also need to install the libraries `mbedtls`, `libmpg123`, `libvorbisidec` and `libxmp` using `pacman` (or `dkp-pacman`):
 
 ```bash
-pacman -S 3ds-libxmp
+pacman -S 3ds-mbedtls 3ds-mpg123 3ds-libvorbisidec 3ds-libxmp
 ```
 
 To perform the cross build:

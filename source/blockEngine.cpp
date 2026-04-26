@@ -1,10 +1,10 @@
 #include <algorithm>
-#include <iostream>
-#include <math.h>
+#include <cmath>
 #include <string>
 #include <tuple>
 
 #include "blockEngine.hpp"
+#include "def.h"
 #include "logging.h"
 #include "rumblePatterns.hpp"
 #include "tetromino.hpp"
@@ -76,7 +76,7 @@ void Pawn::setBlock(int system) {
     memset32_fast(lowestBlock, 0, 4);
 
     for (int r = 0; r < 4; r++) {
-        int* shape = getShape(current, r, system);
+        u16* shape = getShape(current, r, system);
 
         for (int iy = 0; iy < 4; iy++) {
             for (int ix = 0; ix < 4; ix++) {
@@ -519,8 +519,6 @@ void Game::hardDrop() {
         place();
 
     score += diff * 2;
-
-    return;
 }
 
 void Game::update() {
@@ -1685,34 +1683,34 @@ void Game::hold(int dir) {
     statTracker.holds++;
 }
 
-int* BlockEngine::getShape(int n, int r, int rotationSystem) {
-    int* result;
-    result = new int[4 * 4];
+uint16_t* BlockEngine::getShape(int n, int r, int rotationSystem) {
+    uint16_t* result;
+    result = new uint16_t[4 * 4];
 
-    int* source;
+    uint16_t* source;
 
     switch (rotationSystem) {
     case SRS:
-        source = (int*)tetrominos[n][r];
+        source = (uint16_t*)tetrominos[n][r];
         break;
     case NRS:
-        source = (int*)classic[n][r];
+        source = (uint16_t*)classic[n][r];
         break;
     case ARS:
-        source = (int*)ars[n][r];
+        source = (uint16_t*)ars[n][r];
         break;
     case BARS:
-        source = (int*)bars[n][r];
+        source = (uint16_t*)bars[n][r];
         break;
     case SDRS:
-        source = (int*)sdrs[n][r];
+        source = (uint16_t*)sdrs[n][r];
         break;
     default:
-        source = (int*)tetrominos[n][r];
+        source = (uint16_t*)tetrominos[n][r];
         break;
     }
 
-    memcpy32_fast(result, source, 16);
+    memcpy32_fast(result, source, 8);
     return result;
 }
 
@@ -2507,7 +2505,7 @@ void Game::liftKeys() {
     for (int i = 0; i < 3; i++)
         rotates[0] = false;
 
-    holding = 0;
+    holding = false;
     left = 0;
     right = 0;
     down = 0;
@@ -2705,8 +2703,8 @@ Game::Game(int gm, int sd, bool big) {
     }
 
     if (enableFumen && enableFumenQueue) {
-        for (int i = 0; i < 5; i++)
-            queue.push_back(fumenQueue[i]);
+        for (unsigned char i : fumenQueue)
+            queue.push_back(i);
     }
 
     pawn = Pawn(0, 0);
@@ -2778,9 +2776,9 @@ Game::Game(int gm, int sd, bool big) {
         replayElligible = false;
     }
 
-    for (int i = 0; i < 40; i++) {
+    for (auto& disappearTimer : disappearTimers) {
         for (int j = 0; j < 10; j++)
-            disappearTimers[i][j] = 0;
+            disappearTimer[j] = 0;
     }
 }
 

@@ -7,7 +7,6 @@
 
 #include "SDL.h"
 #include "SDL_gamecontroller.h"
-#include "SDL_mixer.h"
 #include "glad/gl.h"
 
 #include <map>
@@ -28,7 +27,6 @@ extern int KEY_START;
 extern void updateWindow(uint8_t*);
 extern void refreshWindowSize();
 extern bool closed();
-extern void drawRect(int x, int y, int w, int h);
 
 extern void windowInit();
 

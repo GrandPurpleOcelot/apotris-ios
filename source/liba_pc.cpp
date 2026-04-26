@@ -1,15 +1,17 @@
 #include "platform.hpp"
 #include <string>
 
-#if defined(PC) || defined(ANDROID)
-
+#ifdef TE
+#include "LinkWebRTC.hpp"
+#include "Tilengine.h"
 #include "def.h"
 #include "liba_pc.h"
 #include "logging.h"
+#include "multiplayerClasses.h"
 #include "scene.hpp"
-#include "stdarg.h"
-#include "stddef.h"
 #include <cmath>
+#include <cstdarg>
+#include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -28,6 +30,11 @@ static int offsety = (SCREEN_HEIGHT - 160) * 0.35;
 static int offsetx = (SCREEN_WIDTH - 240) / 2;
 static int offsety = (SCREEN_HEIGHT - 160) / 2;
 #endif
+
+LinkUniversal* linkUniversal = nullptr;
+MultiplayerLink* multiplayerLink = nullptr;
+std::string roomId;
+std::string exceptionReason;
 
 int spriteVOffset = 0;
 
@@ -56,13 +63,13 @@ public:
         r = _b;
     }
 
-    ColorSplit(u16 c) {
+    explicit ColorSplit(u16 c) {
         b = (((c) & 0x1f) << 3);
         g = (((c >> 5) & 0x1f) << (3));
         r = (((c >> 10) & 0x1f) << (3));
     }
 
-    ColorSplit(u32* c) {
+    explicit ColorSplit(const u32* c) {
         b = (*c >> (16 + 3)) & 0x1f;
         g = (*c >> (8 + 3)) & 0x1f;
         r = (*c >> (0 + 3)) & 0x1f;
@@ -115,8 +122,8 @@ void platformInit() {
             TLN_SetGlobalPalette(i, palettes[i]);
     }
 
-    for (int i = 0; i < 4; i++) {
-        tilesets[i] = TLN_CreateTileset(512, 8, 8, palettes[0], NULL, NULL);
+    for (auto& tileset : tilesets) {
+        tileset = TLN_CreateTileset(512, 8, 8, palettes[0], nullptr, nullptr);
     }
 
     Tile tiles[TILEMAP_SIZE * TILEMAP_SIZE];
@@ -124,8 +131,8 @@ void platformInit() {
         for (int j = 0; j < TILEMAP_SIZE; j++)
             tiles[i * TILEMAP_SIZE + j].value = 0;
 
-    for (int i = 0; i < 32; i++) {
-        tilemaps[i] = TLN_CreateTilemap(64, 64, tiles, 0, tilesets[0]);
+    for (auto& tilemap : tilemaps) {
+        tilemap = TLN_CreateTilemap(64, 64, tiles, 0, tilesets[0]);
     }
 
     spriteBitmap = TLN_CreateBitmap(1024 * 8, 64, 8);
@@ -138,6 +145,9 @@ void platformInit() {
     TLN_SetCustomBlendFunction(customBlend);
 
     windowInit();
+
+    linkUniversal = new LinkUniversal();
+    multiplayerLink = new MultiplayerLink(linkUniversal);
 }
 
 void deinitialize() {
@@ -146,13 +156,13 @@ void deinitialize() {
     for (int i = 1; i < 4; i++)
         TLN_DeleteTileset(tilesets[i]);
 
-    for (int i = 0; i < 32; i++)
-        TLN_DeleteTilemap(tilemaps[i]);
+    for (auto& tilemap : tilemaps)
+        TLN_DeleteTilemap(tilemap);
 
     TLN_DeleteSpriteset(spriteset);
 
-    for (int i = 0; i < 32; i++)
-        TLN_DeletePalette(palettes[i]);
+    for (auto& palette : palettes)
+        TLN_DeletePalette(palette);
 
     free(framebuffer);
 }
@@ -260,7 +270,8 @@ void showSprites(int n) {
         spriteData[counter].h = sprite->sy;
 
         TLN_SetSpriteSet(counter, spriteset);
-        TLN_SetSpritesetData(spriteset, counter, &spriteData[counter], 0, 0);
+        TLN_SetSpritesetData(spriteset, counter, &spriteData[counter], nullptr,
+                             0);
         TLN_SetSpritePicture(counter, counter);
         TLN_SetSpritePalette(counter, palettes[sprite->palette + 16]);
         if (sprite->affine && !sprite->rotate) {
@@ -499,7 +510,7 @@ void setTiles(int tilemap, int index, int count, u32 value) {
     if (count == 32 * 32)
         count = TILEMAP_SIZE * TILEMAP_SIZE;
 
-    TLN_Tile t = new Tile();
+    auto t = new Tile();
     t->value = value;
 
     for (int i = index; i < count + index; i++) {
@@ -805,7 +816,7 @@ void rumble_set_state(int n) {};
 
 void onVBlank() {
     if (canDraw) {
-        canDraw = 0;
+        canDraw = false;
 
         scene->draw();
     }
@@ -818,7 +829,7 @@ void onHBlank(int line) {
         return;
     }
 
-    ColorSplit c = ColorSplit(gradientTable[line]);
+    auto c = ColorSplit(gradientTable[line]);
     TLN_SetBGColor(c.r, c.g, c.b);
 }
 
@@ -833,7 +844,7 @@ s16 sinLut(int angle) {
     return (adj & 0xffff);
 }
 
-COLOR rgb8to5(u32* c) {
+COLOR rgb8to5(const u32* c) {
     int b = (*c >> (16 + 3)) & 0x1f;
     int g = (*c >> (8 + 3)) & 0x1f;
     int r = (*c >> (0 + 3)) & 0x1f;
@@ -842,9 +853,9 @@ COLOR rgb8to5(u32* c) {
 }
 
 void savePalette(COLOR* dst) {
-    for (int i = 0; i < 32; i++)
+    for (auto& palette : palettes)
         for (int j = 0; j < 16; j++)
-            *dst++ = rgb8to5((u32*)TLN_GetPaletteData(palettes[i], j));
+            *dst++ = rgb8to5((u32*)TLN_GetPaletteData(palette, j));
 }
 
 void color_fade_fast(int palette, int index, const COLOR* src, COLOR color,
@@ -974,6 +985,11 @@ void setScreenOffset(int x, int y) {
         setLayerScroll(i, layerInfo[i].x, layerInfo[i].y);
     }
     TLN_SetSpritesMaskRegion(0, 0);
+}
+
+void setUpPresentException(std::string error) {
+    multiplayerLink->deactivate(true);
+    changeScene(new MultiplayerExceptionScene(std::move(error)));
 }
 
 #endif

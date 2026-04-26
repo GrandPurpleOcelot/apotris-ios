@@ -27,10 +27,11 @@
 #include "detectEmulators.h"
 #endif
 
-std::string timeToStringHours(int frames);
-void initFallingBlocks();
 void checkCustomSkins();
 
+#ifdef MULTIBOOT
+__attribute((section(".iwram.word_sprites")))
+#endif
 WordSprite* wordSprites[MAX_WORD_SPRITES];
 
 int titleFloat = 0;
@@ -41,6 +42,10 @@ const int bgGridHeight = 30;
 #endif
 #ifndef GBA
 const int bgGridHeight = 42;
+#endif
+
+#ifdef GBA
+__attribute((section(".ewram.data")))
 #endif
 u16 backgroundArray[bgGridHeight][30];
 
@@ -64,9 +69,15 @@ const std::list<std::string> menuOptions = {
     "Play",        "Settings",     "Stats",  "Links",
     "Skin Editor", "Color Editor", "Credits"};
 const std::list<std::string> gameOptions = {
-    "Marathon", "Sprint",    "Dig",        "Ultra",   "Blitz",
-    "Combo",    "Survival",  "Classic",    "Master",  "Death",
-    "Zen",      "2P Battle", "CPU Battle", "Training"};
+    "Marathon",     "Sprint",  "Dig",    "Ultra", "Blitz", "Combo",
+    "Survival",     "Classic", "Master", "Death", "Zen",
+#ifndef SWITCH
+    "Multi Battle",
+#endif
+#ifdef GBA
+//"Wireless Pak", "Wired Pak",
+#endif
+    "CPU Battle",   "Training"};
 const std::list<std::string> settingsOptions = {
     "Graphics", "Audio", "Controls", "Handling", "Gameplay", "Saving"};
 
@@ -82,6 +93,8 @@ std::string previousElement;
 std::list<std::string> path;
 
 MenuKeys menuKeys;
+
+#ifndef MULTIBOOT
 
 void showTitleSprites() {
     for (int i = 0; i < 2; i++)
@@ -105,6 +118,8 @@ void showTitleSprites() {
     if (titleFloat >= 512)
         titleFloat = 0;
 }
+
+#endif
 
 void fallingBlocks() {
     gravity++;
@@ -159,7 +174,7 @@ void fallingBlocks() {
     if (bgSpawnBlock > bgSpawnBlockMax) {
 
         int n = (int)(randNext() % 7);
-        int* p =
+        uint16_t* p =
             BlockEngine::getShape(n, (int)(randNext() % 4), BlockEngine::SRS);
 
         bool found = false;
@@ -212,6 +227,123 @@ void fallingBlocks() {
     }
 }
 
+#ifdef GBA
+void MultiplayerProtocolScene::init() {
+    clearSprites(128);
+    showSprites(128);
+
+    clearSpriteTiles(256, 12 * 2, 1);
+    for (int i = 0; i < 2; i++)
+        wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
+
+    clearTilemap(29);
+    naprint("How are you connected?", 16, 56);
+
+    wordSprites[0].setText("CABLE");
+    wordSprites[0].show(32, 104, 14);
+
+    wordSprites[1].setText("WIRELESS");
+    wordSprites[1].show(120, 104, 14);
+
+    // backgroundGrid
+    setTiles(26, 0, 32 * 32,
+             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+
+    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
+
+    lengths[0] = wordSprites[0].width;
+    lengths[1] = wordSprites[1].width;
+
+    pos[0] = 48 + lengths[0] / 2;
+    pos[1] = 120 + lengths[1] / 2;
+
+    loadSpriteTiles(16 * 7, blockSprite, 1, 1);
+    for (int i = 0; i < 2; i++) {
+        cursorSprites[i] = &obj_buffer[1 + i];
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_hide(cursorSprites[i]);
+    }
+
+    enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
+}
+
+bool MultiplayerProtocolScene::control() {
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if (key_hit(k.left) || key_hit(k.right)) {
+        cancel = !cancel;
+        sfx(SFX_MENUMOVE);
+    }
+
+    if (key_hit(k.confirm)) {
+        sfx(SFX_MENUCONFIRM);
+        if (!cancel) {
+            multiplayerProtocol = LinkUniversal::Protocol::CABLE;
+        } else {
+            multiplayerProtocol = LinkUniversal::Protocol::WIRELESS_AUTO;
+        }
+        changeScene(new MultBattleScene(), Transitions::FADE);
+#ifndef MULTIBOOT
+    } else if (key_hit(k.cancel)) {
+        sfx(SFX_MENUCANCEL);
+        changeScene(new MainMenuScene(), Transitions::FADE);
+    }
+#else
+    }
+#endif
+
+    return false;
+}
+
+void MultiplayerProtocolScene::draw() {
+    fallingBlocks();
+#ifdef N3DS
+    // Scroll falling blocks to top of screen when in 1x scale:
+    setLayerScroll(2, 0, 40);
+#endif
+
+    int offset = (sinLut(cursorFloat) * 2) >> 12;
+    FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
+
+    const int y = 104;
+
+    for (int i = 0; i < 2; i++) {
+        sprite_unhide(cursorSprites[i], 0);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_set_size(cursorSprites[i], scale, i);
+
+        int x = pos[cancel] -
+                ((lengths[cancel] + 8) / 2 + offset + 4) * ((i) ? -1 : 1) - 8;
+
+        sprite_set_pos(cursorSprites[i], x, y - 5);
+    }
+
+    wordSprites[0].show(48, 104, 14 + (cancel == 0));
+    wordSprites[1].show(120, 104, 14 + (cancel == 1));
+
+    showSprites(128);
+}
+
+void MultiplayerProtocolScene::update() {
+    canDraw = true;
+    key_poll();
+
+    cursorFloat += 6;
+    if (cursorFloat >= 512)
+        cursorFloat = 0;
+
+    control();
+}
+
+void MultiplayerProtocolScene::deinit() {
+    clearText();
+    clearSmallText();
+    resetSmallText();
+}
+#endif
+
+#ifndef MULTIBOOT
 std::string timeToStringHours(int frames) {
     int t = (int)frames * 0.0167f;
     int minutes = (t / 60) % 60;
@@ -221,7 +353,7 @@ std::string timeToStringHours(int frames) {
 
     posprintf(res, "%02d:%02d", hours, minutes);
 
-    std::string result = "";
+    std::string result;
 
     result = res;
 
@@ -275,6 +407,10 @@ void TitleScene::init() {
 
     versionText.setText("v" APOTRIS_VERSION);
 
+#ifndef NO_DIAGNOSE
+    wordSprites[2].setText("DEBUG BUILD");
+#endif
+
     nameText.setText("akouzoukos");
 
     enableBlend((0b000000 << 8) + (1 << 6) + (1 << 3));
@@ -292,6 +428,10 @@ void TitleScene::draw() {
     const int y = 160 - (1) * 8;
     versionText.show(0, y, 15);
     nameText.show(240 - nameText.width, y, 15);
+
+#ifndef NO_DIAGNOSE
+    wordSprites[2].show(0, y - 8, 15);
+#endif
 
     if (flashTimer < flashMax / 2) {
         int w = wordSprites[0].width + wordSprites[1].width + 6;
@@ -321,7 +461,7 @@ bool TitleScene::control() {
 }
 
 void TitleScene::update() {
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     if (control()) {
@@ -434,7 +574,7 @@ void ConfirmSaveScene::draw() {
 }
 
 void ConfirmSaveScene::update() {
-    canDraw = 1;
+    canDraw = true;
     key_poll();
 
     cursorFloat += 6;
@@ -532,116 +672,15 @@ void ConfirmSaveScene::deinit() {
 #endif
 }
 
-void ConfirmEmuScene::init() {
-    clearSprites(128);
-    showSprites(128);
-
-    clearSpriteTiles(256, 12 * 2, 1);
-    for (int i = 0; i < 2; i++)
-        wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
-
-    clearTilemap(29);
-    naprint("Are you on an emulator?", 40, 56);
-
-    wordSprites[0].setText("I AM");
-    wordSprites[0].show(48, 104, 14);
-
-    wordSprites[1].setText("I AM NOT");
-    wordSprites[1].show(120, 104, 14);
-
-    // backgroundGrid
-    setTiles(26, 0, 32 * 32,
-             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
-
-    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
-
-    lengths[0] = wordSprites[0].width;
-    lengths[1] = wordSprites[1].width;
-
-    pos[0] = 48 + lengths[0] / 2;
-    pos[1] = 120 + lengths[1] / 2;
-
-    loadSpriteTiles(16 * 7, blockSprite, 1, 1);
-    for (int i = 0; i < 2; i++) {
-        cursorSprites[i] = &obj_buffer[1 + i];
-        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
-        sprite_enable_affine(cursorSprites[i], i, true);
-        sprite_hide(cursorSprites[i]);
+void MainMenuScene::update() {
+    if (!updateAvailable.empty() && !showingUpdateNotification) {
+        wordSprites[10]->setText("Update available: " + updateAvailable);
+        wordSprites[10]->show(0, 0, 14);
+        wordSprites[11]->show(12 * 8, 0, 14);
+        showingUpdateNotification = true;
     }
 
-    enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
-}
-
-bool ConfirmEmuScene::control() {
-    MenuKeys k = savefile->settings.menuKeys;
-
-    if (key_hit(k.left) || key_hit(k.right)) {
-        cancel = !cancel;
-        sfx(SFX_MENUMOVE);
-    }
-
-    if (key_hit(k.confirm)) {
-        sfx(SFX_MENUCONFIRM);
-#ifdef GBA
-        if (!cancel) {
-            inaccurateEmulator = detect_inaccurate_emulator();
-        }
-        setUpLinkUniversal(!cancel);
-        emulatorPrompted = true;
-#endif
-        changeScene(new MultBattleScene(), Transitions::FADE);
-    } else if (key_hit(k.cancel)) {
-        sfx(SFX_MENUCANCEL);
-        changeScene(new MainMenuScene(), Transitions::FADE);
-    }
-
-    return false;
-}
-
-void ConfirmEmuScene::draw() {
-    fallingBlocks();
-#ifdef N3DS
-    // Scroll falling blocks to top of screen when in 1x scale:
-    setLayerScroll(2, 0, 40);
-#endif
-
-    int offset = (sinLut(cursorFloat) * 2) >> 12;
-    FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
-
-    const int y = 104;
-
-    for (int i = 0; i < 2; i++) {
-        sprite_unhide(cursorSprites[i], 0);
-        sprite_enable_affine(cursorSprites[i], i, true);
-        sprite_set_size(cursorSprites[i], scale, i);
-
-        int x = pos[cancel] -
-                ((lengths[cancel] + 8) / 2 + offset + 4) * ((i) ? -1 : 1) - 8;
-
-        sprite_set_pos(cursorSprites[i], x, y - 5);
-    }
-
-    wordSprites[0].show(48, 104, 14 + (cancel == 0));
-    wordSprites[1].show(120, 104, 14 + (cancel == 1));
-
-    showSprites(128);
-}
-
-void ConfirmEmuScene::update() {
-    canDraw = true;
-    key_poll();
-
-    cursorFloat += 6;
-    if (cursorFloat >= 512)
-        cursorFloat = 0;
-
-    control();
-}
-
-void ConfirmEmuScene::deinit() {
-    clearText();
-    clearSmallText();
-    resetSmallText();
+    SimpleListScene::update();
 }
 
 void MainMenuScene::init() {
@@ -673,7 +712,6 @@ void MainMenuScene::init() {
     aprints(move, 1 + offset, 18, 2);
     aprints(confirm, 30 * 8 - confirm.size() * 4 - offset, 11, 2);
     aprints(cancel, 30 * 8 - cancel.size() * 4 - offset, 18, 2);
-
 #endif
 
 #ifdef GBA
@@ -684,19 +722,19 @@ void MainMenuScene::init() {
 }
 
 void MainMenuScene::deinit() {
-    SimpleListScene::deinit();
-
     resetSmallText();
     clearText();
 }
+#endif
 
 void initFallingBlocks() { memset16(backgroundArray, 0, 30 * (bgGridHeight)); }
 
+#ifndef MULTIBOOT
 void checkCustomSkins() {
-    for (int i = 0; i < MAX_CUSTOM_SKINS; i++) {
+    for (auto& customSkin : savefile->customSkins) {
         bool changed = false;
 
-        int* skin = (int*)&savefile->customSkins[i].board;
+        int* skin = (int*)&customSkin.board;
         int* defaultSkin = (int*)sprite1tiles_bin;
 
         int sum = 0;
@@ -711,7 +749,7 @@ void checkCustomSkins() {
             defaultSkin++;
         }
 
-        skin = (int*)&savefile->customSkins[i].smallBoard;
+        skin = (int*)&customSkin.smallBoard;
         defaultSkin = (int*)mini[0];
 
         for (int count = (sizeof(TILE)) / 4; count; count--) {
@@ -725,6 +763,7 @@ void checkCustomSkins() {
         }
 
         // only set to changed if the skin is non-empty
-        savefile->customSkins[i].changed = changed && sum;
+        customSkin.changed = changed && sum;
     }
 }
+#endif

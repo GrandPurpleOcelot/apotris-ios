@@ -1,3 +1,4 @@
+#ifndef MULTIBOOT
 #include "sceneControls.hpp"
 
 bool ControlOptionScene::control() {
@@ -37,3 +38,5 @@ bool AdvancedRumbleMenuElement::action() {
 
     return true;
 }
+
+#endif

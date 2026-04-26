@@ -1,5 +1,12 @@
 #ifdef GL
 #include "shader.h"
+#include "liba_pc.h"
+
+#ifdef PC
+#include <glad/gl.h>
+#elif defined(PORTMASTER)
+#include <glad/gles2.h>
+#endif
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -15,9 +22,9 @@
 #include <vector>
 
 #ifdef ANDROID
+#include <SDL_system.h>
 #include <android/log.h>
 #include <jni.h>
-#include <SDL_system.h>
 #define LOG_TAG "ApotrisShader"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -133,7 +140,7 @@ uint loadShaderFromFile(std::string path, int type) {
         std::string line;
         while (getline(buffer_in, line)) {
             if (line.find("pragma") == std::string::npos) {
-                buffer_out += 
+                buffer_out +=
                     translateLine(line, type == GL_VERTEX_SHADER) + "\n";
             }
         }
@@ -301,7 +308,7 @@ void initShaders(SDL_Window* window, int index) {
         glGenVertexArrays(1, &vao);
         LOGI("Generated VAO: %u", vao);
     }
-    
+
     glGenTextures(1, &shaderTexture);
     LOGI("Generated Texture: %u", shaderTexture);
 
@@ -383,8 +390,8 @@ void initShaders(SDL_Window* window, int index) {
     LOGI("Shader initialization complete");
 }
 
-void drawWithShaders(SDL_Window* window, SDL_Surface* img,
-                     bool shadersEnabled, bool swap) {
+void drawWithShaders(SDL_Window* window, SDL_Surface* img, bool shadersEnabled,
+                     bool swap) {
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -402,7 +409,7 @@ void drawWithShaders(SDL_Window* window, SDL_Surface* img,
     if (glad_glBindVertexArray) {
         glBindVertexArray(vao);
     }
-    
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     if (swap)
@@ -482,36 +489,41 @@ std::vector<std::string> findShaders() {
     // Use JNI to list assets
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
     jobject activity = (jobject)SDL_AndroidGetActivity();
-    
+
     if (env && activity) {
         // Get AssetManager from Activity
         jclass activityClass = env->GetObjectClass(activity);
-        jmethodID getAssetsMethod = env->GetMethodID(activityClass, "getAssets", "()Landroid/content/res/AssetManager;");
+        jmethodID getAssetsMethod = env->GetMethodID(
+            activityClass, "getAssets", "()Landroid/content/res/AssetManager;");
         jobject assetManager = env->CallObjectMethod(activity, getAssetsMethod);
-        
+
         // List files in "shaders" directory (relative to assets root)
         jclass assetManagerClass = env->GetObjectClass(assetManager);
-        jmethodID listMethod = env->GetMethodID(assetManagerClass, "list", "(Ljava/lang/String;)[Ljava/lang/String;");
-        
-        jstring pathArg = env->NewStringUTF("assets/shaders"); 
-        jobjectArray fileList = (jobjectArray)env->CallObjectMethod(assetManager, listMethod, pathArg);
-        
+        jmethodID listMethod =
+            env->GetMethodID(assetManagerClass, "list",
+                             "(Ljava/lang/String;)[Ljava/lang/String;");
+
+        jstring pathArg = env->NewStringUTF("assets/shaders");
+        jobjectArray fileList = (jobjectArray)env->CallObjectMethod(
+            assetManager, listMethod, pathArg);
+
         if (fileList) {
             int count = env->GetArrayLength(fileList);
             for (int i = 0; i < count; i++) {
-                jstring fileNameStr = (jstring)env->GetObjectArrayElement(fileList, i);
+                jstring fileNameStr =
+                    (jstring)env->GetObjectArrayElement(fileList, i);
                 const char* fileName = env->GetStringUTFChars(fileNameStr, 0);
-                
+
                 std::string name(fileName);
                 if (hasSuffix(name, ".glsl")) {
                     shaderPaths.push_back(shaderPath + "/" + name);
                 }
-                
+
                 env->ReleaseStringUTFChars(fileNameStr, fileName);
                 env->DeleteLocalRef(fileNameStr);
             }
         }
-        
+
         env->DeleteLocalRef(pathArg);
         env->DeleteLocalRef(assetManager);
         env->DeleteLocalRef(activityClass);

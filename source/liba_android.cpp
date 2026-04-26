@@ -929,8 +929,10 @@ void updateWindow(uint8_t* framebuffer) {
             ImGui::Separator();
 
             if (ImGui::BeginTable("SettingsTable", 2, ImGuiTableFlags_None)) {
-                ImGui::TableSetupColumn("Labels", ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableSetupColumn("Controls", ImGuiTableColumnFlags_WidthFixed);
+                ImGui::TableSetupColumn("Labels",
+                                        ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetupColumn("Controls",
+                                        ImGuiTableColumnFlags_WidthFixed);
 
                 // Snap grid stepper
                 ImGui::TableNextRow();
@@ -971,7 +973,8 @@ void updateWindow(uint8_t* framebuffer) {
                 static Layout baseLayout;
 
                 ImGui::PushItemWidth((float)scaled(400));
-                bool changed = ImGui::SliderFloat("##Scale", &globalScale, 0.8f, 1.2f);
+                bool changed =
+                    ImGui::SliderFloat("##Scale", &globalScale, 0.8f, 1.2f);
                 ImGui::PopItemWidth();
 
                 if (ImGui::IsItemActivated()) {
@@ -990,7 +993,8 @@ void updateWindow(uint8_t* framebuffer) {
                     globalScale = 1.0f;
                     if (savefile != nullptr) {
                         savefile->settings
-                            .onScreenLayouts[screenWidth > screenHeight] = layout;
+                            .onScreenLayouts[screenWidth > screenHeight] =
+                            layout;
                     }
                 }
 
@@ -1008,8 +1012,8 @@ void updateWindow(uint8_t* framebuffer) {
                         savefile->settings.touchVibration = vibration - 25;
                         sfx(SFX_MENUMOVE);
                         if (savefile->settings.touchVibration > 0) {
-                            vibrationStart(16 * savefile->settings.touchVibration /
-                                           50);
+                            vibrationStart(
+                                16 * savefile->settings.touchVibration / 50);
                         }
                     }
                 }
@@ -1023,7 +1027,8 @@ void updateWindow(uint8_t* framebuffer) {
                     if (vibration <= 75) {
                         savefile->settings.touchVibration = vibration + 25;
                         sfx(SFX_MENUMOVE);
-                        vibrationStart(16 * savefile->settings.touchVibration / 50);
+                        vibrationStart(16 * savefile->settings.touchVibration /
+                                       50);
                     }
                 }
 
@@ -1046,7 +1051,8 @@ void updateWindow(uint8_t* framebuffer) {
 
             ImGui::Separator();
 
-            float doneBtnW = ImGui::CalcTextSize("Done").x + ImGui::GetStyle().FramePadding.x * 2.0f;
+            float doneBtnW = ImGui::CalcTextSize("Done").x +
+                             ImGui::GetStyle().FramePadding.x * 2.0f;
 
             if (ImGui::Button("Reset")) {
                 std::vector<Layout> layouts = getDefaultLayouts();
@@ -1057,7 +1063,8 @@ void updateWindow(uint8_t* framebuffer) {
             }
 
             ImGui::SameLine();
-            ImGui::SetCursorPosX(ImGui::GetWindowWidth() - doneBtnW - ImGui::GetStyle().WindowPadding.x);
+            ImGui::SetCursorPosX(ImGui::GetWindowWidth() - doneBtnW -
+                                 ImGui::GetStyle().WindowPadding.x);
             if (ImGui::Button("Done")) {
                 touchEditExitRequested = true;
             }
@@ -1503,17 +1510,6 @@ void handleAnalogInput(int axis, int value) {
         unpressKey((key), InputType::CONTROLLER);
         unpressKey((key) | (1 << 5), InputType::CONTROLLER);
     }
-}
-
-void drawRect(int x, int y, int w, int h) {
-    // Creat a rect at pos ( 50, 50 ) that's 50 pixels wide and 50 pixels high.
-    SDL_Rect r;
-    r.x = x;
-    r.y = y;
-    r.w = w;
-    r.h = h;
-
-    rects.push_back(r);
 }
 
 void setGameWindowScale() {
