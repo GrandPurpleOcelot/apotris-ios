@@ -218,6 +218,15 @@ void loadSave() {
         savefile->settings.touchSnapGrid > 100 ||
         (savefile->settings.touchSnapGrid % 10) != 0)
         savefile->settings.touchSnapGrid = 10;
+
+    if (savefile->settings.touchOpacity < 0 ||
+        savefile->settings.touchOpacity > 255)
+        savefile->settings.touchOpacity = 100;
+
+    if (savefile->settings.touchVibration < 0 ||
+        savefile->settings.touchVibration > 100 ||
+        (savefile->settings.touchVibration % 25) != 0)
+        savefile->settings.touchVibration = 50;
 #endif
 
     if (savefile->platform != PLATFORM) {
@@ -532,7 +541,9 @@ void setDefaults(Save* save, int depth) {
 
         save->settings.onScreenLayouts[0] = layouts[0];
         save->settings.onScreenLayouts[1] = layouts[1];
-        save->settings.touchSnapGrid = 50;
+        save->settings.touchSnapGrid = 10;
+        save->settings.touchOpacity = 100;
+        save->settings.touchVibration = 50;
 #endif
 
         save->settings.menuKeys = m;

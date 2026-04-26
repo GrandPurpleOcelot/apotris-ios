@@ -202,7 +202,10 @@ typedef struct Settings {
 
     int batteryDisplay;
 
-    int placeHolder[24];
+    int touchOpacity;
+    int touchVibration;
+
+    int placeHolder[22];
 
 #ifdef ANDROID
     Layout onScreenLayouts[2];

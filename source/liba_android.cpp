@@ -536,7 +536,10 @@ void handleInput() {
 
                     if (!touchEditMode) {
                         pressKey(button.key, InputType::TOUCH);
-                        vibrationStart(16);
+                        if (savefile->settings.touchVibration > 0) {
+                            vibrationStart(
+                                16 * savefile->settings.touchVibration / 50);
+                        }
                     } else {
                         moving = index;
                         resizing = -1;
@@ -617,7 +620,10 @@ void handleInput() {
                                  (y - dy) < button.y + button.h / 2)) {
 
                         pressKey(button.key, InputType::TOUCH);
-                        vibrationStart(16);
+                        if (savefile->settings.touchVibration > 0) {
+                            vibrationStart(
+                                16 * savefile->settings.touchVibration / 50);
+                        }
                     }
                 }
             } else {
@@ -922,60 +928,125 @@ void updateWindow(uint8_t* framebuffer) {
 
             ImGui::Separator();
 
-            // Snap grid stepper
-            int g = savefile->settings.touchSnapGrid;
+            if (ImGui::BeginTable("SettingsTable", 2, ImGuiTableFlags_None)) {
+                ImGui::TableSetupColumn("Labels", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetupColumn("Controls", ImGuiTableColumnFlags_WidthFixed);
 
-            if (ImGui::Button("-##snap")) {
-                if (g >= 10) {
-                    savefile->settings.touchSnapGrid = g - 10;
-                    sfx(SFX_MENUMOVE);
-                }
-            }
-            ImGui::SameLine();
-            if (g == 0)
-                ImGui::TextUnformatted("Off");
-            else
-                ImGui::Text("%d", g);
-            ImGui::SameLine();
-            if (ImGui::Button("+##snap")) {
-                if (g <= 90) {
-                    savefile->settings.touchSnapGrid = g + 10;
-                    sfx(SFX_MENUMOVE);
-                }
-            }
-            ImGui::SameLine();
-            ImGui::TextUnformatted("Snap");
+                // Snap grid stepper
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Snap");
 
-            // Global scale slider
-            static float globalScale = 1.0f;
-            static Layout baseLayout;
+                ImGui::TableSetColumnIndex(1);
+                int g = savefile->settings.touchSnapGrid;
 
-            ImGui::PushItemWidth((float)scaled(400));
-            bool changed =
-                ImGui::SliderFloat("Scale", &globalScale, 0.8f, 1.2f);
-            ImGui::PopItemWidth();
+                if (ImGui::Button("-##snap")) {
+                    if (g >= 10) {
+                        savefile->settings.touchSnapGrid = g - 10;
+                        sfx(SFX_MENUMOVE);
+                    }
+                }
+                ImGui::SameLine();
+                if (g == 0)
+                    ImGui::TextUnformatted("Off");
+                else
+                    ImGui::Text("%d", g);
+                ImGui::SameLine();
+                if (ImGui::Button("+##snap")) {
+                    if (g <= 90) {
+                        savefile->settings.touchSnapGrid = g + 10;
+                        sfx(SFX_MENUMOVE);
+                    }
+                }
 
-            if (ImGui::IsItemActivated()) {
-                baseLayout = layout;
-            }
-            if (changed) {
-                for (int i = 0; i < 10; i++) {
-                    layout.buttons[i].w =
-                        (int)(baseLayout.buttons[i].w * globalScale);
-                    layout.buttons[i].h =
-                        (int)(baseLayout.buttons[i].h * globalScale);
+                // Global scale slider
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Scale");
+
+                ImGui::TableSetColumnIndex(1);
+                static float globalScale = 1.0f;
+                static Layout baseLayout;
+
+                ImGui::PushItemWidth((float)scaled(400));
+                bool changed = ImGui::SliderFloat("##Scale", &globalScale, 0.8f, 1.2f);
+                ImGui::PopItemWidth();
+
+                if (ImGui::IsItemActivated()) {
+                    baseLayout = layout;
                 }
-            }
-            if (ImGui::IsItemDeactivatedAfterEdit() ||
-                ImGui::IsItemDeactivated()) {
-                globalScale = 1.0f;
-                if (savefile != nullptr) {
-                    savefile->settings
-                        .onScreenLayouts[screenWidth > screenHeight] = layout;
+                if (changed) {
+                    for (int i = 0; i < 10; i++) {
+                        layout.buttons[i].w =
+                            (int)(baseLayout.buttons[i].w * globalScale);
+                        layout.buttons[i].h =
+                            (int)(baseLayout.buttons[i].h * globalScale);
+                    }
                 }
+                if (ImGui::IsItemDeactivatedAfterEdit() ||
+                    ImGui::IsItemDeactivated()) {
+                    globalScale = 1.0f;
+                    if (savefile != nullptr) {
+                        savefile->settings
+                            .onScreenLayouts[screenWidth > screenHeight] = layout;
+                    }
+                }
+
+                // Vibration
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Vibration");
+
+                ImGui::TableSetColumnIndex(1);
+                int vibration = savefile->settings.touchVibration;
+
+                if (ImGui::Button("-##vib")) {
+                    if (vibration >= 25) {
+                        savefile->settings.touchVibration = vibration - 25;
+                        sfx(SFX_MENUMOVE);
+                        if (savefile->settings.touchVibration > 0) {
+                            vibrationStart(16 * savefile->settings.touchVibration /
+                                           50);
+                        }
+                    }
+                }
+                ImGui::SameLine();
+                if (savefile->settings.touchVibration == 0)
+                    ImGui::TextUnformatted("Off");
+                else
+                    ImGui::Text("%d%%", savefile->settings.touchVibration);
+                ImGui::SameLine();
+                if (ImGui::Button("+##vib")) {
+                    if (vibration <= 75) {
+                        savefile->settings.touchVibration = vibration + 25;
+                        sfx(SFX_MENUMOVE);
+                        vibrationStart(16 * savefile->settings.touchVibration / 50);
+                    }
+                }
+
+                // Opacity
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Opacity");
+
+                ImGui::TableSetColumnIndex(1);
+                int opacity = savefile->settings.touchOpacity;
+                ImGui::PushItemWidth((float)scaled(400));
+                if (ImGui::SliderInt("##Opacity", &opacity, 10, 255)) {
+                    savefile->settings.touchOpacity = opacity;
+                }
+                ImGui::PopItemWidth();
+
+                ImGui::EndTable();
             }
 
             ImGui::Separator();
+
+            float doneBtnW = ImGui::CalcTextSize("Done").x + ImGui::GetStyle().FramePadding.x * 2.0f;
 
             if (ImGui::Button("Reset")) {
                 std::vector<Layout> layouts = getDefaultLayouts();
@@ -986,13 +1057,13 @@ void updateWindow(uint8_t* framebuffer) {
             }
 
             ImGui::SameLine();
+            ImGui::SetCursorPosX(ImGui::GetWindowWidth() - doneBtnW - ImGui::GetStyle().WindowPadding.x);
             if (ImGui::Button("Done")) {
                 touchEditExitRequested = true;
             }
 
             ImGui::End();
             ImGui::PopStyleVar(2);
-
             // Faint grid overlay
             int gridSize = savefile->settings.touchSnapGrid;
             if (gridSize > 0) {
@@ -1018,7 +1089,8 @@ void updateWindow(uint8_t* framebuffer) {
         if (controllerCount == 0) {
             ImDrawList* draw_list = ImGui::GetForegroundDrawList();
             for (auto const& button : layout.buttons) {
-                ImU32 color = IM_COL32(255, 255, 255, 100);
+                ImU32 color =
+                    IM_COL32(255, 255, 255, savefile->settings.touchOpacity);
 
                 draw_list->AddRect(
                     ImVec2(button.x - button.w / 2, button.y - button.h / 2),
@@ -1029,9 +1101,11 @@ void updateWindow(uint8_t* framebuffer) {
                 if (label) {
                     ImFont* font = ImGui::GetFont();
                     float fontSize = std::min(button.w, button.h) * 0.4f;
-                    ImVec2 textSize = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, label);
-                    draw_list->AddText(font, fontSize, ImVec2(button.x - textSize.x / 2,
-                                                              button.y - textSize.y / 2),
+                    ImVec2 textSize =
+                        font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, label);
+                    draw_list->AddText(font, fontSize,
+                                       ImVec2(button.x - textSize.x / 2,
+                                              button.y - textSize.y / 2),
                                        color, label);
                 } else {
                     float sz = std::min(button.w, button.h) * 0.25f;
@@ -1186,18 +1260,18 @@ void refreshWindowSize() {
         if (savefile->settings.zoom > -1) {
             windowScale = 1 + (float)savefile->settings.zoom / 10;
         } else {
+            int minAxis = std::min(screenWidth, screenHeight);
             if (savefile->settings.integerScale) {
                 windowScale = (int)windowScale;
 
-                while (windowScale > 0 &&
-                       screenHeight / windowScale > 160 * 2) {
+                while (windowScale > 0 && minAxis / windowScale > 160 * 2) {
                     windowScale++;
                 }
-                while (windowScale > 1 && screenHeight / windowScale < 160) {
+                while (windowScale > 1 && minAxis / windowScale < 160) {
                     windowScale--;
                 }
             } else {
-                windowScale = screenHeight / 200.0;
+                windowScale = minAxis / 200.0;
             }
         }
     }
@@ -1614,9 +1688,22 @@ std::vector<Layout> getDefaultLayouts() {
         portraitWidth = landscapeHeight = w;
     }
 
-    const int SPACE = scaled(180);
-    const int BTN_W = scaled(160);
-    const int BTN_H = scaled(160);
+    auto snap = [&](int v) {
+        int g = 10;
+        return ((v + g / 2) / g) * g;
+    };
+
+    const int SPACE = snap(scaled(180));
+    const int BTN_W = snap(scaled(160));
+    const int BTN_H = snap(scaled(160));
+
+    auto makeBtn = [&](int key, int cx, int cy, int w, int h) {
+        int tlX = cx - w / 2;
+        int tlY = cy - h / 2;
+        int snappedTLX = snap(tlX);
+        int snappedTLY = snap(tlY);
+        return Button(key, snappedTLX + w / 2, snappedTLY + h / 2, w, h);
+    };
 
     const int portraitActionX = portraitWidth / 2 + portraitWidth * 0.3;
     const int portraitActionY = portraitHeight * 0.70;
@@ -1626,29 +1713,29 @@ std::vector<Layout> getDefaultLayouts() {
     const int portraitMenuY = portraitHeight * 0.98;
 
     Button portraitButtons[10] = {
-        Button(SDL_CONTROLLER_BUTTON_A, portraitActionX + SPACE / 2,
-               portraitActionY + SPACE, BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_B, portraitActionX - SPACE / 2,
-               portraitActionY + SPACE, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_A, portraitActionX + SPACE / 2,
+                portraitActionY + SPACE, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_B, portraitActionX - SPACE / 2,
+                portraitActionY + SPACE, BTN_W, BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, portraitActionX + SPACE / 2,
-               portraitActionY + SPACE * 2, BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, portraitActionX + SPACE / 2,
-               portraitActionY, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, portraitActionX + SPACE / 2,
+                portraitActionY + SPACE * 2, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+                portraitActionX + SPACE / 2, portraitActionY, BTN_W, BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, portraitDpadX, portraitDpadY,
-               BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, portraitDpadX,
-               portraitDpadY + SPACE * 2, BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, portraitDpadX - SPACE,
-               portraitDpadY + SPACE, BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, portraitDpadX + SPACE,
-               portraitDpadY + SPACE, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_DPAD_UP, portraitDpadX, portraitDpadY,
+                BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_DPAD_DOWN, portraitDpadX,
+                portraitDpadY + SPACE * 2, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_DPAD_LEFT, portraitDpadX - SPACE,
+                portraitDpadY + SPACE, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, portraitDpadX + SPACE,
+                portraitDpadY + SPACE, BTN_W, BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_BACK, portraitMenuX - SPACE / 2,
-               portraitMenuY - SPACE / 2, BTN_W, BTN_H / 2),
-        Button(SDL_CONTROLLER_BUTTON_START, portraitMenuX + SPACE / 2,
-               portraitMenuY - SPACE / 2, BTN_W, BTN_H / 2)};
+        makeBtn(SDL_CONTROLLER_BUTTON_BACK, portraitMenuX - SPACE / 2,
+                portraitMenuY - SPACE / 2, BTN_W, snap(BTN_H / 2)),
+        makeBtn(SDL_CONTROLLER_BUTTON_START, portraitMenuX + SPACE / 2,
+                portraitMenuY - SPACE / 2, BTN_W, snap(BTN_H / 2))};
 
     const int landscapeActionX = landscapeWidth / 2 + landscapeWidth * 0.35;
     const int landscapeActionY = landscapeHeight * 0.50;
@@ -1658,29 +1745,30 @@ std::vector<Layout> getDefaultLayouts() {
     const int landscapeMenuY = landscapeHeight * 0.20;
 
     Button landscapeButtons[10] = {
-        Button(SDL_CONTROLLER_BUTTON_A, landscapeActionX + SPACE / 2,
-               landscapeActionY + SPACE, BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_B, landscapeActionX - SPACE / 2,
-               landscapeActionY + SPACE, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_A, landscapeActionX + SPACE / 2,
+                landscapeActionY + SPACE, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_B, landscapeActionX - SPACE / 2,
+                landscapeActionY + SPACE, BTN_W, BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, landscapeActionX + SPACE / 2,
-               landscapeActionY + SPACE * 2, BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
-               landscapeActionX + SPACE / 2, landscapeActionY, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+                landscapeActionX + SPACE / 2, landscapeActionY + SPACE * 2,
+                BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+                landscapeActionX + SPACE / 2, landscapeActionY, BTN_W, BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_DPAD_UP, landscapeDpadX, landscapeDpadY,
-               BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, landscapeDpadX,
-               landscapeDpadY + SPACE * 2, BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, landscapeDpadX - SPACE,
-               landscapeDpadY + SPACE, BTN_W, BTN_H),
-        Button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, landscapeDpadX + SPACE,
-               landscapeDpadY + SPACE, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_DPAD_UP, landscapeDpadX, landscapeDpadY,
+                BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_DPAD_DOWN, landscapeDpadX,
+                landscapeDpadY + SPACE * 2, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_DPAD_LEFT, landscapeDpadX - SPACE,
+                landscapeDpadY + SPACE, BTN_W, BTN_H),
+        makeBtn(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, landscapeDpadX + SPACE,
+                landscapeDpadY + SPACE, BTN_W, BTN_H),
 
-        Button(SDL_CONTROLLER_BUTTON_BACK, landscapeMenuX,
-               landscapeMenuY - SPACE / 2, BTN_W, BTN_H / 2),
-        Button(SDL_CONTROLLER_BUTTON_START, landscapeMenuX + SPACE,
-               landscapeMenuY - SPACE / 2, BTN_W, BTN_H / 2)};
+        makeBtn(SDL_CONTROLLER_BUTTON_BACK, landscapeMenuX,
+                landscapeMenuY - SPACE / 2, BTN_W, snap(BTN_H / 2)),
+        makeBtn(SDL_CONTROLLER_BUTTON_START, landscapeMenuX + SPACE,
+                landscapeMenuY - SPACE / 2, BTN_W, snap(BTN_H / 2))};
 
     return {Layout(portraitButtons), Layout(landscapeButtons)};
 }
