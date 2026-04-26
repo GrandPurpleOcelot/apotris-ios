@@ -1,13 +1,20 @@
 #pragma once
 #include "def.h"
-#include "rtc/rtc.hpp"
 #include <algorithm>
-#include <future>
-#include <mutex>
-#include <nlohmann/json.hpp>
 #include <queue>
 #include <shared_mutex>
 #include <sstream>
+#include <string>
+#include <unordered_map>
+#include <array>
+#include <optional>
+
+#ifndef SWITCH
+#include "rtc/rtc.hpp"
+#include <future>
+#include <mutex>
+#include <nlohmann/json.hpp>
+#endif
 
 #ifdef N3DS
 #include "n3ds/networking.hpp"
@@ -27,10 +34,12 @@ extern void clearPlayers();
 extern void initPlayer(u8 pId);
 #endif
 
+#ifndef SWITCH
 using nlohmann::json;
 using std::shared_ptr;
 using std::weak_ptr;
 template <class T> weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr) { return ptr; }
+#endif
 
 std::string stringifyMultiplayerPacket(u16 packet);
 
@@ -41,6 +50,7 @@ struct BoardUpdatePacket {
 };
 
 class LinkUniversal {
+#ifndef SWITCH
     static constexpr char STUN_SERVER[] = "stun:stun.l.google.com:19302";
     static constexpr char TYPE[] = "type";
     static constexpr char ID[] = "id";
@@ -730,6 +740,29 @@ public:
     [[nodiscard]] std::unordered_map<u8, std::string> playerNames() const {
         return playerIdToName;
     }
+#else
+public:
+    std::string localId;
+    std::string localPlayerName;
+    void initWebSocketConfig() {}
+
+    void activate() {}
+    void deactivate() {}
+    [[nodiscard]] bool isActive() const { return false; }
+    [[nodiscard]] bool sync() const { return false; }
+    bool canRead(u8 pId) { return false; }
+    u16 read(u8 pId) { return 0; }
+    bool send(u16 packet) { return false; }
+    bool send(std::string msg) { return false; }
+    template <size_t N> bool send(const std::array<std::byte, N>& msg) { return false; }
+    std::optional<BoardUpdatePacket> readBoardUpdate() { return std::nullopt; }
+    [[nodiscard]] bool isConnected() const { return false; }
+    [[nodiscard]] u8 playerCount() const { return 0; }
+    [[nodiscard]] std::unordered_map<u8, std::string> playerNames() const {
+        return std::unordered_map<u8, std::string>();
+    }
+    [[nodiscard]] u8 currentPlayerId() const { return 0; }
+#endif
 };
 
 extern LinkUniversal* linkUniversal;

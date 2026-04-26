@@ -69,10 +69,13 @@ const std::list<std::string> menuOptions = {
     "Play",        "Settings",     "Stats",  "Links",
     "Skin Editor", "Color Editor", "Credits"};
 const std::list<std::string> gameOptions = {
-    "Marathon",     "Sprint",    "Dig",    "Ultra", "Blitz", "Combo",
-    "Survival",     "Classic",   "Master", "Death", "Zen",   "Multi Battle",
+    "Marathon",     "Sprint",  "Dig",    "Ultra", "Blitz", "Combo",
+    "Survival",     "Classic", "Master", "Death", "Zen",
+#ifndef SWITCH
+    "Multi Battle",
+#endif
 #ifdef GBA
-    //"Wireless Pak", "Wired Pak",
+//"Wireless Pak", "Wired Pak",
 #endif
     "CPU Battle",   "Training"};
 const std::list<std::string> settingsOptions = {
@@ -668,8 +671,8 @@ void ConfirmSaveScene::deinit() {
 void MainMenuScene::update() {
     if (!updateAvailable.empty() && !showingUpdateNotification) {
         wordSprites[10]->setText("Update available: " + updateAvailable);
-        wordSprites[10]->show(0,0,14);
-        wordSprites[11]->show(12 * 8,0,14);
+        wordSprites[10]->show(0, 0, 14);
+        wordSprites[11]->show(12 * 8, 0, 14);
         showingUpdateNotification = true;
     }
 
