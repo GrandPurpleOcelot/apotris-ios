@@ -24,6 +24,7 @@
 #ifdef ANDROID
 #include <SDL_system.h>
 #include <android/log.h>
+#include <glad/gles2.h>
 #include <jni.h>
 #define LOG_TAG "ApotrisShader"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
