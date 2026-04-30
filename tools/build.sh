@@ -28,6 +28,7 @@ meson setup --reconfigure --cross-file=meson/n3ds.ini --buildtype=release build-
 meson compile -C build-n3ds 3dsx cia
 
 # Android
+export ANDROID_NDK_ROOT="${ANDROID_NDK_HOME}"
 meson setup --reconfigure --cross-file=meson/android.ini --buildtype=release build-android && \
 meson compile -C build-android
 

@@ -124,6 +124,10 @@ jobs:
             echo -e "[properties]\ncmake_toolchain_file = '/root/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake'" > ci_cross.ini
             meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} --cross-file=ci_cross.ini $build_dir
             meson compile -C $build_dir
+          elif [[ "${{ matrix.target }}" == "android" ]]; then
+            export ANDROID_NDK_ROOT="${ANDROID_NDK_HOME}"
+            meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} $build_dir
+            meson compile -C $build_dir
           elif [[ "${{ matrix.target }}" == "n3ds" ]]; then
             meson setup ${{ matrix.build_flags }} --cross-file=${{ matrix.cross_file }} $build_dir
             meson compile -C $build_dir 3dsx cia
