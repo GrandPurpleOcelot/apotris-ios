@@ -102,7 +102,7 @@ float windowScale = 6;
 
 float gameWindowScale = 6;
 
-InputType lastInputType = InputType::KEYBOARD;
+InputType lastInputType = InputType::TOUCH;
 
 nanotime_step_data stepper;
 
@@ -360,8 +360,6 @@ void windowInit() {
     if (SDL_NumJoysticks() > 0) {
         controller = SDL_GameControllerOpen(0);
         controllerCount = SDL_NumJoysticks();
-
-        controllerCount = 0;
     }
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -515,8 +513,7 @@ void handleInput() {
             unpressKey(key, InputType::CONTROLLER);
             break;
         case SDL_FINGERDOWN:
-            if (controllerCount > 0)
-                break;
+            lastInputType = InputType::TOUCH;
 
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
@@ -589,8 +586,7 @@ void handleInput() {
 
             break;
         case SDL_FINGERMOTION:
-            if (controllerCount > 0)
-                break;
+            lastInputType = InputType::TOUCH;
 
             dx = event.tfinger.dx * screenWidth;
             dy = event.tfinger.dy * screenHeight;
@@ -672,8 +668,7 @@ void handleInput() {
             }
             break;
         case SDL_FINGERUP:
-            if (controllerCount > 0)
-                break;
+            lastInputType = InputType::TOUCH;
 
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
@@ -1093,7 +1088,7 @@ void updateWindow(uint8_t* framebuffer) {
         // ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
         // ImGui::End();
 
-        if (controllerCount == 0) {
+        if (lastInputType == InputType::TOUCH || touchEditMode) {
             ImDrawList* draw_list = ImGui::GetForegroundDrawList();
             for (auto const& button : layout.buttons) {
                 ImU32 color =
@@ -1256,7 +1251,6 @@ void updateWindow(uint8_t* framebuffer) {
         }
 
         controllerCount = SDL_NumJoysticks();
-        controllerCount = 0;
     }
 
     updateBatteryInfo();
