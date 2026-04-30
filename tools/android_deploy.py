@@ -162,9 +162,14 @@ def main():
 
     # 8. Copy Output APK
     apk_out = os.path.join(android_project_dir, 'app/build/outputs/apk', apk_out_dir, apk_out_name)
+    apk_out_unsigned = os.path.join(android_project_dir, 'app/build/outputs/apk', apk_out_dir, apk_out_name.replace('.apk', '-unsigned.apk'))
+    
     if os.path.exists(apk_out):
         print(f"Copying APK to {args.output}")
         shutil.copy(apk_out, args.output)
+    elif os.path.exists(apk_out_unsigned):
+        print(f"Copying unsigned APK to {args.output}")
+        shutil.copy(apk_out_unsigned, args.output)
     else:
         print("Error: APK not found after build.")
         sys.exit(1)

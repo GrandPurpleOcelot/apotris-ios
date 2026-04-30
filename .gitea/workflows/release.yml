@@ -104,13 +104,17 @@ jobs:
         if: matrix.target == 'android' && secrets.ANDROID_KEYSTORE_PASSWORD != ''
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          cat << KEOF > android/keystore.properties
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/release.jks
+            cat << KEOF > android/keystore.properties
           storeFile=release.jks
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyAlias=apotris
           keyPassword=$ANDROID_KEYSTORE_PASSWORD
           KEOF
+          fi
 
       - name: Build for ${{ matrix.target }}
         shell: bash
