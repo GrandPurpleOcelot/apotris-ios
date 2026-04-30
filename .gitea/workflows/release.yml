@@ -68,6 +68,16 @@ jobs:
             readme_src: # No simple readme copy here
             runs-on: ubuntu-latest
             container: akouzoukos/apotris:2026-4-11-2
+          - target: android
+            platform: Android
+            cross_file: meson/android.ini
+            build_flags: --reconfigure --buildtype=release
+            package_name_suffix: Android
+            package_files: "Apotris.apk license/*"
+            exclude_package_files: ""
+            readme_src: ""
+            runs-on: ubuntu-latest
+            container: akouzoukos/apotris:2026-4-30
           - target: web
             platform: HTML5+JS
             cross_file: meson/emscripten.ini
@@ -89,6 +99,18 @@ jobs:
 
       - name: Install packaging tools
         run: apt-get update && apt-get install -y zip git libcurl4-openssl-dev pkg-config-mingw-w64-x86-64 # Ensure zip, git, libcurl and mingw pkg-config are present
+
+      - name: Setup Android Keystore
+        if: matrix.target == 'android' && secrets.ANDROID_KEYSTORE_PASSWORD != ''
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          cat << KEOF > android/keystore.properties
+          storeFile=release.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=apotris
+          keyPassword=$ANDROID_KEYSTORE_PASSWORD
+          KEOF
 
       - name: Build for ${{ matrix.target }}
         shell: bash
@@ -179,6 +201,10 @@ jobs:
                exclude_arg="-x ${{ matrix.exclude_package_files }}"
              fi
              zip "../$zip_name" ${{ matrix.package_files }} $exclude_arg
+
+          elif [[ "${{ matrix.target }}" == "android" ]]; then
+             # Android zip command
+             zip "../$zip_name" ${{ matrix.package_files }}
 
           elif [[ "${{ matrix.target }}" == "web" ]]; then
              # Web zip command
