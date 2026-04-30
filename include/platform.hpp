@@ -26,6 +26,15 @@
 #define PLATFORM 1
 #endif
 
+#ifdef ANDROID
+
+#include "liba_pc.h"
+#include "liba_sdl_audio.hpp"
+#include "liba_android.h"
+
+#define PLATFORM 1
+#endif
+
 #ifdef MM
 #include "liba_mm.h"
 #define PLATFORM 2
@@ -201,5 +210,9 @@ extern void quit();
 
 extern void deinitialize();
 extern void refreshWindowSize();
+extern void showBattery();
 
 extern float fps;
+
+extern int batteryPercentage;
+extern bool charging;

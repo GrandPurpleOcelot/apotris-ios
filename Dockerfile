@@ -14,7 +14,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
     libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
     libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
     libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
-    libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev mingw-w64 \
+    libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev mingw-w64 openjdk-17-jdk-headless \
   && apt-get install -y --fix-missing directx-headers-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -84,3 +84,24 @@ RUN wget -O ${MAKEROM_ZIP_FILE} ${MAKEROM_URL} && \
     mv /tmp/makerom ${MAKEROM_INSTALL_PATH} && \
     chmod +x ${MAKEROM_INSTALL_PATH} && \
     rm ${MAKEROM_ZIP_FILE}
+
+# Install Android SDK and NDK
+ENV ANDROID_HOME="/opt/android-sdk"
+ENV ANDROID_NDK_HOME="${ANDROID_HOME}/ndk/25.2.9519653"
+
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip && \
+    unzip -q cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
+    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
+    rm cmdline-tools.zip && \
+    yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses && \
+    ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
+
+ENV PATH="$PATH:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+
+# Install Gradle
+RUN wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip -O gradle.zip && \
+    unzip -q gradle.zip -d /opt && \
+    ln -s /opt/gradle-8.4/bin/gradle /usr/bin/gradle && \
+    rm gradle.zip
+

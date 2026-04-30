@@ -210,7 +210,7 @@ public:
             //     continue;
             // }
 
-#elif defined(PC)
+#elif defined(PC) || defined(ANDROID)
             u32 key = key_first();
 
             if (key != KEY_FULL - 1) {

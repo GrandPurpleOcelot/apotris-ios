@@ -496,6 +496,41 @@ void nanotime_yield() { svcSleepThread(YieldType_ToAnyThread); }
 #endif
 
 #ifndef NANOTIME_NOW_IMPLEMENTED
+#ifdef ANDROID
+#include <time.h>
+#include <errno.h>
+uint64_t nanotime_now() {
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint64_t)now.tv_sec * NANOTIME_NSEC_PER_SEC + (uint64_t)now.tv_nsec;
+}
+#define NANOTIME_NOW_IMPLEMENTED
+#endif
+#endif
+
+#ifndef NANOTIME_SLEEP_IMPLEMENTED
+#ifdef ANDROID
+#include <time.h>
+#include <errno.h>
+void nanotime_sleep(uint64_t nsec_count) {
+    const struct timespec req = {
+        .tv_sec = (time_t)(nsec_count / NANOTIME_NSEC_PER_SEC),
+        .tv_nsec = (long)(nsec_count % NANOTIME_NSEC_PER_SEC)};
+    nanosleep(&req, NULL);
+}
+#define NANOTIME_SLEEP_IMPLEMENTED
+#endif
+#endif
+
+#ifndef NANOTIME_YIELD_IMPLEMENTED
+#ifdef ANDROID
+#include <sched.h>
+void nanotime_yield() { sched_yield(); }
+#define NANOTIME_YIELD_IMPLEMENTED
+#endif
+#endif
+
+#ifndef NANOTIME_NOW_IMPLEMENTED
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #include <time.h>
 uint64_t nanotime_now() {

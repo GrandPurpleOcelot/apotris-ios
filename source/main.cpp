@@ -123,7 +123,7 @@ void initialize() {
 
 #endif
 
-#if defined(PC) || defined(PORTMASTER)
+#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
     if (savefile->settings.shaders != 0) {
         shaderInit(savefile->settings.shaders);
     }
@@ -179,7 +179,7 @@ void initialize() {
     checkSongs();
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     platformInit();
 
     loadSave();
@@ -200,20 +200,21 @@ int main() {
         if (!exceptionReason.empty()) {
             const std::string localReason = exceptionReason;
             exceptionReason = "";
-            #ifdef PC
+#ifdef PC
             setUpPresentException(localReason);
-            #endif
+#endif
         } else
             scene->update();
         sampleEntropy();
     }
 
     deinitialize();
+    return 0;
 }
 
 #ifdef PC
 int WinMain(void) {
-    main();
+    main(0, NULL);
     return 0;
 }
 #endif
@@ -1112,7 +1113,7 @@ void startGame(BlockEngine::Options options, int seed) {
         if (game->subMode == 1) {
             game->score = savefile->boards.zenTower;
             game->towerScrollCount = savefile->boards.zenTower;
-        }else {
+        } else {
             game->score = savefile->boards.zen;
         }
     }
@@ -1277,7 +1278,7 @@ std::string getStringFromKey(int key) {
 
     return keyToString[key];
 
-#elif defined(WEB) || defined(PC)
+#elif defined(WEB) || defined(PC) || defined(ANDROID)
 
     return stringFromKey(key);
 

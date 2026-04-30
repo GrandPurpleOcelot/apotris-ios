@@ -27,6 +27,7 @@ void setDefaultKeys();
 void resetSkins(Save* save);
 void setDefaults(Save* save, int depth);
 void setDefaultGraphics(Save* save, int depth);
+void setDefaultLayouts(Save* save);
 void applySaveChanges(u8* newSave, u8* oldSave, int newSize);
 void convertScores(Save* save);
 
@@ -57,8 +58,6 @@ void loadSave() {
     const int pmSettings = 540;
     const int pmSave = 3876;
 
-    // 0x50-0x51, re-pack desktop keys into mask?
-    // This'll skip upgrading saves for 0x50 and 0x51, was this intended to be SAVE_TAG?
     if (savefile->newGame >= 0x50 && savefile->newGame <= 0x51) {
 #if defined(PC) || defined(WEB)
 
@@ -139,7 +138,8 @@ void loadSave() {
         memcpy32_fast(savefile, temp, pmSave / 4);
 
         delete temp;
-    } else if (savefile->newGame != SAVE_TAG && savefile->newGame >= 0x4b && savefile->newGame < SAVE_TAG) {
+    } else if (savefile->newGame != SAVE_TAG && savefile->newGame >= 0x4b &&
+               savefile->newGame < SAVE_TAG) {
         // Upgrade old saves
         Save* temp = new Save();
         u8* tmp = (u8*)temp;
@@ -182,7 +182,8 @@ void loadSave() {
         savefile->newGame = SAVE_TAG;
     } else if (savefile->newGame != SAVE_TAG) {
         // No tag recognized, create fresh save file.
-        // (this can be trigger-happy if misconfigured, maybe a prompt is in order to protect against errant triggers?)
+        // (this can be trigger-happy if misconfigured, maybe a prompt is in
+        // order to protect against errant triggers?)
         savefile = new Save();
 
         setDefaults(savefile, 0);
@@ -201,7 +202,8 @@ void loadSave() {
         (savefile->settings.lightMode != 1))
         savefile->settings.lightMode = false;
 
-    if ((savefile->settings.rumbleStrength < 0) || (savefile->settings.rumbleStrength > 8))
+    if ((savefile->settings.rumbleStrength < 0) ||
+        (savefile->settings.rumbleStrength > 8))
         savefile->settings.rumbleStrength = 0;
 
     if (savefile->settings.irs < 0 || savefile->settings.irs > 1)
@@ -211,6 +213,22 @@ void loadSave() {
     if (savefile->settings.initialType < 0 ||
         savefile->settings.initialType > 1)
         savefile->settings.initialType = 1;
+
+#ifdef ANDROID
+    if (savefile->settings.touchSnapGrid < 0 ||
+        savefile->settings.touchSnapGrid > 100 ||
+        (savefile->settings.touchSnapGrid % 10) != 0)
+        savefile->settings.touchSnapGrid = 10;
+
+    if (savefile->settings.touchOpacity < 0 ||
+        savefile->settings.touchOpacity > 255)
+        savefile->settings.touchOpacity = 100;
+
+    if (savefile->settings.touchVibration < 0 ||
+        savefile->settings.touchVibration > 100 ||
+        (savefile->settings.touchVibration % 25) != 0)
+        savefile->settings.touchVibration = 50;
+#endif
 
     if (savefile->platform != PLATFORM) {
         auto oldPlatform = savefile->platform;
@@ -521,6 +539,16 @@ void setDefaults(Save* save, int depth) {
         m.reset = 0;
 #endif
 
+#ifdef ANDROID
+        std::vector<Layout> layouts = getDefaultLayouts();
+
+        save->settings.onScreenLayouts[0] = layouts[0];
+        save->settings.onScreenLayouts[1] = layouts[1];
+        save->settings.touchSnapGrid = 10;
+        save->settings.touchOpacity = 100;
+        save->settings.touchVibration = 50;
+#endif
+
         save->settings.menuKeys = m;
 
         save->platform = PLATFORM;
@@ -548,25 +576,33 @@ void setDefaults(Save* save, int depth) {
 
     if (depth < 9) {
         save->settings.zoneRumbleMode = 1; // Set to Continuous Zone Rumble
-        save->settings.rumbleStyle = 1; // Set to new Dynamic rumble!
-        save->settings.rumbleStrength = save->settings.rumbleStrength * 2; // Scale old value to new scale (0-4 -> 0-8)
+        save->settings.rumbleStyle = 1;    // Set to new Dynamic rumble!
+        save->settings.rumbleStrength =
+            save->settings.rumbleStrength *
+            2; // Scale old value to new scale (0-4 -> 0-8)
 
         // -- GBA Specific-settings
         save->settings.sleep.autosleepDelay = 0; // Disable Autosleep
-        save->settings.sleep.autosleepWakeCombo = 1; // Use any button to wake from Autosleep
-        save->settings.sleep.sleepWakeCombo = 1; // Use L+R+Select as default Sleep/Wake combo.
+        save->settings.sleep.autosleepWakeCombo =
+            1; // Use any button to wake from Autosleep
+        save->settings.sleep.sleepWakeCombo =
+            1; // Use L+R+Select as default Sleep/Wake combo.
 
-        save->settings.rumbleCartType = 0; // Use ROM GPIO as default Rumble Cart type, most common and least likely to cause issues.
-        save->settings.rumbleUpdateRate = 0; // Default to using VBlank for Rumble Pattern ISR
+        save->settings.rumbleCartType =
+            0; // Use ROM GPIO as default Rumble Cart type, most common and
+               // least likely to cause issues.
+        save->settings.rumbleUpdateRate =
+            0; // Default to using VBlank for Rumble Pattern ISR
 
-        save->settings.ezFlash3in1Strength = EZFLASH_RUMBLE_IGNORE; // By default, 3-in-1 support should be disabled.
+        save->settings.ezFlash3in1Strength =
+            EZFLASH_RUMBLE_IGNORE; // By default, 3-in-1 support should be
+                                   // disabled.
         // -- End of GBA-specifics
 
         memset32_fast(savefile->boards.tower, 0, sizeof(EntryBoard) * 4 / 4);
         savefile->boards.zenLines = 0;
         savefile->boards.zenTower = 0;
     }
-
 }
 
 bool compareVersion(const SaveChange& first, const SaveChange& second) {

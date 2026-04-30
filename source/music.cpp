@@ -17,7 +17,7 @@ void playSong(int menuId, int songId) {
         return;
     }
 
-    if (songId > (int)songList->size())
+    if (songId < 0 || songId >= (int)songList->size())
         return;
 
     auto it = songList->begin();

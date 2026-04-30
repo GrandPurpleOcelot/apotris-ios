@@ -30,6 +30,23 @@ extern std::string getDescription(const std::string& mode,
                                   const std::string& element,
                                   const std::string& option);
 
+enum class GameElements { NONE, FIELD, HOLD, QUEUE, TIMER, LENGTH };
+
+class Position {
+public:
+    s16 x = 0;
+    s16 y = 0;
+
+    Position() {}
+
+    Position(s16 x, s16 y) {
+        this->x = x;
+        this->y = y;
+    }
+};
+
+extern Position gameLayout[(int)GameElements::LENGTH];
+
 class Scene {
 public:
     virtual void draw() = 0;
@@ -74,7 +91,8 @@ class GameScene : public Scene {
     void showScoreboard();
 
     bool counted = false;
-    bool preventLayeredCountdowns = false; // TODO I feel like this can be done better
+    bool preventLayeredCountdowns =
+        false; // TODO I feel like this can be done better
     bool skipSong = false;
 
     int timesPaused = 0;
@@ -106,7 +124,7 @@ class TitleScene : public Scene {
     const int flashMax = 48;
 
     int demoTimer = 0;
-    const int demoMax = 60 * 10;
+    const int demoMax = 60 * 2;
 
     bool testDraw = false;
 
@@ -398,6 +416,12 @@ public:
         result.push_front("Video");
 #else
         result.push_back("Sleep");
+#endif
+
+#ifdef ANDROID
+        auto it = result.begin();
+        std::advance(it, 4);
+        result.insert(it, "Touch");
 #endif
 
         return result;

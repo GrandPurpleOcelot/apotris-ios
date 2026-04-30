@@ -13,6 +13,9 @@
 #include "sceneStats.hpp"
 #include "sceneWindow.hpp"
 #include "sceneSleep.hpp"
+#ifdef ANDROID
+#include "sceneTouch.hpp"
+#endif
 #include "skinEditor.hpp"
 #include <string>
 
@@ -172,6 +175,10 @@ void sceneSwitcher(const std::string& str) {
     } else if (str == "Sleep") {
 #ifdef GBA
         changeScene(new SleepOptionScene(), Transitions::FADE);
+#endif
+#ifdef ANDROID
+    } else if (str == "Touch") {
+        changeScene(new TouchOptionScene(), Transitions::FADE);
 #endif
     } else if (str == "Rumble") {
         changeScene(new RumbleOptionScene(), Transitions::FADE);

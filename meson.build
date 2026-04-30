@@ -48,6 +48,7 @@ sources = files(
     src_dir / 'liba_portmaster.cpp',
     src_dir / 'liba_web.cpp',
     src_dir / 'liba_window.cpp',
+    src_dir / 'liba_android.cpp',
     src_dir / 'liba_sdl_audio.cpp',
     src_dir / 'LinkWireless.cpp',
     src_dir / 'main.cpp',
@@ -119,7 +120,9 @@ elif host_machine.system() == 'emscripten'
     add_global_arguments('-fno-stack-protector', language: ['cpp', 'c'])
     add_global_arguments('-U_FORTIFY_SOURCE', language: ['cpp', 'c'])
 elif host_machine.system() == 'darwin'
-    add_global_arguments('-mmacosx-version-min=10.15', language: ['cpp', 'c'])
+    add_global_arguments('-mmacosx-version-min=10.15', language : ['cpp', 'c'])
+elif host_machine.system() == 'android'
+    add_global_arguments('-DIMGUI_IMPL_OPENGL_ES3', language : ['c', 'cpp'])
 endif
 
 if host_machine.system() == 'n3ds'
@@ -382,6 +385,21 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         add_project_arguments('-DGL', language: ['c', 'cpp'])
 
         dependencies += dependency('glesv2')
+    elif host_machine.system() == 'android'
+        add_project_arguments('-DANDROID', language : ['cpp', 'c'])
+        add_project_arguments('-DGL', language : ['c', 'cpp'])
+        add_project_arguments('-DIMGUI_IMPL_OPENGL_ES3', language : ['c', 'cpp'])
+
+        gles3 = meson.get_compiler('c').find_library('GLESv3')
+        dependencies += gles3
+        
+        # Override gl dependency so imgui subproject finds it
+        meson.override_dependency('gl', gles3)
+
+        # ImGui Integration
+        imgui_proj = subproject('imgui', default_options: ['default_library=static', 'opengl=enabled', 'sdl2=enabled', 'sdl2_renderer=enabled'])
+        dependencies += imgui_proj.get_variable('imgui_dep')
+
     elif host_machine.system() != 'emscripten'
         add_project_arguments('-DPC', language: ['cpp', 'c'])
         add_project_arguments('-DGL', language: ['c', 'cpp'])
@@ -516,6 +534,36 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             depends: binary,
             build_by_default: true,
         )
+    elif host_machine.system() == 'android'
+        binary = shared_library(
+            'main',
+            generated_files + sources,
+            include_directories : includes,
+            dependencies : dependencies,
+            link_args : link_args,
+            name_prefix : 'lib',
+        )
+
+        # Android APK packaging
+        deploy_script = files('tools/android_deploy.py')
+
+        apk = custom_target(
+            'android-apk',
+            output : 'Apotris.apk',
+            command : [
+                py3, deploy_script,
+                '--build-dir', meson.current_build_dir(),
+                '--source-dir', meson.current_source_dir(),
+                '--buildtype', get_option('buildtype'),
+                '--libmain', binary,
+                '--output', '@OUTPUT@',
+                '--compiler', meson.get_compiler('cpp').cmd_array(),
+            ],
+            depends : binary,
+            build_by_default : true,
+        )
+
+        alias_target('apk', apk)
     else
         binary = executable(
             name,

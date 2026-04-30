@@ -42,11 +42,14 @@ std::string savefileDir() {
 void handleAnalogInput(int axis, int value);
 void checkLatestVersion();
 void handleInput();
+void updateBatteryInfo();
 
 std::unordered_set<uint32_t> currentKeys;
 std::unordered_set<uint32_t> previousKeys;
 
 std::unordered_set<uint32_t> currentlyPressed;
+
+std::list<SDL_Rect> rects;
 
 // int rowStart = (288 - 288) / 2;
 // int rowEnd = rowStart + 288;
@@ -63,6 +66,9 @@ uint32_t start_time = 0;
 uint32_t frame_time = 0;
 
 float fps = 0;
+
+int batteryPercentage = -1;
+bool charging = false;
 
 SDL_Window* window;
 SDL_Renderer* renderer;
@@ -85,6 +91,8 @@ InputType lastInputType = InputType::KEYBOARD;
 nanotime_step_data stepper;
 
 ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
+
+SDL_Point touchLocation = {0, 0};
 
 #define DEADZONE 12000
 
@@ -127,7 +135,7 @@ void windowInit() {
     nanotime_step_init(&stepper, (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
 
-#ifndef __APPLE__
+#if !defined(__APPLE__)
     SDL_Surface* icon = SDL_LoadBMP("assets/favicon32.bmp");
 
     SDL_SetWindowIcon(window, icon);
@@ -154,6 +162,8 @@ void key_poll() {}
 
 void handleInput() {
     SDL_Event event;
+
+    int x = 0, y = 0, k = 0;
 
     while (SDL_PollEvent(&event)) {
         int key = 0;
@@ -338,6 +348,17 @@ void updateWindow(uint8_t* framebuffer) {
             SDL_RenderCopy(renderer, texture, &src_rect, &dest_rect);
         }
 
+        for (auto const& rect : rects) {
+
+            // Set render color to blue ( rect will be rendered in this color )
+            SDL_SetRenderDrawColor(renderer, 0, 0, 255, 0);
+
+            // Render rect
+            SDL_RenderFillRect(renderer, &rect);
+        }
+
+        rects.clear();
+
         SDL_RenderPresent(renderer);
     } else {
         if (render) {
@@ -376,6 +397,8 @@ void updateWindow(uint8_t* framebuffer) {
 
         controllerCount = SDL_NumJoysticks();
     }
+
+    updateBatteryInfo();
 }
 
 void refreshWindowSize() {
@@ -679,6 +702,17 @@ void handleAnalogInput(int axis, int value) {
     } else {
         unpressKey((key), InputType::CONTROLLER);
         unpressKey((key) | (1 << 5), InputType::CONTROLLER);
+    }
+}
+
+void updateBatteryInfo() {
+    SDL_PowerState state = SDL_GetPowerInfo(NULL, &batteryPercentage);
+
+    charging = false;
+    if (state == SDL_POWERSTATE_CHARGING) {
+        charging = true;
+    } else if (state != SDL_POWERSTATE_ON_BATTERY) {
+        batteryPercentage = -1;
     }
 }
 

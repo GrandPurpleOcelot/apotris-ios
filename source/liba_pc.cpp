@@ -5,6 +5,7 @@
 #include "LinkWebRTC.hpp"
 #include "Tilengine.h"
 #include "def.h"
+#include "liba_pc.h"
 #include "logging.h"
 #include "multiplayerClasses.h"
 #include "scene.hpp"
@@ -16,15 +17,24 @@
 #include <fstream>
 #include <list>
 
+#include "sprite62tiles_bin.h"
+#include "sprite63tiles_bin.h"
+#include "sprite64tiles_bin.h"
+
 #include <map>
+
+#if defined(ANDROID)
+static int offsetx = (SCREEN_WIDTH - 240) * 0.5;
+static int offsety = (SCREEN_HEIGHT - 160) * 0.35;
+#else
+static int offsetx = (SCREEN_WIDTH - 240) / 2;
+static int offsety = (SCREEN_HEIGHT - 160) / 2;
+#endif
 
 LinkUniversal* linkUniversal = nullptr;
 MultiplayerLink* multiplayerLink = nullptr;
 std::string roomId;
 std::string exceptionReason;
-
-static int offsetx = (SCREEN_WIDTH - 240) / 2;
-static int offsety = (SCREEN_HEIGHT - 160) / 2;
 
 int spriteVOffset = 0;
 
@@ -35,6 +45,7 @@ int blendInfo = 0;
 void onHBlank(int line);
 uint8_t customBlend(uint8_t a, uint8_t b);
 void showFPS();
+void showBattery();
 
 std::list<float> fpsHistory;
 
@@ -73,10 +84,12 @@ static inline int rgb5to8(u16 color) {
 class LayerInfo {
 public:
     int id = -1;
-    bool enabled = true;
+    bool enabled = false;
     int priority = -1;
     int sbb = 0;
     int cbb = 0;
+    int x = 0;
+    int y = 0;
 };
 
 TLN_Palette palettes[32];
@@ -397,6 +410,9 @@ void sprite_set_attr(OBJ_ATTR* sprite, int shape, int size, int tile_start,
 void setLayerScroll(int layer, int x, int y) {
     if (!layerInfo[layer].enabled)
         return;
+
+    layerInfo[layer].x = x;
+    layerInfo[layer].y = y;
 
     TLN_SetLayerPosition(layerInfo[layer].id, x - offsetx, y - offsety);
 }
@@ -923,11 +939,52 @@ void showFPS() {
     }
 }
 
+void showBattery() {
+#if defined(PC) || defined(ANDROID)
+    OBJ_ATTR* sprite = &obj_buffer[127];
+
+    if (savefile->settings.batteryDisplay < 0 || batteryPercentage == -1 ||
+        batteryPercentage == 100) {
+        sprite_hide(sprite);
+        return;
+    }
+
+    char buff[8];
+    snprintf(buff, 8, "%d%%", batteryPercentage);
+
+    u8* src = (u8*)sprite62tiles_bin;
+
+    if (charging) {
+        src = (u8*)sprite64tiles_bin;
+    } else if (batteryPercentage <= 15) {
+        src = (u8*)sprite63tiles_bin;
+    }
+
+    loadSpriteTiles(1022, src, 1, 1);
+
+    clearSpriteTiles(1020, 2, 1);
+    aprintsSprite(buff, 4, 0, 1020);
+
+    sprite_set_attr(sprite, ShapeWide, 1, 1020, 15, 0);
+    sprite_set_pos(sprite, 21 * 8 + 1, 154);
+    sprite_unhide(sprite, 0);
+#endif
+}
+
 void setSpriteMaskRegion(int shift) {
     const int top = offsety + 164 + shift;
-    const int bot = offsety + shift;
 
-    TLN_SetSpritesMaskRegion(top, bot);
+    TLN_SetSpritesMaskRegion(top, 0);
+}
+
+void setScreenOffset(int x, int y) {
+    offsetx = x;
+    offsety = y;
+
+    for (int i = 0; i < 4; i++) {
+        setLayerScroll(i, layerInfo[i].x, layerInfo[i].y);
+    }
+    TLN_SetSpritesMaskRegion(0, 0);
 }
 
 void setUpPresentException(std::string error) {

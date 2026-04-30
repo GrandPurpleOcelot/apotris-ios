@@ -170,8 +170,8 @@ typedef struct Settings {
     int moveSfx;
     bool pauseCountdown;
     bool interruptCountdown;
-    u8   rumbleUpdateRate;
-    u8   rumbleStyle;
+    u8 rumbleUpdateRate;
+    u8 rumbleStyle;
     int clearText;
     int randomizer;
 
@@ -200,7 +200,19 @@ typedef struct Settings {
     u8 ezFlash3in1Strength;
     u8 zoneRumbleMode;
 
-    int placeHolder[25];
+    int batteryDisplay;
+
+    int touchOpacity;
+    int touchVibration;
+
+    int placeHolder[22];
+
+#ifdef ANDROID
+    Layout onScreenLayouts[2];
+    int touchSnapGrid;
+#else
+    int layoutPlaceHolder[10 * 2 * 5 * sizeof(int) + 4];
+#endif
 
 } ALIGN(4) Settings;
 

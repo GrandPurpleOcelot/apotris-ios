@@ -1,13 +1,17 @@
 #pragma once
 #include "def.h"
 #include <algorithm>
+#include <array>
+#include <optional>
 #include <queue>
 #include <shared_mutex>
 #include <sstream>
 #include <string>
 #include <unordered_map>
-#include <array>
-#include <optional>
+
+#ifdef ANDROID
+#include <SDL.h>
+#endif
 
 #ifndef SWITCH
 #include "rtc/rtc.hpp"
@@ -132,6 +136,31 @@ public:
 #ifdef N3DS
         ws = std::make_shared<rtc::WebSocket>(rtc::WebSocketConfiguration{
             .caCertificatePemFile = "sdmc:/config/ssl/cacert.pem",
+        });
+#elif defined(ANDROID)
+        std::string certPath;
+        const char* internalPath = SDL_AndroidGetInternalStoragePath();
+        if (internalPath) {
+            std::string destPath = std::string(internalPath) + "/cacert.pem";
+            SDL_RWops* src = SDL_RWFromFile("assets/ssl/cacert.pem", "rb");
+            if (src) {
+                SDL_RWops* dst = SDL_RWFromFile(destPath.c_str(), "wb");
+                if (dst) {
+                    char buf[4096];
+                    int bytesRead;
+                    while ((bytesRead = SDL_RWread(src, buf, 1, sizeof(buf))) >
+                           0) {
+                        SDL_RWwrite(dst, buf, 1, bytesRead);
+                    }
+                    SDL_RWclose(dst);
+                    certPath = destPath; // Only set if successful
+                }
+                SDL_RWclose(src);
+            }
+        }
+        ws = std::make_shared<rtc::WebSocket>(rtc::WebSocketConfiguration{
+            .caCertificatePemFile =
+                certPath.empty() ? std::nullopt : std::make_optional(certPath),
         });
 #else
         ws = std::make_shared<rtc::WebSocket>();
@@ -269,7 +298,7 @@ public:
 #endif
         initWebSocketConfig();
 
-#ifndef WEB
+#if !defined(WEB) && !defined(ANDROID)
         std::promise<void> wsPromise;
         auto wsFuture = wsPromise.get_future();
 
@@ -316,7 +345,7 @@ public:
         std::cout << "WebSocket URL is " << url << std::endl;
         ws->open(url);
 
-#ifndef WEB
+#if !defined(WEB) && !defined(ANDROID)
         std::cout << "Waiting for signaling to be connected..." << std::endl;
         wsFuture.get();
 #endif
@@ -754,7 +783,9 @@ public:
     u16 read(u8 pId) { return 0; }
     bool send(u16 packet) { return false; }
     bool send(std::string msg) { return false; }
-    template <size_t N> bool send(const std::array<std::byte, N>& msg) { return false; }
+    template <size_t N> bool send(const std::array<std::byte, N>& msg) {
+        return false;
+    }
     std::optional<BoardUpdatePacket> readBoardUpdate() { return std::nullopt; }
     [[nodiscard]] bool isConnected() const { return false; }
     [[nodiscard]] u8 playerCount() const { return 0; }
