@@ -336,8 +336,61 @@ void extractAssets(const std::string& pathPrefix) {
     }
 }
 
+std::string getPreferencesFilePath() {
+    std::string path = getDocumentsPath();
+    std::string s = path + "preferences.txt";
+
+    FILE* test = fopen(s.c_str(), "a");
+    if (test) {
+        fclose(test);
+        return s;
+    } else {
+        const char* extPath = SDL_AndroidGetExternalStoragePath();
+        if (extPath) {
+            std::string fallback = std::string(extPath) + "/preferences.txt";
+            return fallback;
+        }
+    }
+    return s;
+}
+
+void savePreferences() {
+    std::string path = getPreferencesFilePath();
+    FILE* file = fopen(path.c_str(), "w");
+    if (file) {
+        fprintf(file, "%d\n", (int)lastInputType);
+        fclose(file);
+    }
+}
+
+void loadPreferences() {
+    std::string path = getPreferencesFilePath();
+    FILE* file = fopen(path.c_str(), "r");
+    if (file) {
+        int val = (int)InputType::TOUCH;
+        if (fscanf(file, "%d", &val) == 1) {
+            if (val >= 0 && val <= 2) {
+                lastInputType = (InputType)val;
+            }
+        }
+        fclose(file);
+    } else {
+        lastInputType = InputType::TOUCH;
+    }
+}
+
+void setLastInputType(InputType type) {
+    if (lastInputType != type) {
+        lastInputType = type;
+        savePreferences();
+    }
+}
+
 void windowInit() {
     SDL_Log("windowInit: start");
+
+    loadPreferences();
+
     // Initialize SDL
     window = nullptr;
 
@@ -424,13 +477,13 @@ void windowInit() {
 }
 
 void pressKey(int key, InputType type) {
-    lastInputType = type;
+    setLastInputType(type);
 
     currentlyPressed.insert(key);
 }
 
 void unpressKey(int key, InputType type) {
-    lastInputType = type;
+    setLastInputType(type);
 
     currentlyPressed.erase(key);
 }
@@ -513,7 +566,7 @@ void handleInput() {
             unpressKey(key, InputType::CONTROLLER);
             break;
         case SDL_FINGERDOWN:
-            lastInputType = InputType::TOUCH;
+            setLastInputType(InputType::TOUCH);
 
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
@@ -586,7 +639,7 @@ void handleInput() {
 
             break;
         case SDL_FINGERMOTION:
-            lastInputType = InputType::TOUCH;
+            setLastInputType(InputType::TOUCH);
 
             dx = event.tfinger.dx * screenWidth;
             dy = event.tfinger.dy * screenHeight;
@@ -668,7 +721,7 @@ void handleInput() {
             }
             break;
         case SDL_FINGERUP:
-            lastInputType = InputType::TOUCH;
+            setLastInputType(InputType::TOUCH);
 
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
@@ -1091,8 +1144,9 @@ void updateWindow(uint8_t* framebuffer) {
         if (lastInputType == InputType::TOUCH || touchEditMode) {
             ImDrawList* draw_list = ImGui::GetForegroundDrawList();
             for (auto const& button : layout.buttons) {
+                int c = savefile->settings.lightMode ? 0 : 255;
                 ImU32 color =
-                    IM_COL32(255, 255, 255, savefile->settings.touchOpacity);
+                    IM_COL32(c, c, c, savefile->settings.touchOpacity);
 
                 draw_list->AddRect(
                     ImVec2(button.x - button.w / 2, button.y - button.h / 2),
@@ -1258,8 +1312,11 @@ void updateWindow(uint8_t* framebuffer) {
 
 void refreshWindowSize() {
     if (savefile != nullptr) {
-        if (savefile->settings.zoom > -1) {
-            windowScale = 1 + (float)savefile->settings.zoom / 10;
+        int activeZoom = (screenWidth <= screenHeight)
+                             ? savefile->settings.zoomPortrait
+                             : savefile->settings.zoom;
+        if (activeZoom > -1) {
+            windowScale = 1 + (float)activeZoom / 10;
         } else {
             int minAxis = std::min(screenWidth, screenHeight);
             if (savefile->settings.integerScale) {
@@ -1306,7 +1363,11 @@ void refreshWindowSize() {
         offsety = (SCREEN_HEIGHT - 160) / 2;
     } else {
         offsetx = (SCREEN_WIDTH - 240) * 0.5;
-        offsety = (SCREEN_HEIGHT - 160) * 0.35;
+        if (savefile != nullptr && savefile->settings.portraitOffset) {
+            offsety = (SCREEN_HEIGHT - 160) * 0.35;
+        } else {
+            offsety = (SCREEN_HEIGHT - 160) * 0.5;
+        }
     }
     setScreenOffset(offsetx, offsety);
 }
@@ -1467,6 +1528,8 @@ void rumbleStart(int length) {
 void rumbleStop() { SDL_GameControllerRumble(controller, 0, 0, 1); }
 
 void setFullscreen(bool state) {
+    if (fullscreen == state)
+        return;
     fullscreen = state;
     if (!fullscreen) {
         SDL_SetWindowFullscreen(window, 0);
@@ -1488,7 +1551,7 @@ void shaderInit(int index) {
 void shaderDeinit() { freeShaders(); }
 
 void handleAnalogInput(int axis, int value) {
-    lastInputType = InputType::CONTROLLER;
+    setLastInputType(InputType::CONTROLLER);
 
     int key = 0;
 

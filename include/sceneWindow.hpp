@@ -10,6 +10,11 @@
 #include <string>
 #endif
 
+#ifdef ANDROID
+extern int screenWidth;
+extern int screenHeight;
+#endif
+
 #ifdef N3DS
 
 class MainScreenElement : public Element {
@@ -125,6 +130,14 @@ public:
 };
 
 class ScaleElement : public Element {
+    int* getActiveZoom() {
+#ifdef ANDROID
+        if (screenWidth <= screenHeight)
+            return &savefile->settings.zoomPortrait;
+#endif
+        return &savefile->settings.zoom;
+    }
+
 public:
     const int min = -1;
     const int max = 90;
@@ -132,38 +145,40 @@ public:
 
     std::string getCursor(std::string text) override {
         std::string result;
+        int activeZoom = *getActiveZoom();
 
-        if (savefile->settings.zoom > min)
+        if (activeZoom > min)
             result += "<";
         else
             result += " ";
 
         result += text;
 
-        if (savefile->settings.zoom < max)
+        if (activeZoom < max)
             result += ">";
 
         return result;
     }
 
     void action(int dir) override {
-        int add = 1 + 9 * (savefile->settings.integerScale &&
-                           savefile->settings.zoom > -1);
+        int* activeZoomPtr = getActiveZoom();
+        int activeZoom = *activeZoomPtr;
+        int add = 1 + 9 * (savefile->settings.integerScale && activeZoom > -1);
         if (dir > 0) {
-            if (savefile->settings.zoom < max) {
-                savefile->settings.zoom += add;
+            if (activeZoom < max) {
+                *activeZoomPtr += add;
 
-                if (savefile->settings.zoom > max)
-                    savefile->settings.zoom = max;
+                if (*activeZoomPtr > max)
+                    *activeZoomPtr = max;
 
                 sfx(SFX_MENUMOVE);
             }
         } else {
-            if (savefile->settings.zoom > min) {
-                savefile->settings.zoom -= add;
+            if (activeZoom > min) {
+                *activeZoomPtr -= add;
 
-                if (savefile->settings.zoom < min)
-                    savefile->settings.zoom = min;
+                if (*activeZoomPtr < min)
+                    *activeZoomPtr = min;
 
                 sfx(SFX_MENUMOVE);
             }
@@ -175,14 +190,39 @@ public:
     }
 
     std::string getCurrentOption() override {
-        if (savefile->settings.zoom > -1) {
-            return "x" + std::to_string((savefile->settings.zoom / 10) + 1) +
-                   "." + std::to_string(savefile->settings.zoom % 10);
+        int activeZoom = *getActiveZoom();
+        if (activeZoom > -1) {
+            return "x" + std::to_string((activeZoom / 10) + 1) + "." +
+                   std::to_string(activeZoom % 10);
         } else {
             return "AUTO";
         }
     }
 };
+
+#ifdef ANDROID
+class PortraitOffsetElement : public Element {
+public:
+    std::string getLabel() override { return "Portrait Offset"; }
+
+    std::string getCursor(std::string text) override {
+        return "[" + text + "]";
+    }
+
+    void action(int dir) override {
+        savefile->settings.portraitOffset = !savefile->settings.portraitOffset;
+        sfx(SFX_MENUCONFIRM);
+        refreshWindowSize();
+    }
+
+    std::string getCurrentOption() override {
+        if (savefile->settings.portraitOffset)
+            return "ON";
+        else
+            return "OFF";
+    }
+};
+#endif
 
 #endif /* N3DS */
 
@@ -361,6 +401,11 @@ public:
 #else
         list.push_back(new IntegerScaleElement());
         list.push_back(new ScaleElement());
+#ifdef ANDROID
+        if (screenWidth <= screenHeight) {
+            list.push_back(new PortraitOffsetElement());
+        }
+#endif
 #endif
         list.push_back(new FPSElement());
 
@@ -386,6 +431,39 @@ public:
             aprintClearArea(30 - 5 - 2, 0, 5 + 2, 1);
         }
         OptionListScene::draw();
+    }
+#endif
+
+#ifdef ANDROID
+private:
+    int lastOrientation;
+
+public:
+    void init() override {
+        OptionListScene::init();
+        lastOrientation = (screenWidth <= screenHeight) ? 1 : 0;
+    }
+
+    void update() override {
+        int currentOrientation = (screenWidth <= screenHeight) ? 1 : 0;
+        if (currentOrientation != lastOrientation) {
+            lastOrientation = currentOrientation;
+
+            for (auto e : elementList)
+                delete e;
+            elementList.clear();
+
+            elementList = getElementList();
+            options = (int)elementList.size();
+
+            if (selection >= options)
+                selection = options - 1;
+
+            refreshText = true;
+            refreshOption = true;
+        }
+
+        OptionListScene::update();
     }
 #endif
 

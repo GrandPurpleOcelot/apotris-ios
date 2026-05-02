@@ -1539,7 +1539,7 @@ void addGameStats() {
 int GameScene::endScreenSetup() {
     resetSmallText();
     clearSmallText();
-    setSmallTextArea(220, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
+    setSmallTextArea(260, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 
     for (auto& wordSprite : wordSprites)
         wordSprite.hide();
