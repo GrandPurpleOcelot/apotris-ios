@@ -336,8 +336,61 @@ void extractAssets(const std::string& pathPrefix) {
     }
 }
 
+std::string getPreferencesFilePath() {
+    std::string path = getDocumentsPath();
+    std::string s = path + "preferences.txt";
+
+    FILE* test = fopen(s.c_str(), "a");
+    if (test) {
+        fclose(test);
+        return s;
+    } else {
+        const char* extPath = SDL_AndroidGetExternalStoragePath();
+        if (extPath) {
+            std::string fallback = std::string(extPath) + "/preferences.txt";
+            return fallback;
+        }
+    }
+    return s;
+}
+
+void savePreferences() {
+    std::string path = getPreferencesFilePath();
+    FILE* file = fopen(path.c_str(), "w");
+    if (file) {
+        fprintf(file, "%d\n", (int)lastInputType);
+        fclose(file);
+    }
+}
+
+void loadPreferences() {
+    std::string path = getPreferencesFilePath();
+    FILE* file = fopen(path.c_str(), "r");
+    if (file) {
+        int val = (int)InputType::TOUCH;
+        if (fscanf(file, "%d", &val) == 1) {
+            if (val >= 0 && val <= 2) {
+                lastInputType = (InputType)val;
+            }
+        }
+        fclose(file);
+    } else {
+        lastInputType = InputType::TOUCH;
+    }
+}
+
+void setLastInputType(InputType type) {
+    if (lastInputType != type) {
+        lastInputType = type;
+        savePreferences();
+    }
+}
+
 void windowInit() {
     SDL_Log("windowInit: start");
+    
+    loadPreferences();
+    
     // Initialize SDL
     window = nullptr;
 
@@ -424,13 +477,13 @@ void windowInit() {
 }
 
 void pressKey(int key, InputType type) {
-    lastInputType = type;
+    setLastInputType(type);
 
     currentlyPressed.insert(key);
 }
 
 void unpressKey(int key, InputType type) {
-    lastInputType = type;
+    setLastInputType(type);
 
     currentlyPressed.erase(key);
 }
@@ -513,7 +566,7 @@ void handleInput() {
             unpressKey(key, InputType::CONTROLLER);
             break;
         case SDL_FINGERDOWN:
-            lastInputType = InputType::TOUCH;
+            setLastInputType(InputType::TOUCH);
 
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
@@ -586,7 +639,7 @@ void handleInput() {
 
             break;
         case SDL_FINGERMOTION:
-            lastInputType = InputType::TOUCH;
+            setLastInputType(InputType::TOUCH);
 
             dx = event.tfinger.dx * screenWidth;
             dy = event.tfinger.dy * screenHeight;
@@ -668,7 +721,7 @@ void handleInput() {
             }
             break;
         case SDL_FINGERUP:
-            lastInputType = InputType::TOUCH;
+            setLastInputType(InputType::TOUCH);
 
             x = touchLocation.x = event.tfinger.x * screenWidth;
             y = touchLocation.y = event.tfinger.y * screenHeight;
@@ -1489,7 +1542,7 @@ void shaderInit(int index) {
 void shaderDeinit() { freeShaders(); }
 
 void handleAnalogInput(int axis, int value) {
-    lastInputType = InputType::CONTROLLER;
+    setLastInputType(InputType::CONTROLLER);
 
     int key = 0;
 
