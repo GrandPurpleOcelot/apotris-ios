@@ -943,7 +943,7 @@ void showBattery() {
 #if defined(PC) || defined(ANDROID)
     OBJ_ATTR* sprite = &obj_buffer[127];
 
-    if (savefile->settings.batteryDisplay < 0 || batteryPercentage == -1 ||
+    if (savefile->settings.batteryDisplay == 0 || batteryPercentage == -1 ||
         batteryPercentage == 100) {
         sprite_hide(sprite);
         return;

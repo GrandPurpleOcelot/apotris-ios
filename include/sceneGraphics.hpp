@@ -685,7 +685,6 @@ public:
 
     void action(int dir) override {
         savefile->settings.batteryDisplay = !savefile->settings.batteryDisplay;
-        clearText();
 
         sfx(SFX_MENUCONFIRM);
     }
