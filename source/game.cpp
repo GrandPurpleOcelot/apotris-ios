@@ -3737,10 +3737,10 @@ void GameScene::update() {
 
     if (skipSong) {
         skipSong = false;
-        if (savefile->settings.cycleSongs == 1) { // CYCLE
-            playNextSong();
-        } else if (savefile->settings.cycleSongs == 2) { // SHUFFLE
+        if (savefile->settings.cycleSongs == 2) { // SHUFFLE
             playSongRandom(currentMenu);
+        } else {
+            playNextSong();
         }
     }
 
