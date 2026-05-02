@@ -132,10 +132,12 @@ public:
 class ScaleElement : public Element {
     int* getActiveZoom() {
 #ifdef ANDROID
-        if (screenWidth <= screenHeight) return &savefile->settings.zoomPortrait;
+        if (screenWidth <= screenHeight)
+            return &savefile->settings.zoomPortrait;
 #endif
         return &savefile->settings.zoom;
     }
+
 public:
     const int min = -1;
     const int max = 90;
@@ -161,8 +163,7 @@ public:
     void action(int dir) override {
         int* activeZoomPtr = getActiveZoom();
         int activeZoom = *activeZoomPtr;
-        int add = 1 + 9 * (savefile->settings.integerScale &&
-                           activeZoom > -1);
+        int add = 1 + 9 * (savefile->settings.integerScale && activeZoom > -1);
         if (dir > 0) {
             if (activeZoom < max) {
                 *activeZoomPtr += add;
@@ -191,8 +192,8 @@ public:
     std::string getCurrentOption() override {
         int activeZoom = *getActiveZoom();
         if (activeZoom > -1) {
-            return "x" + std::to_string((activeZoom / 10) + 1) +
-                   "." + std::to_string(activeZoom % 10);
+            return "x" + std::to_string((activeZoom / 10) + 1) + "." +
+                   std::to_string(activeZoom % 10);
         } else {
             return "AUTO";
         }

@@ -388,9 +388,9 @@ void setLastInputType(InputType type) {
 
 void windowInit() {
     SDL_Log("windowInit: start");
-    
+
     loadPreferences();
-    
+
     // Initialize SDL
     window = nullptr;
 
@@ -1312,7 +1312,9 @@ void updateWindow(uint8_t* framebuffer) {
 
 void refreshWindowSize() {
     if (savefile != nullptr) {
-        int activeZoom = (screenWidth <= screenHeight) ? savefile->settings.zoomPortrait : savefile->settings.zoom;
+        int activeZoom = (screenWidth <= screenHeight)
+                             ? savefile->settings.zoomPortrait
+                             : savefile->settings.zoom;
         if (activeZoom > -1) {
             windowScale = 1 + (float)activeZoom / 10;
         } else {
@@ -1526,7 +1528,8 @@ void rumbleStart(int length) {
 void rumbleStop() { SDL_GameControllerRumble(controller, 0, 0, 1); }
 
 void setFullscreen(bool state) {
-    if (fullscreen == state) return;
+    if (fullscreen == state)
+        return;
     fullscreen = state;
     if (!fullscreen) {
         SDL_SetWindowFullscreen(window, 0);

@@ -215,7 +215,8 @@ void loadSave() {
         savefile->settings.initialType = 1;
 
 #ifdef ANDROID
-    if (savefile->settings.zoomPortrait < -1 || savefile->settings.zoomPortrait > 90) {
+    if (savefile->settings.zoomPortrait < -1 ||
+        savefile->settings.zoomPortrait > 90) {
         savefile->settings.zoomPortrait = savefile->settings.zoom;
         savefile->settings.portraitOffset = true;
     }
