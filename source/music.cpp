@@ -54,8 +54,12 @@ void playSongRandom(int menuId) {
         (getSongState(menuId, (int)index) || index == currentlyPlayingSong) &&
         count++ < 1000);
 
-    if (count >= 1000)
+    if (count >= 1000) {
+        if (!getSongState(menuId, (int) currentlyPlayingSong)) {
+            playSong(menuId, (int) currentlyPlayingSong);
+        }
         return;
+    }
 
     playSong(menuId, (int)index);
 }
