@@ -2903,9 +2903,9 @@ void addPlaceEffect(const BlockEngine::Drop& drop) {
 
     Position pos = gameLayout[(int)GameElements::FIELD];
 
-    placeEffectList.emplace_back(PlaceEffect(
-        pos.x + drop.x, pos.y + drop.y, drop.dx, drop.dy, drop.piece,
-        drop.rotation, drop.rotating * (game->gameMode != CLASSIC)));
+    placeEffectList.emplace_back(
+        pos.x / 8 + drop.x, pos.y / 8 + drop.y, drop.dx, drop.dy, drop.piece,
+        drop.rotation, drop.rotating * (game->gameMode != CLASSIC));
 }
 
 void hideMinos() {
