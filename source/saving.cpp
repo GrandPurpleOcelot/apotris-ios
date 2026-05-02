@@ -215,6 +215,11 @@ void loadSave() {
         savefile->settings.initialType = 1;
 
 #ifdef ANDROID
+    if (savefile->settings.zoomPortrait < -1 || savefile->settings.zoomPortrait > 90) {
+        savefile->settings.zoomPortrait = savefile->settings.zoom;
+        savefile->settings.portraitOffset = true;
+    }
+
     if (savefile->settings.touchSnapGrid < 0 ||
         savefile->settings.touchSnapGrid > 100 ||
         (savefile->settings.touchSnapGrid % 10) != 0)
@@ -487,6 +492,8 @@ void setDefaults(Save* save, int depth) {
         save->settings.rotationSystem = BlockEngine::SRS;
         save->settings.randomizer = BlockEngine::BAG_7;
         save->settings.zoom = -1;
+        save->settings.zoomPortrait = -1;
+        save->settings.portraitOffset = true;
 #ifdef N3DS
         save->settings.n3dsMainScreenIsTop = true;
         save->settings.n3dsScaleMode = n3ds::ScaleMode::SCALED_SHARP;

@@ -1311,8 +1311,9 @@ void updateWindow(uint8_t* framebuffer) {
 
 void refreshWindowSize() {
     if (savefile != nullptr) {
-        if (savefile->settings.zoom > -1) {
-            windowScale = 1 + (float)savefile->settings.zoom / 10;
+        int activeZoom = (screenWidth <= screenHeight) ? savefile->settings.zoomPortrait : savefile->settings.zoom;
+        if (activeZoom > -1) {
+            windowScale = 1 + (float)activeZoom / 10;
         } else {
             int minAxis = std::min(screenWidth, screenHeight);
             if (savefile->settings.integerScale) {
@@ -1359,7 +1360,11 @@ void refreshWindowSize() {
         offsety = (SCREEN_HEIGHT - 160) / 2;
     } else {
         offsetx = (SCREEN_WIDTH - 240) * 0.5;
-        offsety = (SCREEN_HEIGHT - 160) * 0.35;
+        if (savefile != nullptr && savefile->settings.portraitOffset) {
+            offsety = (SCREEN_HEIGHT - 160) * 0.35;
+        } else {
+            offsety = (SCREEN_HEIGHT - 160) * 0.5;
+        }
     }
     setScreenOffset(offsetx, offsety);
 }

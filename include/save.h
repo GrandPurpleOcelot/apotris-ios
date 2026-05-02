@@ -205,7 +205,10 @@ typedef struct Settings {
     int touchOpacity;
     int touchVibration;
 
-    int placeHolder[22];
+    int zoomPortrait;
+    bool portraitOffset;
+
+    int placeHolder[20];
 
 #ifdef ANDROID
     Layout onScreenLayouts[2];
