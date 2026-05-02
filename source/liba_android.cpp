@@ -1144,8 +1144,9 @@ void updateWindow(uint8_t* framebuffer) {
         if (lastInputType == InputType::TOUCH || touchEditMode) {
             ImDrawList* draw_list = ImGui::GetForegroundDrawList();
             for (auto const& button : layout.buttons) {
+                int c = savefile->settings.lightMode ? 0 : 255;
                 ImU32 color =
-                    IM_COL32(255, 255, 255, savefile->settings.touchOpacity);
+                    IM_COL32(c, c, c, savefile->settings.touchOpacity);
 
                 draw_list->AddRect(
                     ImVec2(button.x - button.w / 2, button.y - button.h / 2),
