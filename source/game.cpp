@@ -1689,14 +1689,12 @@ void showPPS() {
         pps = fxdiv(int2fx(game->pieceCounter), (t));
     }
 
-    std::string str;
-
-    str += std::to_string(fx2int(pps)) + ".";
+    std::string str = std::to_string(fx2int(pps)) + ".";
 
     int fractional = pps & 0xff;
     for (int i = 0; i < 2; i++) {
         fractional *= 10;
-        str += std::to_string('0' + (fractional >> 8));
+        str += (char)('0' + (fractional >> 8));
         fractional &= 0xff;
     }
 
