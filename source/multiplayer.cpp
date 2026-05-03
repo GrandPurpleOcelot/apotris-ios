@@ -403,7 +403,7 @@ void handleBotGame() {
         game->clearAttack(atck.id);
     }
 
-    const auto id = RemotePlayerId(1);
+    const auto id = RemotePlayerId(0);
 
     for (int i = 0; i < 20; i++) {
         for (int j = 0; j < 10; j++) {
