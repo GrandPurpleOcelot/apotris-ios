@@ -1296,12 +1296,7 @@ void GameScene::showModeText() {
             if (game->trainingMode)
                 str = "Finesse";
         } else {
-            if (game->gameMode == ZEN) {
-                if (game->subMode == 1)
-                    str = "Tower";
-                else
-                    str = "Normal";
-            } else if (game->gameMode == BATTLE && mode >= 0)
+            if (game->gameMode == BATTLE && mode >= 0)
                 str = modeOptionStrings[game->gameMode - 1][mode - 1];
             else if (game->gameMode != CLASSIC && game->gameMode != MASTER)
                 str = modeOptionStrings[game->gameMode - 1][mode];
@@ -1322,7 +1317,9 @@ void GameScene::showModeText() {
         if (game->subMode) {
             switch (game->gameMode) {
             case MARATHON:
-                if (game->subMode == 2)
+                if (game->subMode == 3)
+                    str = "Cascade";
+                else if (game->subMode == 2)
                     str = "Tower";
                 else
                     str = "Zone";
@@ -1332,6 +1329,12 @@ void GameScene::showModeText() {
                 break;
             case DIG:
                 str = "Efficiency";
+                break;
+            case ZEN:
+                if (game->subMode == 2)
+                    str = "Cascade";
+                else
+                    str = "Tower";
                 break;
             case CLASSIC:
                 str = "B-Type";
