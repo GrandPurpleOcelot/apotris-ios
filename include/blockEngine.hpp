@@ -459,6 +459,26 @@ public:
     }
 } ALIGN(4);
 
+class Connection {
+public:
+    s8 x;
+    s8 y;
+    u16 blocks;
+
+    Connection(int x, int y, int blocks) {
+        this->x = x & 0xff;
+        this->y = y & 0xff;
+        this->blocks = blocks & 0xffff;
+    }
+
+    int packed() {
+        int result = 0;
+        memcpy32(&result, this, 1);
+
+        return result;
+    }
+};
+
 class Game {
 private:
     void fillBag();
@@ -494,6 +514,8 @@ private:
     void toggleBigMode();
     void scrollTower();
     int checkIntegrity();
+    bool cascade();
+    void calculateColumnHeights(int start);
 
     int bigBag[35]{};
 
@@ -569,6 +591,9 @@ private:
 
     List bag;
     List historyList;
+
+    std::list<Connection> connections;
+    std::list<Connection*> unstable;
 
 public:
     void fillReplayToLimit();
@@ -733,6 +758,8 @@ public:
     bool towerMediumClearing = false;
     int towerMediumTimer = 0;
     int towerMediumDelay = 0;
+
+    int cascadeTimer = 0;
 
     List queue;
     List moveHistory;                // max 10

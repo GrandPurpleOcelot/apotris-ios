@@ -12,12 +12,6 @@ int botStepMax = 10;
 
 using namespace BlockEngine;
 
-void showTestBoard(const u16* testBoard);
-
-INLINE bool bitGet(const u16* bitboard, int x, int y) {
-    return (bitboard[y] >> x) & 0b1;
-}
-
 u8 bitcount[] = {
     0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4,
     2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
@@ -32,8 +26,10 @@ u8 bitcount[] = {
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8,
 };
 
-INLINE int countBits(u16 n) {
-    return bitcount[n & 0xff] + bitcount[(n >> 8) & 0xff];
+void showTestBoard(u16* testBoard);
+
+INLINE bool bitGet(u16* bitboard, int x, int y) {
+    return (bitboard[y] >> x) & 0b1;
 }
 
 INLINE int countTransitions(u16 a) { return countBits((a >> 1) ^ a); }

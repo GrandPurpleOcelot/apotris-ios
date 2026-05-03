@@ -100,6 +100,10 @@ public:
 
 #define GRADIENT_COLOR 0x71a6
 
+#define CASCADE 1
+#define CASCADE_DELAY 6
+#define CASCADE_INSTANT 0
+
 #define SHOW_FINESSE 1
 #define SAVE_TAG 0x53
 
@@ -411,3 +415,9 @@ HSV_COLOR rgb2hsv(int r, int g, int b);
 extern std::string updateAvailable;
 
 extern std::list<std::string> debugConnection;
+
+extern u8 bitcount[];
+
+INLINE int countBits(u16 n) {
+    return bitcount[n & 0xff] + bitcount[(n >> 8) & 0xff];
+}
