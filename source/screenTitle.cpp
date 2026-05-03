@@ -160,7 +160,7 @@ void fallingBlocks() {
                     setTile(25, j, i, tileBuild(1, false, false, n));
                 // *dest++ = (1 + ((n) << 12));
                 else {
-                    setTile(25, j, i, tileBuild(48, false, false, n));
+                    setTile(25, j, i, tileBuild(48 + n, false, false, n));
                     // *dest++ = (48 + n + ((n) << 12));
                 }
             } else {

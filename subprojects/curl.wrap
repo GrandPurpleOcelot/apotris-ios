@@ -12,3 +12,8 @@ wrapdb_version = 8.12.1-2
 
 [provide]
 dependency_names = libcurl
+
+[options]
+tests = disabled
+unittests = disabled
+tool = disabled
