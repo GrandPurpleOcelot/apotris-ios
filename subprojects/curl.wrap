@@ -17,3 +17,4 @@ dependency_names = libcurl
 tests = disabled
 unittests = disabled
 tool = disabled
+default_library = static
