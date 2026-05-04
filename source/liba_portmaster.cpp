@@ -119,6 +119,8 @@ void handleInput() {
         }
     }
 
+    currentlyPressed.clear();
+
     if (controller && SDL_GameControllerGetAttached(controller)) {
         for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++) {
             if (SDL_GameControllerGetButton(
