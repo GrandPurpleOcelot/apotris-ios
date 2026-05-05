@@ -293,12 +293,19 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             default_options: ['default_library=static'],
             fallback: ['openmpt', 'openmpt_dep'],
         )
+
+        tilengine_default_options = ['default_library=static']
+        if get_option('portmaster')
+            tilengine_default_options += 'portmaster=true'
+        endif
+
         tilengine = dependency(
             'Tilengine',
             static: true,
-            default_options: ['default_library=static'],
+            default_options: tilengine_default_options,
             fallback: ['Tilengine', 'tilengine_dep'],
         )
+
         if host_machine.system() == 'darwin'
             sdl2_dep = subproject(
                 'sdl2',
