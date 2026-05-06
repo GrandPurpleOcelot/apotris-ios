@@ -369,6 +369,10 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         sdl2_dep,
         soloud,
     ]
+    if host_machine.system() == 'windows'
+        subproject('curl', default_options: ['default_library=static'])
+    endif
+
     if host_machine.system() != 'horizon'
         dependencies += dependency('cpr')
     endif
