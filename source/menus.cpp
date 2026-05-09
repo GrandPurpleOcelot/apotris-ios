@@ -115,22 +115,18 @@ void GameScene::endScreen() {
             }
         } else if (game->gameMode != BATTLE) {
             if (game->gameMode == MASTER && game->won == 1 &&
-                game->level / 100 == 5)
-            {
+                game->level / 100 == 5) {
                 sfx(SFX_TIME);
                 rumblePattern(RUMBLE_TSPIN);
-            }
-            else if (game->won == 1) {
+            } else if (game->won == 1) {
                 sfx(SFX_CLEAR);
                 rumblePattern(RUMBLE_YOUWIN);
-            }
-            else if (game->lost == 1) {
+            } else if (game->lost == 1) {
                 sfx(SFX_GAMEOVER);
                 rumblePattern(RUMBLE_YOULOSE);
             }
         } else {
-            if (game->won == 1)
-            {
+            if (game->won == 1) {
                 sfx(SFX_YOUWIN);
                 rumblePattern(RUMBLE_YOUWIN);
             } else if (game->lost == 1) {
@@ -543,6 +539,18 @@ void GameScene::showStats(bool moreStats, const std::string& time,
             aprints("to Skip Track", 0, 28, 2);
         }
 
+        if (!end && savefile->settings.journey) {
+            aprints("Hold " +
+                        getStringFromKey(savefile->settings.menuKeys.special1),
+                    0, 42, 2);
+            aprints("to save graphics", 0, 49, 2);
+
+            aprints("Hold " +
+                        getStringFromKey(savefile->settings.menuKeys.special2),
+                    0, 61, 2);
+            aprints("to reset graphics", 0, 70, 2);
+        }
+
         return;
     }
 
@@ -670,9 +678,9 @@ int GameScene::pauseMenu() {
 
     // hide Sprites
     hideMinos();
-    sprite_hide(&obj_buffer[23]); // hide meter
-    sprite_hide(&obj_buffer[24]); // hide finesse combo counter
-    sprite_hide(&obj_buffer[25]); // hide enemyBoard
+    sprite_hide(&obj_buffer[23]);  // hide meter
+    sprite_hide(&obj_buffer[24]);  // hide finesse combo counter
+    sprite_hide(&obj_buffer[25]);  // hide enemyBoard
     sprite_hide(&obj_buffer[127]); // hide battery sprite
     for (int i = 0; i < 3; i++)
         sprite_hide(&obj_buffer[16 + i]);
@@ -702,6 +710,9 @@ int GameScene::pauseMenu() {
     showModeText();
 
     bool shown = false;
+    int saveHoldTimer = 0;
+    int resetHoldTimer = 0;
+    const int holdThreshold = 30;
 
     bool skipped = false;
 
@@ -734,13 +745,14 @@ int GameScene::pauseMenu() {
 
         vsync();
         key_poll();
-        #ifdef GBA
-            if (sleep_combo_check(key_curr_state())) {
-                // Re-poll keys to avoid triggering stats/track skip.
-                // I'm not a fan of this but it works with the current scene infrastructure.
-                key_poll();
-            }
-        #endif
+#ifdef GBA
+        if (sleep_combo_check(key_curr_state())) {
+            // Re-poll keys to avoid triggering stats/track skip.
+            // I'm not a fan of this but it works with the current scene
+            // infrastructure.
+            key_poll();
+        }
+#endif
 
         wordSprites[0].setText("PAUSE!");
         wordSprites[0].show(15 * 8 - wordSprites[0].width / 2, 4 * 8, 15);
@@ -759,7 +771,8 @@ int GameScene::pauseMenu() {
 
 #ifdef GBA
         if (!multiplayer) {
-            std::string keyString = (sleep_combo == 0) ? "Unbound" : getStringFromKey(sleep_combo);
+            std::string keyString =
+                (sleep_combo == 0) ? "Unbound" : getStringFromKey(sleep_combo);
 
             std::replace(keyString.begin(), keyString.end(), ' ', '+');
 
@@ -944,11 +957,60 @@ int GameScene::pauseMenu() {
             sfx(SFX_MENUMOVE);
         }
 
-        if (key_hit(k.special1) && !onStates) {
+        if (key_hit(k.special1) && !onStates && !savefile->settings.journey) {
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
             showStats(showingStats, totalTime, ppsStr, false);
+        }
+
+        if (!onStates && savefile->settings.journey) {
+            if (key_is_down(k.special1)) {
+                saveHoldTimer++;
+                if (saveHoldTimer == holdThreshold) {
+                    sfx(SFX_MENUCONFIRM);
+                    saveToProfile(
+                        &savefile->settings
+                             .profiles[savefile->settings.selectedProfile],
+                        &savefile->settings);
+                    savefile->settings.journey = false;
+                    if (previousSettings != nullptr)
+                        *previousSettings = savefile->settings;
+                    saveSavefile();
+                    naprint(
+                        "Graphics Saved!",
+                        ((savefile->settings.aspectRatio) ? (240 - 13) : 240) -
+                            getVariableWidth("Graphics Saved!"),
+                        18 * 8);
+                }
+            } else if (saveHoldTimer > 0) {
+                if (saveHoldTimer < holdThreshold) {
+                    sfx(SFX_MENUCONFIRM);
+                    showingStats = !showingStats;
+                    clearSmallText();
+                    showStats(showingStats, totalTime, ppsStr, false);
+                }
+                saveHoldTimer = 0;
+            }
+
+            if (key_is_down(k.special2)) {
+                resetHoldTimer++;
+                if (resetHoldTimer == holdThreshold) {
+                    sfx(SFX_MENUCONFIRM);
+                    setDefaultGraphics(savefile, 0);
+                    setSkin();
+                    setPalette();
+                    drawFrameBackgrounds();
+                    setClearEffect();
+                    naprint(
+                        "Graphics Reset!",
+                        ((savefile->settings.aspectRatio) ? (240 - 13) : 240) -
+                            getVariableWidth("Graphics Reset!"),
+                        18 * 8);
+                }
+            } else {
+                resetHoldTimer = 0;
+            }
         }
 
         if (!shown && !onStates) {
@@ -1529,7 +1591,8 @@ void addGameStats() {
                 savefile->boards.zenTower = height;
         } else {
             savefile->boards.zen = game->score;
-            savefile->boards.zenLines = savefile->boards.zenLines + game->linesCleared;
+            savefile->boards.zenLines =
+                savefile->boards.zenLines + game->linesCleared;
         }
 
         saveSavefile();
@@ -1735,7 +1798,7 @@ void MultBattleScene::showReadyPlayers() {
 }
 
 void MultBattleScene::hideReadyPlayers() {
-    for(int i = 0; i < 5; i++){
+    for (int i = 0; i < 5; i++) {
         labels[i]->hide();
         wordSprites[i]->hide();
     }
