@@ -1319,17 +1319,34 @@ void refreshWindowSize() {
             windowScale = 1 + (float)activeZoom / 10;
         } else {
             int minAxis = std::min(screenWidth, screenHeight);
+            bool portrait = screenWidth <= screenHeight;
             if (savefile->settings.integerScale) {
                 windowScale = (int)windowScale;
 
-                while (windowScale > 0 && minAxis / windowScale > 160 * 2) {
-                    windowScale++;
-                }
-                while (windowScale > 1 && minAxis / windowScale < 160) {
-                    windowScale--;
+                if (portrait) {
+                    // Ensure 240px game width fits on screen
+                    while (windowScale > 0 &&
+                           screenWidth / (float)windowScale > 240 * 2) {
+                        windowScale++;
+                    }
+                    while (windowScale > 1 &&
+                           screenWidth / (float)windowScale < 240) {
+                        windowScale--;
+                    }
+                } else {
+                    while (windowScale > 0 && minAxis / windowScale > 160 * 2) {
+                        windowScale++;
+                    }
+                    while (windowScale > 1 && minAxis / windowScale < 160) {
+                        windowScale--;
+                    }
                 }
             } else {
-                windowScale = minAxis / 200.0;
+                if (portrait) {
+                    windowScale = screenWidth / 240.0;
+                } else {
+                    windowScale = minAxis / 200.0;
+                }
             }
         }
     }

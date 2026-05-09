@@ -500,6 +500,8 @@ void setDefaults(Save* save, int depth) {
         save->settings.n3dsScaleMode = n3ds::ScaleMode::SCALED_SHARP;
         save->settings._n3dsPlaceholder1 = 0;
         save->settings._n3dsPlaceholder2 = 0;
+#elif defined(ANDROID)
+        save->settings.integerScale = false;
 #else
         save->settings.integerScale = true;
 #endif
