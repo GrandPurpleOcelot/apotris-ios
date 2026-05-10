@@ -163,6 +163,8 @@ public:
     }
 
     void action(int dir) override {
+#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) ||   \
+    defined(ANDROID)
         int* activeZoomPtr = getActiveZoom();
         int activeZoom = *activeZoomPtr;
         int add = 1 + 9 * (savefile->settings.integerScale && activeZoom > -1);
@@ -204,8 +206,6 @@ public:
             }
         }
 
-#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) ||   \
-    defined(ANDROID)
         refreshWindowSize();
 #endif
     }
