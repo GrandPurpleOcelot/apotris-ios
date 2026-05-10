@@ -476,6 +476,27 @@ public:
     }
 };
 
+class SmoothGravityElement : public Element {
+public:
+    std::string getLabel() override { return "Smooth Gravity"; }
+
+    std::string getCursor(std::string text) override {
+        return "[" + text + "]";
+    }
+
+    void action(int dir) override {
+        savefile->settings.smoothGravity = !savefile->settings.smoothGravity;
+        sfx(SFX_MENUCONFIRM);
+    }
+
+    std::string getCurrentOption() override {
+        if (savefile->settings.smoothGravity)
+            return "ON";
+        else
+            return "OFF";
+    }
+};
+
 class PlaceEffectElement : public Element {
 public:
     std::string getLabel() override { return "Place Effect"; }
@@ -797,13 +818,14 @@ class GraphicsScene : public Scene {
         l.push_back(new BoardEffectsElement());
         l.push_back(new ClearStyleElement());
         l.push_back(new ClearDirectionElement());
+        l.push_back(new SmoothGravityElement());
         l.push_back(new PlaceEffectElement());
         l.push_back(new ScreenShakeElement());
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
-        #if defined(PC) || defined(ANDROID)
+#if defined(PC) || defined(ANDROID)
         l.push_back(new BatteryDisplayElement());
-        #endif
+#endif
         l.push_back(new AspectRatioElement());
         l.push_back(new ExploreElement());
         l.push_back(new RandomGraphicsElement());

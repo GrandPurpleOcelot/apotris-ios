@@ -83,8 +83,9 @@ typedef struct GraphicsOptions {
     s8 aspectRatio;
     s8 screenShakeType;
     s8 clearDirection;
+    bool smoothGravity;
 
-    int placeHolder[6];
+    int placeHolder[5];
 } ALIGN(4) GraphicsOptions;
 
 typedef struct SongDisabling {
@@ -207,6 +208,7 @@ typedef struct Settings {
 
     int zoomPortrait;
     bool portraitOffset;
+    bool smoothGravity;
 
     int placeHolder[20];
 
