@@ -500,6 +500,8 @@ void setDefaults(Save* save, int depth) {
         save->settings.n3dsScaleMode = n3ds::ScaleMode::SCALED_SHARP;
         save->settings._n3dsPlaceholder1 = 0;
         save->settings._n3dsPlaceholder2 = 0;
+#elif defined(ANDROID)
+        save->settings.integerScale = false;
 #else
         save->settings.integerScale = true;
 #endif
@@ -545,16 +547,6 @@ void setDefaults(Save* save, int depth) {
 
 #ifdef GBA
         m.reset = 0;
-#endif
-
-#ifdef ANDROID
-        std::vector<Layout> layouts = getDefaultLayouts();
-
-        save->settings.onScreenLayouts[0] = layouts[0];
-        save->settings.onScreenLayouts[1] = layouts[1];
-        save->settings.touchSnapGrid = 10;
-        save->settings.touchOpacity = 100;
-        save->settings.touchVibration = 50;
 #endif
 
         save->settings.menuKeys = m;
@@ -610,6 +602,19 @@ void setDefaults(Save* save, int depth) {
         memset32_fast(savefile->boards.tower, 0, sizeof(EntryBoard) * 4 / 4);
         savefile->boards.zenLines = 0;
         savefile->boards.zenTower = 0;
+
+#ifdef ANDROID
+        std::vector<Layout> layouts = getDefaultLayouts();
+
+        save->settings.onScreenLayouts[0] = layouts[0];
+        save->settings.onScreenLayouts[1] = layouts[1];
+        save->settings.touchSnapGrid = 10;
+        save->settings.touchOpacity = 100;
+        save->settings.touchVibration = 50;
+#endif
+
+        savefile->settings.smoothGravity = true;
+        savefile->settings.batteryDisplay = true;
     }
 }
 
@@ -797,6 +802,7 @@ void profileToSave(GraphicsOptions* profile, Settings* settings) {
 #endif
     settings->screenShakeType = profile->screenShakeType;
     settings->clearDirection = profile->clearDirection;
+    settings->smoothGravity = profile->smoothGravity;
 }
 
 void saveToProfile(GraphicsOptions* profile, Settings* settings) {
@@ -823,6 +829,7 @@ void saveToProfile(GraphicsOptions* profile, Settings* settings) {
 #endif
     profile->screenShakeType = settings->screenShakeType;
     profile->clearDirection = settings->clearDirection;
+    profile->smoothGravity = settings->smoothGravity;
 }
 
 void autosave() {

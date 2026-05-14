@@ -3,9 +3,10 @@
 #ifndef MULTIBOOT
 #include "scene.hpp"
 
-#if defined(PC) || defined(PORTMASTER) || defined (ANDROID)
+#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
 #include "liba_pc.h"
 #include "shader.h"
+#include <cmath>
 #include <sstream>
 #include <string>
 #endif
@@ -116,7 +117,8 @@ public:
                 (savefile->settings.zoom / 10) * 10; // round to 10s
         }
 
-#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) || defined(ANDROID)
+#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) ||   \
+    defined(ANDROID)
         refreshWindowSize();
 #endif
     }
@@ -161,16 +163,36 @@ public:
     }
 
     void action(int dir) override {
+#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) ||   \
+    defined(ANDROID)
         int* activeZoomPtr = getActiveZoom();
         int activeZoom = *activeZoomPtr;
         int add = 1 + 9 * (savefile->settings.integerScale && activeZoom > -1);
         if (dir > 0) {
-            if (activeZoom < max) {
-                *activeZoomPtr += add;
+            if (activeZoom > min) {
+                // Already in manual mode: normal increment
+                if (activeZoom < max) {
+                    *activeZoomPtr += add;
 
-                if (*activeZoomPtr > max)
-                    *activeZoomPtr = max;
+                    if (*activeZoomPtr > max)
+                        *activeZoomPtr = max;
 
+                    sfx(SFX_MENUMOVE);
+                }
+            } else {
+                // Transition from AUTO to manual: start at current auto scale
+                int newZoom = (int)std::round((windowScale - 1.0f) * 10.0f);
+                if (newZoom < 0)
+                    newZoom = 0;
+                if (newZoom > max)
+                    newZoom = max;
+                if (savefile->settings.integerScale) {
+                    // Snap to nearest multiple of 10 for integer scale
+                    newZoom = ((newZoom + 5) / 10) * 10;
+                    if (newZoom > max)
+                        newZoom = max;
+                }
+                *activeZoomPtr = newZoom;
                 sfx(SFX_MENUMOVE);
             }
         } else {
@@ -184,7 +206,6 @@ public:
             }
         }
 
-#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) || defined(ANDROID)
         refreshWindowSize();
 #endif
     }
@@ -276,7 +297,7 @@ public:
 };
 #endif
 
-#if defined(PC) || defined(PORTMASTER) || defined (ANDROID)
+#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
 class ShaderElement : public Element {
 public:
     const std::vector<std::string> shaders = findShaders();

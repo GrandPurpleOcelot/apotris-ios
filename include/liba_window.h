@@ -47,6 +47,7 @@ extern void unbindDuplicateKey(int&, uint32_t);
 
 extern int splitKey(uint32_t key);
 
+extern float windowScale;
 extern int rowStart;
 extern int rowEnd;
 

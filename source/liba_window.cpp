@@ -195,6 +195,9 @@ void handleInput() {
                 screenWidth = event.window.data1;
                 screenHeight = event.window.data2;
                 refreshWindowSize();
+            } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+                if (!demo)
+                    paused = true;
             }
             break;
         case SDL_JOYBUTTONDOWN:

@@ -495,8 +495,6 @@ private:
 
     int bigBag[35]{};
 
-    float speedCounter = 0;
-
     // 7  117
     // 8  133
     // 9  150
@@ -633,6 +631,7 @@ public:
     Pawn pawn = Pawn(0, 0);
     int held = -1;
     float speed;
+    float speedCounter = 0;
     int linesCleared = 0;
     int level = 0;
     unsigned int score = 0;

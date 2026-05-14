@@ -936,6 +936,12 @@ void showPawn() {
 
     Position pos = gameLayout[(int)GameElements::FIELD];
 
+    float smoothOffset = 0;
+    if (savefile->settings.smoothGravity &&
+        game->lockTimer == game->maxLockTimer && game->speed > 0) {
+        smoothOffset = (game->speedCounter - (int)game->speedCounter) * 8;
+    }
+
     if (!game->pawn.big) {
         if (game->pawn.y + peek < 16) {
             sprite_hide(pawnSprite);
@@ -944,11 +950,11 @@ void showPawn() {
 
         sprite_set_attr(pawnSprite, ShapeSquare, 2, 16 * 7, 11, 2);
         sprite_enable_mosaic(pawnSprite);
-        sprite_set_pos(pawnSprite,
-                       pos.x + game->pawn.x * 8 +
-                           push * savefile->settings.shake,
-                       pos.y + (game->pawn.y - game->boardOffset + peek) * 8 +
-                           shake * savefile->settings.shake + peekShift);
+        sprite_set_pos(
+            pawnSprite,
+            pos.x + game->pawn.x * 8 + push * savefile->settings.shake,
+            pos.y + (game->pawn.y - game->boardOffset + peek) * 8 +
+                smoothOffset + shake * savefile->settings.shake + peekShift);
     } else {
         if ((game->pawn.y + peek) * 2 < 14) {
             sprite_hide(pawnSprite);
@@ -962,7 +968,8 @@ void showPawn() {
             pawnSprite,
             pos.x + (game->pawn.x * 2) * 8 + push * savefile->settings.shake,
             pos.y + (game->pawn.y - game->boardOffset + peek) * 8 * 2 +
-                shake * savefile->settings.shake + peekShift);
+                smoothOffset * 2 + shake * savefile->settings.shake +
+                peekShift);
     }
 }
 
