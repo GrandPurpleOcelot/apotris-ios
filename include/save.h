@@ -85,7 +85,7 @@ typedef struct GraphicsOptions {
     s8 clearDirection;
     bool smoothGravity;
 
-    int placeHolder[5];
+    int placeHolder[6];
 } ALIGN(4) GraphicsOptions;
 
 typedef struct SongDisabling {
