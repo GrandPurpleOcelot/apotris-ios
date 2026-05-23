@@ -290,12 +290,14 @@ void GameScene::endScreen() {
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
                 buildBG(3, 0, 27, 0, 1, true);
-                multiplayerLink->deactivate(true);
-                multiplayer = false;
+                if (multiplayer) {
+                    multiplayerLink->deactivate(true);
+                    multiplayer = false;
+                }
 #ifndef MULTIBOOT
-                changeScene(new MainMenuScene, Transitions::FADE);
+                changeScene(new MainMenuScene(), Transitions::FADE);
 #else
-                changeScene(new MultiplayerProtocolScene, Transitions::FADE);
+                changeScene(new MultiplayerProtocolScene(), Transitions::FADE);
 #endif
                 return;
             } else if (selection == 1) {
