@@ -529,7 +529,7 @@ void GameScene::checkSounds() {
         for (int layer = 0; layer < 2; layer++) {
             for (int i = 0; i < 20; i++) {
                 setTile(25 + layer, pos.x / 8 - 1, pos.y / 8 + i, 0);
-                setTile(25, pos.x / i + 10, pos.y / 8 + i, 0);
+                setTile(25, pos.x / 8 + i + 10, pos.y / 8 + i, 0);
             }
 
             for (int i = 0; i < 12; i++) {
@@ -2910,9 +2910,9 @@ void addPlaceEffect(const BlockEngine::Drop& drop) {
 
     Position pos = gameLayout[(int)GameElements::FIELD];
 
-    placeEffectList.emplace_back(
-        pos.x / 8 + drop.x, pos.y / 8 + drop.y, drop.dx, drop.dy, drop.piece,
-        drop.rotation, drop.rotating * (game->gameMode != CLASSIC));
+    placeEffectList.emplace_back(pos.x / 8 + drop.x, pos.y / 8 + drop.y,
+                                 drop.dx, drop.dy, drop.piece, drop.rotation,
+                                 drop.rotating * (game->gameMode != CLASSIC));
 }
 
 void hideMinos() {

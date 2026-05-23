@@ -142,53 +142,163 @@ int KEY_RIGHT = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(SDLK_d);
 int KEY_SELECT = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(SDLK_3);
 int KEY_START = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(SDLK_ESCAPE);
 
-#include <jni.h>
+// The preferred storage path is saved in internal storage so on
+// subsequent launches we don't need to re-probe.
+static std::string storageConfigPath() {
+    const char* internal = SDL_AndroidGetInternalStoragePath();
+    return internal
+               ? std::string(internal) + "/storage_path.txt"
+               : "/data/data/com.akouzoukos.apotris/files/storage_path.txt";
+}
 
-std::string getDocumentsPath() {
+static void saveStoragePath(const std::string& path) {
+    std::string cfg = storageConfigPath();
+    size_t pos = cfg.find_last_of('/');
+    if (pos != std::string::npos)
+        mkdir(cfg.substr(0, pos).c_str(), 0700);
+
+    FILE* f = fopen(cfg.c_str(), "w");
+    if (f) {
+        fprintf(f, "%s\n", path.c_str());
+        fclose(f);
+    }
+}
+
+static std::string loadStoragePath() {
+    FILE* f = fopen(storageConfigPath().c_str(), "r");
+    if (!f)
+        return "";
+    char buf[512];
+    std::string result;
+    if (fgets(buf, sizeof(buf), f)) {
+        result = buf;
+        result.erase(result.find_last_not_of(" \n\r\t") + 1);
+    }
+    fclose(f);
+    return result;
+}
+
+// ── MANAGE_EXTERNAL_STORAGE helpers (API 30+) ─────────────────────────
+
+static bool hasManageStoragePermission() {
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
     if (!env)
-        return "/storage/emulated/0/Documents/Apotris/";
+        return false;
+    jclass activityClass = env->FindClass("org/libsdl/app/SDLActivity");
+    if (!activityClass)
+        return false;
+    jmethodID mid = env->GetStaticMethodID(activityClass,
+                                           "hasManageStoragePermission", "()Z");
+    if (!mid) {
+        env->DeleteLocalRef(activityClass);
+        return false;
+    }
+    jboolean result = env->CallStaticBooleanMethod(activityClass, mid);
+    env->DeleteLocalRef(activityClass);
+    return result == JNI_TRUE;
+}
 
-    jclass envClass = env->FindClass("android/os/Environment");
-    if (!envClass)
-        return "/storage/emulated/0/Documents/Apotris/";
+static void requestManageStoragePermission() {
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (!env) {
+        LOGE("Cannot request MANAGE_EXTERNAL_STORAGE: JNIEnv is null");
+        return;
+    }
+    jclass activityClass = env->FindClass("org/libsdl/app/SDLActivity");
+    if (!activityClass) {
+        LOGE("Cannot find SDLActivity class");
+        return;
+    }
+    jmethodID mid = env->GetStaticMethodID(
+        activityClass, "requestManageStoragePermission", "()V");
+    if (!mid) {
+        LOGE("Cannot find requestManageStoragePermission method");
+        env->DeleteLocalRef(activityClass);
+        return;
+    }
+    env->CallStaticVoidMethod(activityClass, mid);
+    env->DeleteLocalRef(activityClass);
+}
 
-    jfieldID dirDocsField = env->GetStaticFieldID(
-        envClass, "DIRECTORY_DOCUMENTS", "Ljava/lang/String;");
-    if (!dirDocsField)
-        return "/storage/emulated/0/Documents/Apotris/";
-    jstring dirDocsStr =
-        (jstring)env->GetStaticObjectField(envClass, dirDocsField);
+// Tests whether we can actually own the marker file inside the given
+// Apotris directory — creating it if fresh, or reclaiming it if
+// orphaned from a previous installation.
+// Returns true if the directory is usable (marker is writable).
+static bool tryClaimDirectory(const std::string& apotrisDir) {
+    mkdir(apotrisDir.c_str(), 0777);
 
-    jmethodID getExtStoragePublicDirMethod =
-        env->GetStaticMethodID(envClass, "getExternalStoragePublicDirectory",
-                               "(Ljava/lang/String;)Ljava/io/File;");
-    if (!getExtStoragePublicDirMethod)
-        return "/storage/emulated/0/Documents/Apotris/";
-    jobject fileObj = env->CallStaticObjectMethod(
-        envClass, getExtStoragePublicDirMethod, dirDocsStr);
+    std::string assetsDir = apotrisDir + "assets";
+    mkdir(assetsDir.c_str(), 0777);
 
-    if (!fileObj)
-        return "/storage/emulated/0/Documents/Apotris/";
+    std::string marker = assetsDir + "/extracted.txt";
+    struct stat st;
+    bool exists = (stat(marker.c_str(), &st) == 0 && S_ISREG(st.st_mode));
 
-    jclass fileClass = env->GetObjectClass(fileObj);
-    jmethodID getPathMethod =
-        env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
-    if (!getPathMethod)
-        return "/storage/emulated/0/Documents/Apotris/";
-    jstring pathStr = (jstring)env->CallObjectMethod(fileObj, getPathMethod);
+    // Try to open for append first.
+    FILE* f = fopen(marker.c_str(), exists ? "a" : "w");
+    if (f) {
+        if (!exists)
+            fprintf(f, "%s\n", APOTRIS_VERSION);
+        fclose(f);
+        return true;
+    }
 
-    const char* path = env->GetStringUTFChars(pathStr, nullptr);
-    std::string result = std::string(path) + "/Apotris/";
-    env->ReleaseStringUTFChars(pathStr, path);
+    // File exists but is owned by another UID (orphaned).
+    // Try to delete and recreate.
+    if (exists && remove(marker.c_str()) == 0) {
+        f = fopen(marker.c_str(), "w");
+        if (f) {
+            fprintf(f, "%s\n", APOTRIS_VERSION);
+            fclose(f);
+            return true;
+        }
+    }
 
-    env->DeleteLocalRef(pathStr);
-    env->DeleteLocalRef(fileObj);
-    env->DeleteLocalRef(fileClass);
-    env->DeleteLocalRef(dirDocsStr);
-    env->DeleteLocalRef(envClass);
+    return false;
+}
 
-    return result;
+std::string getDocumentsPath() {
+    std::string saved = loadStoragePath();
+    if (!saved.empty() && tryClaimDirectory(saved)) {
+        return saved;
+    }
+
+    // Probe Apotris, Apotris (1), Apotris (2), … in Documents/.
+    const char* base = "/storage/emulated/0/Documents/Apotris";
+
+    // Try the un-numbered directory first.
+    std::string candidate = std::string(base) + "/";
+    if (tryClaimDirectory(candidate)) {
+        saveStoragePath(candidate);
+        return candidate;
+    }
+
+    // Try numbered variants.
+    for (int counter = 1; counter <= 99; counter++) {
+        candidate = std::string(base) + " (" + std::to_string(counter) + ")/";
+        if (tryClaimDirectory(candidate)) {
+            saveStoragePath(candidate);
+            return candidate;
+        }
+    }
+
+    // Fallback: app-private external storage.
+    const char* extStorage = SDL_AndroidGetExternalStoragePath();
+    if (extStorage) {
+        std::string fallback = std::string(extStorage) + "/Apotris/";
+        if (tryClaimDirectory(fallback)) {
+            saveStoragePath(fallback);
+            return fallback;
+        }
+    }
+
+    return std::string(base) + "/";
+}
+
+// Returns true when the resolved path is not in the user-accessible
+// Documents folder.
+static bool isUsingFallbackPath(const std::string& path) {
+    return path.find("/Documents/Apotris") == std::string::npos;
 }
 
 static void make_directory_recursive(const std::string& path) {
@@ -232,7 +342,19 @@ void extractAssets(const std::string& pathPrefix) {
         if (f) {
             fclose(f);
         } else {
-            scopedStorageError = true;
+            // Can't append to the marker — probably orphaned from a
+            // previous app install.  Try to delete+recreate so it's
+            // owned by the current UID.
+            if (remove(markerPath.c_str()) == 0) {
+                f = fopen(markerPath.c_str(), "w");
+                if (f) {
+                    fprintf(f, "%s\n", APOTRIS_VERSION);
+                    fclose(f);
+                }
+            } else {
+                SDL_Log("Marker file exists but cannot be removed "
+                        "or updated (likely from a previous install).");
+            }
         }
         return;
     }
@@ -262,14 +384,36 @@ void extractAssets(const std::string& pathPrefix) {
                 }
                 fclose(out);
             } else {
-                // If failed to open, check if file exists (orphaned file case)
+                // fopen failed.  If the file already exists it may be
+                // orphaned from a previous app installation (old Linux
+                // UID).  On Android, remove() often succeeds even when
+                // fopen("wb") fails, because unlinking requires only
+                // write permission on the parent directory.
                 if (access(destPath.c_str(), F_OK) == 0) {
-                    scopedStorageError = true;
-                    // File exists but we can't write to it. Treat as success
-                    // (skip).
-                    SDL_Log("Warning: Could not overwrite existing asset: %s "
-                            "(Permission denied?)",
-                            destPath.c_str());
+                    if (remove(destPath.c_str()) == 0) {
+                        // File deleted — retry creation.
+                        out = fopen(destPath.c_str(), "wb");
+                        if (out) {
+                            size_t written = fwrite(data, 1, size, out);
+                            if (written != size) {
+                                SDL_Log("Failed to write full file: %s",
+                                        destPath.c_str());
+                                hasError = true;
+                            }
+                            fclose(out);
+                        } else {
+                            SDL_Log("Failed to create file after removal: %s",
+                                    destPath.c_str());
+                            scopedStorageError = true;
+                        }
+                    } else {
+                        // File exists but we can neither overwrite nor
+                        // delete it.  Skip (use whatever is on disk).
+                        scopedStorageError = true;
+                        SDL_Log("Warning: Cannot overwrite or delete "
+                                "existing asset: %s (Permission denied?)",
+                                destPath.c_str());
+                    }
                 } else {
                     // File doesn't exist and we can't create it. Real error.
                     SDL_Log("Failed to open file for writing: %s",
@@ -323,8 +467,23 @@ void extractAssets(const std::string& pathPrefix) {
             fclose(outMarker);
             SDL_Log("Asset extraction completed successfully.");
         } else {
-            SDL_Log("Warning: Could not write marker file: %s",
-                    markerPath.c_str());
+            // Marker might be orphaned from a previous install.
+            // Try remove + recreate.
+            if (remove(markerPath.c_str()) == 0) {
+                outMarker = fopen(markerPath.c_str(), "w");
+                if (outMarker) {
+                    fprintf(outMarker, "%s\n", APOTRIS_VERSION);
+                    fclose(outMarker);
+                    SDL_Log("Asset extraction completed (marker "
+                            "recreated after previous install).");
+                } else {
+                    SDL_Log("Warning: Could not write marker file: %s",
+                            markerPath.c_str());
+                }
+            } else {
+                SDL_Log("Warning: Could not write or remove marker file: %s",
+                        markerPath.c_str());
+            }
         }
     } else {
         SDL_Log("Asset extraction completed with errors. Marker not updated.");
@@ -337,26 +496,31 @@ void extractAssets(const std::string& pathPrefix) {
 }
 
 std::string getPreferencesFilePath() {
-    std::string path = getDocumentsPath();
-    std::string s = path + "preferences.txt";
+    return getDocumentsPath() + "preferences.txt";
+}
 
-    FILE* test = fopen(s.c_str(), "a");
-    if (test) {
-        fclose(test);
-        return s;
-    } else {
-        const char* extPath = SDL_AndroidGetExternalStoragePath();
-        if (extPath) {
-            std::string fallback = std::string(extPath) + "/preferences.txt";
-            return fallback;
-        }
-    }
-    return s;
+static std::string getPreferencesFilePathFallback() {
+    const char* ext = SDL_AndroidGetExternalStoragePath();
+    return ext ? std::string(ext) + "/preferences.txt"
+               : getDocumentsPath() + "preferences.txt";
 }
 
 void savePreferences() {
     std::string path = getPreferencesFilePath();
     FILE* file = fopen(path.c_str(), "w");
+
+    // Orphaned file from a previous install?  Remove + retry.
+    if (!file && access(path.c_str(), F_OK) == 0) {
+        if (remove(path.c_str()) == 0) {
+            file = fopen(path.c_str(), "w");
+        }
+    }
+    // Fall back to app-private storage.
+    if (!file) {
+        path = getPreferencesFilePathFallback();
+        file = fopen(path.c_str(), "w");
+    }
+
     if (file) {
         fprintf(file, "%d\n", (int)lastInputType);
         fclose(file);
@@ -364,17 +528,21 @@ void savePreferences() {
 }
 
 void loadPreferences() {
-    std::string path = getPreferencesFilePath();
-    FILE* file = fopen(path.c_str(), "r");
-    if (file) {
-        int val = (int)InputType::TOUCH;
-        if (fscanf(file, "%d", &val) == 1) {
-            if (val >= 0 && val <= 2) {
-                lastInputType = (InputType)val;
+    // Try shared path first, then fallback.
+    for (int attempt = 0; attempt < 2; attempt++) {
+        std::string path = (attempt == 0) ? getPreferencesFilePath()
+                                          : getPreferencesFilePathFallback();
+        FILE* file = fopen(path.c_str(), "r");
+        if (file) {
+            int val = (int)InputType::TOUCH;
+            if (fscanf(file, "%d", &val) == 1) {
+                if (val >= 0 && val <= 2) {
+                    lastInputType = (InputType)val;
+                }
             }
+            fclose(file);
+            return;
         }
-        fclose(file);
-    } else {
         lastInputType = InputType::TOUCH;
     }
 }
@@ -388,6 +556,10 @@ void setLastInputType(InputType type) {
 
 void windowInit() {
     SDL_Log("windowInit: start");
+
+    // Capture the persisted path BEFORE anything else touches it
+    // (loadPreferences calls getDocumentsPath which saves a path).
+    std::string previousPath = loadStoragePath();
 
     loadPreferences();
 
@@ -423,15 +595,107 @@ void windowInit() {
     refreshWindowSize();
     SDL_Log("windowInit: refreshWindowSize done");
 
-    SDL_AndroidRequestPermission("android.permission.READ_EXTERNAL_STORAGE");
-    SDL_AndroidRequestPermission("android.permission.WRITE_EXTERNAL_STORAGE");
     SDL_AndroidRequestPermission("android.permission.READ_MEDIA_AUDIO");
 
     std::string basePath = getDocumentsPath();
     if (!basePath.empty() && basePath.back() != '/')
         basePath += "/";
+
+    // Determine whether we ended up on the preferred shared path or a
+    // private fallback.  On API 30+ the user may need to grant the
+    // MANAGE_EXTERNAL_STORAGE permission via system Settings.
+    bool usingFallback = isUsingFallbackPath(basePath);
+
+    LOGI("Using storage path: %s  (fallback=%d)", basePath.c_str(),
+         (int)usingFallback);
+
     extractAssets(basePath);
     loadAudio(basePath);
+
+    // If we're using a numbered variant (e.g. Apotris (1)/), show a
+    // one-time message so the user knows where their files live.
+    bool isNumbered =
+        (basePath.find("/Documents/Apotris (") != std::string::npos);
+    if (isNumbered && previousPath != basePath && window != nullptr) {
+        std::string msg = "Apotris created a new storage folder because the "
+                          "previous one could not be accessed:\n\n" +
+                          basePath +
+                          "\n\nTo add custom music or SFX, place your files "
+                          "in the 'assets' subfolder inside this directory "
+                          "using a File Manager.";
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Storage Folder",
+                                 msg.c_str(), window);
+    }
+
+    // If we're using a numbered variant (e.g. Apotris (1)/), also scan
+    // the original Documents/Apotris/assets/ for user-added custom
+    // music so users can still drop files in the expected location.
+    {
+        std::string original = "/storage/emulated/0/Documents/Apotris/assets/";
+        if (basePath != "/storage/emulated/0/Documents/Apotris/" &&
+            basePath != original) {
+            DIR* d = opendir(original.c_str());
+            if (d) {
+                closedir(d);
+                // The original directory exists and is readable.
+                // Scan for extra music files (songList / songNameList
+                // are populated by loadAudio above).
+                extern std::vector<std::string> songList;
+                extern std::vector<std::string> songNameList;
+
+                DIR* dir = opendir(original.c_str());
+                if (dir) {
+                    dirent* entry;
+                    while ((entry = readdir(dir)) != nullptr) {
+                        std::string name = entry->d_name;
+                        // Only consider known music extensions.
+                        auto hasSuffix = [](const std::string& s,
+                                            const std::string& suf) {
+                            return s.size() >= suf.size() &&
+                                   s.compare(s.size() - suf.size(), suf.size(),
+                                             suf) == 0;
+                        };
+                        if (hasSuffix(name, ".it") || hasSuffix(name, ".mod") ||
+                            hasSuffix(name, ".s3m") ||
+                            hasSuffix(name, ".S3M") ||
+                            hasSuffix(name, ".mp3") ||
+                            hasSuffix(name, ".ogg") ||
+                            hasSuffix(name, ".flac") ||
+                            hasSuffix(name, ".xm")) {
+                            // Only add if not already in songList
+                            // (same file name).
+                            bool already = false;
+                            for (auto& s : songNameList) {
+                                if (s == name) {
+                                    already = true;
+                                    break;
+                                }
+                            }
+                            if (!already) {
+                                int idx = (int)songList.size();
+                                songList.push_back(original + name);
+                                std::string asciiName = name;
+                                std::replace_if(
+                                    asciiName.begin(), asciiName.end(),
+                                    [](char c) { return c < 32 || c >= 127; },
+                                    '?');
+                                songNameList.push_back(std::move(asciiName));
+                                if (name.find("MENU_") != std::string::npos) {
+                                    songs.menu.push_back(idx);
+                                } else {
+                                    songs.game.push_back(idx);
+                                }
+                                LOGI("Added custom music from original "
+                                     "dir: %s",
+                                     name.c_str());
+                            }
+                        }
+                    }
+                    closedir(dir);
+                }
+            }
+        }
+    }
 
     nanotime_step_init(&stepper, (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
@@ -462,16 +726,39 @@ void windowInit() {
     vibrationInit();
     SDL_Log("windowInit: vibrationInit done");
 
+    // ── MANAGE_EXTERNAL_STORAGE prompt (API 30+) ──────────────────
+    // If we couldn't write to the shared Documents/ folder and the
+    // device is Android 11+, let the user know they can enable
+    // \"All files access\" in system Settings to fix it.
+
+    static bool manageStoragePromptShown = false;
+    if (usingFallback && !manageStoragePromptShown &&
+        !hasManageStoragePermission()) {
+        manageStoragePromptShown = true;
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_WARNING, "Storage Access",
+            "Apotris is using app-internal storage because it cannot "
+            "write to the Documents folder.\n\n"
+            "To enable custom music and place audio files in a "
+            "user-accessible folder, please enable \"All files access\" "
+            "for Apotris in the Android Settings that will open next.\n\n"
+            "You can also skip this and enable it later via Android "
+            "Settings > Apps > Apotris > All files access.",
+            window);
+        requestManageStoragePermission();
+    }
+
     if (scopedStorageError) {
         SDL_ShowSimpleMessageBox(
-            SDL_MESSAGEBOX_WARNING, "Storage Permission Error",
-            "Apotris cannot modify its files in your Documents folder (likely "
-            "due to reinstalling the game).\n\nA fallback to internal app "
-            "storage is active so you can play and save, but custom music from "
-            "Documents may be unavailable or outdated.\n\nTo fix this, please "
-            "use a File Manager app to DELETE the following "
-            "folder:\n\nInternal Storage/Documents/Apotris/\n\nAfter deleting "
-            "the folder, restart the game.",
+            SDL_MESSAGEBOX_WARNING, "Storage Warning",
+            "Some audio files could not be updated. This usually happens "
+            "after reinstalling the app — files from the previous "
+            "installation still exist but cannot be overwritten.\n\n"
+            "To fix this, use a File Manager to DELETE the folder:\n"
+            "  Internal Storage / Documents / Apotris\n\n"
+            "Then restart the game.\n\n"
+            "WARNING: This will also delete your save data "
+            "(Apotris.sav). Consider backing it up first.",
             window);
     }
 }
@@ -1400,63 +1687,74 @@ void toggleRendering(bool r) { render = r; }
 void initRumble() {};
 
 std::string getSavefilePath() {
-    std::string path = getDocumentsPath();
-    std::string s = path + "Apotris.sav";
+    // Always prefer the shared Documents/ path so save data survives
+    // uninstall and is accessible to the user.
+    return getDocumentsPath() + "Apotris.sav";
+}
 
-    FILE* test = fopen(s.c_str(), "a");
-    if (test) {
-        fclose(test);
-        return s;
-    } else {
-        scopedStorageError = true;
-        const char* extPath = SDL_AndroidGetExternalStoragePath();
-        if (extPath) {
-            std::string fallback = std::string(extPath) + "/Apotris.sav";
-            return fallback;
-        }
-    }
-    return s;
+// App-private fallback used when the shared path is not writable.
+static std::string getSavefilePathFallback() {
+    const char* ext = SDL_AndroidGetExternalStoragePath();
+    return ext ? std::string(ext) + "/Apotris.sav"
+               : getDocumentsPath() + "Apotris.sav";
 }
 
 void loadSavefile() {
-    std::string filePath = getSavefilePath();
-    std::ifstream input(filePath, std::ios::binary | std::ios::in);
-
     if (savefile == nullptr)
         savefile = new Save();
 
-    char* src = (char*)savefile;
-
-    input.read(src, sizeof(Save));
-
-    if (!input) {
-        log("Error when trying to load save.");
-        return;
+    // Try the shared path first, then the app-private fallback.
+    for (int attempt = 0; attempt < 2; attempt++) {
+        std::string filePath =
+            (attempt == 0) ? getSavefilePath() : getSavefilePathFallback();
+        std::ifstream input(filePath, std::ios::binary | std::ios::in);
+        char* src = (char*)savefile;
+        input.read(src, sizeof(Save));
+        if (input) {
+            input.close();
+            return;
+        }
+        input.close();
     }
-
-    input.close();
+    log("Error when trying to load save from either path.");
 }
 
 void saveSavefile() {
     std::string filePath = getSavefilePath();
     std::ofstream output(filePath, std::ios::binary | std::ios::out);
 
-    char* dst = (char*)savefile;
+    // If opening for write failed, the file may be orphaned from a
+    // previous install.  Try remove + retry (same strategy as asset
+    // extraction).
+    if (!output && access(filePath.c_str(), F_OK) == 0) {
+        if (remove(filePath.c_str()) == 0) {
+            output.open(filePath, std::ios::binary | std::ios::out);
+        }
+    }
 
-    const int saveSize = 1 << 15;
-
-    char temp[saveSize];
-
-    memset32_fast(temp, 0, saveSize / 4);
-    memcpy32_fast(temp, dst, sizeof(Save) / 4);
-
-    output.write(temp, saveSize);
+    // If still no luck, fall back to app-private storage.
+    if (!output) {
+        scopedStorageError = true;
+        filePath = getSavefilePathFallback();
+        output.open(filePath, std::ios::binary | std::ios::out);
+    }
 
     if (!output) {
         log("Error when trying to write save.");
         return;
     }
 
+    char* dst = (char*)savefile;
+    const int saveSize = 1 << 15;
+    char temp[saveSize];
+    memset32_fast(temp, 0, saveSize / 4);
+    memcpy32_fast(temp, dst, sizeof(Save) / 4);
+    output.write(temp, saveSize);
+
+    if (!output) {
+        log("Error when trying to write save.");
+        return;
+    }
     output.close();
 }
 
