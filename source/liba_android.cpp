@@ -13,6 +13,7 @@
 #include <jni.h>
 #include <sstream>
 #include <sys/stat.h>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "version.h"
@@ -60,6 +61,13 @@ std::unordered_set<uint32_t> currentKeys;
 std::unordered_set<uint32_t> previousKeys;
 
 std::unordered_set<uint32_t> currentlyPressed;
+
+// Per-finger tracking for touch input: fingerId -> button key.
+// Ensures a finger's button is unpressKey'd on FINGERUP even if the
+// finger has moved outside the button bounds or the event is lost
+// (Android ACTION_CANCEL / SDL multi-touch bugs).
+std::unordered_map<SDL_FingerID, std::unordered_set<uint32_t>>
+    activeFingerButtons;
 
 std::list<SDL_Rect> rects;
 
@@ -865,6 +873,17 @@ void handleInput() {
                 break;
             }
 
+            // Clean up stale finger tracking (lost FINGERUP / ACTION_CANCEL).
+            {
+                auto stale = activeFingerButtons.find(event.tfinger.fingerId);
+                if (stale != activeFingerButtons.end()) {
+                    for (auto key : stale->second) {
+                        unpressKey(key, InputType::TOUCH);
+                    }
+                    activeFingerButtons.erase(stale);
+                }
+            }
+
             for (auto const& button : layout.buttons) {
                 if (x > button.x - button.w / 2 &&
                     x < button.x + button.w / 2 &&
@@ -873,6 +892,8 @@ void handleInput() {
 
                     if (!touchEditMode) {
                         pressKey(button.key, InputType::TOUCH);
+                        activeFingerButtons[event.tfinger.fingerId].insert(
+                            button.key);
                         if (savefile->settings.touchVibration > 0) {
                             vibrationStart(
                                 16 * savefile->settings.touchVibration / 50);
@@ -946,6 +967,8 @@ void handleInput() {
                          (y - dy) < button.y + button.h / 2)) {
 
                         unpressKey(button.key, InputType::TOUCH);
+                        activeFingerButtons[event.tfinger.fingerId].erase(
+                            button.key);
                     } else if ((x > button.x - button.w / 2 &&
                                 x < button.x + button.w / 2 &&
                                 y > button.y - button.h / 2 &&
@@ -956,6 +979,8 @@ void handleInput() {
                                  (y - dy) < button.y + button.h / 2)) {
 
                         pressKey(button.key, InputType::TOUCH);
+                        activeFingerButtons[event.tfinger.fingerId].insert(
+                            button.key);
                         if (savefile->settings.touchVibration > 0) {
                             vibrationStart(
                                 16 * savefile->settings.touchVibration / 50);
@@ -1023,6 +1048,17 @@ void handleInput() {
                         unpressKey(button.key, InputType::TOUCH);
                     }
                 }
+
+                // Unpress any tracked buttons for this finger
+                // (handles overlapping buttons where the finger lifted
+                // outside one of them, slide-off-edge, or ACTION_CANCEL).
+                auto it = activeFingerButtons.find(event.tfinger.fingerId);
+                if (it != activeFingerButtons.end()) {
+                    for (auto key : it->second) {
+                        unpressKey(key, InputType::TOUCH);
+                    }
+                    activeFingerButtons.erase(it);
+                }
             } else {
                 moving = -1;
                 resizing = -1;
@@ -1040,9 +1076,23 @@ void handleInput() {
         case SDL_APP_WILLENTERBACKGROUND:
             paused = true;
             vibrationStop();
+            // Clear all active touch state so keys don't get stuck
+            // when the OS cancels touches without FINGERUP events.
+            for (auto& pair : activeFingerButtons) {
+                for (auto key : pair.second) {
+                    unpressKey(key, InputType::TOUCH);
+                }
+            }
+            activeFingerButtons.clear();
             break;
         case SDL_APP_DIDENTERBACKGROUND:
             pendingBackground = true;
+            for (auto& pair : activeFingerButtons) {
+                for (auto key : pair.second) {
+                    unpressKey(key, InputType::TOUCH);
+                }
+            }
+            activeFingerButtons.clear();
             break;
         case SDL_APP_WILLENTERFOREGROUND:
             inBackground = false;
