@@ -23,6 +23,8 @@
 #define RUMBLE_STRONG 100000
 #define RUMBLE_MEDIUM 400000
 
+#define DEADZONE 12000
+
 static int fd = -1;
 
 void rumbleUpdate();
@@ -30,6 +32,8 @@ void cleanup_handler(int signum);
 int set_rumble(int strength);
 
 void handleInput();
+void handleAnalogInput(int axis, int value);
+void updateBatteryInfo();
 
 std::unordered_set<uint32_t> currentKeys;
 std::unordered_set<uint32_t> previousKeys;
@@ -51,6 +55,9 @@ uint32_t start_time = 0;
 uint32_t frame_time = 0;
 
 float fps = 0;
+
+int batteryPercentage = -1;
+bool charging = false;
 
 SDL_Window* window;
 SDL_Renderer* renderer;
@@ -110,7 +117,30 @@ void handleInput() {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
+        int key = 0;
+
         switch (event.type) {
+        case SDL_CONTROLLERBUTTONDOWN:
+            key = event.cbutton.button;
+            currentlyPressed.insert(key);
+            break;
+        case SDL_CONTROLLERBUTTONUP:
+            key = event.cbutton.button;
+            currentlyPressed.erase(key);
+            break;
+        case SDL_CONTROLLERAXISMOTION:
+            handleAnalogInput(event.caxis.axis, event.caxis.value);
+            break;
+        case SDL_WINDOWEVENT:
+            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                screenWidth = event.window.data1;
+                screenHeight = event.window.data2;
+                refreshWindowSize();
+            } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+                if (!demo)
+                    paused = true;
+            }
+            break;
         case SDL_QUIT:
             quit();
             break;
@@ -119,21 +149,26 @@ void handleInput() {
         }
     }
 
-    currentlyPressed.clear();
-
-    if (controller && SDL_GameControllerGetAttached(controller)) {
-        for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++) {
-            if (SDL_GameControllerGetButton(
-                    controller, static_cast<SDL_GameControllerButton>(i))) {
-                currentlyPressed.insert(i);
-            }
-        }
-    }
-
     previousKeys = currentKeys;
     currentKeys.clear();
 
     currentKeys = currentlyPressed;
+}
+
+void handleAnalogInput(int axis, int value) {
+    int key = 0;
+    key |= (axis & 0xf) | (1 << 14);
+
+    if (value > DEADZONE) {
+        currentlyPressed.insert(key);
+        currentlyPressed.erase(key | (1 << 5));
+    } else if (value < -DEADZONE) {
+        currentlyPressed.insert(key | (1 << 5));
+        currentlyPressed.erase(key);
+    } else {
+        currentlyPressed.erase(key);
+        currentlyPressed.erase(key | (1 << 5));
+    }
 }
 
 uint32_t key_is_down(uint32_t key) {
@@ -278,6 +313,8 @@ void updateWindow(uint8_t* framebuffer) {
     fps = 1000.0f / elapsedMS;
 
     frame_start = SDL_GetPerformanceCounter();
+
+    updateBatteryInfo();
 }
 
 void refreshWindowSize() {
@@ -328,9 +365,7 @@ bool closed() {
     return true;
 }
 
-void rumbleUpdate() {
-    rumblePatternLoop();
-}
+void rumbleUpdate() { rumblePatternLoop(); }
 
 void toggleRendering(bool r) { render = r; }
 
@@ -394,7 +429,8 @@ void saveSavefile() {
 }
 
 void rumbleOutput(uint16_t strength) {
-    uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
+    uint16_t sdl_strength =
+        std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
     set_rumble(RUMBLE_STRONG);
     SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
 }
@@ -417,6 +453,16 @@ std::map<int, std::string> keyToString = {
     {SDL_CONTROLLER_BUTTON_DPAD_DOWN, "Down"},
     {SDL_CONTROLLER_BUTTON_LEFTSHOULDER, "L"},
     {SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, "R"},
+    {(1 << 14) | (0 << 5) | (0), "Left +X"},
+    {(1 << 14) | (1 << 5) | (0), "Left -X"},
+    {(1 << 14) | (0 << 5) | (1), "Left +Y"},
+    {(1 << 14) | (1 << 5) | (1), "Left -Y"},
+    {(1 << 14) | (0 << 5) | (2), "Right +X"},
+    {(1 << 14) | (1 << 5) | (2), "Right -X"},
+    {(1 << 14) | (0 << 5) | (3), "Right +Y"},
+    {(1 << 14) | (1 << 5) | (3), "Right -Y"},
+    {(1 << 14) | (0 << 5) | (4), "LT"},
+    {(1 << 14) | (0 << 5) | (5), "RT"},
 };
 
 // rumble signal handler
@@ -465,4 +511,15 @@ void quit() {
 void shaderInit(int index) { initShaders(window, index); }
 
 void shaderDeinit() { freeShaders(); }
+
+void updateBatteryInfo() {
+    SDL_PowerState state = SDL_GetPowerInfo(NULL, &batteryPercentage);
+
+    charging = false;
+    if (state == SDL_POWERSTATE_CHARGING) {
+        charging = true;
+    } else if (state != SDL_POWERSTATE_ON_BATTERY) {
+        batteryPercentage = -1;
+    }
+}
 #endif

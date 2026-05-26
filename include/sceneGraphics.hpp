@@ -823,7 +823,7 @@ class GraphicsScene : public Scene {
         l.push_back(new ScreenShakeElement());
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
-#if defined(PC) || defined(ANDROID)
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
         l.push_back(new BatteryDisplayElement());
 #endif
         l.push_back(new AspectRatioElement());

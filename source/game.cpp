@@ -1880,7 +1880,7 @@ void GameScene::countdown() {
     showZoneMeter();
     showGoalLine();
 
-#if defined(PC) || defined(ANDROID)
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     showBattery();
 #endif
 
