@@ -33,7 +33,7 @@ jobs:
           - target: linux-arm64 # Use a distinct target name
             platform: aarch64 # Platform architecture
             runs-on: arm64 # Specific runner label
-            container: akouzoukos/apotris-arm64:2026-4-11
+            container: akouzoukos/apotris-arm64:2026-5-27
             build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
             package_name_suffix: Linux-arm64 # Specific suffix
             package_files: "README.txt Apotris Apotris.desktop Apotris.png install.sh *.AppImage assets/* assets/shaders/* license/*"
@@ -47,7 +47,7 @@ jobs:
             exclude_package_files: "assets/meson.build"
             readme_src: tools/README_LINUX.txt
             runs-on: ubuntu-latest
-            container: akouzoukos/apotris-linux:2026-4-11
+            container: akouzoukos/apotris-linux:2026-5-27
           - target: win64
             platform: MinGW x86_64
             cross_file: meson/mingw.ini
