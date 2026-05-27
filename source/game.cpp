@@ -3778,12 +3778,13 @@ void GameScene::update() {
                         Transitions::FADE);
 #endif
         } else if (replaying) {
-            replaying = false;
-            path.clear();
-            path.emplace_back("Play");
-            clearText();
-            buildBG(3, 0, 27, 0, 1, true);
-            sceneSwitcher(modeToString(previousGameOptions->mode));
+            injectReplayEndStats();
+            paused = true;
+            showTowerScrollIndicator();
+            endScreen();
+            paused = false;
+            exitGame = false;
+            return;
         } else {
             stopMusic();
 #ifndef MULTIBOOT
@@ -3886,6 +3887,8 @@ void GameScene::update() {
     }
 
     if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)) {
+        if (replaying)
+            injectReplayEndStats();
         paused = true;
         showTowerScrollIndicator();
 

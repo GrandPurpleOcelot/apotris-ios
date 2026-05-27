@@ -1425,6 +1425,32 @@ void saveReplay() {
     test->header.length = movesWritten;
     test->header.rawLength = bytePos;
 
+    // Snapshot end-game stats for replay interruption
+    test->header.endScore = game->score;
+    test->header.endLinesCleared = game->linesCleared;
+    test->header.endLevel = game->level;
+    test->header.endWon = game->won;
+    test->header.endLost = game->lost;
+    test->header.endGrade = game->grade;
+    test->header.endCoolCount = game->coolCount;
+    test->header.endCreditGrade = (int)(game->creditGrade * 100.0f);
+    test->header.endPieceCounter = game->pieceCounter;
+    test->header.endLinesSent = game->linesSent;
+    test->header.endRegretCount = game->regretCount;
+    test->header.endTowerScrollCount = game->towerScrollCount;
+    test->header.endStackHeight = game->stackHeight;
+
+    for (int i = 0; i < 4; i++)
+        test->header.endClears[i] = game->statTracker.clears[i];
+    test->header.endTSpins = game->statTracker.tspins;
+    test->header.endPerfectClears = game->statTracker.perfectClears;
+    test->header.endMaxStreak = game->statTracker.maxStreak;
+    test->header.endMaxCombo = game->statTracker.maxCombo;
+    test->header.endHolds = game->statTracker.holds;
+    test->header.endMaxZonedLines = game->statTracker.maxZonedLines;
+    test->header.endSecretGrade = game->statTracker.secretGrade;
+    test->header.endInGameTimer = game->inGameTimer;
+
 #ifdef PC
 #ifdef __APPLE__
     std::string filePath = getSavefilePath();
@@ -1451,6 +1477,39 @@ void saveReplay() {
 ReplayHeader* currentReplayHeader = nullptr;
 uint8_t* replayBytes = nullptr;
 int replayCount = 0;
+
+void injectReplayEndStats() {
+    if (currentReplayHeader == nullptr || game == nullptr)
+        return;
+
+    game->score = currentReplayHeader->endScore;
+    game->linesCleared = currentReplayHeader->endLinesCleared;
+    game->level = currentReplayHeader->endLevel;
+    game->won = currentReplayHeader->endWon;
+    game->lost = currentReplayHeader->endLost;
+    game->grade = currentReplayHeader->endGrade;
+    game->coolCount = currentReplayHeader->endCoolCount;
+    game->creditGrade = (float)currentReplayHeader->endCreditGrade / 100.0f;
+    game->pieceCounter = currentReplayHeader->endPieceCounter;
+    game->linesSent = currentReplayHeader->endLinesSent;
+    game->regretCount = currentReplayHeader->endRegretCount;
+    game->towerScrollCount = currentReplayHeader->endTowerScrollCount;
+    game->stackHeight = currentReplayHeader->endStackHeight;
+
+    for (int i = 0; i < 4; i++)
+        game->statTracker.clears[i] = currentReplayHeader->endClears[i];
+    game->statTracker.tspins = currentReplayHeader->endTSpins;
+    game->statTracker.perfectClears = currentReplayHeader->endPerfectClears;
+    game->statTracker.maxStreak = currentReplayHeader->endMaxStreak;
+    game->statTracker.maxCombo = currentReplayHeader->endMaxCombo;
+    game->statTracker.holds = currentReplayHeader->endHolds;
+    game->statTracker.maxZonedLines = currentReplayHeader->endMaxZonedLines;
+    game->statTracker.secretGrade = currentReplayHeader->endSecretGrade;
+
+    // Set global game time from stored duration
+    gameSeconds = (int)currentReplayHeader->duration;
+    game->inGameTimer = currentReplayHeader->endInGameTimer;
+}
 
 void loadReplay() {
     replayBytes = nullptr;

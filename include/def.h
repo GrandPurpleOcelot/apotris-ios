@@ -177,6 +177,7 @@ extern void startGame();
 extern void startBotGame(int seed);
 
 extern void loadReplay();
+extern void injectReplayEndStats();
 extern void frameSnow(int layer);
 
 extern void initFallingBlocks();

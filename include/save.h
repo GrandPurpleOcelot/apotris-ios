@@ -336,7 +336,33 @@ typedef struct ReplayHeader {
 
     BlockEngine::Options options;
 
-    int placeholder[239];
+    int endScore;
+    int endLinesCleared;
+    int endLevel;
+    int endWon;
+    int endLost;
+
+    // mode-specific fields
+    int endGrade;
+    int endCoolCount;
+    int endCreditGrade;
+    int endPieceCounter;
+    int endLinesSent;
+    int endRegretCount;
+    int endTowerScrollCount;
+    int endStackHeight;
+
+    int endClears[4];
+    int endTSpins;
+    int endPerfectClears;
+    int endMaxStreak;
+    int endMaxCombo;
+    int endHolds;
+    int endMaxZonedLines;
+    int endSecretGrade;
+    int endInGameTimer;
+
+    int placeholder[214];
 } ALIGN(4) ReplayHeader;
 
 typedef struct Replay {
