@@ -511,9 +511,9 @@ bool GameScene::reconnect() {
                 playSongRandom(0);
                 buildBG(3, 0, 27, 0, 1, true);
 #ifndef MULTIBOOT
-                changeScene(new MainMenuScene(), Transitions::FADE);
+                changeScene([](){ return new MainMenuScene(); }, Transitions::FADE);
 #else
-                changeScene(new MultBattleScene(), Transitions::FADE);
+                changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
 #endif
                 return false;
             }

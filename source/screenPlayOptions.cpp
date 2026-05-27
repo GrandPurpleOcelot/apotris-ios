@@ -1068,7 +1068,7 @@ bool SinglePakWirelessScene::control() {
         if (!path.empty())
             path.pop_back();
 
-        changeScene(new MultBattleScene(), Transitions::FADE);
+        changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
 
         return true;
     }
@@ -1243,7 +1243,7 @@ bool SinglePakWiredScene::control() {
         if (!path.empty())
             path.pop_back();
 
-        changeScene(new MultBattleScene(), Transitions::FADE);
+        changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
 
         return true;
     }
@@ -1511,22 +1511,22 @@ bool MatchMakingScene::control() {
             clearSmallText();
             hideSprites = true;
 #ifdef GBA
-            changeScene(new MultBattleScene(), Transitions::FADE);
+            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
 #else
             roomId = nameInput(-1);
-            changeScene(new MultBattleScene(roomId), Transitions::FADE);
+            changeScene([](){ return new MultBattleScene(roomId); }, Transitions::FADE);
 #endif
         } else {
 #ifdef GBA
-            changeScene(new MultBattleScene(), Transitions::FADE);
+            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
 #else
             roomId = "";
-            changeScene(new MultBattleScene(), Transitions::FADE);
+            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
 #endif
         }
     } else if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
-        changeScene(new MainMenuScene(), Transitions::FADE);
+        changeScene([](){ return new MainMenuScene(); }, Transitions::FADE);
     }
 
     return false;

@@ -4,7 +4,7 @@
 
 bool TrackListElement::action() {
     sfx(SFX_MENUCONFIRM);
-    changeScene(new TrackListScene(), Transitions::FADE);
+    changeScene([](){ return new TrackListScene(); }, Transitions::FADE);
     return true;
 }
 

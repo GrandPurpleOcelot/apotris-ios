@@ -940,7 +940,7 @@ void showFPS() {
 }
 
 void showBattery() {
-#if defined(PC) || defined(ANDROID)
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     OBJ_ATTR* sprite = &obj_buffer[127];
 
     if (savefile->settings.batteryDisplay == 0 || batteryPercentage == -1 ||
@@ -989,7 +989,8 @@ void setScreenOffset(int x, int y) {
 
 void setUpPresentException(std::string error) {
     multiplayerLink->deactivate(true);
-    changeScene(new MultiplayerExceptionScene(std::move(error)));
+    changeScene(
+        [&error]() { return new MultiplayerExceptionScene(std::move(error)); });
 }
 
 #endif

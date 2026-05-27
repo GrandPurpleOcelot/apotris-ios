@@ -823,7 +823,7 @@ class GraphicsScene : public Scene {
         l.push_back(new ScreenShakeElement());
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
-#if defined(PC) || defined(ANDROID)
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
         l.push_back(new BatteryDisplayElement());
 #endif
         l.push_back(new AspectRatioElement());
@@ -891,7 +891,7 @@ class GraphicsScene : public Scene {
     void deinit();
     void showClear();
 
-    virtual Scene* previousScene() { return new SettingsScene(); };
+    virtual std::function<Scene*()> previousScene() { return []{ return new SettingsScene(); }; };
 
     ~GraphicsScene() { deinit(); };
 };
@@ -978,7 +978,7 @@ class GradientEditorScene : public Scene {
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return new GraphicsScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new GraphicsScene(); }; };
 
     ~GradientEditorScene() { deinit(); }
 };

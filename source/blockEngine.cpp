@@ -723,7 +723,7 @@ void Game::update() {
     while ((int)moveHistory.size() > 10)
         moveHistory.pop_front();
 
-    if (!replayElligible || replay.size() > MAX_REPLAY_SIZE) {
+    if (!replayElligible || replay.size() > REPLAY_MAX_MOVES) {
         replay.clear();
 
         replayElligible = false;
@@ -1716,7 +1716,8 @@ uint16_t* BlockEngine::getShape(int n, int r, int rotationSystem) {
 
 void Game::lockCheck() {
     if (pawn.lowest == pawn.y && lockMoveCounter > 0 &&
-        (rotationSystem == SRS || rotationSystem == BARS || rotationSystem == SDRS)) {
+        (rotationSystem == SRS || rotationSystem == BARS ||
+         rotationSystem == SDRS)) {
         lockTimer = maxLockTimer;
         lockMoveCounter--;
     }
@@ -1900,6 +1901,44 @@ void Game::setLevel(int newLevel) {
 }
 
 void Game::setGoal(int newGoal) { goal = newGoal; }
+
+void Game::fillReplayToLimit() {
+    return;
+
+    // Fill replay with synthetic entries until the delta-encoded
+    // byte stream would overflow the REPLAY_BUF_SIZE-byte rawMoves buffer.
+    // Fake moves share a constant distant timer so they never replay,
+    // producing: 4 bytes for the bridge gap + 2 bytes each thereafter.
+
+    const int bufCapacity = REPLAY_BUF_SIZE;
+    const int current = (int)replay.size();
+
+    // Estimate bytes for existing moves.
+    int byteEstimate = 0;
+    int prevTimer = 0;
+    for (auto& m : replay) {
+        int delta = m.timer - prevTimer;
+        prevTimer = m.timer;
+        byteEstimate += (delta < 255) ? 2 : 4;
+    }
+
+    // Bridge from last real move to the distant fake timer.
+    int lastTimer = (current > 0) ? replay.back().timer : 0;
+    int fakeTimer = timer + 1000000;
+    int firstDelta = fakeTimer - lastTimer;
+    int bridgeCost = (firstDelta < 255) ? 2 : 4;
+
+    int remaining = bufCapacity - byteEstimate;
+    if (remaining < bridgeCost)
+        return;
+
+    // 1 bridge entry + as many delta=0 entries as fit.
+    int count = 1 + (remaining - bridgeCost) / 2;
+
+    for (int i = 0; i < count; i++) {
+        replay.emplace_back(fakeTimer, 0, false);
+    }
+}
 
 void Game::generateGarbage(int height, int localMode) {
     int hole = random() % lengthX;
@@ -2870,9 +2909,12 @@ void Game::setupPawnSpawn() {
             pawn.y--;
     }
 
-    if (rotationSystem == ARS || (rotationSystem == NRS && gameMode != CLASSIC)|| rotationSystem == SDRS) {
+    if (rotationSystem == ARS ||
+        (rotationSystem == NRS && gameMode != CLASSIC) ||
+        rotationSystem == SDRS) {
         pawn.y--;
-        if (rotationSystem == NRS && pawn.current == PIECE_I && gameMode != CLASSIC)
+        if (rotationSystem == NRS && pawn.current == PIECE_I &&
+            gameMode != CLASSIC)
             pawn.y--;
     }
 

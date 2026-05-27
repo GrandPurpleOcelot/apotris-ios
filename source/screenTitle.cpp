@@ -283,11 +283,11 @@ bool MultiplayerProtocolScene::control() {
         } else {
             multiplayerProtocol = LinkUniversal::Protocol::WIRELESS_AUTO;
         }
-        changeScene(new MultBattleScene(), Transitions::FADE);
+        changeScene([] { return new MultBattleScene(); }, Transitions::FADE);
 #ifndef MULTIBOOT
     } else if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
-        changeScene(new MainMenuScene(), Transitions::FADE);
+        changeScene([] { return new MainMenuScene(); }, Transitions::FADE);
     }
 #else
     }
@@ -453,7 +453,7 @@ bool TitleScene::control() {
     if (key_hit(KEY_FULL)) {
         sfx(SFX_MENUCONFIRM);
         rumblePattern(RUMBLE_PLACE);
-        changeScene(new MainMenuScene(), Transitions::FADE);
+        changeScene([] { return new MainMenuScene(); }, Transitions::FADE);
         return true;
     }
 
@@ -480,7 +480,7 @@ void TitleScene::update() {
 
         startGame(BlockEngine::Options(), (int)randNext());
 
-        changeScene(new GameScene(), Transitions::FADE);
+        changeScene([] { return new GameScene(); }, Transitions::FADE);
     }
 }
 
@@ -502,7 +502,9 @@ void TitleScene::deinit() {
 #endif
 }
 
-Scene* MainMenuScene::previousScene() { return new TitleScene(); }
+std::function<Scene*()> MainMenuScene::previousScene() {
+    return [] { return new TitleScene(); };
+}
 
 void ConfirmSaveScene::init() {
     clearSprites(128);
@@ -641,7 +643,7 @@ bool ConfirmSaveScene::control() {
         initRumbleCart();
 #endif
 
-        changeScene(new MainMenuScene(), Transitions::FADE);
+        changeScene([] { return new MainMenuScene(); }, Transitions::FADE);
 
         return true;
     } else if (key_hit(k.cancel)) {
@@ -649,13 +651,14 @@ bool ConfirmSaveScene::control() {
 
         switch (type) {
         case 0:
-            changeScene(new SettingsScene(), Transitions::FADE);
+            changeScene([] { return new SettingsScene(); }, Transitions::FADE);
             break;
         case 1:
-            changeScene(new EditorScene(), Transitions::FADE);
+            changeScene([] { return new EditorScene(); }, Transitions::FADE);
             break;
         case 2:
-            changeScene(new ColorSelectorScene(), Transitions::FADE);
+            changeScene([] { return new ColorSelectorScene(); },
+                        Transitions::FADE);
             break;
         }
 

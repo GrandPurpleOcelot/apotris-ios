@@ -33,7 +33,8 @@ public:
 
         if (touchEditExitRequested) {
             touchEditExitRequested = false;
-            changeScene(new SettingsScene(), Transitions::FADE);
+            changeScene([]() { return new SettingsScene(); },
+                        Transitions::FADE);
         }
     }
 
@@ -47,7 +48,9 @@ public:
 
     std::string name() { return "Touch"; }
 
-    Scene* previousScene() override { return new SettingsScene(); }
+    std::function<Scene*()> previousScene() override {
+        return [] { return new SettingsScene(); };
+    }
 
     ~TouchOptionScene() { deinit(); }
 };

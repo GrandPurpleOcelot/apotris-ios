@@ -28,9 +28,9 @@
 
 #ifdef ANDROID
 
+#include "liba_android.h"
 #include "liba_pc.h"
 #include "liba_sdl_audio.hpp"
-#include "liba_android.h"
 
 #define PLATFORM 1
 #endif
@@ -71,7 +71,8 @@
 
 #endif
 
-#define MAX_REPLAY_SIZE 4096
+#define REPLAY_BUF_SIZE 16384
+#define REPLAY_MAX_MOVES 8192
 
 extern void onVBlank();
 

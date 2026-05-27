@@ -22,7 +22,7 @@ bool ControlOptionScene::control() {
 
 bool RumbleMenuElement::action() {
     sfx(SFX_MENUCONFIRM);
-    changeScene(new RumbleOptionScene(), Transitions::FADE);
+    changeScene([](){ return new RumbleOptionScene(); }, Transitions::FADE);
 
     return true;
 }
@@ -33,7 +33,7 @@ bool AdvancedRumbleMenuElement::action() {
         path.pop_back();
 
 #ifdef GBA
-    changeScene(new AdvancedRumbleOptionScene(), Transitions::FADE);
+    changeScene([](){ return new AdvancedRumbleOptionScene(); }, Transitions::FADE);
 #endif
 
     return true;

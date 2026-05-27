@@ -139,14 +139,18 @@ void GameScene::endScreen() {
     showStats(showingStats, totalTime, ppsStr, true);
 
     if (!replaying) {
+#ifndef NO_DIAGNOSE
+        // Fill replay to the limit to test memory pressure during
+        // "view replay" scene transition on GBA.
+        game->fillReplayToLimit();
+#endif
         saveReplay();
     } else {
         delete currentReplayHeader;
         currentReplayHeader = nullptr;
 
-        for (auto& item : currentReplay)
-            delete item;
-        currentReplay.clear();
+        replayBytes = nullptr;
+        replayCount = 0;
 
         replaying = false;
     }
@@ -263,7 +267,7 @@ void GameScene::endScreen() {
         if (multiplayerStart) {
             multiplayerStart = false;
             startGame(nextSeed);
-            changeScene(new GameScene());
+            changeScene([]() { return new GameScene(); });
             break;
         }
 
@@ -274,7 +278,7 @@ void GameScene::endScreen() {
                 if (!multiplayer) {
                     sfx(SFX_MENUCONFIRM);
                     startGame();
-                    changeScene(new GameScene());
+                    changeScene([]() { return new GameScene(); });
                     break;
                 } else {
                     if (multiplayerLink->stateMachine.IsInState<
@@ -295,9 +299,11 @@ void GameScene::endScreen() {
                     multiplayer = false;
                 }
 #ifndef MULTIBOOT
-                changeScene(new MainMenuScene(), Transitions::FADE);
+                changeScene([]() { return new MainMenuScene; },
+                            Transitions::FADE);
 #else
-                changeScene(new MultiplayerProtocolScene(), Transitions::FADE);
+                changeScene([]() { return new MultiplayerProtocolScene; },
+                            Transitions::FADE);
 #endif
                 return;
             } else if (selection == 1) {
@@ -805,7 +811,7 @@ int GameScene::pauseMenu() {
                 } else if (n == 1) {
                     addGameStats();
                     startGame();
-                    changeScene(new GameScene());
+                    changeScene([]() { return new GameScene(); });
                     paused = false;
                     count = false;
                     sfx(SFX_MENUCONFIRM);
@@ -822,9 +828,11 @@ int GameScene::pauseMenu() {
                     playSongRandom(0);
 
 #ifdef MULTIBOOT
-                    changeScene(new MultBattleScene(), Transitions::FADE);
+                    changeScene([]() { return new MultBattleScene(); },
+                                Transitions::FADE);
 #else
-                    changeScene(new MainMenuScene(), Transitions::FADE);
+                    changeScene([]() { return new MainMenuScene(); },
+                                Transitions::FADE);
 #endif
                     return 1;
                 }
@@ -1362,7 +1370,7 @@ void saveReplay() {
         return;
 
     const int len = game->replay.size();
-    if (len >= 4096) {
+    if (len >= REPLAY_MAX_MOVES) {
         log("replay size too big (" + std::to_string(len) + ")");
         return;
     }
@@ -1378,21 +1386,72 @@ void saveReplay() {
     test = new Replay();
 
     test->header.tag = savefile->newGame;
-    test->header.length = len;
     test->header.duration = game->timer;
     test->header.seed = game->initSeed;
 
     test->header.options = *previousGameOptions;
 
     auto it = game->replay.begin();
+
+    int bytePos = 0;
+    int prevTimer = 0;
+    int movesWritten = 0;
     for (int i = 0; i < len; i++) {
         Timestamp move = *it;
+        int delta = move.timer - prevTimer;
+        prevTimer = move.timer;
 
-        test->moves[i] = (((move.timer & 0x3fffff) << 11) +
-                          ((move.dir & 1) << 9) + (move.move & 0x1ff));
+        // action: [moveType:4][dir:1][unused:3]
+        uint8_t action =
+            (uint8_t)(((move.move & 0xF) << 1) | (move.dir ? 1 : 0));
+
+        if (delta < 255) {
+            if (bytePos + 2 > (int)sizeof(test->rawMoves))
+                break;
+            test->rawMoves[bytePos++] = (uint8_t)delta;
+            test->rawMoves[bytePos++] = action;
+            movesWritten++;
+        } else {
+            if (bytePos + 4 > (int)sizeof(test->rawMoves))
+                break;
+            test->rawMoves[bytePos++] = 255; // escape byte
+            test->rawMoves[bytePos++] = (uint8_t)(delta & 0xFF);
+            test->rawMoves[bytePos++] = (uint8_t)((delta >> 8) & 0xFF);
+            test->rawMoves[bytePos++] = action;
+            movesWritten++;
+        }
 
         ++it;
     }
+
+    test->header.length = movesWritten;
+    test->header.rawLength = bytePos;
+
+    // Snapshot end-game stats for replay interruption
+    test->header.endScore = game->score;
+    test->header.endLinesCleared = game->linesCleared;
+    test->header.endLevel = game->level;
+    test->header.endWon = game->won;
+    test->header.endLost = game->lost;
+    test->header.endGrade = game->grade;
+    test->header.endCoolCount = game->coolCount;
+    test->header.endCreditGrade = (int)(game->creditGrade * 100.0f);
+    test->header.endPieceCounter = game->pieceCounter;
+    test->header.endLinesSent = game->linesSent;
+    test->header.endRegretCount = game->regretCount;
+    test->header.endTowerScrollCount = game->towerScrollCount;
+    test->header.endStackHeight = game->stackHeight;
+
+    for (int i = 0; i < 4; i++)
+        test->header.endClears[i] = game->statTracker.clears[i];
+    test->header.endTSpins = game->statTracker.tspins;
+    test->header.endPerfectClears = game->statTracker.perfectClears;
+    test->header.endMaxStreak = game->statTracker.maxStreak;
+    test->header.endMaxCombo = game->statTracker.maxCombo;
+    test->header.endHolds = game->statTracker.holds;
+    test->header.endMaxZonedLines = game->statTracker.maxZonedLines;
+    test->header.endSecretGrade = game->statTracker.secretGrade;
+    test->header.endInGameTimer = game->inGameTimer;
 
 #ifdef PC
 #ifdef __APPLE__
@@ -1418,13 +1477,45 @@ void saveReplay() {
 }
 
 ReplayHeader* currentReplayHeader = nullptr;
-std::list<Timestamp*> currentReplay;
+uint8_t* replayBytes = nullptr;
+int replayCount = 0;
+
+void injectReplayEndStats() {
+    if (currentReplayHeader == nullptr || game == nullptr)
+        return;
+
+    game->score = currentReplayHeader->endScore;
+    game->linesCleared = currentReplayHeader->endLinesCleared;
+    game->level = currentReplayHeader->endLevel;
+    game->won = currentReplayHeader->endWon;
+    game->lost = currentReplayHeader->endLost;
+    game->grade = currentReplayHeader->endGrade;
+    game->coolCount = currentReplayHeader->endCoolCount;
+    game->creditGrade = (float)currentReplayHeader->endCreditGrade / 100.0f;
+    game->pieceCounter = currentReplayHeader->endPieceCounter;
+    game->linesSent = currentReplayHeader->endLinesSent;
+    game->regretCount = currentReplayHeader->endRegretCount;
+    game->towerScrollCount = currentReplayHeader->endTowerScrollCount;
+    game->stackHeight = currentReplayHeader->endStackHeight;
+
+    for (int i = 0; i < 4; i++)
+        game->statTracker.clears[i] = currentReplayHeader->endClears[i];
+    game->statTracker.tspins = currentReplayHeader->endTSpins;
+    game->statTracker.perfectClears = currentReplayHeader->endPerfectClears;
+    game->statTracker.maxStreak = currentReplayHeader->endMaxStreak;
+    game->statTracker.maxCombo = currentReplayHeader->endMaxCombo;
+    game->statTracker.holds = currentReplayHeader->endHolds;
+    game->statTracker.maxZonedLines = currentReplayHeader->endMaxZonedLines;
+    game->statTracker.secretGrade = currentReplayHeader->endSecretGrade;
+
+    // Set global game time from stored duration
+    gameSeconds = (int)currentReplayHeader->duration;
+    game->inGameTimer = currentReplayHeader->endInGameTimer;
+}
 
 void loadReplay() {
-    for (auto& item : currentReplay)
-        delete item;
-
-    currentReplay.clear();
+    replayBytes = nullptr;
+    replayCount = 0;
 
     if (test != nullptr) {
         if (currentReplayHeader == nullptr)
@@ -1433,12 +1524,12 @@ void loadReplay() {
         memcpy32_fast(currentReplayHeader, &test->header,
                       sizeof(ReplayHeader) / 4);
 
-        for (int i = 0; i < (int)test->header.length; i++) {
-            currentReplay.push_back(new Timestamp(test->moves[i]));
-        }
-
+        replayBytes = test->rawMoves;
+        replayCount = (int)test->header.length;
+        replayIndex = 0;
+        replayBytePos = 0;
+        replayFrameTimer = 0;
         replaying = true;
-        replayIterator = currentReplay.begin();
         startGame(currentReplayHeader->options, currentReplayHeader->seed);
 
         gameLoop();
@@ -1479,15 +1570,14 @@ void loadReplay() {
         log("Correct version number.");
     }
 
-    if (rep.header.length > 4096) {
+    if (rep.header.length > REPLAY_MAX_MOVES) {
         log("Invalid replay (too large).");
         return;
     }
 
     log("Attemping to load moves...");
-    for (int i = 0; i < (int)rep.header.length; i++) {
-        currentReplay.push_back(new Timestamp(rep.moves[i]));
-    }
+    replayBytes = rep.rawMoves;
+    replayCount = (int)rep.header.length;
     log("Loaded moves.");
 
     if (currentReplayHeader == nullptr)
@@ -1495,8 +1585,8 @@ void loadReplay() {
 
     memcpy32_fast(currentReplayHeader, &rep.header, sizeof(ReplayHeader) / 4);
 
+    replayIndex = 0;
     replaying = true;
-    replayIterator = currentReplay.begin();
 
     log("trying to start game...");
     startGame(currentReplayHeader->options, currentReplayHeader->seed);

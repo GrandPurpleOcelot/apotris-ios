@@ -295,9 +295,6 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         )
 
         tilengine_default_options = ['default_library=static']
-        if get_option('portmaster')
-            tilengine_default_options += 'portmaster=true'
-        endif
 
         tilengine = dependency(
             'Tilengine',

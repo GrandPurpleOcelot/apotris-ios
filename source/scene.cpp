@@ -443,9 +443,9 @@ void SimpleListScene::deinit() {
 }
 
 #ifndef MULTIBOOT
-Scene* ModeListScene::previousScene() { return new MainMenuScene(); }
+std::function<Scene*()> ModeListScene::previousScene() { return []{ return new MainMenuScene(); }; }
 #else
-Scene* ModeListScene::previousScene() { return new MultBattleScene(); }
+std::function<Scene*()> ModeListScene::previousScene() { return []{ return new MultBattleScene(); }; }
 #endif
 
 void OptionListScene::init() {

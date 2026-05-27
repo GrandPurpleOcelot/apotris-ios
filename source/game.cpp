@@ -529,7 +529,7 @@ void GameScene::checkSounds() {
         for (int layer = 0; layer < 2; layer++) {
             for (int i = 0; i < 20; i++) {
                 setTile(25 + layer, pos.x / 8 - 1, pos.y / 8 + i, 0);
-                setTile(25, pos.x / i + 10, pos.y / 8 + i, 0);
+                setTile(25, pos.x / 8 + i + 10, pos.y / 8 + i, 0);
             }
 
             for (int i = 0; i < 12; i++) {
@@ -1796,7 +1796,7 @@ void showClearText() {
 }
 
 void gameLoop() {
-    changeScene(new GameScene(), Transitions::FADE);
+    changeScene([]() { return new GameScene(); }, Transitions::FADE);
 
     exitGame = false;
 }
@@ -1880,7 +1880,7 @@ void GameScene::countdown() {
     showZoneMeter();
     showGoalLine();
 
-#if defined(PC) || defined(ANDROID)
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     showBattery();
 #endif
 
@@ -2910,9 +2910,9 @@ void addPlaceEffect(const BlockEngine::Drop& drop) {
 
     Position pos = gameLayout[(int)GameElements::FIELD];
 
-    placeEffectList.emplace_back(
-        pos.x / 8 + drop.x, pos.y / 8 + drop.y, drop.dx, drop.dy, drop.piece,
-        drop.rotation, drop.rotating * (game->gameMode != CLASSIC));
+    placeEffectList.emplace_back(pos.x / 8 + drop.x, pos.y / 8 + drop.y,
+                                 drop.dx, drop.dy, drop.piece, drop.rotation,
+                                 drop.rotating * (game->gameMode != CLASSIC));
 }
 
 void hideMinos() {
@@ -3556,15 +3556,33 @@ void setJourneyGraphics(Save* save, int level) {
     }
 }
 
-std::list<Timestamp*>::iterator replayIterator;
+int replayIndex = 0;
+int replayBytePos = 0;
+int replayFrameTimer = 0;
 
 void replayControl() {
-    Timestamp* t = *replayIterator;
+    while (replayIndex < replayCount) {
+        int savedBytePos = replayBytePos;
+        int savedFrameTimer = replayFrameTimer;
 
-    while (replayIterator != currentReplay.end() &&
-           t->timer <= game->timer + game->eventTimer) {
-        bool dir = t->dir;
-        switch (t->move) {
+        int delta = replayBytes[replayBytePos++];
+        if (delta == 255) {
+            delta = replayBytes[replayBytePos] |
+                    (replayBytes[replayBytePos + 1] << 8);
+            replayBytePos += 2;
+        }
+        replayFrameTimer += delta;
+
+        if (replayFrameTimer > game->timer + game->eventTimer) {
+            // Not time yet — rewind decoder state
+            replayBytePos = savedBytePos;
+            replayFrameTimer = savedFrameTimer;
+            break;
+        }
+
+        uint8_t action = replayBytes[replayBytePos++];
+        bool dir = action & 1;
+        switch ((action >> 1) & 0xF) {
         case 0:
             game->keyLeft(dir);
             break;
@@ -3594,8 +3612,7 @@ void replayControl() {
             break;
         }
 
-        ++replayIterator;
-        t = *replayIterator;
+        replayIndex++;
     }
 }
 
@@ -3757,28 +3774,30 @@ void GameScene::update() {
         if (handlingTest) {
 #ifndef MULTIBOOT
             handlingTest = false;
-            changeScene(new HandlingOptionScene(), Transitions::FADE);
+            changeScene([]() { return new HandlingOptionScene(); },
+                        Transitions::FADE);
 #endif
         } else if (replaying) {
-            replaying = false;
-            path.clear();
-            path.emplace_back("Play");
-            clearText();
-            buildBG(3, 0, 27, 0, 1, true);
-            sceneSwitcher(modeToString(previousGameOptions->mode));
+            injectReplayEndStats();
+            paused = true;
+            showTowerScrollIndicator();
+            endScreen();
+            paused = false;
+            exitGame = false;
+            return;
         } else {
             stopMusic();
 #ifndef MULTIBOOT
             enableBot = false;
-            changeScene(new TitleScene(), Transitions::FADE);
+            changeScene([]() { return new TitleScene(); }, Transitions::FADE);
 #else
-            changeScene(new MultBattleScene(), Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(); },
+                        Transitions::FADE);
 #endif
         }
 
-        for (auto& item : currentReplay)
-            delete item;
-        currentReplay.clear();
+        replayBytes = nullptr;
+        replayCount = 0;
 
         delete currentReplayHeader;
         currentReplayHeader = nullptr;
@@ -3868,6 +3887,8 @@ void GameScene::update() {
     }
 
     if ((game->won || game->lost) && !(flashTimer || eventPauseTimer)) {
+        if (replaying)
+            injectReplayEndStats();
         paused = true;
         showTowerScrollIndicator();
 
@@ -3890,7 +3911,7 @@ void GameScene::update() {
         addGameStats();
         paused = true;
         startGame();
-        changeScene(new GameScene());
+        changeScene([]() { return new GameScene(); });
         return;
     }
 
@@ -3923,7 +3944,7 @@ void GameScene::update() {
 #ifndef MULTIBOOT
     if (demo && game->timer > 60 * 60 * 60 * 3) {
         stopMusic();
-        changeScene(new TitleScene(), Transitions::FADE);
+        changeScene([]() { return new TitleScene(); }, Transitions::FADE);
         return;
     }
 #endif

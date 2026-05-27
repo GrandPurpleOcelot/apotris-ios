@@ -442,6 +442,8 @@ public:
     bool dir;
     bool shiftTimer = false;
 
+    Timestamp() {}
+
     Timestamp(int _timer, int _move, int _dir) {
         timer = _timer;
         move = _move;
@@ -569,6 +571,7 @@ private:
     List historyList;
 
 public:
+    void fillReplayToLimit();
     int checkRotation(int, int, int);
     void next();
     void rotateCW(int dir);
@@ -739,7 +742,7 @@ public:
     std::list<Garbage> garbageQueue; // no max but should be small
     std::list<std::tuple<uint8_t, uint8_t>>
         toDisappear; // no max, depends on pps but gets cleared every frame
-    std::list<Timestamp> replay; // max is MAX_REPLAY_SIZE
+    std::list<Timestamp> replay; // max moves is REPLAY_MAX_MOVES
 
     Game() : Game(0, 0, 0) {}
 

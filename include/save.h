@@ -85,7 +85,7 @@ typedef struct GraphicsOptions {
     s8 clearDirection;
     bool smoothGravity;
 
-    int placeHolder[5];
+    int placeHolder[6];
 } ALIGN(4) GraphicsOptions;
 
 typedef struct SongDisabling {
@@ -329,18 +329,45 @@ public:
 
 typedef struct ReplayHeader {
     u8 tag;
-    u32 length;
+    u32 length; // move count
     u32 duration;
     u32 seed;
+    u32 rawLength; // byte length of delta-encoded data in rawMoves
 
     BlockEngine::Options options;
 
-    int placeholder[240];
+    int endScore;
+    int endLinesCleared;
+    int endLevel;
+    int endWon;
+    int endLost;
+
+    // mode-specific fields
+    int endGrade;
+    int endCoolCount;
+    int endCreditGrade;
+    int endPieceCounter;
+    int endLinesSent;
+    int endRegretCount;
+    int endTowerScrollCount;
+    int endStackHeight;
+
+    int endClears[4];
+    int endTSpins;
+    int endPerfectClears;
+    int endMaxStreak;
+    int endMaxCombo;
+    int endHolds;
+    int endMaxZonedLines;
+    int endSecretGrade;
+    int endInGameTimer;
+
+    int placeholder[214];
 } ALIGN(4) ReplayHeader;
 
 typedef struct Replay {
     ReplayHeader header;
-    uint32_t moves[4096];
+    uint8_t rawMoves[REPLAY_BUF_SIZE];
 } ALIGN(4) Replay;
 
 extern Save* savefile;

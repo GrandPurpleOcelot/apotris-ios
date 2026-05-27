@@ -177,6 +177,7 @@ extern void startGame();
 extern void startBotGame(int seed);
 
 extern void loadReplay();
+extern void injectReplayEndStats();
 extern void frameSnow(int layer);
 
 extern void initFallingBlocks();
@@ -307,8 +308,11 @@ extern BlockEngine::Options* previousGameOptions;
 extern FIXED shakeBuff;
 extern FIXED shakeVelocity;
 
-extern std::list<BlockEngine::Timestamp*>::iterator replayIterator;
-extern std::list<BlockEngine::Timestamp*> currentReplay;
+extern int replayIndex;
+extern int replayBytePos;
+extern int replayFrameTimer;
+extern uint8_t* replayBytes;
+extern int replayCount;
 
 extern BlockEngine::Game* quickSave;
 extern bool saveExists;

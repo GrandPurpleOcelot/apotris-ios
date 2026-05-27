@@ -10,9 +10,10 @@
 #include "sceneHandling.hpp"
 #include "sceneModes.hpp"
 #include "sceneSaving.hpp"
+#include "sceneSleep.hpp"
 #include "sceneStats.hpp"
 #include "sceneWindow.hpp"
-#include "sceneSleep.hpp"
+#include <functional>
 #ifdef ANDROID
 #include "sceneTouch.hpp"
 #endif
@@ -26,7 +27,32 @@ void fadeFromBlack();
 
 static COLOR* preTransitionPalette = nullptr;
 
-void changeScene(Scene* newScene, Transitions transition) {
+Transitions transition;
+std::function<Scene*()> factory;
+static bool sceneSwitch = false;
+void switchScene();
+
+void checkSceneSwitch() {
+    if (!sceneSwitch)
+        return;
+
+    sceneSwitch = false;
+
+    switchScene();
+}
+
+void changeScene(std::function<Scene*()> f) {
+    changeScene(f, Transitions::INSTANT);
+}
+
+void changeScene(std::function<Scene*()> f, Transitions t) {
+    factory = f;
+    transition = t;
+
+    sceneSwitch = true;
+}
+
+void switchScene() {
     gradient(0);
     vsync();
     setLightMode();
@@ -48,8 +74,7 @@ void changeScene(Scene* newScene, Transitions transition) {
         loadPalette(0, 0, preTransitionPalette, 512);
 
     delete scene;
-
-    scene = newScene;
+    scene = factory();
     scene->init();
 
     vsync();
@@ -66,10 +91,6 @@ void changeScene(Scene* newScene, Transitions transition) {
     default:
         break;
     }
-}
-
-void changeScene(Scene* newScene) {
-    changeScene(newScene, Transitions::INSTANT);
 }
 
 void fadeToBlack() {
@@ -119,7 +140,7 @@ void fadeFromBlack() {
 void sceneSwitcher(const std::string& str) {
 #ifndef MULTIBOOT
     if (str == "Play") {
-        changeScene(new ModeListScene(), Transitions::FADE);
+        changeScene([]() { return new ModeListScene(); }, Transitions::FADE);
     } else if (str == "Settings") {
         if (previousSettings == nullptr)
             previousSettings = std::make_unique<Settings>();
@@ -129,13 +150,13 @@ void sceneSwitcher(const std::string& str) {
         for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
             previousSkins[i] = savefile->customSkins[i];
 
-        changeScene(new SettingsScene(), Transitions::FADE);
+        changeScene([]() { return new SettingsScene(); }, Transitions::FADE);
     } else if (str == "Achievements") {
 
     } else if (str == "Stats") {
-        changeScene(new StatScene(), Transitions::FADE);
+        changeScene([]() { return new StatScene(); }, Transitions::FADE);
     } else if (str == "Links") {
-        changeScene(new LinksScene(), Transitions::FADE);
+        changeScene([]() { return new LinksScene(); }, Transitions::FADE);
     } else if (str == "Skin Editor") {
         setPreviousSettings(savefile->settings);
         for (int i = 0; i < MAX_CUSTOM_SKINS; i++)
@@ -143,7 +164,7 @@ void sceneSwitcher(const std::string& str) {
 
         menuKeys = savefile->settings.menuKeys;
 
-        changeScene(new EditorScene(), Transitions::FADE);
+        changeScene([]() { return new EditorScene(); }, Transitions::FADE);
     } else if (str == "Color Editor") {
         setPreviousSettings(savefile->settings);
 
@@ -155,81 +176,89 @@ void sceneSwitcher(const std::string& str) {
 
         menuKeys = savefile->settings.menuKeys;
 
-        changeScene(new ColorSelectorScene(), Transitions::FADE);
+        changeScene([]() { return new ColorSelectorScene(); },
+                    Transitions::FADE);
     } else if (str == "Credits") {
-        changeScene(new CreditsScene(), Transitions::FADE);
+        changeScene([]() { return new CreditsScene(); }, Transitions::FADE);
     } else if (str == "Graphics") {
-        changeScene(new GraphicsScene(), Transitions::FADE);
+        changeScene([]() { return new GraphicsScene(); }, Transitions::FADE);
     } else if (str == "Audio") {
-        changeScene(new AudioOptionScene(), Transitions::FADE);
+        changeScene([]() { return new AudioOptionScene(); }, Transitions::FADE);
     } else if (str == "Controls") {
-        changeScene(new ControlOptionScene(), Transitions::FADE);
+        changeScene([]() { return new ControlOptionScene(); },
+                    Transitions::FADE);
     } else if (str == "Handling") {
-        changeScene(new HandlingOptionScene(), Transitions::FADE);
+        changeScene([]() { return new HandlingOptionScene(); },
+                    Transitions::FADE);
     } else if (str == "Gameplay") {
-        changeScene(new GameplayOptionScene(), Transitions::FADE);
+        changeScene([]() { return new GameplayOptionScene(); },
+                    Transitions::FADE);
     } else if (str == "Saving") {
-        changeScene(new SavingOptionScene(), Transitions::FADE);
+        changeScene([]() { return new SavingOptionScene(); },
+                    Transitions::FADE);
     } else if (str == "Video") {
-        changeScene(new WindowOptionScene(), Transitions::FADE);
+        changeScene([]() { return new WindowOptionScene(); },
+                    Transitions::FADE);
     } else if (str == "Sleep") {
 #ifdef GBA
-        changeScene(new SleepOptionScene(), Transitions::FADE);
+        changeScene([]() { return new SleepOptionScene(); }, Transitions::FADE);
 #endif
 #ifdef ANDROID
     } else if (str == "Touch") {
-        changeScene(new TouchOptionScene(), Transitions::FADE);
+        changeScene([]() { return new TouchOptionScene(); }, Transitions::FADE);
 #endif
     } else if (str == "Rumble") {
-        changeScene(new RumbleOptionScene(), Transitions::FADE);
+        changeScene([]() { return new RumbleOptionScene(); },
+                    Transitions::FADE);
     } else if (str == "Marathon") {
-        changeScene(new MarathonScene(), Transitions::FADE);
+        changeScene([]() { return new MarathonScene(); }, Transitions::FADE);
     } else if (str == "Sprint") {
-        changeScene(new SprintScene(), Transitions::FADE);
+        changeScene([]() { return new SprintScene(); }, Transitions::FADE);
     } else if (str == "Dig") {
-        changeScene(new DigScene(), Transitions::FADE);
+        changeScene([]() { return new DigScene(); }, Transitions::FADE);
     } else if (str == "Ultra") {
-        changeScene(new UltraScene(), Transitions::FADE);
+        changeScene([]() { return new UltraScene(); }, Transitions::FADE);
     } else if (str == "Blitz") {
-        changeScene(new BlitzScene(), Transitions::FADE);
+        changeScene([]() { return new BlitzScene(); }, Transitions::FADE);
     } else if (str == "Combo") {
-        changeScene(new ComboScene(), Transitions::FADE);
+        changeScene([]() { return new ComboScene(); }, Transitions::FADE);
     } else if (str == "Survival") {
-        changeScene(new SurvivalScene(), Transitions::FADE);
+        changeScene([]() { return new SurvivalScene(); }, Transitions::FADE);
     } else if (str == "Classic") {
-        changeScene(new ClassicScene(), Transitions::FADE);
+        changeScene([]() { return new ClassicScene(); }, Transitions::FADE);
     } else if (str == "Master") {
-        changeScene(new MasterScene(), Transitions::FADE);
+        changeScene([]() { return new MasterScene(); }, Transitions::FADE);
     } else if (str == "Death") {
-        changeScene(new DeathScene(), Transitions::FADE);
+        changeScene([]() { return new DeathScene(); }, Transitions::FADE);
     } else if (str == "Zen") {
-        changeScene(new ZenScene(), Transitions::FADE);
+        changeScene([]() { return new ZenScene(); }, Transitions::FADE);
     } else if (str == "Multi Battle") {
 #ifdef GBA
-        changeScene(new MultiplayerProtocolScene(), Transitions::FADE);
+        changeScene([]() { return new MultiplayerProtocolScene(); },
+                    Transitions::FADE);
 #ifndef MULTIBOOT
-    /*
-    } else if (str == "Wireless Pak") {
-        changeScene(new SinglePakWirelessScene(), Transitions::FADE);
-    } else if (str == "Wired Pak") {
-        changeScene(new SinglePakWiredScene(), Transitions::FADE);
-    */
+        /*
+        } else if (str == "Wireless Pak") {
+            changeScene([](){ return new SinglePakWirelessScene(); },
+        Transitions::FADE); } else if (str == "Wired Pak") { changeScene([](){
+        return new SinglePakWiredScene(); }, Transitions::FADE);
+        */
 #endif
 #else
-        changeScene(new MatchMakingScene(), Transitions::FADE);
+        changeScene([]() { return new MatchMakingScene(); }, Transitions::FADE);
 #endif
     } else if (str == "CPU Battle" || str == "Battle") {
-        changeScene(new CPUBattleScene(), Transitions::FADE);
+        changeScene([]() { return new CPUBattleScene(); }, Transitions::FADE);
     } else if (str == "Training") {
-        changeScene(new TrainingScene(), Transitions::FADE);
+        changeScene([]() { return new TrainingScene(); }, Transitions::FADE);
     } else if (str == "Website") {
-        changeScene(new WebsiteLinkScene(), Transitions::FADE);
+        changeScene([]() { return new WebsiteLinkScene(); }, Transitions::FADE);
     } else if (str == "Wiki") {
-        changeScene(new WikiLinkScene(), Transitions::FADE);
+        changeScene([]() { return new WikiLinkScene(); }, Transitions::FADE);
     } else if (str == "Donate") {
-        changeScene(new DonateLinkScene(), Transitions::FADE);
+        changeScene([]() { return new DonateLinkScene(); }, Transitions::FADE);
     } else if (str == "Discord") {
-        changeScene(new DiscordLinkScene(), Transitions::FADE);
+        changeScene([]() { return new DiscordLinkScene(); }, Transitions::FADE);
     } else if (str == "Quit") {
         quit();
     } else {
