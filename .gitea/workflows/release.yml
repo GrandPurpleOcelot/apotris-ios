@@ -33,7 +33,7 @@ jobs:
           - target: linux-arm64 # Use a distinct target name
             platform: aarch64 # Platform architecture
             runs-on: arm64 # Specific runner label
-            container: akouzoukos/apotris-arm64:2026-5-27
+            container: akouzoukos/apotris-arm64:2026-4-11
             build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
             package_name_suffix: Linux-arm64 # Specific suffix
             package_files: "README.txt Apotris Apotris.desktop Apotris.png install.sh *.AppImage assets/* assets/shaders/* license/*"

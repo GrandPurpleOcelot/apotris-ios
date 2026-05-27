@@ -23,5 +23,8 @@ RUN tar xf meson-1.4.0.tar.gz && cd meson-1.4.0 && python3 setup.py install
 # Return to root home folder
 WORKDIR /root
 
+# Ensure Gitea act runner work directory exists
+RUN mkdir -p /var/run/act
+
 # fix linux SDL2 xrandr dependency issue
 RUN sudo apt remove --purge libsdl2-dev -y

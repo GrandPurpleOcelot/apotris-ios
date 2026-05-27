@@ -78,7 +78,7 @@ ln -s usr/share/icons/hicolor/256x256/apps/"$APP_NAME.png" "$APPDIR/$APP_NAME.pn
 # ------------------------------------------------------------------
 echo "==> Creating AppImage..."
 cd "$PROJECT_DIR"
-"$APPIMAGETOOL" "$APPDIR" "$APP_NAME-$APPIMG_ARCH.AppImage"
+APPIMAGE_EXTRACT_AND_RUN=1 "$APPIMAGETOOL" "$APPDIR" "$APP_NAME-$APPIMG_ARCH.AppImage"
 
 OUTFILE="$PROJECT_DIR/$APP_NAME-$APPIMG_ARCH.AppImage"
 if [ -f "$OUTFILE" ]; then
