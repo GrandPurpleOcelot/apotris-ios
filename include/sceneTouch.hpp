@@ -33,7 +33,8 @@ public:
 
         if (touchEditExitRequested) {
             touchEditExitRequested = false;
-            changeScene(new SettingsScene(), Transitions::FADE);
+            changeScene([]() { return new SettingsScene(); },
+                        Transitions::FADE);
         }
     }
 
