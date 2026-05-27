@@ -26,15 +26,16 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-APPIMAGETOOL="$PROJECT_DIR/$BUILD_DIR/appimagetool-x86_64.AppImage"
+APPIMG_ARCH="$(uname -m)"
+APPIMAGETOOL="$PROJECT_DIR/$BUILD_DIR/appimagetool-$APPIMG_ARCH.AppImage"
 
 # ------------------------------------------------------------------
 # 1. Download appimagetool if missing
 # ------------------------------------------------------------------
 if [ ! -f "$APPIMAGETOOL" ]; then
-	echo "==> Downloading appimagetool..."
+	echo "==> Downloading appimagetool for $APPIMG_ARCH..."
 	wget -q -O "$APPIMAGETOOL" \
-		"https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+		"https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$APPIMG_ARCH.AppImage"
 	chmod +x "$APPIMAGETOOL"
 fi
 
@@ -77,9 +78,9 @@ ln -s usr/share/icons/hicolor/256x256/apps/"$APP_NAME.png" "$APPDIR/$APP_NAME.pn
 # ------------------------------------------------------------------
 echo "==> Creating AppImage..."
 cd "$PROJECT_DIR"
-ARCH=x86_64 "$APPIMAGETOOL" "$APPDIR" "$APP_NAME-x86_64.AppImage"
+"$APPIMAGETOOL" "$APPDIR" "$APP_NAME-$APPIMG_ARCH.AppImage"
 
-OUTFILE="$PROJECT_DIR/$APP_NAME-x86_64.AppImage"
+OUTFILE="$PROJECT_DIR/$APP_NAME-$APPIMG_ARCH.AppImage"
 if [ -f "$OUTFILE" ]; then
 	chmod +x "$OUTFILE"
 	echo ""
