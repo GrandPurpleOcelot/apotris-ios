@@ -786,7 +786,7 @@ public:
 
     bool control();
 
-    Scene* previousScene() { return new SettingsScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new SettingsScene(); }; };
 };
 
 #if defined(GBA)
@@ -811,7 +811,7 @@ public:
         return list;
     };
 
-    Scene* previousScene() { return new ControlOptionScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new ControlOptionScene(); }; };
 };
 #endif
 
@@ -834,6 +834,6 @@ public:
         return list;
     };
 
-    Scene* previousScene() { return new ControlOptionScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new ControlOptionScene(); }; };
 };
 #endif

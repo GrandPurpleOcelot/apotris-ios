@@ -527,7 +527,7 @@ void GradientEditorScene::deinit() {
 
 bool GradientElement::action() {
     sfx(SFX_MENUCONFIRM);
-    changeScene(new GradientEditorScene(), Transitions::FADE);
+    changeScene([](){ return new GradientEditorScene(); }, Transitions::FADE);
 
     return true;
 }

@@ -17,7 +17,7 @@ bool HandlingOptionScene::control() {
         // remove 'Handling' from path
         path.pop_back();
 
-        changeScene(new GameScene(), Transitions::FADE);
+        changeScene([](){ return new GameScene(); }, Transitions::FADE);
     }
 
     return false;

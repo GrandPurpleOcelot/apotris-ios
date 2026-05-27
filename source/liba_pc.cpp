@@ -989,7 +989,8 @@ void setScreenOffset(int x, int y) {
 
 void setUpPresentException(std::string error) {
     multiplayerLink->deactivate(true);
-    changeScene(new MultiplayerExceptionScene(std::move(error)));
+    changeScene(
+        [&error]() { return new MultiplayerExceptionScene(std::move(error)); });
 }
 
 #endif

@@ -267,7 +267,7 @@ public:
         };
     };
 
-    Scene* previousScene() { return new SettingsScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new SettingsScene(); }; };
 };
 
 class TrackListScene : public OptionListScene {
@@ -310,7 +310,7 @@ public:
     void init();
     bool control();
 
-    Scene* previousScene() { return new AudioOptionScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new AudioOptionScene(); }; };
 
     std::string getDescription();
 

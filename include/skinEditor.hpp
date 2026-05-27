@@ -258,7 +258,7 @@ class EditorScene : public Scene {
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return NULL; };
+    std::function<Scene*()> previousScene() { return nullptr; };
 
     int currentColor = 2;
     int currentTool = 1;

@@ -771,7 +771,7 @@ void ColorSelectorScene::leave() {
     buildBG(3, 0, 27, 0, 1, 0);
     toggleBG(3, true);
 
-    changeScene(new ConfirmSaveScene(2), Transitions::FADE);
+    changeScene([]() { return new ConfirmSaveScene(2); }, Transitions::FADE);
 }
 
 bool ColorSelectorScene::control() {
@@ -782,7 +782,9 @@ bool ColorSelectorScene::control() {
     if (key_hit(k.confirm)) {
         if (selection == 0) {
             sfx(SFX_MENUCONFIRM);
-            changeScene(new ColorEditorScene(paletteIndex), Transitions::FADE);
+            int idx = paletteIndex;
+            changeScene([idx]() { return new ColorEditorScene(idx); },
+                        Transitions::FADE);
         } else if (selection == 1) {
             sfx(SFX_MENUCANCEL);
             leave();

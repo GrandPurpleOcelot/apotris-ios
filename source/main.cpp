@@ -188,13 +188,14 @@ int main(int argc, char* argv[]) {
     initialize();
 
 #ifndef MULTIBOOT
-    changeScene(new TitleScene());
+    changeScene([]() { return new TitleScene(); });
 #else
-    changeScene(new MultBattleScene());
+    changeScene([]() { return new MultBattleScene(); });
 #endif
 
     // start screen animation
     while (closed()) {
+        checkSceneSwitch();
         vsync();
         // This is here to be thread safe on PC
         if (!exceptionReason.empty()) {

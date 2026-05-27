@@ -122,6 +122,6 @@ public:
         return list;
     };
 
-    Scene* previousScene() { return new SettingsScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new SettingsScene(); }; };
 };
 #endif

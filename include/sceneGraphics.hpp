@@ -891,7 +891,7 @@ class GraphicsScene : public Scene {
     void deinit();
     void showClear();
 
-    virtual Scene* previousScene() { return new SettingsScene(); };
+    virtual std::function<Scene*()> previousScene() { return []{ return new SettingsScene(); }; };
 
     ~GraphicsScene() { deinit(); };
 };
@@ -978,7 +978,7 @@ class GradientEditorScene : public Scene {
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return new GraphicsScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new GraphicsScene(); }; };
 
     ~GradientEditorScene() { deinit(); }
 };

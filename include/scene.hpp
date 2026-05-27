@@ -2,6 +2,7 @@
 
 #include "blockEngine.hpp"
 #include "def.h"
+#include <functional>
 #ifdef GBA
 #include "LinkUniversal.hpp"
 #endif
@@ -54,11 +55,20 @@ public:
     virtual bool control() = 0;
     virtual void init() = 0;
     virtual void deinit() = 0;
-    virtual Scene* previousScene() = 0;
+    virtual std::function<Scene*()> previousScene() = 0;
 
     Scene() = default;
 
     virtual ~Scene(){};
+};
+
+class SceneFactory {
+public:
+    virtual Scene* create() = 0;
+
+    SceneFactory() = default;
+
+    virtual ~SceneFactory(){};
 };
 
 extern Scene* scene;
@@ -97,7 +107,7 @@ class GameScene : public Scene {
 
     int timesPaused = 0;
 
-    Scene* previousScene() { return NULL; };
+    std::function<Scene*()> previousScene() { return nullptr; };
 
     ~GameScene() { deinit(); };
 
@@ -133,7 +143,7 @@ class TitleScene : public Scene {
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return NULL; };
+    std::function<Scene*()> previousScene() { return nullptr; };
 
     ~TitleScene() { deinit(); };
 };
@@ -197,7 +207,7 @@ public:
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return NULL; };
+    std::function<Scene*()> previousScene() { return nullptr; };
 
     virtual std::string getDescription() {
         return ::getDescription(currentOption);
@@ -215,7 +225,7 @@ public:
 
     bool showingUpdateNotification = false;
 
-    Scene* previousScene();
+    std::function<Scene*()> previousScene();
     std::list<std::string> getOptionList() {
         std::list<std::string> result = menuOptions;
 
@@ -233,7 +243,7 @@ public:
 
 class ModeListScene : public SimpleListScene {
 public:
-    Scene* previousScene();
+    std::function<Scene*()> previousScene();
 
     std::list<std::string> getOptionList() {
         std::list<std::string> l = gameOptions;
@@ -330,7 +340,7 @@ public:
     bool control();
     void init();
     void deinit();
-    virtual Scene* previousScene() { return NULL; };
+    virtual std::function<Scene*()> previousScene() { return nullptr; };
 
     virtual std::string getDescription() {
         return ::getDescription(currentOption);
@@ -363,7 +373,7 @@ public:
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return new MainMenuScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
     bool hideSprites;
 };
 #endif
@@ -395,19 +405,18 @@ public:
 
     ConfirmSaveScene(int type) { this->type = type; }
 
-    Scene* previousScene() { return new MainMenuScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
 
     ~ConfirmSaveScene() { deinit(); };
 };
 
 class SettingsScene : public SimpleListScene {
 public:
-    Scene* previousScene() {
+    std::function<Scene*()> previousScene() {
         if (settingsChanged())
-            return new ConfirmSaveScene(0);
+            return []{ return new ConfirmSaveScene(0); };
         else
-            return new MainMenuScene();
-    };
+            return []{ return new MainMenuScene(); }; };
 
     std::list<std::string> getOptionList() {
         std::list<std::string> result = settingsOptions;
@@ -455,7 +464,7 @@ public:
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return new MainMenuScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
 
     ~CreditsScene() { deinit(); };
 };
@@ -464,7 +473,7 @@ class LinksScene : public SimpleListScene {
 
 public:
     // void init();
-    Scene* previousScene() { return new MainMenuScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
 
     std::list<std::string> getOptionList() {
         return {
@@ -497,7 +506,7 @@ public:
     bool control();
     void init();
     void deinit();
-    Scene* previousScene();
+    std::function<Scene*()> previousScene();
     ;
 
     ~MultiplayerExceptionScene() { deinit(); };
@@ -524,7 +533,7 @@ public:
     bool control();
     void init();
     void deinit();
-    Scene* previousScene() { return new LinksScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new LinksScene(); }; };
 
     ~QRScene() { deinit(); };
 };
@@ -618,9 +627,9 @@ public:
     void init();
     void deinit();
 #ifndef MULTIBOOT
-    Scene* previousScene() { return new MainMenuScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
 #else
-    Scene* previousScene() { return new MultiplayerProtocolScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new MultiplayerProtocolScene(); }; };
 #endif
 };
 #endif
@@ -640,8 +649,10 @@ public:
 
 enum class Transitions { INSTANT, FADE, SCANLINE };
 
-extern void changeScene(Scene* newScene);
-extern void changeScene(Scene* newScene, Transitions transition);
+extern void changeScene(std::function<Scene*()> factory);
+extern void changeScene(std::function<Scene*()> factory,
+                        Transitions transition);
+extern void checkSceneSwitch();
 
 extern int rank;
 extern u8 attackAnimationTimers[4];

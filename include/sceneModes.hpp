@@ -37,7 +37,7 @@ public:
     void draw() override;
     void update() override;
 
-    Scene* previousScene() override { return new ModeListScene(); };
+    std::function<Scene*()> previousScene() override { return []{ return new ModeListScene(); }; };
 };
 
 class LevelSelectorElement : public Element {
@@ -603,7 +603,7 @@ public:
     void hideReadyPlayers();
 
 #ifdef MULTIBOOT
-    Scene* previousScene() override { return new MultBattleScene(); };
+    std::function<Scene*()> previousScene() override { return []{ return new MultBattleScene(); }; };
 #endif
 
 #ifdef GBA

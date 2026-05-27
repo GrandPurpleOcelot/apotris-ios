@@ -47,7 +47,9 @@ public:
 
     std::string name() { return "Touch"; }
 
-    Scene* previousScene() override { return new SettingsScene(); }
+    std::function<Scene*()> previousScene() override {
+        return [] { return new SettingsScene(); };
+    }
 
     ~TouchOptionScene() { deinit(); }
 };

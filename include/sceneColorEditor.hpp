@@ -28,7 +28,7 @@ public:
     void init();
     void deinit();
 
-    Scene* previousScene() { return new TitleScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new TitleScene(); }; };
 
     ColorSelectorScene() {}
     ~ColorSelectorScene() { deinit(); }
@@ -121,7 +121,7 @@ public:
     void init();
     void deinit();
 
-    Scene* previousScene() { return new ColorSelectorScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new ColorSelectorScene(); }; };
 
     ColorEditorScene(int paletteIndex) { this->paletteIndex = paletteIndex; }
     ~ColorEditorScene() { deinit(); }

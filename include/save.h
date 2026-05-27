@@ -329,18 +329,19 @@ public:
 
 typedef struct ReplayHeader {
     u8 tag;
-    u32 length;
+    u32 length; // move count
     u32 duration;
     u32 seed;
+    u32 rawLength; // byte length of delta-encoded data in rawMoves
 
     BlockEngine::Options options;
 
-    int placeholder[240];
+    int placeholder[239];
 } ALIGN(4) ReplayHeader;
 
 typedef struct Replay {
     ReplayHeader header;
-    uint32_t moves[4096];
+    uint8_t rawMoves[REPLAY_BUF_SIZE];
 } ALIGN(4) Replay;
 
 extern Save* savefile;

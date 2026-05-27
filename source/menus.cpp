@@ -139,14 +139,18 @@ void GameScene::endScreen() {
     showStats(showingStats, totalTime, ppsStr, true);
 
     if (!replaying) {
+#ifndef NO_DIAGNOSE
+        // Fill replay to the limit to test memory pressure during
+        // "view replay" scene transition on GBA.
+        game->fillReplayToLimit();
+#endif
         saveReplay();
     } else {
         delete currentReplayHeader;
         currentReplayHeader = nullptr;
 
-        for (auto& item : currentReplay)
-            delete item;
-        currentReplay.clear();
+        replayBytes = nullptr;
+        replayCount = 0;
 
         replaying = false;
     }
@@ -263,7 +267,7 @@ void GameScene::endScreen() {
         if (multiplayerStart) {
             multiplayerStart = false;
             startGame(nextSeed);
-            changeScene(new GameScene());
+            changeScene([]() { return new GameScene(); });
             break;
         }
 
@@ -274,7 +278,7 @@ void GameScene::endScreen() {
                 if (!multiplayer) {
                     sfx(SFX_MENUCONFIRM);
                     startGame();
-                    changeScene(new GameScene());
+                    changeScene([]() { return new GameScene(); });
                     break;
                 } else {
                     if (multiplayerLink->stateMachine.IsInState<
@@ -293,9 +297,11 @@ void GameScene::endScreen() {
                 multiplayerLink->deactivate(true);
                 multiplayer = false;
 #ifndef MULTIBOOT
-                changeScene(new MainMenuScene, Transitions::FADE);
+                changeScene([]() { return new MainMenuScene; },
+                            Transitions::FADE);
 #else
-                changeScene(new MultiplayerProtocolScene, Transitions::FADE);
+                changeScene([]() { return new MultiplayerProtocolScene; },
+                            Transitions::FADE);
 #endif
                 return;
             } else if (selection == 1) {
@@ -803,7 +809,7 @@ int GameScene::pauseMenu() {
                 } else if (n == 1) {
                     addGameStats();
                     startGame();
-                    changeScene(new GameScene());
+                    changeScene([]() { return new GameScene(); });
                     paused = false;
                     count = false;
                     sfx(SFX_MENUCONFIRM);
@@ -820,9 +826,11 @@ int GameScene::pauseMenu() {
                     playSongRandom(0);
 
 #ifdef MULTIBOOT
-                    changeScene(new MultBattleScene(), Transitions::FADE);
+                    changeScene([]() { return new MultBattleScene(); },
+                                Transitions::FADE);
 #else
-                    changeScene(new MainMenuScene(), Transitions::FADE);
+                    changeScene([]() { return new MainMenuScene(); },
+                                Transitions::FADE);
 #endif
                     return 1;
                 }
@@ -1360,7 +1368,7 @@ void saveReplay() {
         return;
 
     const int len = game->replay.size();
-    if (len >= 4096) {
+    if (len >= REPLAY_MAX_MOVES) {
         log("replay size too big (" + std::to_string(len) + ")");
         return;
     }
@@ -1376,21 +1384,46 @@ void saveReplay() {
     test = new Replay();
 
     test->header.tag = savefile->newGame;
-    test->header.length = len;
     test->header.duration = game->timer;
     test->header.seed = game->initSeed;
 
     test->header.options = *previousGameOptions;
 
     auto it = game->replay.begin();
+
+    int bytePos = 0;
+    int prevTimer = 0;
+    int movesWritten = 0;
     for (int i = 0; i < len; i++) {
         Timestamp move = *it;
+        int delta = move.timer - prevTimer;
+        prevTimer = move.timer;
 
-        test->moves[i] = (((move.timer & 0x3fffff) << 11) +
-                          ((move.dir & 1) << 9) + (move.move & 0x1ff));
+        // action: [moveType:4][dir:1][unused:3]
+        uint8_t action =
+            (uint8_t)(((move.move & 0xF) << 1) | (move.dir ? 1 : 0));
+
+        if (delta < 255) {
+            if (bytePos + 2 > (int)sizeof(test->rawMoves))
+                break;
+            test->rawMoves[bytePos++] = (uint8_t)delta;
+            test->rawMoves[bytePos++] = action;
+            movesWritten++;
+        } else {
+            if (bytePos + 4 > (int)sizeof(test->rawMoves))
+                break;
+            test->rawMoves[bytePos++] = 255; // escape byte
+            test->rawMoves[bytePos++] = (uint8_t)(delta & 0xFF);
+            test->rawMoves[bytePos++] = (uint8_t)((delta >> 8) & 0xFF);
+            test->rawMoves[bytePos++] = action;
+            movesWritten++;
+        }
 
         ++it;
     }
+
+    test->header.length = movesWritten;
+    test->header.rawLength = bytePos;
 
 #ifdef PC
 #ifdef __APPLE__
@@ -1416,13 +1449,12 @@ void saveReplay() {
 }
 
 ReplayHeader* currentReplayHeader = nullptr;
-std::list<Timestamp*> currentReplay;
+uint8_t* replayBytes = nullptr;
+int replayCount = 0;
 
 void loadReplay() {
-    for (auto& item : currentReplay)
-        delete item;
-
-    currentReplay.clear();
+    replayBytes = nullptr;
+    replayCount = 0;
 
     if (test != nullptr) {
         if (currentReplayHeader == nullptr)
@@ -1431,12 +1463,12 @@ void loadReplay() {
         memcpy32_fast(currentReplayHeader, &test->header,
                       sizeof(ReplayHeader) / 4);
 
-        for (int i = 0; i < (int)test->header.length; i++) {
-            currentReplay.push_back(new Timestamp(test->moves[i]));
-        }
-
+        replayBytes = test->rawMoves;
+        replayCount = (int)test->header.length;
+        replayIndex = 0;
+        replayBytePos = 0;
+        replayFrameTimer = 0;
         replaying = true;
-        replayIterator = currentReplay.begin();
         startGame(currentReplayHeader->options, currentReplayHeader->seed);
 
         gameLoop();
@@ -1477,15 +1509,14 @@ void loadReplay() {
         log("Correct version number.");
     }
 
-    if (rep.header.length > 4096) {
+    if (rep.header.length > REPLAY_MAX_MOVES) {
         log("Invalid replay (too large).");
         return;
     }
 
     log("Attemping to load moves...");
-    for (int i = 0; i < (int)rep.header.length; i++) {
-        currentReplay.push_back(new Timestamp(rep.moves[i]));
-    }
+    replayBytes = rep.rawMoves;
+    replayCount = (int)rep.header.length;
     log("Loaded moves.");
 
     if (currentReplayHeader == nullptr)
@@ -1493,8 +1524,8 @@ void loadReplay() {
 
     memcpy32_fast(currentReplayHeader, &rep.header, sizeof(ReplayHeader) / 4);
 
+    replayIndex = 0;
     replaying = true;
-    replayIterator = currentReplay.begin();
 
     log("trying to start game...");
     startGame(currentReplayHeader->options, currentReplayHeader->seed);

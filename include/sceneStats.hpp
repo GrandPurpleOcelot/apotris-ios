@@ -228,6 +228,6 @@ public:
         };
     };
 
-    Scene* previousScene() { return new MainMenuScene(); };
+    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
 };
 #endif

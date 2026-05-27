@@ -1134,7 +1134,7 @@ uint32_t keys_raw() {
 
 void setUpPresentException(std::string error) {
     multiplayerLink->deactivate(true);
-    changeScene(new MultiplayerExceptionScene(std::move(error)));
+    changeScene([](){ return new MultiplayerExceptionScene(std::move(error)); });
 }
 
 // ******************

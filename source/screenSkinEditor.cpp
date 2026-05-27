@@ -82,7 +82,7 @@ void EditorScene::update() {
         buildBG(3, 0, 27, 0, 1, 0);
         toggleBG(3, true);
 
-        changeScene(new ConfirmSaveScene(1), Transitions::FADE);
+        changeScene([](){ return new ConfirmSaveScene(1); }, Transitions::FADE);
         return;
     }
 

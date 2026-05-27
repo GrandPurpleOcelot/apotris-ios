@@ -98,7 +98,7 @@ void MultiplayerExceptionScene::deinit() {
 }
 
 #ifndef MULTIBOOT
-Scene *MultiplayerExceptionScene::previousScene() { return new MainMenuScene(); }
+std::function<Scene*()> MultiplayerExceptionScene::previousScene() { return []{ return new MainMenuScene(); }; }
 #else
-Scene *MultiplayerExceptionScene::previousScene() { return new MultBattleScene(); }
+std::function<Scene*()> MultiplayerExceptionScene::previousScene() { return []{ return new MultBattleScene(); }; }
 #endif
