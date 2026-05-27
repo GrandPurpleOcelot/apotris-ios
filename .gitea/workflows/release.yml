@@ -36,15 +36,14 @@ jobs:
             container: akouzoukos/apotris-arm64:2026-4-11
             build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
             package_name_suffix: Linux-arm64 # Specific suffix
-            package_files: "README.txt Apotris assets/* assets/shaders/* license/*" # Assuming same files needed
+            package_files: "README.txt Apotris Apotris.desktop Apotris.png install.sh assets/* assets/shaders/* license/*"
             exclude_package_files: "assets/meson.build" # Exclude meson build file in assets
             readme_src: tools/README_LINUX.txt # Use the same Linux readme
           - target: linux
             platform: x86_64
             build_flags: --reconfigure -Db_lto=true -Db_lto_mode=thin --buildtype=release
             package_name_suffix: Linux-x64
-            package_files: "README.txt Apotris assets/* assets/shaders/* license/*" # Files inside build-linux
-            # Note: assets/* might need adjustment if they aren't copied by meson
+            package_files: "README.txt Apotris Apotris.desktop Apotris.png install.sh assets/* assets/shaders/* license/*"
             exclude_package_files: "assets/meson.build"
             readme_src: tools/README_LINUX.txt
             runs-on: ubuntu-latest
@@ -194,6 +193,13 @@ jobs:
           elif [[ "${{ matrix.target }}" == "linux" || "${{ matrix.target }}" == "linux-arm64" || "${{ matrix.target }}" == "win64" || "${{ matrix.target }}" == "switch" ]]; then
              # Copy specific readme
              cp ../${{ matrix.readme_src }} ./README.txt
+             # Linux: copy desktop integration files
+             if [[ "${{ matrix.target }}" == "linux" || "${{ matrix.target }}" == "linux-arm64" ]]; then
+                cp ../dist/Apotris.desktop ./
+                cp ../sprites/logo512.png ./Apotris.png
+                cp ../tools/install.sh ./
+                chmod +x install.sh
+             fi
              # Copy assets if needed (Meson might already do this depending on setup)
              if [[ "${{ matrix.target }}" == "linux" || "${{ matrix.target }}" == "win64" ]]; then
                 if [[ ! -d "assets" ]]; then # Only copy if not already present
