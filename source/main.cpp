@@ -330,6 +330,15 @@ std::string nameInput(int place) {
 
     showSprites(128);
 
+#if defined(N3DS)
+    resetSmallText();
+    setSmallTextArea(220, 0, 17, 30, 20);
+    clearText();
+
+    // Show keyboard immediately if name is empty
+    bool requestKeyboard = (result.find_last_not_of(' ') == std::string::npos);
+#endif
+
     if (place == 0 && game->gameMode != BATTLE &&
         (game->won || game->gameMode == MARATHON || game->gameMode >= BLITZ))
         aprint("New Record", 10, 5);
@@ -337,14 +346,6 @@ std::string nameInput(int place) {
     aprint("Name: ", 11, nameHeight - 2);
 
     MenuKeys k = savefile->settings.menuKeys;
-
-#if defined(N3DS)
-    resetSmallText();
-    setSmallTextArea(220, 0, 17, 30, 20);
-
-    // Show keyboard immediately if name is empty
-    bool requestKeyboard = (result.find_last_not_of(' ') == std::string::npos);
-#endif
 
     while (closed()) {
         vsync();
@@ -589,6 +590,7 @@ std::string nameInput(int place) {
 #if defined(N3DS)
     resetSmallText();
     aprintClearArea(0, 17, 30 + 1, 20);
+    setSmallTextArea(260, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
 #endif
 
     if (result.size() >= 8)

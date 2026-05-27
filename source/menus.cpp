@@ -294,8 +294,10 @@ void GameScene::endScreen() {
                 sfx(SFX_MENUCANCEL);
                 enableBlend(prevBld);
                 buildBG(3, 0, 27, 0, 1, true);
-                multiplayerLink->deactivate(true);
-                multiplayer = false;
+                if (multiplayer) {
+                    multiplayerLink->deactivate(true);
+                    multiplayer = false;
+                }
 #ifndef MULTIBOOT
                 changeScene([]() { return new MainMenuScene; },
                             Transitions::FADE);
