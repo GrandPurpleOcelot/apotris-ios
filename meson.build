@@ -581,6 +581,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             link_args: link_args,
             win_subsystem: 'windows',
             install_rpath: 'lib',
+            install: true,
         )
         if host_machine.system() == 'darwin'
             install_data('dist' / 'Apotris.icns', install_dir: 'Contents/Resources')
@@ -588,6 +589,12 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             install_data('dist' / 'Info.plist', install_dir: 'Contents')
             install_subdir(audio_dir, install_dir: 'Contents/Resources')
             install_subdir('license', install_dir: 'Contents/Resources')
+        elif host_machine.system() == 'linux'
+            install_subdir(audio_dir, install_dir: '.')
+            install_subdir(shaders_dir, install_dir: '.')
+            install_subdir('license', install_dir: '.')
+            install_data('dist' / 'Apotris.desktop', install_dir: 'share/applications')
+            install_data('sprites' / 'logo512.png', install_dir: 'share/icons/hicolor/512x512/apps', rename: 'Apotris.png')
         else
             install_subdir(audio_dir, install_dir: '.')
             install_subdir(shaders_dir, install_dir: '.')

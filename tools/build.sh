@@ -44,9 +44,13 @@ n3ds=Apotris-3DS-$current_branch-$short_hash.zip
 and=Apotris-Android-$current_branch-$short_hash.zip
 
 cp tools/README_LINUX.txt build-linux/README.txt
-cd build-linux && \
-cp -r ../license . && \
-zip $lin README.txt Apotris assets/* license/* -x assets/meson.build && \
+cp dist/Apotris.desktop build-linux/Apotris.desktop
+cp sprites/logo512.png build-linux/Apotris.png
+cp tools/install.sh build-linux/install.sh
+chmod +x build-linux/install.sh
+cd build-linux &&
+cp -r ../license . &&
+zip $lin README.txt Apotris Apotris.desktop Apotris.png install.sh assets/* license/* -x assets/meson.build &&
 cd ..
 
 cd build-win && \
