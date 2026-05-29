@@ -5,6 +5,7 @@
 #include "rumblePatterns.hpp"
 #include "sceneColorEditor.hpp"
 #include "skinEditor.hpp"
+#include "skinFile.hpp"
 #include "sprite41tiles_bin.h"
 #include "tetromino.hpp"
 #include "text.h"
@@ -626,6 +627,9 @@ bool ConfirmSaveScene::control() {
             savefile->settings.menuKeys = menuKeys;
 
             checkCustomSkins();
+
+            if (type == 1)
+                exportAllSkinFiles();
 
             saveSavefile();
         }

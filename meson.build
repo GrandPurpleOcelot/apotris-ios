@@ -72,6 +72,8 @@ sources = files(
     src_dir / 'screenPlayOptions.cpp',
     src_dir / 'screenSkinEditor.cpp',
     src_dir / 'screenColorEditor.cpp',
+    src_dir / 'skinFile.cpp',
+    src_dir / 'stb_impl.cpp',
     src_dir / 'screenTitle.cpp',
     src_dir / 'sprites.cpp',
     src_dir / 'tetromino.cpp',

@@ -22,6 +22,7 @@
 // #include "soundbank.h"
 #include "blockEngine.hpp"
 #include "skinEditor.hpp"
+#include "skinFile.hpp"
 
 void generateTiles();
 void showColorPalette(int);
@@ -45,6 +46,8 @@ static bool onMini = false;
 static bool refresh = false;
 
 void EditorScene::init() {
+    importAllSkinFiles();
+
     clearSprites(128);
     showSprites(128);
 
@@ -82,7 +85,8 @@ void EditorScene::update() {
         buildBG(3, 0, 27, 0, 1, 0);
         toggleBG(3, true);
 
-        changeScene([](){ return new ConfirmSaveScene(1); }, Transitions::FADE);
+        changeScene([]() { return new ConfirmSaveScene(1); },
+                    Transitions::FADE);
         return;
     }
 
@@ -591,6 +595,8 @@ void showMinos() {
 }
 
 void refreshSkin() {
+    savefile->customSkins[skinIndex].changed = true;
+
     if (!onMini) {
         savefile->settings.skin = -(skinIndex + 1);
         for (int i = 0; i < 8; i++) {
