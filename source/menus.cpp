@@ -722,6 +722,10 @@ int GameScene::pauseMenu() {
     int resetHoldTimer = 0;
     const int holdThreshold = 30;
 
+    int confirmHoldTimer = 0;
+    int confirmHoldAction = -1; // -1 = inactive, 1 = restart, 3 = quit
+    OBJ_ATTR* confirmMeterSprite = &obj_buffer[23];
+
     bool skipped = false;
 
     bool count = true;
@@ -798,7 +802,71 @@ int GameScene::pauseMenu() {
 
             showOption("Quit");
 
-            if (key_hit(k.confirm)) {
+            // Hold-to-confirm processing for Restart/Quit
+            if (confirmHoldAction >= 0) {
+                if (key_is_down(k.confirm)) {
+                    confirmHoldTimer++;
+
+                    // Play progress sfx every 1/8 second (~8 frames)
+                    if (confirmHoldTimer % 8 == 0) {
+                        sfx(SFX_SHIFT2);
+                    }
+
+                    // Show zone meter progress sprite
+                    int progress = confirmHoldTimer * 12 / 60;
+                    if (progress > 12)
+                        progress = 12;
+
+                    int meterX =
+                        (savefile->settings.aspectRatio != 0) ? 191 : 204;
+                    sprite_set_attr(confirmMeterSprite, ShapeSquare, 2, 256 + 3,
+                                    12, 0);
+                    sprite_enable_mosaic(confirmMeterSprite);
+                    sprite_set_pos(confirmMeterSprite, meterX, 124);
+                    sprite_unhide(confirmMeterSprite, 0);
+
+                    for (int i = 0; i < 12; i++) {
+                        if (i < progress)
+                            setPaletteColor(12 + 16, 4 + i, 0x7fff, 1);
+                        else
+                            setPaletteColor(12 + 16, 4 + i, 0x0c63, 1);
+                    }
+
+                    // Action completes after 1 second (60 frames)
+                    if (confirmHoldTimer >= 60) {
+                        sprite_hide(confirmMeterSprite);
+                        if (confirmHoldAction == 1) {
+                            addGameStats();
+                            startGame();
+                            changeScene([]() { return new GameScene(); });
+                            paused = false;
+                            count = false;
+                            sfx(SFX_MENUCONFIRM);
+                            return 0;
+                        } else if (confirmHoldAction == 3) {
+                            enableBlend(prevBld);
+                            sfx(SFX_MENUCANCEL);
+                            buildBG(3, 0, 27, 0, 1, true);
+                            addGameStats();
+                            playSongRandom(0);
+
+#ifdef MULTIBOOT
+                            changeScene([]() { return new MultBattleScene(); },
+                                        Transitions::FADE);
+#else
+                            changeScene([]() { return new MainMenuScene(); },
+                                        Transitions::FADE);
+#endif
+                            return 1;
+                        }
+                    }
+                } else {
+                    // Button released, cancel hold
+                    confirmHoldTimer = 0;
+                    confirmHoldAction = -1;
+                    sprite_hide(confirmMeterSprite);
+                }
+            } else if (key_hit(k.confirm)) {
                 int n = selection;
                 if (!(game->gameMode == TRAINING) && selection >= 2)
                     n++;
@@ -809,32 +877,19 @@ int GameScene::pauseMenu() {
                     paused = false;
                     break;
                 } else if (n == 1) {
-                    addGameStats();
-                    startGame();
-                    changeScene([]() { return new GameScene(); });
-                    paused = false;
-                    count = false;
-                    sfx(SFX_MENUCONFIRM);
-                    return 0;
+                    // Start hold-to-confirm for Restart
+                    confirmHoldAction = 1;
+                    confirmHoldTimer = 0;
+                    aprintClearArea(0, 18, 30, 2);
                 } else if (n == 2) {
                     onStates = true;
                     selection = 0;
                     clearText();
                 } else if (n == 3) {
-                    enableBlend(prevBld);
-                    sfx(SFX_MENUCANCEL);
-                    buildBG(3, 0, 27, 0, 1, true);
-                    addGameStats();
-                    playSongRandom(0);
-
-#ifdef MULTIBOOT
-                    changeScene([]() { return new MultBattleScene(); },
-                                Transitions::FADE);
-#else
-                    changeScene([]() { return new MainMenuScene(); },
-                                Transitions::FADE);
-#endif
-                    return 1;
+                    // Start hold-to-confirm for Quit
+                    confirmHoldAction = 3;
+                    confirmHoldTimer = 0;
+                    aprintClearArea(0, 18, 30, 2);
                 }
             }
         } else {
@@ -911,7 +966,7 @@ int GameScene::pauseMenu() {
                            ((optionsHeight + selection * 2) * 8) - 5);
         }
 
-        if (key_hit(k.pause)) {
+        if (key_hit(k.pause) && confirmHoldAction < 0) {
             sfx(SFX_MENUCONFIRM);
             clearText();
             // updateText();
@@ -919,7 +974,7 @@ int GameScene::pauseMenu() {
             break;
         }
 
-        if (key_hit(k.special3)) {
+        if (key_hit(k.special3) && confirmHoldAction < 0) {
 #ifndef NO_DIAGNOSE
             qrScene();
 #endif
@@ -938,7 +993,7 @@ int GameScene::pauseMenu() {
             }
         }
 
-        if (key_hit(k.cancel)) {
+        if (key_hit(k.cancel) && confirmHoldAction < 0) {
             sfx(SFX_MENUCONFIRM);
             if (onStates) {
                 onStates = false;
@@ -951,7 +1006,7 @@ int GameScene::pauseMenu() {
             }
         }
 
-        if (key_hit(k.up)) {
+        if (key_hit(k.up) && confirmHoldAction < 0) {
             if (selection == 0)
                 selection = maxSelection - 1;
             else
@@ -959,7 +1014,7 @@ int GameScene::pauseMenu() {
             sfx(SFX_MENUMOVE);
         }
 
-        if (key_hit(k.down)) {
+        if (key_hit(k.down) && confirmHoldAction < 0) {
             if (selection == maxSelection - 1)
                 selection = 0;
             else
@@ -967,7 +1022,8 @@ int GameScene::pauseMenu() {
             sfx(SFX_MENUMOVE);
         }
 
-        if (key_hit(k.special1) && !onStates && !savefile->settings.journey) {
+        if (key_hit(k.special1) && !onStates && !savefile->settings.journey &&
+            confirmHoldAction < 0) {
             sfx(SFX_MENUCONFIRM);
             showingStats = !showingStats;
             clearSmallText();
