@@ -983,12 +983,28 @@ int GameScene::pauseMenu() {
                 sfx(SFX_MENUCONFIRM);
                 if (!skipped) {
                     skipped = true;
-                    std::string trackSkip = "Track Skipped!";
-                    naprint(
-                        trackSkip,
-                        ((savefile->settings.aspectRatio) ? (240 - 13) : 240) -
-                            getVariableWidth(trackSkip),
-                        18 * 8);
+
+                    std::string trackName = getSongName(currentlyPlayingSong);
+                    if (trackName.empty()) {
+                        std::string trackSkip = "Track Skipped!";
+                        naprint(trackSkip,
+                                ((savefile->settings.aspectRatio) ? (240 - 13)
+                                                                  : 240) -
+                                    getVariableWidth(trackSkip),
+                                18 * 8);
+                    } else {
+                        std::string trackSkip = "Now playing:";
+                        naprint(trackSkip,
+                                ((savefile->settings.aspectRatio) ? (240 - 13)
+                                                                  : 240) -
+                                    getVariableWidth(trackSkip),
+                                17 * 8);
+                        naprint(trackName,
+                                ((savefile->settings.aspectRatio) ? (240 - 13)
+                                                                  : 240) -
+                                    getVariableWidth(trackName),
+                                18 * 8);
+                    }
                 }
             }
         }
