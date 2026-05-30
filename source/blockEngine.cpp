@@ -1546,6 +1546,12 @@ void Game::fillQueue(int count) {
         if (randomizer == BAG_7) {
             int n = random() % bag.size();
 
+            if (proMode && queue.empty() && bagCounter == 1 && bag.size() == 7) {
+                while (bag.array[n] == PIECE_S || bag.array[n] == PIECE_Z || bag.array[n] == PIECE_O) {
+                    n = random() % bag.size();
+                }
+            }
+
             queue.push_back(bag.array[n]);
             bag.erase(n);
 
