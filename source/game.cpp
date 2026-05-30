@@ -1906,7 +1906,8 @@ void GameScene::countdown() {
         if (!multiplayer && !replaying && !interrupted && !demo &&
             savefile->settings.interruptCountdown &&
             (timer < 2 * timerMax / 3) &&
-            key_hit(k.rotateCW | k.rotateCCW | k.rotate180)) {
+            (key_hit(k.rotateCW) || key_hit(k.rotateCCW) ||
+             key_hit(k.rotate180))) {
             interrupted = true;
             timer = timerMax - 30;
             sfx(SFX_GO);
