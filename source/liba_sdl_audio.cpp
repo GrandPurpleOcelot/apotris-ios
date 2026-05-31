@@ -254,17 +254,15 @@ void startSong(int song, bool loop) {
         musicQueue.skip();
     }
 
-    if (musicVolume > 0) {
-        musicQueue.setParams(44100, 2);
-        currentSongHandle = gSoloud.play(musicQueue);
-        musicArray.at(song)->setLooping(loop);
-        musicQueue.play(*musicArray.at(song));
-    }
+    musicQueue.setParams(44100, 2);
+    currentSongHandle = gSoloud.play(musicQueue, musicVolume, 0, true);
+    musicArray.at(song)->setLooping(loop);
+    musicQueue.play(*musicArray.at(song));
 
     currentSong = song;
     looping = loop;
 
-    gSoloud.setVolume(currentSongHandle, musicVolume);
+    gSoloud.setPause(currentSongHandle, false);
 }
 
 void stopSong() {

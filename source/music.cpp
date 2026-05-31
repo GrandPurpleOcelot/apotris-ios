@@ -32,16 +32,52 @@ void playSong(int menuId, int songId) {
     startSong(song, (savefile->settings.cycleSongs == 0));
 }
 
-void playSongRandom(int menuId) {
+static int getSongCount(int menuId) {
+    if (menuId == 0)
+        return (int)songs.menu.size();
+    else if (menuId == 1)
+        return (int)songs.game.size();
+    return 0;
+}
 
-    int max = 0;
+int getNextSong(int menuId, int fromSong) {
+    int max = getSongCount(menuId);
 
-    if (menuId == 0) {
-        max = (int)songs.menu.size();
-    } else if (menuId == 1) {
-        max = (int)songs.game.size();
+    if (max <= 0)
+        return -1;
+
+    if (savefile->settings.cycleSongs == 2) {
+        // Shuffle
+        int index = 0;
+        int attempts = 0;
+        do {
+            index = (int)(randNext() % max);
+        } while ((getSongState(menuId, index) || index == fromSong) &&
+                 attempts++ < 1000);
+
+        if (attempts >= 1000) {
+            if (!getSongState(menuId, fromSong))
+                return fromSong;
+            return -1;
+        }
+        return index;
+    } else {
+        // Sequential
+        int index = std::max(fromSong, 0);
+        int attempts = 0;
+        do {
+            if (++index >= max)
+                index = 0;
+        } while (getSongState(menuId, index) && attempts++ < 1000);
+
+        if (attempts >= 1000)
+            return -1;
+        return index;
     }
+}
 
+void playSongRandom(int menuId) {
+    int max = getSongCount(menuId);
     if (max <= 0)
         return;
 
@@ -55,8 +91,8 @@ void playSongRandom(int menuId) {
         count++ < 1000);
 
     if (count >= 1000) {
-        if (!getSongState(menuId, (int) currentlyPlayingSong)) {
-            playSong(menuId, (int) currentlyPlayingSong);
+        if (!getSongState(menuId, (int)currentlyPlayingSong)) {
+            playSong(menuId, (int)currentlyPlayingSong);
         }
         return;
     }
@@ -65,18 +101,8 @@ void playSongRandom(int menuId) {
 }
 
 void playNextSong() {
-    int max = 0;
-
     int menuId = currentMenu;
-
-    if (menuId == 0) {
-        max = (int)songs.menu.size();
-    } else if (menuId == 1) {
-        max = (int)songs.game.size();
-    } else {
-        return;
-    }
-
+    int max = getSongCount(menuId);
     if (max <= 0)
         return;
 
@@ -92,6 +118,34 @@ void playNextSong() {
         return;
 
     playSong(menuId, (int)index);
+}
+
+std::string getDisplayTrackName(int songIndex) {
+    if (songIndex < 0)
+        return {};
+
+    std::string name = getSongName(songIndex);
+
+    // Strip MENU_ or GAME_ prefix
+    if (name.rfind("MENU_", 0) == 0)
+        name = name.substr(5);
+    else if (name.rfind("GAME_", 0) == 0)
+        name = name.substr(5);
+
+    // Strip alphabetical ordering prefix (e.g. "a_" in "a_thirno")
+    if (name.size() > 2 && name[1] == '_')
+        name = name.substr(2);
+
+    // Strip file extension
+    auto dot = name.rfind('.');
+    if (dot != std::string::npos)
+        name = name.substr(0, dot);
+
+    // Truncate to 15 characters with ellipsis
+    if ((int)name.size() > 15)
+        name = name.substr(0, 15) + "...";
+
+    return name;
 }
 
 void toggleSong(int group, int index, bool state) {

@@ -118,6 +118,8 @@ extern void gameLoop();
 extern void playSong(int, int);
 extern void playSongRandom(int);
 extern void playNextSong();
+extern int getNextSong(int menuId, int fromSong);
+extern std::string getDisplayTrackName(int songIndex);
 extern void songListMenu();
 extern void showTitleSprites();
 extern void setLightMode();
