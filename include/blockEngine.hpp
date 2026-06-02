@@ -165,7 +165,8 @@ public:
     int maxStreak = 0;
     int maxCombo = 0;
     int holds = 0;
-    int maxZonedLines = 0;
+    u16 maxZonedLines = 0;
+    u16 maxCascade = 0;
     int secretGrade = 0;
 
     Stats() {}
@@ -180,6 +181,7 @@ public:
         maxCombo = old.maxCombo;
         holds = old.holds;
         maxZonedLines = old.maxZonedLines;
+        maxCascade = old.maxCascade;
         secretGrade = old.secretGrade;
     }
 
@@ -199,6 +201,9 @@ public:
 
         if (old.maxZonedLines > maxZonedLines)
             maxZonedLines = old.maxZonedLines;
+
+        if (old.maxCascade > maxCascade)
+            maxCascade = old.maxCascade;
 
         if (old.secretGrade > secretGrade)
             secretGrade = old.secretGrade;

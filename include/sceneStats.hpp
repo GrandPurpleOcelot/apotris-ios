@@ -185,6 +185,19 @@ public:
     }
 };
 
+class MaxCascadeElement : public Element {
+public:
+    std::string getLabel() override { return "Max Cascade"; }
+
+    std::string getCursor(std::string text) override {
+        return " " + text + " ";
+    }
+
+    std::string getCurrentOption() override {
+        return std::to_string(savefile->stats.gameStats.maxCascade);
+    }
+};
+
 class SecretGradeElement : public Element {
 public:
     std::string getLabel() override { return "Max Secret Grade"; }
@@ -223,8 +236,8 @@ public:
             new TriplesElement(),        new QuadsElement(),
             new TSpinsElement(),         new PerfectClearsElement(),
             new MaxStreakElement(),      new MaxComboElement(),
-            new MaxZonedLinesElement(),  new SecretGradeElement(),
-            new HighestLevelElement(),
+            new MaxZonedLinesElement(),  new MaxCascadeElement(),
+            new SecretGradeElement(),    new HighestLevelElement(),
         };
     };
 

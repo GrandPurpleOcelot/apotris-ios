@@ -644,6 +644,11 @@ void GameScene::showStats(bool moreStats, const std::string& time,
                 0, 7 * counter++, 2);
     }
 
+    if (game->statTracker.maxCascade > 0) {
+        aprints("Max Cascade: " + std::to_string(game->statTracker.maxCascade),
+                0, 7 * counter++, 2);
+    }
+
     aprints("Times Paused: " + std::to_string(timesPaused), 0, 7 * counter++,
             2);
 
@@ -1165,6 +1170,8 @@ int onRecord() {
             place = saveRecord(savefile->boards.zone[mode], game->score, -1);
         } else if (subMode == 2) {
             place = saveRecord(savefile->boards.tower[mode], game->score, -1);
+        } else if (subMode == 3) {
+            place = saveRecord(savefile->boards.cascade[mode], game->score, -1);
         }
     } else if (game->gameMode == SPRINT && game->won == 1) {
         if (subMode == 0) {

@@ -561,6 +561,9 @@ void Game::update() {
     }
 
     if (cascadeComplexity > 1) {
+        if (cascadeComplexity > statTracker.maxCascade)
+            statTracker.maxCascade = cascadeComplexity;
+
         sounds.cascade = cascadeComplexity;
         cascadeComplexity = 0;
     }
