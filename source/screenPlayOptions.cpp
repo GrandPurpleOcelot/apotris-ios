@@ -1463,7 +1463,12 @@ void MatchMakingScene::init() {
         wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
 
     clearTilemap(29);
-    naprint("Who do you want to play with?", 40, 56);
+
+    std::string str1 = "Who would you like";
+    std::string str2 = "to play with?";
+
+    naprint(str1, (240 - getVariableWidth(str1)) / 2, 56);
+    naprint(str2, (240 - getVariableWidth(str2)) / 2, 56 + 10);
 
     wordSprites[0].setText("FRIENDS");
     wordSprites[0].show(48, 104, 14);

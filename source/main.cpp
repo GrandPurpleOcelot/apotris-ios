@@ -351,8 +351,8 @@ std::string nameInput(int place) {
         vsync();
 
         if (place == -1) {
-            aprint("Pick a unique room to", 5, 5);
-            aprint("join/create", 7, 6);
+            aprint("Pick a unique room", 6, 5);
+            aprint("to join/create", 7, 6);
         }
 
         if (place == -1) {
