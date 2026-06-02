@@ -135,10 +135,11 @@ void platformInit() {
         tilemap = TLN_CreateTilemap(64, 64, tiles, 0, tilesets[0]);
     }
 
-    spriteBitmap = TLN_CreateBitmap(1024 * 8, 64, 8);
+    spriteBitmap = TLN_CreateBitmap(1024 * 8, 8, 8);
 
     TLN_SetBitmapPalette(spriteBitmap, palettes[16]); //  NECESSARY ! ! !
     spriteset = TLN_CreateSpriteset(spriteBitmap, spriteData, 128);
+    TLN_SetSpritesetMapping1D(spriteset, true);
 
     TLN_SetRasterCallback(onHBlank);
 
@@ -264,7 +265,7 @@ void showSprites(int n) {
             continue;
         }
 
-        spriteData[counter].x = (sprite->tile_start) * 8;
+        spriteData[counter].x = sprite->tile_start * 64;
         spriteData[counter].y = 0;
         spriteData[counter].w = sprite->sx;
         spriteData[counter].h = sprite->sy;
@@ -418,34 +419,18 @@ void setLayerScroll(int layer, int x, int y) {
 }
 
 void loadSpriteTiles(int index, const void* src, int lengthX, int lengthY) {
-
     u8* source = (u8*)src;
     const int count = lengthX * lengthY;
-    uint8_t tmp[8 * 8 * count];
+    uint8_t* base = TLN_GetBitmapPtr(spriteBitmap, 0, 0);
+
     for (int ii = 0; ii < count; ii++) {
+        uint8_t* dst = base + (index + ii) * 64;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 4; j++) {
-                tmp[ii * 64 + i * 8 + j * 2] =
-                    source[ii * 32 + i * 4 + j] & 0xf;
-                tmp[ii * 64 + i * 8 + j * 2 + 1] =
+                dst[i * 8 + j * 2] = source[ii * 32 + i * 4 + j] & 0xf;
+                dst[i * 8 + j * 2 + 1] =
                     (source[ii * 32 + i * 4 + j] >> 4) & 0xf;
             }
-        }
-    }
-
-    TLN_SpriteData d;
-    memcpy(d.name, "tile", 5);
-    d.w = 8;
-    d.h = 8;
-
-    int counter = 0;
-    for (int i = 0; i < lengthY; i++) {
-        for (int j = 0; j < lengthX; j++) {
-            d.x = 8 * (j + index);
-            d.y = 8 * i;
-
-            TLN_SetSpritesetData(spriteset, 127, &d, &tmp[counter * 64], 8);
-            counter++;
         }
     }
 }
@@ -454,31 +439,17 @@ void loadSpriteTilesPartial(int index, const void* src, int tx, int ty,
                             int lengthX, int lengthY, int rowLength) {
     u8* source = (u8*)src;
     const int count = lengthX * lengthY;
-    uint8_t tmp[8 * 8 * count];
+    uint8_t* base = TLN_GetBitmapPtr(spriteBitmap, 0, 0);
+    const int startTile = index + ty * rowLength + tx;
+
     for (int ii = 0; ii < count; ii++) {
+        uint8_t* dst = base + (startTile + ii) * 64;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 4; j++) {
-                tmp[ii * 64 + i * 8 + j * 2] =
-                    source[ii * 32 + i * 4 + j] & 0xf;
-                tmp[ii * 64 + i * 8 + j * 2 + 1] =
+                dst[i * 8 + j * 2] = source[ii * 32 + i * 4 + j] & 0xf;
+                dst[i * 8 + j * 2 + 1] =
                     (source[ii * 32 + i * 4 + j] >> 4) & 0xf;
             }
-        }
-    }
-
-    TLN_SpriteData d;
-    memcpy(d.name, "tile", 5);
-    d.w = 8;
-    d.h = 8;
-
-    int counter = 0;
-    for (int i = 0; i < lengthY; i++) {
-        for (int j = 0; j < lengthX; j++) {
-            d.x = 8 * (j + index + tx);
-            d.y = 8 * (i + ty);
-
-            TLN_SetSpritesetData(spriteset, 127, &d, &tmp[counter * 64], 8);
-            counter++;
         }
     }
 }
@@ -538,22 +509,8 @@ void setPaletteColor(int palette, int index, u16 color, int count) {
 }
 
 void clearSpriteTiles(int index, int lengthX, int lengthY) {
-    uint8_t tmp[8 * 8];
-    memset(tmp, 0, 8 * 8);
-
-    TLN_SpriteData d;
-    memcpy(d.name, "clear", 6);
-    d.w = 8;
-    d.h = 8;
-
-    for (int i = 0; i < lengthY; i++) {
-        d.y = 8 * i;
-        for (int j = 0; j < lengthX; j++) {
-            d.x = 8 * (j + index);
-
-            TLN_SetSpritesetData(spriteset, 127, &d, tmp, 8);
-        }
-    }
+    uint8_t* base = TLN_GetBitmapPtr(spriteBitmap, 0, 0);
+    memset(base + index * 64, 0, lengthX * lengthY * 64);
 }
 
 void sprite_enable_mosaic(OBJ_ATTR* sprite) {}
@@ -770,18 +727,8 @@ void clr_rgbscale(COLOR* dst, const COLOR* src, uint nclrs, COLOR clr) {
 };
 
 void clearSpriteTile(int index, int tx, int ty, int width) {
-    uint8_t tmp[8 * 8];
-    memset(tmp, 0, 64);
-
-    TLN_SpriteData d;
-    memcpy(d.name, "tile", 5);
-    d.w = 8;
-    d.h = 8;
-
-    d.x = 8 * (tx + index);
-    d.y = 8 * ty;
-
-    TLN_SetSpritesetData(spriteset, 127, &d, tmp, 8);
+    uint8_t* base = TLN_GetBitmapPtr(spriteBitmap, 0, 0);
+    memset(base + (index + ty * width + tx) * 64, 0, 64);
 };
 
 void clearTiles(int tileset, int index, int count) {
