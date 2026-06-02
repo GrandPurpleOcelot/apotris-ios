@@ -317,6 +317,8 @@ void GameScene::checkSounds() {
 
     if (game->sounds.clear) {
         int speed = game->comboCounter;
+        if (game->previousClear.cascadeComplexity > 1)
+            speed += game->previousClear.cascadeComplexity - 1;
         if (speed > 10)
             speed = 10;
 
@@ -444,6 +446,16 @@ void GameScene::checkSounds() {
 
         if (savefile->settings.clearText == 2)
             floatingList.emplace_back(clearTypeText);
+    }
+
+    if (game->sounds.cascade) {
+        if (savefile->settings.clearText == 2) {
+            std::string cascadeText =
+                "cascade x" + std::to_string(game->sounds.cascade);
+            floatingList.emplace_back(cascadeText);
+        }
+
+        game->sounds.cascade = 0;
     }
 
     if (game->sounds.levelUp) {
@@ -1721,30 +1733,23 @@ void GameScene::showComboStreak() {
 
     if (game->gameMode != CLASSIC && !game->zoneTimer) {
         if (game->comboCounter > 0) {
-            // aprint("Combo x", 21, clearTextHeight - 1);
             wordSprites[8].setText("Combo");
             wordSprites[8].show(21 * 8 + 4, (clearTextHeight - 1) * 8, 15);
 
-            // aprintf(game->comboCounter, 28, clearTextHeight - 1);
             wordSprites[9].setText("x" + std::to_string(game->comboCounter));
             wordSprites[9].show(21 * 8 + 4, (clearTextHeight) * 8, 15);
         } else {
-            // aprintClearArea(20, clearTextHeight - 1, 10, 1);
             wordSprites[8].hide();
             wordSprites[9].hide();
         }
 
         if (game->b2bCounter > 0) {
-            // aprint("Streak", 22, clearTextHeight + 1);
             wordSprites[10].setText("Streak");
             wordSprites[10].show(21 * 8 + 4, (clearTextHeight + 2) * 8, 15);
 
-            // aprint("x", 24, clearTextHeight + 2);
-            // aprintf(game->b2bCounter + 1, 25, clearTextHeight + 2);
             wordSprites[11].setText("x" + std::to_string(game->b2bCounter));
             wordSprites[11].show(21 * 8 + 4, (clearTextHeight + 3) * 8, 15);
         } else {
-            // aprintClearArea(20, clearTextHeight + 1, 10, 2);
             wordSprites[10].hide();
             wordSprites[11].hide();
         }

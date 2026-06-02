@@ -294,11 +294,12 @@ public:
     int isPerfectClear = 0;
     int isBackToBack = 0;
     int isDifficult = 0;
+    int cascadeComplexity = 0;
     Drop drop;
 
     Score() {}
     Score(int lC, int sc, int co, int isTS, int isPC, int isBTB, int isDif,
-          Drop drp) {
+          int complexity, Drop drp) {
         linesCleared = lC;
         score = sc;
         combo = co;
@@ -306,6 +307,7 @@ public:
         isPerfectClear = isPC;
         isBackToBack = isBTB;
         isDifficult = isDif;
+        cascadeComplexity = complexity;
         drop = drp;
     }
 
@@ -317,6 +319,7 @@ public:
         isPerfectClear = oldScore.isPerfectClear;
         isBackToBack = oldScore.isBackToBack;
         isDifficult = oldScore.isDifficult;
+        cascadeComplexity = oldScore.cascadeComplexity;
         drop = Drop(oldScore.drop);
     }
 };
@@ -340,6 +343,7 @@ public:
     int tspin = 0;
     int bone = 0;
     int towerScroll = 0;
+    int cascade = 0;
 
     SoundFlags() {}
     SoundFlags(const SoundFlags& oldFlags) {
@@ -360,6 +364,7 @@ public:
         tspin = oldFlags.tspin;
         bone = oldFlags.bone;
         towerScroll = oldFlags.towerScroll;
+        cascade = oldFlags.cascade;
     }
 };
 
@@ -669,7 +674,7 @@ public:
     int lost = 0;
     int gameMode;
     SoundFlags sounds;
-    Score previousClear = Score(0, 0, 0, 0, 0, 0, 0, Drop());
+    Score previousClear = Score(0, 0, 0, 0, 0, 0, 0, 1, Drop());
     int timer = 0;
     int refresh = 0;
     int won = 0;
@@ -760,6 +765,7 @@ public:
     int towerMediumDelay = 0;
 
     int cascadeTimer = 0;
+    int cascadeComplexity = 1;
 
     List queue;
     List moveHistory;                // max 10

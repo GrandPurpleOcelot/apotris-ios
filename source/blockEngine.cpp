@@ -15,7 +15,7 @@ using namespace BlockEngine;
 using namespace GameInfo;
 
 bool BlockEngine::enableFumen = false;
-bool BlockEngine::enableFumenQueue = true;
+bool BlockEngine::enableFumenQueue = false;
 
 u8 BlockEngine::fumenQueue[5] = {PIECE_I, PIECE_L, PIECE_J, PIECE_T, 0};
 
@@ -560,6 +560,11 @@ void Game::update() {
         return;
     }
 
+    if (cascadeComplexity > 1) {
+        sounds.cascade = cascadeComplexity;
+        cascadeComplexity = 0;
+    }
+
     if (!disappearing)
         inGameTimer++;
 
@@ -863,7 +868,7 @@ void Game::place() {
     bool isCascade = (gameMode == MARATHON && subMode == 3) ||
                      (gameMode == ZEN && subMode == 2);
     if (isCascade)
-        connections.push_back(Connection(pawn.x, pawn.y, blocks));
+        connections.emplace_back(pawn.x, pawn.y, blocks);
 
     toEndZone = false;
     if ((pawn.y + pawn.lowestBlock[pawn.rotation]) <= (lengthY / 2 - 1)) {
@@ -1380,9 +1385,12 @@ int Game::clear(const Drop& drop) {
     if (gameMode == ZEN || gameMode == ULTRA)
         prevLevel = 1;
 
+    const bool isCascade = (gameMode == MARATHON && subMode == 3) ||
+                           (gameMode == ZEN && subMode == 2);
+
     // calculate score
     int add = 0;
-    if (clearCount <= 4 && !isPerfectClear) {
+    if ((clearCount <= 4) && !isPerfectClear) {
         if (isTSpin == 0) {
             // if no t-spin
             if (gameMode != CLASSIC) {
@@ -1407,9 +1415,33 @@ int Game::clear(const Drop& drop) {
             isDifficult = true;
             statTracker.tspins++;
         }
+    } else if (clearCount > 4 && !isPerfectClear && !isTSpin) {
+        // score >4 lines as groups of 4 (e.g. 6 = quad + double)
+        int quads = clearCount / 4;
+        int remainder = clearCount % 4;
+
+        if (gameMode != CLASSIC) {
+            add += quads * scoring[3][0] * prevLevel;
+            attack = quads * scoring[3][2];
+            if (remainder > 0) {
+                add += scoring[remainder - 1][0] * prevLevel;
+                attack += scoring[remainder - 1][2];
+            }
+        } else {
+            add += quads * classicScoring[3] * (level + 1);
+            if (remainder > 0)
+                add += classicScoring[remainder - 1] * (level + 1);
+        }
+
+        isDifficult = true;
+        statTracker.clears[3] += quads;
+        if (remainder > 0)
+            statTracker.clears[remainder - 1]++;
     }
 
     int combo = comboCounter + 1;
+
+    cascadeComplexity++;
 
     if (gameMode == MASTER && !disappearing) {
 
@@ -1442,6 +1474,10 @@ int Game::clear(const Drop& drop) {
         b2bCounter = 0;
     }
 
+    if (cascadeComplexity > 1) {
+        add = (int)add * cascadeComplexity;
+    }
+
     if (b2bCounter > statTracker.maxStreak)
         statTracker.maxStreak = b2bCounter;
 
@@ -1471,8 +1507,9 @@ int Game::clear(const Drop& drop) {
     } else
         score += add;
 
-    previousClear = Score(clearCount, add, comboCounter, isTSpin,
-                          isPerfectClear, isBackToBack, isDifficult, drop);
+    previousClear =
+        Score(clearCount, add, comboCounter, isTSpin, isPerfectClear,
+              isBackToBack, isDifficult, cascadeComplexity, drop);
 
     sounds.clear = 1;
 
@@ -1556,6 +1593,8 @@ void Game::next() { //~21-29k cycles
     arrCounter = 0;
 
     speedCounter = 0;
+
+    cascadeComplexity = 0;
 
     softDrop = false;
 
@@ -1951,8 +1990,9 @@ void Game::removeClearLock() {
 
     int pos = linesToClear.back();
 
-    bool isCascade = (gameMode == MARATHON && subMode == 3) ||
-                     (gameMode == ZEN && subMode == 2);
+    const bool isCascade = (gameMode == MARATHON && subMode == 3) ||
+                           (gameMode == ZEN && subMode == 2);
+
     if (!isCascade) {
         for (int i = pos; i >= stackHeight; i--) {
             if (index != linesToClear.rend() && *index == i) {
@@ -1991,7 +2031,7 @@ void Game::removeClearLock() {
     } else {
         calculateColumnHeights(len);
     }
-    
+
     if (gameMode == COMBO) {
         if (!pawn.big) {
             for (int i = lengthY / 2 - 4; i < lengthY; i++) {
@@ -3358,7 +3398,7 @@ void Game::scrollTower() {
     if (stackHeight == lengthY) {
         score += 3500 * level;
         sounds.clear = 1;
-        previousClear = Score(0, 0, -1, 0, 1, 0, 0, Drop());
+        previousClear = Score(0, 0, -1, 0, 1, 0, 0, 1, Drop());
     }
 
     refresh = 1;
