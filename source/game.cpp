@@ -336,7 +336,7 @@ void GameScene::checkSounds() {
 
         } else if (game->previousClear.isPerfectClear == 1) {
             if ((game->gameMode == MARATHON && game->subMode == 2) ||
-                (game->gameMode == ZEN && game->subMode == 1)) {
+                (game->gameMode == ZEN && game->subMode == 2)) {
                 soundEffect = SFX_PERFECTSCROLL;
                 clearTypeText = "perfect scroll";
             } else {
@@ -477,7 +477,7 @@ void GameScene::checkSounds() {
 
         if (((game->gameMode == MARATHON &&
               game->subMode == 2) || // Tower Explore
-             (game->gameMode == ZEN && game->subMode == 1)) &&
+             (game->gameMode == ZEN && game->subMode == 2)) &&
             (demo || savefile->settings.journey)) {
             flashTimer = flashTimerMax;
             setJourneyGraphics(savefile, game->linesCleared / 10);
@@ -541,7 +541,7 @@ void GameScene::checkSounds() {
         for (int layer = 0; layer < 2; layer++) {
             for (int i = 0; i < 20; i++) {
                 setTile(25 + layer, pos.x / 8 - 1, pos.y / 8 + i, 0);
-                setTile(25, pos.x / 8 + i + 10, pos.y / 8 + i, 0);
+                setTile(25, pos.x / 8 + 10, pos.y / 8 + i, 0);
             }
 
             for (int i = 0; i < 12; i++) {
@@ -584,7 +584,8 @@ void GameScene::checkSounds() {
         fullMeterTimer = fullMeterAnimationLength;
     }
 
-    if (game->gameMode == MARATHON && game->subMode) {
+    if ((game->gameMode == MARATHON && game->subMode) ||
+        (game->gameMode == ZEN && game->subMode == 1)) {
         showFullMeter();
     }
 
@@ -1446,7 +1447,9 @@ bool GameScene::control() {
         restartTimer = 0;
     }
 
-    if (key_hit(k.zone) && game->gameMode == MARATHON && game->subMode == 1 &&
+    if (key_hit(k.zone) &&
+        ((game->gameMode == MARATHON && game->subMode == 1) ||
+         (game->gameMode == ZEN && game->subMode == 1)) &&
         !game->zoneTimer) {
         game->activateZone(1);
     }
@@ -1522,7 +1525,7 @@ void GameScene::showText() {
     if (gm == MARATHON || gm == ULTRA || gm == BLITZ || gm == CLASSIC ||
         gm == ZEN || (gm == MARATHON && game->subMode == 2)) {
 
-        if (gm == ZEN && game->subMode == 1) {
+        if (gm == ZEN && game->subMode == 2) {
             wordSprites[0].setText("Height");
             wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
 
@@ -1670,7 +1673,7 @@ void GameScene::showText() {
 
         wordSprites[7].setTextNum(game->linesSent);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
-    } else if (gm == ZEN && game->subMode == 0) {
+    } else if (gm == ZEN && (game->subMode == 0 || game->subMode == 1)) {
         wordSprites[4].setText("Lines");
         wordSprites[4].show(9 * 8 - wordSprites[4].width, 14 * 8, 15);
 
@@ -2452,7 +2455,7 @@ void drawGrid() {
 
 void progressBar(int layer) {
     if (game == nullptr || game->goal == 0 || game->zoneTimer ||
-        (game->gameMode == ZEN && game->subMode == 1))
+        (game->gameMode == ZEN && game->subMode == 2))
         return;
 
     int l = 25 + layer;
@@ -3006,7 +3009,8 @@ INLINE int getBoard(int x, int y) {
 }
 
 void showZoneMeter() {
-    if (!(game->gameMode == MARATHON && game->subMode == 1))
+    if (!((game->gameMode == MARATHON && game->subMode == 1) ||
+          (game->gameMode == ZEN && game->subMode == 1)))
         return;
 
     OBJ_ATTR* sprite = &obj_buffer[23];
@@ -3092,7 +3096,7 @@ void zoneFlash() {
 
     bool cond = ((flashTimer < flashTimerMax / 2) && eventPauseTimer);
 
-    if (cond && game->gameMode == MARATHON)
+    if (cond && (game->gameMode == MARATHON || game->gameMode == ZEN))
         gradient(true);
 
     mirrorPalettes(cond, 8);
@@ -3930,7 +3934,8 @@ void GameScene::update() {
             rainbowPalette();
     }
 
-    if (game->gameMode == MARATHON && game->subMode && gameSeconds % 2 == 0) {
+    if ((game->gameMode == MARATHON && game->subMode && gameSeconds % 2 == 0) ||
+        (game->gameMode == ZEN && game->subMode == 1 && gameSeconds % 2 == 0)) {
         if (rainbowIncreasing)
             rainbowTimer++;
         else
@@ -4028,7 +4033,7 @@ void showGoalLine() {
     } else if (gm == SPRINT && game->subMode) {
         goal = game->linesSent;
     } else if ((gm == MARATHON && game->subMode == 2) ||
-               (gm == ZEN && game->subMode == 1)) {
+               (gm == ZEN && game->subMode == 2)) {
         goal = game->towerScrollCount;
     } else if (gm != SURVIVAL) {
         goal = game->linesCleared;

@@ -393,9 +393,9 @@ public:
 
     std::list<Element*> getElementList() {
         return {
-            new TupleSelectorElement(
-                "Minutes",
-                {{3 * FRAMES_PER_MIN, "3"}, {5 * FRAMES_PER_MIN, "5"}, {10 * FRAMES_PER_MIN, "10"}}),
+            new TupleSelectorElement("Minutes", {{3 * FRAMES_PER_MIN, "3"},
+                                                 {5 * FRAMES_PER_MIN, "5"},
+                                                 {10 * FRAMES_PER_MIN, "10"}}),
         };
     };
 
@@ -529,6 +529,8 @@ public:
         if (selector->getValue() == 0) {
             return std::to_string(savefile->boards.zen);
         } else if (selector->getValue() == 1) {
+            return std::to_string(savefile->boards.zenZone);
+        } else if (selector->getValue() == 2) {
             return std::to_string(savefile->boards.zenTower);
         } else {
             return std::to_string(savefile->boards.zenCascade);
@@ -557,8 +559,8 @@ public:
     BlockEngine::Modes getMode() { return BlockEngine::ZEN; };
 
     std::list<Element*> getElementList() {
-        StringSelectorElement* sel =
-            new StringSelectorElement("Type", {"Normal", "Tower", "Cascade"});
+        StringSelectorElement* sel = new StringSelectorElement(
+            "Type", {"Normal", "Zone", "Tower", "Cascade"});
         return {
             sel,
             new ZenScoreElement(sel),

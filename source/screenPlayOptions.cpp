@@ -7,7 +7,7 @@
 #ifdef GBA
 #include "detectEmulators.h"
 #ifndef MULTIBOOT
-//#include "sendMultiboot.h"
+// #include "sendMultiboot.h"
 #endif
 #else
 #include "LinkWebRTC.hpp"
@@ -413,17 +413,14 @@ void PlayOptionScene::draw() {
             const int x = (endX) * 8 - getVariableWidth(opt);
             const int y = startY + 8 * (space + 1) * i + verticalOffset;
 
-            const int selected = (counter != selection || !option->isSelectable()) +
-                      (i == elementMax + 1 || (listStart && i == 0));
+            const int selected =
+                (counter != selection || !option->isSelectable()) +
+                (i == elementMax + 1 || (listStart && i == 0));
 
             wordSprites[index]->setPriority(0);
-            wordSprites[index]->show(
-                x, y,
-                15 - selected);
+            wordSprites[index]->show(x, y, 15 - selected);
 
-            labels[index]->show(
-                startX, y,
-                15 - selected);
+            labels[index]->show(startX, y, 15 - selected);
 
             if (counter == selection && !onStart) { // draw sprite cursor
                 currentOption = opt;
@@ -667,7 +664,7 @@ void ClassicScene::update() {
 }
 
 void ZenScene::update() {
-    if (subMode) {
+    if (subMode == 2 || subMode == 3) {
         if (elementList.back()->getLabel() == "Lines Cleared") {
 
             Element* e = elementList.back();
@@ -1440,6 +1437,9 @@ void PlayOptionScene::resetScoreboard() {
         } else {
             if (subMode == 0) {
                 savefile->boards.zen = 0;
+                savefile->boards.zenLines = 0;
+            } else if (subMode == 1) {
+                savefile->boards.zenZone = 0;
                 savefile->boards.zenLines = 0;
             } else {
                 savefile->boards.zenTower = 0;

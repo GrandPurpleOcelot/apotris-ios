@@ -826,7 +826,7 @@ void Game::place() {
     }
 
     // Zen Tower Hole Check
-    if (gameMode == ZEN && subMode == 1) {
+    if (gameMode == ZEN && subMode == 2) {
         const int holeY = checkIntegrity();
 
         if (holeY != -1) {
@@ -869,7 +869,7 @@ void Game::place() {
     }
 
     bool isCascade = (gameMode == MARATHON && subMode == 3) ||
-                     (gameMode == ZEN && subMode == 2);
+                     (gameMode == ZEN && subMode == 3);
     if (isCascade)
         connections.emplace_back(pawn.x, pawn.y, blocks);
 
@@ -880,8 +880,7 @@ void Game::place() {
         else if (gameMode == TRAINING)
             clearBoard();
         // Tower: wait for the scroll before game over
-        else if (!((gameMode == MARATHON && subMode == 2) ||
-                   (gameMode == ZEN && subMode == 1))) {
+        else if (gameMode != ZEN && !(gameMode == MARATHON && subMode == 2)) {
             lost = 1;
             return;
         }
@@ -1093,7 +1092,7 @@ int Game::clear(const Drop& drop) {
 
         if (toClear) {
             if ((gameMode == MARATHON && subMode == 2) ||
-                (gameMode == ZEN && subMode == 1)) {
+                (gameMode == ZEN && subMode == 2)) {
                 // In tower mode, the line doesn't
                 // disappear but is still counted for level progression
                 linesCleared++;
@@ -1118,7 +1117,7 @@ int Game::clear(const Drop& drop) {
 
     // Tower
     if ((gameMode == MARATHON && subMode == 2) ||
-        (gameMode == ZEN && subMode == 1)) {
+        (gameMode == ZEN && subMode == 2)) {
         if (gameMode == MARATHON && checkIntegrity() != -1) {
             lost = 1;
             sounds.invalid = 1;
@@ -1231,6 +1230,17 @@ int Game::clear(const Drop& drop) {
     case MARATHON:
         level = ((int)linesCleared / 10) + 1;
         if (subMode && !zonedLines) {
+            if (zoneCharge < 32) {
+                if ((zoneCharge + clearCount) >= 32) {
+                    sounds.meter = 1;
+                    zoneCharge = 32;
+                } else
+                    zoneCharge += clearCount;
+            }
+        }
+        break;
+    case ZEN:
+        if (subMode == 1 && !zonedLines) {
             if (zoneCharge < 32) {
                 if ((zoneCharge + clearCount) >= 32) {
                     sounds.meter = 1;
@@ -1389,7 +1399,7 @@ int Game::clear(const Drop& drop) {
         prevLevel = 1;
 
     const bool isCascade = (gameMode == MARATHON && subMode == 3) ||
-                           (gameMode == ZEN && subMode == 2);
+                           (gameMode == ZEN && subMode == 3);
 
     // calculate score
     int add = 0;
@@ -1994,7 +2004,7 @@ void Game::removeClearLock() {
     int pos = linesToClear.back();
 
     const bool isCascade = (gameMode == MARATHON && subMode == 3) ||
-                           (gameMode == ZEN && subMode == 2);
+                           (gameMode == ZEN && subMode == 3);
 
     if (!isCascade) {
         for (int i = pos; i >= stackHeight; i--) {
@@ -2461,7 +2471,7 @@ void Game::setSubMode(int sm) {
 
 void Game::setSpeed() {
     if ((gameMode == MARATHON || gameMode == TRAINING ||
-         (gameMode == ZEN && subMode == 1)) &&
+         (gameMode == ZEN && subMode == 2)) &&
         !(subMode == 1 && zoneTimer)) {
         if (level)
             speed = gravity[(level < 19) ? level - 1 : 18];

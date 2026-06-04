@@ -488,7 +488,7 @@ void showScore() {
         if (game->gameMode == DIG) {
             if (game->subMode == 1)
                 score = std::to_string(game->pieceCounter);
-        } else if (game->gameMode == ZEN && game->subMode == 1) {
+        } else if (game->gameMode == ZEN && game->subMode == 2) {
             score = std::to_string(game->towerScrollCount +
                                    (game->lengthY - game->stackHeight));
         } else if (game->gameMode != COMBO)
@@ -585,7 +585,7 @@ void GameScene::showStats(bool moreStats, const std::string& time,
     }
 
     if ((g == MARATHON && game->subMode == 2) ||
-        (g == ZEN && game->subMode == 1)) {
+        (g == ZEN && game->subMode == 2)) {
         int height =
             game->towerScrollCount + (game->lengthY - game->stackHeight);
         aprints("Height: " + std::to_string(height), 0, 7 * counter++, 2);
@@ -1741,14 +1741,19 @@ void addGameStats() {
         savefile->stats.maxLevel = game->level;
 
     if (game->gameMode == ZEN) {
-        if (game->subMode == 1) {
+        if (game->subMode == 2) {
             int height =
                 game->towerScrollCount + (game->lengthY - game->stackHeight);
 
             if (height > (int)savefile->boards.zenTower)
                 savefile->boards.zenTower = height;
-        } else if (game->subMode == 2) {
+        } else if (game->subMode == 3) {
             savefile->boards.zenCascade = game->score;
+            savefile->boards.zenLines =
+                savefile->boards.zenLines + game->linesCleared;
+        } else if (game->subMode == 1) {
+            if (game->score > (int)savefile->boards.zenZone)
+                savefile->boards.zenZone = game->score;
             savefile->boards.zenLines =
                 savefile->boards.zenLines + game->linesCleared;
         } else {

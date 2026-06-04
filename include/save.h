@@ -302,6 +302,7 @@ typedef struct ModeBoards {
     u32 zenLines;
     EntryBoard cascade[4];
     u32 zenCascade;
+    u32 zenZone;
 } ALIGN(4) ModeBoards;
 
 class Save {
