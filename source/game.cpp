@@ -317,6 +317,8 @@ void GameScene::checkSounds() {
 
     if (game->sounds.clear) {
         int speed = game->comboCounter;
+        if (game->previousClear.cascadeComplexity > 1)
+            speed += game->previousClear.cascadeComplexity - 1;
         if (speed > 10)
             speed = 10;
 
@@ -334,7 +336,7 @@ void GameScene::checkSounds() {
 
         } else if (game->previousClear.isPerfectClear == 1) {
             if ((game->gameMode == MARATHON && game->subMode == 2) ||
-                (game->gameMode == ZEN && game->subMode == 1)) {
+                (game->gameMode == ZEN && game->subMode == 2)) {
                 soundEffect = SFX_PERFECTSCROLL;
                 clearTypeText = "perfect scroll";
             } else {
@@ -446,6 +448,16 @@ void GameScene::checkSounds() {
             floatingList.emplace_back(clearTypeText);
     }
 
+    if (game->sounds.cascade) {
+        if (savefile->settings.clearText == 2) {
+            std::string cascadeText =
+                "cascade x" + std::to_string(game->sounds.cascade);
+            floatingList.emplace_back(cascadeText);
+        }
+
+        game->sounds.cascade = 0;
+    }
+
     if (game->sounds.levelUp) {
         sfx(SFX_LEVELUPSOUND);
         rumblePatternLowPri(RUMBLE_LEVEL_UP);
@@ -465,7 +477,7 @@ void GameScene::checkSounds() {
 
         if (((game->gameMode == MARATHON &&
               game->subMode == 2) || // Tower Explore
-             (game->gameMode == ZEN && game->subMode == 1)) &&
+             (game->gameMode == ZEN && game->subMode == 2)) &&
             (demo || savefile->settings.journey)) {
             flashTimer = flashTimerMax;
             setJourneyGraphics(savefile, game->linesCleared / 10);
@@ -529,7 +541,7 @@ void GameScene::checkSounds() {
         for (int layer = 0; layer < 2; layer++) {
             for (int i = 0; i < 20; i++) {
                 setTile(25 + layer, pos.x / 8 - 1, pos.y / 8 + i, 0);
-                setTile(25, pos.x / 8 + i + 10, pos.y / 8 + i, 0);
+                setTile(25, pos.x / 8 + 10, pos.y / 8 + i, 0);
             }
 
             for (int i = 0; i < 12; i++) {
@@ -572,7 +584,8 @@ void GameScene::checkSounds() {
         fullMeterTimer = fullMeterAnimationLength;
     }
 
-    if (game->gameMode == MARATHON && game->subMode) {
+    if ((game->gameMode == MARATHON && game->subMode) ||
+        (game->gameMode == ZEN && game->subMode == 1)) {
         showFullMeter();
     }
 
@@ -653,7 +666,8 @@ void showBackground(int offset) {
             int y = i - 20 + offset;
 
             if (game->bitboard[i] == 0 &&
-                !(i < game->lengthY - 1 && game->bitboard[i + 1] != 0)) {
+                !((i < game->lengthY - 1 && game->bitboard[i + 1] != 0) ||
+                  game->bitboard[i - 1] != 0)) {
                 for (int j = 0; j < 10; j++)
                     setTile(25, pos.x / 8 + j, pos.y / 8 + y, 0);
                 continue;
@@ -1433,7 +1447,9 @@ bool GameScene::control() {
         restartTimer = 0;
     }
 
-    if (key_hit(k.zone) && game->gameMode == MARATHON && game->subMode == 1 &&
+    if (key_hit(k.zone) &&
+        ((game->gameMode == MARATHON && game->subMode == 1) ||
+         (game->gameMode == ZEN && game->subMode == 1)) &&
         !game->zoneTimer) {
         game->activateZone(1);
     }
@@ -1509,7 +1525,7 @@ void GameScene::showText() {
     if (gm == MARATHON || gm == ULTRA || gm == BLITZ || gm == CLASSIC ||
         gm == ZEN || (gm == MARATHON && game->subMode == 2)) {
 
-        if (gm == ZEN && game->subMode == 1) {
+        if (gm == ZEN && game->subMode == 2) {
             wordSprites[0].setText("Height");
             wordSprites[0].show(9 * 8 - wordSprites[0].width, 3 * 8, 15);
 
@@ -1657,7 +1673,7 @@ void GameScene::showText() {
 
         wordSprites[7].setTextNum(game->linesSent);
         wordSprites[7].show(9 * 8 - wordSprites[7].width, 18 * 8, 15);
-    } else if (gm == ZEN && game->subMode == 0) {
+    } else if (gm == ZEN && (game->subMode == 0 || game->subMode == 1)) {
         wordSprites[4].setText("Lines");
         wordSprites[4].show(9 * 8 - wordSprites[4].width, 14 * 8, 15);
 
@@ -1720,30 +1736,23 @@ void GameScene::showComboStreak() {
 
     if (game->gameMode != CLASSIC && !game->zoneTimer) {
         if (game->comboCounter > 0) {
-            // aprint("Combo x", 21, clearTextHeight - 1);
             wordSprites[8].setText("Combo");
             wordSprites[8].show(21 * 8 + 4, (clearTextHeight - 1) * 8, 15);
 
-            // aprintf(game->comboCounter, 28, clearTextHeight - 1);
             wordSprites[9].setText("x" + std::to_string(game->comboCounter));
             wordSprites[9].show(21 * 8 + 4, (clearTextHeight) * 8, 15);
         } else {
-            // aprintClearArea(20, clearTextHeight - 1, 10, 1);
             wordSprites[8].hide();
             wordSprites[9].hide();
         }
 
         if (game->b2bCounter > 0) {
-            // aprint("Streak", 22, clearTextHeight + 1);
             wordSprites[10].setText("Streak");
             wordSprites[10].show(21 * 8 + 4, (clearTextHeight + 2) * 8, 15);
 
-            // aprint("x", 24, clearTextHeight + 2);
-            // aprintf(game->b2bCounter + 1, 25, clearTextHeight + 2);
             wordSprites[11].setText("x" + std::to_string(game->b2bCounter));
             wordSprites[11].show(21 * 8 + 4, (clearTextHeight + 3) * 8, 15);
         } else {
-            // aprintClearArea(20, clearTextHeight + 1, 10, 2);
             wordSprites[10].hide();
             wordSprites[11].hide();
         }
@@ -2446,7 +2455,7 @@ void drawGrid() {
 
 void progressBar(int layer) {
     if (game == nullptr || game->goal == 0 || game->zoneTimer ||
-        (game->gameMode == ZEN && game->subMode == 1))
+        (game->gameMode == ZEN && game->subMode == 2))
         return;
 
     int l = 25 + layer;
@@ -3000,7 +3009,8 @@ INLINE int getBoard(int x, int y) {
 }
 
 void showZoneMeter() {
-    if (!(game->gameMode == MARATHON && game->subMode == 1))
+    if (!((game->gameMode == MARATHON && game->subMode == 1) ||
+          (game->gameMode == ZEN && game->subMode == 1)))
         return;
 
     OBJ_ATTR* sprite = &obj_buffer[23];
@@ -3086,7 +3096,7 @@ void zoneFlash() {
 
     bool cond = ((flashTimer < flashTimerMax / 2) && eventPauseTimer);
 
-    if (cond && game->gameMode == MARATHON)
+    if (cond && (game->gameMode == MARATHON || game->gameMode == ZEN))
         gradient(true);
 
     mirrorPalettes(cond, 8);
@@ -3924,7 +3934,8 @@ void GameScene::update() {
             rainbowPalette();
     }
 
-    if (game->gameMode == MARATHON && game->subMode && gameSeconds % 2 == 0) {
+    if ((game->gameMode == MARATHON && game->subMode && gameSeconds % 2 == 0) ||
+        (game->gameMode == ZEN && game->subMode == 1 && gameSeconds % 2 == 0)) {
         if (rainbowIncreasing)
             rainbowTimer++;
         else
@@ -4022,7 +4033,7 @@ void showGoalLine() {
     } else if (gm == SPRINT && game->subMode) {
         goal = game->linesSent;
     } else if ((gm == MARATHON && game->subMode == 2) ||
-               (gm == ZEN && game->subMode == 1)) {
+               (gm == ZEN && game->subMode == 2)) {
         goal = game->towerScrollCount;
     } else if (gm != SURVIVAL) {
         goal = game->linesCleared;

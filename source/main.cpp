@@ -1113,9 +1113,11 @@ void startGame(BlockEngine::Options options, int seed) {
 #endif
 
     if (options.mode == BlockEngine::ZEN) {
-        if (game->subMode == 1) {
+        if (game->subMode == 2) {
             game->score = savefile->boards.zenTower;
             game->towerScrollCount = savefile->boards.zenTower;
+        } else if (game->subMode == 1) {
+            game->score = savefile->boards.zenZone;
         } else {
             game->score = savefile->boards.zen;
         }

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 
 #include "blockEngine.hpp"
 #include "def.h"
@@ -16,7 +17,7 @@ using namespace GameInfo;
 bool BlockEngine::enableFumen = false;
 bool BlockEngine::enableFumenQueue = false;
 
-u8 BlockEngine::fumenQueue[5] = {PIECE_T, 0, 0, 0, 0};
+u8 BlockEngine::fumenQueue[5] = {PIECE_I, PIECE_L, PIECE_J, PIECE_T, 0};
 
 std::string BlockEngine::fumenString =
     "v115@neC8GeA8AeC8EeA8CeE8AeI8AeI8AeI8AeI8AeI8Ae?"
@@ -159,7 +160,7 @@ void Game::rotate(int dir, int on) {
     if (!on)
         return;
 
-    if ((clearLock || entryDelay)) {
+    if ((clearLock || entryDelay || cascadeTimer)) {
         fromLockRotate = true;
         return;
     } else if (eventLock) {
@@ -445,7 +446,7 @@ void Game::moveDown() {
 }
 
 void Game::hardDrop() {
-    if (clearLock || eventLock || dropLockTimer || entryDelay)
+    if (clearLock || eventLock || dropLockTimer || entryDelay || cascadeTimer)
         return;
 
     int diff = pawn.lowest - pawn.y;
@@ -522,7 +523,6 @@ void Game::hardDrop() {
 }
 
 void Game::update() {
-
     if (!disappearing)
         timer++;
     else
@@ -537,6 +537,36 @@ void Game::update() {
 
     if (clearLock || lost)
         return;
+
+    if (unstable.size()) {
+        if (cascadeTimer++ >= CASCADE_DELAY || maxClearDelay == 1) {
+            cascadeTimer = 0;
+        } else {
+            return;
+        }
+
+        cascade();
+
+        refresh = 2;
+
+        if (unstable.size() == 0) {
+            Drop d;
+            d.startY = stackHeight - boardOffset;
+            d.rawEndY = lengthY - 1;
+            clear(d);
+            calculateColumnHeights(0);
+        }
+
+        return;
+    }
+
+    if (cascadeComplexity > 1) {
+        if (cascadeComplexity > statTracker.maxCascade)
+            statTracker.maxCascade = cascadeComplexity;
+
+        sounds.cascade = cascadeComplexity;
+        cascadeComplexity = 0;
+    }
 
     if (!disappearing)
         inGameTimer++;
@@ -796,7 +826,7 @@ void Game::place() {
     }
 
     // Zen Tower Hole Check
-    if (gameMode == ZEN && subMode == 1) {
+    if (gameMode == ZEN && subMode == 2) {
         const int holeY = checkIntegrity();
 
         if (holeY != -1) {
@@ -831,6 +861,18 @@ void Game::place() {
         }
     }
 
+    u16 blocks = 0;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            blocks |= ((pawn.board[pawn.rotation][i][j] != 0) << j) << (4 * i);
+        }
+    }
+
+    bool isCascade = (gameMode == MARATHON && subMode == 3) ||
+                     (gameMode == ZEN && subMode == 3);
+    if (isCascade)
+        connections.emplace_back(pawn.x, pawn.y, blocks);
+
     toEndZone = false;
     if ((pawn.y + pawn.lowestBlock[pawn.rotation]) <= (lengthY / 2 - 1)) {
         if (zoneTimer)
@@ -838,8 +880,7 @@ void Game::place() {
         else if (gameMode == TRAINING)
             clearBoard();
         // Tower: wait for the scroll before game over
-        else if (!((gameMode == MARATHON && subMode == 2) ||
-                   (gameMode == ZEN && subMode == 1))) {
+        else if (gameMode != ZEN && !(gameMode == MARATHON && subMode == 2)) {
             lost = 1;
             return;
         }
@@ -938,10 +979,8 @@ void Game::place() {
         }
     }
 
-    if (entryDelay) {
-        pawn.current = -1;
-        activePiece = -1;
-    }
+    pawn.current = -1;
+    activePiece = -1;
 
     canHold = true;
 
@@ -1039,8 +1078,8 @@ int Game::clear(const Drop& drop) {
 
     std::list<int> linesToMove;
 
-    int start = lastDrop.startY + boardOffset;
-    int end = lastDrop.rawEndY + 1;
+    int start = drop.startY + boardOffset;
+    int end = drop.rawEndY + 1;
 
     if (zonedLines && !zoneTimer) {
         start = 0;
@@ -1053,7 +1092,7 @@ int Game::clear(const Drop& drop) {
 
         if (toClear) {
             if ((gameMode == MARATHON && subMode == 2) ||
-                (gameMode == ZEN && subMode == 1)) {
+                (gameMode == ZEN && subMode == 2)) {
                 // In tower mode, the line doesn't
                 // disappear but is still counted for level progression
                 linesCleared++;
@@ -1078,7 +1117,7 @@ int Game::clear(const Drop& drop) {
 
     // Tower
     if ((gameMode == MARATHON && subMode == 2) ||
-        (gameMode == ZEN && subMode == 1)) {
+        (gameMode == ZEN && subMode == 2)) {
         if (gameMode == MARATHON && checkIntegrity() != -1) {
             lost = 1;
             sounds.invalid = 1;
@@ -1191,6 +1230,17 @@ int Game::clear(const Drop& drop) {
     case MARATHON:
         level = ((int)linesCleared / 10) + 1;
         if (subMode && !zonedLines) {
+            if (zoneCharge < 32) {
+                if ((zoneCharge + clearCount) >= 32) {
+                    sounds.meter = 1;
+                    zoneCharge = 32;
+                } else
+                    zoneCharge += clearCount;
+            }
+        }
+        break;
+    case ZEN:
+        if (subMode == 1 && !zonedLines) {
             if (zoneCharge < 32) {
                 if ((zoneCharge + clearCount) >= 32) {
                     sounds.meter = 1;
@@ -1348,9 +1398,12 @@ int Game::clear(const Drop& drop) {
     if (gameMode == ZEN || gameMode == ULTRA)
         prevLevel = 1;
 
+    const bool isCascade = (gameMode == MARATHON && subMode == 3) ||
+                           (gameMode == ZEN && subMode == 3);
+
     // calculate score
     int add = 0;
-    if (clearCount <= 4 && !isPerfectClear) {
+    if ((clearCount <= 4) && !isPerfectClear) {
         if (isTSpin == 0) {
             // if no t-spin
             if (gameMode != CLASSIC) {
@@ -1375,9 +1428,33 @@ int Game::clear(const Drop& drop) {
             isDifficult = true;
             statTracker.tspins++;
         }
+    } else if (clearCount > 4 && !isPerfectClear && !isTSpin) {
+        // score >4 lines as groups of 4 (e.g. 6 = quad + double)
+        int quads = clearCount / 4;
+        int remainder = clearCount % 4;
+
+        if (gameMode != CLASSIC) {
+            add += quads * scoring[3][0] * prevLevel;
+            attack = quads * scoring[3][2];
+            if (remainder > 0) {
+                add += scoring[remainder - 1][0] * prevLevel;
+                attack += scoring[remainder - 1][2];
+            }
+        } else {
+            add += quads * classicScoring[3] * (level + 1);
+            if (remainder > 0)
+                add += classicScoring[remainder - 1] * (level + 1);
+        }
+
+        isDifficult = true;
+        statTracker.clears[3] += quads;
+        if (remainder > 0)
+            statTracker.clears[remainder - 1]++;
     }
 
     int combo = comboCounter + 1;
+
+    cascadeComplexity++;
 
     if (gameMode == MASTER && !disappearing) {
 
@@ -1410,6 +1487,10 @@ int Game::clear(const Drop& drop) {
         b2bCounter = 0;
     }
 
+    if (cascadeComplexity > 1) {
+        add = (int)add * cascadeComplexity;
+    }
+
     if (b2bCounter > statTracker.maxStreak)
         statTracker.maxStreak = b2bCounter;
 
@@ -1439,8 +1520,9 @@ int Game::clear(const Drop& drop) {
     } else
         score += add;
 
-    previousClear = Score(clearCount, add, comboCounter, isTSpin,
-                          isPerfectClear, isBackToBack, isDifficult, drop);
+    previousClear =
+        Score(clearCount, add, comboCounter, isTSpin, isPerfectClear,
+              isBackToBack, isDifficult, cascadeComplexity, drop);
 
     sounds.clear = 1;
 
@@ -1524,6 +1606,8 @@ void Game::next() { //~21-29k cycles
     arrCounter = 0;
 
     speedCounter = 0;
+
+    cascadeComplexity = 0;
 
     softDrop = false;
 
@@ -1633,7 +1717,7 @@ void Game::hold(int dir) {
 
     replay.emplace_back(timer + eventTimer, 5, dir);
 
-    if ((clearLock || entryDelay) && gameMode != CLASSIC) {
+    if ((clearLock || entryDelay || cascadeTimer) && gameMode != CLASSIC) {
         // holding = dir;
         fromLockHold = true;
         return;
@@ -1726,7 +1810,8 @@ void Game::lockCheck() {
 void Game::keyLeft(int dir) {
     replay.emplace_back(timer + eventTimer, 0, dir);
 
-    if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
+    if (clearLock || eventLock || entryDelay || cascadeTimer ||
+        (gameMode == CLASSIC && down)) {
         left = dir;
         return;
     }
@@ -1757,7 +1842,8 @@ void Game::keyLeft(int dir) {
 void Game::keyRight(int dir) {
     replay.emplace_back(timer + eventTimer, 1, dir);
 
-    if (clearLock || eventLock || entryDelay || (gameMode == CLASSIC && down)) {
+    if (clearLock || eventLock || entryDelay || cascadeTimer ||
+        (gameMode == CLASSIC && down)) {
         right = dir;
         return;
     }
@@ -1786,7 +1872,7 @@ void Game::keyRight(int dir) {
 
 void Game::keyDown(int dir) {
     replay.emplace_back(timer + eventTimer, 6, dir);
-    if (clearLock || eventLock || entryDelay) {
+    if (clearLock || eventLock || entryDelay || cascadeTimer) {
         if (!(entryDelay && rotationSystem == NRS))
             down = dir;
         return;
@@ -1804,51 +1890,159 @@ void Game::keyDown(int dir) {
     gracePeriod = 0;
 }
 
+bool Game::cascade() {
+    bool cascaded = false;
+    int counter = 0;
+
+    std::unordered_set<int> moved;
+
+    do {
+        // resolve unstable
+        auto it = unstable.begin();
+        while (it != unstable.end()) {
+            Connection* piece = *it;
+
+            if (moved.count(piece->packed())) {
+                ++it;
+                continue;
+            }
+
+            int x = piece->x;
+            int y = piece->y;
+
+            for (int i = 3; i >= 0; i--) {
+                for (int j = 0; j < 4; j++) {
+                    if (!((piece->blocks >> (i * 4 + j)) & 0b1))
+                        continue;
+
+                    if (y + i + 1 < lengthY)
+                        board[y + i + 1][x + j] = board[y + i][x + j];
+                    board[y + i][x + j] = 0;
+
+                    if (y + i + 1 < lengthY)
+                        bitboard[y + i + 1] |= 1 << (x + j);
+                    bitboard[y + i] &= ~(1 << (x + j));
+
+                    // if (disappearing == 1)
+                    //     disappearTimers[y][x] = MAX_DISAPPEAR;
+                    // else if (disappearing == 2)
+                    //     disappearTimers[y][x] = 1;
+                }
+            }
+
+            piece->y++;
+            cascaded = true;
+
+            unstable.erase(it++);
+        }
+
+        // check for unstable
+        for (auto& connection : connections) {
+            if (moved.count(connection.packed())) {
+                continue;
+            }
+
+            if (connection.y > 40) {
+                continue;
+            }
+
+            bool stable = false;
+            int checkedColumnsBits = 0;
+            for (int i = 3; i >= 0; i--) {
+                int currentLine = (connection.blocks >> 4 * i) & 0xf;
+
+                // don't need to recheck checked columns
+                currentLine &= ~checkedColumnsBits;
+
+                if (currentLine == 0) {
+                    continue;
+                } else if (connection.y + i >= lengthY - 1) {
+                    stable = true;
+                    break;
+                }
+
+                for (int j = 0; j < 4 && currentLine != 0; j++) {
+                    int last = currentLine & 0b1;
+                    currentLine >>= 1;
+
+                    if (!last)
+                        continue;
+
+                    if (board[connection.y + i + 1][connection.x + j] != 0) {
+                        stable = true;
+                        break;
+                    }
+
+                    checkedColumnsBits |= 1 << j;
+                }
+            }
+
+            if (!stable) {
+                unstable.push_back(&connection);
+
+                if (!CASCADE_INSTANT) {
+                    moved.insert(connection.packed());
+                }
+            }
+        }
+    } while (unstable.size() && counter++ < 1000);
+
+    return cascaded;
+}
+
 void Game::removeClearLock() {
     if (!clearLock)
         return;
     clearLock = false;
+
+    int lowestLine = linesToClear.front();
 
     auto index = linesToClear.rbegin();
 
     const int len = (int)linesToClear.size();
 
     int pos = linesToClear.back();
-    for (int i = pos; i >= stackHeight; i--) {
-        if (index != linesToClear.rend() && *index == i) {
-            index++;
-        } else {
-            memcpy32_fast(board[pos], board[i], 10);
-            bitboard[pos] = bitboard[i];
-            if (disappearing)
-                memcpy16_fast(disappearTimers[pos], disappearTimers[i], 10);
-            pos--;
-        }
-    }
 
-    for (int i = stackHeight; i < stackHeight + len; i++) {
-        memset32_fast(board[i], 0, 10);
-        bitboard[i] = 0;
-        if (disappearing)
-            memset16(disappearTimers[i], 0, 10);
-    }
+    const bool isCascade = (gameMode == MARATHON && subMode == 3) ||
+                           (gameMode == ZEN && subMode == 3);
 
-    stackHeight += len;
-
-    for (int x = 0; x < lengthX; x++) {
-        int found = -1;
-        for (int y = lengthY - (columnHeights[x] - len) - 1; y < lengthY; y++) {
-            if (board[y][x]) {
-                found = y;
-                break;
+    if (!isCascade) {
+        for (int i = pos; i >= stackHeight; i--) {
+            if (index != linesToClear.rend() && *index == i) {
+                index++;
+            } else {
+                memcpy32_fast(board[pos], board[i], 10);
+                bitboard[pos] = bitboard[i];
+                if (disappearing)
+                    memcpy16_fast(disappearTimers[pos], disappearTimers[i], 10);
+                pos--;
             }
         }
 
-        if (found >= 0) {
-            columnHeights[x] = lengthY - found;
-        } else {
-            columnHeights[x] = 0;
+        for (int i = stackHeight; i < stackHeight + len; i++) {
+            memset32_fast(board[i], 0, 10);
+            bitboard[i] = 0;
+            if (disappearing)
+                memset16(disappearTimers[i], 0, 10);
         }
+
+        stackHeight += len;
+    } else {
+        // remove cleared lines
+        for (auto const& line : linesToClear) {
+            memset32_fast(board[line], 0, 10);
+            bitboard[line] = 0;
+            if (disappearing)
+                memset16(disappearTimers[line], 0, 10);
+        }
+    }
+
+    bool cascaded = false;
+
+    if (isCascade) {
+        cascaded = cascade();
+    } else {
+        calculateColumnHeights(len);
     }
 
     if (gameMode == COMBO) {
@@ -1881,7 +2075,14 @@ void Game::removeClearLock() {
     linesToClear.clear();
     memset32_fast(lineClearArray, 0, 40 / 4);
 
-    if (!entryDelay && !zoneExit) {
+    if (cascaded) {
+        Drop d;
+        d.startY = stackHeight - boardOffset;
+        d.rawEndY = lengthY - 1;
+        clear(d);
+    }
+
+    if (!entryDelay && !zoneExit && !unstable.size()) {
         next();
     } else if (zoneExit) {
         zoneExit = false;
@@ -2270,7 +2471,7 @@ void Game::setSubMode(int sm) {
 
 void Game::setSpeed() {
     if ((gameMode == MARATHON || gameMode == TRAINING ||
-         (gameMode == ZEN && subMode == 1)) &&
+         (gameMode == ZEN && subMode == 2)) &&
         !(subMode == 1 && zoneTimer)) {
         if (level)
             speed = gravity[(level < 19) ? level - 1 : 18];
@@ -2418,6 +2619,7 @@ void Game::clearBoard() {
     clearLock = false;
 }
 
+// source list holds lines to clear sorted from bottom to top
 void Game::fixConnected(const std::list<int>& sourceList) {
     std::list<std::tuple<int, int>> fixList;
 
@@ -2452,6 +2654,71 @@ void Game::fixConnected(const std::list<int>& sourceList) {
                 (n & 0xf) + (GameInfo::connectedFix[type][n >> 4] << 4);
         }
     }
+
+    std::list<Connection> splits;
+
+    auto connection = connections.begin();
+    while (connection != connections.end()) {
+        int x = connection->x;
+        int y = connection->y;
+        int before = connection->blocks;
+
+        for (auto const& line : sourceList) {
+            if (line > y + 4 || line < y)
+                continue;
+
+            int localY = line - y;
+
+            connection->blocks &= ~(0xf << localY * 4);
+
+            if (connection->blocks == 0)
+                break;
+        }
+
+        // check if connection needs to be split
+        // (don't need to check 1 block connections)
+        if (before != connection->blocks && countBits(connection->blocks) > 1) {
+            for (int i = 3; i > 0; i--) {
+                const int currentLine = (connection->blocks >> 4 * i) & 0xf;
+                const int previousLine =
+                    (connection->blocks >> 4 * (i - 1)) & 0xf;
+
+                if (currentLine == 0)
+                    continue;
+
+                // if current and previous line don't have any bits in common
+                // then they are disconnected and current needs to split
+                if ((currentLine & previousLine) == 0) {
+                    int mask = 0;
+
+                    for (int j = i; j < 4; j++) {
+                        mask |= 0xf << (j * 4);
+                    }
+
+                    const int newBlocks = mask & connection->blocks;
+
+                    splits.push_back(Connection(x, y, newBlocks));
+
+                    connection->blocks &= ~(newBlocks);
+
+                    if (countBits(connection->blocks) <= 1)
+                        break;
+                }
+            }
+        }
+
+        if (connection->blocks == 0) {
+            connections.erase(connection++);
+        } else {
+            ++connection;
+        }
+    }
+
+    for (auto const& split : splits) {
+        connections.push_back(split);
+    }
+
+    splits.clear();
 }
 
 void Game::connectBoard(int startY, int endY) {
@@ -3011,7 +3278,6 @@ void Game::checkSecretGrade() {
         if (n > lengthX - 1)
             x = 2 * (lengthX - 1) - x;
 
-        // log("checking " + std::to_string(n) + " " + std::to_string(x));
         if (bitboard[i] != (fullLine & ~(1 << x)) || board[i - 1][x] == 0) {
             break;
         }
@@ -3042,7 +3308,7 @@ void Game::setRandomizer(int rand) {
 
     fillBag();
 
-    if (enableFumen && enableFumenQueue) {
+    if (enableFumenQueue) {
         for (unsigned char i : fumenQueue)
             queue.push_back(i);
     } else {
@@ -3145,7 +3411,7 @@ void Game::scrollTower() {
     if (stackHeight == lengthY) {
         score += 3500 * level;
         sounds.clear = 1;
-        previousClear = Score(0, 0, -1, 0, 1, 0, 0, Drop());
+        previousClear = Score(0, 0, -1, 0, 1, 0, 0, 1, Drop());
     }
 
     refresh = 1;
@@ -3199,4 +3465,30 @@ int Game::checkIntegrity() {
     }
 
     return -1;
+}
+
+void Game::calculateColumnHeights(int start) {
+    // recalculate column heights
+    int max = 0;
+    for (int x = 0; x < lengthX; x++) {
+        int found = -1;
+        for (int y = lengthY - (columnHeights[x] - start) - 1; y < lengthY;
+             y++) {
+            if (board[y][x]) {
+                found = y;
+                break;
+            }
+        }
+
+        if (found >= 0) {
+            columnHeights[x] = lengthY - found;
+        } else {
+            columnHeights[x] = 0;
+        }
+
+        if (max < columnHeights[x]) {
+            max = columnHeights[x];
+        }
+    }
+    stackHeight = lengthY - max;
 }

@@ -488,7 +488,7 @@ void showScore() {
         if (game->gameMode == DIG) {
             if (game->subMode == 1)
                 score = std::to_string(game->pieceCounter);
-        } else if (game->gameMode == ZEN && game->subMode == 1) {
+        } else if (game->gameMode == ZEN && game->subMode == 2) {
             score = std::to_string(game->towerScrollCount +
                                    (game->lengthY - game->stackHeight));
         } else if (game->gameMode != COMBO)
@@ -585,7 +585,7 @@ void GameScene::showStats(bool moreStats, const std::string& time,
     }
 
     if ((g == MARATHON && game->subMode == 2) ||
-        (g == ZEN && game->subMode == 1)) {
+        (g == ZEN && game->subMode == 2)) {
         int height =
             game->towerScrollCount + (game->lengthY - game->stackHeight);
         aprints("Height: " + std::to_string(height), 0, 7 * counter++, 2);
@@ -641,6 +641,11 @@ void GameScene::showStats(bool moreStats, const std::string& time,
     if (game->statTracker.maxZonedLines > 0) {
         aprints("Max MultiClear: " +
                     std::to_string(game->statTracker.maxZonedLines),
+                0, 7 * counter++, 2);
+    }
+
+    if (game->statTracker.maxCascade > 0) {
+        aprints("Max Cascade: " + std::to_string(game->statTracker.maxCascade),
                 0, 7 * counter++, 2);
     }
 
@@ -1165,6 +1170,8 @@ int onRecord() {
             place = saveRecord(savefile->boards.zone[mode], game->score, -1);
         } else if (subMode == 2) {
             place = saveRecord(savefile->boards.tower[mode], game->score, -1);
+        } else if (subMode == 3) {
+            place = saveRecord(savefile->boards.cascade[mode], game->score, -1);
         }
     } else if (game->gameMode == SPRINT && game->won == 1) {
         if (subMode == 0) {
@@ -1296,12 +1303,7 @@ void GameScene::showModeText() {
             if (game->trainingMode)
                 str = "Finesse";
         } else {
-            if (game->gameMode == ZEN) {
-                if (game->subMode == 1)
-                    str = "Tower";
-                else
-                    str = "Normal";
-            } else if (game->gameMode == BATTLE && mode >= 0)
+            if (game->gameMode == BATTLE && mode >= 0)
                 str = modeOptionStrings[game->gameMode - 1][mode - 1];
             else if (game->gameMode != CLASSIC && game->gameMode != MASTER)
                 str = modeOptionStrings[game->gameMode - 1][mode];
@@ -1322,7 +1324,9 @@ void GameScene::showModeText() {
         if (game->subMode) {
             switch (game->gameMode) {
             case MARATHON:
-                if (game->subMode == 2)
+                if (game->subMode == 3)
+                    str = "Cascade";
+                else if (game->subMode == 2)
                     str = "Tower";
                 else
                     str = "Zone";
@@ -1332,6 +1336,12 @@ void GameScene::showModeText() {
                 break;
             case DIG:
                 str = "Efficiency";
+                break;
+            case ZEN:
+                if (game->subMode == 2)
+                    str = "Cascade";
+                else
+                    str = "Tower";
                 break;
             case CLASSIC:
                 str = "B-Type";
@@ -1731,12 +1741,21 @@ void addGameStats() {
         savefile->stats.maxLevel = game->level;
 
     if (game->gameMode == ZEN) {
-        if (game->subMode == 1) {
+        if (game->subMode == 2) {
             int height =
                 game->towerScrollCount + (game->lengthY - game->stackHeight);
 
             if (height > (int)savefile->boards.zenTower)
                 savefile->boards.zenTower = height;
+        } else if (game->subMode == 3) {
+            savefile->boards.zenCascade = game->score;
+            savefile->boards.zenLines =
+                savefile->boards.zenLines + game->linesCleared;
+        } else if (game->subMode == 1) {
+            if (game->score > (int)savefile->boards.zenZone)
+                savefile->boards.zenZone = game->score;
+            savefile->boards.zenLines =
+                savefile->boards.zenLines + game->linesCleared;
         } else {
             savefile->boards.zen = game->score;
             savefile->boards.zenLines =
