@@ -859,7 +859,11 @@ void Game::place() {
             blocks |= ((pawn.board[pawn.rotation][i][j] != 0) << j) << (4 * i);
         }
     }
-    connections.push_back(Connection(pawn.x, pawn.y, blocks));
+
+    bool isCascade = (gameMode == MARATHON && subMode == 3) ||
+                     (gameMode == ZEN && subMode == 2);
+    if (isCascade)
+        connections.push_back(Connection(pawn.x, pawn.y, blocks));
 
     toEndZone = false;
     if ((pawn.y + pawn.lowestBlock[pawn.rotation]) <= (lengthY / 2 - 1)) {
@@ -1947,7 +1951,9 @@ void Game::removeClearLock() {
 
     int pos = linesToClear.back();
 
-    if (!CASCADE) {
+    bool isCascade = (gameMode == MARATHON && subMode == 3) ||
+                     (gameMode == ZEN && subMode == 2);
+    if (!isCascade) {
         for (int i = pos; i >= stackHeight; i--) {
             if (index != linesToClear.rend() && *index == i) {
                 index++;
@@ -1968,19 +1974,19 @@ void Game::removeClearLock() {
         }
 
         stackHeight += len;
-    }
-
-    // remove cleared lines
-    for (auto const& line : linesToClear) {
-        memset32_fast(board[line], 0, 10);
-        bitboard[line] = 0;
-        if (disappearing)
-            memset16(disappearTimers[line], 0, 10);
+    } else {
+        // remove cleared lines
+        for (auto const& line : linesToClear) {
+            memset32_fast(board[line], 0, 10);
+            bitboard[line] = 0;
+            if (disappearing)
+                memset16(disappearTimers[line], 0, 10);
+        }
     }
 
     bool cascaded = false;
 
-    if (CASCADE) {
+    if (isCascade) {
         cascaded = cascade();
     } else {
         calculateColumnHeights(len);

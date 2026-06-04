@@ -311,7 +311,8 @@ public:
 
     std::list<Element*> getElementList() {
         return {
-            new StringSelectorElement("Type", {"Normal", "Zone", "Tower"}),
+            new StringSelectorElement("Type",
+                                      {"Normal", "Zone", "Tower", "Cascade"}),
             new LevelSelectorElement(1, 20),
             new TupleSelectorElement("Lines",
                                      {
@@ -328,6 +329,8 @@ public:
             return &savefile->boards.marathon[goal];
         } else if (submode == 2) {
             return &savefile->boards.tower[goal];
+        } else if (submode == 3) {
+            return &savefile->boards.cascade[goal];
         } else {
             return &savefile->boards.zone[goal];
         }
@@ -523,10 +526,12 @@ public:
     std::string getLabel() override { return "Score"; }
 
     std::string getCurrentOption() override {
-        if ( selector->getValue() == 0) {
+        if (selector->getValue() == 0) {
             return std::to_string(savefile->boards.zen);
-        } else {
+        } else if (selector->getValue() == 1) {
             return std::to_string(savefile->boards.zenTower);
+        } else {
+            return std::to_string(savefile->boards.zenCascade);
         }
     }
 
@@ -552,7 +557,8 @@ public:
     BlockEngine::Modes getMode() { return BlockEngine::ZEN; };
 
     std::list<Element*> getElementList() {
-        StringSelectorElement* sel = new StringSelectorElement("Type", {"Normal", "Tower"});
+        StringSelectorElement* sel =
+            new StringSelectorElement("Type", {"Normal", "Tower", "Cascade"});
         return {
             sel,
             new ZenScoreElement(sel),

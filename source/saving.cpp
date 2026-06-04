@@ -603,6 +603,9 @@ void setDefaults(Save* save, int depth) {
         savefile->boards.zenLines = 0;
         savefile->boards.zenTower = 0;
 
+        memset32_fast(savefile->boards.cascade, 0, sizeof(EntryBoard) * 4 / 4);
+        savefile->boards.zenCascade = 0;
+
 #ifdef ANDROID
         std::vector<Layout> layouts = getDefaultLayouts();
 

@@ -1737,6 +1737,10 @@ void addGameStats() {
 
             if (height > (int)savefile->boards.zenTower)
                 savefile->boards.zenTower = height;
+        } else if (game->subMode == 2) {
+            savefile->boards.zenCascade = game->score;
+            savefile->boards.zenLines =
+                savefile->boards.zenLines + game->linesCleared;
         } else {
             savefile->boards.zen = game->score;
             savefile->boards.zenLines =

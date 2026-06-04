@@ -100,7 +100,6 @@ public:
 
 #define GRADIENT_COLOR 0x71a6
 
-#define CASCADE 1
 #define CASCADE_DELAY 4
 #define CASCADE_INSTANT 0
 
