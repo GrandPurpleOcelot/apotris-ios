@@ -26,16 +26,6 @@ u8 attackAnimationTimers[4];
 
 u32 ownPower = 1;
 
-class BoardUpdate {
-public:
-    int row = 0;
-    RemotePlayerId playerId;
-
-    BoardUpdate(int r, RemotePlayerId playerId) : playerId(playerId) {
-        row = r;
-    }
-};
-
 std::vector<BoardUpdate> enemyBoardUpdates;
 
 OBJ_ATTR* enemyBoardSprite;
@@ -141,12 +131,7 @@ int GameScene::handleMultiplayer(bool duringGame) {
                 // Send full board updates every 16 frames instead of sending
                 // two rows every frame because it is more efficient.
                 if (game->timer % 16 == 0) {
-                    // Packet format:
-                    // bytes 0-1: SEND_ROW with height = 0x1f
-                    // bytes 2-3: (framecount / 16) % 65536
-                    // bytes 4-5..42-43: u16 row bitfields from heights 0 to 19
-
-                    std::array<std::byte, 44> packet;
+                    std::array<std::byte, 104> packet;
 
                     constexpr u16 pkt_header = ENCODE(SEND_ROW) + (0x1f << 10);
                     packet[0] = std::byte(pkt_header & 0xff);
@@ -157,13 +142,22 @@ int GameScene::handleMultiplayer(bool duringGame) {
                     packet[3] = std::byte(pkt_seq >> 8);
 
                     for (size_t r = 0; r < 20; r++) {
-                        u16 row_bitfield = 0;
-                        for (int i = 0; i < 10; i++)
-                            if (game->board[r + 20][i])
-                                row_bitfield += 1 << i;
-
-                        packet[4 + r * 2] = std::byte(row_bitfield & 0xff);
-                        packet[4 + r * 2 + 1] = std::byte(row_bitfield >> 8);
+                        bool clearing = game->lineClearArray[r + 20];
+                        for (size_t col = 0; col < 5; col++) {
+                            int cell0, cell1;
+                            if (clearing) {
+                                cell0 = cell1 = 9;
+                            } else {
+                                int val0 = game->board[r + 20][col * 2];
+                                int val1 = game->board[r + 20][col * 2 + 1];
+                                cell0 =
+                                    (val0 <= 0) ? 0 : ((val0 - 1) & 0xf) + 1;
+                                cell1 =
+                                    (val1 <= 0) ? 0 : ((val1 - 1) & 0xf) + 1;
+                            }
+                            u8 packed = (cell0 & 0xF) | ((cell1 & 0xF) << 4);
+                            packet[4 + r * 5 + col] = std::byte(packed);
+                        }
                     }
 
                     multiplayerLink->universal->send(packet);
@@ -312,7 +306,16 @@ void drawEnemyBoard() {
 
     enemyBoardSprite = &obj_buffer[25];
     sprite_unhide(enemyBoardSprite, ATTR0_AFF_DBL);
-    sprite_set_attr(enemyBoardSprite, ShapeSquare, 3, boardTile, 15, 1);
+
+    int boardPalette = 12;
+
+#ifdef GBA
+    boardPalette = 15;
+#endif
+
+    sprite_set_attr(enemyBoardSprite, ShapeSquare, 3, boardTile, boardPalette,
+                    1);
+
     sprite_enable_affine(enemyBoardSprite, 25, true);
     sprite_set_pos(enemyBoardSprite, x, y);
     sprite_set_size(enemyBoardSprite, int2fx(1) >> zoom, 25);
@@ -331,7 +334,7 @@ void drawEnemyBoard() {
         const int offsetY = (i / 2) * (20 + margin) + (17) * !zoom;
 
         sprite_set_attr(boardFrame, ShapeTall, 2, boardTile + 64,
-                        14 + (attackAnimationTimers[i] > 0), 1);
+                        14 + (attackAnimationTimers[i] > 0), 2);
         sprite_unhide(boardFrame, ATTR0_AFF_DBL);
         sprite_enable_affine(boardFrame, 6, true);
         sprite_set_pos(boardFrame, x + offsetX - 2, y + offsetY - 2);
@@ -364,19 +367,29 @@ void drawEnemyBoard() {
         const int offsetX = (update.playerId.index % 2) * (10 + margin);
         const int offsetY = (update.playerId.index / 2) * (20 + margin);
 
-        const int yy = update.row + offsetY;
+        const int startRow = update.fullBoard ? 0 : update.row;
+        const int endRow = update.fullBoard ? 19 : update.row;
 
-        for (int j = 0; j < 10; j++) {
-            const int xx = j + offsetX;
+        for (int r = startRow; r <= endRow; r++) {
+            const int yy = r + offsetY;
 
-            if (enemyBoard[update.playerId.index][update.row][j]) {
-                auto color =
-                    (enemyBoard[update.playerId.index][update.row][j]) + 1 +
-                    savefile->settings.lightMode;
-                setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8,
-                               color);
-            } else
-                setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8, 0);
+            for (int j = 0; j < 10; j++) {
+                const int xx = j + offsetX;
+
+                int cell = enemyBoard[update.playerId.index][r][j];
+                if (cell > 0) {
+#ifdef GBA
+                    setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8,
+                                   2 + savefile->settings.lightMode);
+#else
+                    int entry = (cell == 9) ? 14 : cell + 5;
+                    setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8,
+                                   entry);
+#endif
+                } else
+                    setSpritePixel(boardTile, xx / 8, yy / 8, 8, xx % 8, yy % 8,
+                                   0);
+            }
         }
     }
 
@@ -387,9 +400,11 @@ int botClearTimer = 0;
 #ifndef MULTIBOOT
 void handleBotGame() {
 
+#ifdef GBA
     if (botIncomingHeight++ > 19) {
         botIncomingHeight = 0;
     }
+#endif
 
     if (!botGame->attackQueue.empty()) {
         BlockEngine::Garbage atck = botGame->attackQueue.front();
@@ -406,12 +421,27 @@ void handleBotGame() {
     const auto id = RemotePlayerId(0);
 
     for (int i = 0; i < 20; i++) {
+        bool clearing = botGame->lineClearArray[i + 20];
         for (int j = 0; j < 10; j++) {
-            enemyBoard[id.index][i][j] = (botGame->board[i + 20][j] > 0) * 1;
+            u8 cellType;
+            if (clearing) {
+                cellType = 9;
+            } else {
+                int val = botGame->board[i + 20][j];
+                if (val <= 0)
+                    cellType = 0;
+                else
+                    cellType = ((val - 1) & 0xf) + 1;
+            }
+            enemyBoard[id.index][i][j] = cellType;
         }
     }
 
+#ifdef GBA
     enemyBoardUpdates.emplace_back(botIncomingHeight, id);
+#else
+    enemyBoardUpdates.emplace_back(0, id, true);
+#endif
     drawEnemyBoard();
 
     if (botGame->clearLock) {
@@ -511,9 +541,11 @@ bool GameScene::reconnect() {
                 playSongRandom(0);
                 buildBG(3, 0, 27, 0, 1, true);
 #ifndef MULTIBOOT
-                changeScene([](){ return new MainMenuScene(); }, Transitions::FADE);
+                changeScene([]() { return new MainMenuScene(); },
+                            Transitions::FADE);
 #else
-                changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
+                changeScene([]() { return new MultBattleScene(); },
+                            Transitions::FADE);
 #endif
                 return false;
             }

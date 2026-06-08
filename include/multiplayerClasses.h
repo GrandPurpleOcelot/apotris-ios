@@ -24,6 +24,7 @@
 #include <optional>
 #include <queue>
 #include <utility>
+#include <vector>
 
 // Higher three bits of u16 for commands
 #define UPDATE_STATE (2 << 13)
@@ -60,6 +61,21 @@ public:
 
     explicit RemotePlayerId(u8 playerId);
 };
+
+class BoardUpdate {
+public:
+    int row = 0;
+    bool fullBoard = false;
+    RemotePlayerId playerId;
+
+    BoardUpdate(int r, RemotePlayerId playerId, bool full = false)
+        : playerId(playerId) {
+        row = r;
+        fullBoard = full;
+    }
+};
+
+extern std::vector<BoardUpdate> enemyBoardUpdates;
 
 class Command {
 public:
@@ -220,14 +236,16 @@ public:
 #ifdef TRACY_ENABLE
             ZoneScopedN("read_board_update");
 #endif
-
-            for (size_t i = 0; i < 20; i++) {
-                const u16 row_bitfield = boardUpdate->boardRows[i];
-                // ENCODE(SEND_ROW) == (SEND_ROW << 13) == 0xa000
-                const u16 packet = (u16)((SEND_ROW << 13) + ((i & 0x1f) << 10) +
-                                         (row_bitfield & 0x3ff));
-                queue.emplace(boardUpdate->playerId, packet);
+            auto remotePlayerId = RemotePlayerId(boardUpdate->playerId);
+            if (remotePlayerId.index >= 4)
+                continue;
+            for (size_t row = 0; row < 20; row++) {
+                for (size_t col = 0; col < 10; col++) {
+                    enemyBoard[remotePlayerId.index][row][col] =
+                        boardUpdate->board[row][col];
+                }
             }
+            enemyBoardUpdates.emplace_back(0, remotePlayerId, true);
         }
 #endif
 #ifdef TRACY_ENABLE

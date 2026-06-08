@@ -7,7 +7,7 @@
 #ifdef GBA
 #include "detectEmulators.h"
 #ifndef MULTIBOOT
-//#include "sendMultiboot.h"
+// #include "sendMultiboot.h"
 #endif
 #else
 #include "LinkWebRTC.hpp"
@@ -299,6 +299,7 @@ void PlayOptionScene::start() {
                 botSleepDuration = getDelayForBotDifficulty(value);
                 botStepMax = 10;
                 mode = value;
+                goal = 250;
             } else {
                 goal = value;
                 mode = element->value;
@@ -413,17 +414,14 @@ void PlayOptionScene::draw() {
             const int x = (endX) * 8 - getVariableWidth(opt);
             const int y = startY + 8 * (space + 1) * i + verticalOffset;
 
-            const int selected = (counter != selection || !option->isSelectable()) +
-                      (i == elementMax + 1 || (listStart && i == 0));
+            const int selected =
+                (counter != selection || !option->isSelectable()) +
+                (i == elementMax + 1 || (listStart && i == 0));
 
             wordSprites[index]->setPriority(0);
-            wordSprites[index]->show(
-                x, y,
-                15 - selected);
+            wordSprites[index]->show(x, y, 15 - selected);
 
-            labels[index]->show(
-                startX, y,
-                15 - selected);
+            labels[index]->show(startX, y, 15 - selected);
 
             if (counter == selection && !onStart) { // draw sprite cursor
                 currentOption = opt;
@@ -1511,22 +1509,26 @@ bool MatchMakingScene::control() {
             clearSmallText();
             hideSprites = true;
 #ifdef GBA
-            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(); },
+                        Transitions::FADE);
 #else
             roomId = nameInput(-1);
-            changeScene([](){ return new MultBattleScene(roomId); }, Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(roomId); },
+                        Transitions::FADE);
 #endif
         } else {
 #ifdef GBA
-            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(); },
+                        Transitions::FADE);
 #else
             roomId = "";
-            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(); },
+                        Transitions::FADE);
 #endif
         }
     } else if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
-        changeScene([](){ return new MainMenuScene(); }, Transitions::FADE);
+        changeScene([]() { return new MainMenuScene(); }, Transitions::FADE);
     }
 
     return false;

@@ -125,6 +125,7 @@ extern void loadSpriteTilesPartial(int index, const void* src, int tx, int ty,
                                    int lengthX, int lengthY, int rowLength);
 
 extern void setPaletteColor(int palette, int index, u16 color, int count);
+extern u16 getPaletteColor(int palette, int index);
 
 extern void sprite_set_id(OBJ_ATTR* sprite, int id);
 extern void sprite_hide(OBJ_ATTR* sprite);

@@ -2167,6 +2167,13 @@ int Game::getIncomingGarbage() {
     return result;
 }
 
+std::vector<int> Game::getIncomingAttacks() const {
+    std::vector<int> result;
+    for (const auto& atck : garbageQueue)
+        result.push_back(atck.amount);
+    return result;
+}
+
 std::list<int> Game::getBestFinesse(int piece, int dx, int rotation) {
     std::list<int> result;
 

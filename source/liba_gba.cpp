@@ -9,12 +9,11 @@
 #include "flashSaves.h"
 #ifndef MULTIBOOT
 #include "LinkCableMultiboot.hpp"
-#include "gba_flash.h"
 #include "gba-rumble.h"
+#include "gba_flash.h"
 #include "gba_sram.h"
 #include "maxmod.h"
 #else
-#include "vgm.h"
 #include "Bump_bin.h"
 #include "Cancel_bin.h"
 #include "Click_bin.h"
@@ -23,8 +22,10 @@
 #include "Jump_bin.h"
 #include "Menu_In_bin.h"
 #include "Powerup_bin.h"
+#include "vgm.h"
 #define AGB_ROM ((u8*)0x8000000)
 #endif
+#include "LinkWirelessMultiboot.hpp"
 #include "gbfs.h"
 #include "gbp_logo.hpp"
 #include "logging.h"
@@ -33,9 +34,9 @@
 #include "rumblePatterns.hpp"
 #include "scene.hpp"
 #include "text.h"
-#include "LinkWirelessMultiboot.hpp"
 
-LinkUniversal::Protocol multiplayerProtocol = LinkUniversal::Protocol::AUTODETECT;
+LinkUniversal::Protocol multiplayerProtocol =
+    LinkUniversal::Protocol::AUTODETECT;
 // #include <string>
 // #include "scene.hpp"
 // #include "main.hpp"
@@ -65,28 +66,27 @@ u32 sleep_combo = 0;
 
 u16 get_sleep_combo(u32 index) {
     switch (index) {
-        case 0: // Disabled
-            return 0;
-        case 1:
-            return KEY_L | KEY_R | KEY_SELECT;
-        case 2:
-            return KEY_START | KEY_SELECT;
-        default:
-            return 0;
+    case 0: // Disabled
+        return 0;
+    case 1:
+        return KEY_L | KEY_R | KEY_SELECT;
+    case 2:
+        return KEY_START | KEY_SELECT;
+    default:
+        return 0;
     }
 }
 
-
 u32 get_autosleep_mins(u32 index) {
     switch (index) {
-        case 0: // Disabled
-            return 0;
-        case 1:
-            return 1;
-        case 2:
-            return 3;
-        default: // 5 minute intervals, starting from 5
-            return (index - 2) * 5;
+    case 0: // Disabled
+        return 0;
+    case 1:
+        return 1;
+    case 2:
+        return 3;
+    default: // 5 minute intervals, starting from 5
+        return (index - 2) * 5;
     }
 }
 
@@ -100,7 +100,7 @@ void await_key_release(u32 keys, int timeout_secs) {
         VBlankIntrWait();
         key_poll();
         timer++;
-    } while ( key_curr_state() != ((~keys) & KEY_FULL) );
+    } while (key_curr_state() != ((~keys) & KEY_FULL));
 }
 
 bool sleep_combo_check(u32 keys) {
@@ -148,18 +148,16 @@ mm_word myEventHandler(mm_word msg, mm_word param) {
     return 0;
 }
 
-#define SC_REG_ENABLE       (*(volatile uint16_t *)0x9FFFFFE)
-#define SC_ENABLE_MAGIC     0xA55A
+#define SC_REG_ENABLE (*(volatile uint16_t*)0x9FFFFFE)
+#define SC_ENABLE_MAGIC 0xA55A
 
-#define SC_ENABLE_PSRAM     BIT(0)
-#define SC_ENABLE_CARD      BIT(1)
-#define SC_ENABLE_WRITE     BIT(2)
+#define SC_ENABLE_PSRAM BIT(0)
+#define SC_ENABLE_CARD BIT(1)
+#define SC_ENABLE_WRITE BIT(2)
 
-__attribute__((section(".text")))
-static volatile bool sentinel = false;
+__attribute__((section(".text"))) static volatile bool sentinel = false;
 
-static void superCardUnlock(uint16_t sc_mode)
-{
+static void superCardUnlock(uint16_t sc_mode) {
     SC_REG_ENABLE = SC_ENABLE_MAGIC;
     SC_REG_ENABLE = SC_ENABLE_MAGIC;
     SC_REG_ENABLE = sc_mode;
@@ -167,12 +165,13 @@ static void superCardUnlock(uint16_t sc_mode)
 }
 
 /**
- * SuperCard detection routine from Asie. The idea is that we attempt to unlock the "ROM" area for writes, then test if
- * our flip of sentinel, in "ROM" from "false" to "true" was registered by the card. If it was, we're executing on a
- * SuperCard. If it was not flipped, the card providing "ROM" is not a SuperCard. Required for safe "fast ROM waitstate"
+ * SuperCard detection routine from Asie. The idea is that we attempt to unlock
+ * the "ROM" area for writes, then test if our flip of sentinel, in "ROM" from
+ * "false" to "true" was registered by the card. If it was, we're executing on a
+ * SuperCard. If it was not flipped, the card providing "ROM" is not a
+ * SuperCard. Required for safe "fast ROM waitstate"
  */
-bool isRunningOnSuperCard()
-{
+bool isRunningOnSuperCard() {
     superCardUnlock(SC_ENABLE_PSRAM | SC_ENABLE_WRITE);
     sentinel = true;
     superCardUnlock(SC_ENABLE_PSRAM);
@@ -342,13 +341,13 @@ void platformInit() {
 void setUpLinkUniversal() {
     const u32 timeout = 60;
     const u32 wirelessInterval = 50; // No reason to go lower
-    const u32 wiredInterval = 300; // 150 usually works, but some devices need 300...
+    const u32 wiredInterval =
+        300; // 150 usually works, but some devices need 300...
     delete multiplayerLink;
     delete linkUniversal;
 
     linkUniversal = new LinkUniversal(
-        LinkUniversal::Protocol::AUTODETECT,
-        "Apotris",
+        LinkUniversal::Protocol::AUTODETECT, "Apotris",
         (LinkUniversal::CableOptions){
             .baudRate =
                 LinkCable::BaudRate::BAUD_RATE_3, // Baud 3 is required for
@@ -356,13 +355,13 @@ void setUpLinkUniversal() {
             .timeout = timeout,
             .interval = wiredInterval,
             .sendTimerId = 1},
-        (LinkUniversal::WirelessOptions){
-            .forwarding = true,
-            .retransmission = true,
-            .maxPlayers = LINK_WIRELESS_MAX_PLAYERS,
-            .timeout = timeout,
-            .interval = wirelessInterval,
-            .sendTimerId = 1});
+        (LinkUniversal::WirelessOptions){.forwarding = true,
+                                         .retransmission = true,
+                                         .maxPlayers =
+                                             LINK_WIRELESS_MAX_PLAYERS,
+                                         .timeout = timeout,
+                                         .interval = wirelessInterval,
+                                         .sendTimerId = 1});
     multiplayerLink = new MultiplayerLink(linkUniversal);
 }
 
@@ -376,9 +375,13 @@ void sleep_checks() {
     if (multiplayer)
         return;
 
-    const u32 autosleep_wait_frames = get_autosleep_mins(savefile->settings.sleep.autosleepDelay) * FRAMES_PER_MIN;
+    const u32 autosleep_wait_frames =
+        get_autosleep_mins(savefile->settings.sleep.autosleepDelay) *
+        FRAMES_PER_MIN;
 
-    const bool no_user_input = savefile->settings.sleep.autosleepWakeCombo == 2 ? !key_is_down(KEY_FULL & ~(KEY_L | KEY_R)) : !key_is_down(KEY_FULL);
+    const bool no_user_input = savefile->settings.sleep.autosleepWakeCombo == 2
+                                   ? !key_is_down(KEY_FULL & ~(KEY_L | KEY_R))
+                                   : !key_is_down(KEY_FULL);
 
     if (no_user_input) {
         autosleepTimer++;
@@ -458,6 +461,10 @@ void loadSpriteTilesPartial(int index, const void* src, int tx, int ty,
 
 void setPaletteColor(int palette, int index, u16 color, int count) {
     memset16(&pal_bg_mem[palette * 16 + index], color, count);
+}
+
+u16 getPaletteColor(int palette, int index) {
+    return pal_bg_mem[palette * 16 + index];
 }
 
 void sprite_hide(OBJ_ATTR* sprite) { obj_hide(sprite); }
@@ -544,21 +551,22 @@ void initRumbleCart() {
     enum GBARumbleCartType cart_type = gba_rumble_cart_uninitialized;
 
     switch (savefile->settings.rumbleCartType) {
-        case 0: // "Type A", ROM GPIO
-            cart_type = gba_rumble_cart_rio;
-            break;
-        case 1: // "Type B", DS Rumble Pak
-            cart_type = gba_rumble_cart_ds;
-            break;
-        case 2: // "Type C", EZ-Flash Omega DE/3-in-1
-            cart_type = gba_rumble_cart_ezflash;
-            break;
-        default:
-            return;
+    case 0: // "Type A", ROM GPIO
+        cart_type = gba_rumble_cart_rio;
+        break;
+    case 1: // "Type B", DS Rumble Pak
+        cart_type = gba_rumble_cart_ds;
+        break;
+    case 2: // "Type C", EZ-Flash Omega DE/3-in-1
+        cart_type = gba_rumble_cart_ezflash;
+        break;
+    default:
+        return;
     }
     gba_rumble_init_cart(cart_type);
 
-    if (savefile->settings.ezFlash3in1Strength >= EZFLASH_MIN_RUMBLE && savefile->settings.ezFlash3in1Strength <= EZFLASH_MAX_RUMBLE) {
+    if (savefile->settings.ezFlash3in1Strength >= EZFLASH_MIN_RUMBLE &&
+        savefile->settings.ezFlash3in1Strength <= EZFLASH_MAX_RUMBLE) {
         gba_rumble_ezflash_write_rumble(savefile->settings.ezFlash3in1Strength);
     }
 
@@ -566,15 +574,20 @@ void initRumbleCart() {
         // Setup rumble PWM with one of the hardware timers (any of 0-3)
         interrupt_set_handler(INTR_TIMER2, rumblePatternLoop);
 
-        u16 timerReloadVal = 8 << 1; // 1024hz, further shifts will half the rate.
+        u16 timerReloadVal = 8
+                             << 1; // 1024hz, further shifts will half the rate.
 
-        if (savefile->settings.rumbleUpdateRate >= 1 && savefile->settings.rumbleUpdateRate <= 4) { // Expecting vals 0-4, but 0-4 are the only valid ones.
+        if (savefile->settings.rumbleUpdateRate >= 1 &&
+            savefile->settings.rumbleUpdateRate <=
+                4) { // Expecting vals 0-4, but 0-4 are the only valid ones.
             u16 timerShiftFactor = 4 - savefile->settings.rumbleUpdateRate;
             timerReloadVal <<= timerShiftFactor;
         }
 
-        REG_TM2D   = -timerReloadVal; // Set negative val in timer reload reg
-        REG_TM2CNT = TM_FREQ_1024 | TM_IRQ | TM_ENABLE; // 1024-cycle prescaler -> 16.384 kHz, 61.04 μs per timer tick
+        REG_TM2D = -timerReloadVal; // Set negative val in timer reload reg
+        REG_TM2CNT =
+            TM_FREQ_1024 | TM_IRQ | TM_ENABLE; // 1024-cycle prescaler -> 16.384
+                                               // kHz, 61.04 μs per timer tick
 
         interrupt_enable(INTR_TIMER2);
     } else {
@@ -621,9 +634,7 @@ void rumbleOutput(uint16_t strength) {
     }
 }
 
-void rumbleStop() {
-    gba_rumble_stop();
-}
+void rumbleStop() { gba_rumble_stop(); }
 
 bool detect_gbp() {
     bool gbp_detected = false;
@@ -663,10 +674,15 @@ bool prevGradient, isLinked;
 void sleep() {
     int timer = 0;
 
-    const u32 autosleep_wait_frames = get_autosleep_mins(savefile->settings.sleep.autosleepDelay) * FRAMES_PER_MIN;
-    const bool is_autosleep = (autosleep_wait_frames && autosleepTimer > autosleep_wait_frames);
+    const u32 autosleep_wait_frames =
+        get_autosleep_mins(savefile->settings.sleep.autosleepDelay) *
+        FRAMES_PER_MIN;
+    const bool is_autosleep =
+        (autosleep_wait_frames && autosleepTimer > autosleep_wait_frames);
 
-    const bool use_combo_for_wake = !is_autosleep || (is_autosleep && sleep_combo && savefile->settings.sleep.autosleepWakeCombo == 0);
+    const bool use_combo_for_wake =
+        !is_autosleep || (is_autosleep && sleep_combo &&
+                          savefile->settings.sleep.autosleepWakeCombo == 0);
 
     // Wait for keys to be released so the console doesn't
     // insta-wake due to the interrupt combo already being active.
@@ -678,19 +694,23 @@ void sleep() {
         // Using the same keys used to put manually to sleep.
         REG_P1CNT = sleep_combo | BIT(14) | BIT(15);
     } else if (savefile->settings.sleep.autosleepWakeCombo == 2) {
-        // Any key except shoulder L and R (bits 8 and 9) should be able to wake the console.
-        REG_P1CNT = static_cast<cu16>(~(BIT(15) | BIT(8) | BIT(9) | BIT(10) | BIT(11) | BIT(12) | BIT(13)));
+        // Any key except shoulder L and R (bits 8 and 9) should be able to wake
+        // the console.
+        REG_P1CNT = static_cast<cu16>(~(BIT(15) | BIT(8) | BIT(9) | BIT(10) |
+                                        BIT(11) | BIT(12) | BIT(13)));
     } else {
-        // Setting bit 15 to 0 allows any single key in the active mask to wake the console.
-        // 10-13 are unused bits in the register
-        REG_P1CNT = static_cast<cu16>(~(BIT(15) | BIT(10) | BIT(11) | BIT(12) | BIT(13)));
+        // Setting bit 15 to 0 allows any single key in the active mask to wake
+        // the console. 10-13 are unused bits in the register
+        REG_P1CNT = static_cast<cu16>(
+            ~(BIT(15) | BIT(10) | BIT(11) | BIT(12) | BIT(13)));
     }
 
     Stop();
 
     enableVolatileInterrupts(true);
 
-    // Wait for waking keys to be released so they don't trigger menu/game actions.
+    // Wait for waking keys to be released so they don't trigger menu/game
+    // actions.
     await_key_release(KEY_FULL, 3);
 }
 
@@ -767,52 +787,52 @@ void sfx(int s) {
     mmEffectVolume(h, 255 * (float)savefile->settings.sfxVolume / 10);
 #else
     const u8* sfxData = nullptr;
-    switch(s) {
-        case SFX_LEVELUP:
-        case SFX_DOUBLE:
-            sfxData = Confirm_vgm;
-            break;
-        case SFX_YOUWIN:
-        case SFX_SECRET:
-        case SFX_TSPIN:
-        case SFX_TSPINMINI:
-        case SFX_MULTICLEAR:
-        case SFX_PERFECTRIS:
-        case SFX_PERFECTCLEAR:
-        case SFX_ULTIMATRIS:
-        case SFX_TRIPLE:
-        case SFX_QUAD:
-        case SFX_BACKTOBACKQUAD:
-        case SFX_BACKTOBACKTSPIN:
-        case SFX_DODECATRIS:
-        case SFX_OCTORIS:
-            sfxData = Powerup_vgm;
-            break;
-        case SFX_HOLD:
-            sfxData = Jump_vgm;
-            break;
-        case SFX_GO:
-        case SFX_ROTATE:
-            sfxData = Menu_In_vgm;
-            break;
-        case SFX_INITIAL:
-        case SFX_MENUCANCEL:
-            sfxData = Cancel_vgm;
-            break;
-        case SFX_READY:
-        case SFX_PLACE:
-        case SFX_INVALID:
-            sfxData = Bump_vgm;
-            break;
-        case SFX_SHIFT:
-        case SFX_SHIFT2:
-        case SFX_MENUCONFIRM:
-        case SFX_GAMEOVER:
-            sfxData = Click_vgm;
-            break;
-        case SFX_YOULOSE:
-            sfxData = Evil_Laugh_vgm;
-            break;
+    switch (s) {
+    case SFX_LEVELUP:
+    case SFX_DOUBLE:
+        sfxData = Confirm_vgm;
+        break;
+    case SFX_YOUWIN:
+    case SFX_SECRET:
+    case SFX_TSPIN:
+    case SFX_TSPINMINI:
+    case SFX_MULTICLEAR:
+    case SFX_PERFECTRIS:
+    case SFX_PERFECTCLEAR:
+    case SFX_ULTIMATRIS:
+    case SFX_TRIPLE:
+    case SFX_QUAD:
+    case SFX_BACKTOBACKQUAD:
+    case SFX_BACKTOBACKTSPIN:
+    case SFX_DODECATRIS:
+    case SFX_OCTORIS:
+        sfxData = Powerup_vgm;
+        break;
+    case SFX_HOLD:
+        sfxData = Jump_vgm;
+        break;
+    case SFX_GO:
+    case SFX_ROTATE:
+        sfxData = Menu_In_vgm;
+        break;
+    case SFX_INITIAL:
+    case SFX_MENUCANCEL:
+        sfxData = Cancel_vgm;
+        break;
+    case SFX_READY:
+    case SFX_PLACE:
+    case SFX_INVALID:
+        sfxData = Bump_vgm;
+        break;
+    case SFX_SHIFT:
+    case SFX_SHIFT2:
+    case SFX_MENUCONFIRM:
+    case SFX_GAMEOVER:
+        sfxData = Click_vgm;
+        break;
+    case SFX_YOULOSE:
+        sfxData = Evil_Laugh_vgm;
+        break;
     }
     if (sfxData) {
         VgmPlay(sfxData, false);

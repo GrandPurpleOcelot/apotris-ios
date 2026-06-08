@@ -10,8 +10,8 @@
 #include <string>
 #include <tuple>
 
-#ifdef GBA
 #include "multiplayerClasses.h"
+#ifdef GBA
 #include "sceneModes.hpp"
 #include <rumble.h>
 #endif // GBA
@@ -31,6 +31,7 @@ void addGlow(Drop);
 void addPlaceEffect(const Drop&);
 
 void showBar(int, int, int, int, int);
+void showAttackBar(const std::vector<int>&, int, int, int, int);
 
 void showBestMove();
 bool checkDiagonal(uint32_t);
@@ -1858,6 +1859,9 @@ void clearGlow() {
 }
 
 void GameScene::countdown() {
+    if (game->gameMode == BATTLE)
+        clearEnemyBoard();
+
     int timer = 0;
     const int timerMax = 120;
 
@@ -2491,19 +2495,8 @@ void progressBar(int layer) {
         if (++attackFlashTimer > attackFlashMax)
             attackFlashTimer = 0;
 
-        int p = 8;
-
-        if (layer < 0)
-            p += 16;
-
-        if (attackFlashTimer < attackFlashMax / 2) {
-            setPaletteColor(p, 4, 0x421f, 1);
-        } else {
-            setPaletteColor(p, 4, 0x7fff, 1);
-        }
-
         // attack bar
-        showBar(game->getIncomingGarbage(), 20, pos.x / 8 - 1, 8, layer);
+        showAttackBar(game->getIncomingAttacks(), 20, pos.x / 8 - 1, 8, layer);
 
         if (layer >= 0) {
             setTile(l, pos.x / 8 - 1, pos.y / 8 + 20,
@@ -2684,6 +2677,230 @@ void showBar(int current, int max, int x, int palette, int layer) {
                 setSpriteTile(200 + (x > 9) * 20 + (i / 4) * 4, 0, i % 4, 1,
                               &sprite8tiles_bin[32 * (3)]);
             }
+        }
+    }
+}
+
+static inline u32 rowInteriorFill(int nibble) {
+    if (nibble == 0)
+        return 0x13000032;
+    return (u32)(0x13000032 | (nibble << 20) | (nibble << 16) | (nibble << 12) |
+                 (nibble << 8));
+}
+
+void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
+                   int layer) {
+    if (attacks.empty()) {
+        showBar(0, max, x, palette, layer);
+        return;
+    }
+
+    int pixelZone[160];
+    memset(pixelZone, 0, sizeof(pixelZone));
+
+    int gp = 0;
+    for (size_t a = 0; a < attacks.size() && gp < 158; a++) {
+        int zone = (int)a + 1;
+        int pixelCount = attacks[a] * 8;
+        if (gp + pixelCount > 158)
+            pixelCount = 158 - gp;
+        for (int k = 0; k < pixelCount; k++)
+            pixelZone[gp++] = zone;
+        if (a < attacks.size() - 1 && gp < 158)
+            gp++;
+    }
+    int totalPixelFill = gp;
+
+    int current = (totalPixelFill * 20) / 158;
+    if (current > 20)
+        current = 20;
+
+    auto getZone = [&](int tileIndex, int rowInTile) -> int {
+        int globalPixel = (19 - tileIndex) * 8 + (7 - rowInTile);
+        if (globalPixel < 0 || globalPixel >= 158)
+            return 0;
+        return pixelZone[globalPixel];
+    };
+
+    auto isUniform = [&](int ti, int startRow, int endRow,
+                         int* outZone) -> bool {
+        int first = getZone(ti, startRow);
+        for (int r = startRow; r <= endRow; r++) {
+            if (getZone(ti, r) != first)
+                return false;
+        }
+        *outZone = first;
+        return first != 0;
+    };
+
+    bool flashOn = (attackFlashTimer < attackFlashMax / 2);
+
+    int p = 8;
+    if (layer < 0)
+        p += 16;
+
+    setPaletteColor(p, 4, 0x7fff, 1);
+    setPaletteColor(p, 5, flashOn ? 0x7fff : 0x001f, 1);
+
+    int l = 25 + layer;
+
+    int pixels =
+        fx2int(fxmul(fxdiv(int2fx(current), int2fx(max)), int2fx(158)));
+    int segments =
+        fx2int(fxdiv(int2fx(current), fxdiv(int2fx(max), int2fx(20))));
+    int edge = pixels - segments * 8 + 1 * (segments != 0);
+    int t = 0;
+
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
+    if (layer >= 0) {
+        int zone;
+        bool uni;
+
+        uni = isUniform(0, 0, 7, &zone);
+        t = 6;
+        if (uni) {
+            if (segments == 19 && edge != 0)
+                t = 10;
+            else if (segments >= 20)
+                t = 8;
+        } else if (segments == 19 && edge != 0)
+            t = 10;
+        else if (segments >= 20)
+            t = 8;
+
+        setTile(l, x, pos.y / 8, tileBuild(t, false, false, palette));
+        if (!uni || zone == 1) {
+            for (int r = 1; r < 8; r++) {
+                int z = getZone(0, r);
+                if (z == 0)
+                    setTileRow(0, t, r, rowInteriorFill(0));
+                else if (z == 1)
+                    setTileRow(0, t, r, rowInteriorFill(5));
+            }
+        }
+
+        uni = isUniform(19, 0, 7, &zone);
+        t = 8;
+        if (!uni || zone == 0) {
+            if (segments == 0) {
+                t = 6;
+                if (edge != 0)
+                    t = 10;
+            }
+        }
+
+        setTile(l, x, pos.y / 8 + 19, tileBuild(t, false, true, palette));
+        if (!uni || zone == 1) {
+            for (int r = 0; r < 7; r++) {
+                int z = getZone(19, r);
+                if (z == 0)
+                    setTileRow(0, t, r, rowInteriorFill(0));
+                else if (z == 1)
+                    setTileRow(0, t, r, rowInteriorFill(5));
+            }
+        }
+
+        for (int i = 1; i < 19; i++) {
+            uni = isUniform(i, 0, 7, &zone);
+            t = 9;
+            if (!uni || zone == 0) {
+                if (19 - i > segments)
+                    t = 7;
+                else if (19 - i == segments)
+                    t = 11;
+            }
+
+            setTile(l, x, pos.y / 8 + i, tileBuild(t, false, false, palette));
+            if (!uni || zone == 1) {
+                for (int r = 0; r < 8; r++) {
+                    int z = getZone(i, r);
+                    if (z == 0)
+                        setTileRow(0, t, r, rowInteriorFill(0));
+                    else if (z == 1)
+                        setTileRow(0, t, r, rowInteriorFill(5));
+                }
+            }
+        }
+    } else {
+        TILE temp;
+        int zone;
+        bool uni;
+
+        uni = isUniform(0, 0, 7, &zone);
+        if (uni) {
+            if (segments == 19 && edge != 0)
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 4], 8);
+            else if (segments >= 20)
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 2], 8);
+            else
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 0], 8);
+        } else if (segments == 19 && edge != 0)
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 4], 8);
+        else if (segments >= 20)
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 2], 8);
+        else
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 0], 8);
+
+        if (!uni || zone == 1) {
+            for (int r = 1; r < 8; r++) {
+                int z = getZone(0, r);
+                if (z == 0)
+                    temp.data[r] = rowInteriorFill(0);
+                else if (z == 1)
+                    temp.data[r] = rowInteriorFill(5);
+            }
+        }
+        setSpriteTile(200 + (x > 9) * 20, 0, 0, 1, &temp);
+
+        uni = isUniform(19, 0, 7, &zone);
+        if (uni) {
+            if (segments == 0 && edge != 0)
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 8], 8);
+            else if (segments == 0)
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 6], 8);
+            else
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 7], 8);
+        } else if (segments == 0 && edge != 0)
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 8], 8);
+        else if (segments == 0)
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 6], 8);
+        else
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 7], 8);
+
+        if (!uni || zone == 1) {
+            for (int r = 0; r < 7; r++) {
+                int z = getZone(19, r);
+                if (z == 0)
+                    temp.data[r] = rowInteriorFill(0);
+                else if (z == 1)
+                    temp.data[r] = rowInteriorFill(5);
+            }
+        }
+        setSpriteTile(200 + (x > 9) * 20 + 16, 0, 3, 1, &temp);
+
+        for (int i = 1; i < 19; i++) {
+            uni = isUniform(i, 0, 7, &zone);
+            if (uni) {
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 3], 8);
+            } else if (19 - i > segments) {
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 1], 8);
+            } else if (19 - i == segments) {
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 5], 8);
+            } else {
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 3], 8);
+            }
+
+            if (!uni || zone == 1) {
+                for (int r = 0; r < 8; r++) {
+                    int z = getZone(i, r);
+                    if (z == 0)
+                        temp.data[r] = rowInteriorFill(0);
+                    else if (z == 1)
+                        temp.data[r] = rowInteriorFill(5);
+                }
+            }
+            setSpriteTile(200 + (x > 9) * 20 + (i / 4) * 4, 0, i % 4, 1, &temp);
         }
     }
 }
