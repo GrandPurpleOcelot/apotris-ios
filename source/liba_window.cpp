@@ -196,7 +196,7 @@ void handleInput() {
                 screenHeight = event.window.data2;
                 refreshWindowSize();
             } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-                if (!demo)
+                if (!demo && !multiplayer)
                     paused = true;
             }
             break;
