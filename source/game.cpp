@@ -31,7 +31,7 @@ void addGlow(Drop);
 void addPlaceEffect(const Drop&);
 
 void showBar(int, int, int, int, int);
-void showAttackBar(const std::vector<int>&, int, int, int, int);
+void showAttackBar(const std::list<Garbage>&, int, int, int, int);
 
 void showBestMove();
 bool checkDiagonal(uint32_t);
@@ -2495,8 +2495,7 @@ void progressBar(int layer) {
         if (++attackFlashTimer > attackFlashMax)
             attackFlashTimer = 0;
 
-        // attack bar
-        showAttackBar(game->getIncomingAttacks(), 20, pos.x / 8 - 1, 8, layer);
+        showAttackBar(game->garbageQueue, 20, pos.x / 8 - 1, 8, layer);
 
         if (layer >= 0) {
             setTile(l, pos.x / 8 - 1, pos.y / 8 + 20,
@@ -2688,44 +2687,106 @@ static inline u32 rowInteriorFill(int nibble) {
                  (nibble << 8));
 }
 
-void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
-                   int layer) {
-    if (attacks.empty()) {
-        showBar(0, max, x, palette, layer);
+void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
+                   int palette, int layer) {
+    static std::vector<int> cachedIds;
+    static std::vector<int> cachedAmounts;
+    static bool lastWasEmpty = true;
+    static int lastLayer = 0;
+
+    bool flashOn = (attackFlashTimer < attackFlashMax / 2);
+    int p = 8 + (layer < 0 ? 16 : 0);
+    setPaletteColor(p, 4, 0x7fff, 1);
+    setPaletteColor(p, 5, flashOn ? 0x7fff : 0x001f, 1);
+
+    bool emptyNow = garbage.empty();
+
+    // Skip rendering if nothing changed
+    if (lastWasEmpty == emptyNow && layer == lastLayer) {
+        if (!emptyNow) {
+            if (garbage.size() == cachedIds.size()) {
+                bool same = true;
+                size_t i = 0;
+                for (auto it = garbage.begin(); it != garbage.end();
+                     ++it, ++i) {
+                    if (it->id != cachedIds[i] ||
+                        it->amount != cachedAmounts[i]) {
+                        same = false;
+                        break;
+                    }
+                }
+                if (same)
+                    return;
+            }
+        }
+    }
+
+    lastWasEmpty = emptyNow;
+    lastLayer = layer;
+    cachedIds.clear();
+    cachedAmounts.clear();
+
+    for (auto it : garbage) {
+        cachedIds.push_back(it.id);
+        cachedAmounts.push_back(it.amount);
+    }
+
+    if (garbage.empty()) {
+        Position pos = gameLayout[(int)GameElements::FIELD];
+        int l = 25 + layer;
+
+        if (layer >= 0) {
+            int baseY = pos.y / 8;
+            setTile(l, x, baseY, tileBuild(6, false, false, palette));
+            for (int i = 1; i < 19; i++)
+                setTile(l, x, baseY + i, tileBuild(7, false, false, palette));
+            setTile(l, x, baseY + 19, tileBuild(6, false, true, palette));
+        } else {
+            int base = 200 + (x > 9) * 20;
+            setSpriteTile(base, 0, 0, 1, &sprite8tiles_bin[32 * 0]);
+            for (int i = 1; i < 19; i++)
+                setSpriteTile(base + (i / 4) * 4, 0, i % 4, 1,
+                              &sprite8tiles_bin[32 * 1]);
+            setSpriteTile(base + 16, 0, 3, 1, &sprite8tiles_bin[32 * 6]);
+        }
         return;
     }
 
-    int pixelZone[160];
-    memset(pixelZone, 0, sizeof(pixelZone));
-
+    u8 pixelZone[160];
     int gp = 0;
-    for (size_t a = 0; a < attacks.size() && gp < 158; a++) {
-        int zone = (int)a + 1;
-        int pixelCount = attacks[a] * 8;
+    u8 zone = 1;
+    for (auto it = garbage.begin(); it != garbage.end() && gp < 158;
+         ++it, ++zone) {
+        int pixelCount = it->amount * 8;
         if (gp + pixelCount > 158)
             pixelCount = 158 - gp;
         for (int k = 0; k < pixelCount; k++)
             pixelZone[gp++] = zone;
-        if (a < attacks.size() - 1 && gp < 158)
-            gp++;
+        auto next = it;
+        ++next;
+        if (next != garbage.end() && gp < 158)
+            pixelZone[gp++] = 0;
     }
+    for (int k = gp; k < 160; k++)
+        pixelZone[k] = 0;
+
     int totalPixelFill = gp;
+    int current = min((totalPixelFill * 20) / 158, 20);
 
-    int current = (totalPixelFill * 20) / 158;
-    if (current > 20)
-        current = 20;
+    int segments = current;
+    int pixels = (current * 158) / 20;
+    int edge = pixels - segments * 8 + (segments != 0 ? 1 : 0);
 
-    auto getZone = [&](int tileIndex, int rowInTile) -> int {
-        int globalPixel = (19 - tileIndex) * 8 + (7 - rowInTile);
-        if (globalPixel < 0 || globalPixel >= 158)
+    auto getZone = [&](int ti, int r) -> int {
+        int idx = (19 - ti) * 8 + (7 - r);
+        if (idx < 0 || idx >= 158)
             return 0;
-        return pixelZone[globalPixel];
+        return pixelZone[idx];
     };
 
-    auto isUniform = [&](int ti, int startRow, int endRow,
-                         int* outZone) -> bool {
-        int first = getZone(ti, startRow);
-        for (int r = startRow; r <= endRow; r++) {
+    auto isUniform = [&](int ti, int* outZone) -> bool {
+        int first = getZone(ti, 0);
+        for (int r = 1; r < 8; r++) {
             if (getZone(ti, r) != first)
                 return false;
         }
@@ -2733,31 +2794,17 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
         return first != 0;
     };
 
-    bool flashOn = (attackFlashTimer < attackFlashMax / 2);
-
-    int p = 8;
-    if (layer < 0)
-        p += 16;
-
-    setPaletteColor(p, 4, 0x7fff, 1);
-    setPaletteColor(p, 5, flashOn ? 0x7fff : 0x001f, 1);
-
     int l = 25 + layer;
-
-    int pixels =
-        fx2int(fxmul(fxdiv(int2fx(current), int2fx(max)), int2fx(158)));
-    int segments =
-        fx2int(fxdiv(int2fx(current), fxdiv(int2fx(max), int2fx(20))));
-    int edge = pixels - segments * 8 + 1 * (segments != 0);
     int t = 0;
-
     Position pos = gameLayout[(int)GameElements::FIELD];
 
     if (layer >= 0) {
-        int zone;
-        bool uni;
+        int baseY = pos.y / 8;
 
-        uni = isUniform(0, 0, 7, &zone);
+        // Top tile (tile 0)
+        int tileZone;
+        bool uni = isUniform(0, &tileZone);
+
         t = 6;
         if (uni) {
             if (segments == 19 && edge != 0)
@@ -2769,8 +2816,8 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
         else if (segments >= 20)
             t = 8;
 
-        setTile(l, x, pos.y / 8, tileBuild(t, false, false, palette));
-        if (!uni || zone == 1) {
+        setTile(l, x, baseY, tileBuild(t, false, false, palette));
+        if (!uni || tileZone == 1) {
             for (int r = 1; r < 8; r++) {
                 int z = getZone(0, r);
                 if (z == 0)
@@ -2780,9 +2827,11 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
             }
         }
 
-        uni = isUniform(19, 0, 7, &zone);
+        // Bottom tile (tile 19)
+        uni = isUniform(19, &tileZone);
+
         t = 8;
-        if (!uni || zone == 0) {
+        if (!uni || tileZone == 0) {
             if (segments == 0) {
                 t = 6;
                 if (edge != 0)
@@ -2790,8 +2839,8 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
             }
         }
 
-        setTile(l, x, pos.y / 8 + 19, tileBuild(t, false, true, palette));
-        if (!uni || zone == 1) {
+        setTile(l, x, baseY + 19, tileBuild(t, false, true, palette));
+        if (!uni || tileZone == 1) {
             for (int r = 0; r < 7; r++) {
                 int z = getZone(19, r);
                 if (z == 0)
@@ -2801,18 +2850,20 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
             }
         }
 
+        // Middle tiles (1..18)
         for (int i = 1; i < 19; i++) {
-            uni = isUniform(i, 0, 7, &zone);
+            uni = isUniform(i, &tileZone);
+
             t = 9;
-            if (!uni || zone == 0) {
+            if (!uni || tileZone == 0) {
                 if (19 - i > segments)
                     t = 7;
                 else if (19 - i == segments)
                     t = 11;
             }
 
-            setTile(l, x, pos.y / 8 + i, tileBuild(t, false, false, palette));
-            if (!uni || zone == 1) {
+            setTile(l, x, baseY + i, tileBuild(t, false, false, palette));
+            if (!uni || tileZone == 1) {
                 for (int r = 0; r < 8; r++) {
                     int z = getZone(i, r);
                     if (z == 0)
@@ -2823,11 +2874,14 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
             }
         }
     } else {
+        // Sprite path
+        int base = 200 + (x > 9) * 20;
         TILE temp;
-        int zone;
-        bool uni;
 
-        uni = isUniform(0, 0, 7, &zone);
+        // Top tile (tile 0)
+        int spriteZone;
+        bool uni = isUniform(0, &spriteZone);
+
         if (uni) {
             if (segments == 19 && edge != 0)
                 memcpy32_fast(&temp, &sprite8tiles_bin[32 * 4], 8);
@@ -2842,7 +2896,7 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
         else
             memcpy32_fast(&temp, &sprite8tiles_bin[32 * 0], 8);
 
-        if (!uni || zone == 1) {
+        if (!uni || spriteZone == 1) {
             for (int r = 1; r < 8; r++) {
                 int z = getZone(0, r);
                 if (z == 0)
@@ -2851,9 +2905,11 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
                     temp.data[r] = rowInteriorFill(5);
             }
         }
-        setSpriteTile(200 + (x > 9) * 20, 0, 0, 1, &temp);
+        setSpriteTile(base, 0, 0, 1, &temp);
 
-        uni = isUniform(19, 0, 7, &zone);
+        // Bottom tile (tile 19)
+        uni = isUniform(19, &spriteZone);
+
         if (uni) {
             if (segments == 0 && edge != 0)
                 memcpy32_fast(&temp, &sprite8tiles_bin[32 * 8], 8);
@@ -2868,7 +2924,7 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
         else
             memcpy32_fast(&temp, &sprite8tiles_bin[32 * 7], 8);
 
-        if (!uni || zone == 1) {
+        if (!uni || spriteZone == 1) {
             for (int r = 0; r < 7; r++) {
                 int z = getZone(19, r);
                 if (z == 0)
@@ -2877,10 +2933,12 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
                     temp.data[r] = rowInteriorFill(5);
             }
         }
-        setSpriteTile(200 + (x > 9) * 20 + 16, 0, 3, 1, &temp);
+        setSpriteTile(base + 16, 0, 3, 1, &temp);
 
+        // Middle tiles (1..18)
         for (int i = 1; i < 19; i++) {
-            uni = isUniform(i, 0, 7, &zone);
+            uni = isUniform(i, &spriteZone);
+
             if (uni) {
                 memcpy32_fast(&temp, &sprite8tiles_bin[32 * 3], 8);
             } else if (19 - i > segments) {
@@ -2891,7 +2949,7 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
                 memcpy32_fast(&temp, &sprite8tiles_bin[32 * 3], 8);
             }
 
-            if (!uni || zone == 1) {
+            if (!uni || spriteZone == 1) {
                 for (int r = 0; r < 8; r++) {
                     int z = getZone(i, r);
                     if (z == 0)
@@ -2900,7 +2958,7 @@ void showAttackBar(const std::vector<int>& attacks, int max, int x, int palette,
                         temp.data[r] = rowInteriorFill(5);
                 }
             }
-            setSpriteTile(200 + (x > 9) * 20 + (i / 4) * 4, 0, i % 4, 1, &temp);
+            setSpriteTile(base + (i / 4) * 4, 0, i % 4, 1, &temp);
         }
     }
 }
