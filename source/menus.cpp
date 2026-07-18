@@ -722,6 +722,31 @@ int GameScene::pauseMenu() {
 
     showModeText();
 
+    int pendingSong = -1;
+
+    auto showNowPlaying = [](int songIndex) {
+        std::string trackName = getDisplayTrackName(songIndex);
+        if (trackName.empty())
+            return;
+
+        int rightEdge = (savefile->settings.aspectRatio) ? (240 - 13) : 240;
+
+        std::string label = "Now playing:";
+        int lx = rightEdge - getVariableWidth(label);
+        if (lx < 0)
+            lx = 0;
+        naprint(label, lx, 17 * 8);
+
+        int tx = rightEdge - getVariableWidth(trackName);
+        if (tx < 0)
+            tx = 0;
+        naprint(trackName, tx, 18 * 8);
+    };
+
+    // Show currently playing track name in bottom right
+    if (game->gameMode != TRAINING && savefile->settings.volume > 0)
+        showNowPlaying(currentlyPlayingSong);
+
     bool shown = false;
     int saveHoldTimer = 0;
     int resetHoldTimer = 0;
@@ -730,8 +755,6 @@ int GameScene::pauseMenu() {
     int confirmHoldTimer = 0;
     int confirmHoldAction = -1; // -1 = inactive, 1 = restart, 3 = quit
     OBJ_ATTR* confirmMeterSprite = &obj_buffer[23];
-
-    bool skipped = false;
 
     bool count = true;
 
@@ -822,12 +845,11 @@ int GameScene::pauseMenu() {
                     if (progress > 12)
                         progress = 12;
 
-                    int meterX =
-                        (savefile->settings.aspectRatio != 0) ? 191 : 204;
+                    int meterX = (savefile->settings.aspectRatio != 0) ? 13 : 4;
                     sprite_set_attr(confirmMeterSprite, ShapeSquare, 2, 256 + 3,
                                     12, 0);
                     sprite_enable_mosaic(confirmMeterSprite);
-                    sprite_set_pos(confirmMeterSprite, meterX, 124);
+                    sprite_set_pos(confirmMeterSprite, meterX, 160 - 36);
                     sprite_unhide(confirmMeterSprite, 0);
 
                     for (int i = 0; i < 12; i++) {
@@ -885,7 +907,6 @@ int GameScene::pauseMenu() {
                     // Start hold-to-confirm for Restart
                     confirmHoldAction = 1;
                     confirmHoldTimer = 0;
-                    aprintClearArea(0, 18, 30, 2);
                 } else if (n == 2) {
                     onStates = true;
                     selection = 0;
@@ -894,7 +915,6 @@ int GameScene::pauseMenu() {
                     // Start hold-to-confirm for Quit
                     confirmHoldAction = 3;
                     confirmHoldTimer = 0;
-                    aprintClearArea(0, 18, 30, 2);
                 }
             }
         } else {
@@ -984,16 +1004,24 @@ int GameScene::pauseMenu() {
             qrScene();
 #endif
             if (game->gameMode != TRAINING) {
-                skipSong = true;
                 sfx(SFX_MENUCONFIRM);
-                if (!skipped) {
-                    skipped = true;
-                    std::string trackSkip = "Track Skipped!";
-                    naprint(
-                        trackSkip,
-                        ((savefile->settings.aspectRatio) ? (240 - 13) : 240) -
-                            getVariableWidth(trackSkip),
-                        18 * 8);
+
+                int from =
+                    (pendingSong >= 0) ? pendingSong : currentlyPlayingSong;
+                int next = getNextSong(1, from);
+
+                if (next >= 0) {
+                    pendingSong = next;
+
+                    if (savefile->settings.volume > 0) {
+                        clearText();
+                        showModeText();
+                        showStats(showingStats, totalTime, ppsStr, false);
+                        showNowPlaying(next);
+                    }
+                } else {
+                    // All songs disabled — stop music on unpause
+                    pendingSong = -2;
                 }
             }
         }
@@ -1117,8 +1145,14 @@ int GameScene::pauseMenu() {
     if (count && savefile->settings.pauseCountdown && !preventLayeredCountdowns)
         countdown();
 
-    if (!preventLayeredCountdowns)
-        resumeSong();
+    if (!preventLayeredCountdowns) {
+        if (pendingSong >= 0)
+            playSong(currentMenu, pendingSong);
+        else if (pendingSong == -2)
+            stopMusic();
+        else
+            resumeSong();
+    }
 
     return 0;
 }
