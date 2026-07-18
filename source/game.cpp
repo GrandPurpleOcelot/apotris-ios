@@ -2687,6 +2687,20 @@ static inline u32 rowInteriorFill(int nibble) {
                  (nibble << 8));
 }
 
+static inline u32 roundedShoulderFill(int nibble) {
+    if (nibble == 0)
+        return 0x13300332;
+    return (u32)(0x13300332 | (nibble << 16) | (nibble << 12));
+}
+
+static inline int attackZoneNibble(int zone) {
+    if (zone == 0)
+        return 0;
+    if (zone == 1)
+        return 5;
+    return 4;
+}
+
 void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
                    int palette, int layer) {
     static std::vector<int> cachedIds;
@@ -2784,13 +2798,14 @@ void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
         return pixelZone[idx];
     };
 
-    auto isUniform = [&](int ti, int* outZone) -> bool {
-        int first = getZone(ti, 0);
-        for (int r = 1; r < 8; r++) {
+    auto isUniform = [&](int ti, int startRow, int endRow,
+                         int* outZone) -> bool {
+        int first = getZone(ti, startRow);
+        *outZone = first;
+        for (int r = startRow + 1; r <= endRow; r++) {
             if (getZone(ti, r) != first)
                 return false;
         }
-        *outZone = first;
         return first != 0;
     };
 
@@ -2803,7 +2818,7 @@ void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
 
         // Top tile (tile 0)
         int tileZone;
-        bool uni = isUniform(0, &tileZone);
+        bool uni = isUniform(0, 2, 7, &tileZone);
 
         t = 6;
         if (uni) {
@@ -2818,17 +2833,16 @@ void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
 
         setTile(l, x, baseY, tileBuild(t, false, false, palette));
         if (!uni || tileZone == 1) {
-            for (int r = 1; r < 8; r++) {
-                int z = getZone(0, r);
-                if (z == 0)
-                    setTileRow(0, t, r, rowInteriorFill(0));
-                else if (z == 1)
-                    setTileRow(0, t, r, rowInteriorFill(5));
+            int shoulderNibble = attackZoneNibble(getZone(0, 2));
+            setTileRow(0, t, 1, roundedShoulderFill(shoulderNibble));
+            for (int r = 2; r < 8; r++) {
+                int nibble = attackZoneNibble(getZone(0, r));
+                setTileRow(0, t, r, rowInteriorFill(nibble));
             }
         }
 
         // Bottom tile (tile 19)
-        uni = isUniform(19, &tileZone);
+        uni = isUniform(19, 0, 6, &tileZone);
 
         t = 8;
         if (!uni || tileZone == 0) {
@@ -2842,17 +2856,17 @@ void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
         setTile(l, x, baseY + 19, tileBuild(t, false, true, palette));
         if (!uni || tileZone == 1) {
             for (int r = 0; r < 7; r++) {
-                int z = getZone(19, r);
-                if (z == 0)
-                    setTileRow(0, t, r, rowInteriorFill(0));
-                else if (z == 1)
-                    setTileRow(0, t, r, rowInteriorFill(5));
+                int nibble = attackZoneNibble(getZone(19, r));
+                int sourceRow = 7 - r;
+                u32 row = r == 6 ? roundedShoulderFill(nibble)
+                                 : rowInteriorFill(nibble);
+                setTileRow(0, t, sourceRow, row);
             }
         }
 
         // Middle tiles (1..18)
         for (int i = 1; i < 19; i++) {
-            uni = isUniform(i, &tileZone);
+            uni = isUniform(i, 0, 7, &tileZone);
 
             t = 9;
             if (!uni || tileZone == 0) {
@@ -2880,7 +2894,7 @@ void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
 
         // Top tile (tile 0)
         int spriteZone;
-        bool uni = isUniform(0, &spriteZone);
+        bool uni = isUniform(0, 2, 7, &spriteZone);
 
         if (uni) {
             if (segments == 19 && edge != 0)
@@ -2897,18 +2911,17 @@ void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
             memcpy32_fast(&temp, &sprite8tiles_bin[32 * 0], 8);
 
         if (!uni || spriteZone == 1) {
-            for (int r = 1; r < 8; r++) {
-                int z = getZone(0, r);
-                if (z == 0)
-                    temp.data[r] = rowInteriorFill(0);
-                else if (z == 1)
-                    temp.data[r] = rowInteriorFill(5);
+            int shoulderNibble = attackZoneNibble(getZone(0, 2));
+            temp.data[1] = roundedShoulderFill(shoulderNibble);
+            for (int r = 2; r < 8; r++) {
+                int nibble = attackZoneNibble(getZone(0, r));
+                temp.data[r] = rowInteriorFill(nibble);
             }
         }
         setSpriteTile(base, 0, 0, 1, &temp);
 
         // Bottom tile (tile 19)
-        uni = isUniform(19, &spriteZone);
+        uni = isUniform(19, 0, 6, &spriteZone);
 
         if (uni) {
             if (segments == 0 && edge != 0)
@@ -2926,18 +2939,16 @@ void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
 
         if (!uni || spriteZone == 1) {
             for (int r = 0; r < 7; r++) {
-                int z = getZone(19, r);
-                if (z == 0)
-                    temp.data[r] = rowInteriorFill(0);
-                else if (z == 1)
-                    temp.data[r] = rowInteriorFill(5);
+                int nibble = attackZoneNibble(getZone(19, r));
+                temp.data[r] = r == 6 ? roundedShoulderFill(nibble)
+                                      : rowInteriorFill(nibble);
             }
         }
         setSpriteTile(base + 16, 0, 3, 1, &temp);
 
         // Middle tiles (1..18)
         for (int i = 1; i < 19; i++) {
-            uni = isUniform(i, &spriteZone);
+            uni = isUniform(i, 0, 7, &spriteZone);
 
             if (uni) {
                 memcpy32_fast(&temp, &sprite8tiles_bin[32 * 3], 8);
