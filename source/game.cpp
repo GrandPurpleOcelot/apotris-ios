@@ -237,6 +237,12 @@ void GameScene::updateText() {
 }
 
 void GameScene::checkSounds() {
+    if (game->sounds.attackApplied)
+        sfx(SFX_ATTACK_APPLIED);
+
+    if (game->sounds.attackReceived)
+        sfx(SFX_ATTACK_RECEIVED);
+
     if (game->sounds.hold)
         sfx(SFX_HOLD);
 

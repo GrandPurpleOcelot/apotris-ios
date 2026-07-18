@@ -349,6 +349,8 @@ public:
     int bone = 0;
     int towerScroll = 0;
     int cascade = 0;
+    int attackApplied = 0;
+    int attackReceived = 0;
 
     SoundFlags() {}
     SoundFlags(const SoundFlags& oldFlags) {
@@ -370,6 +372,8 @@ public:
         bone = oldFlags.bone;
         towerScroll = oldFlags.towerScroll;
         cascade = oldFlags.cascade;
+        attackApplied = oldFlags.attackApplied;
+        attackReceived = oldFlags.attackReceived;
     }
 };
 

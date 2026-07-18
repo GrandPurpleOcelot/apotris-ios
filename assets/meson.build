@@ -8,6 +8,8 @@ audio_files = files(
     'MENU_a_menu.it',
     'MENU_b_optikal-innovation.mod',
     'MENU_c_schmid-space_taxi.mod',
+    'attack_applied.wav',
+    'attack_received.wav',
     'backToBackQuad.wav',
     'backToBackTSpin.wav',
     'clear.wav',

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#define SFX_COUNT 41
+#define SFX_COUNT 43
 
 extern const char* SoundEffectPaths[];
 extern int SoundEffectIds[];
@@ -50,6 +50,8 @@ enum SoundEffects {
     SFX_QUAD,
     SFX_TOWERSCROLL,
     SFX_PERFECTSCROLL,
+    SFX_ATTACK_APPLIED,
+    SFX_ATTACK_RECEIVED,
 };
 
 enum MenuSongs {
