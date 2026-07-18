@@ -852,6 +852,10 @@ COLOR rgb8to5(const u32* c) {
     return r | (g << 5) | (b << 10);
 }
 
+u16 getPaletteColor(int palette, int index) {
+    return rgb8to5((u32*)TLN_GetPaletteData(palettes[palette], index));
+}
+
 void savePalette(COLOR* dst) {
     for (auto& palette : palettes)
         for (int j = 0; j < 16; j++)

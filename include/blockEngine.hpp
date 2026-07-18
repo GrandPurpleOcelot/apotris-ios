@@ -633,6 +633,7 @@ public:
     void addToGarbageQueue(int, int);
     static std::list<int> getBestFinesse(int, int, int);
     int getIncomingGarbage();
+    std::vector<int> getIncomingAttacks() const;
     Move findBestDrop();
     void setTrainingMode(bool);
     void demoClear();

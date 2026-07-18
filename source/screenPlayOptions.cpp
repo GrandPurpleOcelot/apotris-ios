@@ -299,6 +299,7 @@ void PlayOptionScene::start() {
                 botSleepDuration = getDelayForBotDifficulty(value);
                 botStepMax = 10;
                 mode = value;
+                goal = 250;
             } else {
                 goal = value;
                 mode = element->value;
@@ -1516,22 +1517,26 @@ bool MatchMakingScene::control() {
             clearSmallText();
             hideSprites = true;
 #ifdef GBA
-            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(); },
+                        Transitions::FADE);
 #else
             roomId = nameInput(-1);
-            changeScene([](){ return new MultBattleScene(roomId); }, Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(roomId); },
+                        Transitions::FADE);
 #endif
         } else {
 #ifdef GBA
-            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(); },
+                        Transitions::FADE);
 #else
             roomId = "";
-            changeScene([](){ return new MultBattleScene(); }, Transitions::FADE);
+            changeScene([]() { return new MultBattleScene(); },
+                        Transitions::FADE);
 #endif
         }
     } else if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
-        changeScene([](){ return new MainMenuScene(); }, Transitions::FADE);
+        changeScene([]() { return new MainMenuScene(); }, Transitions::FADE);
     }
 
     return false;

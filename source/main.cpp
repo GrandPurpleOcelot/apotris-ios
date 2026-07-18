@@ -770,6 +770,8 @@ void setLightMode() {
     if (savefile->settings.lightMode) {
         setPaletteColor(0, 0, 0x5ad6, 1); // background gray
         setPaletteColor(8, 4, 0x0421, 1); // progressbar
+        setPaletteColor(8, 5, 0x001f, 1);
+        setPaletteColor(16 + 8, 5, 0x001f, 1);
         setPaletteColor(0, 8, 0x5ad6, 1);
 
         setPaletteColor(16 + 8, 6, 0x6739, 1); // frame background
@@ -780,6 +782,8 @@ void setLightMode() {
     } else {
         setPaletteColor(0, 0, 0x0000, 1); // background gray
         setPaletteColor(8, 4, 0x7fff, 1); // progressbar
+        setPaletteColor(8, 5, 0x001f, 1);
+        setPaletteColor(16 + 8, 5, 0x001f, 1);
         setPaletteColor(0, 8, 0x0c63, 1);
 
         setPaletteColor(16 + 8, 6, 0x0c63, 1); // frame background
@@ -921,8 +925,19 @@ void setPalette() {
         setPaletteColor(16 + i, 15, RGB15(0, 31, 0), 1);
     }
 
-    setPaletteColor(30, 14, RGB15(25, 27, 28), 1);
+    setPaletteColor(30, 14,
+                    getPaletteColor(8, 2 + savefile->settings.lightMode), 1);
     setPaletteColor(31, 14, RGB15(31, 5, 5), 1);
+
+#if !defined(GBA) && !defined(MULTIBOOT)
+    for (int i = 0; i < 7; i++) {
+        setPaletteColor(
+            16 + 12, 6 + i,
+            getPaletteColor(16 + i, 3 - savefile->settings.lightMode * 2), 1);
+    }
+    setPaletteColor(16 + 12, 13, getPaletteColor(16 + 7, 3), 1);
+    setPaletteColor(16 + 12, 14, RGB15(27, 29, 31), 1);
+#endif
 }
 
 int getClassicPalette() {

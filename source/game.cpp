@@ -10,8 +10,8 @@
 #include <string>
 #include <tuple>
 
-#ifdef GBA
 #include "multiplayerClasses.h"
+#ifdef GBA
 #include "sceneModes.hpp"
 #include <rumble.h>
 #endif // GBA
@@ -31,6 +31,7 @@ void addGlow(Drop);
 void addPlaceEffect(const Drop&);
 
 void showBar(int, int, int, int, int);
+void showAttackBar(const std::list<Garbage>&, int, int, int, int);
 
 void showBestMove();
 bool checkDiagonal(uint32_t);
@@ -1867,6 +1868,9 @@ void clearGlow() {
 }
 
 void GameScene::countdown() {
+    if (game->gameMode == BATTLE)
+        clearEnemyBoard();
+
     int timer = 0;
     const int timerMax = 120;
 
@@ -2501,19 +2505,7 @@ void progressBar(int layer) {
         if (++attackFlashTimer > attackFlashMax)
             attackFlashTimer = 0;
 
-        int p = 8;
-
-        if (layer < 0)
-            p += 16;
-
-        if (attackFlashTimer < attackFlashMax / 2) {
-            setPaletteColor(p, 4, 0x421f, 1);
-        } else {
-            setPaletteColor(p, 4, 0x7fff, 1);
-        }
-
-        // attack bar
-        showBar(game->getIncomingGarbage(), 20, pos.x / 8 - 1, 8, layer);
+        showAttackBar(game->garbageQueue, 20, pos.x / 8 - 1, 8, layer);
 
         if (layer >= 0) {
             setTile(l, pos.x / 8 - 1, pos.y / 8 + 20,
@@ -2694,6 +2686,300 @@ void showBar(int current, int max, int x, int palette, int layer) {
                 setSpriteTile(200 + (x > 9) * 20 + (i / 4) * 4, 0, i % 4, 1,
                               &sprite8tiles_bin[32 * (3)]);
             }
+        }
+    }
+}
+
+static inline u32 rowInteriorFill(int nibble) {
+    if (nibble == 0)
+        return 0x13000032;
+    return (u32)(0x13000032 | (nibble << 20) | (nibble << 16) | (nibble << 12) |
+                 (nibble << 8));
+}
+
+static inline u32 roundedShoulderFill(int nibble) {
+    if (nibble == 0)
+        return 0x13300332;
+    return (u32)(0x13300332 | (nibble << 16) | (nibble << 12));
+}
+
+static inline int attackZoneNibble(int zone) {
+    if (zone == 0)
+        return 0;
+    if (zone == 1)
+        return 5;
+    return 4;
+}
+
+void showAttackBar(const std::list<Garbage>& garbage, int max, int x,
+                   int palette, int layer) {
+    static std::vector<int> cachedIds;
+    static std::vector<int> cachedAmounts;
+    static bool lastWasEmpty = true;
+    static int lastLayer = 0;
+
+    bool flashOn = (attackFlashTimer < attackFlashMax / 2);
+    int p = 8 + (layer < 0 ? 16 : 0);
+    setPaletteColor(p, 4, 0x7fff, 1);
+    setPaletteColor(p, 5, flashOn ? 0x7fff : 0x001f, 1);
+
+    bool emptyNow = garbage.empty();
+
+    // Skip rendering if nothing changed
+    if (lastWasEmpty == emptyNow && layer == lastLayer) {
+        if (!emptyNow) {
+            if (garbage.size() == cachedIds.size()) {
+                bool same = true;
+                size_t i = 0;
+                for (auto it = garbage.begin(); it != garbage.end();
+                     ++it, ++i) {
+                    if (it->id != cachedIds[i] ||
+                        it->amount != cachedAmounts[i]) {
+                        same = false;
+                        break;
+                    }
+                }
+                if (same)
+                    return;
+            }
+        }
+    }
+
+    lastWasEmpty = emptyNow;
+    lastLayer = layer;
+    cachedIds.clear();
+    cachedAmounts.clear();
+
+    for (auto it : garbage) {
+        cachedIds.push_back(it.id);
+        cachedAmounts.push_back(it.amount);
+    }
+
+    if (garbage.empty()) {
+        Position pos = gameLayout[(int)GameElements::FIELD];
+        int l = 25 + layer;
+
+        if (layer >= 0) {
+            int baseY = pos.y / 8;
+            setTile(l, x, baseY, tileBuild(6, false, false, palette));
+            for (int i = 1; i < 19; i++)
+                setTile(l, x, baseY + i, tileBuild(7, false, false, palette));
+            setTile(l, x, baseY + 19, tileBuild(6, false, true, palette));
+        } else {
+            int base = 200 + (x > 9) * 20;
+            setSpriteTile(base, 0, 0, 1, &sprite8tiles_bin[32 * 0]);
+            for (int i = 1; i < 19; i++)
+                setSpriteTile(base + (i / 4) * 4, 0, i % 4, 1,
+                              &sprite8tiles_bin[32 * 1]);
+            setSpriteTile(base + 16, 0, 3, 1, &sprite8tiles_bin[32 * 6]);
+        }
+        return;
+    }
+
+    u8 pixelZone[160];
+    int gp = 0;
+    u8 zone = 1;
+    for (auto it = garbage.begin(); it != garbage.end() && gp < 158;
+         ++it, ++zone) {
+        int pixelCount = it->amount * 8;
+        if (gp + pixelCount > 158)
+            pixelCount = 158 - gp;
+        for (int k = 0; k < pixelCount; k++)
+            pixelZone[gp++] = zone;
+        auto next = it;
+        ++next;
+        if (next != garbage.end() && gp < 158)
+            pixelZone[gp++] = 0;
+    }
+    for (int k = gp; k < 160; k++)
+        pixelZone[k] = 0;
+
+    int totalPixelFill = gp;
+    int current = min((totalPixelFill * 20) / 158, 20);
+
+    int segments = current;
+    int pixels = (current * 158) / 20;
+    int edge = pixels - segments * 8 + (segments != 0 ? 1 : 0);
+
+    auto getZone = [&](int ti, int r) -> int {
+        int idx = (19 - ti) * 8 + (7 - r);
+        if (idx < 0 || idx >= 158)
+            return 0;
+        return pixelZone[idx];
+    };
+
+    auto isUniform = [&](int ti, int startRow, int endRow,
+                         int* outZone) -> bool {
+        int first = getZone(ti, startRow);
+        *outZone = first;
+        for (int r = startRow + 1; r <= endRow; r++) {
+            if (getZone(ti, r) != first)
+                return false;
+        }
+        return first != 0;
+    };
+
+    int l = 25 + layer;
+    int t = 0;
+    Position pos = gameLayout[(int)GameElements::FIELD];
+
+    if (layer >= 0) {
+        int baseY = pos.y / 8;
+
+        // Top tile (tile 0)
+        int tileZone;
+        bool uni = isUniform(0, 2, 7, &tileZone);
+
+        t = 6;
+        if (uni) {
+            if (segments == 19 && edge != 0)
+                t = 10;
+            else if (segments >= 20)
+                t = 8;
+        } else if (segments == 19 && edge != 0)
+            t = 10;
+        else if (segments >= 20)
+            t = 8;
+
+        setTile(l, x, baseY, tileBuild(t, false, false, palette));
+        if (!uni || tileZone == 1) {
+            int shoulderNibble = attackZoneNibble(getZone(0, 2));
+            setTileRow(0, t, 1, roundedShoulderFill(shoulderNibble));
+            for (int r = 2; r < 8; r++) {
+                int nibble = attackZoneNibble(getZone(0, r));
+                setTileRow(0, t, r, rowInteriorFill(nibble));
+            }
+        }
+
+        // Bottom tile (tile 19)
+        uni = isUniform(19, 0, 6, &tileZone);
+
+        t = 8;
+        if (!uni || tileZone == 0) {
+            if (segments == 0) {
+                t = 6;
+                if (edge != 0)
+                    t = 10;
+            }
+        }
+
+        setTile(l, x, baseY + 19, tileBuild(t, false, true, palette));
+        if (!uni || tileZone == 1) {
+            for (int r = 0; r < 7; r++) {
+                int nibble = attackZoneNibble(getZone(19, r));
+                int sourceRow = 7 - r;
+                u32 row = r == 6 ? roundedShoulderFill(nibble)
+                                 : rowInteriorFill(nibble);
+                setTileRow(0, t, sourceRow, row);
+            }
+        }
+
+        // Middle tiles (1..18)
+        for (int i = 1; i < 19; i++) {
+            uni = isUniform(i, 0, 7, &tileZone);
+
+            t = 9;
+            if (!uni || tileZone == 0) {
+                if (19 - i > segments)
+                    t = 7;
+                else if (19 - i == segments)
+                    t = 11;
+            }
+
+            setTile(l, x, baseY + i, tileBuild(t, false, false, palette));
+            if (!uni || tileZone == 1) {
+                for (int r = 0; r < 8; r++) {
+                    int z = getZone(i, r);
+                    if (z == 0)
+                        setTileRow(0, t, r, rowInteriorFill(0));
+                    else if (z == 1)
+                        setTileRow(0, t, r, rowInteriorFill(5));
+                }
+            }
+        }
+    } else {
+        // Sprite path
+        int base = 200 + (x > 9) * 20;
+        TILE temp;
+
+        // Top tile (tile 0)
+        int spriteZone;
+        bool uni = isUniform(0, 2, 7, &spriteZone);
+
+        if (uni) {
+            if (segments == 19 && edge != 0)
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 4], 8);
+            else if (segments >= 20)
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 2], 8);
+            else
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 0], 8);
+        } else if (segments == 19 && edge != 0)
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 4], 8);
+        else if (segments >= 20)
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 2], 8);
+        else
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 0], 8);
+
+        if (!uni || spriteZone == 1) {
+            int shoulderNibble = attackZoneNibble(getZone(0, 2));
+            temp.data[1] = roundedShoulderFill(shoulderNibble);
+            for (int r = 2; r < 8; r++) {
+                int nibble = attackZoneNibble(getZone(0, r));
+                temp.data[r] = rowInteriorFill(nibble);
+            }
+        }
+        setSpriteTile(base, 0, 0, 1, &temp);
+
+        // Bottom tile (tile 19)
+        uni = isUniform(19, 0, 6, &spriteZone);
+
+        if (uni) {
+            if (segments == 0 && edge != 0)
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 8], 8);
+            else if (segments == 0)
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 6], 8);
+            else
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 7], 8);
+        } else if (segments == 0 && edge != 0)
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 8], 8);
+        else if (segments == 0)
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 6], 8);
+        else
+            memcpy32_fast(&temp, &sprite8tiles_bin[32 * 7], 8);
+
+        if (!uni || spriteZone == 1) {
+            for (int r = 0; r < 7; r++) {
+                int nibble = attackZoneNibble(getZone(19, r));
+                temp.data[r] = r == 6 ? roundedShoulderFill(nibble)
+                                      : rowInteriorFill(nibble);
+            }
+        }
+        setSpriteTile(base + 16, 0, 3, 1, &temp);
+
+        // Middle tiles (1..18)
+        for (int i = 1; i < 19; i++) {
+            uni = isUniform(i, 0, 7, &spriteZone);
+
+            if (uni) {
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 3], 8);
+            } else if (19 - i > segments) {
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 1], 8);
+            } else if (19 - i == segments) {
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 5], 8);
+            } else {
+                memcpy32_fast(&temp, &sprite8tiles_bin[32 * 3], 8);
+            }
+
+            if (!uni || spriteZone == 1) {
+                for (int r = 0; r < 8; r++) {
+                    int z = getZone(i, r);
+                    if (z == 0)
+                        temp.data[r] = rowInteriorFill(0);
+                    else if (z == 1)
+                        temp.data[r] = rowInteriorFill(5);
+                }
+            }
+            setSpriteTile(base + (i / 4) * 4, 0, i % 4, 1, &temp);
         }
     }
 }

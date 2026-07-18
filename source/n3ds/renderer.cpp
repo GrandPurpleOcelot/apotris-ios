@@ -3456,6 +3456,11 @@ void setPaletteColor(int palette, int index, u16 color, int count) {
 #endif
 }
 
+u16 getPaletteColor(int palette, int index) {
+    return tng::color_tng_to_gba(
+        tng::palettes[palette / 16][palette % 16][index]);
+}
+
 void sprite_enable_mosaic(OBJ_ATTR* sprite) {
     sprite->mosaic = true;
     int index = sprite - obj_buffer;

@@ -50,7 +50,7 @@ std::string stringifyMultiplayerPacket(u16 packet);
 struct BoardUpdatePacket {
     u8 playerId;
     u16 seq;
-    std::array<u16, 20> boardRows;
+    u8 board[20][10]; // 4-bit color values: 0=empty, 1-7=color, 8=garbage
 };
 
 class LinkUniversal {
@@ -387,7 +387,7 @@ public:
                 int realRemoteId = playerStringToId[peerId];
                 std::lock_guard<std::mutex> guard{readQueueLock};
                 readQueues[peerId].emplace((u8)(realRemoteId), real);
-            } else if (packet.size() == 44 &&
+            } else if (packet.size() == 104 &&
                        ((u16)packet[0] | ((u16)packet[1] << 8)) == 0x1c00) {
                 // 0x1c00 == ENCODE(SEND_ROW) + (0x1f << 10)
 #ifdef TRACY_ENABLE
@@ -406,10 +406,12 @@ public:
                         .playerId = (u8)realRemoteId,
                         .seq = seq,
                     });
-                for (size_t i = 0; i < 20; i++) {
-                    const u16 row_bitfield = (u16)packet[4 + i * 2] |
-                                             ((u16)packet[4 + i * 2 + 1] << 8);
-                    boardUpdate.boardRows[i] = row_bitfield;
+                for (size_t r = 0; r < 20; r++) {
+                    for (size_t col = 0; col < 5; col++) {
+                        u8 packed = (u8)packet[4 + r * 5 + col];
+                        boardUpdate.board[r][col * 2] = packed & 0xF;
+                        boardUpdate.board[r][col * 2 + 1] = (packed >> 4) & 0xF;
+                    }
                 }
             } else {
                 fprintf(stderr, "Received unknown message of len=%d",
