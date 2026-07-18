@@ -218,34 +218,30 @@ INLINE int max(int a, int b) { return (a > b) ? a : b; }
 
 INLINE void setSpriteTile(int index, u8 tx, u8 ty, u8 width, const void* src) {
     u8* source = (u8*)src;
-    uint8_t tmp[8 * 8];
-    memset(tmp, 0, 64);
+    uint8_t* dst =
+        TLN_GetBitmapPtr(spriteBitmap, 0, 0) + (index + ty * width + tx) * 64;
+    memset(dst, 0, 64);
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 4; j++) {
-            tmp[i * 8 + j * 2] = source[i * 4 + j] & 0xf;
-            tmp[i * 8 + j * 2 + 1] = (source[i * 4 + j] >> 4) & 0xf;
+            dst[i * 8 + j * 2] = source[i * 4 + j] & 0xf;
+            dst[i * 8 + j * 2 + 1] = (source[i * 4 + j] >> 4) & 0xf;
         }
     }
-
-    TLN_SpriteData d;
-    memset(d.name, 0, 64);
-    d.w = 8;
-    d.h = 8;
-    d.x = 8 * (tx + index);
-    d.y = 8 * ty;
-
-    TLN_SetSpritesetData(spriteset, 0, &d, tmp, 8);
 }
 
 INLINE void setSpritePixel(int index, u8 tx, u8 ty, u8 width, u8 x, u8 y,
                            u8 color) {
-    u8* dst = TLN_GetBitmapPtr(spriteBitmap, (tx + index) * 8 + x, ty * 8 + y);
+    u8* dst = TLN_GetBitmapPtr(spriteBitmap, 0, 0) +
+              (index + ty * width + tx) * 64 + y * 8 + x;
 
-    *dst = color;
+    if (color)
+        *dst = color;
+    else
+        *dst = 0;
 }
 
 INLINE void setSpriteTileRow(int index, int y, int n) {
-    u8* dst = TLN_GetBitmapPtr(spriteBitmap, (index) * 8, y);
+    u8* dst = TLN_GetBitmapPtr(spriteBitmap, 0, 0) + index * 64 + y * 8;
 
     for (int i = 0; i < 8; i++) {
         *dst++ |= (n >> (i * 4)) & 0xf;

@@ -458,6 +458,7 @@ TLNAPI TLN_Palette TLN_GetSpritesetPalette(TLN_Spriteset spriteset);
 TLNAPI int TLN_FindSpritesetSprite(TLN_Spriteset spriteset, const char* name);
 TLNAPI bool TLN_SetSpritesetData(TLN_Spriteset spriteset, int entry,
                                  TLN_SpriteData* data, void* pixels, int pitch);
+TLNAPI bool TLN_SetSpritesetMapping1D(TLN_Spriteset spriteset, bool enabled);
 TLNAPI bool TLN_DeleteSpriteset(TLN_Spriteset Spriteset);
 /**@}*/
 
