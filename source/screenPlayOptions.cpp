@@ -732,6 +732,16 @@ void MultBattleScene::init() {
 
     clearSpriteTiles(672, 144, 1);
     resetSmallText();
+
+    // Sync winTargetIndex with current multiplayerLink target (e.g. after Play Again)
+    if (multiplayerLink->targetWins > 0) {
+        for (int i = 0; i < 3; i++) {
+            if (winTargets[i] == multiplayerLink->targetWins) {
+                winTargetIndex = i;
+                break;
+            }
+        }
+    }
 }
 
 void MultBattleScene::draw() {
@@ -743,7 +753,62 @@ void MultBattleScene::draw() {
 
     handleConnectionDisplay();
 
+#ifndef MULTIBOOT
+    if (choosingWinTarget)
+        showWinTargetCursor();
+    else
+        for (int i = 0; i < 2; i++)
+            sprite_hide(cursorSprites[i]);
+#endif
+
     showSprites(128);
+}
+
+void MultBattleScene::showWinTargetSelection() {
+    clearText();
+
+    for (int i = 0; i < MAX_WORD_SPRITES; i++)
+        wordSprites[i]->hide();
+#ifndef MULTIBOOT
+    for (int i = 0; i < 7; i++)
+        labels[i]->hide();
+#endif
+
+    const std::string targets = "3   5   7";
+
+    naprint("SET MATCH TARGET", 120 - getVariableWidth("SET MATCH TARGET") / 2,
+            7 * 8);
+    naprint(targets, 120 - getVariableWidth(targets) / 2, 9 * 8);
+    naprint("A: Confirm", 120 - getVariableWidth("A: Confirm") / 2, 13 * 8);
+}
+
+void MultBattleScene::showWinTargetCursor() {
+#ifndef MULTIBOOT
+    const std::string targets = "3   5   7";
+    const int targetX = 120 - getVariableWidth(targets) / 2;
+    const int selectedOffset =
+        getVariableWidth(targets.substr(0, winTargetIndex * 4));
+    const int selectedWidth =
+        getVariableWidth(std::to_string(winTargets[winTargetIndex]));
+    const int centerX = targetX + selectedOffset + selectedWidth / 2;
+    const int offset = (sinLut(cursorFloat) * 2) >> 12;
+    FIXED scale = float2fx((1.0 - ((float)0.1 * offset)));
+
+    for (int i = 0; i < 2; i++) {
+        sprite_unhide(cursorSprites[i], 0);
+        sprite_set_attr(cursorSprites[i], ShapeSquare, 0, 7 * 16, 5, 1);
+        sprite_enable_affine(cursorSprites[i], i, true);
+        sprite_set_size(cursorSprites[i], scale, i);
+
+        const int x =
+            centerX - ((selectedWidth + 8) / 2 + offset + 4) *
+                          (i ? -1 : 1) -
+            8;
+        sprite_set_pos(cursorSprites[i], x, 9 * 8 - 5);
+    }
+#else
+    // MULTIBOOT does not initialize OptionListScene cursor sprites.
+#endif
 }
 
 void MultBattleScene::handleConnectionDisplay() {
@@ -756,6 +821,16 @@ void MultBattleScene::handleConnectionDisplay() {
         state = 2;
     else
         state = 3;
+
+    if (choosingWinTarget) {
+        for (int i = 0; i < MAX_WORD_SPRITES; i++)
+            wordSprites[i]->hide();
+#ifndef MULTIBOOT
+        for (int i = 0; i < 7; i++)
+            labels[i]->hide();
+#endif
+        return;
+    }
 
     if (multiplayerLink->players[multiplayerLink->universal->currentPlayerId()]
             .ready &&
@@ -859,6 +934,36 @@ void MultBattleScene::handleConnectionDisplay() {
 
 bool MultBattleScene::control() {
     MenuKeys k = savefile->settings.menuKeys;
+
+    if (choosingWinTarget) {
+        if (key_hit(k.cancel)) {
+            choosingWinTarget = false;
+            clearText();
+            showPath();
+            lastState = 0;
+            sfx(SFX_MENUCANCEL);
+        } else if (key_hit(k.left) && winTargetIndex > 0) {
+            winTargetIndex--;
+            showWinTargetSelection();
+            sfx(SFX_MENUMOVE);
+        } else if (key_hit(k.right) && winTargetIndex < 2) {
+            winTargetIndex++;
+            showWinTargetSelection();
+            sfx(SFX_MENUMOVE);
+        } else if (key_hit(k.confirm) || key_hit(k.pause)) {
+            multiplayerLink->setMatchTarget(winTargets[winTargetIndex]);
+            multiplayerLink->broadcastState(UPDATE_STATE + MATCH_TARGET +
+                                            multiplayerLink->targetWins);
+            multiplayerLink->readyUp();
+            choosingWinTarget = false;
+            clearText();
+            showPath();
+            lastState = 0;
+            sfx(SFX_MENUCONFIRM);
+        }
+        return false;
+    }
+
 #ifndef MULTIBOOT
     if (key_hit(k.cancel)) {
         sfx(SFX_MENUCANCEL);
@@ -891,9 +996,17 @@ bool MultBattleScene::control() {
                     ->players[multiplayerLink->universal->currentPlayerId()]
                     .ready &&
                (key_hit(k.confirm) || key_hit(k.pause))) {
-        sfx(SFX_MENUCONFIRM);
-        multiplayerLink->readyUp();
+        if (multiplayerLink->universal->currentPlayerId() == 0 &&
+            multiplayerLink->targetWins == 0) {
+            choosingWinTarget = true;
+            showWinTargetSelection();
+            sfx(SFX_MENUCONFIRM);
+        } else {
+            sfx(SFX_MENUCONFIRM);
+            multiplayerLink->readyUp();
+        }
     }
+
 #if !defined(NO_DIAGNOSE) && !defined(MULTIBOOT)
     if (key_hit(k.special3)) {
         botThinkingSpeed = 1;

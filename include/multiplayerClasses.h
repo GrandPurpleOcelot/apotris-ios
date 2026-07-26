@@ -41,6 +41,10 @@
 #define GAME_OVER 6
 #define I_LOST 7
 
+// Match packets use bits separate from seed and power state packets.
+#define MATCH_COMPLETE 0x200
+#define MATCH_TARGET 0x400
+
 // These are upper bit masks
 #define SEND_SEED 0x1000
 #define POWER_LEVEL 0x800
@@ -115,6 +119,12 @@ public:
     }
 };
 
+struct MatchResult {
+    bool won = false;
+    int placement = 0;   // 0 = 1st place, 1 = 2nd, etc.
+    int playerCount = 2; // players in the match
+};
+
 class MultiplayerLink {
 private:
     bool allOverB = false;
@@ -167,6 +177,9 @@ public:
     bool playAgain = false;
     int wins = 0;
     int losses = 0;
+    int targetWins = 0; // 0 = endless / no target
+    std::vector<MatchResult> matchHistory;
+    bool matchComplete = false;
 
     u32 enemyPower[4] = {1, 1, 1, 1};
 
@@ -183,12 +196,24 @@ public:
 
     void reset() {
         playingPlayerCount = 0;
-        wins = losses = 0;
+        if (targetWins == 0) {
+            wins = losses = 0;
+            matchHistory.clear();
+        }
         playing = false;
+        matchComplete = false;
         universal->sync();
         nextSeed = 0;
         purgeQueues();
         players.clear();
+    }
+
+    void resetSession() {
+        wins = losses = 0;
+        targetWins = 0;
+        matchHistory.clear();
+        matchComplete = false;
+        reset();
     }
 
     void initPlayer(u8 i) { players[i] = Player(i); }
@@ -200,6 +225,11 @@ public:
     }
 
     void readyUp() { players[universal->currentPlayerId()].ready = true; }
+
+    void setMatchTarget(int target) {
+        if (target == 3 || target == 5 || target == 7)
+            targetWins = target;
+    }
 
     int getReadyCount() {
         int over = 0;
@@ -219,6 +249,14 @@ public:
     void deactivate(bool sendBye);
 
     void activate();
+
+    [[nodiscard]] bool isTargetReached() const {
+        return targetWins > 0 && wins >= targetWins;
+    }
+
+    void recordMatchResult(bool won, int placement) {
+        matchHistory.push_back({won, placement, (int)playingPlayerCount});
+    }
 
     [[nodiscard]] std::queue<Packet> readPackets() const {
 #ifdef TRACY_ENABLE
@@ -535,6 +573,11 @@ struct MultiplayerStates {
                     Command(RemotePlayerId(packet.playerId), packet.packet);
                 if (command.command != 2)
                     continue;
+                if ((command.value & MATCH_TARGET) == MATCH_TARGET) {
+                    if (packet.playerId == 0)
+                        Owner().setMatchTarget(command.value & 0xFF);
+                    continue;
+                }
                 if (command.value != LETS_PLAY)
                     continue;
                 Owner().players[packet.playerId].ready = true;
@@ -637,10 +680,15 @@ struct MultiplayerStates {
         void OnEnter() override {
             Owner().broadcastState(UPDATE_STATE + I_WON);
             updateRank();
+            Owner().recordMatchResult(true, rank);
             Owner().playing = false;
             Owner().resetPlayers();
             Owner().playAgain = true;
             Owner().wins++;
+            if (Owner().isTargetReached()) {
+                Owner().matchComplete = true;
+                Owner().broadcastState(UPDATE_STATE + MATCH_COMPLETE);
+            }
         }
 
         Transition GetTransition() override {
@@ -659,6 +707,7 @@ struct MultiplayerStates {
         void OnEnter() override {
             Owner().broadcastState(UPDATE_STATE + I_LOST);
             updateRank();
+            Owner().recordMatchResult(false, rank);
             Owner().players[Owner().universal->currentPlayerId()].over = true;
             Owner().losses++;
         }
@@ -675,6 +724,8 @@ struct MultiplayerStates {
                         Owner().players[command.playerId.id].over = true;
                     } else if (command.value == I_WON) {
                         Owner().markAllOver(Owner().playingPlayerCount);
+                    } else if (command.value == MATCH_COMPLETE) {
+                        Owner().matchComplete = true;
                     } else if (command.value == BYE) {
                         u32 newPlayerCount = Owner().playingPlayerCount - 1;
 #ifndef GBA
@@ -747,12 +798,16 @@ struct MultiplayerStates {
                 }
                 if (command.value == GAME_OVER) {
                     Owner().players[command.playerId.id].over = true;
+                } else if (command.value == MATCH_COMPLETE) {
+                    Owner().matchComplete = true;
                 }
             }
 
             if (echoCounter++ % 10 == 0) {
                 Owner().broadcastState(UPDATE_STATE + GAME_OVER);
                 Owner().broadcastState(UPDATE_STATE + I_LOST);
+                if (Owner().matchComplete)
+                    Owner().broadcastState(UPDATE_STATE + MATCH_COMPLETE);
             }
         }
 
@@ -768,6 +823,31 @@ struct MultiplayerStates {
 
         Transition GetTransition() override {
             if (transitionTimeout <= 0) {
+                if (Owner().matchComplete || Owner().isTargetReached()) {
+                    return SiblingTransition<MatchComplete>();
+                }
+                return SiblingTransition<PlayersSeeding>();
+            }
+            return NoTransition();
+        }
+    };
+
+    struct MatchComplete : StateWithOwner<MultiplayerLink> {
+        int holdTimer = 30;
+
+        void OnEnter() override {
+            Owner().matchComplete = true;
+            Owner().playing = false;
+            Owner().resetPlayers();
+        }
+
+        void Update() override {
+            if (holdTimer > 0)
+                holdTimer--;
+        }
+
+        Transition GetTransition() override {
+            if (Owner().playAgain) {
                 return SiblingTransition<PlayersSeeding>();
             }
             return NoTransition();

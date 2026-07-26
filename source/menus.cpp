@@ -19,6 +19,7 @@
 #endif
 
 #include "multiplayerClasses.h"
+#include "sceneMultiplayerResults.hpp"
 #include "qrcodegen.h"
 
 using namespace BlockEngine;
@@ -217,6 +218,12 @@ void GameScene::endScreen() {
 
         vsync();
         key_poll();
+
+        if (multiplayerLink->matchComplete) {
+            changeScene([]() { return new MultiplayerResultsScene(); },
+                        Transitions::FADE);
+            return;
+        }
 
         if (!multiplayerLink->stateMachine
                  .IsInState<MultiplayerStates::Playing>()) {
@@ -1951,6 +1958,8 @@ void GameScene::showReadyPlayers() {
 void GameScene::showScoreboard() {
     std::string score = std::to_string(multiplayerLink->wins) + "W - " +
                         std::to_string(multiplayerLink->losses) + "L";
+    if (multiplayerLink->targetWins > 0)
+        score += " (" + std::to_string(multiplayerLink->targetWins) + ")";
     wordSprites[9].setText(score);
     wordSprites[9].show(4, 160 - 12, 14);
 }

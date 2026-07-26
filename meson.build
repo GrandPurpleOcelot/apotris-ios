@@ -66,6 +66,7 @@ sources = files(
     src_dir / 'screenControls.cpp',
     src_dir / 'screenCredits.cpp',
     src_dir / 'screenException.cpp',
+    src_dir / 'screenMultiplayerResults.cpp',
     src_dir / 'screenGraphics.cpp',
     src_dir / 'screenHandling.cpp',
     src_dir / 'screenLinks.cpp',
