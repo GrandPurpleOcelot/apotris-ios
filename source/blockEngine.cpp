@@ -927,7 +927,10 @@ void Game::place() {
                     ++index;
                 }
             }
-            generateGarbage(sum, 1);
+            if (sum > 0) {
+                generateGarbage(sum, 1);
+                sounds.attackApplied = 1;
+            }
 
             for (auto& garbage : collectedGarbage)
                 acknowledgeGarbage(this, garbage);
@@ -2362,6 +2365,7 @@ void Game::addToGarbageQueue(int id, int amount) {
     //         return;
 
     garbageQueue.emplace_back(id, amount);
+    sounds.attackReceived = 1;
 }
 
 int Game::getIncomingGarbage() {
