@@ -1950,9 +1950,13 @@ bool Game::cascade() {
 
                 if (currentLine == 0) {
                     continue;
-                } else if (connection.y + i >= lengthY - 1 ||
-                           bitboard[connection.y + i + 1] &
-                               (currentLine << connection.x)) {
+                }
+
+                const int supportMask = connection.x >= 0
+                                            ? currentLine << connection.x
+                                            : currentLine >> -connection.x;
+                if (connection.y + i >= lengthY - 1 ||
+                    bitboard[connection.y + i + 1] & supportMask) {
                     stable = true;
                     break;
                 }
