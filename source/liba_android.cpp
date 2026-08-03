@@ -242,11 +242,13 @@ static bool tryClaimDirectory(const std::string& apotrisDir) {
     struct stat st;
     bool exists = (stat(marker.c_str(), &st) == 0 && S_ISREG(st.st_mode));
 
-    // Try to open for append first.
+    // Write placeholder so extractAssets() knows extraction is needed.
+    // (extractAssets checks for APOTRIS_VERSION; a non-matching value
+    //  forces it to extract the actual assets.)
     FILE* f = fopen(marker.c_str(), exists ? "a" : "w");
     if (f) {
         if (!exists)
-            fprintf(f, "%s\n", APOTRIS_VERSION);
+            fprintf(f, "0\n");
         fclose(f);
         return true;
     }
@@ -256,7 +258,7 @@ static bool tryClaimDirectory(const std::string& apotrisDir) {
     if (exists && remove(marker.c_str()) == 0) {
         f = fopen(marker.c_str(), "w");
         if (f) {
-            fprintf(f, "%s\n", APOTRIS_VERSION);
+            fprintf(f, "0\n");
             fclose(f);
             return true;
         }
