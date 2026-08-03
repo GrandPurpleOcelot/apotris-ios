@@ -736,6 +736,26 @@ void windowInit() {
     vibrationInit();
     SDL_Log("windowInit: vibrationInit done");
 
+    // ── Fallback storage message (API 29) ──────────────────────
+    // On API 29 scoped storage blocks Documents/ access but
+    // MANAGE_EXTERNAL_STORAGE doesn't exist yet.  Show a one-time
+    // message so the user knows where files are and how to add them.
+    static bool fallbackMessageShown = false;
+    if (usingFallback && !isNumbered && !fallbackMessageShown &&
+        SDL_GetAndroidSDKVersion() < 30 && window != nullptr) {
+        fallbackMessageShown = true;
+        std::string msg =
+            "Apotris is using app-private storage because Android 10 "
+            "does not allow writing to the Documents folder:\n\n" +
+            basePath +
+            "\n\nTo add custom music or SFX, place your files in the "
+            "'assets' subfolder inside the directory shown above using "
+            "a File Manager.  On Android 11+, enable 'All files access' "
+            "in Settings to use the Documents folder instead.";
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,
+                                 "Storage Location", msg.c_str(), window);
+    }
+
     // ── MANAGE_EXTERNAL_STORAGE prompt (API 30+) ──────────────────
     // If we couldn't write to the shared Documents/ folder and the
     // device is Android 11+, let the user know they can enable
