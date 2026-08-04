@@ -741,9 +741,20 @@ void windowInit() {
     // MANAGE_EXTERNAL_STORAGE doesn't exist yet.  Show a one-time
     // message so the user knows where files are and how to add them.
     static bool fallbackMessageShown = false;
+    if (!fallbackMessageShown && !basePath.empty()) {
+        std::string flagPath = basePath + "fallback_shown.flag";
+        if (access(flagPath.c_str(), F_OK) == 0) {
+            fallbackMessageShown = true;
+        }
+    }
     if (usingFallback && !isNumbered && !fallbackMessageShown &&
         SDL_GetAndroidSDKVersion() < 30 && window != nullptr) {
         fallbackMessageShown = true;
+        if (!basePath.empty()) {
+            std::string flagPath = basePath + "fallback_shown.flag";
+            FILE* f = fopen(flagPath.c_str(), "w");
+            if (f) fclose(f);
+        }
         std::string msg =
             "Apotris is using app-private storage because Android 10 "
             "does not allow writing to the Documents folder:\n\n" +
