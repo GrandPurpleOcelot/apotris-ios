@@ -388,7 +388,7 @@ struct Packet {
 #ifndef GBA
 extern std::string roomId;
 #endif
-#ifdef PC
+#if defined(PC) || defined(ANDROID)
 std::string getSavefilePath();
 #endif
 extern std::string exceptionReason;
