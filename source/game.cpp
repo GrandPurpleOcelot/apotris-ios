@@ -3401,6 +3401,11 @@ void zoneFlash() {
         else
             setPaletteColor(0, 0, 0x5ad6, 1);
     }
+
+    if (!flashTimer && !game->zoneTimer) {
+        setPalette();
+        enableBlend(blendInfo);
+    }
 }
 
 void resetZonePalette() {
