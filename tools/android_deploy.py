@@ -98,6 +98,10 @@ def main():
             with open(sdl_activity, 'r') as f:
                 content = f.read()
             content = content.replace('mHIDDeviceManager = HIDDeviceManager.acquire(this);', '// mHIDDeviceManager = HIDDeviceManager.acquire(this);')
+            content = content.replace(
+                'req = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;',
+                'req = ActivityInfo.SCREEN_ORIENTATION_USER;'
+            )
             with open(sdl_activity, 'w') as f:
                 f.write(content)
     else:
