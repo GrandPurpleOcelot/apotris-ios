@@ -540,7 +540,7 @@ void GameScene::checkSounds() {
         savefile->settings.clearEffect = 2;
         setPalette();
         setClearEffect();
-        showBackground(0);
+        showBackground(peek);
 
         flashTimer = flashTimerMax;
         zoneFlash();
@@ -3400,6 +3400,11 @@ void zoneFlash() {
             setPaletteColor(0, 0, 0x0000, 1);
         else
             setPaletteColor(0, 0, 0x5ad6, 1);
+    }
+
+    if (!flashTimer && !game->zoneTimer) {
+        setPalette();
+        enableBlend(blendInfo);
     }
 }
 
