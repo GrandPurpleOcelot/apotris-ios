@@ -540,7 +540,7 @@ void GameScene::checkSounds() {
         savefile->settings.clearEffect = 2;
         setPalette();
         setClearEffect();
-        showBackground(0);
+        showBackground(peek);
 
         flashTimer = flashTimerMax;
         zoneFlash();
