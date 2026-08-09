@@ -606,7 +606,7 @@ void Game::update() {
                 else if (right)
                     moved = moveRight();
 
-                if (speed == 20 && gameMode != BLITZ) {
+                if (!zoneTimer && speed == 20 && gameMode != BLITZ) {
                     int counter = 0;
                     while (counter++ < 20 && checkRotation(0, 1, pawn.rotation))
                         pawn.y++;
@@ -623,7 +623,7 @@ void Game::update() {
                 else if (right)
                     moved = moveRight();
 
-                if (speed == 20 && gameMode != BLITZ) {
+                if (!zoneTimer && speed == 20 && gameMode != BLITZ) {
                     int counter = 0;
                     while (counter++ < 20 && checkRotation(0, 1, pawn.rotation))
                         pawn.y++;
