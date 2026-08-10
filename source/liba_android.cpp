@@ -242,11 +242,13 @@ static bool tryClaimDirectory(const std::string& apotrisDir) {
     struct stat st;
     bool exists = (stat(marker.c_str(), &st) == 0 && S_ISREG(st.st_mode));
 
-    // Try to open for append first.
+    // Write placeholder so extractAssets() knows extraction is needed.
+    // (extractAssets checks for APOTRIS_VERSION; a non-matching value
+    //  forces it to extract the actual assets.)
     FILE* f = fopen(marker.c_str(), exists ? "a" : "w");
     if (f) {
         if (!exists)
-            fprintf(f, "%s\n", APOTRIS_VERSION);
+            fprintf(f, "0\n");
         fclose(f);
         return true;
     }
@@ -256,7 +258,7 @@ static bool tryClaimDirectory(const std::string& apotrisDir) {
     if (exists && remove(marker.c_str()) == 0) {
         f = fopen(marker.c_str(), "w");
         if (f) {
-            fprintf(f, "%s\n", APOTRIS_VERSION);
+            fprintf(f, "0\n");
             fclose(f);
             return true;
         }
@@ -733,6 +735,37 @@ void windowInit() {
 
     vibrationInit();
     SDL_Log("windowInit: vibrationInit done");
+
+    // ── Fallback storage message (API 29) ──────────────────────
+    // On API 29 scoped storage blocks Documents/ access but
+    // MANAGE_EXTERNAL_STORAGE doesn't exist yet.  Show a one-time
+    // message so the user knows where files are and how to add them.
+    static bool fallbackMessageShown = false;
+    if (!fallbackMessageShown && !basePath.empty()) {
+        std::string flagPath = basePath + "fallback_shown.flag";
+        if (access(flagPath.c_str(), F_OK) == 0) {
+            fallbackMessageShown = true;
+        }
+    }
+    if (usingFallback && !isNumbered && !fallbackMessageShown &&
+        SDL_GetAndroidSDKVersion() < 30 && window != nullptr) {
+        fallbackMessageShown = true;
+        if (!basePath.empty()) {
+            std::string flagPath = basePath + "fallback_shown.flag";
+            FILE* f = fopen(flagPath.c_str(), "w");
+            if (f) fclose(f);
+        }
+        std::string msg =
+            "Apotris is using app-private storage because Android 10 "
+            "does not allow writing to the Documents folder:\n\n" +
+            basePath +
+            "\n\nTo add custom music or SFX, place your files in the "
+            "'assets' subfolder inside the directory shown above using "
+            "a File Manager.  On Android 11+, enable 'All files access' "
+            "in Settings to use the Documents folder instead.";
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,
+                                 "Storage Location", msg.c_str(), window);
+    }
 
     // ── MANAGE_EXTERNAL_STORAGE prompt (API 30+) ──────────────────
     // If we couldn't write to the shared Documents/ folder and the

@@ -45,6 +45,16 @@ void setTilePixel(TILE& tile, int row, int col, uint8_t index) {
     tile.data[row] |= ((u32)(index & 0x0F) << shift);
 }
 
+static std::string skinFilePath(int index) {
+#ifdef ANDROID
+    return (std::filesystem::path(getSavefilePath()).parent_path() / "skins" /
+            ("custom" + std::to_string(index) + ".png"))
+        .string();
+#else
+    return "skins/custom" + std::to_string(index) + ".png";
+#endif
+}
+
 void indexToRGBA(uint8_t idx, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a) {
     if (idx == 0) {
         r = g = b = a = 0;
@@ -78,7 +88,12 @@ uint8_t rgbaToIndex(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
 bool exportSkinFile(const std::string& path, const Skin& skin) {
     std::filesystem::path fsPath(path);
-    std::filesystem::create_directories(fsPath.parent_path());
+    std::error_code ec;
+    std::filesystem::create_directories(fsPath.parent_path(), ec);
+    if (ec) {
+        log("Failed to create skin directory: " + ec.message());
+        return false;
+    }
 
     std::vector<uint8_t> rgba(SKIN_PNG_WIDTH * SKIN_PNG_HEIGHT * 4);
 
@@ -109,8 +124,10 @@ bool exportSkinFile(const std::string& path, const Skin& skin) {
         }
     }
 
-    int result = stbi_write_png(path.c_str(), SKIN_PNG_WIDTH, SKIN_PNG_HEIGHT,
-                                4, rgba.data(), SKIN_PNG_WIDTH * 4);
+    std::string outputPath = fsPath.string();
+    int result =
+        stbi_write_png(outputPath.c_str(), SKIN_PNG_WIDTH, SKIN_PNG_HEIGHT, 4,
+                       rgba.data(), SKIN_PNG_WIDTH * 4);
     if (!result) {
         log("Failed to write skin PNG file");
         return false;
@@ -160,8 +177,7 @@ bool importSkinFile(const std::string& path, Skin& skin) {
 
 void importAllSkinFiles() {
     for (int i = 0; i < MAX_CUSTOM_SKINS; i++) {
-        std::string path = "skins/custom" + std::to_string(i + 1) + ".png";
-        importSkinFile(path, savefile->customSkins[i]);
+        importSkinFile(skinFilePath(i + 1), savefile->customSkins[i]);
     }
 }
 
@@ -170,8 +186,7 @@ void exportAllSkinFiles() {
         if (!savefile->customSkins[i].changed)
             continue;
 
-        std::string path = "skins/custom" + std::to_string(i + 1) + ".png";
-        exportSkinFile(path, savefile->customSkins[i]);
+        exportSkinFile(skinFilePath(i + 1), savefile->customSkins[i]);
     }
 }
 
