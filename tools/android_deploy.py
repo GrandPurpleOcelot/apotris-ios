@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--libmain', required=True, help='Path to built libmain.so')
     parser.add_argument('--compiler', required=True, nargs='+', help='C++ compiler command')
     parser.add_argument('--output', required=True, help='Output APK path')
+    parser.add_argument('--abi', default='arm64-v8a', choices=['arm64-v8a', 'x86_64', 'x86', 'armeabi-v7a'], help='Target ABI (default: arm64-v8a)')
 
     args = parser.parse_args()
 
@@ -27,7 +28,7 @@ def main():
     source_dir = args.source_dir
     libmain_path = args.libmain
     android_project_dir = os.path.join(source_dir, 'android')
-    jni_libs_dir = os.path.join(android_project_dir, 'app/src/main/jniLibs/arm64-v8a')
+    jni_libs_dir = os.path.join(android_project_dir, 'app/src/main/jniLibs', args.abi)
     assets_dir = os.path.join(android_project_dir, 'app/src/main/assets/assets')
     data_dir = os.path.join(android_project_dir, 'app/src/main/assets/data')
     java_src_dir = os.path.join(android_project_dir, 'app/src/main/java/org/libsdl/app')
@@ -97,11 +98,50 @@ def main():
             print("Patching SDLActivity.java...")
             with open(sdl_activity, 'r') as f:
                 content = f.read()
+            # Disable HID device manager (crashes on some devices)
             content = content.replace('mHIDDeviceManager = HIDDeviceManager.acquire(this);', '// mHIDDeviceManager = HIDDeviceManager.acquire(this);')
             content = content.replace(
                 'req = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;',
                 'req = ActivityInfo.SCREEN_ORIENTATION_USER;'
             )
+            # Add hasManageStoragePermission / requestManageStoragePermission
+            # (needed by liba_android.cpp; added to SDL after 2.28.5)
+            old = '''    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        boolean result = (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
+        nativePermissionResult(requestCode, result);
+    }'''
+            new = '''    public static boolean hasManageStoragePermission() {
+        if (Build.VERSION.SDK_INT < 30) {
+            return true;
+        }
+        Activity activity = (Activity)getContext();
+        return android.os.Environment.isExternalStorageManager();
+    }
+
+    public static void requestManageStoragePermission() {
+        if (Build.VERSION.SDK_INT < 30) {
+            return;
+        }
+        Activity activity = (Activity)getContext();
+        try {
+            Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+            intent.setData(Uri.parse("package:" + activity.getPackageName()));
+            activity.startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to request MANAGE_EXTERNAL_STORAGE: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        boolean result = (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
+        nativePermissionResult(requestCode, result);
+    }'''
+            if old in content:
+                content = content.replace(old, new)
+            else:
+                print("Warning: Could not find onRequestPermissionsResult in SDLActivity.java — storage permission fix not applied")
             with open(sdl_activity, 'w') as f:
                 f.write(content)
     else:
