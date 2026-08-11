@@ -2024,6 +2024,8 @@ void Game::removeClearLock() {
 
     if (isCascade) {
         cascaded = cascade();
+        if (unstable.empty())
+            calculateColumnHeights(0);
     } else {
         calculateColumnHeights(len);
     }
@@ -2602,6 +2604,9 @@ void Game::clearBoard() {
     garbageHeight = 0;
 
     stackHeight = lengthY;
+
+    unstable.clear();
+    connections.clear();
 
     linesToClear.clear();
     memset32_fast(lineClearArray, 0, 40 / 4);
