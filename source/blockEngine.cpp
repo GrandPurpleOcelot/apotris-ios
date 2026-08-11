@@ -2,7 +2,6 @@
 #include <cmath>
 #include <string>
 #include <tuple>
-#include <unordered_set>
 
 #include "blockEngine.hpp"
 #include "def.h"
@@ -1903,18 +1902,11 @@ bool Game::cascade() {
     bool cascaded = false;
     int counter = 0;
 
-    std::unordered_set<int> moved;
-
     do {
         // resolve unstable
         auto it = unstable.begin();
         while (it != unstable.end()) {
             Connection* piece = *it;
-
-            if (moved.count(piece->packed())) {
-                ++it;
-                continue;
-            }
 
             int x = piece->x;
             int y = piece->y;
@@ -1947,10 +1939,6 @@ bool Game::cascade() {
 
         // check for unstable
         for (auto& connection : connections) {
-            if (moved.count(connection.packed())) {
-                continue;
-            }
-
             if (connection.y > 40) {
                 continue;
             }
@@ -1960,41 +1948,30 @@ bool Game::cascade() {
             for (int i = 3; i >= 0; i--) {
                 int currentLine = (connection.blocks >> 4 * i) & 0xf;
 
-                // don't need to recheck checked columns
+                // Only lowest block in each column can provide support.
                 currentLine &= ~checkedColumnsBits;
 
                 if (currentLine == 0) {
                     continue;
-                } else if (connection.y + i >= lengthY - 1) {
+                }
+
+                const int supportMask = connection.x >= 0
+                                            ? currentLine << connection.x
+                                            : currentLine >> -connection.x;
+                if (connection.y + i >= lengthY - 1 ||
+                    bitboard[connection.y + i + 1] & supportMask) {
                     stable = true;
                     break;
                 }
 
-                for (int j = 0; j < 4 && currentLine != 0; j++) {
-                    int last = currentLine & 0b1;
-                    currentLine >>= 1;
-
-                    if (!last)
-                        continue;
-
-                    if (board[connection.y + i + 1][connection.x + j] != 0) {
-                        stable = true;
-                        break;
-                    }
-
-                    checkedColumnsBits |= 1 << j;
-                }
+                checkedColumnsBits |= currentLine;
             }
 
             if (!stable) {
                 unstable.push_back(&connection);
-
-                if (!CASCADE_INSTANT) {
-                    moved.insert(connection.packed());
-                }
             }
         }
-    } while (unstable.size() && counter++ < 1000);
+    } while (CASCADE_INSTANT && unstable.size() && counter++ < 1000);
 
     return cascaded;
 }
@@ -2050,6 +2027,8 @@ void Game::removeClearLock() {
 
     if (isCascade) {
         cascaded = cascade();
+        if (unstable.empty())
+            calculateColumnHeights(0);
     } else {
         calculateColumnHeights(len);
     }
@@ -2629,6 +2608,9 @@ void Game::clearBoard() {
     garbageHeight = 0;
 
     stackHeight = lengthY;
+
+    unstable.clear();
+    connections.clear();
 
     linesToClear.clear();
     memset32_fast(lineClearArray, 0, 40 / 4);
