@@ -62,6 +62,27 @@ std::unordered_set<uint32_t> previousKeys;
 
 std::unordered_set<uint32_t> currentlyPressed;
 
+static std::string textInput;
+static bool textInputActive = false;
+
+void startTextInput() {
+    textInput.clear();
+    textInputActive = true;
+    SDL_StartTextInput();
+}
+
+void stopTextInput() {
+    SDL_StopTextInput();
+    textInput.clear();
+    textInputActive = false;
+}
+
+std::string consumeTextInput() {
+    std::string result = textInput;
+    textInput.clear();
+    return result;
+}
+
 // Per-finger tracking for touch input: fingerId -> button key.
 // Ensures a finger's button is unpressKey'd on FINGERUP even if the
 // finger has moved outside the button bounds or the event is lost
@@ -859,8 +880,16 @@ void handleInput() {
         bool found = false;
 
         switch (event.type) {
+        case SDL_TEXTINPUT:
+            if (textInputActive)
+                textInput += event.text.text;
+            break;
         case SDL_KEYDOWN:
             key = event.key.keysym.sym;
+            if (textInputActive && key == SDLK_BACKSPACE)
+                textInput += '\b';
+            if (textInputActive && key == SDLK_RETURN)
+                textInput += '\n';
             pressKey(key, InputType::KEYBOARD);
             break;
         case SDL_CONTROLLERBUTTONDOWN:

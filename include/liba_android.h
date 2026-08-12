@@ -33,6 +33,10 @@ extern void windowInit();
 
 extern void key_poll();
 
+extern void startTextInput();
+extern void stopTextInput();
+extern std::string consumeTextInput();
+
 extern void setFullscreen(bool);
 extern void shaderInit(int);
 extern void shaderDeinit();
