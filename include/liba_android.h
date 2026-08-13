@@ -31,6 +31,8 @@ extern bool closed();
 
 extern void windowInit();
 
+std::string getDocumentsPath();
+
 extern void key_poll();
 
 extern void startTextInput();

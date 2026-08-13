@@ -568,6 +568,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
                 '--libmain', binary,
                 '--output', '@OUTPUT@',
                 '--compiler', meson.get_compiler('cpp').cmd_array(),
+                '--abi', host_machine.cpu_family() == 'aarch64' ? 'arm64-v8a' : host_machine.cpu_family(),
             ],
             depends : binary,
             build_by_default : true,

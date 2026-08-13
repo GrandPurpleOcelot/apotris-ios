@@ -40,7 +40,7 @@ def main():
     data_dir = os.path.join(android_project_dir, 'app/src/main/assets/data')
     java_src_dir = os.path.join(android_project_dir, 'app/src/main/java/org/libsdl/app')
 
-    print(f"Deploying Android build...")
+    print(f"Deploying Android {args.abi} build...")
 
     # Ensure directories exist
     os.makedirs(jni_libs_dir, exist_ok=True)
@@ -110,11 +110,9 @@ def main():
                 'mHIDDeviceManager = HIDDeviceManager.acquire(this);',
                 '// mHIDDeviceManager = HIDDeviceManager.acquire(this);',
                 'HID workaround')
-            content = replace_once(
-                content,
+            content = content.replace(
                 'req = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;',
-                'req = ActivityInfo.SCREEN_ORIENTATION_USER;',
-                'orientation workaround')
+                'req = ActivityInfo.SCREEN_ORIENTATION_USER;')
             soft_return = '''if (SDLActivity.onNativeSoftReturnKey()) {
                 return true;
             }'''
