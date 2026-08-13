@@ -15,9 +15,9 @@ public:
     OBJ_ATTR* cursorSprites[2];
 
     int listStart = 0;
-    const int maxVisible = 8;
+    const int maxVisible = 4;
 
-    // Pre-computed display lines
+    // Pre-computed player standings
     std::vector<std::string> displayLines;
 
     void buildDisplayLines();

@@ -1,66 +1,47 @@
-#include "sceneMultiplayerResults.hpp"
 #include "def.h"
 #include "sceneModes.hpp"
+#include "sceneMultiplayerResults.hpp"
 #include "sprites.h"
 #include "text.h"
+#include <algorithm>
+
+namespace {
+constexpr int resultsButtonY = 16;
+constexpr int resultsButtonRight = 232;
+} // namespace
 
 void MultiplayerResultsScene::buildDisplayLines() {
     displayLines.clear();
 
-    if (multiplayerLink->targetWins > 0) {
-        std::string winner;
-        if (multiplayerLink->wins >= multiplayerLink->targetWins) {
-            winner = "You win the match!";
-        } else {
-            // Someone else reached target - find who has the most wins
-            winner = "Match complete!";
-        }
-        displayLines.push_back(winner);
-        displayLines.push_back("");
-    }
+    std::vector<std::pair<u8, Player>> standings;
+    for (const auto& player : multiplayerLink->players)
+        standings.push_back(player);
+
+    std::sort(standings.begin(), standings.end(),
+              [](const auto& left, const auto& right) {
+                  if (left.second.wins != right.second.wins)
+                      return left.second.wins > right.second.wins;
+                  return left.first < right.first;
+              });
 
 #ifndef GBA
-    auto playerNames = multiplayerLink->getPlayerNames();
-    u8 localId = multiplayerLink->universal->currentPlayerId();
-    std::string localName = playerNames[localId];
-    if (localName.empty())
-        localName = "You";
+    const auto playerNames = multiplayerLink->getPlayerNames();
 #endif
 
-    int gameNum = 1;
-    for (const auto& result : multiplayerLink->matchHistory) {
-        std::string line;
-        line = "Game " + std::to_string(gameNum) + ": ";
-
-        if (result.playerCount <= 2) {
-            // 2P: show who won
-            if (result.won) {
-                line += "You won!";
-            } else {
-                line += "You lost";
-            }
-        } else {
-            // >2P: show placement
-            int place = result.placement + 1;
-            line += std::to_string(place);
-            // Ordinal suffix
-            if (place == 1)
-                line += "st";
-            else if (place == 2)
-                line += "nd";
-            else if (place == 3)
-                line += "rd";
-            else
-                line += "th";
-            line += " place";
-        }
-        displayLines.push_back(line);
-        gameNum++;
+    for (const auto& standing : standings) {
+        const u8 playerId = standing.first;
+        const Player& player = standing.second;
+        std::string playerName = "Player " + std::to_string(playerId + 1);
+#ifndef GBA
+        const auto name = playerNames.find(playerId);
+        if (name != playerNames.end() &&
+            name->second.find_first_not_of(' ') != std::string::npos)
+            playerName = name->second;
+#endif
+        displayLines.push_back(
+            playerName + " - " + std::to_string(player.wins) + "W - " +
+            std::to_string(player.attacksPerMinute()) + "APM");
     }
-
-    displayLines.push_back("");
-    displayLines.push_back("Wins: " + std::to_string(multiplayerLink->wins) +
-                           "  Losses: " + std::to_string(multiplayerLink->losses));
 }
 
 void MultiplayerResultsScene::init() {
@@ -105,22 +86,24 @@ void MultiplayerResultsScene::renderText() {
     naprint("MATCH RESULTS", 120 - getVariableWidth("MATCH RESULTS") / 2,
             1 * 8);
 
+    if (!multiplayerLink->matchHistory.empty()) {
+        const char* outcome =
+            multiplayerLink->matchHistory.back().won ? "YOU WON" : "YOU LOST";
+        naprint(outcome, 120 - getVariableWidth(outcome) / 2, 3 * 8);
+    }
+
     int visibleCount = 0;
     for (int i = listStart;
          i < (int)displayLines.size() && visibleCount < maxVisible; i++) {
-        if (displayLines[i].empty())
-            continue;
-        naprint(displayLines[i],
-                120 - getVariableWidth(displayLines[i]) / 2,
-                (3 + visibleCount) * 8);
+        naprint(displayLines[i], 120 - getVariableWidth(displayLines[i]) / 2,
+                (5 + visibleCount * 2) * 8);
         visibleCount++;
     }
 
-    const int buttonY = 3 + maxVisible + 1;
-    naprint("Play Again", 120 - getVariableWidth("Play Again") / 2,
-            buttonY * 8);
-    naprint("Main Menu", 120 - getVariableWidth("Main Menu") / 2,
-            (buttonY + 2) * 8);
+    naprint("Play Again", resultsButtonRight - getVariableWidth("Play Again"),
+            resultsButtonY * 8);
+    naprint("Main Menu", resultsButtonRight - getVariableWidth("Main Menu"),
+            (resultsButtonY + 2) * 8);
 }
 
 void MultiplayerResultsScene::draw() {
@@ -145,15 +128,13 @@ void MultiplayerResultsScene::update() {
         sprite_enable_affine(cursorSprites[i], i, true);
         sprite_set_size(cursorSprites[i], scale, i);
 
-        int buttonY = 3 + maxVisible + 1 + selection * 2;
-        int x = 240 / 2 -
-                ((getVariableWidth(selection == 0 ? "Play Again"
-                                                  : "Main Menu") +
-                  8) /
-                     2 +
-                 offset + 4) *
-                    (i ? -1 : 1) -
-                8;
+        const char* selectedOption =
+            selection == 0 ? "Play Again" : "Main Menu";
+        const int buttonX =
+            resultsButtonRight - getVariableWidth(selectedOption);
+        const int buttonY = resultsButtonY + selection * 2;
+        const int x =
+            i ? resultsButtonRight + offset - 4 : buttonX - offset - 12;
 
         sprite_set_pos(cursorSprites[i], x, buttonY * 8 - 5);
     }
@@ -181,7 +162,7 @@ bool MultiplayerResultsScene::control() {
         if (selection == 0) {
             // Play Again
             sfx(SFX_MENUCONFIRM);
-            multiplayerLink->resetSession();
+            multiplayerLink->resetMatch();
             multiplayerLink->playAgain = true;
 #ifndef GBA
             changeScene([]() { return new MultBattleScene(roomId); },
@@ -214,8 +195,7 @@ bool MultiplayerResultsScene::control() {
         multiplayer = false;
         path.clear();
 #ifndef MULTIBOOT
-        changeScene([]() { return new MainMenuScene(); },
-                    Transitions::FADE);
+        changeScene([]() { return new MainMenuScene(); }, Transitions::FADE);
 #else
         changeScene([]() { return new MultiplayerProtocolScene(); },
                     Transitions::FADE);

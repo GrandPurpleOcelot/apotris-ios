@@ -20,6 +20,7 @@
 #include "def.h"
 #include "hsm.h"
 #include "scene.hpp"
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <queue>
@@ -27,6 +28,10 @@
 #include <vector>
 
 // Higher three bits of u16 for commands
+#define SEND_MATCH_ATTACKS 0 // payload: attacks sent this game
+#define SEND_MATCH_TIME 1    // payload: wins (3 bits), seconds (10 bits)
+#define MATCH_STAT_WINS_SHIFT 10
+#define MATCH_STAT_SECONDS_MASK 0x3FF
 #define UPDATE_STATE (2 << 13)
 #define SEND_ATTACK 3
 #define ACK_ATTACK 4
@@ -102,10 +107,17 @@ public:
     bool ready = false;
     bool over = false;
     bool reconnected = false;
+    int wins = 0;
+    int attacks = 0;
+    int attackSeconds = 0;
 
     explicit Player(u8 lId) { linkId = lId; }
 
     explicit Player() { linkId = -1; }
+
+    [[nodiscard]] int attacksPerMinute() const {
+        return attackSeconds ? attacks * 60 / attackSeconds : 0;
+    }
 
     [[nodiscard]] std::string toString() const {
         std::string result;
@@ -216,11 +228,28 @@ public:
         reset();
     }
 
+    void resetMatch() {
+        wins = losses = 0;
+        targetWins = 0;
+        matchHistory.clear();
+        matchComplete = false;
+        playing = false;
+        allOverB = false;
+        purgeQueues();
+
+        for (auto& player : players)
+            player.second = Player(player.first);
+    }
+
     void initPlayer(u8 i) { players[i] = Player(i); }
 
     void resetPlayers() {
-        for (auto i : players) {
-            players[i.first] = Player(i.first);
+        for (auto& i : players) {
+            Player resetPlayer(i.first);
+            resetPlayer.wins = i.second.wins;
+            resetPlayer.attacks = i.second.attacks;
+            resetPlayer.attackSeconds = i.second.attackSeconds;
+            i.second = resetPlayer;
         }
     }
 
@@ -254,8 +283,32 @@ public:
         return targetWins > 0 && wins >= targetWins;
     }
 
-    void recordMatchResult(bool won, int placement) {
+    void recordMatchResult(bool won, int placement, int attacks,
+                           int gameFrames) {
         matchHistory.push_back({won, placement, (int)playingPlayerCount});
+
+        Player& player = players[universal->currentPlayerId()];
+        player.wins += won;
+        player.attacks += attacks;
+        player.attackSeconds += std::max(1, (gameFrames + 30) / 60);
+
+        sendEvent(
+            (u16)((SEND_MATCH_ATTACKS << 13) | std::min(attacks, 0x1FFF)));
+        sendEvent((u16)((SEND_MATCH_TIME << 13) |
+                        ((std::min(player.wins, 7) << MATCH_STAT_WINS_SHIFT) |
+                         std::min(std::max(1, (gameFrames + 30) / 60),
+                                  MATCH_STAT_SECONDS_MASK))));
+    }
+
+    void recordRemoteMatchStat(RemotePlayerId playerId, int command,
+                               int value) {
+        Player& player = players[playerId.id];
+        if (command == SEND_MATCH_ATTACKS)
+            player.attacks += value;
+        else if (command == SEND_MATCH_TIME) {
+            player.wins = value >> MATCH_STAT_WINS_SHIFT;
+            player.attackSeconds += value & MATCH_STAT_SECONDS_MASK;
+        }
     }
 
     [[nodiscard]] std::queue<Packet> readPackets() const {
@@ -633,7 +686,10 @@ struct MultiplayerStates {
                 auto command =
                     Command(RemotePlayerId(packet.playerId), packet.packet);
 
-                if (command.command == 2) {
+                if (command.command == SEND_MATCH_ATTACKS ||
+                    command.command == SEND_MATCH_TIME) {
+                    command.execute();
+                } else if (command.command == 2) {
                     if (command.value == I_LOST)
                         Owner().players[command.playerId.id].over = true;
                     else if (command.value == I_WON) {
@@ -680,7 +736,7 @@ struct MultiplayerStates {
         void OnEnter() override {
             Owner().broadcastState(UPDATE_STATE + I_WON);
             updateRank();
-            Owner().recordMatchResult(true, rank);
+            Owner().recordMatchResult(true, rank, game->linesSent, game->timer);
             Owner().playing = false;
             Owner().resetPlayers();
             Owner().playAgain = true;
@@ -707,7 +763,8 @@ struct MultiplayerStates {
         void OnEnter() override {
             Owner().broadcastState(UPDATE_STATE + I_LOST);
             updateRank();
-            Owner().recordMatchResult(false, rank);
+            Owner().recordMatchResult(false, rank, game->linesSent,
+                                      game->timer);
             Owner().players[Owner().universal->currentPlayerId()].over = true;
             Owner().losses++;
         }
@@ -719,7 +776,10 @@ struct MultiplayerStates {
                 queue.pop();
                 auto command =
                     Command(RemotePlayerId(packet.playerId), packet.packet);
-                if (command.command == 2) {
+                if (command.command == SEND_MATCH_ATTACKS ||
+                    command.command == SEND_MATCH_TIME) {
+                    command.execute();
+                } else if (command.command == 2) {
                     if (command.value == I_LOST) {
                         Owner().players[command.playerId.id].over = true;
                     } else if (command.value == I_WON) {
@@ -793,9 +853,13 @@ struct MultiplayerStates {
 
                 auto command =
                     Command(RemotePlayerId(packet.playerId), packet.packet);
-                if (command.command != 2) {
+                if (command.command == SEND_MATCH_ATTACKS ||
+                    command.command == SEND_MATCH_TIME) {
+                    command.execute();
                     continue;
                 }
+                if (command.command != 2)
+                    continue;
                 if (command.value == GAME_OVER) {
                     Owner().players[command.playerId.id].over = true;
                 } else if (command.value == MATCH_COMPLETE) {

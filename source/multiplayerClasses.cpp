@@ -10,6 +10,14 @@ std::string stringifyMultiplayerPacket(u16 packet) {
     const u16 cmd = packet >> 13;
     const u16 param = packet & ((1 << 13) - 1);
     switch (cmd) {
+    case SEND_MATCH_ATTACKS:
+        str = "SEND_MATCH_ATTACKS(" + std::to_string(param) + ')';
+        break;
+    case SEND_MATCH_TIME:
+        str = "SEND_MATCH_TIME(w=" +
+              std::to_string(param >> MATCH_STAT_WINS_SHIFT) +
+              ",t=" + std::to_string(param & MATCH_STAT_SECONDS_MASK) + ')';
+        break;
     case UPDATE_STATE >> 13: {
         str = "UPDATE_STATE(";
         switch (param) {
@@ -288,6 +296,10 @@ void Command::execute() const {
         return;
 
     switch (command) {
+    case SEND_MATCH_ATTACKS:
+    case SEND_MATCH_TIME:
+        multiplayerLink->recordRemoteMatchStat(playerId, command, value);
+        break;
     case SEND_ATTACK:
         // Record this attack to judge relative multiplayer rank
         multiplayerLink->enemyPower[playerId.index] += attackValue;
