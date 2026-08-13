@@ -22,10 +22,10 @@
 #include <vector>
 
 #ifdef ANDROID
-#include <SDL_system.h>
+#include "liba_android.h"
+
 #include <android/log.h>
 #include <glad/gles2.h>
-#include <jni.h>
 #define LOG_TAG "ApotrisShader"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -484,53 +484,12 @@ static bool hasSuffix(const std::string& s, const std::string& suffix) {
 
 std::vector<std::string> findShaders() {
     std::string shaderPath = "assets/shaders";
-    std::vector<std::string> shaderPaths;
 
 #ifdef ANDROID
-    // Use JNI to list assets
-    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-    jobject activity = (jobject)SDL_AndroidGetActivity();
+    shaderPath = getDocumentsPath() + shaderPath;
+#endif
 
-    if (env && activity) {
-        // Get AssetManager from Activity
-        jclass activityClass = env->GetObjectClass(activity);
-        jmethodID getAssetsMethod = env->GetMethodID(
-            activityClass, "getAssets", "()Landroid/content/res/AssetManager;");
-        jobject assetManager = env->CallObjectMethod(activity, getAssetsMethod);
-
-        // List files in "shaders" directory (relative to assets root)
-        jclass assetManagerClass = env->GetObjectClass(assetManager);
-        jmethodID listMethod =
-            env->GetMethodID(assetManagerClass, "list",
-                             "(Ljava/lang/String;)[Ljava/lang/String;");
-
-        jstring pathArg = env->NewStringUTF("assets/shaders");
-        jobjectArray fileList = (jobjectArray)env->CallObjectMethod(
-            assetManager, listMethod, pathArg);
-
-        if (fileList) {
-            int count = env->GetArrayLength(fileList);
-            for (int i = 0; i < count; i++) {
-                jstring fileNameStr =
-                    (jstring)env->GetObjectArrayElement(fileList, i);
-                const char* fileName = env->GetStringUTFChars(fileNameStr, 0);
-
-                std::string name(fileName);
-                if (hasSuffix(name, ".glsl")) {
-                    shaderPaths.push_back(shaderPath + "/" + name);
-                }
-
-                env->ReleaseStringUTFChars(fileNameStr, fileName);
-                env->DeleteLocalRef(fileNameStr);
-            }
-        }
-
-        env->DeleteLocalRef(pathArg);
-        env->DeleteLocalRef(assetManager);
-        env->DeleteLocalRef(activityClass);
-        env->DeleteLocalRef(assetManagerClass);
-    }
-#else
+    std::vector<std::string> shaderPaths;
     DIR* dir = opendir(shaderPath.c_str());
     if (!dir) {
         log("couldn't open dir: " + shaderPath);
@@ -545,8 +504,7 @@ std::vector<std::string> findShaders() {
     }
 
     closedir(dir);
-#endif
-
+    sort(shaderPaths.begin(), shaderPaths.end());
     return shaderPaths;
 }
 

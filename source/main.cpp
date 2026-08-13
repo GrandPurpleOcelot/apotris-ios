@@ -330,11 +330,13 @@ std::string nameInput(int place) {
 
     showSprites(128);
 
-#if defined(N3DS)
+#if defined(N3DS) || defined(ANDROID)
     resetSmallText();
     setSmallTextArea(220, 0, 17, 30, 20);
     clearText();
+#endif
 
+#if defined(N3DS)
     // Show keyboard immediately if name is empty
     bool requestKeyboard = (result.find_last_not_of(' ') == std::string::npos);
 #endif
@@ -392,6 +394,111 @@ std::string nameInput(int place) {
 #endif
 
         if (!onDone) {
+#if defined(ANDROID)
+            {
+                clearSmallText();
+                std::string s = "Press " + getStringFromKey(k.special3) +
+                                " to use on-screen keyboard";
+                aprints(s, (30 * 8 - 4 * s.size()) / 2, 8, 2);
+            }
+
+            if (key_hit(k.special3))
+                startTextInput();
+
+            for (unsigned char character : consumeTextInput()) {
+                if (character == '\n' || character == '\r') {
+                    onDone = true;
+                    stopTextInput();
+                    sfx(SFX_MENUCONFIRM);
+                    break;
+                }
+
+                if (character == '\b') {
+                    if (cursor > 0 && (cursor < 7 || result[cursor] == ' ')) {
+                        result[--cursor] = ' ';
+                        sfx(SFX_MENUMOVE);
+                    } else if (result[cursor] != ' ') {
+                        result[cursor] = ' ';
+                        sfx(SFX_MENUMOVE);
+                    }
+                    continue;
+                }
+
+                if (character >= 'a' && character <= 'z')
+                    character -= 'a' - 'A';
+
+                if (character == ' ' ||
+                    (character >= 'A' && character <= 'Z')) {
+                    result[cursor] = character;
+                    if (cursor < 7)
+                        cursor++;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+
+            if (lastInputType == InputType::CONTROLLER ||
+                lastInputType == InputType::TOUCH) {
+                char curr = result.at(cursor);
+
+                if (key_hit(k.confirm) || key_hit(k.right)) {
+                    stopTextInput();
+                    cursor++;
+                    if (cursor > 7) {
+                        onDone = true;
+                        cursor = 7;
+                        sfx(SFX_MENUCONFIRM);
+                    } else {
+                        sfx(SFX_MENUMOVE);
+                    }
+                }
+
+                if (key_hit(k.cancel)) {
+                    stopTextInput();
+                    result[cursor] = ' ';
+                    if (cursor > 0)
+                        cursor--;
+                    sfx(SFX_MENUCANCEL);
+                }
+
+                if (key_hit(k.left)) {
+                    stopTextInput();
+                    if (cursor > 0)
+                        cursor--;
+                    sfx(SFX_MENUMOVE);
+                }
+
+                if (key_hit(k.up)) {
+                    stopTextInput();
+                    if (curr == 'A')
+                        result[cursor] = ' ';
+                    else if (curr == ' ')
+                        result[cursor] = 'Z';
+                    else if (curr > 'A')
+                        result[cursor] = curr - 1;
+                    sfx(SFX_MENUMOVE);
+                } else if (key_hit(k.down)) {
+                    stopTextInput();
+                    if (curr == 'Z')
+                        result[cursor] = ' ';
+                    else if (curr == ' ')
+                        result[cursor] = 'A';
+                    else if (curr < 'Z')
+                        result[cursor] = curr + 1;
+                    sfx(SFX_MENUMOVE);
+                }
+            }
+
+            if (timer++ > 19)
+                timer = 0;
+            if (timer < 10)
+                aprint("_", 13 + cursor, nameHeight);
+
+            if (!onDone && (key_hit(SDLK_RETURN) || key_hit(SDLK_ESCAPE))) {
+                onDone = true;
+                stopTextInput();
+                sfx(SFX_MENUCONFIRM);
+            }
+#else
             char curr = result.at(cursor);
 
 #if defined(PC)
@@ -534,9 +641,13 @@ std::string nameInput(int place) {
 
 #endif
         end:
+#endif
 
             if (key_hit(k.pause)) {
                 onDone = true;
+#if defined(ANDROID)
+                stopTextInput();
+#endif
                 sfx(SFX_MENUCONFIRM);
             }
         } else {
@@ -547,6 +658,9 @@ std::string nameInput(int place) {
 
             if (key_hit(k.cancel)) {
                 onDone = false;
+#if defined(ANDROID)
+                startTextInput();
+#endif
                 sfx(SFX_MENUCANCEL);
             }
         }
@@ -587,7 +701,11 @@ std::string nameInput(int place) {
 
     clearText();
 
-#if defined(N3DS)
+#if defined(ANDROID)
+    stopTextInput();
+#endif
+
+#if defined(N3DS) || defined(ANDROID)
     resetSmallText();
     aprintClearArea(0, 17, 30 + 1, 20);
     setSmallTextArea(260, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);

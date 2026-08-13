@@ -12,6 +12,13 @@ def run_command(command, cwd=None, env=None):
         print(f"Error executing command: {command}")
         sys.exit(e.returncode)
 
+def replace_once(content, old, new, description):
+    count = content.count(old)
+    if count != 1:
+        raise RuntimeError(
+            f"Expected one {description} anchor in SDLActivity.java, found {count}")
+    return content.replace(old, new)
+
 def main():
     parser = argparse.ArgumentParser(description='Android deploy script for Apotris')
     parser.add_argument('--build-dir', required=True, help='Meson build directory')
@@ -33,7 +40,7 @@ def main():
     data_dir = os.path.join(android_project_dir, 'app/src/main/assets/data')
     java_src_dir = os.path.join(android_project_dir, 'app/src/main/java/org/libsdl/app')
 
-    print(f"Deploying Android build...")
+    print(f"Deploying Android {args.abi} build...")
 
     # Ensure directories exist
     os.makedirs(jni_libs_dir, exist_ok=True)
@@ -98,24 +105,47 @@ def main():
             print("Patching SDLActivity.java...")
             with open(sdl_activity, 'r') as f:
                 content = f.read()
-            # Disable HID device manager (crashes on some devices)
-            content = content.replace('mHIDDeviceManager = HIDDeviceManager.acquire(this);', '// mHIDDeviceManager = HIDDeviceManager.acquire(this);')
+            content = replace_once(
+                content,
+                'mHIDDeviceManager = HIDDeviceManager.acquire(this);',
+                '// mHIDDeviceManager = HIDDeviceManager.acquire(this);',
+                'HID workaround')
             content = content.replace(
                 'req = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;',
-                'req = ActivityInfo.SCREEN_ORIENTATION_USER;'
-            )
-            # Add hasManageStoragePermission / requestManageStoragePermission
-            # (needed by liba_android.cpp; added to SDL after 2.28.5)
-            old = '''    @Override
+                'req = ActivityInfo.SCREEN_ORIENTATION_USER;')
+            soft_return = '''if (SDLActivity.onNativeSoftReturnKey()) {
+                return true;
+            }'''
+            content = replace_once(
+                content,
+                soft_return,
+                soft_return + '''
+            nativeGenerateScancodeForUnichar('\\r');
+            return true;''',
+                'soft-return workaround')
+            commit_text = '''
+    @Override
+    public boolean commitText(CharSequence text, int newCursorPosition) {'''
+            content = replace_once(
+                content,
+                commit_text,
+                '''
+    @Override
+    public boolean performEditorAction(int actionCode) {
+        nativeGenerateScancodeForUnichar('\\r');
+        return true;
+    }
+''' + commit_text,
+                'editor-action workaround')
+            permissions_result = '''    @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         boolean result = (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
         nativePermissionResult(requestCode, result);
     }'''
-            new = '''    public static boolean hasManageStoragePermission() {
+            storage_permissions = '''    public static boolean hasManageStoragePermission() {
         if (Build.VERSION.SDK_INT < 30) {
             return true;
         }
-        Activity activity = (Activity)getContext();
         return android.os.Environment.isExternalStorageManager();
     }
 
@@ -133,15 +163,12 @@ def main():
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        boolean result = (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
-        nativePermissionResult(requestCode, result);
-    }'''
-            if old in content:
-                content = content.replace(old, new)
-            else:
-                print("Warning: Could not find onRequestPermissionsResult in SDLActivity.java — storage permission fix not applied")
+''' + permissions_result
+            content = replace_once(
+                content,
+                permissions_result,
+                storage_permissions,
+                'storage permission workaround')
             with open(sdl_activity, 'w') as f:
                 f.write(content)
     else:

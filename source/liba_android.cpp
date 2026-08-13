@@ -62,6 +62,27 @@ std::unordered_set<uint32_t> previousKeys;
 
 std::unordered_set<uint32_t> currentlyPressed;
 
+static std::string textInput;
+static bool textInputActive = false;
+
+void startTextInput() {
+    textInput.clear();
+    textInputActive = true;
+    SDL_StartTextInput();
+}
+
+void stopTextInput() {
+    SDL_StopTextInput();
+    textInput.clear();
+    textInputActive = false;
+}
+
+std::string consumeTextInput() {
+    std::string result = textInput;
+    textInput.clear();
+    return result;
+}
+
 // Per-finger tracking for touch input: fingerId -> button key.
 // Ensures a finger's button is unpressKey'd on FINGERUP even if the
 // finger has moved outside the button bounds or the event is lost
@@ -325,13 +346,42 @@ static void make_directory_recursive(const std::string& path) {
 
 bool scopedStorageError = false;
 
+static bool assetsAreExtracted(const std::string& pathPrefix) {
+    for (int i = 0; i < SFX_COUNT; i++) {
+        if (access((pathPrefix + SoundEffectPaths[i]).c_str(), F_OK) != 0)
+            return false;
+    }
+
+    size_t listSize;
+    void* listData = SDL_LoadFile("assets/file_list.txt", &listSize);
+    if (!listData)
+        return false;
+
+    std::string listStr((char*)listData, listSize);
+    SDL_free(listData);
+    std::stringstream ss(listStr);
+    std::string line;
+    while (std::getline(ss, line)) {
+        line.erase(line.find_last_not_of(" \n\r\t") + 1);
+        if (line.empty())
+            continue;
+
+        if (access((pathPrefix + "assets/" + line).c_str(), F_OK) != 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void extractAssets(const std::string& pathPrefix) {
     std::string assetsDir = pathPrefix + "assets";
     mkdir(assetsDir.c_str(), 0777);
 
     std::string markerPath = pathPrefix + "assets/extracted.txt";
+    std::string markerVersion = std::string(APOTRIS_VERSION) + ":assets-v2";
 
-    // Check version
+    // Check extraction manifest version
     FILE* marker = fopen(markerPath.c_str(), "r");
     bool needsUpdate = true;
     if (marker) {
@@ -340,7 +390,7 @@ void extractAssets(const std::string& pathPrefix) {
             // Trim newline and whitespace
             std::string ver = buffer;
             ver.erase(ver.find_last_not_of(" \n\r\t") + 1);
-            if (ver == APOTRIS_VERSION) {
+            if (ver == markerVersion && assetsAreExtracted(pathPrefix)) {
                 needsUpdate = false;
             }
         }
@@ -358,7 +408,7 @@ void extractAssets(const std::string& pathPrefix) {
             if (remove(markerPath.c_str()) == 0) {
                 f = fopen(markerPath.c_str(), "w");
                 if (f) {
-                    fprintf(f, "%s\n", APOTRIS_VERSION);
+                    fprintf(f, "%s\n", markerVersion.c_str());
                     fclose(f);
                 }
             } else {
@@ -473,7 +523,7 @@ void extractAssets(const std::string& pathPrefix) {
     if (!hasError) {
         FILE* outMarker = fopen(markerPath.c_str(), "w");
         if (outMarker) {
-            fprintf(outMarker, "%s\n", APOTRIS_VERSION);
+            fprintf(outMarker, "%s\n", markerVersion.c_str());
             fclose(outMarker);
             SDL_Log("Asset extraction completed successfully.");
         } else {
@@ -482,7 +532,7 @@ void extractAssets(const std::string& pathPrefix) {
             if (remove(markerPath.c_str()) == 0) {
                 outMarker = fopen(markerPath.c_str(), "w");
                 if (outMarker) {
-                    fprintf(outMarker, "%s\n", APOTRIS_VERSION);
+                    fprintf(outMarker, "%s\n", markerVersion.c_str());
                     fclose(outMarker);
                     SDL_Log("Asset extraction completed (marker "
                             "recreated after previous install).");
@@ -753,7 +803,8 @@ void windowInit() {
         if (!basePath.empty()) {
             std::string flagPath = basePath + "fallback_shown.flag";
             FILE* f = fopen(flagPath.c_str(), "w");
-            if (f) fclose(f);
+            if (f)
+                fclose(f);
         }
         std::string msg =
             "Apotris is using app-private storage because Android 10 "
@@ -763,8 +814,8 @@ void windowInit() {
             "'assets' subfolder inside the directory shown above using "
             "a File Manager.  On Android 11+, enable 'All files access' "
             "in Settings to use the Documents folder instead.";
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,
-                                 "Storage Location", msg.c_str(), window);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Storage Location",
+                                 msg.c_str(), window);
     }
 
     // ── MANAGE_EXTERNAL_STORAGE prompt (API 30+) ──────────────────
@@ -773,18 +824,16 @@ void windowInit() {
     // \"All files access\" in system Settings to fix it.
 
     static bool manageStoragePromptShown = false;
-    if (usingFallback && !manageStoragePromptShown &&
-        !hasManageStoragePermission()) {
+    if (!manageStoragePromptShown && !hasManageStoragePermission()) {
         manageStoragePromptShown = true;
         SDL_ShowSimpleMessageBox(
             SDL_MESSAGEBOX_WARNING, "Storage Access",
-            "Apotris is using app-internal storage because it cannot "
-            "write to the Documents folder.\n\n"
-            "To enable custom music and place audio files in a "
-            "user-accessible folder, please enable \"All files access\" "
-            "for Apotris in the Android Settings that will open next.\n\n"
-            "You can also skip this and enable it later via Android "
-            "Settings > Apps > Apotris > All files access.",
+            "Apotris needs \"All files access\" to extract and load "
+            "assets from its Documents folder, including custom shaders.\n\n"
+            "Enable \"All files access\" for Apotris in Android Settings "
+            "that opens next, then restart game.\n\n"
+            "You can also enable it later via Android Settings > Apps > "
+            "Apotris > All files access.",
             window);
         requestManageStoragePermission();
     }
@@ -859,8 +908,16 @@ void handleInput() {
         bool found = false;
 
         switch (event.type) {
+        case SDL_TEXTINPUT:
+            if (textInputActive)
+                textInput += event.text.text;
+            break;
         case SDL_KEYDOWN:
             key = event.key.keysym.sym;
+            if (textInputActive && key == SDLK_BACKSPACE)
+                textInput += '\b';
+            if (textInputActive && key == SDLK_RETURN)
+                textInput += '\n';
             pressKey(key, InputType::KEYBOARD);
             break;
         case SDL_CONTROLLERBUTTONDOWN:
