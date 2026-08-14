@@ -167,6 +167,24 @@ The built Apotris ROMs (.elf, .gba) will be in your `build-gba` directory.
 
 The built Apotris executable and its required `assets/` folder will be in your build directories for other builds.
 
+### PC developer scenarios
+
+PC builds can record and replay complete input paths, including menu navigation.
+
+- Press `F10` to reset to title screen and begin recording. Press `F10` again to
+  save next numbered scenario in `tests/`, such as `tests/scenario-1.scn`, plus
+  its initial save snapshot, `tests/scenario-1.scn.save`.
+- Press `F9` to reload last scenario and restart it from title screen.
+- Start a saved scenario directly with:
+
+  ```sh
+  ./Apotris --scenario path/to/my-scenario.scn
+  ```
+
+Scenario playback suppresses writes to normal `Apotris.sav`. Keep scenario file
+and its matching `.save` sidecar together. Input events use frame timing, so
+record from title screen and replay using same build/platform.
+
 ### Unique GBA builds
 
 GBA has a few unique targets for different flash carts and hardware platforms. Included is a table of all targets and

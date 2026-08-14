@@ -9,6 +9,7 @@
 #include <unordered_set>
 
 #include "def.h"
+#include "scenario.hpp"
 
 #include "shader.h"
 
@@ -173,22 +174,43 @@ void handleInput() {
         switch (event.type) {
         case SDL_KEYDOWN:
             key = event.key.keysym.sym;
-            pressKey(key, InputType::KEYBOARD);
+            if (event.key.repeat == 0 && key == SDLK_F10) {
+                scenarioToggleRecording();
+                break;
+            }
+            if (event.key.repeat == 0 && key == SDLK_F9) {
+                scenarioReplayLast();
+                break;
+            }
+            if (!scenarioIsPlaying()) {
+                scenarioRecordInput(key, true, false);
+                pressKey(key, InputType::KEYBOARD);
+            }
             break;
         case SDL_CONTROLLERBUTTONDOWN:
             key = event.cbutton.button;
-            pressKey(key, InputType::CONTROLLER);
+            if (!scenarioIsPlaying()) {
+                scenarioRecordInput(key, true, true);
+                pressKey(key, InputType::CONTROLLER);
+            }
             break;
         case SDL_KEYUP:
             key = event.key.keysym.sym;
-            unpressKey(key, InputType::KEYBOARD);
+            if (key != SDLK_F9 && key != SDLK_F10 && !scenarioIsPlaying()) {
+                scenarioRecordInput(key, false, false);
+                unpressKey(key, InputType::KEYBOARD);
+            }
             break;
         case SDL_CONTROLLERBUTTONUP:
             key = event.cbutton.button;
-            unpressKey(key, InputType::CONTROLLER);
+            if (!scenarioIsPlaying()) {
+                scenarioRecordInput(key, false, true);
+                unpressKey(key, InputType::CONTROLLER);
+            }
             break;
         case SDL_CONTROLLERAXISMOTION:
-            handleAnalogInput(event.caxis.axis, event.caxis.value);
+            if (!scenarioIsPlaying())
+                handleAnalogInput(event.caxis.axis, event.caxis.value);
             break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
@@ -202,11 +224,17 @@ void handleInput() {
             break;
         case SDL_JOYBUTTONDOWN:
             key = event.jbutton.button;
-            pressKey(key, InputType::CONTROLLER);
+            if (!scenarioIsPlaying()) {
+                scenarioRecordInput(key, true, true);
+                pressKey(key, InputType::CONTROLLER);
+            }
             break;
         case SDL_JOYBUTTONUP:
             key = event.jbutton.button;
-            unpressKey(key, InputType::CONTROLLER);
+            if (!scenarioIsPlaying()) {
+                scenarioRecordInput(key, false, true);
+                unpressKey(key, InputType::CONTROLLER);
+            }
             break;
         case SDL_QUIT:
             quit();
@@ -215,6 +243,8 @@ void handleInput() {
             break;
         }
     }
+
+    scenarioApplyInput(currentlyPressed);
 
     previousKeys = currentKeys;
     currentKeys.clear();
@@ -566,6 +596,9 @@ void loadSavefile() {
 }
 
 void saveSavefile() {
+    if (scenarioSuppressSave())
+        return;
+
     std::string filePath = getSavefilePath();
     std::ofstream output(filePath, std::ios::binary | std::ios::out);
 
@@ -699,12 +732,18 @@ void handleAnalogInput(int axis, int value) {
     key |= (axis & 0xf) | (1 << 14);
 
     if (value > DEADZONE) {
+        scenarioRecordInput(key, true, true);
+        scenarioRecordInput(key | (1 << 5), false, true);
         pressKey((key), InputType::CONTROLLER);
         unpressKey((key) | (1 << 5), InputType::CONTROLLER);
     } else if (value < -DEADZONE) {
+        scenarioRecordInput(key | (1 << 5), true, true);
+        scenarioRecordInput(key, false, true);
         pressKey((key) | (1 << 5), InputType::CONTROLLER);
         unpressKey((key), InputType::CONTROLLER);
     } else {
+        scenarioRecordInput(key, false, true);
+        scenarioRecordInput(key | (1 << 5), false, true);
         unpressKey((key), InputType::CONTROLLER);
         unpressKey((key) | (1 << 5), InputType::CONTROLLER);
     }

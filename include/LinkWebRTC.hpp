@@ -4,6 +4,7 @@
 #include <array>
 #include <optional>
 #include <queue>
+#include <random>
 #include <shared_mutex>
 #include <sstream>
 #include <string>
@@ -99,14 +100,19 @@ public:
     std::string localPlayerName;
     [[nodiscard]] u8 currentPlayerId() const { return playerId; }
     static std::string randomId(size_t length) {
-        using std::chrono::high_resolution_clock;
         static const std::string characters("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         std::string id(length, '0');
+#ifdef PC
+        std::random_device randomDevice;
         std::uniform_int_distribution<int> uniform(0,
                                                    int(characters.size() - 1));
+        std::generate(id.begin(), id.end(),
+                      [&]() { return characters.at(uniform(randomDevice)); });
+#else
         std::generate(id.begin(), id.end(), [&]() {
             return characters.at((int)randNext() % (characters.length() - 1));
         });
+#endif
         return id;
     }
     shared_ptr<rtc::PeerConnection>

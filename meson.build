@@ -61,6 +61,7 @@ sources = files(
     src_dir / 'qrcodegen.c',
     src_dir / 'rumblePatterns.cpp',
     src_dir / 'saving.cpp',
+    src_dir / 'scenario.cpp',
     src_dir / 'scene.cpp',
     src_dir / 'screenAudio.cpp',
     src_dir / 'screenControls.cpp',
