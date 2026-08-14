@@ -779,7 +779,9 @@ void MultBattleScene::showWinTargetSelection() {
     naprint("SET MATCH TARGET", 120 - getVariableWidth("SET MATCH TARGET") / 2,
             7 * 8);
     naprint(targets, 120 - getVariableWidth(targets) / 2, 9 * 8);
-    naprint("A: Confirm", 120 - getVariableWidth("A: Confirm") / 2, 13 * 8);
+    const std::string confirmText =
+        getStringFromKey(savefile->settings.menuKeys.confirm) + ": Confirm";
+    naprint(confirmText, 120 - getVariableWidth(confirmText) / 2, 13 * 8);
 }
 
 void MultBattleScene::showWinTargetCursor() {
@@ -915,8 +917,14 @@ void MultBattleScene::handleConnectionDisplay() {
     case 2:
         if (state == 1)
             naprint("                    ", 6 * 8, 15 * 8);
-        else
-            naprint("Press A to ready up!", 6 * 8, 15 * 8);
+        else {
+            const std::string confirmText =
+                "Press " +
+                getStringFromKey(savefile->settings.menuKeys.confirm) +
+                " to ready up!";
+            naprint(confirmText, 120 - getVariableWidth(confirmText) / 2,
+                    15 * 8);
+        }
 
 #ifdef GBA
         naprint("Connected!", 10 * 8, 8 * 8);
