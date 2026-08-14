@@ -626,6 +626,12 @@ struct MultiplayerStates {
                     Command(RemotePlayerId(packet.playerId), packet.packet);
                 if (command.command != 2)
                     continue;
+#ifdef GBA
+                if (command.value & SEND_SEED) {
+                    Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
+                    continue;
+                }
+#endif
                 if ((command.value & MATCH_TARGET) == MATCH_TARGET) {
                     if (packet.playerId == 0)
                         Owner().setMatchTarget(command.value & 0xFF);
