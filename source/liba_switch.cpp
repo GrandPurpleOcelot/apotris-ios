@@ -228,8 +228,6 @@ void updateWindow(uint8_t* framebuffer) {
 
     SDL_RenderPresent(renderer);
 
-    handleInput();
-
     // Cap to 60 FPS
     nanotime_step(&stepper);
 
@@ -247,6 +245,8 @@ void updateWindow(uint8_t* framebuffer) {
     fps = 1000.0f / elapsedMS;
 
     frame_start = SDL_GetPerformanceCounter();
+
+    handleInput();
 }
 
 void refreshWindowSize() {

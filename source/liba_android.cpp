@@ -1704,8 +1704,6 @@ void updateWindow(uint8_t* framebuffer) {
 
     SDL_FreeSurface(img);
 
-    handleInput();
-
     // Cap FPS
     nanotime_step(&stepper);
     Uint64 end = SDL_GetPerformanceCounter();
@@ -1733,6 +1731,8 @@ void updateWindow(uint8_t* framebuffer) {
 
         controllerCount = SDL_NumJoysticks();
     }
+
+    handleInput();
 
     updateBatteryInfo();
 }
