@@ -4,6 +4,7 @@
 #include <array>
 #include <optional>
 #include <queue>
+#include <random>
 #include <shared_mutex>
 #include <sstream>
 #include <string>
@@ -85,6 +86,7 @@ class LinkUniversal {
     std::unordered_map<std::string, shared_ptr<rtc::DataChannel>>
         dataChannelMap;
     std::unordered_map<u8, std::string> playerIdToName;
+    std::unordered_map<std::string, std::string> playerStringToName;
 
     std::mutex readQueueLock;
     std::shared_mutex multiplayerLock;
@@ -99,14 +101,19 @@ public:
     std::string localPlayerName;
     [[nodiscard]] u8 currentPlayerId() const { return playerId; }
     static std::string randomId(size_t length) {
-        using std::chrono::high_resolution_clock;
         static const std::string characters("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         std::string id(length, '0');
+#ifdef PC
+        std::random_device randomDevice;
         std::uniform_int_distribution<int> uniform(0,
                                                    int(characters.size() - 1));
+        std::generate(id.begin(), id.end(),
+                      [&]() { return characters.at(uniform(randomDevice)); });
+#else
         std::generate(id.begin(), id.end(), [&]() {
             return characters.at((int)randNext() % (characters.length() - 1));
         });
+#endif
         return id;
     }
     shared_ptr<rtc::PeerConnection>
@@ -205,7 +212,14 @@ public:
             }
 
             if (type == PLAYER_INFO) {
-                playerIdToName[playerStringToId[message[FROM]]] = message[NAME];
+                const std::string playerString = message[FROM];
+                const std::string playerName = message[NAME];
+                playerStringToName[playerString] = playerName;
+
+                if (auto player = playerStringToId.find(playerString);
+                    player != playerStringToId.end()) {
+                    playerIdToName[player->second] = playerName;
+                }
             }
             if (type == SEED) {
                 nextSeed = stoi(id) & ((0x1000) - 1);
@@ -229,6 +243,10 @@ public:
                 }
                 playerIdToString[remotePlayerId] = peerId;
                 playerStringToId[peerId] = remotePlayerId;
+                if (auto name = playerStringToName.find(peerId);
+                    name != playerStringToName.end()) {
+                    playerIdToName[remotePlayerId] = name->second;
+                }
                 clearPlayers();
                 for (auto& i : playerIdToString) {
                     initPlayer(i.first);
@@ -259,12 +277,15 @@ public:
                 if (pc)
                     pc->close();
 #endif
-                if (playerStringToId.count(peerId)) {
-                    u8 pId_to_remove = playerStringToId[peerId];
+                if (auto player = playerStringToId.find(peerId);
+                    player != playerStringToId.end()) {
+                    u8 pId_to_remove = player->second;
                     removePlayer(pId_to_remove);
                     playerIdToString.erase(pId_to_remove);
-                    playerStringToId.erase(peerId);
+                    playerStringToId.erase(player);
+                    playerIdToName.erase(pId_to_remove);
                 }
+                playerStringToName.erase(peerId);
 
             } else if (type == MATCH && peerId != localId) {
                 std::shared_lock<std::shared_mutex> guard{multiplayerLock};
@@ -534,6 +555,7 @@ public:
         playerStringToId.clear();
         playerIdToString.clear();
         playerIdToName.clear();
+        playerStringToName.clear();
         ws->close();
         localId = randomId(10);
         playerId = -1;

@@ -593,6 +593,10 @@ class MultBattleScene : public PlayOptionScene {
 public:
     BlockEngine::Modes getMode() override { return BlockEngine::BATTLE; };
 
+    int winTargetIndex = 1; // 0=3, 1=5, 2=7
+    const int winTargets[3] = {3, 5, 7};
+    bool choosingWinTarget = false;
+
     std::list<Element*> getElementList() override { return {}; };
 
     void init() override;
@@ -605,6 +609,8 @@ public:
     std::string name() override { return "Multi Battle"; };
 
     void showReadyPlayers();
+    void showWinTargetSelection();
+    void showWinTargetCursor();
     void handleConnectionDisplay();
     void handleReadyStatus();
 

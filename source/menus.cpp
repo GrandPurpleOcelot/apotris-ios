@@ -19,6 +19,7 @@
 #endif
 
 #include "multiplayerClasses.h"
+#include "sceneMultiplayerResults.hpp"
 #include "qrcodegen.h"
 
 using namespace BlockEngine;
@@ -94,10 +95,11 @@ void GameScene::endScreen() {
     int prevBld = blendInfo;
 
     int record = endScreenSetup();
+    const bool finalMatch = multiplayer && multiplayerLink->matchComplete;
 
     if (multiplayer)
 #ifndef MULTIBOOT
-        max = 2;
+        max = finalMatch ? 1 : 2;
 #else
         max = 1;
 #endif
@@ -240,14 +242,18 @@ void GameScene::endScreen() {
 
         int x = 240 / 2 - ((20) + offset + 4) - 16;
 
+        const int optionOffset = finalMatch ? 3 : 0;
         sprite_set_pos(cursorSprite, x,
-                       ((optionsHeight + selection * 3) * 8) - 5);
+                       ((optionsHeight + optionOffset + selection * 3) * 8) -
+                           5);
 
         int counter = 0;
 
-        wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8,
+        wordSprites[1].show(12 * 8,
+                            (optionsHeight + optionOffset + counter) * 8,
                             14 + (selection == 0));
-        wordSprites[2].show(14 * 8, (optionsHeight + counter + 1) * 8,
+        wordSprites[2].show(14 * 8,
+                            (optionsHeight + optionOffset + counter + 1) * 8,
                             14 + (selection == 0));
         counter += 3;
 
@@ -259,10 +265,12 @@ void GameScene::endScreen() {
             counter += 3;
         }
 
-        wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8,
-                            14 + (selection == 1 + !multiplayer));
-        wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8,
-                            14 + (selection == 1 + !multiplayer));
+        if (!finalMatch) {
+            wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8,
+                                14 + (selection == 1 + !multiplayer));
+            wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8,
+                                14 + (selection == 1 + !multiplayer));
+        }
 
         if (multiplayerStart) {
             multiplayerStart = false;
@@ -273,6 +281,13 @@ void GameScene::endScreen() {
 
         if (key_hit(k.confirm) || key_hit(k.pause)) {
             if (selection == 0) {
+                if (finalMatch) {
+                    sfx(SFX_MENUCONFIRM);
+                    changeScene([]() { return new MultiplayerResultsScene(); },
+                                Transitions::FADE);
+                    return;
+                }
+
                 shake = 0;
 
                 if (!multiplayer) {
@@ -1855,15 +1870,20 @@ int GameScene::endScreenSetup() {
 
 void GameScene::showEndScreenOptions() {
     const int optionsHeight = 11;
+    const bool finalMatch = multiplayer && multiplayerLink->matchComplete;
 
     int counter = 0;
 
-    wordSprites[1].setText("Play");
-    wordSprites[1].show(12 * 8, (optionsHeight + counter) * 8, 14);
-    wordSprites[2].setText("Again");
-    wordSprites[2].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
+    const int optionOffset = finalMatch ? 3 : 0;
+    wordSprites[1].setText(finalMatch ? "View" : "Play");
+    wordSprites[1].show(12 * 8, (optionsHeight + optionOffset + counter) * 8,
+                         14);
+    wordSprites[2].setText(finalMatch ? "Results" : "Again");
+    wordSprites[2].show(
+        14 * 8, (optionsHeight + optionOffset + counter + 1) * 8, 14);
 #ifndef MULTIBOOT
-    counter += 3;
+    if (!finalMatch)
+        counter += 3;
 #endif
 
     if (!multiplayer) {
@@ -1878,10 +1898,12 @@ void GameScene::showEndScreenOptions() {
         showScoreboard();
     }
 #ifndef MULTIBOOT
-    wordSprites[5].setText("Main");
-    wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14);
-    wordSprites[6].setText("Menu");
-    wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
+    if (!finalMatch) {
+        wordSprites[5].setText("Main");
+        wordSprites[5].show(12 * 8, (optionsHeight + counter) * 8, 14);
+        wordSprites[6].setText("Menu");
+        wordSprites[6].show(14 * 8, (optionsHeight + counter + 1) * 8, 14);
+    }
 #endif
 
     showModeText();
@@ -1951,6 +1973,8 @@ void GameScene::showReadyPlayers() {
 void GameScene::showScoreboard() {
     std::string score = std::to_string(multiplayerLink->wins) + "W - " +
                         std::to_string(multiplayerLink->losses) + "L";
+    if (multiplayerLink->targetWins > 0)
+        score += " (" + std::to_string(multiplayerLink->targetWins) + ")";
     wordSprites[9].setText(score);
     wordSprites[9].show(4, 160 - 12, 14);
 }

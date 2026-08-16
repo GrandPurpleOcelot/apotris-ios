@@ -39,7 +39,10 @@
 #include "font2tiles_bin.h"
 #include "multiplayerClasses.h"
 
+#include "scenario.hpp"
 #include "sceneColorEditor.hpp"
+
+#include <cstdio>
 
 using namespace BlockEngine;
 
@@ -180,9 +183,29 @@ void initialize() {
 }
 
 int main(int argc, char* argv[]) {
+    std::string scenarioPath;
+#ifdef PC
+    for (int i = 1; i < argc; i++) {
+        if (std::string(argv[i]) == "--scenario") {
+            if (i + 1 == argc) {
+                std::fprintf(stderr, "--scenario requires a file path\n");
+                return 2;
+            }
+            scenarioPath = argv[++i];
+        }
+    }
+#endif
+
     platformInit();
 
     loadSave();
+#ifdef PC
+    if (!scenarioPath.empty()) {
+        if (!scenarioLoad(scenarioPath))
+            return 1;
+        scenarioRestoreSave();
+    }
+#endif
     randSetSeed(savefile->seed);
 
     initialize();
@@ -195,6 +218,10 @@ int main(int argc, char* argv[]) {
 
     // start screen animation
     while (closed()) {
+#ifdef PC
+        if (scenarioConsumeRestartRequest())
+            scenarioRestart();
+#endif
         checkSceneSwitch();
         vsync();
         // This is here to be thread safe on PC

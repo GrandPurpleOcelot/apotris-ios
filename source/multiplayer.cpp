@@ -393,6 +393,20 @@ void drawEnemyBoard() {
         }
     }
 
+    for (auto i = 0; i < multiplayerLink->playingPlayerCount; i++) {
+        if (i == multiplayerLink->universal->currentPlayerId())
+            continue;
+        auto id = RemotePlayerId(i);
+        if (!multiplayerLink->players[i].over)
+            continue;
+
+        const int offsetX = (id.index % 2) * (10 + margin);
+        const int offsetY = (id.index / 2) * (20 + margin);
+        const int koColor = boardPalette == 15 ? 2 : 14;
+        aprintsSprite("KO", offsetX + 1, offsetY + 7, boardTile, 8, koColor,
+                      koColor);
+    }
+
     enemyBoardUpdates.clear();
 }
 
