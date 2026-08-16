@@ -357,6 +357,7 @@ public:
     bool playRandoms = true;
 
     int cursorFloat = 0;
+    bool onlinePlayerCountShown = false;
 
     WordSprite wordSprites[2];
 

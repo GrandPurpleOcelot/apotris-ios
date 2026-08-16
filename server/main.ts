@@ -1,5 +1,5 @@
 import { app as generalApp, AZURE_STORAGE_CONNECTION_STRING, router as generalRouter } from './general_routes.ts';
-import { handleWebSocket } from './signaling.ts';
+import { getOnlinePlayerCounts, handleWebSocket } from './signaling.ts';
 import { SUPABASE_SERVICE_KEY, SUPABASE_URL, supabaseRouter } from './session_handler.ts';
 
 const app = generalApp;
@@ -12,7 +12,11 @@ const PORT = parseInt(
     10,
 );
 
-// --- WebSocket Endpoint ---
+// --- Multiplayer Endpoints ---
+router.get('/v1/online-players', (ctx) => {
+    ctx.response.body = getOnlinePlayerCounts();
+});
+
 router.get('/ws/:clientID/:roomID', (ctx) => {
     return handleWebSocket(ctx as any); // Type assertion for RouterContext
 });
@@ -77,6 +81,10 @@ console.log(
     `  POST http://${
         HOST_NAME === '0.0.0.0' ? 'localhost' : HOST_NAME
     }:${PORT}/v1/poll-device-token (Checks if device has been logged in)`,
+);
+console.log('Available multiplayer endpoints:');
+console.log(
+    `  GET  http://${HOST_NAME === '0.0.0.0' ? 'localhost' : HOST_NAME}:${PORT}/v1/online-players`,
 );
 console.log('Available WebSocket endpoint:');
 console.log(

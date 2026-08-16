@@ -21,7 +21,23 @@ const MAX_PLAYERS = 5; // Max players per room
 // Global state for WebSocket connections
 const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
 const rooms: Map<string, string[]> = new Map<string, string[]>(); // roomID -> array of clientIDs
+const roomTypes: Map<string, 'friends' | 'randoms'> = new Map<string, 'friends' | 'randoms'>();
 const names: Map<string, string> = new Map<string, string>(); // clientId -> name
+
+export function getOnlinePlayerCounts() {
+    let friends = 0;
+    let randoms = 0;
+
+    for (const [roomID, members] of rooms) {
+        if (roomTypes.get(roomID) === 'randoms') {
+            randoms += members.length;
+        } else {
+            friends += members.length;
+        }
+    }
+
+    return { friends, randoms, total: friends + randoms };
+}
 
 const getRandomInt = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -227,7 +243,7 @@ function handleOpen(
     if (requestedRoomID.toLowerCase() === 'match') {
         // matchmake
         for (const [id, room] of rooms.entries()) {
-            if (room.length < 2) {
+            if (roomTypes.get(id) === 'randoms' && room.length < 2) {
                 room.push(clientID);
                 roomIDToJoin = id;
                 break;
@@ -236,6 +252,7 @@ function handleOpen(
         if (!roomIDToJoin) {
             roomIDToJoin = `room-match-${Math.floor(Math.random() * 100000)}`;
             rooms.set(roomIDToJoin, [clientID]);
+            roomTypes.set(roomIDToJoin, 'randoms');
             console.info(
                 `New match room created: ${roomIDToJoin} for client ${clientID}`,
             );
@@ -263,6 +280,7 @@ function handleOpen(
             roomIDToJoin = targetRoomID;
             if (roomIDToJoin) {
                 rooms.set(roomIDToJoin, [clientID]);
+                roomTypes.set(roomIDToJoin, 'friends');
             }
             console.info(
                 `New room created: ${roomIDToJoin} for client ${clientID}`,
@@ -354,6 +372,7 @@ function handleClose(event: CloseEvent, clientID: string) {
 
         if (roomMembers.length === 0) {
             rooms.delete(roomID);
+            roomTypes.delete(roomID);
             console.info(`Room ${roomID} is empty and has been removed.`);
             break;
         }
