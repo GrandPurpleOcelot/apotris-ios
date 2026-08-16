@@ -240,6 +240,11 @@ void scenarioApplyInput(std::unordered_set<uint32_t>& pressedKeys) {
                 playbackPressed.erase(event.key);
         }
         pressedKeys = playbackPressed;
+
+        if (nextEvent == events.size() && playbackPressed.empty()) {
+            playing = false;
+            log("Scenario playback complete");
+        }
     }
 
     frame++;
