@@ -315,8 +315,6 @@ void updateWindow(uint8_t* framebuffer) {
 
     SDL_RenderPresent(renderer);
 
-    handleInput();
-
     // Cap FPS
     nanotime_step(&stepper);
 
@@ -345,6 +343,8 @@ void updateWindow(uint8_t* framebuffer) {
 
         controllerCount = SDL_NumJoysticks();
     }
+
+    handleInput();
 }
 
 void refreshWindowSize() {

@@ -294,8 +294,6 @@ void updateWindow(uint8_t* framebuffer) {
     }
     SDL_FreeSurface(img); // Free the surface after use
 
-    handleInput();
-
     // Cap FPS
     nanotime_step(&stepper);
 
@@ -313,6 +311,8 @@ void updateWindow(uint8_t* framebuffer) {
     fps = 1000.0f / elapsedMS;
 
     frame_start = SDL_GetPerformanceCounter();
+
+    handleInput();
 
     updateBatteryInfo();
 }
