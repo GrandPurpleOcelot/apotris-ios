@@ -216,7 +216,7 @@ typedef struct Settings {
     Layout onScreenLayouts[2];
     int touchSnapGrid;
 #else
-    int layoutPlaceHolder[10 * 2 * 5 * sizeof(int) + 4];
+    int layoutPlaceHolder[10 * 2 * 5 + 1];
 #endif
 
 } ALIGN(4) Settings;
@@ -315,7 +315,7 @@ public:
 
     ModeBoards boards;
 
-    int placeHolder[800];
+    int placeHolder[799];
 
     TotalStats stats;
 

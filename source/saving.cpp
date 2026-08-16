@@ -35,8 +35,9 @@ const SaveChange saveChanges[] = {
     SaveChange(0x50, 132, 20 * 4), // add zone + buffer to keys
     SaveChange(0x50, 3120, 4096),  // add zone + buffer to scoreboards
     SaveChange(0x51, 624, 192),    // add zone + buffer to scoreboards
+    SaveChange(0x53, 816, 404),    // add persisted touch-layout storage
 };
-int changeLength = 3;
+int changeLength = 4;
 
 // Hash entire save file deterministically
 u32 hashSave() {
@@ -631,7 +632,10 @@ bool compareLocation(const SaveChange& first, const SaveChange& second) {
 }
 
 void applySaveChanges(u8* newSave, u8* oldSave, int newSize) {
-    int migSize = 3876;
+    int migSize = newSize;
+    for (int j = 0; j < changeLength; j++)
+        migSize -= saveChanges[j].size;
+
     bool changed = false;
 
     int oldPos = 0;
