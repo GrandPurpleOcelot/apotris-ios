@@ -31,7 +31,7 @@ function getBlobContainerClient(containerName: string): ContainerClient | null {
 
 // --- General Endpoints ---
 router.get('/v1/latest-version', (ctx) => {
-    ctx.response.body = { latestVersion: 'v4.1.0' };
+    ctx.response.body = { latestVersion: 'v4.2.0' };
 });
 
 router.get('/v1/generate-device-id', (ctx) => {
