@@ -163,10 +163,12 @@ IWRAM_CODE void aprints(std::string str, int x, int y,
     }
 }
 
-IWRAM_CODE void aprintsSprite(std::string str, int x, int y,
-                              int tileId) { // x and y are pixel
+IWRAM_CODE void aprintsSprite(std::string str, int x, int y, int tileId,
+                              int width, int colorIndex,
+                              int shadowColor) { // x and y are pixel
     // width of current line, acts like a cursor position so that
     // text is drawn on the next line if w is greater than text area width
+    const int tileWidth = width > 0 ? width : 1;
     int w = 0;
 
     for (int i = 0; i < (int)str.length(); i++) {
@@ -192,11 +194,14 @@ IWRAM_CODE void aprintsSprite(std::string str, int x, int y,
                 // figure out if pixel at j,k should be drawn
                 int draw = (character >> (15 - counter)) & 1;
 
-                if (draw)
-                    setSpritePixel(tileId,
-                                   (x + w + k) / 8 + ((y + j + drop) / 8), 0, 0,
-                                   (((x + w + k) % 8)), (y + j + drop) % 8,
-                                   2 + 2 * (j > 2));
+                if (draw) {
+                    const int pixelColor = (j > 2 && shadowColor >= 0)
+                                               ? shadowColor
+                                               : colorIndex + 2 * (j > 2);
+                    setSpritePixel(tileId, (x + w + k) / 8, (y + j + drop) / 8,
+                                   tileWidth, (x + w + k) % 8,
+                                   (y + j + drop) % 8, pixelColor);
+                }
                 counter++;
             }
         }

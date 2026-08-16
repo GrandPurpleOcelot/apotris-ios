@@ -9,7 +9,8 @@ extern void aprintSprite(std::string str, int tile);
 extern void aprintf(int, int, int);
 
 extern void aprints(std::string, int, int, int);
-extern void aprintsSprite(std::string, int, int, int);
+extern void aprintsSprite(std::string, int, int, int, int width = 0,
+                          int colorIndex = 2, int shadowColor = -1);
 
 extern void setSmallTextArea(int tid, int startX, int startY, int endX,
                              int endY);
