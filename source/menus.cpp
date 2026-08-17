@@ -772,6 +772,32 @@ int GameScene::pauseMenu() {
     OBJ_ATTR* confirmMeterSprite = &obj_buffer[23];
 
     bool count = true;
+    const bool shortGame = gameSeconds < 5 * 60 * 60;
+
+    auto restartGame = [&]() {
+        addGameStats();
+        startGame();
+        changeScene([]() { return new GameScene(); });
+        paused = false;
+        count = false;
+        sfx(SFX_MENUCONFIRM);
+    };
+
+    auto quitGame = [&]() {
+        enableBlend(prevBld);
+        sfx(SFX_MENUCANCEL);
+        buildBG(3, 0, 27, 0, 1, true);
+        addGameStats();
+        playSongRandom(0);
+
+#ifdef MULTIBOOT
+        changeScene([]() { return new MultBattleScene(); },
+                    Transitions::FADE);
+#else
+        changeScene([]() { return new MainMenuScene(); },
+                    Transitions::FADE);
+#endif
+    };
 
     int cursorFloat = 0;
     OBJ_ATTR* cursorSprites[2];
@@ -878,27 +904,10 @@ int GameScene::pauseMenu() {
                     if (confirmHoldTimer >= 60) {
                         sprite_hide(confirmMeterSprite);
                         if (confirmHoldAction == 1) {
-                            addGameStats();
-                            startGame();
-                            changeScene([]() { return new GameScene(); });
-                            paused = false;
-                            count = false;
-                            sfx(SFX_MENUCONFIRM);
+                            restartGame();
                             return 0;
                         } else if (confirmHoldAction == 3) {
-                            enableBlend(prevBld);
-                            sfx(SFX_MENUCANCEL);
-                            buildBG(3, 0, 27, 0, 1, true);
-                            addGameStats();
-                            playSongRandom(0);
-
-#ifdef MULTIBOOT
-                            changeScene([]() { return new MultBattleScene(); },
-                                        Transitions::FADE);
-#else
-                            changeScene([]() { return new MainMenuScene(); },
-                                        Transitions::FADE);
-#endif
+                            quitGame();
                             return 1;
                         }
                     }
@@ -919,6 +928,11 @@ int GameScene::pauseMenu() {
                     paused = false;
                     break;
                 } else if (n == 1) {
+                    if (shortGame) {
+                        restartGame();
+                        return 0;
+                    }
+
                     // Start hold-to-confirm for Restart
                     confirmHoldAction = 1;
                     confirmHoldTimer = 0;
@@ -927,6 +941,11 @@ int GameScene::pauseMenu() {
                     selection = 0;
                     clearText();
                 } else if (n == 3) {
+                    if (shortGame) {
+                        quitGame();
+                        return 1;
+                    }
+
                     // Start hold-to-confirm for Quit
                     confirmHoldAction = 3;
                     confirmHoldTimer = 0;
