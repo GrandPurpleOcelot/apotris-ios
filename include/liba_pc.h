@@ -1,4 +1,10 @@
 #pragma once
+
+// Avoid WinGDI's FIXED typedef conflicting with Apotris fixed-point type.
+#if defined(_WIN32) && !defined(NOGDI)
+#define NOGDI
+#endif
+
 #include <algorithm>
 #include <iostream>
 #include <list>
