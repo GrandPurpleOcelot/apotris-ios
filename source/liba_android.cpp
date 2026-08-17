@@ -1164,8 +1164,10 @@ void handleInput() {
             }
             break;
         case SDL_APP_WILLENTERBACKGROUND:
-            if (!demo)
+            if (!demo) {
                 paused = true;
+                pauseSong();
+            }
             vibrationStop();
             // Clear all active touch state so keys don't get stuck
             // when the OS cancels touches without FINGERUP events.

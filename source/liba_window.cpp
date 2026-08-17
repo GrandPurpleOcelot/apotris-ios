@@ -218,8 +218,10 @@ void handleInput() {
                 screenHeight = event.window.data2;
                 refreshWindowSize();
             } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-                if (!demo && !multiplayer)
+                if (!demo && !multiplayer) {
                     paused = true;
+                    pauseSong();
+                }
             }
             break;
         case SDL_JOYBUTTONDOWN:
