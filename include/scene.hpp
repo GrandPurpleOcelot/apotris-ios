@@ -357,7 +357,9 @@ public:
     bool playRandoms = true;
 
     int cursorFloat = 0;
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     bool onlinePlayerCountShown = false;
+#endif
 
     WordSprite wordSprites[2];
 

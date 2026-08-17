@@ -13,18 +13,20 @@
 #include "LinkWebRTC.hpp"
 #endif
 #include "prng.h"
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 #include <atomic>
+#endif
 #include <cstring>
 #include <utility>
 
-namespace {
-constexpr int ONLINE_PLAYER_COUNT_REFRESH_FRAMES = 60 * 20;
-std::atomic<int> onlinePlayerCount{-1};
-std::atomic<unsigned int> onlinePlayerCountRequest{0};
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
+static constexpr int ONLINE_PLAYER_COUNT_REFRESH_FRAMES = 60 * 20;
+static std::atomic<int> onlinePlayerCount{-1};
+static std::atomic<unsigned int> onlinePlayerCountRequest{0};
 
-void fetchOnlinePlayerCount() {
+static void fetchOnlinePlayerCount() {
     onlinePlayerCount.store(-1);
     const unsigned int request = ++onlinePlayerCountRequest;
     cpr::GetCallback(
@@ -43,7 +45,7 @@ void fetchOnlinePlayerCount() {
         cpr::Url{"https://api.apotris.com/v1/online-players"});
 }
 
-void drawMatchMakingText(int totalPlayers = -1) {
+static void drawMatchMakingText(int totalPlayers = -1) {
     clearText();
     // clearText restores a previously configured text area; this scene owns
     // layer 29, so remove it before rebuilding the matchmaking text.
@@ -61,7 +63,7 @@ void drawMatchMakingText(int totalPlayers = -1) {
                      14);
     }
 }
-} // namespace
+#endif
 
 bool lostConnection = true;
 
@@ -1624,7 +1626,9 @@ void PlayOptionScene::resetScoreboard() {
 #if !defined(MULTIBOOT) && !defined(GBA)
 
 void MatchMakingScene::init() {
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     fetchOnlinePlayerCount();
+#endif
 
     clearSprites(128);
     showSprites(128);
@@ -1634,7 +1638,14 @@ void MatchMakingScene::init() {
         wordSprites[i].setup(i, 64 + i * 3, 256 + i * 12, false);
 
     clearTilemap(29);
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     drawMatchMakingText();
+#else
+    std::string str1 = "Who would you like";
+    std::string str2 = "to play with?";
+    naprint(str1, (240 - getVariableWidth(str1)) / 2, 56);
+    naprint(str2, (240 - getVariableWidth(str2)) / 2, 66);
+#endif
 
     wordSprites[0].setText("FRIENDS");
     wordSprites[0].show(48, 104, 14);
@@ -1727,11 +1738,13 @@ void MatchMakingScene::draw() {
         sprite_set_pos(cursorSprites[i], x, y - 5);
     }
 
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     const int totalPlayers = onlinePlayerCount.load();
     if (!onlinePlayerCountShown && totalPlayers >= 0) {
         drawMatchMakingText(totalPlayers);
         onlinePlayerCountShown = true;
     }
+#endif
 
     if (!hideSprites) {
         wordSprites[0].show(48, 104, 14 + (playRandoms == 0));
@@ -1752,11 +1765,13 @@ void MatchMakingScene::update() {
     if (cursorFloat >= 512)
         cursorFloat = 0;
 
+#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     if (++timer >= ONLINE_PLAYER_COUNT_REFRESH_FRAMES) {
         timer = 0;
         onlinePlayerCountShown = false;
         fetchOnlinePlayerCount();
     }
+#endif
 
     control();
 }
