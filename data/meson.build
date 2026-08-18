@@ -207,6 +207,8 @@ binary_files = files(
     'sprite63tiles.bin',
     'sprite64map.bin',
     'sprite64tiles.bin',
+    'sprite65map.bin',
+    'sprite65tiles.bin',
     'sprite5map.bin',
     'sprite5tiles.bin',
     'sprite6map.bin',
