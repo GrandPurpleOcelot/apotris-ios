@@ -26,23 +26,65 @@ static constexpr int ONLINE_PLAYER_COUNT_REFRESH_FRAMES = 60 * 20;
 static std::atomic<int> onlinePlayerCount{-1};
 static std::atomic<unsigned int> onlinePlayerCountRequest{0};
 
+#ifdef ANDROID
+static const std::string& androidCaCertificatePath() {
+    static const std::string path = []() {
+        const char* internalPath = SDL_AndroidGetInternalStoragePath();
+        if (!internalPath)
+            return std::string{};
+
+        const std::string destPath = std::string(internalPath) + "/cacert.pem";
+        SDL_RWops* src = SDL_RWFromFile("assets/ssl/cacert.pem", "rb");
+        if (!src)
+            return std::string{};
+
+        SDL_RWops* dst = SDL_RWFromFile(destPath.c_str(), "wb");
+        if (!dst) {
+            SDL_RWclose(src);
+            return std::string{};
+        }
+
+        char buffer[4096];
+        while (const size_t bytesRead =
+                   SDL_RWread(src, buffer, 1, sizeof(buffer)))
+            SDL_RWwrite(dst, buffer, 1, bytesRead);
+
+        SDL_RWclose(dst);
+        SDL_RWclose(src);
+        return destPath;
+    }();
+    return path;
+}
+#endif
+
 static void fetchOnlinePlayerCount() {
     onlinePlayerCount.store(-1);
     const unsigned int request = ++onlinePlayerCountRequest;
-    cpr::GetCallback(
-        [request](cpr::Response response) {
-            if (response.status_code != 200)
-                return;
+    const auto callback = [request](cpr::Response response) {
+        if (response.status_code != 200)
+            return;
 
-            try {
-                const auto body = nlohmann::json::parse(response.text);
-                if (onlinePlayerCountRequest.load() == request &&
-                    body.contains("total") && body["total"].is_number_integer())
-                    onlinePlayerCount.store(body["total"].get<int>());
-            } catch (const nlohmann::json::exception&) {
-            }
-        },
-        cpr::Url{"https://api.apotris.com/v1/online-players"});
+        try {
+            const auto body = nlohmann::json::parse(response.text);
+            if (onlinePlayerCountRequest.load() == request &&
+                body.contains("total") && body["total"].is_number_integer())
+                onlinePlayerCount.store(body["total"].get<int>());
+        } catch (const nlohmann::json::exception&) {
+        }
+    };
+
+#ifdef ANDROID
+    const std::string& caCertificatePath = androidCaCertificatePath();
+    if (!caCertificatePath.empty()) {
+        cpr::GetCallback(
+            callback, cpr::Url{"https://api.apotris.com/v1/online-players"},
+            cpr::Ssl(cpr::ssl::CaInfo{cpr::fs::path{caCertificatePath}}));
+        return;
+    }
+#endif
+
+    cpr::GetCallback(callback,
+                     cpr::Url{"https://api.apotris.com/v1/online-players"});
 }
 
 static void drawMatchMakingText(int totalPlayers = -1) {

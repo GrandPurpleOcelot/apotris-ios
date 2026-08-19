@@ -17,9 +17,9 @@
 #include <fstream>
 #include <list>
 
-#include "sprite62tiles_bin.h"
 #include "sprite63tiles_bin.h"
 #include "sprite64tiles_bin.h"
+#include "sprite65tiles_bin.h"
 
 #include <map>
 
@@ -903,12 +903,12 @@ void showBattery() {
     char buff[8];
     snprintf(buff, 8, "%d%%", batteryPercentage);
 
-    u8* src = (u8*)sprite62tiles_bin;
+    u8* src = (u8*)sprite63tiles_bin;
 
     if (charging) {
-        src = (u8*)sprite64tiles_bin;
+        src = (u8*)sprite65tiles_bin;
     } else if (batteryPercentage <= 15) {
-        src = (u8*)sprite63tiles_bin;
+        src = (u8*)sprite64tiles_bin;
     }
 
     loadSpriteTiles(1022, src, 1, 1);
