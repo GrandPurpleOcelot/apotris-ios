@@ -1676,7 +1676,7 @@ void MatchMakingScene::init() {
     enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
 }
 
-std::string nameInput(int);
+std::string nameInput(int, bool* = nullptr);
 
 bool MatchMakingScene::control() {
     MenuKeys k = savefile->settings.menuKeys;
@@ -1696,7 +1696,23 @@ bool MatchMakingScene::control() {
             changeScene([]() { return new MultBattleScene(); },
                         Transitions::FADE);
 #else
-            roomId = nameInput(-1);
+            bool cancelled = false;
+            roomId = nameInput(-1, &cancelled);
+            if (cancelled) {
+                changeScene([]() { return new MainMenuScene(); },
+                            Transitions::FADE);
+                return false;
+            }
+
+            // Keep malformed input from reaching the WebSocket connection if
+            // the input loop exits without accepting a room code.
+            if (roomId.find_first_not_of(' ') == std::string::npos) {
+                roomId.clear();
+                changeScene([]() { return new MatchMakingScene(); },
+                            Transitions::FADE);
+                return false;
+            }
+
             changeScene([]() { return new MultBattleScene(roomId); },
                         Transitions::FADE);
 #endif

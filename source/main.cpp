@@ -323,7 +323,10 @@ void reset() {
 #endif
 }
 
-std::string nameInput(int place) {
+std::string nameInput(int place, bool* cancelled) {
+
+    if (cancelled != nullptr)
+        *cancelled = false;
 
     std::string result = place == -1 ? "         " : savefile->latestName;
     int cursor = 0;
@@ -393,6 +396,16 @@ std::string nameInput(int place) {
         aprint("DONE", 14, 16);
 
         key_poll();
+
+        // With a room code, cancel keeps its normal backspace behavior. Only
+        // leave the room-entry menu when there is nothing left to delete.
+        if (place == -1 && key_hit(k.cancel) &&
+            result.find_first_not_of(' ') == std::string::npos) {
+            if (cancelled != nullptr)
+                *cancelled = true;
+            sfx(SFX_MENUCANCEL);
+            break;
+        }
 
         aprintClearArea(13, nameHeight, 10, 1);
         aprint(result, 13, nameHeight);
@@ -679,8 +692,16 @@ std::string nameInput(int place) {
             }
         } else {
             if (key_hit(k.confirm) || key_hit(k.pause)) {
-                sfx(SFX_MENUCONFIRM);
-                break;
+                if (place == -1 &&
+                    result.find_first_not_of(' ') == std::string::npos) {
+                    // Do not pass an all-space room ID to the WebSocket URL.
+                    // The signaling server requires a non-empty room/action.
+                    onDone = false;
+                    sfx(SFX_MENUCANCEL);
+                } else {
+                    sfx(SFX_MENUCONFIRM);
+                    break;
+                }
             }
 
             if (key_hit(k.cancel)) {
