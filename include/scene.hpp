@@ -377,7 +377,7 @@ public:
     void init();
     void deinit();
     std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
-    bool hideSprites;
+    bool hideSprites = false;
 };
 #endif
 

@@ -27,7 +27,7 @@ using namespace BlockEngine;
 void endAnimation();
 void showScore();
 int onRecord();
-std::string nameInput(int);
+std::string nameInput(int, bool* = nullptr);
 void qrScene();
 
 void saveReplay();
