@@ -35,12 +35,23 @@ def main():
     source_dir = args.source_dir
     libmain_path = args.libmain
     android_project_dir = os.path.join(source_dir, 'android')
-    jni_libs_dir = os.path.join(android_project_dir, 'app/src/main/jniLibs', args.abi)
+    jni_libs_root = os.path.join(android_project_dir, 'app/src/main/jniLibs')
+    jni_libs_dir = os.path.join(jni_libs_root, args.abi)
     assets_dir = os.path.join(android_project_dir, 'app/src/main/assets/assets')
     data_dir = os.path.join(android_project_dir, 'app/src/main/assets/data')
     java_src_dir = os.path.join(android_project_dir, 'app/src/main/java/org/libsdl/app')
 
     print(f"Deploying Android {args.abi} build...")
+
+    # Each Meson build produces one ABI. Remove binaries from previous builds
+    # before Gradle packages the APK; otherwise an emulator can select a stale
+    # libmain.so for its ABI instead of this build's library.
+    if os.path.isdir(jni_libs_root):
+        for abi in os.listdir(jni_libs_root):
+            abi_dir = os.path.join(jni_libs_root, abi)
+            if abi != args.abi and os.path.isdir(abi_dir):
+                print(f"Removing stale Android {abi} binaries...")
+                shutil.rmtree(abi_dir)
 
     # Ensure directories exist
     os.makedirs(jni_libs_dir, exist_ok=True)
