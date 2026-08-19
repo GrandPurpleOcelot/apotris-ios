@@ -678,6 +678,8 @@ void GameScene::showStats(bool moreStats, const std::string& time,
 }
 
 int GameScene::pauseMenu() {
+    pauseSong();
+
     int selection = 0;
     int maxSelection;
 

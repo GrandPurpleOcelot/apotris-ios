@@ -139,7 +139,6 @@ void handleInput() {
             } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
                 if (!demo) {
                     paused = true;
-                    pauseSong();
                 }
             }
             break;
