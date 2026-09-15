@@ -251,7 +251,8 @@ void startSong(int song, bool loop) {
     if (currentSong != -1 && currentSong < (int)musicArray.size() &&
         musicQueue.isCurrentlyPlaying(*musicArray.at(currentSong))) {
         musicQueue.stop();
-        musicQueue.skip();
+        if (musicQueue.getQueueCount() > 0)
+            musicQueue.skip();
     }
 
     musicQueue.setParams(44100, 2);
@@ -271,7 +272,8 @@ void stopSong() {
 
     musicQueue.stop();
 
-    musicQueue.skip();
+    if (musicQueue.getQueueCount() > 0)
+        musicQueue.skip();
 
     currentSong = -1;
 }
