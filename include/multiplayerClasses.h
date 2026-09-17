@@ -615,6 +615,13 @@ struct MultiplayerStates {
     struct PlayersAwaitReady : StateWithOwner<MultiplayerLink> {
         bool sentReady = false;
         bool multiplayerStarting = false;
+        bool playerDisconnected = false;
+
+        void OnEnter() override {
+            sentReady = false;
+            multiplayerStarting = false;
+            playerDisconnected = false;
+        }
 
         void Update() override {
             std::queue<Packet> queue = Owner().readPackets();
@@ -626,6 +633,10 @@ struct MultiplayerStates {
                     Command(RemotePlayerId(packet.playerId), packet.packet);
                 if (command.command != 2)
                     continue;
+                if (command.value == BYE) {
+                    playerDisconnected = true;
+                    continue;
+                }
 #ifdef GBA
                 if (command.value & SEND_SEED) {
                     Owner().broadcastState(UPDATE_STATE + SEND_SEED + nextSeed);
@@ -659,6 +670,8 @@ struct MultiplayerStates {
         }
 
         Transition GetTransition() override {
+            if (playerDisconnected)
+                return SiblingTransition<ConnectionInitializing>();
             if (multiplayerStarting && !multiplayerStart) {
                 return SiblingTransition<Playing>();
             }

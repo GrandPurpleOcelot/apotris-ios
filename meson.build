@@ -52,6 +52,7 @@ sources = files(
     src_dir / 'liba_sdl_audio.cpp',
     src_dir / 'LinkWireless.cpp',
     src_dir / 'main.cpp',
+    src_dir / 'matchmakingQueue.cpp',
     src_dir / 'menuSystem.cpp',
     src_dir / 'menus.cpp',
     src_dir / 'multiplayer.cpp',

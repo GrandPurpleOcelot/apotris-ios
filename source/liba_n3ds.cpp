@@ -3,6 +3,7 @@
 #ifdef N3DS
 
 #include "def.h"
+#include "matchmakingQueue.hpp"
 #include "n3ds/audio.hpp"
 #include "n3ds/citro3d++.hpp"
 #include "n3ds/ctru++.hpp"
@@ -916,6 +917,7 @@ void onVBlank() {
         ZoneColor(tracy::Color::Yellow);
 #endif
         scene->draw();
+        MatchmakingQueue::drawOverlay();
     }
 
     frameCounter++;

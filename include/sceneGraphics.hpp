@@ -785,6 +785,10 @@ public:
 };
 
 class GraphicsScene : public Scene {
+public:
+    bool suspendsMatchmaking() const override { return true; }
+
+private:
     int maxDas = 12;
     int dasHor = 0;
     int dasVer = 0;
@@ -897,6 +901,10 @@ class GraphicsScene : public Scene {
 };
 
 class GradientEditorScene : public Scene {
+public:
+    bool suspendsMatchmaking() const override { return true; }
+
+private:
     int color1[3];
 
     int color2[3];

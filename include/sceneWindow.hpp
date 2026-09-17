@@ -403,6 +403,7 @@ private:
 
 class WindowOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Video"; };
     std::list<Element*> getElementList() {
         std::list<Element*> list;

@@ -746,6 +746,7 @@ public:
 
 class ControlOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Controls"; };
 
     std::list<Element*> getElementList() {
@@ -792,6 +793,7 @@ public:
 #if defined(GBA)
 class AdvancedRumbleOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Adv. Rumble"; };
     std::list<Element*> getElementList() {
         std::list<Element*> list;
@@ -817,6 +819,7 @@ public:
 
 class RumbleOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Rumble"; };
     std::list<Element*> getElementList() {
         std::list<Element*> list;

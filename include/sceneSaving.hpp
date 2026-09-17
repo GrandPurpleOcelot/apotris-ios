@@ -107,6 +107,7 @@ public:
 
 class SavingOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Saving"; };
 
     std::list<Element*> getElementList() {

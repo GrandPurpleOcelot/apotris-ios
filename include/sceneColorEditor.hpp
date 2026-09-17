@@ -22,6 +22,7 @@ private:
     void leave();
 
 public:
+    bool suspendsMatchmaking() const override { return true; }
     void draw();
     void update();
     bool control();
@@ -115,6 +116,7 @@ private:
     void drawText();
 
 public:
+    bool suspendsMatchmaking() const override { return true; }
     void draw();
     void update();
     bool control();

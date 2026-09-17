@@ -33,6 +33,7 @@
 #include "defaultGradient_bin.h"
 
 #include "menu.h"
+#include "matchmakingQueue.hpp"
 #include "scene.hpp"
 
 #include "font1tiles_bin.h"
@@ -231,8 +232,11 @@ int main(int argc, char* argv[]) {
 #ifdef PC
             setUpPresentException(localReason);
 #endif
-        } else
-            scene->update();
+        } else {
+            MatchmakingQueue::update();
+            if (!MatchmakingQueue::blocksSceneUpdate())
+                scene->update();
+        }
         sampleEntropy();
     }
 

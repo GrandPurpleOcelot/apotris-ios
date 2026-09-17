@@ -1,6 +1,7 @@
 #include "def.h"
 #include "logging.h"
 #include "menu.h"
+#include "matchmakingQueue.hpp"
 #include "scene.hpp"
 #include "sceneAudio.hpp"
 #include "sceneColorEditor.hpp"
@@ -245,7 +246,12 @@ void sceneSwitcher(const std::string& str) {
         */
 #endif
 #else
-        changeScene([]() { return new MatchMakingScene(); }, Transitions::FADE);
+        if (MatchmakingQueue::isQueued())
+            changeScene([]() { return new QueueWaitingScene(); },
+                        Transitions::FADE);
+        else
+            changeScene([]() { return new MatchMakingScene(); },
+                        Transitions::FADE);
 #endif
     } else if (str == "CPU Battle" || str == "Battle") {
         changeScene([]() { return new CPUBattleScene(); }, Transitions::FADE);

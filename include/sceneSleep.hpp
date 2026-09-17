@@ -144,6 +144,7 @@ public:
 
 class SleepOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Sleep"; };
     std::list<Element*> getElementList() {
         std::list<Element*> list;
