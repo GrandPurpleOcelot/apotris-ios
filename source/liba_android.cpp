@@ -1801,7 +1801,9 @@ void refreshWindowSize() {
         }
 
         setLayout();
-        setFullscreen((screenWidth > screenHeight));
+        // Keep a square display fullscreen; with a strict > it flips to
+        // windowed and flickers as the resize toggles fullscreen back.
+        setFullscreen((screenWidth >= screenHeight));
     }
 
     int offsetx = 0, offsety = 0;
