@@ -351,10 +351,14 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
                 )
             endif
         endif
+        soloud_default_options = ['default_library=static']
+        if get_option('portmaster')
+            soloud_default_options += 'SoLoud:portmaster=true'
+        endif
         soloud = dependency(
             'SoLoud',
             static: true,
-            default_options: ['default_library=static'],
+            default_options: soloud_default_options,
             fallback: ['SoLoud', 'soloud_dep'],
         )
     endif
