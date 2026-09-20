@@ -1,4 +1,5 @@
 #include "logging.h"
+#include "matchmakingQueue.hpp"
 #include "multiplayerClasses.h"
 #include "rumblePatterns.hpp"
 #include "scene.hpp"
@@ -14,9 +15,9 @@
 #endif
 #include "prng.h"
 #if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
+#include <atomic>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
-#include <atomic>
 #endif
 #include <cstring>
 #include <utility>
@@ -824,7 +825,8 @@ void MultBattleScene::init() {
     clearSpriteTiles(672, 144, 1);
     resetSmallText();
 
-    // Sync winTargetIndex with current multiplayerLink target (e.g. after Play Again)
+    // Sync winTargetIndex with current multiplayerLink target (e.g. after Play
+    // Again)
     if (multiplayerLink->targetWins > 0) {
         for (int i = 0; i < 3; i++) {
             if (winTargets[i] == multiplayerLink->targetWins) {
@@ -894,9 +896,7 @@ void MultBattleScene::showWinTargetCursor() {
         sprite_set_size(cursorSprites[i], scale, i);
 
         const int x =
-            centerX - ((selectedWidth + 8) / 2 + offset + 4) *
-                          (i ? -1 : 1) -
-            8;
+            centerX - ((selectedWidth + 8) / 2 + offset + 4) * (i ? -1 : 1) - 8;
         sprite_set_pos(cursorSprites[i], x, 9 * 8 - 5);
     }
 #else
@@ -1126,6 +1126,7 @@ void MultBattleScene::update() {
 
     if (multiplayerStart) {
         multiplayerStart = false;
+        MatchmakingQueue::matchStarted();
         start();
         return;
     }
@@ -1139,6 +1140,9 @@ void MultBattleScene::update() {
         }
 #endif
     } else {
+        if (MatchmakingQueue::returnToWaitingAfterConnectionFailure())
+            return;
+
         if (!lostConnection) {
             refreshText = true;
             clearText();
@@ -1667,6 +1671,148 @@ void PlayOptionScene::resetScoreboard() {
 
 #if !defined(MULTIBOOT) && !defined(GBA)
 
+static void drawQueueWaitingText(int selection) {
+    clearText();
+    aprint("Waiting for connection...", 2, 7);
+    aprint("You can play while waiting", 2, 9);
+    aprint(selection == 0 ? "> Play while waiting" : "  Play while waiting", 5,
+           13);
+    aprint(selection == 1 ? "> Cancel queue" : "  Cancel queue", 8, 15);
+}
+
+void QueueWaitingScene::init() {
+    clearSprites(128);
+    clearSmallText();
+    setTiles(26, 0, 32 * 32,
+             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
+    drawQueueWaitingText(selection);
+}
+
+void QueueWaitingScene::draw() { fallingBlocks(); }
+
+bool QueueWaitingScene::control() {
+    MenuKeys k = savefile->settings.menuKeys;
+    if (key_hit(k.up) || key_hit(k.down)) {
+        selection = !selection;
+        drawQueueWaitingText(selection);
+        sfx(SFX_MENUMOVE);
+    }
+
+    if (key_hit(k.confirm)) {
+        sfx(SFX_MENUCONFIRM);
+        if (selection == 0)
+            changeScene([]() { return new ModeListScene(); },
+                        Transitions::FADE);
+        else {
+            MatchmakingQueue::cancel();
+            changeScene([]() { return new MatchMakingScene(); },
+                        Transitions::FADE);
+        }
+        return true;
+    }
+
+    if (key_hit(k.cancel)) {
+        sfx(SFX_MENUCANCEL);
+        MatchmakingQueue::cancel();
+        changeScene([]() { return new MatchMakingScene(); }, Transitions::FADE);
+        return true;
+    }
+
+    return false;
+}
+
+void QueueWaitingScene::update() {
+    canDraw = true;
+    key_poll();
+    control();
+}
+
+void QueueWaitingScene::deinit() {
+    clearText();
+    clearSmallText();
+}
+
+static void drawMatchFoundText(int selection, int frames) {
+    clearText();
+    aprint("MATCH FOUND", 9, 7);
+    aprint("Ready to battle?", 6, 9);
+    aprint("Starting in " + std::to_string((frames + 59) / 60) + "s", 6, 11);
+    aprint(selection == 0 ? "> Accept" : "  Accept", 10, 14);
+    aprint(selection == 1 ? "> Deny" : "  Deny", 10, 16);
+}
+
+void MatchFoundScene::init() {
+    previousBlendInfo = blendInfo;
+    MatchmakingQueue::activateMatchFoundScene();
+
+    clearSprites(128);
+    clearSmallText();
+    setTiles(26, 0, 32 * 32,
+             tileBuild(35 * (!savefile->settings.lightMode), false, false, 0));
+    setTiles(27, 0, 32 * 32, tileBuild(34, false, false, 0));
+    enableBlend((0b101110 << 8) + (1 << 6) + (1 << 3));
+    drawMatchFoundText(selection, frames);
+
+    if (returnToGame && !paused) {
+        paused = true;
+        pauseSong();
+        pausedGame = true;
+    }
+}
+
+bool MatchFoundScene::control() {
+    MenuKeys k = savefile->settings.menuKeys;
+
+    if (key_hit(k.up) || key_hit(k.down) || key_hit(k.left) ||
+        key_hit(k.right)) {
+        selection = selection == 0 ? 1 : 0;
+        drawMatchFoundText(selection, frames);
+        sfx(SFX_MENUMOVE);
+    } else if (key_hit(k.cancel)) {
+        sfx(SFX_MENUCANCEL);
+        MatchmakingQueue::denyMatch();
+        return true;
+    } else if (key_hit(k.confirm) && selection >= 0) {
+        sfx(SFX_MENUCONFIRM);
+        if (selection == 0)
+            MatchmakingQueue::acceptMatch();
+        else
+            MatchmakingQueue::denyMatch();
+        return true;
+    }
+
+    return false;
+}
+
+void MatchFoundScene::update() {
+    canDraw = true;
+    key_poll();
+    if (control())
+        return;
+
+    if (--frames <= 0) {
+        sfx(SFX_MENUCANCEL);
+        MatchmakingQueue::denyMatch();
+        return;
+    }
+
+    drawMatchFoundText(selection, frames);
+}
+
+void MatchFoundScene::draw() { fallingBlocks(); }
+
+void MatchFoundScene::deinit() {
+    clearText();
+    clearSmallText();
+    enableBlend(previousBlendInfo);
+    if (pausedGame) {
+        paused = false;
+        resumeSong();
+        pausedGame = false;
+    }
+}
+
 void MatchMakingScene::init() {
 #if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
     fetchOnlinePlayerCount();
@@ -1755,7 +1901,8 @@ bool MatchMakingScene::control() {
                 return false;
             }
 
-            changeScene([]() { return new MultBattleScene(roomId); },
+            MatchmakingQueue::start();
+            changeScene([]() { return new QueueWaitingScene(); },
                         Transitions::FADE);
 #endif
         } else {
@@ -1764,7 +1911,8 @@ bool MatchMakingScene::control() {
                         Transitions::FADE);
 #else
             roomId = "";
-            changeScene([]() { return new MultBattleScene(); },
+            MatchmakingQueue::start();
+            changeScene([]() { return new QueueWaitingScene(); },
                         Transitions::FADE);
 #endif
         }

@@ -257,6 +257,7 @@ public:
 
 class AudioOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Audio"; };
 
     std::list<Element*> getElementList() {
@@ -272,6 +273,7 @@ public:
 
 class TrackListScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     int previous = 0;
     bool slow = false;
     std::string name() { return "Track List"; };

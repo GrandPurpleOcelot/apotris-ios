@@ -426,6 +426,7 @@ public:
 
 class HandlingOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Handling"; };
 
     std::list<Element*> getElementList() {

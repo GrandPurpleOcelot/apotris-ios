@@ -57,6 +57,11 @@ public:
     virtual void deinit() = 0;
     virtual std::function<Scene*()> previousScene() = 0;
 
+    // Queueing pauses only while editing settings
+    virtual bool suspendsMatchmaking() const { return false; }
+    virtual bool isQueueWaitingScene() const { return false; }
+    virtual bool isMatchFoundScene() const { return false; }
+
     Scene() = default;
 
     virtual ~Scene(){};
@@ -101,6 +106,7 @@ class GameScene : public Scene {
     void showScoreboard();
 
     bool counted = false;
+    bool resumingExistingGame = false;
     bool preventLayeredCountdowns =
         false; // TODO I feel like this can be done better
     bool skipSong = false;
@@ -117,6 +123,9 @@ public:
     static void UpdateEnemyBoard(int command, int value, u8 linkPlayerId);
 
     WordSprite wordSprites[MAX_WORD_SPRITES];
+
+    GameScene(bool resumeExistingGame = false)
+        : resumingExistingGame(resumeExistingGame) {}
 
     void showEndScreenOptions();
 };
@@ -349,6 +358,46 @@ public:
     ~OptionListScene() { deinit(); };
 };
 
+#if !defined(GBA) && !defined(MULTIBOOT)
+class QueueWaitingScene : public Scene {
+public:
+    int selection = 0;
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    std::function<Scene*()> previousScene() {
+        return [] { return new ModeListScene(); };
+    };
+    bool isQueueWaitingScene() const override { return true; }
+};
+
+class MatchFoundScene : public Scene {
+public:
+    int selection = -1;
+    int frames = 10 * 60;
+    int previousBlendInfo = 0;
+    bool pausedGame = false;
+
+    explicit MatchFoundScene(bool shouldReturnToGame)
+        : returnToGame(shouldReturnToGame) {}
+
+    void draw();
+    void update();
+    bool control();
+    void init();
+    void deinit();
+    std::function<Scene*()> previousScene() { return nullptr; };
+    bool isMatchFoundScene() const override { return true; }
+    ~MatchFoundScene() { deinit(); };
+
+private:
+    bool returnToGame = false;
+};
+#endif
+
 #ifndef GBA
 class MatchMakingScene : public Scene {
 public:
@@ -376,7 +425,9 @@ public:
     bool control();
     void init();
     void deinit();
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
     bool hideSprites = false;
 };
 #endif
@@ -384,6 +435,7 @@ public:
 #ifndef MULTIBOOT
 class ConfirmSaveScene : public Scene {
 public:
+    bool suspendsMatchmaking() const override { return true; };
     int timer = 0;
 
     bool cancel = true;
@@ -408,18 +460,22 @@ public:
 
     ConfirmSaveScene(int type) { this->type = type; }
 
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
 
     ~ConfirmSaveScene() { deinit(); };
 };
 
 class SettingsScene : public SimpleListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; };
     std::function<Scene*()> previousScene() {
         if (settingsChanged())
-            return []{ return new ConfirmSaveScene(0); };
+            return [] { return new ConfirmSaveScene(0); };
         else
-            return []{ return new MainMenuScene(); }; };
+            return [] { return new MainMenuScene(); };
+    };
 
     std::list<std::string> getOptionList() {
         std::list<std::string> result = settingsOptions;
@@ -467,7 +523,9 @@ public:
     bool control();
     void init();
     void deinit();
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
 
     ~CreditsScene() { deinit(); };
 };
@@ -476,7 +534,9 @@ class LinksScene : public SimpleListScene {
 
 public:
     // void init();
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
 
     std::list<std::string> getOptionList() {
         return {
@@ -536,7 +596,9 @@ public:
     bool control();
     void init();
     void deinit();
-    std::function<Scene*()> previousScene() { return []{ return new LinksScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new LinksScene(); };
+    };
 
     ~QRScene() { deinit(); };
 };
@@ -630,9 +692,13 @@ public:
     void init();
     void deinit();
 #ifndef MULTIBOOT
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
 #else
-    std::function<Scene*()> previousScene() { return []{ return new MultiplayerProtocolScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MultiplayerProtocolScene(); };
+    };
 #endif
 };
 #endif

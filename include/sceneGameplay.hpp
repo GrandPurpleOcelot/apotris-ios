@@ -336,6 +336,7 @@ public:
 
 class GameplayOptionScene : public OptionListScene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     std::string name() { return "Gameplay"; };
     std::list<Element*> getElementList() {
         return {

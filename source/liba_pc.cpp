@@ -6,6 +6,7 @@
 #include "Tilengine.h"
 #include "def.h"
 #include "liba_pc.h"
+#include "matchmakingQueue.hpp"
 #include "logging.h"
 #include "multiplayerClasses.h"
 #include "scene.hpp"
@@ -766,6 +767,7 @@ void onVBlank() {
         canDraw = false;
 
         scene->draw();
+        MatchmakingQueue::drawOverlay();
     }
 
     frameCounter++;

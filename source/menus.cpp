@@ -8,6 +8,7 @@
 // #include "soundbank.h"
 #include "blockEngine.hpp"
 #include "logging.h"
+#include "matchmakingQueue.hpp"
 #include "text.h"
 #include <cstring>
 #include <map>
@@ -19,8 +20,8 @@
 #endif
 
 #include "multiplayerClasses.h"
-#include "sceneMultiplayerResults.hpp"
 #include "qrcodegen.h"
+#include "sceneMultiplayerResults.hpp"
 
 using namespace BlockEngine;
 
@@ -219,6 +220,9 @@ void GameScene::endScreen() {
 
         vsync();
         key_poll();
+        MatchmakingQueue::update();
+        if (MatchmakingQueue::blocksSceneUpdate())
+            return;
 
         if (!multiplayerLink->stateMachine
                  .IsInState<MultiplayerStates::Playing>()) {
@@ -791,11 +795,9 @@ int GameScene::pauseMenu() {
         playSongRandom(0);
 
 #ifdef MULTIBOOT
-        changeScene([]() { return new MultBattleScene(); },
-                    Transitions::FADE);
+        changeScene([]() { return new MultBattleScene(); }, Transitions::FADE);
 #else
-        changeScene([]() { return new MainMenuScene(); },
-                    Transitions::FADE);
+        changeScene([]() { return new MainMenuScene(); }, Transitions::FADE);
 #endif
     };
 
@@ -825,6 +827,9 @@ int GameScene::pauseMenu() {
             maxSelection = 3;
 
         vsync();
+        MatchmakingQueue::update();
+        if (MatchmakingQueue::blocksSceneUpdate())
+            return 0;
         key_poll();
 #ifdef GBA
         if (sleep_combo_check(key_curr_state())) {
@@ -1896,10 +1901,10 @@ void GameScene::showEndScreenOptions() {
     const int optionOffset = finalMatch ? 3 : 0;
     wordSprites[1].setText(finalMatch ? "View" : "Play");
     wordSprites[1].show(12 * 8, (optionsHeight + optionOffset + counter) * 8,
-                         14);
+                        14);
     wordSprites[2].setText(finalMatch ? "Results" : "Again");
-    wordSprites[2].show(
-        14 * 8, (optionsHeight + optionOffset + counter + 1) * 8, 14);
+    wordSprites[2].show(14 * 8,
+                        (optionsHeight + optionOffset + counter + 1) * 8, 14);
 #ifndef MULTIBOOT
     if (!finalMatch)
         counter += 3;

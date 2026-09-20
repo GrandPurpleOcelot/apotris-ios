@@ -8,6 +8,7 @@
 
 class TouchOptionScene : public Scene {
 public:
+    bool suspendsMatchmaking() const override { return true; }
     void init() override {
         canDraw = 1;
         toggleBG(3, false);

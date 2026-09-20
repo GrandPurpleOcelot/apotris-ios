@@ -1,6 +1,7 @@
 #include "blockEngine.hpp"
 #include "def.h"
 #include "logging.h"
+#include "matchmakingQueue.hpp"
 #include "menu.h"
 #include "platform.hpp"
 #include "rumblePatterns.hpp"
@@ -1921,6 +1922,11 @@ void GameScene::countdown() {
         canDraw = true;
         vsync();
         key_poll();
+        MatchmakingQueue::update();
+        if (MatchmakingQueue::blocksSceneUpdate()) {
+            paused = false;
+            return;
+        }
 
         if (!multiplayer && !replaying && !interrupted && !demo &&
             savefile->settings.interruptCountdown &&
@@ -3996,7 +4002,7 @@ void GameScene::init() {
 
     setSmallTextArea(110, 3, 7, 9, 10);
     clearText();
-    gameSeconds = 0;
+    gameSeconds = resumingExistingGame ? game->timer : 0;
 
     loadSpriteTiles(256 + 3, meterTiles[0], 4, 4);
 
@@ -4016,7 +4022,8 @@ void GameScene::init() {
     drawFrame(-1);
     drawFrameBackgrounds();
 
-    stopMusic();
+    if (!resumingExistingGame)
+        stopMusic();
 
     showHold();
 
@@ -4024,7 +4031,9 @@ void GameScene::init() {
 
     showSprites(128);
 
-    if (game->gameMode == MASTER || game->gameMode == DEATH) {
+    if (resumingExistingGame) {
+        maxClearTimer = game->maxClearDelay;
+    } else if (game->gameMode == MASTER || game->gameMode == DEATH) {
         maxClearTimer = game->maxClearDelay;
     } else if (proMode && game->gameMode != CLASSIC) {
         maxClearTimer = 1;
@@ -4061,6 +4070,8 @@ void GameScene::update() {
 
     if (!counted) {
         countdown();
+        if (MatchmakingQueue::blocksSceneUpdate())
+            return;
 
         if (!(game->gameMode == TRAINING || handlingTest))
             playSongRandom(1);
@@ -4212,6 +4223,9 @@ void GameScene::update() {
             paused = false;
             return;
         }
+
+        if (MatchmakingQueue::blocksSceneUpdate())
+            return;
     }
 
     if (playAgain) {

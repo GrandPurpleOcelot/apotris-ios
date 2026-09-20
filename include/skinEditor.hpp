@@ -253,6 +253,7 @@ public:
 };
 
 class EditorScene : public Scene {
+    bool suspendsMatchmaking() const override { return true; }
     void draw();
     void update();
     bool control();
