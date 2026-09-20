@@ -134,7 +134,7 @@ class TitleScene : public Scene {
     const int flashMax = 48;
 
     int demoTimer = 0;
-    const int demoMax = 60 * 2;
+    const int demoMax = 60 * 10;
 
     bool testDraw = false;
 
@@ -376,7 +376,9 @@ public:
     bool control();
     void init();
     void deinit();
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
     bool hideSprites = false;
 };
 #endif
@@ -408,7 +410,9 @@ public:
 
     ConfirmSaveScene(int type) { this->type = type; }
 
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
 
     ~ConfirmSaveScene() { deinit(); };
 };
@@ -417,9 +421,10 @@ class SettingsScene : public SimpleListScene {
 public:
     std::function<Scene*()> previousScene() {
         if (settingsChanged())
-            return []{ return new ConfirmSaveScene(0); };
+            return [] { return new ConfirmSaveScene(0); };
         else
-            return []{ return new MainMenuScene(); }; };
+            return [] { return new MainMenuScene(); };
+    };
 
     std::list<std::string> getOptionList() {
         std::list<std::string> result = settingsOptions;
@@ -467,7 +472,9 @@ public:
     bool control();
     void init();
     void deinit();
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
 
     ~CreditsScene() { deinit(); };
 };
@@ -476,7 +483,9 @@ class LinksScene : public SimpleListScene {
 
 public:
     // void init();
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
 
     std::list<std::string> getOptionList() {
         return {
@@ -536,7 +545,9 @@ public:
     bool control();
     void init();
     void deinit();
-    std::function<Scene*()> previousScene() { return []{ return new LinksScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new LinksScene(); };
+    };
 
     ~QRScene() { deinit(); };
 };
@@ -630,9 +641,13 @@ public:
     void init();
     void deinit();
 #ifndef MULTIBOOT
-    std::function<Scene*()> previousScene() { return []{ return new MainMenuScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MainMenuScene(); };
+    };
 #else
-    std::function<Scene*()> previousScene() { return []{ return new MultiplayerProtocolScene(); }; };
+    std::function<Scene*()> previousScene() {
+        return [] { return new MultiplayerProtocolScene(); };
+    };
 #endif
 };
 #endif
