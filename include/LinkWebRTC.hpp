@@ -57,6 +57,8 @@ struct BoardUpdatePacket {
 class LinkUniversal {
 #ifndef SWITCH
     static constexpr char STUN_SERVER[] = "stun:stun.l.google.com:19302";
+    static constexpr char TURN_SERVER[] = "api.apotris.com";
+    static constexpr char TURN_CREDENTIALS[] = "turn";
     static constexpr char TYPE[] = "type";
     static constexpr char ID[] = "id";
     static constexpr char NAME[] = "name";
@@ -139,6 +141,7 @@ public:
 #ifndef WEB
         rtc::InitLogger(rtc::LogLevel::Debug);
 #endif
+        config.iceServers.clear();
         config.iceServers.emplace_back(STUN_SERVER);
 #ifdef N3DS
         ws = std::make_shared<rtc::WebSocket>(rtc::WebSocketConfiguration{
@@ -177,16 +180,31 @@ public:
         ws->onMessage([this, wws = make_weak_ptr(ws)](auto data) {
             if (!std::holds_alternative<std::string>(data))
                 return;
-            std::cout << "Got websocket message: "
-                      << std::get<std::string>(data) << std::endl;
             json message = json::parse(std::get<std::string>(data));
             if (message.find(ID) == message.end() ||
                 message.find(TYPE) == message.end())
                 return;
 
             std::string type = message[TYPE];
+            if (type != TURN_CREDENTIALS)
+                std::cout << "Got websocket message: "
+                          << std::get<std::string>(data) << std::endl;
             std::string id =
                 message[ID]; // The value from the "id" field of the JSON
+            if (type == TURN_CREDENTIALS) {
+                if (message.contains(FROM) || id != localId ||
+                    !message.contains("username") ||
+                    !message["username"].is_string() ||
+                    !message.contains("password") ||
+                    !message["password"].is_string())
+                    return;
+                const std::string username = message["username"];
+                const std::string password = message["password"];
+                if (!username.empty() && !password.empty())
+                    config.iceServers.emplace_back(TURN_SERVER, 3478, username,
+                                                   password);
+                return;
+            }
             std::string peerId = id; // This will be the peer ID for RTC
                                      // operations. Default to
                                      // id_field_in_message.
@@ -360,7 +378,8 @@ public:
 #endif
 
         std::string url = "wss://api.apotris.com/ws/" + localId +
-                          (!roomId.empty() ? "/" + roomId : "/match");
+                          (!roomId.empty() ? "/" + roomId : "/match") +
+                          "?turn=1";
         url.erase(remove(url.begin(), url.end(), ' '), url.end());
 
         std::cout << "WebSocket URL is " << url << std::endl;
