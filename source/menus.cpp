@@ -2029,7 +2029,7 @@ void MultBattleScene::showReadyPlayers() {
         const int y = startY + 8 * (1) * counter + verticalOffset;
 
         char buff[12];
-        posprintf(buff, "%d. %s", counter + 1, (pair.second).c_str());
+        posprintf(buff, "%d. %.8s", counter + 1, pair.second.c_str());
 
         labels[counter]->setText(buff);
         labels[counter]->show(startX, y, 15);

@@ -553,7 +553,7 @@ void PlayOptionScene::draw() {
                 const int y = startY + 8 * (1) * i + verticalOffset;
 
                 char buff[12];
-                posprintf(buff, "%d. %s", i + 1, board->entries[i].name);
+                posprintf(buff, "%d. %.8s", i + 1, board->entries[i].name);
 
                 labels[i]->setText(buff);
                 labels[i]->show(startX, y, 15);

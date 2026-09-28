@@ -14,6 +14,13 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import type { Context } from 'https://deno.land/x/oak@v12.6.1/mod.ts';
+import { createTurnCredentials } from './turn.ts';
+
+const turnSecretFile = Deno.env.get('TURN_SECRET_FILE');
+const turnSecret = turnSecretFile ? Deno.readTextFileSync(turnSecretFile).trim() : null;
+if (turnSecretFile && !turnSecret) {
+    throw new Error('TURN_SECRET_FILE is empty');
+}
 
 // Constants
 const MAX_PLAYERS = 5; // Max players per room
@@ -70,6 +77,9 @@ export async function handleWebSocket(
     }
 
     try {
+        const turnCredentials = turnSecret && ctx.request.url.searchParams.get('turn') === '1'
+            ? await createTurnCredentials(turnSecret)
+            : null;
         const socket = await ctx.upgrade(); // Oak handles the upgrade and 101 response
 
         console.info(
@@ -77,7 +87,7 @@ export async function handleWebSocket(
         );
 
         socket.addEventListener('open', () => {
-            handleOpen(clientID, requestedRoomID, socket);
+            handleOpen(clientID, requestedRoomID, socket, turnCredentials);
         });
 
         socket.addEventListener('message', (websocketMessage) => {
@@ -233,6 +243,7 @@ function handleOpen(
     clientID: string,
     requestedRoomID: string,
     socket: WebSocket,
+    turnCredentials: { username: string; password: string } | null,
 ) {
     clients.set(clientID, socket);
     console.info(`Client connected :: ${clientID}`);
@@ -296,6 +307,10 @@ function handleOpen(
     }
 
     console.info(`Client ${clientID} joined room ${roomIDToJoin}`);
+
+    if (turnCredentials) {
+        socket.send(JSON.stringify({ type: 'turn', id: clientID, ...turnCredentials }));
+    }
 
     const currentRoom = rooms.get(roomIDToJoin);
     if (currentRoom && currentRoom.length > 1) {
