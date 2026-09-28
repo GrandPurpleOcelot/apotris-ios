@@ -239,6 +239,24 @@ public:
     }
 };
 
+class SonicDropElement : public Element {
+public:
+    std::string getLabel() override { return "Sonic Drop"; }
+
+    std::string getCursor(std::string text) override {
+        return "[" + text + "]";
+    }
+
+    void action(int dir) override {
+        savefile->settings.sonicDrop = savefile->settings.sonicDrop != 1;
+        sfx(SFX_MENUCONFIRM);
+    }
+
+    std::string getCurrentOption() override {
+        return savefile->settings.sonicDrop == 1 ? "ON" : "OFF";
+    }
+};
+
 class DropProtectionElement : public Element {
 public:
     std::string getLabel() override { return "Drop Protection"; }
@@ -435,6 +453,7 @@ public:
             new ARRElement(),
             new SDFElement(),
             new DelaySoftDropElement(),
+            new SonicDropElement(),
             new DropProtectionElement(),
             new DirectionalDelayElement(),
             new DisableDiagonalsElement(),

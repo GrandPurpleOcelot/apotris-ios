@@ -126,6 +126,9 @@ std::string getDescription(const std::string& element) {
     } else if (element == "Delay Soft Drop") {
         return "Whether DAS affects Soft Drop or not.";
 
+    } else if (element == "Sonic Drop") {
+        return "Make hard drop not lock the falling piece after dropping.";
+
     } else if (element == "Drop Protection") {
         return "Disables back-to-back hard drops for the set frames.";
 

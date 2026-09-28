@@ -430,6 +430,7 @@ bool Game::moveRight() {
 
 void Game::moveDown() {
     if (checkRotation(0, 1, pawn.rotation)) {
+        softDrop = true;
         pawn.y++;
 
         if (rotationSystem == ARS && !stopLockReset)
@@ -438,7 +439,7 @@ void Game::moveDown() {
         if (gameMode != CLASSIC)
             setShiftSoundFlag();
         lastMoveRotation = 0;
-    } else if (rotationSystem == NRS || rotationSystem == ARS) {
+    } else if (rotationSystem == NRS || rotationSystem == ARS || sonicDrop) {
         place();
         down = 0;
     }
@@ -509,7 +510,7 @@ void Game::hardDrop() {
 
             return;
         }
-    } else {
+    } else if (!softDrop) {
         finesseStreak++;
     }
 
@@ -983,6 +984,9 @@ void Game::place() {
 
     pawn.current = -1;
     activePiece = -1;
+
+    if (sonicDrop)
+        down = 0;
 
     canHold = true;
 
@@ -1632,8 +1636,10 @@ void Game::fillQueue(int count) {
         if (randomizer == BAG_7) {
             int n = random() % bag.size();
 
-            if (proMode && queue.empty() && bagCounter == 1 && bag.size() == 7) {
-                while (bag.array[n] == PIECE_S || bag.array[n] == PIECE_Z || bag.array[n] == PIECE_O) {
+            if (proMode && queue.empty() && bagCounter == 1 &&
+                bag.size() == 7) {
+                while (bag.array[n] == PIECE_S || bag.array[n] == PIECE_Z ||
+                       bag.array[n] == PIECE_O) {
                     n = random() % bag.size();
                 }
             }
@@ -1886,16 +1892,15 @@ void Game::keyDown(int dir) {
         return;
     }
 
+    down = dir;
+    dropLockTimer = 0;
+    gracePeriod = 0;
+
     if (down == 0 && dir) {
         moveDown();
         if (pawn.y != pawn.lowest)
             score++;
     }
-
-    down = dir;
-    softDrop = true;
-    dropLockTimer = 0;
-    gracePeriod = 0;
 }
 
 bool Game::cascade() {
@@ -2281,6 +2286,7 @@ void Game::setTuning(Tuning newTune) {
     dropLockMax = newTune.dropProtection;
     directionCancel = newTune.directionalDas;
     delaySoftDrop = newTune.delaySoftDrop;
+    sonicDrop = newTune.sonicDrop;
     maxClearDelay = 20;
 }
 
