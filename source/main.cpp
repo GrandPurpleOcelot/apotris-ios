@@ -32,8 +32,8 @@
 
 #include "defaultGradient_bin.h"
 
-#include "menu.h"
 #include "matchmakingQueue.hpp"
+#include "menu.h"
 #include "scene.hpp"
 
 #include "font1tiles_bin.h"
@@ -1175,6 +1175,7 @@ Tuning getTuning(Save* save) {
         t.ihs = save->settings.ihs,
         t.irs = save->settings.irs,
         t.initialType = save->settings.initialType,
+        t.sonicDrop = save->settings.sonicDrop,
     };
 
     return t;

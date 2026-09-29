@@ -209,8 +209,9 @@ typedef struct Settings {
     int zoomPortrait;
     bool portraitOffset;
     bool smoothGravity;
+    int sonicDrop;
 
-    int placeHolder[20];
+    int placeHolder[19];
 
 #ifdef ANDROID
     Layout onScreenLayouts[2];

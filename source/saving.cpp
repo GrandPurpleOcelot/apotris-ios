@@ -354,6 +354,7 @@ void setDefaultHandling(Save* save) {
     save->settings.arr = 2;
     save->settings.sfr = 2;
     save->settings.delaySoftDrop = false;
+    save->settings.sonicDrop = false;
     save->settings.dropProtection = true;
     save->settings.dropProtectionFrames = 8;
 
@@ -383,6 +384,7 @@ void setDefaults(Save* save, int depth) {
         save->settings.announcer = true;
         save->settings.finesse = false;
         save->settings.das = 11;
+        save->settings.sonicDrop = false;
         save->settings.arr = 2;
         save->settings.sfr = 2;
         save->settings.dropProtection = true;

@@ -431,6 +431,7 @@ public:
     bool ihs = false;
     bool irs = false;
     bool initialType = false;
+    bool sonicDrop = false;
 };
 
 class Options {
