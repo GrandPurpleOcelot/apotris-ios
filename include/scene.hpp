@@ -211,12 +211,15 @@ public:
 
     bool refreshText = true;
 
-    void draw();
+    virtual void draw();
     void update();
-    bool control();
+    virtual bool control();
     void init();
     void deinit();
     std::function<Scene*()> previousScene() { return nullptr; };
+
+    virtual int scrollTextY() const { return 152; }
+    virtual bool showBlockScrollMarkers() const { return true; }
 
     virtual std::string getDescription() {
         return ::getDescription(currentOption);
@@ -227,10 +230,26 @@ public:
 
 #ifndef MULTIBOOT
 class MainMenuScene : public SimpleListScene {
+    bool donationVisible = false;
+    std::string selectHint;
+#ifndef GBA
+    int mageTimer = 0;
+    int mageFrame = 0;
+    OBJ_ATTR* mageSprites[2] = {};
+    u16 previousMagePalette[16] = {};
+#endif
+
 public:
     void init();
+    void draw() override;
     void update();
+    bool control() override;
     void deinit();
+    ~MainMenuScene();
+
+    int scrollTextY() const override { return donationVisible ? 4 : 152; }
+    bool showBlockScrollMarkers() const override { return !donationVisible; }
+    std::string getDescription() override;
 
     bool showingUpdateNotification = false;
 
@@ -596,7 +615,7 @@ public:
     bool control();
     void init();
     void deinit();
-    std::function<Scene*()> previousScene() {
+    virtual std::function<Scene*()> previousScene() {
         return [] { return new LinksScene(); };
     };
 
@@ -638,17 +657,25 @@ public:
 #include "paypal_qr_bin.h"
 
 class DonateLinkScene : public QRScene {
+    bool fromMainMenu = false;
+
 public:
+    explicit DonateLinkScene(bool fromMenu = false)
+        : fromMainMenu(fromMenu) {
+        qrX = 29;
+        qrY = 29;
+    }
+    std::function<Scene*()> previousScene() override {
+        if (fromMainMenu)
+            return [] { return new MainMenuScene(); };
+        return QRScene::previousScene();
+    }
     std::string name() override { return "Donate"; }
 
     u8* getData() override { return (u8*)paypal_qr_bin; }
 
     std::string getLink() override { return "https://apotris.com/donate"; }
 
-    DonateLinkScene() {
-        qrX = 29;
-        qrY = 29;
-    }
 };
 
 #include "discord_qr_bin.h"

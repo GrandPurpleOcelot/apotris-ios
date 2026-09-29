@@ -14,6 +14,10 @@
 
 #include "classic_pal_bin.h"
 #include "logging.h"
+#ifndef GBA
+#include "mage_pal_bin.h"
+#include "mage_tiles_bin.h"
+#endif
 #include "scene.hpp"
 #include "sprites.h"
 #include <posprintf.h>
@@ -679,8 +683,46 @@ void ConfirmSaveScene::deinit() {
 #endif
 }
 
+std::string MainMenuScene::getDescription() {
+    if (!donationVisible)
+        return "";
+
+    return "Thank you for playing Apotris! If you're enjoying the game, "
+           "please consider donating! (Press " +
+           selectHint + ")";
+}
+
+bool MainMenuScene::control() {
+    if (donationVisible && key_hit(KEY_SELECT)) {
+        sfx(SFX_MENUCONFIRM);
+        changeScene([] { return new DonateLinkScene(true); },
+                    Transitions::FADE);
+        return true;
+    }
+    return SimpleListScene::control();
+}
+
+void MainMenuScene::draw() {
+    SimpleListScene::draw();
+
+#ifndef GBA
+    if (!donationVisible)
+        return;
+
+    const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
+    const int left = (240 - width) / 2;
+    for (int i = 0; i < 2; i++) {
+        sprite_unhide(mageSprites[i], ATTR0_AFF);
+        sprite_set_pos(mageSprites[i], left - 20 + i * (width + 12),
+                       scrollTextY() - 26);
+    }
+    showSprites(128);
+#endif
+}
+
 void MainMenuScene::update() {
-    if (!updateAvailable.empty() && !showingUpdateNotification) {
+    if (!donationVisible && !updateAvailable.empty() &&
+        !showingUpdateNotification) {
         wordSprites[10]->setText("Update available: " + updateAvailable);
         wordSprites[10]->show(0, 0, 14);
         wordSprites[11]->show(12 * 8, 0, 14);
@@ -688,11 +730,51 @@ void MainMenuScene::update() {
     }
 
     SimpleListScene::update();
+
+    if (donationVisible) {
+        std::string hint = getStringFromKey(KEY_SELECT);
+        if (hint != selectHint) {
+            selectHint = hint;
+            refreshText = true;
+        }
+
+#ifndef GBA
+        if (++mageTimer >= 8) {
+            mageTimer = 0;
+            mageFrame = (mageFrame + 1) % 8;
+            loadSpriteTiles(816, mage_tiles_bin + mageFrame * 8 * 32, 2, 4);
+        }
+#endif
+    }
 }
 
 void MainMenuScene::init() {
     path.clear();
+    donationVisible = savefile->stats.timePlayed > 10 * 60 * 60 * 60 &&
+                      !savefile->donationDismissed;
+
+    if (donationVisible)
+        selectHint = getStringFromKey(KEY_SELECT);
+
     SimpleListScene::init();
+
+#ifndef GBA
+    if (donationVisible) {
+        for (int i = 0; i < 16; i++)
+            previousMagePalette[i] = getPaletteColor(12 + 16, i);
+
+        loadPalette(12 + 16, 0, mage_pal_bin, mage_pal_bin_size / 2);
+        loadSpriteTiles(816, mage_tiles_bin, 2, 4);
+
+        for (int i = 0; i < 2; i++) {
+            mageSprites[i] = &obj_buffer[15 + i];
+            sprite_set_attr(mageSprites[i], ShapeTall, 2, 816, 12, 0);
+            sprite_enable_affine(mageSprites[i], i + 2, true);
+            sprite_set_size(mageSprites[i], float2fx(1), i + 2);
+            sprite_hide(mageSprites[i]);
+        }
+    }
+#endif
 
 #if defined(PC) || defined(WEB)
     if (lastInputType == InputType::CONTROLLER)
@@ -731,6 +813,17 @@ void MainMenuScene::init() {
 void MainMenuScene::deinit() {
     resetSmallText();
     clearText();
+}
+
+MainMenuScene::~MainMenuScene() {
+    if (donationVisible && !savefile->donationDismissed) {
+        savefile->donationDismissed = 1;
+        saveSavefile();
+    }
+#ifndef GBA
+    if (donationVisible)
+        loadPalette(12 + 16, 0, previousMagePalette, 16);
+#endif
 }
 #endif
 

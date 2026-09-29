@@ -319,7 +319,8 @@ public:
 
     TotalStats stats;
 
-    int placeHolder2[87];
+    u32 donationDismissed = 0;
+    int placeHolder2[86];
 
     Skin customSkins[MAX_CUSTOM_SKINS];
 

@@ -225,32 +225,37 @@ void SimpleListScene::draw() {
     }
 
     if (refreshText) {
-        scrollText = getDescription();
-        clearSpriteTiles(672, 144, 1);
-        if (!scrollText.empty()) {
-            scrollTextLength = getVariableWidth(scrollText);
+        std::string nextText = getDescription();
+        if (nextText != scrollText) {
+            scrollText = nextText;
+            clearSpriteTiles(672, 144, 1);
+            if (!scrollText.empty()) {
+                scrollTextLength = getVariableWidth(scrollText);
 
-            const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
+                const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
 
-            endDelay = 0;
-            scrollOffset = -max((width - scrollTextLength), 0) / 2;
-            scrollDelay = 0;
-            scrollingText[0]->setTextSlow(scrollText);
+                endDelay = 0;
+                scrollOffset = -max((width - scrollTextLength), 0) / 2;
+                scrollDelay = 0;
+                scrollingText[0]->setTextSlow(scrollText);
 
 #if defined(TE) || defined(N3DS)
-            for (int i = 0; i < 2; i++) {
-                sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
-                sprite_set_pos(scrollSideSprites[i],
-                               240 / 2 +
-                                   ((i * 2) - 1) *
-                                       (min(scrollTextLength, width) / 2) -
-                                   16 * (i == 0),
-                               152 - 4);
-            }
+                if (showBlockScrollMarkers()) {
+                    for (int i = 0; i < 2; i++) {
+                        sprite_unhide(scrollSideSprites[i], ATTR0_AFF);
+                        sprite_set_pos(scrollSideSprites[i],
+                                       240 / 2 +
+                                           ((i * 2) - 1) *
+                                               (min(scrollTextLength, width) / 2) -
+                                           16 * (i == 0),
+                                       152 - 4);
+                    }
+                }
 #endif
-        } else {
-            for (auto& scrollSideSprite : scrollSideSprites) {
-                sprite_hide(scrollSideSprite);
+            } else {
+                for (auto& scrollSideSprite : scrollSideSprites) {
+                    sprite_hide(scrollSideSprite);
+                }
             }
         }
     }
@@ -411,7 +416,7 @@ void SimpleListScene::update() {
     for (int i = 0; i < 3; i++) {
         scrollingText[i]->setScroll(scrollOffset);
         scrollingText[i]->show(12 * 8 * i + 13 * savefile->settings.aspectRatio,
-                               160 - 8, 14);
+                               scrollTextY(), 14);
     }
 
     control();
