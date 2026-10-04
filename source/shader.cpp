@@ -3,6 +3,7 @@
 #include "liba_pc.h"
 
 #ifdef PC
+#include "liba_window.h"
 #include <glad/gl.h>
 #elif defined(PORTMASTER)
 #include <glad/gles2.h>
@@ -485,7 +486,9 @@ static bool hasSuffix(const std::string& s, const std::string& suffix) {
 std::vector<std::string> findShaders() {
     std::string shaderPath = "assets/shaders";
 
-#ifdef ANDROID
+#ifdef PC
+    shaderPath = assetPath(shaderPath);
+#elif defined(ANDROID)
     shaderPath = getDocumentsPath() + shaderPath;
 #endif
 

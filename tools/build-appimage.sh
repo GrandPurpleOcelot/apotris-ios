@@ -81,11 +81,10 @@ fi
 echo "==> Installing .desktop file..."
 cp "$PROJECT_DIR/dist/Apotris.desktop" "$APPDIR/usr/share/applications/$APP_NAME.desktop"
 
-# AppRun sets the working directory to the bundled assets directory because
-# the game currently resolves assets relative to its working directory.
+# Keep the caller's working directory unchanged; the game resolves bundled
+# resources relative to its executable and the AppImage layout.
 cat > "$APPDIR/AppRun" <<'EOF'
 #!/bin/sh
-cd "$APPDIR/usr/share/apotris" || exit 1
 exec "$APPDIR/usr/bin/Apotris" "$@"
 EOF
 chmod +x "$APPDIR/AppRun"
