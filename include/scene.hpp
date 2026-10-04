@@ -255,14 +255,7 @@ public:
     std::function<Scene*()> previousScene();
 
     std::list<std::string> getOptionList() {
-        std::list<std::string> l = gameOptions;
-
-#if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) ||   \
-    defined(N3DS)
-        l.remove("2P Battle");
-#endif
-
-        return l;
+        return gameOptions;
     };
     std::string name() { return "Play"; };
 };
