@@ -1370,7 +1370,6 @@ bool GameScene::control() {
         sfx(SFX_MENUCONFIRM);
         paused = true;
         showTowerScrollIndicator();
-        pauseSong();
         clearText();
         updateText();
     }
@@ -1946,7 +1945,6 @@ void GameScene::countdown() {
                                            // n3ds::wasAppPaused check here too?
                 sfx(SFX_MENUCONFIRM);
                 paused = true;
-                pauseSong();
                 clearText();
                 updateText();
                 preventLayeredCountdowns = true;
