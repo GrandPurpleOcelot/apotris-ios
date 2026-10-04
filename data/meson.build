@@ -37,6 +37,8 @@ binary_files = files(
     'font1tiles.bin',
     'font2tiles.bin',
     'font_pal.bin',
+    'mage_pal.bin',
+    'mage_tiles.bin',
     'meter1_tiles.bin',
     'meter2_tiles.bin',
     'meter3_tiles.bin',
