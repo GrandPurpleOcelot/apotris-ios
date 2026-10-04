@@ -3,6 +3,7 @@
 #include "liba_window.h"
 #include <cstdio>
 #include <dirent.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sys/stat.h>
@@ -93,6 +94,14 @@ nanotime_step_data stepper;
 
 ShaderStatus shaderStatus = ShaderStatus::NOT_INITED;
 
+static std::filesystem::path assetRoot;
+
+std::string assetPath(const std::string& relativePath) {
+    if (assetRoot.empty())
+        return relativePath;
+    return (assetRoot / relativePath).string();
+}
+
 SDL_Point touchLocation = {0, 0};
 
 #define DEADZONE 12000
@@ -109,10 +118,34 @@ int KEY_SELECT = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(SDLK_3);
 int KEY_START = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(SDLK_ESCAPE);
 
 void windowInit() {
-    // Initialize SDL
     window = nullptr;
 
     SDL_Init(SDL_INIT_VIDEO);
+
+    // Resolve read-only resources independently of the launcher's working
+    // directory. AppImages keep the executable in usr/bin and assets in
+    // usr/share/apotris; other builds normally keep assets beside the binary.
+    char* executableDir = SDL_GetBasePath();
+    if (executableDir) {
+        std::filesystem::path basePath(executableDir);
+        SDL_free(executableDir);
+
+        if (std::filesystem::is_directory(basePath / "assets")) {
+            assetRoot = basePath;
+        } else {
+            std::filesystem::path appImageRoot =
+                basePath / "../share/apotris";
+            if (std::filesystem::is_directory(appImageRoot / "assets")) {
+                assetRoot = std::filesystem::weakly_canonical(appImageRoot);
+            }
+        }
+    }
+
+    // Preserve the traditional source/build-tree layout as a fallback.
+    if (assetRoot.empty() &&
+        std::filesystem::is_directory("assets")) {
+        assetRoot = std::filesystem::current_path();
+    }
 
     window = SDL_CreateWindow("Apotris PC", SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight,
@@ -137,7 +170,7 @@ void windowInit() {
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
 
 #if !defined(__APPLE__)
-    SDL_Surface* icon = SDL_LoadBMP("assets/favicon32.bmp");
+    SDL_Surface* icon = SDL_LoadBMP(assetPath("assets/favicon32.bmp").c_str());
 
     SDL_SetWindowIcon(window, icon);
 

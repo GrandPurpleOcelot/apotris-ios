@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <string>
 
 #include "audio_files.h"
 #include "liba_pc.h"
@@ -29,6 +30,7 @@ extern void refreshWindowSize();
 extern bool closed();
 
 extern void windowInit();
+extern std::string assetPath(const std::string& relativePath);
 
 extern void key_poll();
 

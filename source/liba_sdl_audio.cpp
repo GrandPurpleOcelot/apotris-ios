@@ -18,6 +18,10 @@
 
 #include "def.h"
 
+#ifdef PC
+#include "liba_window.h"
+#endif
+
 SoLoud::Soloud gSoloud;
 SoLoud::Queue musicQueue;
 
@@ -49,6 +53,9 @@ void loadAudio(std::string pathPrefix) {
 
     for (int i = 0; i < SFX_COUNT; i++) {
         std::string str = pathPrefix + (std::string)SoundEffectPaths[i];
+#ifdef PC
+        str = assetPath(SoundEffectPaths[i]);
+#endif
         std::string apkPath = (std::string)SoundEffectPaths[i];
 
         SDL_RWops* rw = SDL_RWFromFile(str.c_str(), "rb");
@@ -71,6 +78,9 @@ void loadAudio(std::string pathPrefix) {
 
     int counter = 0;
     std::string path = pathPrefix + "assets";
+#ifdef PC
+    path = assetPath("assets");
+#endif
     std::vector<std::string> songPaths;
 
     DIR* dir = opendir(path.c_str());
@@ -111,7 +121,11 @@ void loadAudio(std::string pathPrefix) {
 
     // Add base songs from file_list.txt if they aren't already there
     size_t listSize;
-    void* listData = SDL_LoadFile("assets/file_list.txt", &listSize);
+    std::string fileListPath = "assets/file_list.txt";
+#ifdef PC
+    fileListPath = assetPath(fileListPath);
+#endif
+    void* listData = SDL_LoadFile(fileListPath.c_str(), &listSize);
     if (listData) {
         std::string listStr((char*)listData, listSize);
         SDL_free(listData);
@@ -170,6 +184,9 @@ void loadAudio(std::string pathPrefix) {
         SoLoud::result loaded = SoLoud::SO_NO_ERROR;
         std::string songPath = songList.at(i);
         std::string apkPath = "assets/" + songNameList.at(i);
+#ifdef PC
+        apkPath = assetPath(apkPath);
+#endif
 
         SDL_RWops* rw = SDL_RWFromFile(songPath.c_str(), "rb");
         if (!rw) {
