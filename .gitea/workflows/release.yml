@@ -429,8 +429,9 @@ jobs:
         if: steps.check_files.outputs.files_exist == 'false' || (steps.check_files.outputs.files_exist == 'true' && steps.upload.outputs.uploaded_urls == '')
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.INFO_WEBHOOK_URL }}
-          COMMIT_HASH_SHORT: ${{ github.sha::7 }} # Use github.sha directly here as steps.vars might not run
+          COMMIT_HASH_SHORT: ${{ github.sha }}
         run: |
+          COMMIT_HASH_SHORT="${COMMIT_HASH_SHORT:0:7}"
           failure_reason="No packages were successfully created or uploaded."
           if [ "${{ steps.check_files.outputs.files_exist }}" == 'false' ]; then
             failure_reason="Build process completed, but no packages were found to upload."
