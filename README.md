@@ -121,7 +121,7 @@ Ensure the version string and directory paths are correct for your installation.
 Install the following packages:
 
 ```bash
-sudo apt install build-essential git meson cmake 
+sudo apt install build-essential git meson cmake xxd
 ```
 
 also install `mingw-w64` if you plan to cross compile for Windows
