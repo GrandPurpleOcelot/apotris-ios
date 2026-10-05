@@ -2,7 +2,7 @@ project(
     'Apotris',
     'c',
     'cpp',
-    version: '4.2.0a',
+    version: '4.2.0RC',
     license: 'AGPL3',
     meson_version: '>=1.1.0',
     default_options: [
