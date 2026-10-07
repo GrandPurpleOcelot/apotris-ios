@@ -1892,11 +1892,12 @@ void Game::keyDown(int dir) {
         return;
     }
 
+    bool firstDown = down == 0 && dir;
     down = dir;
     dropLockTimer = 0;
     gracePeriod = 0;
 
-    if (down == 0 && dir) {
+    if (firstDown) {
         moveDown();
         if (pawn.y != pawn.lowest)
             score++;
