@@ -102,8 +102,10 @@ static void drawMatchMakingText(int totalPlayers = -1) {
     if (totalPlayers >= 0) {
         const std::string playersOnline =
             std::to_string(totalPlayers) + " PLAYERS ONLINE";
-        naprintColor(playersOnline, 236 - getVariableWidth(playersOnline), 144,
-                     14);
+        const int rightEdge =
+            (savefile->settings.aspectRatio == 0) ? 236 : 236 - 13;
+        naprintColor(playersOnline, rightEdge - getVariableWidth(playersOnline),
+                     144, 14);
     }
 }
 #endif

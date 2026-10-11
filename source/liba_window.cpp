@@ -83,8 +83,8 @@ bool fullscreen = false;
 
 bool render = true;
 
-int screenWidth = 1280;
-int screenHeight = 720;
+int screenHeight = 160 * 4;
+int screenWidth = (4 * screenHeight) / 3;
 
 float windowScale = 3;
 
@@ -133,8 +133,7 @@ void windowInit() {
         if (std::filesystem::is_directory(basePath / "assets")) {
             assetRoot = basePath;
         } else {
-            std::filesystem::path appImageRoot =
-                basePath / "../share/apotris";
+            std::filesystem::path appImageRoot = basePath / "../share/apotris";
             if (std::filesystem::is_directory(appImageRoot / "assets")) {
                 assetRoot = std::filesystem::weakly_canonical(appImageRoot);
             }
@@ -142,8 +141,7 @@ void windowInit() {
     }
 
     // Preserve the traditional source/build-tree layout as a fallback.
-    if (assetRoot.empty() &&
-        std::filesystem::is_directory("assets")) {
+    if (assetRoot.empty() && std::filesystem::is_directory("assets")) {
         assetRoot = std::filesystem::current_path();
     }
 
