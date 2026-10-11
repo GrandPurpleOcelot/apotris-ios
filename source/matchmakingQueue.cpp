@@ -162,8 +162,10 @@ void drawOverlay() {
         sprite_enable_affine(spinner, spinnerAffine, true);
         sprite_rotscale(spinner, int2fx(1), int2fx(1), spinnerAngle,
                         spinnerAffine);
-        sprite_set_pos(spinner, 220, 4);
-        sprite_unhide(spinner, 0);
+        const int width = (savefile->settings.aspectRatio == 0) ? 240 : 214;
+        const int left = (240 - width) / 2;
+        sprite_set_pos(spinner, left + width - 20, 4);
+        sprite_unhide(spinner, ATTR0_AFF_DBL);
         spinnerAngle = (spinnerAngle + 1024) & 0xffff;
     } else {
         sprite_hide(&obj_buffer[109]);

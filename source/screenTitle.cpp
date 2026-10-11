@@ -724,8 +724,9 @@ void MainMenuScene::update() {
     if (!donationVisible && !updateAvailable.empty() &&
         !showingUpdateNotification) {
         wordSprites[10]->setText("Update available: " + updateAvailable);
-        wordSprites[10]->show(0, 0, 14);
-        wordSprites[11]->show(12 * 8, 0, 14);
+        const int offset = 13 * savefile->settings.aspectRatio;
+        wordSprites[10]->show(offset, 0, 14);
+        wordSprites[11]->show(12 * 8 + offset, 0, 14);
         showingUpdateNotification = true;
     }
 
