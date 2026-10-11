@@ -2,6 +2,7 @@
 
 #include "liba_android.h"
 #include <SDL_system.h>
+#include <SDL_haptic.h>
 #include <algorithm>
 #include <android/log.h>
 #include <cmath>
@@ -26,6 +27,7 @@
 #include "def.h"
 
 #include "scene.hpp"
+#include "rumblePatterns.hpp"
 
 #include "shader.h"
 
@@ -115,10 +117,13 @@ SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Texture* texture;
 SDL_GameController* controller;
+static SDL_Haptic* controllerHaptic = nullptr;
+static bool controllerHapticInitialized = false;
+
+static void openController();
+static void closeController();
 
 Layout layout;
-
-int controllerCount = 0;
 
 bool fullscreen = false;
 
@@ -642,10 +647,7 @@ void windowInit() {
     SDL_Log("windowInit: SDL_CreateRenderer done");
 
     SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-    if (SDL_NumJoysticks() > 0) {
-        controller = SDL_GameControllerOpen(0);
-        controllerCount = SDL_NumJoysticks();
-    }
+    openController();
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
@@ -1168,6 +1170,7 @@ void handleInput() {
                 paused = true;
             }
             vibrationStop();
+            rumblePatternStop();
             // Clear all active touch state so keys don't get stuck
             // when the OS cancels touches without FINGERUP events.
             for (auto& pair : activeFingerButtons) {
@@ -1723,15 +1726,12 @@ void updateWindow(uint8_t* framebuffer) {
 
     frame_start = SDL_GetPerformanceCounter();
 
-    // handle controller hotplug
-    if (SDL_NumJoysticks() != controllerCount) {
-        if (controllerCount == 0) {
-            controller = SDL_GameControllerOpen(0);
-        } else if (SDL_NumJoysticks() == 0) {
-            SDL_GameControllerClose(controller);
-        }
-
-        controllerCount = SDL_NumJoysticks();
+    // Release haptics before the joystick, then select a connected controller.
+    if (controller && !SDL_GameControllerGetAttached(controller)) {
+        closeController();
+    }
+    if (!controller) {
+        openController();
     }
 
     handleInput();
@@ -1822,13 +1822,76 @@ void refreshWindowSize() {
 
 bool closed() {
     songEndHandler();
+    rumblePatternLoop();
 
     return true;
 }
 
 void toggleRendering(bool r) { render = r; }
 
-void initRumble() {};
+void initRumble() {
+    if (!controller || controllerHaptic ||
+        SDL_GameControllerHasRumble(controller))
+        return;
+
+    // SDL 2.28's Android joystick driver doesn't implement controller rumble.
+    // Its haptic driver exposes InputDevice.getVibrator() instead. Only open
+    // this controller's haptic device, never the phone's vibrator.
+    if (!controllerHapticInitialized) {
+        if (SDL_InitSubSystem(SDL_INIT_HAPTIC) < 0) {
+            SDL_Log("Controller haptic initialization failed: %s", SDL_GetError());
+            return;
+        }
+        controllerHapticInitialized = true;
+    }
+
+    SDL_Joystick* joystick = SDL_GameControllerGetJoystick(controller);
+    if (SDL_JoystickIsHaptic(joystick) != 1) {
+        SDL_Log("Controller %s has no Android haptic device",
+                SDL_GameControllerName(controller));
+        return;
+    }
+    controllerHaptic = SDL_HapticOpenFromJoystick(joystick);
+    if (!controllerHaptic) {
+        SDL_Log("Opening controller haptic failed: %s", SDL_GetError());
+        return;
+    }
+    if (SDL_HapticRumbleInit(controllerHaptic) < 0) {
+        SDL_Log("Controller haptic rumble initialization failed: %s", SDL_GetError());
+        SDL_HapticClose(controllerHaptic);
+        controllerHaptic = nullptr;
+        return;
+    }
+    SDL_Log("Controller haptic rumble ready: %s", SDL_GameControllerName(controller));
+}
+
+static void openController() {
+    for (int i = 0; i < SDL_NumJoysticks(); ++i) {
+        if (!SDL_IsGameController(i))
+            continue;
+        controller = SDL_GameControllerOpen(i);
+        if (controller) {
+            initRumble();
+            return;
+        }
+    }
+}
+
+static void closeController() {
+    rumblePatternStop();
+    if (controllerHaptic) {
+        SDL_HapticClose(controllerHaptic);
+        controllerHaptic = nullptr;
+    }
+    if (controllerHapticInitialized) {
+        SDL_QuitSubSystem(SDL_INIT_HAPTIC);
+        controllerHapticInitialized = false;
+    }
+    if (controller) {
+        SDL_GameControllerClose(controller);
+        controller = nullptr;
+    }
+}
 
 std::string getSavefilePath() {
     // Always prefer the shared Documents/ path so save data survives
@@ -1909,6 +1972,7 @@ void quit() {
         ImGui_ImplSDL2_Shutdown();
         ImGui::DestroyContext();
     }
+    closeController();
     vibrationDeinit();
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
@@ -1977,14 +2041,13 @@ void unbindDuplicateKey(int& dest, uint32_t key) {
     }
 }
 
-void rumbleStart(int length) {
-    if (lastInputType != InputType::CONTROLLER || length <= 0)
-        return;
-
-    SDL_GameControllerRumble(controller, 0xffff, 0xffff, length * 64);
+void rumbleStop() {
+    if (controllerHaptic) {
+        SDL_HapticRumbleStop(controllerHaptic);
+    } else if (controller && SDL_GameControllerHasRumble(controller)) {
+        SDL_GameControllerRumble(controller, 0, 0, 1);
+    }
 }
-
-void rumbleStop() { SDL_GameControllerRumble(controller, 0, 0, 1); }
 
 void setFullscreen(bool state) {
     if (fullscreen == state)
@@ -2301,11 +2364,19 @@ void updateBatteryInfo() {
 }
 
 void rumbleOutput(uint16_t strength) {
-    if (lastInputType != InputType::CONTROLLER)
+    if (!controller || lastInputType != InputType::CONTROLLER)
         return;
 
-    uint16_t sdl_strength =
-        std::min(0xFFFF, strength * 0xFFFF / 8); // Cap to 0xFFFF
-    SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
+    if (!strength) {
+        rumbleStop();
+        return;
+    }
+
+    if (controllerHaptic) {
+        SDL_HapticRumblePlay(controllerHaptic, std::min(1.0f, strength / 8.0f), 64);
+    } else if (SDL_GameControllerHasRumble(controller)) {
+        uint16_t sdl_strength = std::min(0xFFFF, strength * 0xFFFF / 8);
+        SDL_GameControllerRumble(controller, sdl_strength, sdl_strength, 64);
+    }
 }
 #endif

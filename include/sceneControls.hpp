@@ -764,7 +764,7 @@ public:
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
 
-#if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC)
+#if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC) || defined(ANDROID)
         list.push_back(new RumbleMenuElement());
 #endif
 
