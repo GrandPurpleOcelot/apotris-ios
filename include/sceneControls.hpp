@@ -210,7 +210,7 @@ public:
             //     continue;
             // }
 
-#elif defined(PC) || defined(ANDROID)
+#elif defined(PC) || defined(MOBILE)
             u32 key = key_first();
 
             if (key != KEY_FULL - 1) {
@@ -764,7 +764,7 @@ public:
         list.push_back(new ABHoldElement());
         list.push_back(new QuickResetElement());
 
-#if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC) || defined(ANDROID)
+#if defined(GBA) || defined(SWITCH) || defined(MM) || defined(PORTMASTER) || defined(PC) || defined(MOBILE)
         list.push_back(new RumbleMenuElement());
 #endif
 

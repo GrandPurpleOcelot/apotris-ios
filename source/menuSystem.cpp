@@ -15,7 +15,7 @@
 #include "sceneStats.hpp"
 #include "sceneWindow.hpp"
 #include <functional>
-#ifdef ANDROID
+#ifdef MOBILE
 #include "sceneTouch.hpp"
 #endif
 #include "skinEditor.hpp"
@@ -204,7 +204,7 @@ void sceneSwitcher(const std::string& str) {
 #ifdef GBA
         changeScene([]() { return new SleepOptionScene(); }, Transitions::FADE);
 #endif
-#ifdef ANDROID
+#ifdef MOBILE
     } else if (str == "Touch") {
         changeScene([]() { return new TouchOptionScene(); }, Transitions::FADE);
 #endif

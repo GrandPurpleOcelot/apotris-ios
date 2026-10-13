@@ -26,7 +26,7 @@
 #define PLATFORM 1
 #endif
 
-#ifdef ANDROID
+#ifdef MOBILE
 
 #include "liba_android.h"
 #include "liba_pc.h"

@@ -2,7 +2,7 @@
 
 #include "scene.hpp"
 
-#ifdef ANDROID
+#ifdef MOBILE
 
 #include "liba_android.h"
 

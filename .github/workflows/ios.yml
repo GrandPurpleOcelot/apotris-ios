@@ -1,0 +1,92 @@
+name: iOS
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install tools
+        run: brew install meson ninja xcodegen pkgconf || true
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ios/build/downloads
+            subprojects/packagecache
+          key: ios-downloads-${{ hashFiles('subprojects/*.wrap', 'ios/build.sh') }}
+
+      - name: Generate Xcode project
+        run: xcodegen --spec ios/project.yml
+
+      - name: Build for simulator
+        shell: bash -eo pipefail {0}
+        run: |
+          xcodebuild -project ios/Apotris.xcodeproj -scheme Apotris \
+            -sdk iphonesimulator -configuration Debug \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build \
+            > xcodebuild-sim.log 2>&1 || { tail -80 xcodebuild-sim.log; exit 1; }
+          grep -E '^== |BUILD SUCCEEDED' xcodebuild-sim.log
+          test -d dd/Build/Products/Debug-iphonesimulator/Apotris.app
+
+      - name: Run in simulator and screenshot
+        run: |
+          set -x
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)["devices"]
+          print(next(x["udid"] for k, v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")))')
+          xcrun simctl boot "$DEVICE"
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" dd/Build/Products/Debug-iphonesimulator/Apotris.app
+          xcrun simctl launch --stdout="$PWD/app-console.log" --stderr="$PWD/app-console.log" \
+            "$DEVICE" com.grandpurpleocelot.apotris
+          sleep 15
+          xcrun simctl io "$DEVICE" screenshot screenshot-1-early.png
+          sleep 30
+          xcrun simctl io "$DEVICE" screenshot screenshot-2-later.png
+          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q apotris; then
+            echo "APP RUNNING" | tee app-status.txt
+          else
+            echo "APP NOT RUNNING" | tee app-status.txt
+          fi
+          xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
+            --predicate 'process == "Apotris" OR (process == "SpringBoard" AND eventMessage CONTAINS "apotris")' \
+            > app-system.log 2>&1 || true
+          mkdir -p crashes
+          find ~/Library/Logs/DiagnosticReports -name 'Apotris*' -exec cp {} crashes/ \; 2>/dev/null || true
+          ls crashes
+          tail -40 app-console.log || true
+          grep -q "APP RUNNING" app-status.txt
+
+      - name: Build for device (unsigned)
+        if: ${{ !cancelled() }}
+        shell: bash -eo pipefail {0}
+        run: |
+          xcodebuild -project ios/Apotris.xcodeproj -scheme Apotris \
+            -sdk iphoneos -configuration Release \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build \
+            > xcodebuild-device.log 2>&1 || { tail -80 xcodebuild-device.log; exit 1; }
+          grep -E '^== |BUILD SUCCEEDED' xcodebuild-device.log
+          test -d dd/Build/Products/Release-iphoneos/Apotris.app
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-results
+          path: |
+            screenshot-*.png
+            app-*.log
+            app-status.txt
+            crashes/
+            xcodebuild-*.log
+            ios/Apotris.xcodeproj
+          if-no-files-found: ignore

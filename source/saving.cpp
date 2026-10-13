@@ -215,7 +215,7 @@ void loadSave() {
         savefile->settings.initialType > 1)
         savefile->settings.initialType = 1;
 
-#ifdef ANDROID
+#ifdef MOBILE
     if (savefile->settings.zoomPortrait < -1 ||
         savefile->settings.zoomPortrait > 90) {
         savefile->settings.zoomPortrait = savefile->settings.zoom;
@@ -503,7 +503,7 @@ void setDefaults(Save* save, int depth) {
         save->settings.n3dsScaleMode = n3ds::ScaleMode::SCALED_SHARP;
         save->settings._n3dsPlaceholder1 = 0;
         save->settings._n3dsPlaceholder2 = 0;
-#elif defined(ANDROID)
+#elif defined(MOBILE)
         save->settings.integerScale = false;
 #else
         save->settings.integerScale = true;
@@ -610,7 +610,7 @@ void setDefaults(Save* save, int depth) {
         savefile->boards.zenCascade = 0;
         savefile->boards.zenZone = 0;
 
-#ifdef ANDROID
+#ifdef MOBILE
         std::vector<Layout> layouts = getDefaultLayouts();
 
         save->settings.onScreenLayouts[0] = layouts[0];

@@ -3,7 +3,7 @@
 #ifndef MULTIBOOT
 #include "scene.hpp"
 
-#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
+#if defined(PC) || defined(PORTMASTER) || defined(MOBILE)
 #include "liba_pc.h"
 #include "shader.h"
 #include <cmath>
@@ -11,7 +11,7 @@
 #include <string>
 #endif
 
-#ifdef ANDROID
+#ifdef MOBILE
 extern int screenWidth;
 extern int screenHeight;
 #endif
@@ -118,7 +118,7 @@ public:
         }
 
 #if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) ||   \
-    defined(ANDROID)
+    defined(MOBILE)
         refreshWindowSize();
 #endif
     }
@@ -133,7 +133,7 @@ public:
 
 class ScaleElement : public Element {
     int* getActiveZoom() {
-#ifdef ANDROID
+#ifdef MOBILE
         if (screenWidth <= screenHeight)
             return &savefile->settings.zoomPortrait;
 #endif
@@ -164,7 +164,7 @@ public:
 
     void action(int dir) override {
 #if defined(PC) || defined(WEB) || defined(PORTMASTER) || defined(SWITCH) ||   \
-    defined(ANDROID)
+    defined(MOBILE)
         int* activeZoomPtr = getActiveZoom();
         int activeZoom = *activeZoomPtr;
         int add = 1 + 9 * (savefile->settings.integerScale && activeZoom > -1);
@@ -221,7 +221,7 @@ public:
     }
 };
 
-#ifdef ANDROID
+#ifdef MOBILE
 class PortraitOffsetElement : public Element {
 public:
     std::string getLabel() override { return "Portrait Offset"; }
@@ -297,7 +297,7 @@ public:
 };
 #endif
 
-#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
+#if defined(PC) || defined(PORTMASTER) || defined(MOBILE)
 class ShaderElement : public Element {
 public:
     const std::vector<std::string> shaders = findShaders();
@@ -423,7 +423,7 @@ public:
 #else
         list.push_back(new IntegerScaleElement());
         list.push_back(new ScaleElement());
-#ifdef ANDROID
+#ifdef MOBILE
         if (screenWidth <= screenHeight) {
             list.push_back(new PortraitOffsetElement());
         }
@@ -431,7 +431,7 @@ public:
 #endif
         list.push_back(new FPSElement());
 
-#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
+#if defined(PC) || defined(PORTMASTER) || defined(MOBILE)
         list.push_back(new ShaderElement());
 #endif
 
@@ -456,7 +456,7 @@ public:
     }
 #endif
 
-#ifdef ANDROID
+#ifdef MOBILE
 private:
     int lastOrientation;
 

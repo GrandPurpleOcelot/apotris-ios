@@ -22,11 +22,14 @@
 #include <string>
 #include <vector>
 
-#ifdef ANDROID
+#ifdef MOBILE
 #include "liba_android.h"
 
-#include <android/log.h>
 #include <glad/gles2.h>
+#endif
+
+#ifdef ANDROID
+#include <android/log.h>
 #define LOG_TAG "ApotrisShader"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -102,7 +105,7 @@ std::string translateLine(std::string in, bool isVertex) {
 uint loadShaderFromFile(std::string path, int type) {
     std::string add = "";
 
-#if defined(PORTMASTER) || defined(ANDROID)
+#if defined(PORTMASTER) || defined(MOBILE)
     add += "#version 300 es\n\n";
 #elif defined(__APPLE__)
     add += "#version 410 core\n\n";
@@ -222,7 +225,7 @@ uint getShader(int index) {
 }
 
 void initShaders(SDL_Window* window, int index) {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(IOS)
     // Request OpenGL 4.1 Core Profile (macOS maximum)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
@@ -231,7 +234,7 @@ void initShaders(SDL_Window* window, int index) {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 #endif
 
-#ifdef ANDROID
+#ifdef MOBILE
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -255,7 +258,7 @@ void initShaders(SDL_Window* window, int index) {
             return;
         }
 
-#ifdef ANDROID
+#ifdef MOBILE
         if (GLAD_VERSION_MAJOR(version) < 3) {
             LOGE("OpenGL ES 3.0 required but found %d.%d",
                  GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
@@ -488,7 +491,7 @@ std::vector<std::string> findShaders() {
 
 #ifdef PC
     shaderPath = assetPath(shaderPath);
-#elif defined(ANDROID)
+#elif defined(MOBILE)
     shaderPath = getDocumentsPath() + shaderPath;
 #endif
 

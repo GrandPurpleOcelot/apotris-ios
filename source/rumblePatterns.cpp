@@ -561,7 +561,7 @@ void rumblePatternLoop()
 
     const bool rumble = partStrength != 0 && tickStrength < partStrength;
 
-    #if defined(SWITCH) || defined(PORTMASTER) || defined(WEB) || defined(PC) || defined(ANDROID)
+    #if defined(SWITCH) || defined(PORTMASTER) || defined(WEB) || defined(PC) || defined(MOBILE)
     // SDL2 can just recieve the part's strength directly, sending the final (user-scaled) strength to our output func.
     rumbleOutput(partStrength);
     #else

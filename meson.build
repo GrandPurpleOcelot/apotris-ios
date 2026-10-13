@@ -106,6 +106,14 @@ effect_locations_file = 'effect_locations.bin'
 
 build_type = get_option('buildtype')
 
+# iOS is a darwin host with an iOS subsystem (see ios/build.sh). It reuses the
+# Android touch layer (MOBILE) and is built as a static library that the Xcode
+# project in ios/ links into the app.
+is_ios = host_machine.system() == 'darwin' and host_machine.subsystem().startswith('ios')
+if is_ios
+    add_languages('objcpp', native: false)
+endif
+
 # Set up recommended compiler and linker flags for GBA before loading any other projects
 if host_machine.system() == 'gba'
     subdir('meson/toolchain')
@@ -124,6 +132,8 @@ elif host_machine.system() == 'emscripten'
     add_global_arguments('-pthread', language: ['cpp', 'c'])
     add_global_arguments('-fno-stack-protector', language: ['cpp', 'c'])
     add_global_arguments('-U_FORTIFY_SOURCE', language: ['cpp', 'c'])
+elif is_ios
+    add_global_arguments('-DIMGUI_IMPL_OPENGL_ES3', language : ['c', 'cpp', 'objcpp'])
 elif host_machine.system() == 'darwin'
     add_global_arguments('-mmacosx-version-min=10.15', language : ['cpp', 'c'])
 elif host_machine.system() == 'android'
@@ -308,7 +318,13 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             fallback: ['Tilengine', 'tilengine_dep'],
         )
 
-        if host_machine.system() == 'darwin'
+        if is_ios
+            # SDL2 and SDL2_mixer come from their own CMake builds (the
+            # wrapdb ports have no UIKit support); ios/build.sh puts them on
+            # PKG_CONFIG_PATH.
+            sdl2_dep = dependency('sdl2', static: true)
+            sdl_mixer = dependency('SDL2_mixer', static: true)
+        elif host_machine.system() == 'darwin'
             sdl2_dep = subproject(
                 'sdl2',
                 default_options: [
@@ -379,10 +395,12 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         subproject('curl', default_options: ['default_library=static'])
     endif
 
-    if host_machine.system() != 'horizon'
+    if host_machine.system() != 'horizon' and not is_ios
         dependencies += dependency('cpr')
     endif
-    if host_machine.system() != 'emscripten' and host_machine.system() != 'horizon'
+    if is_ios
+        # Online play (cpr/libdatachannel) is not ported to iOS yet.
+    elif host_machine.system() != 'emscripten' and host_machine.system() != 'horizon'
         datachannel = dependency(
             'libdatachannel',
             fallback: ['libdatachannel', 'libdatachannel_dep'],
@@ -397,6 +415,23 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
     # Define non-GBA specific preprocessor guards
     if host_machine.system() == 'horizon'
         add_project_arguments('-DSWITCH', language: ['cpp', 'c'])
+        add_project_arguments('-DNO_NETWORK', language: ['cpp', 'c'])
+    elif is_ios
+        add_project_arguments(
+            ['-DIOS', '-DMOBILE', '-DGL', '-DNO_NETWORK'],
+            language: ['cpp', 'c', 'objcpp'],
+        )
+
+        gles = dependency('appleframeworks', modules: ['OpenGLES'])
+        dependencies += gles
+
+        # Override gl dependency so imgui subproject finds it
+        meson.override_dependency('gl', gles)
+
+        imgui_proj = subproject('imgui', default_options: ['default_library=static', 'opengl=enabled', 'sdl2=enabled', 'sdl2_renderer=enabled'])
+        dependencies += imgui_proj.get_variable('imgui_dep')
+
+        sources += files('ios' / 'ios_platform.mm')
     elif get_option('portmaster')
         add_project_arguments('-DPORTMASTER', language: ['cpp', 'c'])
         add_project_arguments('-DGL', language: ['c', 'cpp'])
@@ -404,6 +439,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         dependencies += dependency('glesv2')
     elif host_machine.system() == 'android'
         add_project_arguments('-DANDROID', language : ['cpp', 'c'])
+        add_project_arguments('-DMOBILE', language : ['cpp', 'c'])
         add_project_arguments('-DGL', language : ['c', 'cpp'])
         add_project_arguments('-DIMGUI_IMPL_OPENGL_ES3', language : ['c', 'cpp'])
 
@@ -430,7 +466,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         add_project_arguments('-DWEB', language: ['cpp', 'c'])
     endif
 
-    add_project_arguments('-DTE', language: ['c', 'cpp'])
+    add_project_arguments('-DTE', language: is_ios ? ['c', 'cpp', 'objcpp'] : ['c', 'cpp'])
 
     generated_files = []
     # Assemble bin2s targets
@@ -511,7 +547,7 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
         link_args += '-Wl,-Bstatic,--whole-archive'
         link_args += '-lwinpthread'
         link_args += '-Wl,--no-whole-archive'
-    elif host_machine.system() == 'darwin'
+    elif host_machine.system() == 'darwin' and not is_ios
         link_args += '-mmacosx-version-min=10.15'
     endif
 
@@ -550,6 +586,15 @@ if host_machine.system() != 'gba' and host_machine.system() != 'n3ds'
             ],
             depends: binary,
             build_by_default: true,
+        )
+    elif is_ios
+        # ios/build.sh merges this with the dependency archives; the Xcode
+        # project links the result together with SDL2main.
+        binary = static_library(
+            name,
+            generated_files + sources,
+            include_directories: includes,
+            dependencies: dependencies,
         )
     elif host_machine.system() == 'android'
         binary = shared_library(

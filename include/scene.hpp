@@ -498,7 +498,7 @@ public:
         result.push_back("Sleep");
 #endif
 
-#ifdef ANDROID
+#ifdef MOBILE
         auto it = result.begin();
         std::advance(it, 4);
         result.insert(it, "Touch");

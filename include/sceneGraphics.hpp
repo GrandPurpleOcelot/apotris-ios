@@ -827,7 +827,7 @@ private:
         l.push_back(new ScreenShakeElement());
         l.push_back(new ScreenShakeTypeElement());
         l.push_back(new ClearTextElement());
-#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
+#if defined(PC) || defined(MOBILE) || defined(PORTMASTER)
         l.push_back(new BatteryDisplayElement());
 #endif
         l.push_back(new AspectRatioElement());
