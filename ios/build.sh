@@ -12,13 +12,26 @@
 
 set -euo pipefail
 
+# Xcode exports hundreds of build settings into script phases, and clang
+# honours some of them (IPHONEOS_DEPLOYMENT_TARGET, SDKROOT, ...) even for
+# the Mac-native helper tools meson builds. Re-run with only what we need.
+if [ -z "${APOTRIS_CLEAN_ENV:-}" ]; then
+    exec env -i APOTRIS_CLEAN_ENV=1 HOME="$HOME" TERM="${TERM:-dumb}" \
+        PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+        DEVELOPER_DIR="${DEVELOPER_DIR:-$(xcode-select -p)}" \
+        PLATFORM_NAME="${PLATFORM_NAME:-}" ARCHS="${ARCHS:-}" \
+        CONFIGURATION="${CONFIGURATION:-}" \
+        IOS_MIN="${IPHONEOS_DEPLOYMENT_TARGET:-}" \
+        bash "$0" "$@"
+fi
+
 IOS_DIR="$(cd "$(dirname "$0")" && pwd)"
 SRC_DIR="$(dirname "$IOS_DIR")"
 
 PLATFORM="${1:-${PLATFORM_NAME:-iphoneos}}"
 ARCH="${ARCHS:-arm64}"
 ARCH="${ARCH%% *}" # Xcode may pass several; device and Apple Silicon simulators are arm64
-MIN_IOS="${IPHONEOS_DEPLOYMENT_TARGET:-15.0}"
+MIN_IOS="${IOS_MIN:-15.0}"
 BUILDTYPE=release
 if [ "${CONFIGURATION:-Release}" = "Debug" ]; then
     BUILDTYPE=debugoptimized
@@ -27,8 +40,6 @@ fi
 SDL2_VERSION=2.28.5        # same as subprojects/sdl2.wrap
 SDL2_MIXER_VERSION=2.6.2   # same as subprojects/sdl2_mixer.wrap
 
-# Homebrew is not on PATH inside Xcode build phases.
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 for tool in meson ninja cmake pkg-config; do
     if ! command -v "$tool" > /dev/null; then
         echo "error: $tool not found. Install it with: brew install meson ninja cmake pkg-config" >&2
@@ -55,9 +66,6 @@ OUT="$IOS_DIR/build/out/$PLATFORM"
 DOWNLOADS="$IOS_DIR/build/downloads"
 mkdir -p "$WORK" "$PREFIX" "$OUT" "$DOWNLOADS"
 
-# Xcode build phases can't see the user's ~/.zshrc, so avoid surprises from
-# a stray macOS deployment target or SDK.
-unset MACOSX_DEPLOYMENT_TARGET SDKROOT || true
 
 fetch() { # url file
     if [ ! -f "$DOWNLOADS/$2" ]; then
@@ -145,6 +153,7 @@ EOF
 MESON_BUILD="$WORK/meson"
 if [ ! -f "$MESON_BUILD/build.ninja" ]; then
     echo "== Configuring Apotris for $PLATFORM ($ARCH)"
+    rm -rf "$MESON_BUILD" # a failed configure leaves a half-made directory
     meson setup "$MESON_BUILD" "$SRC_DIR" \
         --cross-file="$CROSS" \
         --buildtype="$BUILDTYPE" \

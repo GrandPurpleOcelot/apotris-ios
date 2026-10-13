@@ -28,11 +28,13 @@ jobs:
         run: xcodegen --spec ios/project.yml
 
       - name: Build for simulator
+        shell: bash -eo pipefail {0}
         run: |
           xcodebuild -project ios/Apotris.xcodeproj -scheme Apotris \
             -sdk iphonesimulator -configuration Debug \
             -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build \
-            | tee xcodebuild-sim.log | grep -E 'error|warning: .*ios|BUILD|== ' || true
+            > xcodebuild-sim.log 2>&1 || { tail -80 xcodebuild-sim.log; exit 1; }
+          grep -E '^== |BUILD SUCCEEDED' xcodebuild-sim.log
           test -d dd/Build/Products/Debug-iphonesimulator/Apotris.app
 
       - name: Run in simulator and screenshot
@@ -53,11 +55,14 @@ jobs:
           tail -50 app-console.log || true
 
       - name: Build for device (unsigned)
+        if: ${{ !cancelled() }}
+        shell: bash -eo pipefail {0}
         run: |
           xcodebuild -project ios/Apotris.xcodeproj -scheme Apotris \
             -sdk iphoneos -configuration Release \
             -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build \
-            | tee xcodebuild-device.log | grep -E 'error|BUILD|== ' || true
+            > xcodebuild-device.log 2>&1 || { tail -80 xcodebuild-device.log; exit 1; }
+          grep -E '^== |BUILD SUCCEEDED' xcodebuild-device.log
           test -d dd/Build/Products/Release-iphoneos/Apotris.app
 
       - uses: actions/upload-artifact@v4
