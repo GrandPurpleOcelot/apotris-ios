@@ -115,6 +115,21 @@ cmake_build SDL2_mixer "$WORK/SDL2_mixer-$SDL2_MIXER_VERSION" \
     -DSDL2MIXER_MIDI=OFF -DSDL2MIXER_MP3=OFF -DSDL2MIXER_OPUS=OFF \
     -DSDL2MIXER_VORBIS=OFF -DSDL2MIXER_WAVPACK=OFF -DSDL2MIXER_WAVE=ON
 
+# SDL2_mixer's CMake installs no pkg-config file on Apple platforms, and
+# that is how meson looks for it.
+cat > "$PREFIX/lib/pkgconfig/SDL2_mixer.pc" <<EOF
+prefix=$PREFIX
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+
+Name: SDL2_mixer
+Description: mixer library for Simple DirectMedia Layer
+Version: $SDL2_MIXER_VERSION
+Requires: sdl2
+Libs: -L\${libdir} -lSDL2_mixer
+Cflags: -I\${includedir}/SDL2
+EOF
+
 # 2. Apotris itself, through meson
 CROSS="$WORK/ios-cross.ini"
 cat > "$CROSS" <<EOF
