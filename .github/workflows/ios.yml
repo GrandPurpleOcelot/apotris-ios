@@ -47,12 +47,25 @@ jobs:
           xcrun simctl boot "$DEVICE"
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" dd/Build/Products/Debug-iphonesimulator/Apotris.app
-          xcrun simctl launch --console-pty "$DEVICE" com.grandpurpleocelot.apotris > app-console.log 2>&1 &
-          sleep 45
-          xcrun simctl io "$DEVICE" screenshot screenshot-portrait.png
-          xcrun simctl spawn "$DEVICE" launchctl list | grep -i apotris || echo "APP NOT RUNNING"
-          ls "$(xcrun simctl get_app_container "$DEVICE" com.grandpurpleocelot.apotris data)/Documents" || true
-          tail -50 app-console.log || true
+          xcrun simctl launch --stdout="$PWD/app-console.log" --stderr="$PWD/app-console.log" \
+            "$DEVICE" com.grandpurpleocelot.apotris
+          sleep 15
+          xcrun simctl io "$DEVICE" screenshot screenshot-1-early.png
+          sleep 30
+          xcrun simctl io "$DEVICE" screenshot screenshot-2-later.png
+          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q apotris; then
+            echo "APP RUNNING" | tee app-status.txt
+          else
+            echo "APP NOT RUNNING" | tee app-status.txt
+          fi
+          xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
+            --predicate 'process == "Apotris" OR (process == "SpringBoard" AND eventMessage CONTAINS "apotris")' \
+            > app-system.log 2>&1 || true
+          mkdir -p crashes
+          find ~/Library/Logs/DiagnosticReports -name 'Apotris*' -exec cp {} crashes/ \; 2>/dev/null || true
+          ls crashes
+          tail -40 app-console.log || true
+          grep -q "APP RUNNING" app-status.txt
 
       - name: Build for device (unsigned)
         if: ${{ !cancelled() }}
@@ -71,7 +84,9 @@ jobs:
           name: ios-results
           path: |
             screenshot-*.png
-            app-console.log
+            app-*.log
+            app-status.txt
+            crashes/
             xcodebuild-*.log
             ios/Apotris.xcodeproj
           if-no-files-found: ignore
