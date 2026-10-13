@@ -46,7 +46,7 @@ void setTilePixel(TILE& tile, int row, int col, uint8_t index) {
 }
 
 static std::string skinFilePath(int index) {
-#ifdef ANDROID
+#ifdef MOBILE
     return (std::filesystem::path(getSavefilePath()).parent_path() / "skins" /
             ("custom" + std::to_string(index) + ".png"))
         .string();

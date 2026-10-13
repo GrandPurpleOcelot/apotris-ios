@@ -76,7 +76,7 @@ const std::list<std::string> menuOptions = {
 const std::list<std::string> gameOptions = {
     "Marathon",     "Sprint",  "Dig",    "Ultra", "Blitz", "Combo",
     "Survival",     "Classic", "Master", "Death", "Zen",
-#ifndef SWITCH
+#ifndef NO_NETWORK
     "Multi Battle",
 #endif
 #ifdef GBA
@@ -642,7 +642,7 @@ bool ConfirmSaveScene::control() {
         setFullscreen(savefile->settings.fullscreen);
 #endif
 
-#ifdef ANDROID
+#ifdef MOBILE
         setLayout();
 #endif
 

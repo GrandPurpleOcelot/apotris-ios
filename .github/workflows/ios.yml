@@ -1,0 +1,72 @@
+name: iOS
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install tools
+        run: brew install meson ninja xcodegen pkgconf || true
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ios/build/downloads
+            subprojects/packagecache
+          key: ios-downloads-${{ hashFiles('subprojects/*.wrap', 'ios/build.sh') }}
+
+      - name: Generate Xcode project
+        run: xcodegen --spec ios/project.yml
+
+      - name: Build for simulator
+        run: |
+          xcodebuild -project ios/Apotris.xcodeproj -scheme Apotris \
+            -sdk iphonesimulator -configuration Debug \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build \
+            | tee xcodebuild-sim.log | grep -E 'error|warning: .*ios|BUILD|== ' || true
+          test -d dd/Build/Products/Debug-iphonesimulator/Apotris.app
+
+      - name: Run in simulator and screenshot
+        run: |
+          set -x
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)["devices"]
+          print(next(x["udid"] for k, v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")))')
+          xcrun simctl boot "$DEVICE"
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" dd/Build/Products/Debug-iphonesimulator/Apotris.app
+          xcrun simctl launch --console-pty "$DEVICE" com.grandpurpleocelot.apotris > app-console.log 2>&1 &
+          sleep 45
+          xcrun simctl io "$DEVICE" screenshot screenshot-portrait.png
+          xcrun simctl spawn "$DEVICE" launchctl list | grep -i apotris || echo "APP NOT RUNNING"
+          ls "$(xcrun simctl get_app_container "$DEVICE" com.grandpurpleocelot.apotris data)/Documents" || true
+          tail -50 app-console.log || true
+
+      - name: Build for device (unsigned)
+        run: |
+          xcodebuild -project ios/Apotris.xcodeproj -scheme Apotris \
+            -sdk iphoneos -configuration Release \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build \
+            | tee xcodebuild-device.log | grep -E 'error|BUILD|== ' || true
+          test -d dd/Build/Products/Release-iphoneos/Apotris.app
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-results
+          path: |
+            screenshot-*.png
+            app-console.log
+            xcodebuild-*.log
+            ios/Apotris.xcodeproj
+          if-no-files-found: ignore

@@ -1,7 +1,7 @@
 #include "platform.hpp"
 
 #if defined(PC) || defined(PORTMASTER) || defined(WEB) || defined(SWITCH) ||   \
-    defined(ANDROID)
+    defined(MOBILE)
 
 #include <SDL.h>
 #include <algorithm>

@@ -1,17 +1,16 @@
-#ifdef ANDROID
+// Shared touch-platform layer for Android and iOS (MOBILE).
+#ifdef MOBILE
 
 #include "liba_android.h"
 #include <SDL_system.h>
 #include <SDL_haptic.h>
 #include <algorithm>
-#include <android/log.h>
 #include <cmath>
 #include <cstdio>
 #include <dirent.h>
 #include <fstream>
 #include <glad/gles2.h>
 #include <iostream>
-#include <jni.h>
 #include <sstream>
 #include <sys/stat.h>
 #include <unordered_map>
@@ -20,9 +19,17 @@
 #include "version.h"
 #include <unistd.h>
 
+#ifdef ANDROID
+#include <android/log.h>
+#include <jni.h>
+
 #define LOG_TAG "ApotrisAndroid"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#else
+#define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
+#define LOGI(...) SDL_Log(__VA_ARGS__)
+#endif
 
 #include "def.h"
 
@@ -45,9 +52,11 @@ static bool imguiSDLInited = false;
 static bool inBackground = false;
 static bool pendingBackground = false;
 
+#ifdef ANDROID
 static jobject vibrateService = nullptr;
 static jmethodID vibrateMethodId = 0;
 static jmethodID vibrateCancelMethodId = 0;
+#endif
 
 void handleAnalogInput(int axis, int value);
 void handleInput();
@@ -176,6 +185,7 @@ int KEY_RIGHT = (SDL_CONTROLLER_BUTTON_DPAD_RIGHT << 16) | packKey(SDLK_d);
 int KEY_SELECT = (SDL_CONTROLLER_BUTTON_BACK << 16) | packKey(SDLK_3);
 int KEY_START = (SDL_CONTROLLER_BUTTON_START << 16) | packKey(SDLK_ESCAPE);
 
+#ifdef ANDROID
 // The preferred storage path is saved in internal storage so on
 // subsequent launches we don't need to re-probe.
 static std::string storageConfigPath() {
@@ -336,6 +346,7 @@ std::string getDocumentsPath() {
 static bool isUsingFallbackPath(const std::string& path) {
     return path.find("/Documents/Apotris") == std::string::npos;
 }
+#endif
 
 static void make_directory_recursive(const std::string& path) {
     size_t pos = 0;
@@ -565,9 +576,13 @@ std::string getPreferencesFilePath() {
 }
 
 static std::string getPreferencesFilePathFallback() {
+#ifdef ANDROID
     const char* ext = SDL_AndroidGetExternalStoragePath();
     return ext ? std::string(ext) + "/preferences.txt"
                : getDocumentsPath() + "preferences.txt";
+#else
+    return getDocumentsPath() + "preferences.txt";
+#endif
 }
 
 void savePreferences() {
@@ -622,9 +637,11 @@ void setLastInputType(InputType type) {
 void windowInit() {
     SDL_Log("windowInit: start");
 
+#ifdef ANDROID
     // Capture the persisted path BEFORE anything else touches it
     // (loadPreferences calls getDocumentsPath which saves a path).
     std::string previousPath = loadStoragePath();
+#endif
 
     loadPreferences();
 
@@ -637,7 +654,16 @@ void windowInit() {
     // Disables the default accelerometer "joystick" on android
     SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
 
-    window = SDL_CreateWindow("Apotris Android", SDL_WINDOWPOS_CENTERED,
+#ifdef IOS
+    // Raw GL (shaders, ImGui) shares the window with the SDL renderer, so
+    // keep the renderer on GLES like Android instead of Metal.
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
+    SDL_SetHint(SDL_HINT_ORIENTATIONS,
+                "LandscapeLeft LandscapeRight Portrait");
+    SDL_SetHint(SDL_HINT_IOS_HIDE_HOME_INDICATOR, "2");
+#endif
+
+    window = SDL_CreateWindow("Apotris", SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight,
                               SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL |
                                   SDL_WINDOW_RESIZABLE);
@@ -657,11 +683,20 @@ void windowInit() {
     refreshWindowSize();
     SDL_Log("windowInit: refreshWindowSize done");
 
+#ifdef ANDROID
     SDL_AndroidRequestPermission("android.permission.READ_MEDIA_AUDIO");
+#endif
 
     std::string basePath = getDocumentsPath();
     if (!basePath.empty() && basePath.back() != '/')
         basePath += "/";
+
+#ifdef IOS
+    LOGI("Using storage path: %s", basePath.c_str());
+
+    extractAssets(basePath);
+    loadAudio(basePath);
+#else
 
     // Determine whether we ended up on the preferred shared path or a
     // private fallback.  On API 30+ the user may need to grant the
@@ -758,6 +793,7 @@ void windowInit() {
             }
         }
     }
+#endif
 
     nanotime_step_init(&stepper, (uint64_t)(NANOTIME_NSEC_PER_SEC / FPS_TARGET),
                        nanotime_now_max(), nanotime_now, nanotime_sleep);
@@ -788,6 +824,7 @@ void windowInit() {
     vibrationInit();
     SDL_Log("windowInit: vibrationInit done");
 
+#ifdef ANDROID
     // ── Fallback storage message (API 29) ──────────────────────
     // On API 29 scoped storage blocks Documents/ access but
     // MANAGE_EXTERNAL_STORAGE doesn't exist yet.  Show a one-time
@@ -839,6 +876,7 @@ void windowInit() {
             window);
         requestManageStoragePermission();
     }
+#endif
 
     if (scopedStorageError) {
         SDL_ShowSimpleMessageBox(
@@ -1169,6 +1207,10 @@ void handleInput() {
             if (!demo) {
                 paused = true;
             }
+#ifdef IOS
+            // iOS kills apps that issue GL calls in the background.
+            render = false;
+#endif
             vibrationStop();
             rumblePatternStop();
             // Clear all active touch state so keys don't get stuck
@@ -1901,9 +1943,13 @@ std::string getSavefilePath() {
 
 // App-private fallback used when the shared path is not writable.
 static std::string getSavefilePathFallback() {
+#ifdef ANDROID
     const char* ext = SDL_AndroidGetExternalStoragePath();
     return ext ? std::string(ext) + "/Apotris.sav"
                : getDocumentsPath() + "Apotris.sav";
+#else
+    return getDocumentsPath() + "Apotris.sav";
+#endif
 }
 
 void loadSavefile() {
@@ -2113,6 +2159,7 @@ void setGameWindowScale() {
     }
 }
 
+#ifdef ANDROID
 bool vibrationInit() {
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
     if (!env) {
@@ -2241,6 +2288,7 @@ void vibrationDeinit() {
         SDL_Log("Vibration service cleaned up");
     }
 }
+#endif
 
 std::vector<Layout> getDefaultLayouts() {
     int w, h;

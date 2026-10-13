@@ -213,7 +213,7 @@ typedef struct Settings {
 
     int placeHolder[19];
 
-#ifdef ANDROID
+#ifdef MOBILE
     Layout onScreenLayouts[2];
     int touchSnapGrid;
 #else

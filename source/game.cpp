@@ -233,7 +233,7 @@ void GameScene::updateText() {
         showPPS();
     }
 
-#if defined(PC) || defined(ANDROID)
+#if defined(PC) || defined(MOBILE)
     showBattery();
 #endif
 }
@@ -1899,7 +1899,7 @@ void GameScene::countdown() {
     showZoneMeter();
     showGoalLine();
 
-#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
+#if defined(PC) || defined(MOBILE) || defined(PORTMASTER)
     showBattery();
 #endif
 
@@ -3938,7 +3938,7 @@ void GameScene::init() {
     buildBG(2, 0, 25, 0, 0, true);
 #endif
 
-#if defined(ANDROID)
+#if defined(MOBILE)
     // setGameWindowScale();
 #endif
 

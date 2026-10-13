@@ -24,7 +24,7 @@
 
 #include <map>
 
-#if defined(ANDROID)
+#if defined(MOBILE)
 static int offsetx = (SCREEN_WIDTH - 240) * 0.5;
 static int offsety = (SCREEN_HEIGHT - 160) * 0.35;
 #else
@@ -893,7 +893,7 @@ void showFPS() {
 }
 
 void showBattery() {
-#if defined(PC) || defined(ANDROID) || defined(PORTMASTER)
+#if defined(PC) || defined(MOBILE) || defined(PORTMASTER)
     OBJ_ATTR* sprite = &obj_buffer[127];
 
     if (savefile->settings.batteryDisplay == 0 || batteryPercentage == -1 ||

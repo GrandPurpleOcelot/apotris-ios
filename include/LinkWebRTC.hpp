@@ -14,7 +14,7 @@
 #include <SDL.h>
 #endif
 
-#ifndef SWITCH
+#ifndef NO_NETWORK
 #include "rtc/rtc.hpp"
 #include <future>
 #include <mutex>
@@ -39,7 +39,7 @@ extern void clearPlayers();
 extern void initPlayer(u8 pId);
 #endif
 
-#ifndef SWITCH
+#ifndef NO_NETWORK
 using nlohmann::json;
 using std::shared_ptr;
 using std::weak_ptr;
@@ -55,7 +55,7 @@ struct BoardUpdatePacket {
 };
 
 class LinkUniversal {
-#ifndef SWITCH
+#ifndef NO_NETWORK
     static constexpr char STUN_SERVER[] = "stun:stun.l.google.com:19302";
     static constexpr char TURN_SERVER[] = "api.apotris.com";
     static constexpr char TURN_CREDENTIALS[] = "turn";

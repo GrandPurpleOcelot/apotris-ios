@@ -127,7 +127,7 @@ void initialize() {
 
 #endif
 
-#if defined(PC) || defined(PORTMASTER) || defined(ANDROID)
+#if defined(PC) || defined(PORTMASTER) || defined(MOBILE)
     if (savefile->settings.shaders != 0) {
         shaderInit(savefile->settings.shaders);
     }
@@ -364,7 +364,7 @@ std::string nameInput(int place, bool* cancelled) {
 
     showSprites(128);
 
-#if defined(N3DS) || defined(ANDROID)
+#if defined(N3DS) || defined(MOBILE)
     resetSmallText();
     setSmallTextArea(220, 0, 17, 30, 20);
     clearText();
@@ -438,7 +438,7 @@ std::string nameInput(int place, bool* cancelled) {
 #endif
 
         if (!onDone) {
-#if defined(ANDROID)
+#if defined(MOBILE)
             {
                 clearSmallText();
                 std::string s = "Press " + getStringFromKey(k.special3) +
@@ -689,7 +689,7 @@ std::string nameInput(int place, bool* cancelled) {
 
             if (key_hit(k.pause)) {
                 onDone = true;
-#if defined(ANDROID)
+#if defined(MOBILE)
                 stopTextInput();
 #endif
                 sfx(SFX_MENUCONFIRM);
@@ -710,7 +710,7 @@ std::string nameInput(int place, bool* cancelled) {
 
             if (key_hit(k.cancel)) {
                 onDone = false;
-#if defined(ANDROID)
+#if defined(MOBILE)
                 startTextInput();
 #endif
                 sfx(SFX_MENUCANCEL);
@@ -753,11 +753,11 @@ std::string nameInput(int place, bool* cancelled) {
 
     clearText();
 
-#if defined(ANDROID)
+#if defined(MOBILE)
     stopTextInput();
 #endif
 
-#if defined(N3DS) || defined(ANDROID)
+#if defined(N3DS) || defined(MOBILE)
     resetSmallText();
     aprintClearArea(0, 17, 30 + 1, 20);
     setSmallTextArea(260, 1 + (savefile->settings.aspectRatio != 0), 1, 10, 20);
@@ -1469,7 +1469,7 @@ std::string getStringFromKey(int key) {
 
     return keyToString[key];
 
-#elif defined(WEB) || defined(PC) || defined(ANDROID)
+#elif defined(WEB) || defined(PC) || defined(MOBILE)
 
     return stringFromKey(key);
 

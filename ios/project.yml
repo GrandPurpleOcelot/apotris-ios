@@ -1,0 +1,97 @@
+# XcodeGen spec for the iOS app: `xcodegen --spec ios/project.yml`
+# regenerates ios/Apotris.xcodeproj. The game itself is built by build.sh,
+# which the "Build Apotris" phase runs before linking.
+name: Apotris
+options:
+  bundleIdPrefix: com.grandpurpleocelot
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    MARKETING_VERSION: "4.2.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Apotris:
+    type: application
+    platform: iOS
+    sources:
+      - path: Apotris
+        excludes:
+          - Info.plist
+      - path: build/bundle/assets
+        type: folder
+        optional: true
+        buildPhase: resources
+      - path: build/bundle/license
+        type: folder
+        optional: true
+        buildPhase: resources
+    info:
+      path: Apotris/Info.plist
+      properties:
+        CFBundleDisplayName: Apotris
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchStoryboardName: LaunchScreen
+        UIRequiresFullScreen: true
+        UIStatusBarHidden: true
+        UIViewControllerBasedStatusBarAppearance: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # Saves, skins and custom music show up in the Files app.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        GCSupportsControllerUserInteraction: true
+        GCSupportedGameControllers:
+          - ProfileName: ExtendedGamepad
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.grandpurpleocelot.apotris
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ONLY_ACTIVE_ARCH: YES
+        ARCHS[sdk=iphonesimulator*]: $(NATIVE_ARCH_ACTUAL)
+        # build.sh writes into ios/build, which the script sandbox forbids.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        LIBRARY_SEARCH_PATHS: $(PROJECT_DIR)/build/out/$(PLATFORM_NAME)
+        OTHER_LDFLAGS:
+          - -lApotrisAll
+          - -lSDL2main
+          - -lc++
+          - -liconv
+          - -lz
+    dependencies:
+      - sdk: AVFoundation.framework
+      - sdk: AudioToolbox.framework
+      - sdk: CoreAudio.framework
+      - sdk: CoreBluetooth.framework
+      - sdk: CoreFoundation.framework
+      - sdk: CoreGraphics.framework
+      - sdk: CoreHaptics.framework
+      - sdk: CoreMotion.framework
+      - sdk: Foundation.framework
+      - sdk: GameController.framework
+      - sdk: Metal.framework
+      - sdk: OpenGLES.framework
+      - sdk: QuartzCore.framework
+      - sdk: UIKit.framework
+    preBuildScripts:
+      - name: Build Apotris
+        script: |
+          "$PROJECT_DIR/build.sh"
+        basedOnDependencyAnalysis: false
+        outputFiles:
+          - $(PROJECT_DIR)/build/out/$(PLATFORM_NAME)/libApotrisAll.a
+          - $(PROJECT_DIR)/build/out/$(PLATFORM_NAME)/libSDL2main.a
